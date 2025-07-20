@@ -1,0 +1,725 @@
+# Backend API
+
+A Node.js/Express backend built with TypeScript, following the Controller-Service-Repository pattern with PostgreSQL database and **TSOA** for automatic route generation and OpenAPI documentation.
+
+## 🏗️ Architecture
+
+This backend follows a clean architecture pattern with clear separation of concerns and **TSOA** for type-safe API development:
+
+```
+src/
+├── controllers/     # HTTP request handlers (with TSOA decorators)
+├── services/        # Business logic layer
+├── repositories/    # Data access layer
+├── routes.ts        # Auto-generated routes (TSOA)
+├── db/             # Database configuration & migrations
+├── config/         # Configuration files
+├── errors/         # Custom error classes
+├── middleware/     # Express middleware
+├── decorators/     # Custom TSOA decorators
+├── swagger/        # OpenAPI documentation
+└── types/          # TypeScript type definitions
+```
+
+### Pattern Overview
+
+- **Controllers**: Handle HTTP requests/responses with TSOA decorators for automatic route generation
+- **Services**: Contain business logic, orchestrate operations between repositories
+- **Repositories**: Handle data persistence, database operations
+- **TSOA**: Automatic route generation, OpenAPI documentation, and type safety
+- **Error Handling**: Custom error classes with global error middleware
+- **Shared Types**: Common types shared between frontend and backend
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm
+- Docker & Docker Compose
+- PostgreSQL (via Docker)
+
+### 1. Install Dependencies
+
+```bash
+pnpm install
+```
+
+### 2. Start PostgreSQL Database
+
+```bash
+# Start PostgreSQL in Docker
+docker-compose up -d postgres
+
+# Or if you have a separate docker-compose.yml
+docker-compose up -d
+```
+
+### 3. Set Environment Variables
+
+Create a `.env` file in the backend directory:
+
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/your_db_name
+PORT=4000
+NODE_ENV=development
+```
+
+### 4. Run Database Migrations
+
+```bash
+pnpm kysely:migrate
+```
+
+### 5. Generate TSOA Routes and Documentation
+
+```bash
+# Generate routes and OpenAPI spec
+pnpm tsoa:routes
+pnpm tsoa:spec
+```
+
+### 6. Start Development Server
+
+```bash
+pnpm dev
+```
+
+The API will be available at `http://localhost:4000/api`
+API Documentation will be available at `http://localhost:4000/api/docs`
+
+## 📁 Project Structure
+
+### Controllers (`src/controllers/`)
+
+Controllers handle HTTP requests and responses using **TSOA decorators** for automatic route generation and OpenAPI documentation:
+
+```typescript
+import { Route, Get, Tags, Middlewares, Request, Queries, Body, Post } from '@tsoa/runtime';
+
+@Route('examples')
+@Tags('Example')
+export class ExampleController {
+  private service = new ExampleService();
+
+  @Get('/')
+  public async getAll() {
+    return this.service.getAllExamples();
+  }
+
+  @Get('/:id')
+  @ValidateParams(GetExampleByIdRouteSchema)
+  public async getOne(@Params() id: GetExampleByIdRouteParams['id']) {
+    return this.service.getExample({id});
+  }
+
+  @Post('/paginated')
+  @Middlewares(paginationMiddleware(10, 100))
+  public async getAllPaginated(
+    @Queries() query: PaginationQuery,
+    @Request() request: express.Request
+  ) {
+    return this.service.getAllExamplesPaginated({
+      pagination: request.pagination!,
+    });
+  }
+}
+```
+
+**Key TSOA Features:**
+- **Automatic Route Generation**: Routes are generated from controller decorators
+- **OpenAPI Documentation**: Automatic Swagger/OpenAPI spec generation
+- **Type Safety**: Full TypeScript support with runtime validation
+- **Parameter Validation**: Built-in validation for path, query, and body parameters
+- **Middleware Support**: Easy integration with Express middleware
+
+### Services (`src/services/`)
+
+Services contain business logic and orchestrate operations between repositories:
+
+```typescript
+export class ExampleService {
+  private repository = new ExampleRepository();
+
+  async getExample(id: string): Promise<Example> {
+    const example = await this.repository.findById(id);
+    if (!example) throw new NotFoundError('Example not found');
+    return example;
+  }
+}
+```
+
+### Repositories (`src/repositories/`)
+
+Repositories handle data persistence and database operations:
+
+```typescript
+export class ExampleRepository {
+  async findById(id: string): Promise<Example | null> {
+    const row = await db
+      .selectFrom('examples')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst();
+
+    return row ? this.mapToExample(row) : null;
+  }
+
+  async findAll(): Promise<Example[]> {
+    const rows = await db
+      .selectFrom('examples')
+      .selectAll()
+      .execute();
+
+    return rows.map(this.mapToExample);
+  }
+}
+```
+
+### Auto-Generated Routes (`src/routes.ts`)
+
+**⚠️ This file is auto-generated by TSOA. Do not modify it manually.**
+
+TSOA automatically generates the `routes.ts` file based on your controller decorators. To regenerate:
+
+```bash
+pnpm tsoa:routes
+```
+
+## 🔧 TSOA Configuration
+
+### Configuration File (`tsoa.json`)
+
+```json
+{
+  "entryFile": "./src/server.ts",
+  "noImplicitAdditionalProperties": "silently-remove-extras",
+  "controllerPathGlobs": ["src/controllers/**/*.ts"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["src/*"],
+      "~/shared": ["../../packages/shared/src"],
+      "~/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "spec": {
+    "host": null,
+    "specVersion": 3,
+    "outputDirectory": "./src/swagger"
+  },
+  "routes": {
+    "routesDir": "./src",
+    "middleware": "express"
+  }
+}
+```
+
+### Available Scripts
+
+```bash
+# Generate OpenAPI specification
+pnpm tsoa:spec
+
+# Generate routes
+pnpm tsoa:routes
+
+# Generate both routes and spec
+pnpm tsoa:spec && pnpm tsoa:routes
+```
+
+## 📚 API Documentation
+
+### Swagger UI
+
+Access the interactive API documentation at:
+- **URL**: `http://localhost:4000/api/docs`
+- **OpenAPI JSON**: `http://localhost:4000/swagger.json`
+
+### Example Endpoints
+
+#### GET /api/examples
+
+Get all examples
+
+```bash
+curl http://localhost:4000/api/examples
+```
+
+#### GET /api/examples/:id
+
+Get a single example by ID
+
+```bash
+curl http://localhost:4000/api/examples/123
+```
+
+#### POST /api/examples/paginated
+
+Get paginated examples with query parameters
+
+```bash
+curl -X POST http://localhost:4000/api/examples/paginated \
+  -H "Content-Type: application/json" \
+  -d '{"page": 1, "limit": 10, "sortBy": "name", "sortOrder": "asc"}'
+```
+
+## 🛡️ Error Handling
+
+### Custom Error Classes (`src/errors/`)
+
+The application uses custom error classes for consistent error handling:
+
+```typescript
+// 4xx Client Errors
+throw new NotFoundError('Example not found')
+throw new BadRequestError('Invalid input')
+throw new ValidationError('Validation failed')
+
+// 5xx Server Errors
+throw new InternalServerError('Database operation failed')
+```
+
+### Global Error Handler (`src/middleware/errorHandler.ts`)
+
+All errors are handled by a centralized error handler that:
+
+- **Formats error responses** consistently
+- **Handles Zod validation errors** automatically
+- **Includes stack traces** in development only
+- **Logs non-operational errors** for debugging
+
+### Error Response Format
+
+```json
+{
+  "error": "NotFoundError",
+  "message": "Example not found",
+  "statusCode": 404,
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "path": "/api/examples/123",
+  "method": "GET"
+}
+```
+
+## 🗄️ Database
+
+The project uses PostgreSQL running in Docker for local development. The database configuration is in `docker-compose.yml`:
+
+```bash
+# Start PostgreSQL
+docker-compose up -d postgres
+
+# Stop PostgreSQL
+docker-compose down
+```
+
+The database will be available at:
+
+- **Host**: `localhost`
+- **Port**: `5432`
+- **Database**: `template_monorepo`
+- **Username**: `postgres`
+- **Password**: `password`
+
+### Database Migrations
+
+Migrations are managed with Kysely:
+
+```bash
+# Create a new migration
+pnpm kysely migration create create_examples_table
+
+# Run migrations
+pnpm kysely:migrate
+
+# Rollback migrations
+pnpm kysely migrate down
+```
+
+### Database Schema
+
+The database uses Kysely for type-safe database operations:
+
+```typescript
+export interface Database {
+  examples: Example;
+}
+```
+
+## 🔧 Development
+
+### Available Scripts
+
+```bash
+# Development server with hot reload
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Start production server
+pnpm start
+
+# Run database migrations
+pnpm kysely:migrate
+
+# Generate database types
+pnpm kysely:generate
+```
+
+# Generate TSOA routes and OpenAPI spec
+pnpm tsoa:routes
+pnpm tsoa:spec
+```
+
+### TypeScript Configuration
+
+The project uses TypeScript with strict configuration and path mapping:
+
+- `~/*` maps to `src/*`
+- Shared types from `~/shared`
+- Strict type checking enabled
+
+### Adding New Endpoints with TSOA
+
+To add a new endpoint:
+
+1. **Create or update a controller method with TSOA decorators:**
+```typescript
+@Route('examples')
+export class ExampleController {
+  @Post('/')
+  public async create(@Body() body: CreateExampleDto) {
+    return this.service.createExample(body);
+  }
+
+  @Put('/:id')
+  public async update(
+    @Params() id: string,
+    @Body() body: UpdateExampleDto
+  ) {
+    return this.service.updateExample(id, body);
+  }
+}
+```
+
+2. **Generate routes and documentation:**
+```bash
+pnpm tsoa:routes
+pnpm tsoa:spec
+```
+
+3. **The endpoint is automatically available** at the specified route with full OpenAPI documentation.
+
+### Request Validation with TSOA
+
+TSOA provides built-in validation using decorators:
+
+```typescript
+import { Body, Queries, Params } from '@tsoa/runtime';
+
+@Post('/')
+public async create(
+  @Body() body: CreateExampleDto,  // Validates request body
+  @Queries() query: QueryParams,   // Validates query parameters
+  @Params() params: PathParams     // Validates path parameters
+) {
+  // TSOA automatically validates and provides type-safe parameters
+  return this.service.createExample(body);
+}
+```
+
+### Custom Decorators (`src/decorators/`)
+
+The project includes custom TSOA decorators for enhanced functionality:
+
+```typescript
+// Custom parameter validation decorator
+@ValidateParams(GetExampleByIdRouteSchema)
+public async getOne(@Params() id: GetExampleByIdRouteParams['id']) {
+  // Custom validation logic applied
+}
+```
+
+### Pagination with TSOA
+
+To add pagination to any endpoint:
+
+1. **Add pagination middleware to the controller method:**
+```typescript
+@Get('/paginated')
+@Middlewares(paginationMiddleware(10, 100))
+public async getAllPaginated(
+  @Queries() query: PaginationQuery,
+  @Request() request: express.Request
+) {
+  return this.service.getAllExamplesPaginated({
+    pagination: request.pagination!,
+  });
+}
+```
+
+2. **Update the service method:**
+```typescript
+async getAllExamplesPaginated(options: { pagination: PaginationOptions }): Promise<PaginatedResponse<Example>> {
+  return this.repository.findAllPaginated(options.pagination);
+}
+```
+
+3. **Update the repository method:**
+```typescript
+async findAllPaginated(options: PaginationOptions): Promise<PaginatedResponse<Example>> {
+  // Get total count
+  const totalResult = await db
+    .selectFrom('examples')
+    .select(db.fn.count('id').as('total'))
+    .executeTakeFirst()
+
+  const total = Number(totalResult?.total || 0)
+
+  // Get paginated data
+  const rows = await db
+    .selectFrom('examples')
+    .selectAll()
+    .orderBy(options.sortBy, options.sortOrder)
+    .limit(options.limit)
+    .offset(options.offset)
+    .execute()
+
+  return createPaginatedResponse(rows.map(this.mapToExample), total, options)
+}
+```
+
+## 🏥 Health Check System
+
+The API includes a comprehensive health check system for monitoring and deployment. The system is template-friendly and adapts based on your configuration:
+
+- **With Database**: Full health checks including database connectivity
+- **Without Database**: Basic health checks (memory, disk) - perfect for template repos
+
+### Health Check Endpoints
+
+```typescript
+// Basic health check
+GET /health                    - Simple 200 OK response
+
+// Detailed health check
+GET /health/detailed           - Full system health with database, memory, disk
+
+// Specific checks
+GET /health/database           - Database connectivity only
+GET /health/memory             - Memory usage only
+
+// Kubernetes probes
+GET /health/ready              - Readiness probe
+GET /health/live               - Liveness probe
+```
+
+### Health Check Response
+
+**With Database Configured:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "uptime": 3600000,
+  "version": "1.0.0",
+  "checks": {
+    "database": {
+      "status": "healthy",
+      "responseTime": 15,
+      "details": {
+        "connection": "established",
+        "queryTime": "15ms"
+      }
+    },
+    "memory": {
+      "status": "healthy",
+      "details": {
+        "heapUsed": "45.2 MB",
+        "heapTotal": "67.8 MB",
+        "usagePercent": "66.67%"
+      }
+    },
+    "disk": {
+      "status": "healthy",
+      "details": {
+        "check": "basic",
+        "message": "Disk space check passed"
+      }
+    }
+  }
+}
+```
+
+**Without Database (Template Mode):**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "uptime": 3600000,
+  "version": "1.0.0",
+  "checks": {
+    "memory": {
+      "status": "healthy",
+      "details": {
+        "heapUsed": "45.2 MB",
+        "heapTotal": "67.8 MB",
+        "usagePercent": "66.67%"
+      }
+    },
+    "disk": {
+      "status": "healthy",
+      "details": {
+        "check": "basic",
+        "message": "Disk space check passed"
+      }
+    }
+  }
+}
+```
+
+### Kubernetes Integration
+
+For Kubernetes deployments, use these endpoints:
+
+```yaml
+# livenessProbe
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 4000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+# readinessProbe
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: 4000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+```
+
+### Pagination System
+
+The API includes a flexible pagination system:
+
+#### Query Parameters
+
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 10, max: 100)
+- `sortBy`: Field to sort by (default: 'createdAt')
+- `sortOrder`: Sort direction 'asc' or 'desc' (default: 'desc')
+
+#### Example Usage
+
+```bash
+# Get first page with 10 items
+GET /api/examples/paginated
+
+# Get second page with 20 items, sorted by name
+GET /api/examples/paginated?page=2&limit=20&sortBy=name&sortOrder=asc
+```
+
+#### Response Format
+
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 45,
+    "totalPages": 5,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}
+```
+
+### HTTP Status Codes
+
+The API uses appropriate HTTP status codes:
+
+- **200**: Success (GET, PUT, PATCH)
+- **201**: Created (POST)
+- **204**: No Content (DELETE)
+- **400**: Bad Request
+- **401**: Unauthorized
+- **404**: Not Found
+- **422**: Validation Error
+- **500**: Internal Server Error
+
+## 🧪 Testing
+
+```bash
+# Run tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+```
+
+## 📦 Dependencies
+
+### Production Dependencies
+
+- **express**: Web framework
+- **@tsoa/runtime**: TSOA runtime for Express
+- **kysely**: Type-safe SQL query builder
+- **pg**: PostgreSQL client
+- **zod**: Runtime type validation
+- **swagger-ui-express**: Swagger UI for API documentation
+
+### Development Dependencies
+
+- **typescript**: TypeScript compiler
+- **tsx**: TypeScript execution engine
+- **tsoa**: TSOA CLI for route and spec generation
+- **kysely-ctl**: Database migration tool
+- **@types/express**: Express type definitions
+- **tsconfig-paths**: TypeScript path mapping support
+
+## 🌐 REST API Compliance
+
+### Complete CRUD Operations
+
+The API follows REST principles with full CRUD support, automatically generated by TSOA:
+
+```typescript
+// GET    /api/examples          - Get all examples
+// GET    /api/examples/paginated - Get paginated examples
+// GET    /api/examples/:id      - Get single example
+// POST   /api/examples          - Create new example
+// PUT    /api/examples/:id      - Update example (full update)
+// PATCH  /api/examples/:id      - Update example (partial update)
+// DELETE /api/examples/:id      - Delete example
+```
+
+## 🔄 TSOA Workflow
+
+### Development Workflow
+
+1. **Write Controllers**: Create controllers with TSOA decorators
+2. **Generate Routes**: Run `pnpm tsoa:routes` to generate routes
+3. **Generate Documentation**: Run `pnpm tsoa:spec` to generate OpenAPI spec
+4. **Test Endpoints**: Use the generated routes and Swagger UI
+5. **Iterate**: Make changes and regenerate as needed
+
+### Production Deployment
+
+1. **Build**: `pnpm build`
+2. **Generate Routes**: `pnpm tsoa:routes`
+3. **Generate Spec**: `pnpm tsoa:spec`
+4. **Start**: `pnpm start`
+
+### TSOA Benefits
+
+- **Type Safety**: Full TypeScript support with runtime validation
+- **Automatic Documentation**: OpenAPI/Swagger documentation generated from code
+- **Route Generation**: No manual route configuration needed
+- **Validation**: Built-in parameter validation
+- **Middleware Support**: Easy integration with Express middleware
+- **Code Generation**: Automatic route and type generation

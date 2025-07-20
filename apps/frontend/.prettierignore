@@ -1,0 +1,45 @@
+# Build outputs
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Generated files
+.tanstack/
+routeTree.gen.ts
+
+# Configuration files
+*.config.js
+*.config.ts
+vite.config.ts
+tailwind.config.mjs
+postcss.config.mjs
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment files
+.env*
+!.env.example
+
+# IDE files
+.vscode/
+.idea/
+.cursor/
+
+# Git files
+.gitignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CSS files (contain Tailwind directives)
+*.css
+
+# Only format TypeScript and React files
+!src/**/*.{ts,tsx}
+!*.{ts,tsx}

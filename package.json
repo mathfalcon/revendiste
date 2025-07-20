@@ -1,0 +1,28 @@
+{
+  "name": "template-monorepo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "gts lint",
+    "clean": "gts clean",
+    "compile": "tsc",
+    "fix": "gts fix",
+    "dev": "turbo run dev",
+    "build": "turbo run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.13.1",
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "gts": "^6.0.2",
+    "turbo": "^2.5.4",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "tsoa": "link:../../../AppData/Local/pnpm/global/5/node_modules/tsoa"
+  }
+}

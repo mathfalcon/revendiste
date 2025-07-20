@@ -1,0 +1,22 @@
+{
+  "entryFile": "./src/server.ts",
+  "noImplicitAdditionalProperties": "silently-remove-extras",
+  "controllerPathGlobs": ["src/controllers/**/*.ts"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["src/*"],
+      "~/shared": ["../../packages/shared/src"],
+      "~/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "spec": {
+    "host": null,
+    "specVersion": 3,
+    "outputDirectory": "./src/swagger"
+  },
+  "routes": {
+    "routesDir": "./src",
+    "middleware": "express"
+  }
+}

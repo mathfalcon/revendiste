@@ -1,0 +1,674 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"PaginationMeta": {
+				"properties": {
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalPages": {
+						"type": "number",
+						"format": "double"
+					},
+					"hasNext": {
+						"type": "boolean"
+					},
+					"hasPrev": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"page",
+					"limit",
+					"total",
+					"totalPages",
+					"hasNext",
+					"hasPrev"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PaginatedResponse__id-string--name-string--createdAt-Date__": {
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"name": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"createdAt",
+								"name",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"infer_typeofPaginationSchema_": {
+				"properties": {
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
+					},
+					"sortBy": {
+						"type": "string"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"type": "object"
+			},
+			"PaginationQuery": {
+				"$ref": "#/components/schemas/infer_typeofPaginationSchema_"
+			},
+			"infer_typeofMyValidator_": {
+				"properties": {
+					"msg": {
+						"type": "string"
+					},
+					"code": {
+						"type": "number",
+						"format": "double"
+					},
+					"result": {
+						"properties": {
+							"price": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"price"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"msg",
+					"code",
+					"result"
+				],
+				"type": "object"
+			},
+			"MyResponse": {
+				"$ref": "#/components/schemas/infer_typeofMyValidator_"
+			},
+			"Record_string.any_": {
+				"properties": {},
+				"additionalProperties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"HealthCheckResult": {
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"healthy",
+							"unhealthy",
+							"degraded"
+						]
+					},
+					"message": {
+						"type": "string"
+					},
+					"responseTime": {
+						"type": "number",
+						"format": "double"
+					},
+					"details": {
+						"$ref": "#/components/schemas/Record_string.any_"
+					}
+				},
+				"required": [
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HealthCheck": {
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"healthy",
+							"unhealthy",
+							"degraded"
+						]
+					},
+					"timestamp": {
+						"type": "string"
+					},
+					"uptime": {
+						"type": "number",
+						"format": "double"
+					},
+					"version": {
+						"type": "string"
+					},
+					"checks": {
+						"properties": {
+							"external": {
+								"$ref": "#/components/schemas/HealthCheckResult"
+							},
+							"disk": {
+								"$ref": "#/components/schemas/HealthCheckResult"
+							},
+							"memory": {
+								"$ref": "#/components/schemas/HealthCheckResult"
+							},
+							"database": {
+								"$ref": "#/components/schemas/HealthCheckResult"
+							}
+						},
+						"required": [
+							"disk",
+							"memory"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"status",
+					"timestamp",
+					"uptime",
+					"version",
+					"checks"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "backend",
+		"version": "1.0.0",
+		"license": {
+			"name": "ISC"
+		},
+		"contact": {}
+	},
+	"paths": {
+		"/examples": {
+			"get": {
+				"operationId": "GetAll",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"properties": {
+											"createdAt": {
+												"type": "string",
+												"format": "date-time"
+											},
+											"name": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"createdAt",
+											"name",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Example"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/examples/paginated": {
+			"post": {
+				"operationId": "GetAllPaginated",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PaginatedResponse__id-string--name-string--createdAt-Date__"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Example"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PaginationQuery"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/examples/{id}": {
+			"get": {
+				"operationId": "GetOne",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"createdAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"name": {
+											"type": "string"
+										},
+										"id": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"createdAt",
+										"name",
+										"id"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Example"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/examples/test": {
+			"get": {
+				"operationId": "GetTest",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MyResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Example"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/health": {
+			"get": {
+				"operationId": "Basic",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"timestamp": {
+											"type": "string"
+										},
+										"status": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"timestamp",
+										"status"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Health"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/health/detailed": {
+			"get": {
+				"operationId": "Detailed",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HealthCheck"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Health"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/health/database": {
+			"get": {
+				"operationId": "Database",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"properties": {
+												"database": {},
+												"timestamp": {
+													"type": "string"
+												},
+												"message": {
+													"type": "string"
+												},
+												"status": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"timestamp",
+												"message",
+												"status"
+											],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"message": {},
+												"database": {
+													"$ref": "#/components/schemas/HealthCheckResult"
+												},
+												"timestamp": {
+													"type": "string"
+												},
+												"status": {
+													"type": "string",
+													"enum": [
+														"healthy",
+														"unhealthy",
+														"degraded"
+													]
+												}
+											},
+											"required": [
+												"database",
+												"timestamp",
+												"status"
+											],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Health"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/health/memory": {
+			"get": {
+				"operationId": "Memory",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"memory": {
+											"$ref": "#/components/schemas/HealthCheckResult"
+										},
+										"timestamp": {
+											"type": "string"
+										},
+										"status": {
+											"type": "string",
+											"enum": [
+												"healthy",
+												"unhealthy",
+												"degraded"
+											]
+										}
+									},
+									"required": [
+										"memory",
+										"timestamp",
+										"status"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Health"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/health/ready": {
+			"get": {
+				"operationId": "Readiness",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"timestamp": {
+											"type": "string"
+										},
+										"status": {
+											"type": "string",
+											"enum": [
+												"healthy",
+												"unhealthy",
+												"degraded"
+											]
+										},
+										"ready": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"timestamp",
+										"status",
+										"ready"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Health"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/health/live": {
+			"get": {
+				"operationId": "Liveness",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"uptime": {
+											"type": "number",
+											"format": "double"
+										},
+										"timestamp": {
+											"type": "string"
+										},
+										"alive": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"uptime",
+										"timestamp",
+										"alive"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Health"
+				],
+				"security": [],
+				"parameters": []
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/"
+		}
+	]
+}
