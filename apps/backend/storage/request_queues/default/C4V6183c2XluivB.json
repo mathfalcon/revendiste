@@ -1,0 +1,9 @@
+{
+	"id": "C4V6183c2XluivB",
+	"json": "{\"id\":\"C4V6183c2XluivB\",\"url\":\"https://entraste.com/evento/kultoo-pres-nyimbo-diego-acosta-recuero-more\",\"loadedUrl\":\"https://entraste.com/evento/kultoo-pres-nyimbo-diego-acosta-recuero-more\",\"uniqueKey\":\"https://entraste.com/evento/kultoo-pres-nyimbo-diego-acosta-recuero-more\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:09.053Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com/evento/kultoo-pres-nyimbo-diego-acosta-recuero-more",
+	"url": "https://entraste.com/evento/kultoo-pres-nyimbo-diego-acosta-recuero-more"
+}

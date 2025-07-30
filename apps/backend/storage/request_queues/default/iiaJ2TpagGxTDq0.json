@@ -1,0 +1,9 @@
+{
+	"id": "iiaJ2TpagGxTDq0",
+	"json": "{\"id\":\"iiaJ2TpagGxTDq0\",\"url\":\"https://entraste.com/evento/solomun-punta-del-este-2025\",\"loadedUrl\":\"https://entraste.com/evento/solomun-punta-del-este-2025\",\"uniqueKey\":\"https://entraste.com/evento/solomun-punta-del-este-2025\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:12.708Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com/evento/solomun-punta-del-este-2025",
+	"url": "https://entraste.com/evento/solomun-punta-del-este-2025"
+}

@@ -1,0 +1,9 @@
+{
+	"id": "TgC78MhIEKEZFeg",
+	"json": "{\"id\":\"TgC78MhIEKEZFeg\",\"url\":\"https://entraste.com/evento/sabado-19-de-julio-reggaeton-cumbia-vieja-copia-0\",\"loadedUrl\":\"https://entraste.com/evento/sabado-19-de-julio-reggaeton-cumbia-vieja-copia-0\",\"uniqueKey\":\"https://entraste.com/evento/sabado-19-de-julio-reggaeton-cumbia-vieja-copia-0\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:06.580Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com/evento/sabado-19-de-julio-reggaeton-cumbia-vieja-copia-0",
+	"url": "https://entraste.com/evento/sabado-19-de-julio-reggaeton-cumbia-vieja-copia-0"
+}

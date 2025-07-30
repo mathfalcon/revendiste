@@ -1,0 +1,9 @@
+{
+	"id": "QnoPwYRSn3GnvoT",
+	"json": "{\"id\":\"QnoPwYRSn3GnvoT\",\"url\":\"https://entraste.com\",\"loadedUrl\":\"https://entraste.com/\",\"uniqueKey\":\"https://entraste.com\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"LIST\",\"__crawlee\":{\"state\":4}},\"handledAt\":\"2025-07-21T02:47:05.462Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com",
+	"url": "https://entraste.com"
+}

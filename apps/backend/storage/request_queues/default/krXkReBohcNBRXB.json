@@ -1,0 +1,9 @@
+{
+	"id": "krXkReBohcNBRXB",
+	"json": "{\"id\":\"krXkReBohcNBRXB\",\"url\":\"https://entraste.com/evento/cloud-7-jueves-eliz-venta\",\"loadedUrl\":\"https://entraste.com/evento/cloud-7-jueves-eliz-venta\",\"uniqueKey\":\"https://entraste.com/evento/cloud-7-jueves-eliz-venta\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:07.215Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com/evento/cloud-7-jueves-eliz-venta",
+	"url": "https://entraste.com/evento/cloud-7-jueves-eliz-venta"
+}

@@ -1,0 +1,9 @@
+{
+	"id": "SgcI7kX50Fphq2q",
+	"json": "{\"id\":\"SgcI7kX50Fphq2q\",\"url\":\"https://entraste.com/evento/viejar2-x-lgante-24-de-agosto\",\"loadedUrl\":\"https://entraste.com/evento/viejar2-x-lgante-24-de-agosto\",\"uniqueKey\":\"https://entraste.com/evento/viejar2-x-lgante-24-de-agosto\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:11.459Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com/evento/viejar2-x-lgante-24-de-agosto",
+	"url": "https://entraste.com/evento/viejar2-x-lgante-24-de-agosto"
+}

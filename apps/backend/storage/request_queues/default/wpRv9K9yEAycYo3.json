@@ -1,0 +1,9 @@
+{
+	"id": "wpRv9K9yEAycYo3",
+	"json": "{\"id\":\"wpRv9K9yEAycYo3\",\"url\":\"https://entraste.com/evento/key-conference-2025-en-sitio\",\"loadedUrl\":\"https://entraste.com/evento/key-conference-2025-en-sitio\",\"uniqueKey\":\"https://entraste.com/evento/key-conference-2025-en-sitio\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:11.246Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com/evento/key-conference-2025-en-sitio",
+	"url": "https://entraste.com/evento/key-conference-2025-en-sitio"
+}

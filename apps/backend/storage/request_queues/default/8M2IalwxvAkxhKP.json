@@ -1,0 +1,9 @@
+{
+	"id": "8M2IalwxvAkxhKP",
+	"json": "{\"id\":\"8M2IalwxvAkxhKP\",\"url\":\"https://entraste.com/evento/unreal-pres-hunter-game-rafael-cerato-at-hangar-33\",\"loadedUrl\":\"https://entraste.com/evento/unreal-pres-hunter-game-rafael-cerato-at-hangar-33\",\"uniqueKey\":\"https://entraste.com/evento/unreal-pres-hunter-game-rafael-cerato-at-hangar-33\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:10.482Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com/evento/unreal-pres-hunter-game-rafael-cerato-at-hangar-33",
+	"url": "https://entraste.com/evento/unreal-pres-hunter-game-rafael-cerato-at-hangar-33"
+}

@@ -1,0 +1,9 @@
+{
+	"id": "diUUfovy6mpzUhV",
+	"json": "{\"id\":\"diUUfovy6mpzUhV\",\"url\":\"https://entraste.com/evento/aura-sabado-venta48\",\"loadedUrl\":\"https://entraste.com/evento/aura-sabado-venta48\",\"uniqueKey\":\"https://entraste.com/evento/aura-sabado-venta48\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:08.467Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com/evento/aura-sabado-venta48",
+	"url": "https://entraste.com/evento/aura-sabado-venta48"
+}

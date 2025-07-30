@@ -1,0 +1,422 @@
+[
+  {
+    "externalId": "https://entraste.com/evento/sol-de-noche-0-1-2",
+    "platform": "entraste",
+    "name": "Sol de Noche",
+    "description": "El próximo 19 de julio va volver a pasar…\n\nUn experiencia diferente en 2 sectores.\n\n7 Dj que tienen algo para contarte…\n\nUna fiesta que lo incluye todo: lo tradicional y lo no tradicional.\n\nNos espera una nueva aventura en este fenómeno",
+    "eventStartDate": "2025-07-20T02:59:00.000Z",
+    "eventEndDate": "2025-07-20T09:00:00.000Z",
+    "venueName": "Centro Uruguayo",
+    "venueAddress": "Pbro. Manuel Antonio de Castro y Careaga 557",
+    "externalUrl": "https://entraste.com/evento/sol-de-noche-0-1-2",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/c222c36adc6b2ee8e1f647cd1ca65063"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/f3f940c539a4ca5a046b966e859059fb"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/sabado-19-de-julio-reggaeton-cumbia-vieja-copia-0",
+    "platform": "entraste",
+    "name": "SÁBADO 19 DE JULIO – REGGAETON & CUMBIA VIEJA",
+    "description": "REGGAETÓN VIEJO & CUMBIA VIEJA\nDJ SET RK JOTA ALL NIGHT LONG\n\nMesas 098814543.\n\n––\n*No se permite el ingreso con ropa deportiva.\n*Al ingresar a VOU estás aceptando aparecer en material fotográfico y/o audiovisual que puede ser utilizado en piezas comunicacionales de la marca.",
+    "eventStartDate": "2025-07-20T02:00:00.000Z",
+    "eventEndDate": "2025-07-20T09:00:00.000Z",
+    "venueName": "Plaza Mateo",
+    "venueAddress": "Av. Sarmiento, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/sabado-19-de-julio-reggaeton-cumbia-vieja-copia-0",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/7f74c90765c153ff9cda397411478de2"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/8994d707a4ea15795ef10f92b8e55a05"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/aura-sabado-venta47",
+    "platform": "entraste",
+    "name": "AURA - Sabado - Venta",
+    "description": "",
+    "eventStartDate": "2025-07-20T02:59:00.000Z",
+    "eventEndDate": "2025-07-20T02:35:00.000Z",
+    "venueName": "Cloud 7",
+    "venueAddress": "Constituyente 1885, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/aura-sabado-venta47",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/5966f18e1ea4fee80b5f7276b445b731"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/ba170581bde6a4ed4418efb169fb13af"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/cloud-7-jueves-eliz-venta",
+    "platform": "entraste",
+    "name": "Cloud 7 - Jueves - Eliz - Venta",
+    "description": "",
+    "eventStartDate": "2025-07-25T02:59:00.000Z",
+    "eventEndDate": "2025-07-25T21:41:00.000Z",
+    "venueName": "Cloud 7",
+    "venueAddress": "Constituyente 1885, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/cloud-7-jueves-eliz-venta",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/41091cdff70bd35aa93914d4b64a8c38"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/25735e19df6d33d31c0a2611c7a25c32"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/pariseo-25-de-julio-latin-club",
+    "platform": "entraste",
+    "name": "PARISEO 25 DE JULIO - Latin Club",
+    "description": "Promo 3x2 en entradas\n\nComprá dos y llevate una tercera sin cargo. ¡Aprovechá esta promoción hasta agotar stock!\n\nBackstage Pariseo\n\nReservá tu mesa VIP y viví la experiencia desde el backstage. Reservas de mesas o promo cumpleaños\nal +598 97 785 470\n\n.\n\nUbicación Pariseo: Vou Club, Parque Rodo\nhttps://maps.google.com/?q=-34.915569,-56.168629\n\nP :)",
+    "eventStartDate": "2025-07-26T02:59:00.000Z",
+    "eventEndDate": "2025-07-26T09:00:00.000Z",
+    "venueName": "Plaza Mateo",
+    "venueAddress": "Av. Sarmiento, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/pariseo-25-de-julio-latin-club",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/346ef891da8185b9c54c51a30d154cf5"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/d727a022c980d86b60a211fa8473a926"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/we-are-bla-at-hangar33",
+    "platform": "entraste",
+    "name": "WE ARE BLA AT HANGAR33",
+    "description": "",
+    "eventStartDate": "2025-07-27T02:59:00.000Z",
+    "eventEndDate": "2025-07-27T21:00:00.000Z",
+    "venueName": "HANGAR 33",
+    "venueAddress": "Wilson Ferreira Aldunate 7201",
+    "externalUrl": "https://entraste.com/evento/we-are-bla-at-hangar33",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/e2fde3c68a2fb848678dc1d1f50099ee"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/6787f141d5fb77e0833a76643da3b389"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/aura-sabado-venta48",
+    "platform": "entraste",
+    "name": "AURA - Sabado - Venta",
+    "description": "",
+    "eventStartDate": "2025-07-27T02:59:00.000Z",
+    "eventEndDate": "2025-07-27T21:44:00.000Z",
+    "venueName": "Cloud 7",
+    "venueAddress": "Constituyente 1885, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/aura-sabado-venta48",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/4b5870e095890a6ef33c2b4ee6d74342"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/1794118f39d1e6ec1e8716d12e9abf32"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/big-viejar2-x-the-la-planta-0",
+    "platform": "entraste",
+    "name": "big viejar2 x the la planta",
+    "description": "volvemos este 26 de julio a nuestro nuevo venue, renovado y con the la planta en vivo.\n\nel artista más esperado por todos nosotros, el más pedido hace más de un año, llega por primera vez!",
+    "eventStartDate": "2025-07-27T02:59:00.000Z",
+    "eventEndDate": "2025-07-27T09:59:00.000Z",
+    "venueName": "viejar2",
+    "venueAddress": "viejar2",
+    "externalUrl": "https://entraste.com/evento/big-viejar2-x-the-la-planta-0",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/165517426823f650d87ec89dd25d9c05"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/cb7a605b62e74fa45da963355c322bca"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/kultoo-pres-nyimbo-diego-acosta-recuero-more",
+    "platform": "entraste",
+    "name": "Kultoo pres. Nyimbo (Diego Acosta + Recuero) & more",
+    "description": "",
+    "eventStartDate": "2025-08-02T02:59:00.000Z",
+    "eventEndDate": "2025-08-02T08:00:00.000Z",
+    "venueName": "Constituyente 1885",
+    "venueAddress": "Constituyente 1885",
+    "externalUrl": "https://entraste.com/evento/kultoo-pres-nyimbo-diego-acosta-recuero-more",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/5b2ced94323e55a3233acf5d89d48fd6"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/f8c46cff9e3f8c622d01941f96878789"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/mega-rancho-0",
+    "platform": "entraste",
+    "name": "MEGA RANCHO en SITIO",
+    "description": "",
+    "eventStartDate": "2025-08-10T02:30:00.000Z",
+    "eventEndDate": "2025-08-10T08:00:00.000Z",
+    "venueName": "Sitio",
+    "venueAddress": "Velodromo Municipal de Montevideo",
+    "externalUrl": "https://entraste.com/evento/mega-rancho-0",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/da449dd138ca9b44d2ad7602cb1af0e7"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/0a40996e48b74783e949469f8af21c97"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/viejar2-en-modo-arabe",
+    "platform": "entraste",
+    "name": "viejar2 en modo arabe",
+    "description": "el próximo jueves 17.07 llega por primera vez papichamp con todos sus éxitos a nuestro venue.\n\ncon todo su show completo 100% en vivo, los esperamos para crear una noche única.",
+    "eventStartDate": "2025-08-10T02:59:00.000Z",
+    "eventEndDate": "2025-08-10T09:59:00.000Z",
+    "venueName": "viejar2",
+    "venueAddress": "viejar2",
+    "externalUrl": "https://entraste.com/evento/viejar2-en-modo-arabe",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/0b63fed4a9e3b0828c4070dde51fa5fb"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/48c4280acb496b2b92811cf40694e751"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/unreal-pres-hunter-game-rafael-cerato-at-hangar-33",
+    "platform": "entraste",
+    "name": "Unreal pres. Hunter/Game & Rafael Cerato at Hangar 33",
+    "description": "",
+    "eventStartDate": "2025-08-17T02:30:00.000Z",
+    "eventEndDate": "2025-08-17T10:00:00.000Z",
+    "venueName": "HANGAR 33",
+    "venueAddress": "Av. de las Industrias Wilson Ferreira Aldunate 7201, 15000 Ciudad de la Costa, Departamento de Canelones",
+    "externalUrl": "https://entraste.com/evento/unreal-pres-hunter-game-rafael-cerato-at-hangar-33",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/505cca9558b61903e993307dbc64fd1b"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/266f8a164c063c28305a94b052c2fd4e"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/festival-quebrada-0",
+    "platform": "entraste",
+    "name": "Festival QUEBRADA presenta a NICOLAS JAAR",
+    "description": "Volvemos a Montevideo, esta vez con una nuevo experimento en formato festival. Nuestros artistas invitadxs son:\n\nNICOLAS JAAR\n\npresenta Archivos de Piedra\n\nY Narraciones de un Retorno\n\njunto a Eli Wewentxu\n\nNicolas Jaar (CH)\n\nEli Wewentxu (CH)\n\nAnthea (UK)\n\nLuciano Supervielle b2b Mateo Otonello (LIVE SHOW)\n\nPi b2b Shuriken b2b Victoria Brion (LIVE SHOW)\n\nFede Lijt\n\nNo te lo vas a querer perder!\n\n20:00hs SITIO\n(Velódromo de Montevideo)",
+    "eventStartDate": "2025-08-16T23:00:00.000Z",
+    "eventEndDate": "2025-08-17T07:00:00.000Z",
+    "venueName": "Sitio",
+    "venueAddress": "Velódromo Municipal",
+    "externalUrl": "https://entraste.com/evento/festival-quebrada-0",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/d7a52f7185ba4dc7867fed6dd7cf58cb"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/5f69fdfa1666cd6f38892dbbb8f7b057"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/viernes-22-de-agosto-feliz-cumpleanos-vou",
+    "platform": "entraste",
+    "name": "VIERNES 22 DE AGOSTO – FELIZ CUMPLEAÑOS VOU",
+    "description": "Celebramos 1 año de VOU en el Arena Central de Plaza Mateo.\n\nLa Champions Liga en vivo.\nReggeaton viejo y cumbia vieja con Alex Miraballes, LUCIALUCIA y RKJOTA.\nGeneral +22\nVIP +26\n\nMesas y vips: 097 246 979\n.\n\n––\n*No se permite el ingreso con ropa deportiva.\n*Al ingresar estás aceptando aparecer en material fotográfico y/o audiovisual que puede ser utilizado en piezas comunicacionales de la marca.",
+    "eventStartDate": "2025-08-23T02:59:00.000Z",
+    "eventEndDate": "2025-08-23T09:00:00.000Z",
+    "venueName": "Plaza Mateo",
+    "venueAddress": "Av. Sarmiento, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/viernes-22-de-agosto-feliz-cumpleanos-vou",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/19af5150091ab9bba42f740d301f1d97"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/b6f69adcc4b20f0f8b3004eb2c96b0e4"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/key-conference-2025-en-sitio",
+    "platform": "entraste",
+    "name": "Key Conference 2025 en Sitio",
+    "description": "",
+    "eventStartDate": "2025-08-25T00:00:00.000Z",
+    "eventEndDate": "2025-08-25T08:00:00.000Z",
+    "venueName": "Sitio",
+    "venueAddress": "Velodromo Municipal de Montevideo",
+    "externalUrl": "https://entraste.com/evento/key-conference-2025-en-sitio",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/292906cb5495a426ed4601d32e632029"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/e3bbad36b0519b269becc3cdf6d14075"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/viejar2-x-lgante-24-de-agosto",
+    "platform": "entraste",
+    "name": "viejar2 x lgante 24 de agosto",
+    "description": "",
+    "eventStartDate": "2025-08-25T02:59:00.000Z",
+    "eventEndDate": "2025-08-25T09:59:00.000Z",
+    "venueName": "viejar2",
+    "venueAddress": "av artigas entre bonini e idelfonso de león",
+    "externalUrl": "https://entraste.com/evento/viejar2-x-lgante-24-de-agosto",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/3570a87158225e16e89e03e744562daf"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/a2a2982d29fdedbe482f74205abe4e96"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/area-t-pres-bart-skils-oscar-l-hangar-33-t1",
+    "platform": "entraste",
+    "name": "Area T pres. Bart Skils, Oscar L @ Hangar 33, T1",
+    "description": "Este Viernes 5 de Septiembre volvemos a Hangar 33, Terminal 1 para gozarnos junto a estos grandes artistas.\n\nLINE UP:\nBart Skils\nOscar L\nMoment (Martin Costas, Gabriel Gil, Enzo Monza)\nRecuero\n\nNos vemos en la pista :)",
+    "eventStartDate": "2025-09-06T02:00:00.000Z",
+    "eventEndDate": "2025-09-06T10:00:00.000Z",
+    "venueName": "Hangar 33, Terminal 1",
+    "venueAddress": "Av. Wilson F. Aldunate 7201, Ciudad de la Costa",
+    "externalUrl": "https://entraste.com/evento/area-t-pres-bart-skils-oscar-l-hangar-33-t1",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/de02ae8a8d1a7e13ecfff5f8c706c4d5"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/c35af6feca3eefd58db894e5e4bc0551"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/key-mood-w-camelphat-more",
+    "platform": "entraste",
+    "name": "Key Mood w/ Camelphat & more",
+    "description": "",
+    "eventStartDate": "2025-09-20T01:00:00.000Z",
+    "eventEndDate": "2025-09-20T08:00:00.000Z",
+    "venueName": "Sitio",
+    "venueAddress": "Velodromo Municipal de Montevideo",
+    "externalUrl": "https://entraste.com/evento/key-mood-w-camelphat-more",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/54a7f4de98275974bcd1eef37678b8df"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/0c634d1eb2cb32b8c7782c46d002b905"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/drip-clvb-at-sitio-velodromo",
+    "platform": "entraste",
+    "name": "DRIP CLVB at SITIO (Velodromo)",
+    "description": "DRIP CLVB en el Velódromo Municipal de Montevideo.\n\nLa fiesta más grande del género urbano. Orgullo nacional.\n\nArtistas TBA.",
+    "eventStartDate": "2025-09-07T01:00:00.000Z",
+    "eventEndDate": "2025-09-07T08:00:00.000Z",
+    "venueName": "Velodromo",
+    "venueAddress": "Av. Ramón V. Benzano 3471, 11600 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/drip-clvb-at-sitio-velodromo",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/3b6b9b8ba803b0852095a832676e7896"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/5086ba285c5a80a66b6a0a2c6110bbd6"
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/solomun-punta-del-este-2025",
+    "platform": "entraste",
+    "name": "Solomun Punta Del Este 2025",
+    "description": "",
+    "eventStartDate": "2025-12-30T02:00:00.000Z",
+    "eventEndDate": "2025-12-30T09:00:00.000Z",
+    "venueName": "Punta Del Este",
+    "venueAddress": "Punta Del Este",
+    "externalUrl": "https://entraste.com/evento/solomun-punta-del-este-2025",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/5527c107b390c9d866c33aaa3a199f8f"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/ed346beeef4f01029f979583de8fb548"
+      }
+    ]
+  }
+]
