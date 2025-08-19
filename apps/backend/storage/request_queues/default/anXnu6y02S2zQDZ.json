@@ -1,9 +1,0 @@
-{
-	"id": "anXnu6y02S2zQDZ",
-	"json": "{\"id\":\"anXnu6y02S2zQDZ\",\"url\":\"https://entraste.com/evento/viernes-22-de-agosto-feliz-cumpleanos-vou\",\"loadedUrl\":\"https://entraste.com/evento/viernes-22-de-agosto-feliz-cumpleanos-vou\",\"uniqueKey\":\"https://entraste.com/evento/viernes-22-de-agosto-feliz-cumpleanos-vou\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:11.202Z\"}",
-	"method": "GET",
-	"orderNo": null,
-	"retryCount": 0,
-	"uniqueKey": "https://entraste.com/evento/viernes-22-de-agosto-feliz-cumpleanos-vou",
-	"url": "https://entraste.com/evento/viernes-22-de-agosto-feliz-cumpleanos-vou"
-}

@@ -14,7 +14,8 @@
     "tsoa:spec": "tsoa spec",
     "tsoa:routes": "tsoa routes",
     "generate:db": "kysely-codegen --camel-case --dialect postgres --out-file ./src/types/db.d.ts",
-    "scrape:test": "tsx src/scripts/test-entraste-scraper.ts",
+    "scrape:test": "tsx src/scripts/test-crawlee-scraper.ts",
+    "test:logger": "tsx src/scripts/test-logger.ts",
     "postinstall": "npx playwright install chromium"
   },
   "keywords": [],
@@ -22,6 +23,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.13.1",
   "dependencies": {
+    "@date-fns/tz": "^1.4.1",
     "@tsoa/runtime": "^6.6.0",
     "cors": "^2.8.5",
     "crawlee": "^3.13.10",
@@ -31,6 +33,7 @@
     "pg": "^8.16.3",
     "playwright": "^1.54.1",
     "swagger-ui-express": "^5.0.1",
+    "winston": "^3.17.0",
     "zod": "^4.0.5"
   },
   "devDependencies": {

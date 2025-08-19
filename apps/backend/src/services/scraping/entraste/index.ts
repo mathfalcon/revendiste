@@ -1,15 +1,19 @@
 import {PlaywrightRequestHandler} from 'crawlee';
-import {BaseScraper} from './base-scraper';
+import {BaseScraper} from '../base';
 import {
   Platform,
   ScrapedEventData,
   ScrapedEventDataSchema,
   ScrapedImageType,
   ScrapedTicketWave,
-} from './types';
-import {getStringFromError, trimTextAndDefaultToEmpty} from '~/utils';
-import {parse, setHours, setMinutes, addDays} from 'date-fns';
-import {es} from 'date-fns/locale';
+} from '../base/types';
+import {
+  DateUtils,
+  getStringFromError,
+  trimTextAndDefaultToEmpty,
+  logger,
+} from '~/utils';
+import {addMinutes} from 'date-fns';
 
 enum RequestLabel {
   LIST = 'LIST',
@@ -32,7 +36,6 @@ export class EntrasteScraper extends BaseScraper {
       launchContext: {
         userAgent,
       },
-      // maxRequestsPerCrawl: 2,
       requestHandler: this.handleRequest,
       failedRequestHandler({request, log}) {
         log.info(`Request ${request.url} failed too many times.`);
@@ -50,11 +53,10 @@ export class EntrasteScraper extends BaseScraper {
       ]);
       await crawler.run();
 
-      console.log(`Scraped ${this.events.length} events from Entraste`);
-      console.log(this.events);
+      logger.info(`Scraped ${this.events.length} events from Entraste`);
       return this.events;
     } catch (error) {
-      console.error('Error scraping Entraste events:', error);
+      logger.error('Error scraping Entraste events:', error);
       throw error;
     }
   }
@@ -166,10 +168,10 @@ export class EntrasteScraper extends BaseScraper {
       await crawler.addRequests([`${this.baseUrl}/evento/${eventId}`]);
       await crawler.run();
 
-      console.log(`Scraped ${waves.length} ticket waves for event ${eventId}`);
+      logger.info(`Scraped ${waves.length} ticket waves for event ${eventId}`);
       return waves;
     } catch (error) {
-      console.error(`Error scraping ticket waves for event ${eventId}:`, error);
+      logger.error(`Error scraping ticket waves for event ${eventId}:`, error);
       throw error;
     }
   }
@@ -272,68 +274,154 @@ export class EntrasteScraper extends BaseScraper {
       await page.textContent('.location-section h2[data-eventstart] + p'),
     );
 
-    const dateTimeMatch = dateTimeText.match(
-      /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+) (\d+) de ([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+desde las (\d+):(\d+) hasta las (\d+):(\d+)/,
+    let parsedDateTime: {
+      startTime: Date | undefined;
+      endTime: Date | undefined;
+    } | null = null;
+
+    if (dateTimeText.startsWith('Desde el')) {
+      parsedDateTime = this.handleMultiDayEvent(dateTimeText);
+    } else {
+      parsedDateTime = this.handleSingleDayEvent(dateTimeText);
+    }
+
+    if (!parsedDateTime) {
+      throw new Error(
+        `Could not parse date/time information, dateString: ${dateTimeText}`,
+      );
+    }
+
+    return parsedDateTime;
+  }
+
+  private handleMultiDayEvent(dateString: string): {
+    startTime: Date | undefined;
+    endTime: Date | undefined;
+  } {
+    // Pattern: "Desde el viernes 10 de octubre a las 23:59 hasta el domingo 12 de octubre a las 06:00"
+    const dateTimeMatch = dateString.match(
+      /Desde el ([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+a\s+las\s+(\d+):(\d+)\s+hasta\s+el\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+a\s+las\s+(\d+):(\d+)/,
     );
 
     if (!dateTimeMatch) {
-      console.warn('Could not parse date and time from text', dateTimeText);
+      logger.warn('Could not parse multi-day event date:', dateString);
       return {startTime: undefined, endTime: undefined};
     }
 
     const [
-      _originalText,
-      dayOfWeekInSpanish,
-      day,
-      monthInSpanish,
-      startHour,
-      startMinute,
-      endHour,
-      endMinute,
+      _fullMatch,
+      _startDayOfWeek, // viernes
+      startDay, // 10
+      startMonth, // octubre
+      startHour, // 23
+      startMinute, // 59
+      _endDayOfWeek, // domingo
+      endDay, // 12
+      endMonth, // octubre
+      endHour, // 06
+      endMinute, // 00
     ] = dateTimeMatch;
 
-    // Parse the Spanish date and time
-    const parsedDateTime = this.parseSpanishDateTime(
-      dayOfWeekInSpanish,
-      day,
-      monthInSpanish,
-      startHour,
-      startMinute,
-      endHour,
-      endMinute,
-    );
+    const startDate = DateUtils.fromSpanishStrings({
+      dayString: startDay,
+      monthString: startMonth,
+      hour: startHour,
+      minutes: startMinute,
+      timezone: 'America/Montevideo',
+    });
 
-    if (parsedDateTime) {
-      return parsedDateTime;
+    const endDate = DateUtils.fromSpanishStrings({
+      dayString: endDay,
+      monthString: endMonth,
+      hour: endHour,
+      minutes: endMinute,
+      timezone: 'America/Montevideo',
+    });
+
+    if (endDate < startDate) {
+      endDate.setFullYear(endDate.getFullYear() + 1);
     }
 
-    // Fallback to using the timestamp from data attribute
-    const eventStartTimestamp = await page.getAttribute(
-      'h2[data-eventstart]',
-      'data-eventstart',
+    return {startTime: startDate, endTime: endDate};
+  }
+
+  private handleSingleDayEvent(dateString: string): {
+    startTime: Date | undefined;
+    endTime: Date | undefined;
+  } {
+    logger.debug('Parsing single-day event date string:', dateString);
+    // Pattern: "Jueves 21 de agosto\ndesde las 23:59 hasta las 06:00"
+    // Also handles single-line format: "Jueves 21 de agosto desde las 23:59 hasta las 06:00"
+    const dateTimeMatch = dateString.match(
+      /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s*(?:desde\s+)?las\s+(\d+):(\d+)\s+hasta\s+las\s+(\d+):(\d+)/,
     );
 
-    if (!eventStartTimestamp) {
-      console.warn('Could not find event start timestamp');
+    if (!dateTimeMatch) {
+      logger.warn('Could not parse single-day event date:', dateString);
       return {startTime: undefined, endTime: undefined};
     }
 
-    const startTimestamp = parseInt(eventStartTimestamp) * 1000;
-    const startTime = new Date(startTimestamp);
+    const [
+      _fullMatch,
+      _dayOfWeek, // jueves
+      day, // 21
+      month, // agosto
+      startHour, // 23
+      startMinute, // 59
+      endHour, // 06
+      endMinute, // 00
+    ] = dateTimeMatch;
 
-    // Calculate end time based on the parsed hours
-    const endTimestamp = new Date(startTimestamp);
-    const endHourNum = parseInt(endHour);
-    const endMinuteNum = parseInt(endMinute);
+    try {
+      logger.debug(
+        `Parsed values: day=${day}, month=${month}, start=${startHour}:${startMinute}, end=${endHour}:${endMinute}`,
+      );
 
-    if (endHourNum < parseInt(startHour)) {
-      endTimestamp.setDate(endTimestamp.getDate() + 1);
+      // Create start date using the parsed day and month
+      const startDate = DateUtils.fromSpanishStrings({
+        dayString: day,
+        monthString: month,
+        hour: startHour,
+        minutes: startMinute,
+        timezone: 'America/Montevideo',
+      });
+
+      // Calculate the time difference to determine end date
+      const startHourNum = parseInt(startHour);
+      const startMinuteNum = parseInt(startMinute);
+      const endHourNum = parseInt(endHour);
+      const endMinuteNum = parseInt(endMinute);
+
+      // Calculate total minutes from start to end
+      let totalMinutes = 0;
+
+      if (
+        endHourNum < startHourNum ||
+        (endHourNum === startHourNum && endMinuteNum < startMinuteNum)
+      ) {
+        // Event crosses midnight - calculate time until midnight + time from midnight
+        const minutesUntilMidnight =
+          24 * 60 - (startHourNum * 60 + startMinuteNum);
+        const minutesFromMidnight = endHourNum * 60 + endMinuteNum;
+        totalMinutes = minutesUntilMidnight + minutesFromMidnight;
+        logger.debug(
+          `Event crosses midnight: ${totalMinutes} total minutes (${minutesUntilMidnight} until midnight + ${minutesFromMidnight} from midnight)`,
+        );
+      } else {
+        // Event ends on the same day
+        totalMinutes =
+          endHourNum * 60 + endMinuteNum - (startHourNum * 60 + startMinuteNum);
+        logger.debug(`Event ends same day: ${totalMinutes} total minutes`);
+      }
+
+      // Use date-fns to add the calculated minutes to the start date
+      const endDate = addMinutes(startDate, totalMinutes);
+
+      return {startTime: startDate, endTime: endDate};
+    } catch (error) {
+      logger.warn('Error parsing single-day event date:', error);
+      return {startTime: undefined, endTime: undefined};
     }
-
-    endTimestamp.setHours(endHourNum, endMinuteNum, 0, 0);
-    const endTime = endTimestamp;
-
-    return {startTime, endTime};
   }
 
   /**
@@ -358,6 +446,10 @@ export class EntrasteScraper extends BaseScraper {
         req.userData = {label: 'DETAIL'};
         return req;
       },
+      // exclude: [
+      //   // Exclude anything that is not the specific URL
+      //   /^(?!https:\/\/entraste\.com\/evento\/cloud-7-jueves-coqeein-montana-venta$).*/,
+      // ],
     });
   };
 
@@ -397,65 +489,15 @@ export class EntrasteScraper extends BaseScraper {
       this.validateAndAddEvent(eventData);
     } catch (error) {
       log.error(`Error extracting event details: ${getStringFromError(error)}`);
+      throw error;
     }
   };
-
-  /**
-   * Parse Spanish date and time strings into Date objects
-   */
-  private parseSpanishDateTime(
-    dayOfWeekInSpanish: string,
-    day: string,
-    monthInSpanish: string,
-    startHour: string,
-    startMinute: string,
-    endHour: string,
-    endMinute: string,
-  ): {startTime: Date; endTime: Date} | null {
-    try {
-      // Parse the date using Spanish locale
-      const dateString = `${day} ${monthInSpanish}`;
-      const currentYear = new Date().getFullYear();
-
-      // Try to parse the date with Spanish locale
-      const baseDate = parse(
-        dateString,
-        'd MMMM',
-        new Date(currentYear, 0, 1),
-        {
-          locale: es,
-        },
-      );
-
-      // Set the start time
-      const startTime = setMinutes(
-        setHours(baseDate, parseInt(startHour)),
-        parseInt(startMinute),
-      );
-
-      // Set the end time
-      let endTime = setMinutes(
-        setHours(baseDate, parseInt(endHour)),
-        parseInt(endMinute),
-      );
-
-      // If end hour is less than start hour, it's the next day
-      if (parseInt(endHour) < parseInt(startHour)) {
-        endTime = addDays(endTime, 1);
-      }
-
-      return {startTime, endTime};
-    } catch (error) {
-      console.error('Error parsing Spanish date:', error);
-      return null;
-    }
-  }
 
   private validateAndAddEvent(eventData: Partial<ScrapedEventData>) {
     const validationResult = ScrapedEventDataSchema.safeParse(eventData);
     if (!validationResult.success) {
-      console.error('Invalid event data:', validationResult.error);
-      console.log(eventData);
+      logger.error('Invalid event data:', validationResult.error);
+      logger.debug('Event data that failed validation:', eventData);
       return;
     }
 

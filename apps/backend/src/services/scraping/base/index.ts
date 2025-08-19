@@ -1,11 +1,15 @@
-import {Configuration, PlaywrightCrawler, PlaywrightCrawlerOptions} from 'crawlee';
+import {
+  Configuration,
+  PlaywrightCrawler,
+  PlaywrightCrawlerOptions,
+} from 'crawlee';
 import {
   Platform,
   PlatformConfig,
   ScrapedEventData,
   ScrapedTicketWave,
 } from './types';
-import {PLATFORM_CONFIGS} from './platform-config';
+import {PLATFORM_CONFIGS} from './config';
 
 export abstract class BaseScraper {
   protected platform: Platform;

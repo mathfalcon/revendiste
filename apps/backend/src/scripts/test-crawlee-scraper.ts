@@ -1,5 +1,5 @@
 import {writeFileSync} from 'fs';
-import {EntrasteScraper} from '../services/scraping/entraste-scraper';
+import {EntrasteScraper} from '../services/scraping/entraste';
 
 const entrasteScraper = new EntrasteScraper();
 
