@@ -76,8 +76,37 @@ export abstract class BaseScraper {
     return '';
   }
 
+  /**
+   * Convert HTML content to formatted text with proper line breaks
+   */
+  protected convertHtmlToFormattedText(html: string): string {
+    return (
+      html
+        // Replace <br> and <br/> tags with newlines
+        .replace(/<br\s*\/?>/gi, '\n')
+        // Replace closing tags with newlines (any HTML element)
+        .replace(/<\/[^>]+>/g, '\n')
+        // Remove all opening HTML tags
+        .replace(/<[^>]*>/g, '')
+        // Decode HTML entities
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        // Clean up multiple consecutive newlines
+        .replace(/\n\s*\n\s*\n/g, '\n\n')
+        // Trim whitespace from each line
+        .split('\n')
+        .map(line => line.trim())
+        .join('\n')
+        // Final trim
+        .trim()
+    );
+  }
+
   abstract scrapeEvents(): Promise<ScrapedEventData[]>;
-  abstract scrapeTicketWaves(eventId: string): Promise<ScrapedTicketWave[]>;
 
   getPlatformName(): Platform {
     return this.platform;

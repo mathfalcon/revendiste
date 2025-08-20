@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document presents an enhanced database schema that addresses additional considerations for a production-ready ticket reselling platform.
+This document presents an enhanced database schema that addresses additional considerations for a production-ready ticket reselling platform. The schema is designed to align with our scraping data types (`ScrapedEventData` and `ScrapedTicketWave`) while maintaining flexibility for future features.
 
 ## Enhanced Schema
 
@@ -37,42 +37,48 @@ erDiagram
     }
 
     EVENTS {
-      SERIAL id PK
+      uuid id PK
+      VARCHAR external_id UNIQUE
+      VARCHAR platform
       VARCHAR name
       TEXT description
-      DATE event_date
-      TIME event_time
-      VARCHAR location
+      TIMESTAMPTZ event_start_date
+      TIMESTAMPTZ event_end_date
       VARCHAR venue_name
-      VARCHAR city
-      VARCHAR country
-      VARCHAR postal_code
-      DECIMAL latitude
-      DECIMAL longitude
-      INT organizer_id FK
+      VARCHAR venue_address
+      VARCHAR external_url
       VARCHAR status
-      VARCHAR category
       JSONB metadata
-      VARCHAR image_url
       TIMESTAMPTZ created_at
       TIMESTAMPTZ updated_at
+      TIMESTAMPTZ last_scraped_at
     }
 
-    TICKET_WAVES {
-      SERIAL id PK
+    EVENT_IMAGES {
+      uuid id PK
       INT event_id FK
+      VARCHAR image_type
+      VARCHAR url
+      VARCHAR alt_text
+      INT display_order
+      TIMESTAMPTZ created_at
+    }
+
+    EVENT_TICKET_WAVES {
+      uuid id PK
+      INT event_id FK
+      VARCHAR external_id UNIQUE
       VARCHAR name
       TEXT description
       NUMERIC face_value
       VARCHAR currency
+      BOOLEAN is_sold_out
+      BOOLEAN is_available
       VARCHAR status
-      TIMESTAMPTZ sale_start
-      TIMESTAMPTZ sale_end
-      INT total_quantity
-      INT sold_quantity
       JSONB metadata
       TIMESTAMPTZ created_at
       TIMESTAMPTZ updated_at
+      TIMESTAMPTZ last_scraped_at
     }
 
     TICKETS {
@@ -202,10 +208,11 @@ erDiagram
     USERS ||--o{ MESSAGES : "sends/receives"
     USERS ||--o{ NOTIFICATIONS : "receives"
     USERS ||--o{ AUDIT_LOGS : "triggers"
-    
-    EVENTS ||--o{ TICKET_WAVES : "has"
+
+    EVENTS ||--o{ EVENT_IMAGES : "has"
+    EVENTS ||--o{ EVENT_TICKET_WAVES : "has"
     EVENTS ||--o{ TICKETS : "has"
-    TICKET_WAVES ||--o{ TICKETS : "defines"
+    EVENT_TICKET_WAVES ||--o{ TICKETS : "defines"
     TICKETS ||--o{ LISTINGS : "listed as"
     LISTINGS ||--|{ TRANSACTIONS : "sold via"
     TRANSACTIONS ||--o{ DISPUTES : "disputed"
@@ -215,32 +222,57 @@ erDiagram
 ## Field Descriptions
 
 ### USERS Table
+
 - **role**: ENUM: user, organizer, admin
 - **status**: ENUM: active, suspended, banned, pending_verification
 - **preferences**: User preferences and settings stored as JSON
 
 ### USER_VERIFICATIONS Table
+
 - **document_type**: ENUM: id_card, passport, driving_license
 - **status**: ENUM: pending, approved, rejected
 - **user_id FK**: → USERS.id
 - **reviewed_by FK**: → USERS.id
 
 ### EVENTS Table
-- **status**: ENUM: draft, published, cancelled, completed
-- **category**: ENUM: concert, sports, theater, festival, etc.
-- **organizer_id FK**: → USERS.id
-- **metadata**: Event-specific data stored as JSON
 
-### TICKET_WAVES Table
-- **name**: e.g., 'General Admission', 'VIP', 'Early Bird'
-- **currency**: ENUM: USD, UYU
-- **status**: ENUM: active, sold_out, expired, cancelled
+- **external_id**: Unique identifier from the source platform (e.g., Entraste, Passline)
+- **platform**: Source platform (ENUM: entraste, passline, redtickets)
+- **event_start_date**: Event start date and time
+- **event_end_date**: Event end date and time
+- **venue_name**: Name of the venue
+- **venue_address**: Full address of the venue
+- **external_url**: URL to the event on the source platform
+- **status**: Event status (ENUM: active, cancelled, completed)
+- **metadata**: Additional platform-specific data stored as JSON
+- **last_scraped_at**: Timestamp of last successful scraping
+
+### EVENT_IMAGES Table
+
 - **event_id FK**: → EVENTS.id
-- **metadata**: Platform-specific data (wave_id, etc.)
+- **image_type**: Type of image (ENUM: flyer, hero)
+- **url**: Image URL
+- **alt_text**: Alternative text for accessibility
+- **display_order**: Order for displaying images
+
+### EVENT_TICKET_WAVES Table
+
+- **external_id**: Unique identifier from the source platform
+- **event_id FK**: → EVENTS.id
+- **name**: Ticket wave name (e.g., 'General Admission', 'VIP')
+- **description**: Description of the ticket wave
+- **face_value**: Original ticket price
+- **currency**: Currency code (ENUM: USD, UYU)
+- **is_sold_out**: Whether the wave is sold out
+- **is_available**: Whether tickets are currently available
+- **status**: Wave status (ENUM: active, sold_out, expired, cancelled)
+- **metadata**: Additional platform-specific data stored as JSON
+- **last_scraped_at**: Timestamp of last successful scraping
 
 ### TICKETS Table
-- **ticket_wave_id FK**: → TICKET_WAVES.id
-- **currency**: ENUM: USD, UYU - matches ticket_wave.currency
+
+- **event_ticket_wave_id FK**: → EVENT_TICKET_WAVES.id
+- **currency**: ENUM: USD, UYU - matches event_ticket_wave.currency
 - **status**: ENUM: valid, used, expired, cancelled
 - **event_id FK**: → EVENTS.id
 - **original_owner_id FK**: → USERS.id
@@ -248,6 +280,7 @@ erDiagram
 - **metadata**: Extra fields (seat, section, row, etc.)
 
 ### LISTINGS Table
+
 - **currency**: ENUM: USD, UYU - must match ticket currency
 - **status**: ENUM: active, pending, sold, cancelled, expired
 - **listing_type**: ENUM: fixed_price, auction, best_offer
@@ -256,6 +289,7 @@ erDiagram
 - **terms**: Seller terms and conditions stored as JSON
 
 ### TRANSACTIONS Table
+
 - **currency**: ENUM: USD, UYU - must match listing currency
 - **payment_status**: ENUM: initiated, pending, paid, refunded, disputed, completed, failed
 - **payment_method**: ENUM: credit_card, bank_transfer, digital_wallet
@@ -264,6 +298,7 @@ erDiagram
 - **seller_id FK**: → USERS.id
 
 ### DISPUTES Table
+
 - **reason**: ENUM: ticket_invalid, not_received, wrong_ticket, other
 - **status**: ENUM: open, under_review, resolved, closed
 - **resolution**: ENUM: refund_buyer, refund_seller, partial_refund, no_action
@@ -272,21 +307,25 @@ erDiagram
 - **assigned_admin FK**: → USERS.id
 
 ### MESSAGES Table
+
 - **message_type**: ENUM: text, image, file, system
 - **transaction_id FK**: → TRANSACTIONS.id
 - **sender_id FK**: → USERS.id
 - **receiver_id FK**: → USERS.id
 
 ### NOTIFICATIONS Table
+
 - **type**: ENUM: listing_sold, payment_received, dispute_opened, etc.
 - **channel**: ENUM: email, sms, push, in_app
 - **user_id FK**: → USERS.id
 - **data**: Additional notification data stored as JSON
 
 ### AUDIT_LOGS Table
+
 - **action**: ENUM: INSERT, UPDATE, DELETE
 - **user_id FK**: → USERS.id
 
 ### PRICING_RULES Table
+
 - **rule_type**: ENUM: max_markup, min_price, max_price
 - **currency**: ENUM: USD, UYU

@@ -14,6 +14,8 @@ import {
   logger,
 } from '~/utils';
 import {addMinutes} from 'date-fns';
+import {Page} from 'playwright';
+import z from 'zod';
 
 enum RequestLabel {
   LIST = 'LIST',
@@ -61,121 +63,6 @@ export class EntrasteScraper extends BaseScraper {
     }
   }
 
-  async scrapeTicketWaves(eventId: string): Promise<ScrapedTicketWave[]> {
-    const waves: ScrapedTicketWave[] = [];
-    const extractPrice = this.extractPrice.bind(this);
-
-    const crawler = this.createCrawler({
-      async requestHandler({pushData, request, page, log}) {
-        log.info(`Processing event page: ${request.url}`);
-
-        // Set user agent and viewport
-        await page.setViewportSize({width: 1920, height: 1080});
-
-        // Block unnecessary resources for faster scraping
-        await page.route('**/*.{png,jpg,jpeg,gif,svg,css,woff,woff2}', route =>
-          route.abort(),
-        );
-
-        // Wait for the page to load (adjust selector based on actual page structure)
-        await page.waitForSelector(
-          '.ticket-type, .ticket-wave, .entrada-tipo',
-          {timeout: 10000},
-        );
-
-        // Extract ticket wave data using page.$$eval
-        const waveData = await page.$$eval(
-          '.ticket-type, .ticket-wave, .entrada-tipo',
-          $tickets => {
-            const scrapedWaves: any[] = [];
-
-            $tickets.forEach($ticket => {
-              const wave_id =
-                $ticket.getAttribute('data-wave-id') ||
-                $ticket.getAttribute('id') ||
-                '';
-              const name =
-                $ticket
-                  .querySelector('.ticket-name, .wave-name')
-                  ?.textContent?.trim() || '';
-              const price_text =
-                $ticket.querySelector('.price, .precio')?.textContent?.trim() ||
-                '';
-              const description =
-                $ticket
-                  .querySelector('.description, .descripcion')
-                  ?.textContent?.trim() || '';
-              const category =
-                $ticket
-                  .querySelector('.category, .categoria')
-                  ?.textContent?.trim() || '';
-              const benefits =
-                $ticket
-                  .querySelector('.benefits, .beneficios')
-                  ?.textContent?.trim() || '';
-
-              if (wave_id && name && price_text) {
-                scrapedWaves.push({
-                  wave_id,
-                  name,
-                  price_text,
-                  description,
-                  category,
-                  benefits,
-                });
-              }
-            });
-
-            return scrapedWaves;
-          },
-        );
-
-        // Process and format the data
-        for (const wave of waveData) {
-          const face_value = extractPrice(wave.price_text);
-
-          if (face_value > 0) {
-            const scrapedWave: ScrapedTicketWave = {
-              external_wave_id: wave.wave_id,
-              name: wave.name,
-              description: wave.description,
-              face_value,
-              currency: 'UYU',
-              sale_start: undefined,
-              sale_end: undefined,
-              total_quantity: undefined,
-              sold_quantity: undefined,
-              platform_data: {
-                wave_id: wave.wave_id,
-                category: wave.category,
-                benefits: wave.benefits,
-              },
-            };
-
-            waves.push(scrapedWave);
-          }
-        }
-
-        log.info(`Found ${waveData.length} ticket waves`);
-      },
-
-      failedRequestHandler({request, log}) {
-        log.info(`Request ${request.url} failed too many times.`);
-      },
-    });
-
-    try {
-      await crawler.addRequests([`${this.baseUrl}/evento/${eventId}`]);
-      await crawler.run();
-
-      logger.info(`Scraped ${waves.length} ticket waves for event ${eventId}`);
-      return waves;
-    } catch (error) {
-      logger.error(`Error scraping ticket waves for event ${eventId}:`, error);
-      throw error;
-    }
-  }
-
   handleRequest: PlaywrightRequestHandler = async args => {
     const {request, log} = args;
     log.info(`▶️  ${request.userData.label}  ${request.url}`);
@@ -196,7 +83,7 @@ export class EntrasteScraper extends BaseScraper {
    * Extract basic event information (name, description)
    */
   private async extractBasicEventInfo(
-    page: any,
+    page: Page,
   ): Promise<{name: string; description: string}> {
     const name = trimTextAndDefaultToEmpty(
       await page.textContent('.event-info-title'),
@@ -211,7 +98,7 @@ export class EntrasteScraper extends BaseScraper {
   /**
    * Extract description with proper HTML to text formatting
    */
-  private async extractFormattedDescription(page: any): Promise<string> {
+  private async extractFormattedDescription(page: Page): Promise<string> {
     const descriptionHtml = await page.innerHTML('#event-description');
     if (!descriptionHtml) return '';
 
@@ -220,40 +107,10 @@ export class EntrasteScraper extends BaseScraper {
   }
 
   /**
-   * Convert HTML content to formatted text with proper line breaks
-   */
-  private convertHtmlToFormattedText(html: string): string {
-    return (
-      html
-        // Replace <br> and <br/> tags with newlines
-        .replace(/<br\s*\/?>/gi, '\n')
-        // Replace closing tags with newlines (any HTML element)
-        .replace(/<\/[^>]+>/g, '\n')
-        // Remove all opening HTML tags
-        .replace(/<[^>]*>/g, '')
-        // Decode HTML entities
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&nbsp;/g, ' ')
-        // Clean up multiple consecutive newlines
-        .replace(/\n\s*\n\s*\n/g, '\n\n')
-        // Trim whitespace from each line
-        .split('\n')
-        .map(line => line.trim())
-        .join('\n')
-        // Final trim
-        .trim()
-    );
-  }
-
-  /**
    * Extract venue information
    */
   private async extractVenueInfo(
-    page: any,
+    page: Page,
   ): Promise<{venueName: string; venueAddress: string}> {
     const venueName = trimTextAndDefaultToEmpty(
       await page.textContent('.location-section h3'),
@@ -428,13 +285,14 @@ export class EntrasteScraper extends BaseScraper {
    * Extract image URLs
    */
   private async extractImageUrls(
-    page: any,
+    page: Page,
   ): Promise<{flyerImgSrc: string | null; heroImgSrc: string | null}> {
     const flyerImgSrc = await page.getAttribute('img.event-flyer-image', 'src');
     const heroImgSrc = await page.getAttribute(
       'img.event-flyer-imagebox',
       'src',
     );
+
     return {flyerImgSrc, heroImgSrc};
   }
 
@@ -446,10 +304,10 @@ export class EntrasteScraper extends BaseScraper {
         req.userData = {label: 'DETAIL'};
         return req;
       },
-      // exclude: [
-      //   // Exclude anything that is not the specific URL
-      //   /^(?!https:\/\/entraste\.com\/evento\/cloud-7-jueves-coqeein-montana-venta$).*/,
-      // ],
+      exclude: [
+        // Exclude anything that is not the specific URL
+        /^(?!https:\/\/entraste\.com\/evento\/cloud-7-jueves-coqeein-montana-venta$).*/,
+      ],
     });
   };
 
@@ -463,7 +321,9 @@ export class EntrasteScraper extends BaseScraper {
       const {venueName, venueAddress} = await this.extractVenueInfo(page);
       const {startTime, endTime} = await this.extractDateTimeInfo(page);
       const {flyerImgSrc, heroImgSrc} = await this.extractImageUrls(page);
-
+      console.log('calling ticket wavecs');
+      const ticketWaves = await this.scrapeTicketWaves(page);
+      console.log(ticketWaves, 'xD');
       const eventData: Partial<ScrapedEventData> = {
         externalId: url,
         platform: Platform.Entraste,
@@ -484,6 +344,7 @@ export class EntrasteScraper extends BaseScraper {
             url: heroImgSrc || '',
           },
         ],
+        ticketWaves: ticketWaves,
       };
 
       this.validateAndAddEvent(eventData);
@@ -495,6 +356,7 @@ export class EntrasteScraper extends BaseScraper {
 
   private validateAndAddEvent(eventData: Partial<ScrapedEventData>) {
     const validationResult = ScrapedEventDataSchema.safeParse(eventData);
+
     if (!validationResult.success) {
       logger.error('Invalid event data:', validationResult.error);
       logger.debug('Event data that failed validation:', eventData);
@@ -502,5 +364,87 @@ export class EntrasteScraper extends BaseScraper {
     }
 
     this.events.push(validationResult.data);
+  }
+
+  private async scrapeTicketWaves(page: Page): Promise<ScrapedTicketWave[]> {
+    try {
+      const pageUrl = page.url();
+      console.log(pageUrl, 'pageUrl');
+
+      const ticketWavesContainer = page.locator('.tickets-form .ticket');
+      console.log(ticketWavesContainer, 'ticketWavesContainer');
+
+      // Execute a function in the browser that targets
+      // the book title elements and allows their manipulation
+      const ticketWaves = await page.$$eval('.ticket', els => {
+        const scrapedTicketWaves: ScrapedTicketWave[] = [];
+
+        els.forEach(ticket => {
+          const titleEl = ticket.querySelector('.ticket-description .title');
+          let ticketWaveName: string | null = null;
+
+          if (titleEl) {
+            // Clone the node to avoid modifying the DOM
+            const clone = titleEl.cloneNode(true) as HTMLElement;
+            // Remove all <small> elements (e.g., the "Agotadas" part)
+            clone.querySelectorAll('small').forEach(small => small.remove());
+            // Get the cleaned text content and trim whitespace
+            ticketWaveName = clone.textContent?.trim() || '';
+          }
+
+          const description =
+            ticket.querySelector('.ticket-description .text')?.textContent ??
+            '';
+
+          // Get the price from the ticket-price element
+          let faceValue = 0;
+          let currency: ScrapedTicketWave['currency'] = 'UYU'; // Default to UYU
+          const priceContainer = ticket.querySelector('.ticket-price .price');
+          if (priceContainer) {
+            // Extract the price as a number, removing any non-digit characters
+            const priceText =
+              priceContainer.textContent
+                ?.replace(/[^\d.,]/g, '')
+                .replace(',', '.') ?? '';
+            faceValue = parseFloat(priceText) || 0;
+
+            // Determine currency from <small> element inside priceContainer
+            const smallEl = priceContainer.querySelector('small');
+            if (smallEl) {
+              const currencyText = smallEl.textContent?.trim() || '';
+              if (currencyText === '$') {
+                currency = 'UYU';
+              } else if (currencyText.length > 0) {
+                currency = 'USD';
+              }
+            }
+          }
+
+          const isSoldOut = ticket.classList.contains('tickets-soldout');
+
+          const ticketDataJson = ticket.getAttribute('data-ticket');
+          if (ticketDataJson) {
+            const ticketDataParsed = JSON.parse(ticketDataJson);
+
+            scrapedTicketWaves.push({
+              name: ticketWaveName ?? '',
+              description,
+              faceValue,
+              currency,
+              externalId: ticketDataParsed.etid,
+              isSoldOut,
+              isAvailable: !isSoldOut,
+            });
+          }
+        });
+
+        return scrapedTicketWaves;
+      });
+
+      return ticketWaves;
+    } catch (error) {
+      logger.error('Error scraping ticket waves:', error);
+      throw error;
+    }
   }
 }

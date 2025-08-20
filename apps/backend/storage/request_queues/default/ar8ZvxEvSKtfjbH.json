@@ -1,0 +1,9 @@
+{
+	"id": "ar8ZvxEvSKtfjbH",
+	"json": "{\"id\":\"ar8ZvxEvSKtfjbH\",\"url\":\"https://entraste.com/evento/cloud-7-jueves-coqeein-montana-venta\",\"loadedUrl\":\"https://entraste.com/evento/cloud-7-jueves-coqeein-montana-venta\",\"uniqueKey\":\"https://entraste.com/evento/cloud-7-jueves-coqeein-montana-venta\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-08-20T01:20:47.064Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://entraste.com/evento/cloud-7-jueves-coqeein-montana-venta",
+	"url": "https://entraste.com/evento/cloud-7-jueves-coqeein-montana-venta"
+}
