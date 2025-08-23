@@ -1,5 +1,100 @@
 [
   {
+    "externalId": "https://entraste.com/evento/viernes-22-de-agosto-feliz-cumpleanos-vou",
+    "platform": "entraste",
+    "name": "VIERNES 22 DE AGOSTO – FELIZ CUMPLEAÑOS VOU",
+    "description": "Celebramos 1 año de VOU en el Arena Central de Plaza Mateo.\n\nLa Champions Liga en vivo.\nReggeaton viejo y cumbia vieja con Alex Miraballes, LUCIALUCIA y RKJOTA.\nGeneral +22\nVIP +26\n\nMesas y vips: 097 246 979\n.\n\n––\n*No se permite el ingreso con ropa deportiva.\n*Al ingresar estás aceptando aparecer en material fotográfico y/o audiovisual que puede ser utilizado en piezas comunicacionales de la marca.",
+    "eventStartDate": "2025-08-22T23:59:00.000-03:00",
+    "eventEndDate": "2025-08-23T06:00:00.000-03:00",
+    "venueName": "Plaza Mateo",
+    "venueAddress": "Av. Sarmiento, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/viernes-22-de-agosto-feliz-cumpleanos-vou",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/19af5150091ab9bba42f740d301f1d97"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/b6f69adcc4b20f0f8b3004eb2c96b0e4"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13298",
+        "name": "Lote 3 +22",
+        "description": "Válido hasta 1:30. Penúltimo lote ",
+        "faceValue": 700,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13299",
+        "name": "Lote 3 +22 sin horario",
+        "description": "Sin limite de hora para ingresar. Penúltimo lote",
+        "faceValue": 900,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "12709",
+        "name": "Preventa +22",
+        "description": "Válido hasta 1:30 am. ",
+        "faceValue": 400,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12712",
+        "name": "Preventa +22 - Sin horario",
+        "description": "Sin limite de hora para ingresar.",
+        "faceValue": 600,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12829",
+        "name": "Lote 1 +22",
+        "description": "Valido hasta 1:30am",
+        "faceValue": 450,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12830",
+        "name": "Lote 1 +22 sin horario",
+        "description": "Sin límite de hora para ingresar",
+        "faceValue": 650,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12946",
+        "name": "Lote 2 +22",
+        "description": "Válido hasta 1:30",
+        "faceValue": 600,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12947",
+        "name": "Lote 2 +22 sin horario",
+        "description": "Sin límite de hora para ingresar ",
+        "faceValue": 800,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
     "externalId": "https://entraste.com/evento/cloud-7-jueves-coqeein-montana-venta",
     "platform": "entraste",
     "name": "Cloud 7 - Jueves - Coqeein Montana - Venta",
@@ -55,6 +150,2148 @@
         "currency": "UYU",
         "isSoldOut": true,
         "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/sweet-viernes-venta52",
+    "platform": "entraste",
+    "name": "Sweet - Viernes - Venta",
+    "description": "",
+    "eventStartDate": "2025-08-22T23:59:00.000-03:00",
+    "eventEndDate": "2025-08-23T06:00:00.000-03:00",
+    "venueName": "Cloud 7",
+    "venueAddress": "Constituyente 1885, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/sweet-viernes-venta52",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/93d20c739fed0b500f015e49d39948ee"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/b45e8856e6a179a5ce6b5bde5cd71f9a"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13633",
+        "name": "Sweet Primera Tanda Mujer",
+        "description": "Valida toda la noche",
+        "faceValue": 350,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13634",
+        "name": "Sweet Primera Tanda Hombre",
+        "description": "Valida toda la noche",
+        "faceValue": 550,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13635",
+        "name": "Sweet Preventa Viernes",
+        "description": "Valida hasta 2.00",
+        "faceValue": 300,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/sabado-23",
+    "platform": "entraste",
+    "name": "INTRO NOSTALGIA",
+    "description": "",
+    "eventStartDate": "2025-08-23T21:00:00.000-03:00",
+    "eventEndDate": "2025-08-24T03:00:00.000-03:00",
+    "venueName": "SECRET LOCATION",
+    "venueAddress": "Secret Location",
+    "externalUrl": "https://entraste.com/evento/sabado-23",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/dda838de1efae54f38e25a237c3e1e7d"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/9e753ea2f46938760d3496c80f03549f"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13133",
+        "name": "SEGUNDA TANDA",
+        "description": "Evento exclusivo +18. Ingreso valido hasta 23:00hs",
+        "faceValue": 620,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13131",
+        "name": "PREVENTA",
+        "description": "Evento exclusivo +18. Ingreso válido hasta 23:00hs",
+        "faceValue": 420,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13132",
+        "name": "PRIMERA TANDA",
+        "description": "Evento exclusivo +18. Ingreso válido hasta 23:00hs",
+        "faceValue": 520,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/combo-dos-noches",
+    "platform": "entraste",
+    "name": "COMBO DOS NOCHES",
+    "description": "DOS NOCHES PARA RECORDAR\n\nRecibimos el fin de semana de la Nostalgia con algo GRANDEE, una carpa gigante nunca antes armada en Florida y una producción increíblee\nDOS NOCHES PARA RECORDAR\n\n23/08 \"LA INTRO\"\n\n- Llegan CUMBIA CLUB y MATIAS VALDEZ\na la noche de Floridaa. También nos van a acompañar durante la noche foodtrucks y stands de emprededores\n\n24/08 \"NOSTALGIA\"\n\n- Y la noche más importante del año se merecía algo de este nivel, llega HERNAN Y LA CHAMPIONS LIGA\n. Nos los venian pidiendo, nosotros los escuchamos y pudimos hacerlo posible. Se viene una noche en la que vamos a gozar de principio a finnnn Runnnn for your ticketss\n\nRunnn for your ticketsss",
+    "eventStartDate": "2025-08-23T21:00:00.000-03:00",
+    "eventEndDate": "2025-08-24T07:00:00.000-03:00",
+    "venueName": "Secret Location",
+    "venueAddress": "Secret Location",
+    "externalUrl": "https://entraste.com/evento/combo-dos-noches",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/c27f7f55ebf74cb41919e7984efec73a"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/fb353b16d9a9340b7ad6e5badfd2c3d0"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13142",
+        "name": "PREVENTA COMBO GENERAL",
+        "description": "Ingreso de sábado válido hasta 23hs y domingo válido hasta 2:30hs. Evento exclusivo +18",
+        "faceValue": 990,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13143",
+        "name": "PRIMERA TANDA COMBO GENERAL",
+        "description": "Ingreso de sábado válido hasta 23hs y domingo válido hasta 2:30hs. Evento exclusivo +18",
+        "faceValue": 1090,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13144",
+        "name": "COMBO 23 Y BACKSTAGE 24",
+        "description": "Ingreso de sábado habilitado hasta 23hs y domingo habilitado hasta 2:30hs. Sector exclusivo +23 domingo.",
+        "faceValue": 1770,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/aura-sabado-venta52",
+    "platform": "entraste",
+    "name": "AURA - Sabado - Venta",
+    "description": "",
+    "eventStartDate": "2025-08-23T23:59:00.000-03:00",
+    "eventEndDate": "2025-08-24T06:00:00.000-03:00",
+    "venueName": "Cloud 7",
+    "venueAddress": "Constituyente 1885, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/aura-sabado-venta52",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/519c500c6e3684bc591644716cc858c0"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/8eb1e565b509e5a07ca3a6133098b706"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13646",
+        "name": "Aura Primera Tanda Hombre",
+        "description": "Valida toda la noche",
+        "faceValue": 550,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13647",
+        "name": "Aura Primera Tanda Mujer",
+        "description": "Valida toda la noche",
+        "faceValue": 350,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13648",
+        "name": "Aura Preventa Sabado",
+        "description": "Valida hasta 1.00",
+        "faceValue": 300,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/cloud-7-24-de-agosto-nostalgia-old-school-invitaciones",
+    "platform": "entraste",
+    "name": "Cloud 7 - 24 de Agosto Reggaeton Old School - Invitaciones",
+    "description": "",
+    "eventStartDate": "2025-08-24T23:00:00.000-03:00",
+    "eventEndDate": "2025-08-25T06:00:00.000-03:00",
+    "venueName": "Cloud 7",
+    "venueAddress": "Constituyente 1885, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/cloud-7-24-de-agosto-nostalgia-old-school-invitaciones",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/5d680e9ec80560db538e641f5b5d7877"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/b99f22e6fc4b4d80bb12cef1969bf27a"
+      }
+    ],
+    "ticketWaves": []
+  },
+  {
+    "externalId": "https://entraste.com/evento/key-conference-2025-en-sitio",
+    "platform": "entraste",
+    "name": "Key Conference 2025 en Sitio",
+    "description": "",
+    "eventStartDate": "2025-08-24T21:00:00.000-03:00",
+    "eventEndDate": "2025-08-25T05:00:00.000-03:00",
+    "venueName": "Sitio",
+    "venueAddress": "Velodromo Municipal de Montevideo",
+    "externalUrl": "https://entraste.com/evento/key-conference-2025-en-sitio",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/292906cb5495a426ed4601d32e632029"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/e3bbad36b0519b269becc3cdf6d14075"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13119",
+        "name": "2da Tanda General",
+        "description": "Sector General",
+        "faceValue": 1700,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13120",
+        "name": "Campo Vip - Ingreso hasta 22:00hs",
+        "description": "Sector Campo Vip",
+        "faceValue": 2000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13121",
+        "name": "3er Tanda Campo Vip",
+        "description": "Sector Campo Vip",
+        "faceValue": 3000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13687",
+        "name": "3er Tanda General",
+        "description": "Sector General",
+        "faceValue": 2000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/cloud-7-24-de-agosto-nostalgia-old-school-venta",
+    "platform": "entraste",
+    "name": "Cloud 7 - 24 de Agosto Reggaeton Old School - Venta",
+    "description": "",
+    "eventStartDate": "2025-08-24T23:00:00.000-03:00",
+    "eventEndDate": "2025-08-25T06:00:00.000-03:00",
+    "venueName": "Cloud 7",
+    "venueAddress": "Constituyente 1885, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/cloud-7-24-de-agosto-nostalgia-old-school-venta",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/350b50ddb77c5e03cc390dc22c09eda7"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/9b3fdbee775a7c50cb5bc95febd71796"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13156",
+        "name": "Primera Tanda Hombre - 24 de Agosto Nostalgia Old School",
+        "description": "Valida hasta las 2 am",
+        "faceValue": 400,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13157",
+        "name": "Preventa - 24 de Agosto Nostalgia Old School",
+        "description": "Valida hasta 1 am",
+        "faceValue": 300,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13158",
+        "name": "Primera Tanda Mujer - 24 de Agosto Nostalgia Old School",
+        "description": "Valida hasta las 2 am",
+        "faceValue": 350,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13162",
+        "name": "Members Black Cloud 7",
+        "description": "All Night",
+        "faceValue": 50,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13163",
+        "name": "Members Red Cloud 7",
+        "description": "Valida hasta 2 am",
+        "faceValue": 100,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13517",
+        "name": "Segunda Tanda Hombre - 24 de Agosto Old School",
+        "description": "Valida hasta 2 am",
+        "faceValue": 500,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13518",
+        "name": "Segunda Tanda Mujer - 24 de Agosto Old School",
+        "description": "Valida hasta 2 am",
+        "faceValue": 350,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13652",
+        "name": "Tercera Tanda Hombre - 24 de Agosto Old School",
+        "description": "Valida hasta 2 am",
+        "faceValue": 600,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13653",
+        "name": "Tercera Tanda Mujer - 24 de Agosto Old School",
+        "description": "valida hasta 2 am",
+        "faceValue": 400,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/viejar2-x-lgante-24-de-agosto",
+    "platform": "entraste",
+    "name": "viejar2 x lgante 24 de agosto",
+    "description": "",
+    "eventStartDate": "2025-08-24T23:59:00.000-03:00",
+    "eventEndDate": "2025-08-25T06:59:00.000-03:00",
+    "venueName": "viejar2",
+    "venueAddress": "av artigas entre bonini e idelfonso de león",
+    "externalUrl": "https://entraste.com/evento/viejar2-x-lgante-24-de-agosto",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/3570a87158225e16e89e03e744562daf"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/a2a2982d29fdedbe482f74205abe4e96"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13599",
+        "name": "ULTIMA TANDA VIP",
+        "description": "última tanda vip",
+        "faceValue": 2350,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13658",
+        "name": "ÚLTIMA TANDA GRAL",
+        "description": "acceso +18",
+        "faceValue": 820,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13681",
+        "name": "ÚLTIMA TANDA +16",
+        "description": "acceso +16",
+        "faceValue": 900,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "12755",
+        "name": "preventa vip limitada",
+        "description": "acceso vip elevado / show lgante ",
+        "faceValue": 700,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12756",
+        "name": "preventa general limitada",
+        "description": "acceso general / show lgante ",
+        "faceValue": 380,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12770",
+        "name": "preventa menores de edad",
+        "description": "acceso delimitado en carpa para +16",
+        "faceValue": 400,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12775",
+        "name": "tanda 1 vip",
+        "description": "acceso vip / backstage ",
+        "faceValue": 850,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12776",
+        "name": "tanda 1 general",
+        "description": "acceso general ",
+        "faceValue": 420,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12777",
+        "name": "tanda 1 menores de edad",
+        "description": "acceso para menores de edad ",
+        "faceValue": 420,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12793",
+        "name": "tanda 2 general",
+        "description": "acceso general ",
+        "faceValue": 420,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12794",
+        "name": "tanda 2 vip",
+        "description": "acceso vip / backstage ",
+        "faceValue": 900,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12882",
+        "name": "tanda 2 menores de edad",
+        "description": "acceso sector menores de edad ",
+        "faceValue": 460,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13112",
+        "name": "tanda 3 vip",
+        "description": "acceso vip ",
+        "faceValue": 1000,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13113",
+        "name": "tanda 3 sector menores",
+        "description": "acceso a sector menores de edad ",
+        "faceValue": 520,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13114",
+        "name": "tanda 3 sector gral",
+        "description": "acceso gral tanda 3",
+        "faceValue": 460,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13256",
+        "name": "TANDA 4 menores de edad",
+        "description": "acceso + 16 ",
+        "faceValue": 550,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13257",
+        "name": "TANDA 4 GRAL",
+        "description": "acceso gral ",
+        "faceValue": 490,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13326",
+        "name": "TANDA 4 VIP",
+        "description": "acceso vip",
+        "faceValue": 1150,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13327",
+        "name": "TANDA 5 GRAL",
+        "description": "acceso gral +18",
+        "faceValue": 540,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13384",
+        "name": "TANDA 6 VIP",
+        "description": "acceso vip",
+        "faceValue": 1270,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13385",
+        "name": "TANDA 6 - MENORES",
+        "description": "acceso +16 ",
+        "faceValue": 600,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13454",
+        "name": "TANDA 7 VIP",
+        "description": "acceso vip ",
+        "faceValue": 1450,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13455",
+        "name": "TANDA 7 menores",
+        "description": "acceso +16",
+        "faceValue": 720,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13456",
+        "name": "TANDA 6 GRAL",
+        "description": "acceso gral +18",
+        "faceValue": 600,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13537",
+        "name": "TANDA 8 VIP",
+        "description": "acceso vip",
+        "faceValue": 1600,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13538",
+        "name": "TANDA 8 +16",
+        "description": "acceso menores de edad ",
+        "faceValue": 750,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13539",
+        "name": "TANDA 8 GRAL",
+        "description": "acceso +18",
+        "faceValue": 700,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13558",
+        "name": "TANDA 9 VIP",
+        "description": "acceso vip / backstage",
+        "faceValue": 1890,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13589",
+        "name": "TANDA 9 GRAL +18",
+        "description": "acceso +18",
+        "faceValue": 710,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13600",
+        "name": "TANDA 10 GRAL",
+        "description": "acceso gral +18 ",
+        "faceValue": 750,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13657",
+        "name": "ÚLTIMA TANDA +16",
+        "description": "acceso +16",
+        "faceValue": 900,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/pariseo-29-de-agosto-especial-brasil",
+    "platform": "entraste",
+    "name": "PARISEO BR 29 DE AGOSTO - Especial Brasil",
+    "description": "Promo 3x2 en entradas\n\nComprá dos y llevate una tercera sin cargo. ¡Aprovechá esta promoción hasta agotar stock!\n\nBackstage Pariseo\n\nReservá tu mesa VIP y viví la experiencia desde el backstage. Reservas de mesas o promo cumpleaños\nal +598 97 785 470\n\n.\n\nUbicación Pariseo: Vou Club, Parque Rodo\nhttps://maps.google.com/?q=-34.915569,-56.168629\n\nP :)",
+    "eventStartDate": "2025-08-29T12:00:00.000-03:00",
+    "eventEndDate": "2025-08-30T06:00:00.000-03:00",
+    "venueName": "Plaza Mateo",
+    "venueAddress": "Av. Sarmiento, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/pariseo-29-de-agosto-especial-brasil",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/4c0aec0952f937791c84985cbf24448d"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/05143ee646e152ed1f1905f7eb445462"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13360",
+        "name": "Pariseo 1",
+        "description": "Ingreso válido hasta la 1 am",
+        "faceValue": 350,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13361",
+        "name": "Pariseo 2",
+        "description": "Ingreso válido hasta las 2 am",
+        "faceValue": 450,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13362",
+        "name": "Pariseo 3",
+        "description": "Ingreso válido hasta las 3 am",
+        "faceValue": 600,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13363",
+        "name": "3X2 Pariseo 1",
+        "description": "3 accesos al precio de 2. Ingreso valido hasta 1 am. Limitadas",
+        "faceValue": 235,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13364",
+        "name": "Pariseo 1 - último dia",
+        "description": "Ingreso válido hasta la 1 am",
+        "faceValue": 400,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/nostalgia-24",
+    "platform": "entraste",
+    "name": "NOSTALGIA 24",
+    "description": "DOS NOCHES PARA RECORDAR\n\nRecibimos el fin de semana de la Nostalgia con algo GRANDEE, una carpa gigante nunca antes armada en Florida y una puesta en escena increíble.\nDOS NOCHES PARA RECORDAR\n\n23/08 \"LA INTRO\"\n\n- Llegan CUMBIA CLUB\ny MATIAS VALDEZ\na la noche de Floridaa. También nos van a acompañar durante la noche foodtrucks y stands de emprededores locales\n\n24/08 \"NOSTALGIA\"\n\n- Y la noche más importante del año se merecía algo de este nivel, llega HERNAN Y LA CHAMPIONS LIGA\n. Nos los venian pidiendo, nosotros los escuchamos y pudimos hacerlo posible. Se viene una noche en la que vamos a gozar de principio a finnnn\n\nRunnnn for your ticketss",
+    "eventStartDate": "2025-08-24T23:59:00.000-03:00",
+    "eventEndDate": "2025-08-25T07:00:00.000-03:00",
+    "venueName": "Secret Location",
+    "venueAddress": "Secret Location",
+    "externalUrl": "https://entraste.com/evento/nostalgia-24",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/84d2cfab6f85c5b1771e9399b4e24c77"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/719f58a97dc63f2f8719983d0e3910e8"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13140",
+        "name": "TERCERA TANDA GENERAL",
+        "description": "Evento exclusivo +18. Ingreso válido hasta 02:30hs",
+        "faceValue": 870,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13150",
+        "name": "COCHE 1 - Traslado Montevideo - Florida (Ida y vuelta)",
+        "description": "Este ticket no incluye entrada. Salida: desde Plaza Varela 23:00hs. Vuelta: 7am hacia Plaza Varela. Por más información comunicarse al 099445601. ",
+        "faceValue": 650,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13151",
+        "name": "COCHE 2 - Traslado Montevideo - Florida (Ida y vuelta)",
+        "description": "Este ticket no incluye entrada. Salida: desde Plaza Varela 23:00hs. Vuelta: 7am hacia Plaza Varela. Por más información comunicarse al 099445601. ",
+        "faceValue": 650,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13300",
+        "name": "Ingreso General + Traslado San José - Florida (Ida y Vuelta)",
+        "description": "Este ticket incluye el traslado ida y vuelta desde San José a Florida y el ticket para ingresar al evento. Por mas información comunicarse al: 098772855",
+        "faceValue": 1100,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13301",
+        "name": "Ingreso General + Traslado Santa Lucía - Florida (Ida y Vuelta)",
+        "description": "Este ticket incluye el traslado ida y vuelta desde Santa Lucía a Florida y el ticket general para ingresar al evento. Por mas información comunicarse al: 092396882",
+        "faceValue": 1100,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13302",
+        "name": "Ingreso General + Traslado Libertad - Florida (Ida y Vuelta)",
+        "description": "Este ticket incluye el traslado ida y vuelta desde Libertad a Florida y el ticket general para ingresar al evento. Por mas información comunicarse al: 098216001",
+        "faceValue": 1100,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13303",
+        "name": "Ingreso General + Traslado Canelones - Florida (Ida y Vuelta)",
+        "description": "Este ticket incluye el traslado ida y vuelta desde Canelones a Florida y el ticket general para ingresar al evento. Por mas información comunicarse al: 092091399",
+        "faceValue": 1200,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13656",
+        "name": "ÚLTIMAS BACKSTAGE",
+        "description": "Últimos 50 tickets. Sector exclusivo +23. Ingreso válido hasta 02:30hs",
+        "faceValue": 1750,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13683",
+        "name": "ESTACIONAMIENTO CAMPO GRAL",
+        "description": "Tickets limitados",
+        "faceValue": 150,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13134",
+        "name": "PREVENTA GENERAL",
+        "description": "Evento exclusivo +18. Ingreso válido hasta 02:30hs",
+        "faceValue": 470,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13135",
+        "name": "PREVENTA BACKSTAGE +23",
+        "description": "Sector exclusivo +23. Ingreso válido hasta 02:30hs",
+        "faceValue": 900,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13136",
+        "name": "PRIMERA TANDA GENERAL",
+        "description": "Evento exclusivo +18. Ingreso válido hasta 02:30hs",
+        "faceValue": 670,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13137",
+        "name": "PRIMERA TANDA BACKSTAGE",
+        "description": "Sector exclusivo +23. Ingreso válido hasta 02:30hs",
+        "faceValue": 1150,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13138",
+        "name": "SEGUNDA TANDA GENERAL",
+        "description": "Evento exclusivo +18. Ingreso válido hasta 02:30hs",
+        "faceValue": 770,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13139",
+        "name": "SEGUNDA TANDA BACKSTAGE",
+        "description": "Sector exclusivo +23. Ingreso válido hasta 02:30hs",
+        "faceValue": 1350,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13141",
+        "name": "TERCERA TANDA BACKSTAGE",
+        "description": "Sector exclusivo +23. Ingreso válido hasta 02:30hs",
+        "faceValue": 1550,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/sabado-30-de-agosto-reggaeton-y-cumbia-vieja-copia",
+    "platform": "entraste",
+    "name": "SÁBADO 30 DE AGOSTO – REGGAETON Y CUMBIA VIEJA",
+    "description": "REGGAETON Y CUMBIA VIEJA EN EL CLUB\nDJ SET LUCIALUCIA & RKJOTA\n\nMesas 098814543.\n\n––\n*No se permite el ingreso con ropa deportiva.\n*Al ingresar a VOU estás aceptando aparecer en material fotográfico y/o audiovisual que puede ser utilizado en piezas comunicacionales de la marca.",
+    "eventStartDate": "2025-08-30T23:00:00.000-03:00",
+    "eventEndDate": "2025-08-31T06:00:00.000-03:00",
+    "venueName": "Plaza Mateo",
+    "venueAddress": "Av. Sarmiento, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/sabado-30-de-agosto-reggaeton-y-cumbia-vieja-copia",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/06696c2ab157bde03b2a622435482672"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/ffcaa5bf7b45574fab6fa786f6f1beb8"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13559",
+        "name": "Anticipadas - Hasta 01.30 am.",
+        "description": "Válido hasta 01.30 am. Luego de este horario se cobra recargo.",
+        "faceValue": 300,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13560",
+        "name": "Anticipadas - Sin horario",
+        "description": "Válido para ingresar a cualquier hora.",
+        "faceValue": 400,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/area-t-pres-bart-skils-oscar-l-hangar-33-t1",
+    "platform": "entraste",
+    "name": "Area T pres. Bart Skils, Oscar L @ Hangar 33",
+    "description": "Este Viernes 5 de Septiembre volvemos a Hangar 33 para gozarnos junto a estos grandes artistas.\n\nLINE UP:\nBart Skils\nOscar L\nMoment (Martin Costas, Gabriel Gil, Enzo Monza)\nRecuero\n\nNos vemos en la pista :)",
+    "eventStartDate": "2025-09-05T23:00:00.000-03:00",
+    "eventEndDate": "2025-09-06T07:00:00.000-03:00",
+    "venueName": "Hangar 33",
+    "venueAddress": "Av. Wilson F. Aldunate 7201, Ciudad de la Costa",
+    "externalUrl": "https://entraste.com/evento/area-t-pres-bart-skils-oscar-l-hangar-33-t1",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/de02ae8a8d1a7e13ecfff5f8c706c4d5"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/c35af6feca3eefd58db894e5e4bc0551"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13001",
+        "name": "2da Tanda - Generales - Limite de Horario 00:00",
+        "description": "Acceso antes de las 00:00 - Cantidad limitada",
+        "faceValue": 900,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13002",
+        "name": "2da Tanda - Generales",
+        "description": "Sector general",
+        "faceValue": 1150,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13004",
+        "name": "2da Tanda - Campo Vip",
+        "description": "Sector vip",
+        "faceValue": 1550,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13005",
+        "name": "Parking",
+        "description": "Estacionamiento privado cerrado",
+        "faceValue": 350,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "12997",
+        "name": "1er Tanda - Generales - Limite de Horario 00:00",
+        "description": "Acceso antes de las 00:00 - Cantidad limitada",
+        "faceValue": 700,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12998",
+        "name": "1er Tanda - Generales",
+        "description": "Sector general",
+        "faceValue": 950,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12999",
+        "name": "1er Tanda - Campo Vip - Limite de Horario 00:00",
+        "description": "Acceso antes de las 00:00 - Cantidad limitada",
+        "faceValue": 1100,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13000",
+        "name": "1er Tanda - Campo Vip",
+        "description": "Sector vip",
+        "faceValue": 1350,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13003",
+        "name": "2da Tanda - Campo Vip - Limite de Horario 00:00",
+        "description": "Acceso antes de las 00:00 - Cantidad limitada",
+        "faceValue": 1300,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/agustin-clark-all-night-long-bclub-viernes-5-de-septiembre",
+    "platform": "entraste",
+    "name": "AGUSTÍN CLARK ALL NIGHT LONG - BCLUB",
+    "description": "Agustín Clark\nredobla la apuesta del año pasado y llega a bclub\ncon su segundo ALL NIGHT LONG\n\nEl DJ y productor detrás del prestigioso sello Key Records\npromete hacernos bailar de principio a fin en una noche en la que él toma el control absoluto",
+    "eventStartDate": "2025-09-05T23:59:00.000-03:00",
+    "eventEndDate": "2025-09-06T06:00:00.000-03:00",
+    "venueName": "Plaza Mateo",
+    "venueAddress": "Av. Sarmiento, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/agustin-clark-all-night-long-bclub-viernes-5-de-septiembre",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/b23b16267173de6daa415926c44b06e2"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/09d43aabebb47f00c03e50fccdf9e3cb"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13228",
+        "name": "Lote 3",
+        "description": " ",
+        "faceValue": 700,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13401",
+        "name": "Backstage",
+        "description": "Limitados.",
+        "faceValue": 1000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13229",
+        "name": "Lote 1",
+        "description": " ",
+        "faceValue": 500,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13230",
+        "name": "Lote 2",
+        "description": " ",
+        "faceValue": 600,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/mood-new-season",
+    "platform": "entraste",
+    "name": "MOOD - New Season",
+    "description": "VUELVE MOOD\nLa matinee mas linda del pais\n\nY ahora renovada, en una nueva temporada.\n\nLes presentamos nuestra nueva casa,\nEn la rambla esquina Sarmiento (Parque Rodo)",
+    "eventStartDate": "2025-09-06T19:00:00.000-03:00",
+    "eventEndDate": "2025-09-06T23:00:00.000-03:00",
+    "venueName": "VOU CLUB",
+    "venueAddress": "Rambla esq Sarmiento",
+    "externalUrl": "https://entraste.com/evento/mood-new-season",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/28391415cf3286e8e0ea9351da4292f9"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/ca0f69416b5521df7549ad673e2dfac3"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13682",
+        "name": "Lote 2",
+        "description": "Ticket de acceso",
+        "faceValue": 450,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13678",
+        "name": "Lote 1",
+        "description": "Ticket de acceso",
+        "faceValue": 400,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/drip-clvb-at-sitio-velodromo",
+    "platform": "entraste",
+    "name": "DRIP CLVB at SITIO (Velodromo)",
+    "description": "EL ENCUENTRO DEFINITIVO DE LA MÚSICA URBANA EN MONTEVIDEO.\nUNA FIESTA QUE REÚNE LO MEJOR DEL REGGAETÓN, TRAP Y CULTURA STREETWEAR.\n\nEN VIVO:\nPOLIMÁ WESTCOAST (CL)\nALAN GÓMEZ (AR)\nMALAPRAXXIS (UY)\n\n––\n\nDJ SETS:\nRKJOTA\nLUCIALUCIA\nRNZO\n\nDRIP CLVB EN SITIO - VELÓDROMO DE MONTEVIDEO.",
+    "eventStartDate": "2025-09-06T22:00:00.000-03:00",
+    "eventEndDate": "2025-09-07T05:00:00.000-03:00",
+    "venueName": "SITIO",
+    "venueAddress": "Av. Ramón V. Benzano 3471, 11600 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/drip-clvb-at-sitio-velodromo",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/31600481e005d8763e951a7d4b7dec22"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/61a276621c486c747e0d0cf39ee15290"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "11994",
+        "name": "SECTOR MAINFLOOR - Ingreso hasta 22:45hs",
+        "description": "Sector General",
+        "faceValue": 700,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "11999",
+        "name": "4ta Tanda SECTOR MAINFLOOR",
+        "description": "Sector General - ingreso hasta 00:00hs ",
+        "faceValue": 1000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "12006",
+        "name": "4ta Tanda - SECTOR COMFORT ZONE",
+        "description": "Sector VIP - ingreso hasta 00:30hs ",
+        "faceValue": 1800,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13579",
+        "name": "SECTOR MAINFLOOR - Ingreso SIN HORARIO",
+        "description": "SECTOR MAINFLOOR",
+        "faceValue": 1350,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13580",
+        "name": "COMFORT ZONE SIN HORARIO",
+        "description": "COMFORT ZONE",
+        "faceValue": 2150,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13650",
+        "name": "3X2 SECTOR COMFORT ZONE",
+        "description": "Promo 3 entradas al precio de 2. Sector VIP - ingreso hasta 00:30hs ",
+        "faceValue": 1200,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13651",
+        "name": "3X2 SECTOR MAINFLOOR",
+        "description": "Promo 3 entradas al precio de 2. Sector General - ingreso hasta 00:00hs ",
+        "faceValue": 670,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13654",
+        "name": "3X2 SECTOR COMFORT ZONE - ingreso SIN HORARIO",
+        "description": "Promo 3 entradas al precio de 2. Sector Vip - ingreso sin limite de horario ",
+        "faceValue": 1450,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13655",
+        "name": "3X2 - SECTOR MAINFLOOR - Ingreso SIN HORARIO",
+        "description": "Promo 3 entradas al precio de 2. Sector General - ingreso sin limite de horario ",
+        "faceValue": 900,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "11996",
+        "name": "1er Tanda SECTOR MAINFLOOR",
+        "description": "Sector General - ingreso hasta 00:00hs ",
+        "faceValue": 700,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "11997",
+        "name": "2da Tanda  SECTOR MAINFLOOR",
+        "description": "Sector General - ingreso hasta 00:30hs ",
+        "faceValue": 800,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "11998",
+        "name": "3er Tanda  SECTOR MAINFLOOR",
+        "description": "Sector General - ingreso hasta 00:00hs ",
+        "faceValue": 900,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12003",
+        "name": "1er Tanda - SECTOR COMFORT ZONE",
+        "description": "Sector Campo VIP - ingreso hasta 00:30hs ",
+        "faceValue": 1250,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12004",
+        "name": "2da Tanda - SECTOR COMFORT ZONE",
+        "description": "Sector Campo VIP - ingreso hasta 1hs ",
+        "faceValue": 1400,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12005",
+        "name": "3er Tanda - SECTOR COMFORT ZONE",
+        "description": "Sector Campo VIP - ingreso hasta 00:30hs ",
+        "faceValue": 1600,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12740",
+        "name": "SECTOR MAINFLOOR - Ingreso hasta 22:45hs  - PREVENTA EXCLUSIVA SANTANDER",
+        "description": "Sector General",
+        "faceValue": 500,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12741",
+        "name": "1er Tanda General  SECTOR MAINFLOOR - PREVENTA EXCLUSIVA SANTANDER",
+        "description": "Sector General - ingreso hasta 00:00hs",
+        "faceValue": 700,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "12742",
+        "name": "1er Tanda - SECTOR COMFORT ZONE - PREVENTA EXCLUSIVA SANTANDER",
+        "description": "Sector Campo VIP - ingreso hasta 00:30hs",
+        "faceValue": 1250,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/limonada-disco-show",
+    "platform": "entraste",
+    "name": "Limonada Disco Show",
+    "description": "",
+    "eventStartDate": "2025-09-12T23:30:00.000-03:00",
+    "eventEndDate": "2025-09-13T06:00:00.000-03:00",
+    "venueName": "Lotus Club",
+    "venueAddress": "Lotus Club, Contador Luis E. Lecueder, 11300 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/limonada-disco-show",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/5feedd29064c1c3284eb34f7003e527e"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/95b8602021277c1be3ec05416adf89e5"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13551",
+        "name": "Preventa",
+        "description": "Preventa",
+        "faceValue": 420,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/sanata-fest-primavera-sitio",
+    "platform": "entraste",
+    "name": "SANATA FEST PRIMAVERA - SITIO",
+    "description": "EL SECTOR VIP INCLUYE:\n\n? Acceso a sector preferencial\n? Barra y baños de uso exclusivo\n? 5 tragos a elección del menú de la barra\n? Cupos limitados",
+    "eventStartDate": "2025-09-12T21:00:00.000-03:00",
+    "eventEndDate": "2025-09-13T02:00:00.000-03:00",
+    "venueName": "Sitio",
+    "venueAddress": "Velodromo Municipal de Montevideo",
+    "externalUrl": "https://entraste.com/evento/sanata-fest-primavera-sitio",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/a9ed1739cb8e1e7d9d2a260f41e5d8f4"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/e40fe178f1c2d3efad6fc634b57cb034"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13684",
+        "name": "Segunda Tanda",
+        "description": "Sector General",
+        "faceValue": 560,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13686",
+        "name": "Vip",
+        "description": "Sector preferencial + 5 tragos a elección",
+        "faceValue": 2000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/mega-pariseo-la-ceremonia",
+    "platform": "entraste",
+    "name": "MEGA PARISEO - LA CEREMONIA",
+    "description": "MEGA PARISEO – LA CEREMONIA\n\nya perdimos la cuenta de cuanto tiempo llevamos saliendo mor… creo que es hora de dar el siguiente paso ???????????\n\nVolvemos a ARENA CENTRAL de Plaza Mateo VIERNES 19/9, pero no para una cita cualquiera…\n\nTickets ya disponibles, mesas listas para reservar y una MEGA Ceremonia esperando a que nos encontremos para parisear como siempre <3\n\nMesas +598 97 785 470\n\n-P",
+    "eventStartDate": "2025-09-19T00:00:00.000-03:00",
+    "eventEndDate": "2025-09-20T06:00:00.000-03:00",
+    "venueName": "Plaza Mateo",
+    "venueAddress": "Av. Sarmiento, 11200 Montevideo, Departamento de Montevideo",
+    "externalUrl": "https://entraste.com/evento/mega-pariseo-la-ceremonia",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/4c472bd7b0cd648bf9604861249c4a0e"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/0d1c0e0a6174740a74f9c24edb9729bb"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13424",
+        "name": "Pariseo 1 - Tanda 2",
+        "description": "Ingreso válido hasta la 1 am",
+        "faceValue": 450,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13425",
+        "name": "Pariseo 2 - Tanda 2",
+        "description": "Ingreso válido hasta las 2 am",
+        "faceValue": 550,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13426",
+        "name": "Pariseo 3 - Tanda 2",
+        "description": "Ingreso válido hasta las 3  am",
+        "faceValue": 750,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13437",
+        "name": "PARISEO 1AM X 3 TICKETS",
+        "description": "Ingresos valido hasta 1 am. Ultimas 30 disponibles.",
+        "faceValue": 350,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/jrmnt2",
+    "platform": "entraste",
+    "name": "JRMNT2 - club BB",
+    "description": "",
+    "eventStartDate": "2025-10-04T23:00:00.000-03:00",
+    "eventEndDate": "2025-10-05T06:30:00.000-03:00",
+    "venueName": "Carrasco Polo Club",
+    "venueAddress": "Servando Gomez, Carrasco, Montevideo",
+    "externalUrl": "https://entraste.com/evento/jrmnt2",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/eec9241e02ff3c118e2e05a3791d66d6"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/67415374e43960870e961e46d1ea30d1"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13679",
+        "name": "EARLY BIRDS - GENERAL - OPEN BAR",
+        "description": "SECTOR GENERAL H+21, M+20",
+        "faceValue": 1800,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13680",
+        "name": "EARLY BIRDS SECTOR+25 - OPEN BAR",
+        "description": "SECTOR +25, ESTRICTO CONTROL EN PUERTA",
+        "faceValue": 1800,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/key-mood-w-camelphat-more",
+    "platform": "entraste",
+    "name": "Key Mood w/ Camelphat & more",
+    "description": "",
+    "eventStartDate": "2025-09-19T22:00:00.000-03:00",
+    "eventEndDate": "2025-09-20T05:00:00.000-03:00",
+    "venueName": "Sitio",
+    "venueAddress": "Velodromo Municipal de Montevideo",
+    "externalUrl": "https://entraste.com/evento/key-mood-w-camelphat-more",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/54a7f4de98275974bcd1eef37678b8df"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/0c634d1eb2cb32b8c7782c46d002b905"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "12837",
+        "name": "3er Tanda Campo Vip",
+        "description": "Sector Campo Vip",
+        "faceValue": 3300,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "12945",
+        "name": "2da Tanda General",
+        "description": "Sector General",
+        "faceValue": 1700,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13091",
+        "name": "General - Ingreso hasta 23:00hs",
+        "description": "Sector General",
+        "faceValue": 1300,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/hub-aniversario-f2f-hangar-33",
+    "platform": "entraste",
+    "name": "HUB Aniversario | F2F - Hangar 33, T2",
+    "description": "HUB\nllega a HANGAR 33\nen su décima edición para festejar su aniversario a lo grande.\n\nReserva tu mesa VIP y festeja con nosotros como se debe:\n\nhttps://wa.link/1nr6d8\n\n+598 91 486 061",
+    "eventStartDate": "2025-10-04T23:30:00.000-03:00",
+    "eventEndDate": "2025-10-05T07:00:00.000-03:00",
+    "venueName": "HANGAR 33",
+    "venueAddress": "Av. de las Industrias Wilson Ferreira Aldunate 7201, 15000 Ciudad de la Costa, Departamento de Canelones",
+    "externalUrl": "https://entraste.com/evento/hub-aniversario-f2f-hangar-33",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/0e0628c88081299f440265fa84a3c2bc"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/0c344dd9692c66c885be672195006c86"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13487",
+        "name": "Early Bird - VIP Standing sin Limite de Horario",
+        "description": "Acceso VIP Standing",
+        "faceValue": 850,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13488",
+        "name": "Early Bird - VIP Standing con Limite de Horario 01:00 AM",
+        "description": "Acceso VIP Standing con limite de ingreso 01:00 AM",
+        "faceValue": 700,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13489",
+        "name": "Primera Tanda - General sin Limite de Horario",
+        "description": "Entrada general de primera tanda",
+        "faceValue": 650,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13490",
+        "name": "Primera Tanda - General con Limite de Horario",
+        "description": "Entrada general de primera tanda con limite de ingreso 01:00 AM",
+        "faceValue": 500,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13491",
+        "name": "Parking",
+        "description": "Estacionamiento privado cerrado.",
+        "faceValue": 350,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13485",
+        "name": "Early Bird - Sin Limite de Horario",
+        "description": "Entrada General",
+        "faceValue": 550,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13486",
+        "name": "Early Bird - Limite de Horario 01:00 AM",
+        "description": "Entrada General con limite de ingreso a la 01:00 AM",
+        "faceValue": 400,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/pre-summer-weekend-punta-del-este-0",
+    "platform": "entraste",
+    "name": "PRE SUMMER WEEKEND - PUNTA DEL ESTE",
+    "description": "VUELVE PRE SUMMER WEEKEND\n\nVUELVE EL FIN DE SEMANA PREVIO AL VERANO MAS GRANDE DE TODOS.\nPrepárate para un finde inolvidable.\n\n2 NOCHES\n2 FIESTAS\n\n---- PUNTA DEL ESTE ----",
+    "eventStartDate": "2025-10-10T23:59:00.000-03:00",
+    "eventEndDate": "2025-10-12T06:00:00.000-03:00",
+    "venueName": "PRE-SUMMER WEEKEND",
+    "venueAddress": "Punta del este",
+    "externalUrl": "https://entraste.com/evento/pre-summer-weekend-punta-del-este-0",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/96808908326fbce969e2493840c6b2f4"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/59eb2cefeeab298c9f93fb13491cd624"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13608",
+        "name": "#2 COMBO - GENERAL (CON HORARIO)",
+        "description": "Tickets limitados +18 HASTA 2:00",
+        "faceValue": 1530,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13609",
+        "name": "#2 COMBO - GENERAL (SIN HORARIO)",
+        "description": "Tickets limitados +18",
+        "faceValue": 1800,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13610",
+        "name": "#2 COMBO - CAMPO VIP (CON HORARIO)",
+        "description": "Tickets limitados +21 (HASTA 2:00)",
+        "faceValue": 1870,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13611",
+        "name": "#2 COMBO - CAMPO VIP (SIN HORARIO)",
+        "description": "Tickets limitados +21",
+        "faceValue": 2200,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13492",
+        "name": "#1 COMBO - CAMPO GENERAL (CON HORARIO)",
+        "description": "Ticket combo VIERNES Y SABADO +18 / INGRESO HASTA 2:00",
+        "faceValue": 1360,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13493",
+        "name": "#1 COMBO - CAMPO GENERAL (SIN HORARIO)",
+        "description": "Ticket combo VIERNES Y SABADO +18",
+        "faceValue": 1600,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13494",
+        "name": "#1 COMBO - CAMPO VIP (CON HORARIO)",
+        "description": "Ticket combo VIERNES Y SABADO +21 / INGRESO HASTA 2:00",
+        "faceValue": 1700,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13495",
+        "name": "#1 COMBO - CAMPO VIP (SIN HORARIO)",
+        "description": "Ticket combo VIERNES Y SABADO +21",
+        "faceValue": 2000,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/pariseo-punta-del-este-psw",
+    "platform": "entraste",
+    "name": "PARISEO PUNTA DEL ESTE - PSW",
+    "description": "",
+    "eventStartDate": "2025-10-10T23:59:00.000-03:00",
+    "eventEndDate": "2025-10-11T06:00:00.000-03:00",
+    "venueName": "PRE - SUMMER WEEKEND",
+    "venueAddress": "Punta Del Este",
+    "externalUrl": "https://entraste.com/evento/pariseo-punta-del-este-psw",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/2078bcbc0088fde5f87e5c7a0ad0aae0"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/cac9a3e5efe082b39b4c1a9b79e1439b"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13567",
+        "name": "PARISEO TANDA 2 - PSW",
+        "description": "Sector  General - ingreso hasta 2:00 AM",
+        "faceValue": 850,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13575",
+        "name": "PARISEO INGRESO VIP - TANDA 2",
+        "description": "Sector VIP - ingreso hasta 3:00 AM",
+        "faceValue": 1050,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13578",
+        "name": "PSW BACKSTAGE +23 PARISEO - TANDA 2",
+        "description": "Sector Backstage",
+        "faceValue": 2100,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13569",
+        "name": "PARISEO ÚLTIMA TANDA - PSW",
+        "description": "Sector  General - ingreso hasta 2:00 AM",
+        "faceValue": 1300,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13577",
+        "name": "PARISEO INGRESO VIP - ÚLTIMA TANDA",
+        "description": "Sector Campo VIP - ingreso hasta 3:00 AM",
+        "faceValue": 1450,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/blavicio-at-pre-summer-weekend",
+    "platform": "entraste",
+    "name": "BLAVICIO AT PRE-SUMMER WEEKEND",
+    "description": "",
+    "eventStartDate": "2025-10-11T23:59:00.000-03:00",
+    "eventEndDate": "2025-10-12T06:00:00.000-03:00",
+    "venueName": "PRE-SUMMER WEEKEND",
+    "venueAddress": "PUNTA DEL ESTE",
+    "externalUrl": "https://entraste.com/evento/blavicio-at-pre-summer-weekend",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/408ffa6da0394a60d30371d3de5189a0"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/89d96ef20a39439d164456c7a48b31a8"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13594",
+        "name": "BACKSTAGE +25",
+        "description": "TICKETS LIMITADOS +25",
+        "faceValue": 1800,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13595",
+        "name": "SEGUNDA TANDA GENERAL CON HORARIO",
+        "description": "Tickets limitados +18 HASTA 02:00",
+        "faceValue": 850,
+        "currency": "UYU",
+        "isSoldOut": true,
+        "isAvailable": false
+      },
+      {
+        "externalId": "13596",
+        "name": "SEGUNDA TANDA GENERAL SIN HORARIO",
+        "description": "TICKETS LIMITADOS +18",
+        "faceValue": 950,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13597",
+        "name": "SEGUNDA TANDA CAMPO VIP CON HORARIO",
+        "description": "Tickets limitados +21 HASTA 2:00",
+        "faceValue": 1050,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13598",
+        "name": "SEGUNDA TANDA CAMPO VIP SIN HORARIO",
+        "description": "Tickets limitados +21",
+        "faceValue": 1150,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/keylloween-2025",
+    "platform": "entraste",
+    "name": "Keylloween 2025",
+    "description": "",
+    "eventStartDate": "2025-11-01T23:00:00.000-03:00",
+    "eventEndDate": "2025-11-02T07:00:00.000-03:00",
+    "venueName": "Hangar 33",
+    "venueAddress": "Av Wilson Ferreira Alunate 7201",
+    "externalUrl": "https://entraste.com/evento/keylloween-2025",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/2a7db9bee95dcdccc18a19057ce9f962"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/7e06b9082d7efaf9455c3e22f9998b2e"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13411",
+        "name": "General - Ingreso hasta 00:00hs",
+        "description": "Sector General",
+        "faceValue": 800,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13412",
+        "name": "1er Tanda General",
+        "description": "Sector General",
+        "faceValue": 1000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13413",
+        "name": "1er Tanda Campo Vip",
+        "description": "Sector Campo Vip",
+        "faceValue": 1600,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/boris-brejcha-at-open-park",
+    "platform": "entraste",
+    "name": "Boris Brejcha at Open Park 2026",
+    "description": "",
+    "eventStartDate": "2025-01-02T23:00:00.000-03:00",
+    "eventEndDate": "2025-01-03T06:00:00.000-03:00",
+    "venueName": "Open Park",
+    "venueAddress": "Punta del Este",
+    "externalUrl": "https://entraste.com/evento/boris-brejcha-at-open-park",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/fcb8e31821991db778a4a36aaf7a3dcf"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/af6afd7fb29d696407b7516194bc9081"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13457",
+        "name": "2da Tanda General",
+        "description": "Sector General",
+        "faceValue": 4000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13458",
+        "name": "2da Tanda Campo Vip",
+        "description": "Sector Campo Vip",
+        "faceValue": 6000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13459",
+        "name": "3er Tanda Campo Vip",
+        "description": "Sector Campo Vip",
+        "faceValue": 6800,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/solomun-punta-del-este-2025",
+    "platform": "entraste",
+    "name": "Solomun Punta Del Este 2025",
+    "description": "",
+    "eventStartDate": "2025-12-29T23:00:00.000-03:00",
+    "eventEndDate": "2025-12-30T06:00:00.000-03:00",
+    "venueName": "Punta Del Este",
+    "venueAddress": "Punta Del Este",
+    "externalUrl": "https://entraste.com/evento/solomun-punta-del-este-2025",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/5527c107b390c9d866c33aaa3a199f8f"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/ed346beeef4f01029f979583de8fb548"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "12931",
+        "name": "3er Tanda General",
+        "description": "Sector General ",
+        "faceValue": 5000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "12932",
+        "name": "3er Tanda Campo Vip",
+        "description": "Sector Campo Vip",
+        "faceValue": 8200,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/diego-maciel-2025-en-montevideo",
+    "platform": "entraste",
+    "name": "Diego Maciel 2025 en Montevideo",
+    "description": "",
+    "eventStartDate": "2025-11-28T23:00:00.000-03:00",
+    "eventEndDate": "2025-11-29T06:00:00.000-03:00",
+    "venueName": "Montevideo, Uruguay",
+    "venueAddress": "Montevideo, Uruguay",
+    "externalUrl": "https://entraste.com/evento/diego-maciel-2025-en-montevideo",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/b24d389e1cc949ae0db5e8fa6b34dd7c"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/0e4fbc8a04e7ce256d51b97aacf3b9b0"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13601",
+        "name": "Friends & Family",
+        "description": "Acceso válido hasta las 00:00 hrs.",
+        "faceValue": 690,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13602",
+        "name": "Friends - Lote 01",
+        "description": "Acceso exclusivo",
+        "faceValue": 890,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13603",
+        "name": "Friends - Lote 02",
+        "description": "Acceso exclusivo",
+        "faceValue": 1090,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13604",
+        "name": "Friends - Lote 03",
+        "description": "Acceso exclusivo",
+        "faceValue": 1490,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      }
+    ]
+  },
+  {
+    "externalId": "https://entraste.com/evento/music-on-pde-2026-w-marco-carola-more",
+    "platform": "entraste",
+    "name": "Music On PDE 2026 w/ Marco Carola & more",
+    "description": "",
+    "eventStartDate": "2025-01-04T23:00:00.000-03:00",
+    "eventEndDate": "2025-01-05T06:00:00.000-03:00",
+    "venueName": "Open Park",
+    "venueAddress": "Punta del Este",
+    "externalUrl": "https://entraste.com/evento/music-on-pde-2026-w-marco-carola-more",
+    "images": [
+      {
+        "type": "flyer",
+        "url": "https://api.entraste.com/sc/uploads/file/193b669ed832fbceb1903251b9f45257"
+      },
+      {
+        "type": "hero",
+        "url": "https://api.entraste.com/sc/uploads/file/cfea6d0933d5e7d93b7ff9f9db6ded07"
+      }
+    ],
+    "ticketWaves": [
+      {
+        "externalId": "13615",
+        "name": "2da Tanda General",
+        "description": "Sector General",
+        "faceValue": 3000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13616",
+        "name": "2da Tanda Campo Vip",
+        "description": "Sector Campo Vip",
+        "faceValue": 5250,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
+      },
+      {
+        "externalId": "13617",
+        "name": "General - Ingreso hasta 00:00hs",
+        "description": "Sector General",
+        "faceValue": 2000,
+        "currency": "UYU",
+        "isSoldOut": false,
+        "isAvailable": true
       }
     ]
   }

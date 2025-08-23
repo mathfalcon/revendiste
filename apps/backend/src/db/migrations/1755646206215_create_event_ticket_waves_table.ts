@@ -4,10 +4,10 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Create EVENT_TICKET_WAVES table
   await db.schema
     .createTable('event_ticket_waves')
-    .addColumn('id', 'uuid', col => col.primaryKey())
-    .addColumn('event_id', 'integer', col =>
-      col.notNull().references('events.id'),
+    .addColumn('id', 'uuid', col =>
+      col.primaryKey().defaultTo(sql`gen_random_uuid()`),
     )
+    .addColumn('event_id', 'uuid', col => col.notNull().references('events.id'))
     .addColumn('external_id', 'varchar(255)', col => col.unique().notNull())
     .addColumn('name', 'varchar(255)', col => col.notNull())
     .addColumn('description', 'text')
@@ -28,6 +28,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('last_scraped_at', 'timestamptz', col =>
       col.defaultTo(sql`now()`).notNull(),
     )
+    .addColumn('deleted_at', 'timestamptz')
     .execute();
 
   // Create indexes for better performance

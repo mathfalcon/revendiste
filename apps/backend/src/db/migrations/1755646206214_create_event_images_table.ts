@@ -4,10 +4,10 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Create EVENT_IMAGES table
   await db.schema
     .createTable('event_images')
-    .addColumn('id', 'uuid', col => col.primaryKey())
-    .addColumn('event_id', 'integer', col =>
-      col.notNull().references('events.id'),
+    .addColumn('id', 'uuid', col =>
+      col.primaryKey().defaultTo(sql`gen_random_uuid()`),
     )
+    .addColumn('event_id', 'uuid', col => col.notNull().references('events.id'))
     .addColumn('image_type', 'varchar(50)', col => col.notNull())
     .addColumn('url', 'varchar(1000)', col => col.notNull())
     .addColumn('alt_text', 'varchar(500)')
@@ -15,6 +15,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('created_at', 'timestamptz', col =>
       col.defaultTo(sql`now()`).notNull(),
     )
+    .addColumn('deleted_at', 'timestamptz')
     .execute();
 }
 

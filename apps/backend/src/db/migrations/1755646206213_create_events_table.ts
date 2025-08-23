@@ -4,7 +4,9 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Create EVENTS table
   await db.schema
     .createTable('events')
-    .addColumn('id', 'uuid', col => col.primaryKey())
+    .addColumn('id', 'uuid', col =>
+      col.primaryKey().defaultTo(sql`gen_random_uuid()`),
+    )
     .addColumn('external_id', 'varchar(255)', col => col.unique().notNull())
     .addColumn('platform', 'varchar(50)', col => col.notNull())
     .addColumn('name', 'varchar(500)', col => col.notNull())
@@ -24,6 +26,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('updated_at', 'timestamptz', col =>
       col.defaultTo(sql`now()`).notNull(),
     )
+    .addColumn('deleted_at', 'timestamptz')
     .addColumn('last_scraped_at', 'timestamptz', col =>
       col.defaultTo(sql`now()`).notNull(),
     )
@@ -41,8 +44,16 @@ export async function up(db: Kysely<any>): Promise<void> {
     .on('events')
     .column('external_id')
     .execute();
+
+  // Create GIN index for full-text search on event names
+  await sql`
+    CREATE INDEX events_name_gin_idx
+    ON events
+    USING GIN (to_tsvector('spanish', name));
+  `.execute(db);
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
+  await sql`DROP INDEX IF EXISTS events_name_gin_idx;`.execute(db);
   await db.schema.dropTable('events').execute();
 }

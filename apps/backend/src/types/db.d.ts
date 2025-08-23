@@ -9,14 +9,69 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Json = JsonValue;
+
+export type JsonArray = JsonValue[];
+
+export type JsonObject = {
+  [x: string]: JsonValue | undefined;
+};
+
+export type JsonPrimitive = boolean | number | string | null;
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
+export type Numeric = ColumnType<string, number | string, number | string>;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
-export interface Examples {
+export interface EventImages {
+  altText: string | null;
   createdAt: Generated<Timestamp>;
-  id: string;
+  displayOrder: Generated<number>;
+  eventId: string;
+  id: Generated<string>;
+  imageType: string;
+  url: string;
+}
+
+export interface Events {
+  createdAt: Generated<Timestamp>;
+  description: string | null;
+  eventEndDate: Timestamp;
+  eventStartDate: Timestamp;
+  externalId: string;
+  externalUrl: string;
+  id: Generated<string>;
+  lastScrapedAt: Generated<Timestamp>;
+  metadata: Json | null;
   name: string;
+  platform: string;
+  status: Generated<string>;
+  updatedAt: Generated<Timestamp>;
+  venueAddress: string;
+  venueName: string | null;
+}
+
+export interface EventTicketWaves {
+  createdAt: Generated<Timestamp>;
+  currency: string;
+  description: string | null;
+  eventId: string;
+  externalId: string;
+  faceValue: Numeric;
+  id: Generated<string>;
+  isAvailable: Generated<boolean>;
+  isSoldOut: Generated<boolean>;
+  lastScrapedAt: Generated<Timestamp>;
+  metadata: Json | null;
+  name: string;
+  status: Generated<string>;
+  updatedAt: Generated<Timestamp>;
 }
 
 export interface DB {
-  examples: Examples;
+  eventImages: EventImages;
+  events: Events;
+  eventTicketWaves: EventTicketWaves;
 }

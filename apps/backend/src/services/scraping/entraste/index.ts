@@ -304,10 +304,10 @@ export class EntrasteScraper extends BaseScraper {
         req.userData = {label: 'DETAIL'};
         return req;
       },
-      exclude: [
-        // Exclude anything that is not the specific URL
-        /^(?!https:\/\/entraste\.com\/evento\/cloud-7-jueves-coqeein-montana-venta$).*/,
-      ],
+      // exclude: [
+      //   // Exclude anything that is not the specific URL
+      //   /^(?!https:\/\/entraste\.com\/evento\/cloud-7-jueves-coqeein-montana-venta$).*/,
+      // ],
     });
   };
 
