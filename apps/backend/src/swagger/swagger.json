@@ -43,26 +43,61 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"PaginatedResponse__id-string--name-string--createdAt-Date__": {
+			"PaginatedResponse__createdAt-Date--description-string--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string__": {
 				"properties": {
 					"data": {
 						"items": {
 							"properties": {
-								"createdAt": {
+								"venueName": {
+									"type": "string"
+								},
+								"venueAddress": {
+									"type": "string"
+								},
+								"updatedAt": {
 									"type": "string",
 									"format": "date-time"
+								},
+								"status": {
+									"type": "string"
 								},
 								"name": {
 									"type": "string"
 								},
 								"id": {
 									"type": "string"
+								},
+								"externalUrl": {
+									"type": "string"
+								},
+								"eventStartDate": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"eventEndDate": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"description": {
+									"type": "string"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
 								}
 							},
 							"required": [
-								"createdAt",
+								"venueName",
+								"venueAddress",
+								"updatedAt",
+								"status",
 								"name",
-								"id"
+								"id",
+								"externalUrl",
+								"eventStartDate",
+								"eventEndDate",
+								"description",
+								"createdAt"
 							],
 							"type": "object"
 						},
@@ -104,37 +139,6 @@
 			},
 			"PaginationQuery": {
 				"$ref": "#/components/schemas/infer_typeofPaginationSchema_"
-			},
-			"infer_typeofMyValidator_": {
-				"properties": {
-					"msg": {
-						"type": "string"
-					},
-					"code": {
-						"type": "number",
-						"format": "double"
-					},
-					"result": {
-						"properties": {
-							"price": {
-								"type": "string"
-							}
-						},
-						"required": [
-							"price"
-						],
-						"type": "object"
-					}
-				},
-				"required": [
-					"msg",
-					"code",
-					"result"
-				],
-				"type": "object"
-			},
-			"MyResponse": {
-				"$ref": "#/components/schemas/infer_typeofMyValidator_"
 			},
 			"Record_string.any_": {
 				"properties": {},
@@ -233,50 +237,8 @@
 		"contact": {}
 	},
 	"paths": {
-		"/examples": {
+		"/events": {
 			"get": {
-				"operationId": "GetAll",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"properties": {
-											"createdAt": {
-												"type": "string",
-												"format": "date-time"
-											},
-											"name": {
-												"type": "string"
-											},
-											"id": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"createdAt",
-											"name",
-											"id"
-										],
-										"type": "object"
-									},
-									"type": "array"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Example"
-				],
-				"security": [],
-				"parameters": []
-			}
-		},
-		"/examples/paginated": {
-			"post": {
 				"operationId": "GetAllPaginated",
 				"responses": {
 					"200": {
@@ -284,14 +246,14 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/PaginatedResponse__id-string--name-string--createdAt-Date__"
+									"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string__"
 								}
 							}
 						}
 					}
 				},
 				"tags": [
-					"Example"
+					"Events"
 				],
 				"security": [],
 				"parameters": [
@@ -333,87 +295,7 @@
 							"type": "number"
 						}
 					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/PaginationQuery"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/examples/{id}": {
-			"get": {
-				"operationId": "GetOne",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"createdAt": {
-											"type": "string",
-											"format": "date-time"
-										},
-										"name": {
-											"type": "string"
-										},
-										"id": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"createdAt",
-										"name",
-										"id"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Example"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
 				]
-			}
-		},
-		"/examples/test": {
-			"get": {
-				"operationId": "GetTest",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/MyResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Example"
-				],
-				"security": [],
-				"parameters": []
 			}
 		},
 		"/health": {

@@ -37,6 +37,14 @@ export async function up(db: Kysely<any>): Promise<void> {
     .on('event_ticket_waves')
     .column('external_id')
     .execute();
+
+  // Create unique composite index for upsert functionality
+  await db.schema
+    .createIndex('event_ticket_waves_event_id_external_id_unique_idx')
+    .on('event_ticket_waves')
+    .columns(['event_id', 'external_id'])
+    .unique()
+    .execute();
 }
 
 export async function down(db: Kysely<any>): Promise<void> {

@@ -1,1 +1,2 @@
-export * from './example'
+export * from './events';
+export * from './health';

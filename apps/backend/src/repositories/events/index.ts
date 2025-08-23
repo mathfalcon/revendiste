@@ -1,200 +1,200 @@
 import {type Kysely, sql} from 'kysely';
 import type {DB} from '../../types/db';
-
+import type {ScrapedEventData} from '../../services/scraping';
+import {logger} from '~/utils';
+import {jsonArrayFrom} from 'kysely/helpers/postgres';
+import {mapToPaginatedResponse} from '~/middleware';
 export class EventsRepository {
   constructor(private db: Kysely<DB>) {}
 
-  // Create
-  async create(event: {
-    externalId: string;
-    platform: string;
-    name: string;
-    description?: string | null;
-    eventStartDate: Date;
-    eventEndDate: Date;
-    venueName?: string | null;
-    venueAddress: string;
-    externalUrl: string;
-    metadata?: any;
+  // Upsert event with all related data in a single transaction
+  async upsertScrapedEvent(event: ScrapedEventData) {
+    return await this.db.transaction().execute(async trx => {
+      const now = new Date();
+
+      // Upsert the main event
+      const [upsertedEvent] = await trx
+        .insertInto('events')
+        .values({
+          externalId: event.externalId,
+          platform: event.platform,
+          name: event.name,
+          description: event.description || null,
+          eventStartDate: event.eventStartDate,
+          eventEndDate: event.eventEndDate,
+          venueName: event.venueName || null,
+          venueAddress: event.venueAddress,
+          externalUrl: event.externalUrl,
+          status: 'active',
+          createdAt: now,
+          updatedAt: now,
+          lastScrapedAt: now,
+        })
+        .onConflict(oc =>
+          oc.column('externalId').doUpdateSet({
+            name: event.name,
+            description: event.description || null,
+            eventStartDate: event.eventStartDate,
+            eventEndDate: event.eventEndDate,
+            venueName: event.venueName || null,
+            venueAddress: event.venueAddress,
+            externalUrl: event.externalUrl,
+            status: 'active',
+            updatedAt: now,
+            lastScrapedAt: now,
+          }),
+        )
+        .returningAll()
+        .execute();
+
+      // Upsert images by eventId and imageType
+      if (event.images.length > 0) {
+        for (const image of event.images) {
+          await trx
+            .insertInto('eventImages')
+            .values({
+              eventId: upsertedEvent.id,
+              imageType: image.type,
+              url: image.url,
+              displayOrder: event.images.indexOf(image),
+              createdAt: now,
+            })
+            .onConflict(oc =>
+              oc.columns(['eventId', 'imageType']).doUpdateSet({
+                url: image.url,
+                displayOrder: event.images.indexOf(image),
+                createdAt: now,
+              }),
+            )
+            .execute();
+        }
+      }
+
+      // Upsert ticket waves by eventId and externalId
+      if (event.ticketWaves.length > 0) {
+        for (const ticketWave of event.ticketWaves) {
+          await trx
+            .insertInto('eventTicketWaves')
+            .values({
+              eventId: upsertedEvent.id,
+              externalId: ticketWave.externalId,
+              name: ticketWave.name,
+              description: ticketWave.description || null,
+              faceValue: ticketWave.faceValue,
+              currency: ticketWave.currency,
+              isSoldOut: ticketWave.isSoldOut,
+              isAvailable: ticketWave.isAvailable,
+              status: 'active',
+              metadata: ticketWave.metadata || null,
+              createdAt: now,
+              updatedAt: now,
+              lastScrapedAt: now,
+            })
+            .onConflict(oc =>
+              oc.columns(['eventId', 'externalId']).doUpdateSet({
+                name: ticketWave.name,
+                description: ticketWave.description || null,
+                faceValue: ticketWave.faceValue,
+                currency: ticketWave.currency,
+                isSoldOut: ticketWave.isSoldOut,
+                isAvailable: ticketWave.isAvailable,
+                status: 'active',
+                metadata: ticketWave.metadata || null,
+                updatedAt: now,
+                lastScrapedAt: now,
+              }),
+            )
+            .execute();
+        }
+      }
+
+      return upsertedEvent;
+    });
+  }
+
+  // Batch process events - each event in its own transaction
+  async upsertEventsBatch(events: ScrapedEventData[]) {
+    if (events.length === 0) {
+      return [];
+    }
+
+    const results = [];
+
+    // Process each event individually to maintain transaction integrity
+    for (const event of events) {
+      try {
+        const result = await this.upsertScrapedEvent(event);
+        results.push(result);
+      } catch (error) {
+        // Log error but continue processing other events
+        logger.error(`Failed to upsert event ${event.externalId}:`, error);
+      }
+    }
+
+    return results;
+  }
+
+  // Retrieve paginated events with images using jsonArrayFrom
+  async findAllPaginatedWithImages(pagination: {
+    page: number;
+    limit: number;
+    offset: number;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
   }) {
-    const [created] = await this.db
-      .insertInto('events')
-      .values({
-        ...event,
-        status: 'active',
-      })
-      .returningAll()
-      .execute();
+    const {page, limit, offset, sortBy, sortOrder} = pagination;
 
-    return created;
-  }
-
-  // Read - Get by ID
-  async findById(id: string) {
-    return (
-      (await this.db
-        .selectFrom('events')
-        .selectAll()
-        .where('id', '=', id)
-        .executeTakeFirst()) || null
-    );
-  }
-
-  // Read - Get by external ID
-  async findByExternalId(externalId: string) {
-    return (
-      (await this.db
-        .selectFrom('events')
-        .selectAll()
-        .where('externalId', '=', externalId)
-        .executeTakeFirst()) || null
-    );
-  }
-
-  // Read - Get all events with pagination
-  async findAll(limit: number = 50, offset: number = 0) {
-    return await this.db
+    // Get total count
+    const totalResult = await this.db
       .selectFrom('events')
-      .selectAll()
-      .orderBy('eventStartDate', 'asc')
-      .limit(limit)
-      .offset(offset)
-      .execute();
-  }
-
-  // Read - Get events by platform
-  async findByPlatform(
-    platform: string,
-    limit: number = 50,
-    offset: number = 0,
-  ) {
-    return await this.db
-      .selectFrom('events')
-      .selectAll()
-      .where('platform', '=', platform)
-      .orderBy('eventStartDate', 'asc')
-      .limit(limit)
-      .offset(offset)
-      .execute();
-  }
-
-  // Read - Fuzzy search by name using full-text search
-  async searchByName(
-    searchTerm: string,
-    limit: number = 20,
-    offset: number = 0,
-  ) {
-    return await this.db
-      .selectFrom('events')
-      .selectAll()
-      .where(
-        sql`to_tsvector('spanish', name) @@ plainto_tsquery('spanish', ${searchTerm})`,
-      )
-      .orderBy(
-        sql`ts_rank(to_tsvector('spanish', name), plainto_tsquery('spanish', ${searchTerm})) DESC`,
-      )
-      .limit(limit)
-      .offset(offset)
-      .execute();
-  }
-
-  // Read - Get upcoming events
-  async findUpcoming(limit: number = 50, offset: number = 0) {
-    return await this.db
-      .selectFrom('events')
-      .selectAll()
-      .where('eventStartDate', '>', new Date())
+      .select(this.db.fn.count('id').as('total'))
+      .where('deletedAt', 'is', null)
       .where('status', '=', 'active')
-      .orderBy('eventStartDate', 'asc')
+      .executeTakeFirst();
+
+    const total = Number(totalResult?.total || 0);
+
+    // Get events with nested images using jsonArrayFrom
+    const events = await this.db
+      .selectFrom('events')
+      .select(eb => [
+        'id',
+        'name',
+        'description',
+        'eventStartDate',
+        'eventEndDate',
+        'venueName',
+        'venueAddress',
+        'externalUrl',
+        'status',
+        'createdAt',
+        'updatedAt',
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventImages')
+            .select(['eventImages.url', 'eventImages.imageType'])
+            .whereRef('eventImages.eventId', '=', 'events.id')
+            .orderBy('eventImages.displayOrder'),
+        ).as('images'),
+      ])
+      .where('deletedAt', 'is', null)
+      .where('status', '=', 'active')
+      .orderBy('createdAt', 'desc')
       .limit(limit)
       .offset(offset)
       .execute();
-  }
 
-  // Update
-  async update(
-    id: string,
-    updates: {
-      externalId?: string;
-      platform?: string;
-      name?: string;
-      description?: string | null;
-      eventStartDate?: Date;
-      eventEndDate?: Date;
-      venueName?: string | null;
-      venueAddress?: string;
-      externalUrl?: string;
-      status?: string;
-      metadata?: any;
-    },
-  ) {
-    const [updated] = await this.db
-      .updateTable('events')
-      .set({
-        ...updates,
-        updatedAt: new Date(),
-      })
-      .where('id', '=', id)
-      .returningAll()
-      .execute();
+    const totalPages = Math.ceil(total / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
 
-    return updated || null;
-  }
-
-  // Update - Update last scraped timestamp
-  async updateLastScraped(id: string) {
-    await this.db
-      .updateTable('events')
-      .set({
-        lastScrapedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where('id', '=', id)
-      .execute();
-  }
-
-  // Delete
-  async delete(id: string) {
-    const result = await this.db
-      .deleteFrom('events')
-      .where('id', '=', id)
-      .execute();
-
-    return result.length > 0;
-  }
-
-  // Soft delete by updating status
-  async softDelete(id: string) {
-    const result = await this.db
-      .updateTable('events')
-      .set({
-        status: 'deleted',
-        updatedAt: new Date(),
-      })
-      .where('id', '=', id)
-      .execute();
-
-    return result.length > 0;
-  }
-
-  // Count total events
-  async count() {
-    const result = await this.db
-      .selectFrom('events')
-      .select(sql<number>`count(*)`.as('count'))
-      .executeTakeFirst();
-
-    return Number(result?.count) || 0;
-  }
-
-  // Count events by platform
-  async countByPlatform(platform: string) {
-    const result = await this.db
-      .selectFrom('events')
-      .select(sql<number>`count(*)`.as('count'))
-      .where('platform', '=', platform)
-      .executeTakeFirst();
-
-    return Number(result?.count) || 0;
+    return mapToPaginatedResponse(events, {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext,
+      hasPrev,
+    });
   }
 }

@@ -15,7 +15,6 @@ import {
 } from '~/utils';
 import {addMinutes} from 'date-fns';
 import {Page} from 'playwright';
-import z from 'zod';
 
 enum RequestLabel {
   LIST = 'LIST',
@@ -287,13 +286,10 @@ export class EntrasteScraper extends BaseScraper {
   private async extractImageUrls(
     page: Page,
   ): Promise<{flyerImgSrc: string | null; heroImgSrc: string | null}> {
-    const flyerImgSrc = await page.getAttribute('img.event-flyer-image', 'src');
-    const heroImgSrc = await page.getAttribute(
-      'img.event-flyer-imagebox',
-      'src',
-    );
+    const flyerImgSrc = await page.getAttribute('img.hero-imagebox', 'src');
+    const heroImgSrc = await page.getAttribute('img.event-flyer-image', 'src');
 
-    return {flyerImgSrc, heroImgSrc};
+    return {flyerImgSrc: flyerImgSrc || heroImgSrc, heroImgSrc};
   }
 
   private handleListRequest: PlaywrightRequestHandler = async args => {
@@ -306,7 +302,7 @@ export class EntrasteScraper extends BaseScraper {
       },
       // exclude: [
       //   // Exclude anything that is not the specific URL
-      //   /^(?!https:\/\/entraste\.com\/evento\/cloud-7-jueves-coqeein-montana-venta$).*/,
+      //   /^(?!https:\/\/entraste\.com\/evento\/kool-memories-centro-uruguayo$).*/,
       // ],
     });
   };
@@ -321,11 +317,10 @@ export class EntrasteScraper extends BaseScraper {
       const {venueName, venueAddress} = await this.extractVenueInfo(page);
       const {startTime, endTime} = await this.extractDateTimeInfo(page);
       const {flyerImgSrc, heroImgSrc} = await this.extractImageUrls(page);
-      console.log('calling ticket wavecs');
       const ticketWaves = await this.scrapeTicketWaves(page);
-      console.log(ticketWaves, 'xD');
+
       const eventData: Partial<ScrapedEventData> = {
-        externalId: url,
+        externalId: url.split('/').pop() || '',
         platform: Platform.Entraste,
         name,
         description,
@@ -368,12 +363,6 @@ export class EntrasteScraper extends BaseScraper {
 
   private async scrapeTicketWaves(page: Page): Promise<ScrapedTicketWave[]> {
     try {
-      const pageUrl = page.url();
-      console.log(pageUrl, 'pageUrl');
-
-      const ticketWavesContainer = page.locator('.tickets-form .ticket');
-      console.log(ticketWavesContainer, 'ticketWavesContainer');
-
       // Execute a function in the browser that targets
       // the book title elements and allows their manipulation
       const ticketWaves = await page.$$eval('.ticket', els => {

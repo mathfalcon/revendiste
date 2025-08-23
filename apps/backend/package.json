@@ -13,9 +13,9 @@
     "kysely:generate": "kysely generate",
     "tsoa:spec": "tsoa spec",
     "tsoa:routes": "tsoa routes",
+    "tsoa:both": "tsoa routes && tsoa spec",
     "generate:db": "kysely-codegen --camel-case --dialect postgres --out-file ./src/types/db.d.ts",
-    "scrape:test": "tsx src/scripts/test-crawlee-scraper.ts",
-    "test:logger": "tsx src/scripts/test-logger.ts",
+    "scrape-events": "tsx src/cronjobs/scrape-events.ts",
     "postinstall": "npx playwright install chromium"
   },
   "keywords": [],

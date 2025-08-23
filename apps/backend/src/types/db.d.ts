@@ -26,8 +26,8 @@ export type Numeric = ColumnType<string, number | string, number | string>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface EventImages {
-  altText: string | null;
   createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
   displayOrder: Generated<number>;
   eventId: string;
   id: Generated<string>;
@@ -37,6 +37,7 @@ export interface EventImages {
 
 export interface Events {
   createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
   description: string | null;
   eventEndDate: Timestamp;
   eventStartDate: Timestamp;
@@ -56,6 +57,7 @@ export interface Events {
 export interface EventTicketWaves {
   createdAt: Generated<Timestamp>;
   currency: string;
+  deletedAt: Timestamp | null;
   description: string | null;
   eventId: string;
   externalId: string;

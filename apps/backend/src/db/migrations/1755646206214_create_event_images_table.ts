@@ -10,12 +10,19 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('event_id', 'uuid', col => col.notNull().references('events.id'))
     .addColumn('image_type', 'varchar(50)', col => col.notNull())
     .addColumn('url', 'varchar(1000)', col => col.notNull())
-    .addColumn('alt_text', 'varchar(500)')
     .addColumn('display_order', 'integer', col => col.defaultTo(0).notNull())
     .addColumn('created_at', 'timestamptz', col =>
       col.defaultTo(sql`now()`).notNull(),
     )
     .addColumn('deleted_at', 'timestamptz')
+    .execute();
+
+  // Create unique index for upsert functionality
+  await db.schema
+    .createIndex('event_images_event_id_image_type_unique_idx')
+    .on('event_images')
+    .columns(['event_id', 'image_type'])
+    .unique()
     .execute();
 }
 
