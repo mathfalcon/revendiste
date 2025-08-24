@@ -13,7 +13,7 @@ import {
   trimTextAndDefaultToEmpty,
   logger,
 } from '~/utils';
-import {addMinutes} from 'date-fns';
+import {addMinutes, isPast, setYear} from 'date-fns';
 import {Page} from 'playwright';
 
 enum RequestLabel {
@@ -125,14 +125,14 @@ export class EntrasteScraper extends BaseScraper {
    */
   private async extractDateTimeInfo(
     page: any,
-  ): Promise<{startTime: Date | undefined; endTime: Date | undefined}> {
+  ): Promise<{startDate: Date | undefined; endDate: Date | undefined}> {
     const dateTimeText = trimTextAndDefaultToEmpty(
       await page.textContent('.location-section h2[data-eventstart] + p'),
     );
 
     let parsedDateTime: {
-      startTime: Date | undefined;
-      endTime: Date | undefined;
+      startDate: Date | undefined;
+      endDate: Date | undefined;
     } | null = null;
 
     if (dateTimeText.startsWith('Desde el')) {
@@ -151,8 +151,8 @@ export class EntrasteScraper extends BaseScraper {
   }
 
   private handleMultiDayEvent(dateString: string): {
-    startTime: Date | undefined;
-    endTime: Date | undefined;
+    startDate: Date | undefined;
+    endDate: Date | undefined;
   } {
     // Pattern: "Desde el viernes 10 de octubre a las 23:59 hasta el domingo 12 de octubre a las 06:00"
     const dateTimeMatch = dateString.match(
@@ -161,7 +161,7 @@ export class EntrasteScraper extends BaseScraper {
 
     if (!dateTimeMatch) {
       logger.warn('Could not parse multi-day event date:', dateString);
-      return {startTime: undefined, endTime: undefined};
+      return {startDate: undefined, endDate: undefined};
     }
 
     const [
@@ -194,16 +194,22 @@ export class EntrasteScraper extends BaseScraper {
       timezone: 'America/Montevideo',
     });
 
+    const eventIsNextYear = isPast(startDate) && isPast(endDate);
+    if (eventIsNextYear) {
+      setYear(startDate, new Date().getFullYear() + 1);
+      setYear(endDate, new Date().getFullYear() + 1);
+    }
+
     if (endDate < startDate) {
       endDate.setFullYear(endDate.getFullYear() + 1);
     }
 
-    return {startTime: startDate, endTime: endDate};
+    return DateUtils.fixNextYearEdgeCase(startDate, endDate);
   }
 
   private handleSingleDayEvent(dateString: string): {
-    startTime: Date | undefined;
-    endTime: Date | undefined;
+    startDate: Date | undefined;
+    endDate: Date | undefined;
   } {
     logger.debug('Parsing single-day event date string:', dateString);
     // Pattern: "Jueves 21 de agosto\ndesde las 23:59 hasta las 06:00"
@@ -214,7 +220,7 @@ export class EntrasteScraper extends BaseScraper {
 
     if (!dateTimeMatch) {
       logger.warn('Could not parse single-day event date:', dateString);
-      return {startTime: undefined, endTime: undefined};
+      return {startDate: undefined, endDate: undefined};
     }
 
     const [
@@ -273,10 +279,10 @@ export class EntrasteScraper extends BaseScraper {
       // Use date-fns to add the calculated minutes to the start date
       const endDate = addMinutes(startDate, totalMinutes);
 
-      return {startTime: startDate, endTime: endDate};
+      return DateUtils.fixNextYearEdgeCase(startDate, endDate);
     } catch (error) {
       logger.warn('Error parsing single-day event date:', error);
-      return {startTime: undefined, endTime: undefined};
+      return {startDate: undefined, endDate: undefined};
     }
   }
 
@@ -315,7 +321,7 @@ export class EntrasteScraper extends BaseScraper {
       // Extract all event data using single-responsibility methods
       const {name, description} = await this.extractBasicEventInfo(page);
       const {venueName, venueAddress} = await this.extractVenueInfo(page);
-      const {startTime, endTime} = await this.extractDateTimeInfo(page);
+      const {startDate, endDate} = await this.extractDateTimeInfo(page);
       const {flyerImgSrc, heroImgSrc} = await this.extractImageUrls(page);
       const ticketWaves = await this.scrapeTicketWaves(page);
 
@@ -326,8 +332,8 @@ export class EntrasteScraper extends BaseScraper {
         description,
         venueName,
         venueAddress,
-        eventStartDate: startTime,
-        eventEndDate: endTime,
+        eventStartDate: startDate,
+        eventEndDate: endDate,
         externalUrl: url,
         images: [
           {

@@ -1,4 +1,4 @@
-import {type Kysely, sql} from 'kysely';
+import {type Kysely} from 'kysely';
 import type {DB} from '../../types/db';
 import type {ScrapedEventData} from '../../services/scraping';
 import {logger} from '~/utils';
@@ -126,6 +126,7 @@ export class EventsRepository {
         const result = await this.upsertScrapedEvent(event);
         results.push(result);
       } catch (error) {
+        console.log(error);
         // Log error but continue processing other events
         logger.error(`Failed to upsert event ${event.externalId}:`, error);
       }
@@ -179,7 +180,7 @@ export class EventsRepository {
       ])
       .where('deletedAt', 'is', null)
       .where('status', '=', 'active')
-      .orderBy('createdAt', 'desc')
+      .orderBy('eventStartDate', 'asc')
       .limit(limit)
       .offset(offset)
       .execute();
@@ -196,5 +197,105 @@ export class EventsRepository {
       hasNext,
       hasPrev,
     });
+  }
+
+  // Soft delete events by external IDs (for events not in scraped results)
+  async softDeleteEventsByExternalIds(externalIds: string[], deletedAt: Date) {
+    const result = await this.db
+      .updateTable('events')
+      .set({
+        deletedAt: deletedAt,
+        status: 'inactive',
+        updatedAt: deletedAt,
+      })
+      .where('deletedAt', 'is', null)
+      .where('externalId', 'in', externalIds)
+      .returning(['id', 'externalId', 'name'])
+      .execute();
+
+    return result;
+  }
+
+  // Soft delete events with past end dates
+  async softDeleteEventsWithPastEndDates(deletedAt: Date) {
+    const result = await this.db
+      .updateTable('events')
+      .set({
+        deletedAt: deletedAt,
+        status: 'inactive',
+        updatedAt: deletedAt,
+      })
+      .where('deletedAt', 'is', null)
+      .where('eventEndDate', '<', deletedAt)
+      .returning(['id', 'externalId', 'name'])
+      .execute();
+
+    return result;
+  }
+
+  // Get all active event external IDs (for comparison with scraped results)
+  async getAllActiveEventExternalIds(): Promise<string[]> {
+    const result = await this.db
+      .selectFrom('events')
+      .select('externalId')
+      .where('deletedAt', 'is', null)
+      .where('status', '=', 'active')
+      .execute();
+
+    return result.map(row => row.externalId);
+  }
+
+  // More efficient: Soft delete events not in scraped results using database-side comparison
+  async softDeleteEventsNotInScrapedResults(
+    scrapedExternalIds: string[],
+    deletedAt: Date,
+  ) {
+    // Use NOT EXISTS with a subquery for better performance with large datasets
+    const result = await this.db
+      .updateTable('events')
+      .set({
+        deletedAt: deletedAt,
+        status: 'inactive',
+        updatedAt: deletedAt,
+      })
+      .where('deletedAt', 'is', null)
+      .where(eb =>
+        eb.not(
+          eb.exists(
+            eb
+              .selectFrom('events as e2')
+              .select('e2.externalId')
+              .whereRef('e2.externalId', '=', 'events.externalId')
+              .where('e2.externalId', 'in', scrapedExternalIds),
+          ),
+        ),
+      )
+      .returning(['id', 'externalId', 'name'])
+      .execute();
+
+    return result;
+  }
+
+  // Helper method to soft delete related ticket waves
+  async softDeleteRelatedTicketWaves(eventIds: string[], deletedAt: Date) {
+    if (eventIds.length === 0) return;
+
+    const batchSize = 100;
+
+    // Process ticket wave deletions in batches to avoid large IN clauses
+    for (let i = 0; i < eventIds.length; i += batchSize) {
+      const batchIds = eventIds.slice(i, i + batchSize);
+
+      await this.db
+        .updateTable('eventTicketWaves')
+        .set({
+          deletedAt: deletedAt,
+          status: 'inactive',
+          updatedAt: deletedAt,
+        })
+        .where('deletedAt', 'is', null)
+        .where('eventId', 'in', batchIds)
+        .execute();
+    }
   }
 }

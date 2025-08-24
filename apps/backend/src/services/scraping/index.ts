@@ -15,7 +15,11 @@ export class ScrapingService {
     // Flatten the array of arrays into a single array of events
     const allEvents = eventsArrays.flat();
 
+    // Store the scraped events
     await this.eventsService.storeScrapedEvents(allEvents);
+
+    // Clean up events that are no longer in scraped results or have past end dates
+    await this.eventsService.cleanupStaleEvents(allEvents);
 
     return allEvents;
   }

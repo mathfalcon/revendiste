@@ -21,7 +21,7 @@ export interface HealthCheckResult {
 }
 
 export class HealthService {
-  private startTime = Date.now();
+  private startDate = Date.now();
 
   async checkDatabase(): Promise<HealthCheckResult | null> {
     // Skip database check if DATABASE_URL is not configured
@@ -135,7 +135,7 @@ export class HealthService {
     return {
       status: overallStatus,
       timestamp: new Date().toISOString(),
-      uptime: Date.now() - this.startTime,
+      uptime: Date.now() - this.startDate,
       version: process.env.npm_package_version || '1.0.0',
       checks,
     };

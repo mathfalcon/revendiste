@@ -1,4 +1,5 @@
 import {TZDate} from '@date-fns/tz';
+import {isPast, setYear} from 'date-fns';
 import {es} from 'date-fns/locale';
 
 export class DateUtils {
@@ -24,5 +25,15 @@ export class DateUtils {
     date.setHours(hour, minutes, 0, 0);
 
     return date;
+  }
+
+  static fixNextYearEdgeCase(startDate: Date, endDate: Date) {
+    const eventIsNextYear = isPast(startDate) && isPast(endDate);
+    if (eventIsNextYear) {
+      startDate = setYear(startDate, new Date().getFullYear() + 1);
+      endDate = setYear(endDate, new Date().getFullYear() + 1);
+    }
+
+    return {startDate, endDate};
   }
 }
