@@ -3,4 +3,4 @@ packages:
   - packages/*
 
 overrides:
-  tsoa: link:../../../AppData/Local/pnpm/global/5/node_modules/tsoa
+  tsoa: link:../../AppData/Local/pnpm/global/5/node_modules/tsoa

@@ -1,1 +1,1 @@
-export * from './example'
+export {EventsRepository} from './events';

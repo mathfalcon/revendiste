@@ -2,6 +2,8 @@ import {z} from 'zod';
 import 'dotenv/config';
 
 const EnvSchema = z.object({
+  NODE_ENV: z.enum(['local', 'development', 'production']).default('local'),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   PORT: z.coerce.number().default(3001),
   POSTGRES_USER: z.string(),
   POSTGRES_PASSWORD: z.string(),
@@ -18,6 +20,8 @@ if (!env.success) {
 }
 
 export const {
+  NODE_ENV,
+  LOG_LEVEL,
   PORT,
   POSTGRES_USER,
   POSTGRES_PASSWORD,

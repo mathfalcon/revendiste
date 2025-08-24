@@ -1,9 +1,0 @@
-{
-	"id": "gnxgQkVt1bTOoww",
-	"json": "{\"id\":\"gnxgQkVt1bTOoww\",\"url\":\"https://entraste.com/evento/festival-quebrada-0\",\"loadedUrl\":\"https://entraste.com/evento/festival-quebrada-0\",\"uniqueKey\":\"https://entraste.com/evento/festival-quebrada-0\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:10.615Z\"}",
-	"method": "GET",
-	"orderNo": null,
-	"retryCount": 0,
-	"uniqueKey": "https://entraste.com/evento/festival-quebrada-0",
-	"url": "https://entraste.com/evento/festival-quebrada-0"
-}

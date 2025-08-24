@@ -1,5 +1,9 @@
 import {Request, Response, NextFunction} from 'express';
-import {PaginatedResponse, PaginationOptions} from '~/types/pagination';
+import {
+  PaginatedResponse,
+  PaginationMeta,
+  PaginationOptions,
+} from '~/types/pagination';
 import {validateRequest} from './validation';
 import z from 'zod';
 
@@ -25,7 +29,7 @@ const validatePagination = () =>
     }),
   );
 
-export const paginationMiddleware = (defaultLimit = 10, maxLimit = 100) => {
+export const paginationMiddleware = (defaultLimit = 25, maxLimit = 100) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // First validate the query parameters
     validatePagination()(req, res, err => {
@@ -100,4 +104,14 @@ export const ensurePagination = (
     );
   }
   next();
+};
+
+export const mapToPaginatedResponse = <T>(
+  data: T[],
+  pagination: PaginationMeta,
+): PaginatedResponse<T> => {
+  return {
+    data,
+    pagination,
+  };
 };

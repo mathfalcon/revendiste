@@ -1,9 +1,0 @@
-{
-	"id": "9SPSgATFFc18fOs",
-	"json": "{\"id\":\"9SPSgATFFc18fOs\",\"url\":\"https://entraste.com/evento/area-t-pres-bart-skils-oscar-l-hangar-33-t1\",\"loadedUrl\":\"https://entraste.com/evento/area-t-pres-bart-skils-oscar-l-hangar-33-t1\",\"uniqueKey\":\"https://entraste.com/evento/area-t-pres-bart-skils-oscar-l-hangar-33-t1\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"DETAIL\",\"__crawlee\":{\"enqueueStrategy\":\"same-hostname\",\"state\":4}},\"handledAt\":\"2025-07-21T02:47:11.948Z\"}",
-	"method": "GET",
-	"orderNo": null,
-	"retryCount": 0,
-	"uniqueKey": "https://entraste.com/evento/area-t-pres-bart-skils-oscar-l-hangar-33-t1",
-	"url": "https://entraste.com/evento/area-t-pres-bart-skils-oscar-l-hangar-33-t1"
-}

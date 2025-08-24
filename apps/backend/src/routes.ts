@@ -4,7 +4,7 @@
 import type { TsoaRoute } from '@tsoa/runtime';
 import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-import { ExampleController } from './controllers/example/index';
+import { EventsController } from './controllers/events/index';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { HealthController } from './controllers/health/index';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
@@ -27,10 +27,10 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "PaginatedResponse__id-string--name-string--createdAt-Date__": {
+    "PaginatedResponse__createdAt-Date--description-string--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string__": {
         "dataType": "refObject",
         "properties": {
-            "data": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"createdAt":{"dataType":"datetime","required":true},"name":{"dataType":"string","required":true},"id":{"dataType":"string","required":true}}},"required":true},
+            "data": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"venueName":{"dataType":"string","required":true},"venueAddress":{"dataType":"string","required":true},"updatedAt":{"dataType":"datetime","required":true},"status":{"dataType":"string","required":true},"name":{"dataType":"string","required":true},"id":{"dataType":"string","required":true},"externalUrl":{"dataType":"string","required":true},"eventStartDate":{"dataType":"datetime","required":true},"eventEndDate":{"dataType":"datetime","required":true},"description":{"dataType":"string","required":true},"createdAt":{"dataType":"datetime","required":true}}},"required":true},
             "pagination": {"ref":"PaginationMeta","required":true},
         },
         "additionalProperties": false,
@@ -91,86 +91,26 @@ export function RegisterRoutes(app: Router) {
 
 
     
-        const argsExampleController_getAll: Record<string, TsoaRoute.ParameterSchema> = {
-        };
-        app.get('/examples',
-            ...(fetchMiddlewares<RequestHandler>(ExampleController)),
-            ...(fetchMiddlewares<RequestHandler>(ExampleController.prototype.getAll)),
-
-            async function ExampleController_getAll(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsExampleController_getAll, request, response });
-
-                const controller = new ExampleController();
-
-              await templateService.apiHandler({
-                methodName: 'getAll',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsExampleController_getAllPaginated: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsEventsController_getAllPaginated: Record<string, TsoaRoute.ParameterSchema> = {
                 query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"sortOrder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["asc"]},{"dataType":"enum","enums":["desc"]}]},"sortBy":{"dataType":"string"},"limit":{"dataType":"double"},"page":{"dataType":"double"}}},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
-                body: {"in":"body","name":"body","required":true,"ref":"PaginationQuery"},
         };
-        app.post('/examples/paginated',
-            ...(fetchMiddlewares<RequestHandler>(ExampleController)),
-            ...(fetchMiddlewares<RequestHandler>(ExampleController.prototype.getAllPaginated)),
+        app.get('/events',
+            ...(fetchMiddlewares<RequestHandler>(EventsController)),
+            ...(fetchMiddlewares<RequestHandler>(EventsController.prototype.getAllPaginated)),
 
-            async function ExampleController_getAllPaginated(request: ExRequest, response: ExResponse, next: any) {
+            async function EventsController_getAllPaginated(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsExampleController_getAllPaginated, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsEventsController_getAllPaginated, request, response });
 
-                const controller = new ExampleController();
+                const controller = new EventsController();
 
               await templateService.apiHandler({
                 methodName: 'getAllPaginated',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsExampleController_getOne: Record<string, TsoaRoute.ParameterSchema> = {
-                id: {"in":"path","name":"id","required":true,"dataType":"string"},
-        };
-        app.get('/examples/:id',
-            ...(fetchMiddlewares<RequestHandler>(ExampleController)),
-            ...(fetchMiddlewares<RequestHandler>(ExampleController.prototype.getOne)),
-
-            async function ExampleController_getOne(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsExampleController_getOne, request, response });
-
-                const controller = new ExampleController();
-
-              await templateService.apiHandler({
-                methodName: 'getOne',
                 controller,
                 response,
                 next,
