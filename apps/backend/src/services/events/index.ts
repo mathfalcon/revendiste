@@ -140,4 +140,8 @@ export class EventsService {
       );
     }
   }
+
+  async getEventById(eventId: string) {
+    return this.eventsRepository.getById(eventId);
+  }
 }

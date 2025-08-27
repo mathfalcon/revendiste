@@ -5,6 +5,10 @@
 
 import type { ColumnType } from "kysely";
 
+export type EventImageType = "flyer" | "hero";
+
+export type EventTicketCurrency = "USD" | "UYU";
+
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
@@ -31,7 +35,7 @@ export interface EventImages {
   displayOrder: Generated<number>;
   eventId: string;
   id: Generated<string>;
-  imageType: string;
+  imageType: EventImageType;
   url: string;
 }
 
@@ -56,7 +60,7 @@ export interface Events {
 
 export interface EventTicketWaves {
   createdAt: Generated<Timestamp>;
-  currency: string;
+  currency: EventTicketCurrency;
   deletedAt: Timestamp | null;
   description: string | null;
   eventId: string;

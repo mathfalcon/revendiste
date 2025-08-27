@@ -1,9 +1,10 @@
-import { QueryClient } from '@tanstack/react-query';
-import { createRouter as createTanStackRouter } from '@tanstack/react-router';
-import { routerWithQueryClient } from '@tanstack/react-router-with-query';
-import { routeTree } from './routeTree.gen';
-import { DefaultCatchBoundary } from './components/DefaultCatchBoundary';
-import { NotFound } from './components/NotFound';
+import {QueryClient} from '@tanstack/react-query';
+import {createRouter as createTanStackRouter} from '@tanstack/react-router';
+import {routerWithQueryClient} from '@tanstack/react-router-with-query';
+import {routeTree} from './routeTree.gen';
+import {DefaultCatchBoundary} from './components/DefaultCatchBoundary';
+import {NotFound} from './components/NotFound';
+import {FullScreenLoading} from './components';
 
 // NOTE: Most of the integration code found here is experimental and will
 // definitely end up in a more streamlined API in the future. This is just
@@ -15,12 +16,13 @@ export function createRouter() {
   return routerWithQueryClient(
     createTanStackRouter({
       routeTree,
-      context: { queryClient },
+      context: {queryClient},
       defaultPreload: 'intent',
       defaultErrorComponent: DefaultCatchBoundary,
       defaultNotFoundComponent: () => <NotFound />,
+      defaultPendingComponent: () => <FullScreenLoading />,
     }),
-    queryClient
+    queryClient,
   );
 }
 

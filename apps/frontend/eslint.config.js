@@ -9,7 +9,15 @@ import {globalIgnores} from 'eslint/config';
 import eslintConfigPrettier from 'eslint-config-prettier/flat';
 
 export default tseslint.config([
-  globalIgnores(['dist', 'node_modules', '*.config.js', '*.config.ts', 'vite.config.ts', 'tailwind.config.mjs', 'postcss.config.mjs']),
+  globalIgnores([
+    'dist',
+    'node_modules',
+    '*.config.js',
+    '*.config.ts',
+    'vite.config.ts',
+    'tailwind.config.mjs',
+    'postcss.config.mjs',
+  ]),
   {
     files: ['src/**/*.{ts,tsx}'],
     extends: [
@@ -49,7 +57,10 @@ export default tseslint.config([
       'react/jsx-key': 'error',
       'react/jsx-no-target-blank': 'error',
       'react/jsx-no-comment-textnodes': 'error',
-      'react/jsx-curly-brace-presence': ['error', { props: 'never', children: 'never' }],
+      'react/jsx-curly-brace-presence': [
+        'error',
+        {props: 'never', children: 'never'},
+      ],
       'react/jsx-boolean-value': ['error', 'never'],
       'react/jsx-closing-bracket-location': ['error', 'line-aligned'],
       'react/jsx-closing-tag-location': 'error',
@@ -58,15 +69,37 @@ export default tseslint.config([
       'react/jsx-first-prop-new-line': ['error', 'multiline'],
       'react/jsx-indent': ['error', 2],
       'react/jsx-indent-props': ['error', 2],
-      'react/jsx-max-props-per-line': ['error', { maximum: 1, when: 'multiline' }],
-      'react/jsx-no-bind': ['error', { allowArrowFunctions: true }],
+      'react/jsx-max-props-per-line': [
+        'error',
+        {maximum: 1, when: 'multiline'},
+      ],
+      'react/jsx-no-bind': ['error', {allowArrowFunctions: true}],
       'react/jsx-no-literals': 'off',
       'react/jsx-one-expression-per-line': 'off',
       'react/jsx-pascal-case': 'error',
       'react/jsx-props-no-multi-spaces': 'error',
       'react/jsx-sort-props': 'off',
-      'react/jsx-tag-spacing': ['error', { closingSlash: 'never', beforeSelfClosing: 'always', afterOpening: 'never' }],
-      'react/jsx-wrap-multilines': ['error', { declaration: 'parens-new-line', assignment: 'parens-new-line', return: 'parens-new-line', arrow: 'parens-new-line', condition: 'parens-new-line', logical: 'parens-new-line', prop: 'parens-new-line' }],
+      'react/jsx-tag-spacing': [
+        'error',
+        {
+          closingSlash: 'never',
+          beforeSelfClosing: 'always',
+          afterOpening: 'never',
+        },
+      ],
+      'react/jsx-wrap-multilines': [
+        'error',
+        {
+          declaration: 'parens-new-line',
+          assignment: 'parens-new-line',
+          return: 'parens-new-line',
+          arrow: 'parens-new-line',
+          condition: 'parens-new-line',
+          logical: 'parens-new-line',
+          prop: 'parens-new-line',
+        },
+      ],
+      'react-refresh/only-export-components': 'warn',
 
       // React Hooks rules
       'react-hooks/rules-of-hooks': 'error',
@@ -100,6 +133,7 @@ export default tseslint.config([
           checksVoidReturn: false, // Allow async event handlers
         },
       ],
+      '@typescript-eslint/no-unsafe-assignment': 'off',
 
       // General rules
       'no-console': 'warn',
@@ -111,12 +145,12 @@ export default tseslint.config([
       'template-curly-spacing': ['error', 'never'],
       'arrow-spacing': 'error',
       'comma-dangle': ['error', 'always-multiline'],
-      'semi': ['error', 'always'],
-      'quotes': ['error', 'single', { avoidEscape: true }],
-      'indent': ['error', 2, { SwitchCase: 1 }],
+      semi: ['error', 'always'],
+      quotes: ['error', 'single', {avoidEscape: true}],
+      indent: ['error', 2, {SwitchCase: 1}],
       'no-trailing-spaces': 'error',
       'eol-last': 'error',
     },
   },
-  eslintConfigPrettier
+  eslintConfigPrettier,
 ]);

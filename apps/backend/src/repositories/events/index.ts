@@ -4,6 +4,7 @@ import type {ScrapedEventData} from '../../services/scraping';
 import {logger} from '~/utils';
 import {jsonArrayFrom} from 'kysely/helpers/postgres';
 import {mapToPaginatedResponse} from '~/middleware';
+import {NotFoundError} from '~/errors';
 export class EventsRepository {
   constructor(private db: Kysely<DB>) {}
 
@@ -297,5 +298,56 @@ export class EventsRepository {
         .where('eventId', 'in', batchIds)
         .execute();
     }
+  }
+
+  // Retrieve event information with ticket waves and images
+  async getById(eventId: string) {
+    const event = await this.db
+      .selectFrom('events')
+      .select(eb => [
+        'id',
+        'name',
+        'description',
+        'eventStartDate',
+        'eventEndDate',
+        'venueName',
+        'venueAddress',
+        'externalUrl',
+        'status',
+        'createdAt',
+        'updatedAt',
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventImages')
+            .select(['eventImages.url', 'eventImages.imageType'])
+            .whereRef('eventImages.eventId', '=', 'events.id')
+            .orderBy('eventImages.displayOrder'),
+        ).as('eventImages'),
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventTicketWaves')
+            .select([
+              'eventTicketWaves.name',
+              'eventTicketWaves.faceValue',
+              'eventTicketWaves.currency',
+              'eventTicketWaves.isSoldOut',
+              'eventTicketWaves.isAvailable',
+              'eventTicketWaves.description',
+            ])
+            .whereRef('eventTicketWaves.eventId', '=', 'events.id')
+            .orderBy('eventTicketWaves.faceValue', 'asc'),
+        ).as('ticketWaves'),
+      ])
+      .where('id', '=', eventId)
+      .where('deletedAt', 'is', null)
+      .where('status', '=', 'active')
+      .orderBy('eventStartDate', 'asc')
+      .executeTakeFirst();
+
+    if (!event) {
+      throw new NotFoundError('Event not found');
+    }
+
+    return event;
   }
 }

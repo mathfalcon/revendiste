@@ -10,6 +10,16 @@
  * ---------------------------------------------------------------
  */
 
+export enum EventTicketCurrency {
+  USD = "USD",
+  UYU = "UYU",
+}
+
+export enum EventImageType {
+  Flyer = "flyer",
+  Hero = "hero",
+}
+
 export interface PaginationMeta {
   /** @format double */
   page: number;
@@ -23,12 +33,52 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-export interface PaginatedResponseIdStringNameStringCreatedAtDate {
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
   data: {
+    images: {
+      imageType: EventImageType;
+      url: string;
+    }[];
+    venueName: string | null;
+    venueAddress: string;
     /** @format date-time */
-    createdAt: string;
+    updatedAt: string;
+    status: string;
     name: string;
     id: string;
+    externalUrl: string;
+    /** @format date-time */
+    eventStartDate: string;
+    /** @format date-time */
+    eventEndDate: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  pagination: PaginationMeta;
+}
+
+export interface GetEventsPaginatedResponse {
+  data: {
+    images: {
+      imageType: EventImageType;
+      url: string;
+    }[];
+    venueName: string | null;
+    venueAddress: string;
+    /** @format date-time */
+    updatedAt: string;
+    status: string;
+    name: string;
+    id: string;
+    externalUrl: string;
+    /** @format date-time */
+    eventStartDate: string;
+    /** @format date-time */
+    eventEndDate: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
   }[];
   pagination: PaginationMeta;
 }
@@ -37,23 +87,42 @@ export interface InferTypeofPaginationSchema {
   sortOrder?: "asc" | "desc";
   sortBy?: string;
   /** @format double */
-  limit?: number;
+  limit: number;
   /** @format double */
-  page?: number;
+  page: number;
 }
 
 export type PaginationQuery = InferTypeofPaginationSchema;
 
-export interface InferTypeofMyValidator {
-  msg: string;
-  /** @format double */
-  code: number;
-  result: {
-    price: string;
-  };
+export interface GetEventByIdResponse {
+  ticketWaves: {
+    isSoldOut: boolean;
+    isAvailable: boolean;
+    faceValue: string;
+    currency: EventTicketCurrency;
+    name: string;
+    description: string | null;
+  }[];
+  eventImages: {
+    imageType: EventImageType;
+    url: string;
+  }[];
+  venueName: string | null;
+  venueAddress: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  name: string;
+  id: string;
+  externalUrl: string;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  description: string | null;
+  /** @format date-time */
+  createdAt: string;
 }
-
-export type MyResponse = InferTypeofMyValidator;
 
 /** Construct a type with a set of properties K of type T */
 export type RecordStringAny = Record<string, any>;
@@ -266,78 +335,29 @@ export class HttpClient<SecurityDataType = unknown> {
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
-  examples = {
+  events = {
     /**
      * No description
      *
-     * @tags Example
-     * @name GetAll
-     * @request GET:/examples
-     */
-    getAll: (params: RequestParams = {}) =>
-      this.request<
-        {
-          /** @format date-time */
-          createdAt: string;
-          name: string;
-          id: string;
-        }[],
-        any
-      >({
-        path: `/examples`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Example
+     * @tags Events
      * @name GetAllPaginated
-     * @request POST:/examples/paginated
+     * @request GET:/events
      */
     getAllPaginated: (
-      data: PaginationQuery,
-      query?: {
+      query: {
         sortOrder?: "asc" | "desc";
         sortBy?: string;
         /** @format double */
-        limit?: number;
+        limit: number;
         /** @format double */
-        page?: number;
+        page: number;
       },
       params: RequestParams = {},
     ) =>
-      this.request<PaginatedResponseIdStringNameStringCreatedAtDate, any>({
-        path: `/examples/paginated`,
-        method: "POST",
-        query: query,
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Example
-     * @name GetOne
-     * @request GET:/examples/{id}
-     */
-    getOne: (id: string, params: RequestParams = {}) =>
-      this.request<
-        {
-          /** @format date-time */
-          createdAt: string;
-          name: string;
-          id: string;
-        },
-        any
-      >({
-        path: `/examples/${id}`,
+      this.request<GetEventsPaginatedResponse, any>({
+        path: `/events`,
         method: "GET",
+        query: query,
         format: "json",
         ...params,
       }),
@@ -345,13 +365,13 @@ export class Api<
     /**
      * No description
      *
-     * @tags Example
-     * @name GetTest
-     * @request GET:/examples/test
+     * @tags Events
+     * @name GetById
+     * @request GET:/events/{eventId}
      */
-    getTest: (params: RequestParams = {}) =>
-      this.request<MyResponse, any>({
-        path: `/examples/test`,
+    getById: (eventId: string, params: RequestParams = {}) =>
+      this.request<GetEventByIdResponse, any>({
+        path: `/events/${eventId}`,
         method: "GET",
         format: "json",
         ...params,
