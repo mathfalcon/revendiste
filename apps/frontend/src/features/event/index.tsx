@@ -20,11 +20,11 @@ export const EventPage = () => {
   );
 
   return (
-    <div className='container mx-auto p-6 flex flex-col gap-6'>
+    <div className='container mx-auto py-6 flex flex-col gap-6'>
       <img
         src={heroImage?.url ?? defaultHeroImage}
         alt='event'
-        className='rounded-lg h-[465px]'
+        className='rounded-lg h-full w-auto max-h-[465px]'
       />
 
       <div className='grid grid-cols-2 gap-10'>
