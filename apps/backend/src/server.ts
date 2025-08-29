@@ -6,6 +6,7 @@ import {errorHandler} from './middleware/errorHandler';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
 import {logger} from './utils';
+import {clerkMiddleware} from '@clerk/express';
 
 const app: express.Application = express();
 
@@ -20,6 +21,8 @@ app.use(
 );
 
 app.use(express.json());
+
+app.use(clerkMiddleware());
 
 registerSwaggerRoutes(app);
 RegisterRoutes(app);

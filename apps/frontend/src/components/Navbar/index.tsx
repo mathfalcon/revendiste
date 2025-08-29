@@ -3,16 +3,10 @@ import {FullLogo} from '~/assets';
 import {ModeToggle} from '../ModeToggle';
 import {SearchInput} from '../SearchInput';
 import {Link} from '@tanstack/react-router';
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignOutButton,
-  useAuth,
-  useSignIn,
-} from '@clerk/tanstack-react-start';
+import {SignedIn, SignedOut, SignInButton} from '@clerk/tanstack-react-start';
 import {cn} from '~/lib/utils';
 import {UserProfile} from '../UserProfile';
+import {SignInAppearance} from '../SignInModal';
 
 // Hamburger icon component
 const HamburgerIcon = ({
@@ -70,45 +64,11 @@ export const Navbar = () => {
         <div className='flex items-center gap-3'>
           <ModeToggle />
           <SignedOut>
-            <SignInButton
-              mode='modal'
-              appearance={{
-                elements: {
-                  formFieldInput:
-                    'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
-                  formButtonPrimary: buttonVariants({variant: 'default'}),
-                  buttonArrowIcon: 'hidden',
-                  card: 'bg-background',
-                  footer: {
-                    background: 'hsl(var(--background))',
-                  },
-                  footerActionText: 'text-foreground',
-                  footerActionLink: 'text-foreground',
-                  rootBox: 'text-foreground',
-                  headerTitle: 'text-foreground',
-                  headerSubtitle: 'text-foreground',
-                  socialButtonsBlockButton: cn(
-                    buttonVariants({
-                      variant: 'ghost',
-                      className: 'bg-background-secondary',
-                    }),
-                  ),
-                  modalCloseButton: 'text-foreground',
-                  dividerLine: 'bg-foreground opacity-25',
-                  dividerText: 'text-foreground opacity-25',
-                  socialButtonsBlockButtonText: 'text-foreground',
-                  formFieldLabel: 'text-foreground',
-                  modalContent: 'm-auto',
-                },
-              }}
-            >
+            <SignInButton mode='modal' appearance={SignInAppearance}>
               <Button
                 variant='ghost'
                 size='sm'
                 className='text-sm font-medium hover:bg-accent hover:text-accent-foreground'
-                onClick={e => {
-                  e.preventDefault();
-                }}
               >
                 Ingresar
               </Button>

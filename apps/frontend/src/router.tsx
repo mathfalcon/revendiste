@@ -11,7 +11,12 @@ import {FullScreenLoading} from './components';
 // to show what's possible with the current APIs.
 
 export function createRouter() {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {retry: false},
+      mutations: {retry: false},
+    },
+  });
 
   return routerWithQueryClient(
     createTanStackRouter({
@@ -25,7 +30,6 @@ export function createRouter() {
     queryClient,
   );
 }
-
 declare module '@tanstack/react-router' {
   interface Register {
     router: ReturnType<typeof createRouter>;

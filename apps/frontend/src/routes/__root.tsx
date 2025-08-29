@@ -16,7 +16,7 @@ import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
 import {Navbar} from '~/components';
 import {ThemeProvider} from '~/components/ThemeProvider';
-import {ClerkProvider, GoogleOneTap} from '@clerk/tanstack-react-start';
+import {ClerkProvider} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
 
 export const Route = createRootRouteWithContext<{

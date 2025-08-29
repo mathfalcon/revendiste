@@ -30,6 +30,9 @@ importers:
 
   apps/backend:
     dependencies:
+      '@clerk/express':
+        specifier: ^1.7.26
+        version: 1.7.26(express@5.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@date-fns/tz':
         specifier: ^1.4.1
         version: 1.4.1
@@ -464,6 +467,12 @@ packages:
     peerDependencies:
       react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
       react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-0
+
+  '@clerk/express@1.7.26':
+    resolution: {integrity: sha512-qVNg5hHUTZsN0Cs5s6InQllz3P1LLCkDA5DOCGuvp3EJ7+tFil1yUTmpn3QyXg3j1IlP8QMGPeUiYev7Mt+ivA==}
+    engines: {node: '>=18.17.0'}
+    peerDependencies:
+      express: ^4.17.0 || ^5.0.0
 
   '@clerk/localizations@3.24.0':
     resolution: {integrity: sha512-7COjNFcvt+lJk2Kcsa7xS47nM0MfdbcfGSkx0IdMQZX56wZtH4ftKhKJxIfiFfuCUIiyThx+Z9QuUqMM7IL9NQ==}
@@ -7324,6 +7333,17 @@ snapshots:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
       tslib: 2.8.1
+
+  '@clerk/express@1.7.26(express@5.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      '@clerk/backend': 2.10.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@clerk/shared': 3.23.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@clerk/types': 4.83.0
+      express: 5.1.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - react
+      - react-dom
 
   '@clerk/localizations@3.24.0':
     dependencies:

@@ -10,6 +10,8 @@ const EnvSchema = z.object({
   POSTGRES_DB: z.string(),
   POSTGRES_PORT: z.coerce.number().default(5432),
   POSTGRES_HOST: z.string().default('localhost'),
+  CLERK_PUBLISHABLE_KEY: z.string(),
+  CLERK_SECRET_KEY: z.string(),
 });
 
 export const env = EnvSchema.safeParse(process.env);
@@ -28,4 +30,6 @@ export const {
   POSTGRES_DB,
   POSTGRES_PORT,
   POSTGRES_HOST,
+  CLERK_PUBLISHABLE_KEY,
+  CLERK_SECRET_KEY,
 } = env.data;
