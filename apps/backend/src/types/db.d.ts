@@ -76,8 +76,23 @@ export interface EventTicketWaves {
   updatedAt: Generated<Timestamp>;
 }
 
+export interface Users {
+  clerkId: string;
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  email: string;
+  firstName: string | null;
+  id: Generated<string>;
+  imageUrl: string | null;
+  lastActiveAt: Timestamp | null;
+  lastName: string | null;
+  metadata: Json | null;
+  updatedAt: Generated<Timestamp>;
+}
+
 export interface DB {
   eventImages: EventImages;
   events: Events;
   eventTicketWaves: EventTicketWaves;
+  users: Users;
 }

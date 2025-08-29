@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   createRootRouteWithContext,
+  useLocation,
 } from '@tanstack/react-router';
 import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
 import {TanStackRouterDevtools} from '@tanstack/react-router-devtools';
@@ -15,6 +16,8 @@ import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
 import {Navbar} from '~/components';
 import {ThemeProvider} from '~/components/ThemeProvider';
+import {ClerkProvider} from '@clerk/tanstack-react-start';
+import {esUY} from '@clerk/localizations';
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -29,7 +32,7 @@ export const Route = createRootRouteWithContext<{
         content: 'width=device-width, initial-scale=1',
       },
       ...seo({
-        title: 'Revendiste | Vende tus entradas de forma fácil y segura',
+        title: 'Revendiste | Transferí tus entradas de forma fácil y segura',
         description: `Revendiste es una plataforma de venta de entradas de forma fácil y segura. `,
       }),
     ],
@@ -88,22 +91,37 @@ function RootComponent() {
 }
 
 function RootDocument({children}: {children: React.ReactNode}) {
+  const location = useLocation();
+
+  // Define routes where navbar should be hidden
+  const hideNavbarRoutes = ['/ingresar', '/registrarse'];
+  const shouldHideNavbar = hideNavbarRoutes.some(route =>
+    location.pathname.startsWith(route),
+  );
+
   return (
-    <html>
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
-          <div className='flex flex-col min-h-screen bg-background-secondary'>
-            <Navbar />
-            {children}
-            <TanStackRouterDevtools position='bottom-right' />
-            <ReactQueryDevtools buttonPosition='bottom-left' />
-            <Scripts />
-          </div>
-        </ThemeProvider>
-      </body>
-    </html>
+    <ClerkProvider
+      localization={esUY}
+      appearance={{
+        cssLayerName: 'clerk',
+      }}
+    >
+      <html>
+        <head>
+          <HeadContent />
+        </head>
+        <body>
+          <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
+            <div className='flex flex-col min-h-screen bg-background-secondary'>
+              {!shouldHideNavbar && <Navbar />}
+              {children}
+              <TanStackRouterDevtools position='bottom-right' />
+              <ReactQueryDevtools buttonPosition='bottom-left' />
+              <Scripts />
+            </div>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

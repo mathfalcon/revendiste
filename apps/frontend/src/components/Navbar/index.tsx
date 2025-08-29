@@ -1,9 +1,12 @@
-import {Button} from '~/components/ui/button';
-import {cn} from '~/lib/utils';
+import {Button, buttonVariants} from '~/components/ui/button';
 import {FullLogo} from '~/assets';
 import {ModeToggle} from '../ModeToggle';
 import {SearchInput} from '../SearchInput';
 import {Link} from '@tanstack/react-router';
+import {SignedIn, SignedOut, SignInButton} from '@clerk/tanstack-react-start';
+import {cn} from '~/lib/utils';
+import {UserProfile} from '../UserProfile';
+import {SignInAppearance} from '../SignInModal';
 
 // Hamburger icon component
 const HamburgerIcon = ({
@@ -60,16 +63,18 @@ export const Navbar = () => {
         {/* Right side */}
         <div className='flex items-center gap-3'>
           <ModeToggle />
-          <Button
-            variant='ghost'
-            size='sm'
-            className='text-sm font-medium hover:bg-accent hover:text-accent-foreground'
-            onClick={e => {
-              e.preventDefault();
-            }}
-          >
-            Ingresar
-          </Button>
+          <SignedOut>
+            <SignInButton mode='modal' appearance={SignInAppearance}>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='text-sm font-medium hover:bg-accent hover:text-accent-foreground'
+              >
+                Ingresar
+              </Button>
+            </SignInButton>
+          </SignedOut>
+
           <Button
             size='sm'
             className='text-sm font-medium px-4 h-9 rounded-md shadow-sm'
@@ -79,6 +84,9 @@ export const Navbar = () => {
           >
             Vende tus entradas
           </Button>
+          <SignedIn>
+            <UserProfile />
+          </SignedIn>
         </div>
       </div>
     </header>

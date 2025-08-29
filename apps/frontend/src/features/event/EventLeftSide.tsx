@@ -10,7 +10,7 @@ type EventLeftSideProps = Pick<
 
 export const EventLeftSide = (props: EventLeftSideProps) => {
   const {name, eventStartDate, venueName, venueAddress, description} = props;
-  console.log(description);
+
   return (
     <div className='flex flex-col gap-8'>
       <div className='flex flex-col gap-4'>

@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RegistrarseSplatRouteImport } from './routes/registrarse.$'
+import { Route as IngresarSplatRouteImport } from './routes/ingresar.$'
 import { Route as EventosEventIdRouteImport } from './routes/eventos/$eventId'
 
 const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
@@ -22,6 +24,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RegistrarseSplatRoute = RegistrarseSplatRouteImport.update({
+  id: '/registrarse/$',
+  path: '/registrarse/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IngresarSplatRoute = IngresarSplatRouteImport.update({
+  id: '/ingresar/$',
+  path: '/ingresar/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventosEventIdRoute = EventosEventIdRouteImport.update({
   id: '/eventos/$eventId',
   path: '/eventos/$eventId',
@@ -31,29 +43,43 @@ const EventosEventIdRoute = EventosEventIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
+  '/ingresar/$': typeof IngresarSplatRoute
+  '/registrarse/$': typeof RegistrarseSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
+  '/ingresar/$': typeof IngresarSplatRoute
+  '/registrarse/$': typeof RegistrarseSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_pathlessLayout': typeof PathlessLayoutRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
+  '/ingresar/$': typeof IngresarSplatRoute
+  '/registrarse/$': typeof RegistrarseSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/eventos/$eventId'
+  fullPaths: '/' | '/eventos/$eventId' | '/ingresar/$' | '/registrarse/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/eventos/$eventId'
-  id: '__root__' | '/' | '/_pathlessLayout' | '/eventos/$eventId'
+  to: '/' | '/eventos/$eventId' | '/ingresar/$' | '/registrarse/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/_pathlessLayout'
+    | '/eventos/$eventId'
+    | '/ingresar/$'
+    | '/registrarse/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PathlessLayoutRoute: typeof PathlessLayoutRoute
   EventosEventIdRoute: typeof EventosEventIdRoute
+  IngresarSplatRoute: typeof IngresarSplatRoute
+  RegistrarseSplatRoute: typeof RegistrarseSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -72,6 +98,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/registrarse/$': {
+      id: '/registrarse/$'
+      path: '/registrarse/$'
+      fullPath: '/registrarse/$'
+      preLoaderRoute: typeof RegistrarseSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ingresar/$': {
+      id: '/ingresar/$'
+      path: '/ingresar/$'
+      fullPath: '/ingresar/$'
+      preLoaderRoute: typeof IngresarSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/eventos/$eventId': {
       id: '/eventos/$eventId'
       path: '/eventos/$eventId'
@@ -86,6 +126,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PathlessLayoutRoute: PathlessLayoutRoute,
   EventosEventIdRoute: EventosEventIdRoute,
+  IngresarSplatRoute: IngresarSplatRoute,
+  RegistrarseSplatRoute: RegistrarseSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

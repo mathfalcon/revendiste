@@ -1,3 +1,4 @@
+@layer theme, base, clerk, components, utilities;
 @import 'tailwindcss';
 @config "../../tailwind.config.js";
 
@@ -23,6 +24,7 @@
   :root {
     --background: 0 0% 100%;
     --background-secondary: 222, 100%, 98%;
+    --foreground: 0 0% 0%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
@@ -94,7 +96,7 @@
     --muted-foreground: 0 0% 63.9%;
     --accent: 0 0% 14.9%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0, 86%, 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
