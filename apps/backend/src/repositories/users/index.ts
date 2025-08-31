@@ -4,7 +4,7 @@ import {logger} from '~/utils';
 import {User} from '~/types';
 
 export class UsersRepository {
-  constructor(private db: Kysely<DB>) {}
+  constructor(private readonly db: Kysely<DB>) {}
 
   // Find user by Clerk ID
   async findByClerkId(clerkId: string) {

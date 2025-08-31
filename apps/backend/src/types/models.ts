@@ -1,4 +1,6 @@
 import {Selectable} from 'kysely';
-import {Users} from './db';
+import {TicketListings, Users} from './db';
 
 export type User = Selectable<Users>;
+
+export type TicketListing = Selectable<TicketListings>;

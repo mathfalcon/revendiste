@@ -13,17 +13,14 @@ import {
   ensurePagination,
   paginationMiddleware,
   PaginationQuery,
-  requireAuthMiddleware,
 } from '~/middleware';
 import {EventsRepository} from '~/repositories';
 import {db} from '~/db';
-import {clerkClient, getAuth} from '@clerk/express';
 
-interface GetEventsPaginatedResponse
-  extends ReturnType<EventsService['getAllEventsPaginated']> {}
-interface GetEventByIdResponse
-  extends ReturnType<EventsService['getEventById']> {}
-
+type GetEventsPaginatedResponse = Promise<
+  ReturnType<EventsService['getAllEventsPaginated']>
+>;
+type GetEventByIdResponse = Promise<ReturnType<EventsService['getEventById']>>;
 @Route('events')
 @Tags('Events')
 export class EventsController {
@@ -38,12 +35,6 @@ export class EventsController {
     return this.service.getAllEventsPaginated({
       pagination: request.pagination!,
     });
-  }
-
-  @Get('/protected')
-  @Middlewares(requireAuthMiddleware)
-  public async getProtected(@Request() req: express.Request) {
-    return req.user;
   }
 
   @Get('/{eventId}')

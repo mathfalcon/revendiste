@@ -7,6 +7,8 @@ import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 import { EventsController } from './controllers/events/index';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { HealthController } from './controllers/health/index';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { TicketListingsController } from './controllers/ticket-listings/index';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 
 
@@ -58,192 +60,6 @@ const models: TsoaRoute.Models = {
     "PaginationQuery": {
         "dataType": "refAlias",
         "type": {"ref":"infer_typeofPaginationSchema_","validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "UserPublicMetadata": {
-        "dataType": "refObject",
-        "properties": {
-        },
-        "additionalProperties": {"dataType":"any"},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "UserPrivateMetadata": {
-        "dataType": "refObject",
-        "properties": {
-        },
-        "additionalProperties": {"dataType":"any"},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "UserUnsafeMetadata": {
-        "dataType": "refObject",
-        "properties": {
-        },
-        "additionalProperties": {"dataType":"any"},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "VerificationStatus": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["unverified"]},{"dataType":"enum","enums":["verified"]},{"dataType":"enum","enums":["transferable"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["expired"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "url.URL": {
-        "dataType": "refAlias",
-        "type": {"dataType":"string","validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Verification": {
-        "dataType": "refObject",
-        "properties": {
-            "status": {"ref":"VerificationStatus","required":true},
-            "strategy": {"dataType":"string","required":true},
-            "externalVerificationRedirectURL": {"dataType":"union","subSchemas":[{"ref":"url.URL"},{"dataType":"enum","enums":[null]}],"required":true},
-            "attempts": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "expireAt": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "nonce": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "message": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "IdentificationLink": {
-        "dataType": "refObject",
-        "properties": {
-            "id": {"dataType":"string","required":true},
-            "type": {"dataType":"string","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "EmailAddress": {
-        "dataType": "refObject",
-        "properties": {
-            "id": {"dataType":"string","required":true},
-            "emailAddress": {"dataType":"string","required":true},
-            "verification": {"dataType":"union","subSchemas":[{"ref":"Verification"},{"dataType":"enum","enums":[null]}],"required":true},
-            "linkedTo": {"dataType":"array","array":{"dataType":"refObject","ref":"IdentificationLink"},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "PhoneNumber": {
-        "dataType": "refObject",
-        "properties": {
-            "id": {"dataType":"string","required":true},
-            "phoneNumber": {"dataType":"string","required":true},
-            "reservedForSecondFactor": {"dataType":"boolean","required":true},
-            "defaultSecondFactor": {"dataType":"boolean","required":true},
-            "verification": {"dataType":"union","subSchemas":[{"ref":"Verification"},{"dataType":"enum","enums":[null]}],"required":true},
-            "linkedTo": {"dataType":"array","array":{"dataType":"refObject","ref":"IdentificationLink"},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Web3Wallet": {
-        "dataType": "refObject",
-        "properties": {
-            "id": {"dataType":"string","required":true},
-            "web3Wallet": {"dataType":"string","required":true},
-            "verification": {"dataType":"union","subSchemas":[{"ref":"Verification"},{"dataType":"enum","enums":[null]}],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Record_string.unknown_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"any"},"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ExternalAccount": {
-        "dataType": "refObject",
-        "properties": {
-            "id": {"dataType":"string","required":true},
-            "provider": {"dataType":"string","required":true},
-            "identificationId": {"dataType":"string","required":true},
-            "externalId": {"dataType":"string","required":true},
-            "approvedScopes": {"dataType":"string","required":true},
-            "emailAddress": {"dataType":"string","required":true},
-            "firstName": {"dataType":"string","required":true},
-            "lastName": {"dataType":"string","required":true},
-            "imageUrl": {"dataType":"string","required":true},
-            "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "phoneNumber": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "publicMetadata": {"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"enum","enums":[null]}],"required":true},
-            "label": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "verification": {"dataType":"union","subSchemas":[{"ref":"Verification"},{"dataType":"enum","enums":[null]}],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SamlAccountConnection": {
-        "dataType": "refObject",
-        "properties": {
-            "id": {"dataType":"string","required":true},
-            "name": {"dataType":"string","required":true},
-            "domain": {"dataType":"string","required":true},
-            "active": {"dataType":"boolean","required":true},
-            "provider": {"dataType":"string","required":true},
-            "syncUserAttributes": {"dataType":"boolean","required":true},
-            "allowSubdomains": {"dataType":"boolean","required":true},
-            "allowIdpInitiated": {"dataType":"boolean","required":true},
-            "createdAt": {"dataType":"double","required":true},
-            "updatedAt": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SamlAccount": {
-        "dataType": "refObject",
-        "properties": {
-            "id": {"dataType":"string","required":true},
-            "provider": {"dataType":"string","required":true},
-            "providerUserId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "active": {"dataType":"boolean","required":true},
-            "emailAddress": {"dataType":"string","required":true},
-            "firstName": {"dataType":"string","required":true},
-            "lastName": {"dataType":"string","required":true},
-            "verification": {"dataType":"union","subSchemas":[{"ref":"Verification"},{"dataType":"enum","enums":[null]}],"required":true},
-            "samlConnection": {"dataType":"union","subSchemas":[{"ref":"SamlAccountConnection"},{"dataType":"enum","enums":[null]}],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "User": {
-        "dataType": "refObject",
-        "properties": {
-            "id": {"dataType":"string","required":true},
-            "passwordEnabled": {"dataType":"boolean","required":true},
-            "totpEnabled": {"dataType":"boolean","required":true},
-            "backupCodeEnabled": {"dataType":"boolean","required":true},
-            "twoFactorEnabled": {"dataType":"boolean","required":true},
-            "banned": {"dataType":"boolean","required":true},
-            "locked": {"dataType":"boolean","required":true},
-            "createdAt": {"dataType":"double","required":true},
-            "updatedAt": {"dataType":"double","required":true},
-            "imageUrl": {"dataType":"string","required":true},
-            "hasImage": {"dataType":"boolean","required":true},
-            "primaryEmailAddressId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "primaryPhoneNumberId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "primaryWeb3WalletId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "lastSignInAt": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "externalId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "firstName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "lastName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "publicMetadata": {"ref":"UserPublicMetadata","required":true},
-            "privateMetadata": {"ref":"UserPrivateMetadata","required":true},
-            "unsafeMetadata": {"ref":"UserUnsafeMetadata","required":true},
-            "emailAddresses": {"dataType":"array","array":{"dataType":"refObject","ref":"EmailAddress"},"required":true},
-            "phoneNumbers": {"dataType":"array","array":{"dataType":"refObject","ref":"PhoneNumber"},"required":true},
-            "web3Wallets": {"dataType":"array","array":{"dataType":"refObject","ref":"Web3Wallet"},"required":true},
-            "externalAccounts": {"dataType":"array","array":{"dataType":"refObject","ref":"ExternalAccount"},"required":true},
-            "samlAccounts": {"dataType":"array","array":{"dataType":"refObject","ref":"SamlAccount"},"required":true},
-            "lastActiveAt": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "createOrganizationEnabled": {"dataType":"boolean","required":true},
-            "createOrganizationsLimit": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "deleteSelfEnabled": {"dataType":"boolean","required":true},
-            "legalAcceptedAt": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-        },
-        "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "EventTicketCurrency": {
@@ -299,6 +115,25 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CreateTicketListingResponse": {
+        "dataType": "refObject",
+        "properties": {
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CreateTicketListingDto": {
+        "dataType": "refObject",
+        "properties": {
+            "eventId": {"dataType":"string","required":true},
+            "ticketWaveId": {"dataType":"string","required":true},
+            "publisherUserId": {"dataType":"string","required":true},
+            "price": {"dataType":"double","required":true},
+            "quantity": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
 const templateService = new ExpressTemplateService(models, {"noImplicitAdditionalProperties":"silently-remove-extras","bodyCoercion":true});
 
@@ -336,36 +171,6 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getAllPaginated',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsEventsController_getProtected: Record<string, TsoaRoute.ParameterSchema> = {
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
-        };
-        app.get('/events/protected',
-            ...(fetchMiddlewares<RequestHandler>(EventsController)),
-            ...(fetchMiddlewares<RequestHandler>(EventsController.prototype.getProtected)),
-
-            async function EventsController_getProtected(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsEventsController_getProtected, request, response });
-
-                const controller = new EventsController();
-
-              await templateService.apiHandler({
-                methodName: 'getProtected',
                 controller,
                 response,
                 next,
@@ -570,6 +375,37 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'liveness',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTicketListingsController_create: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"CreateTicketListingDto"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/ticket-listings',
+            ...(fetchMiddlewares<RequestHandler>(TicketListingsController)),
+            ...(fetchMiddlewares<RequestHandler>(TicketListingsController.prototype.create)),
+
+            async function TicketListingsController_create(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTicketListingsController_create, request, response });
+
+                const controller = new TicketListingsController();
+
+              await templateService.apiHandler({
+                methodName: 'create',
                 controller,
                 response,
                 next,

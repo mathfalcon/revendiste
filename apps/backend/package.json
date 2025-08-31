@@ -14,7 +14,7 @@
     "tsoa:spec": "tsoa spec",
     "tsoa:routes": "tsoa routes",
     "tsoa:both": "tsoa routes && tsoa spec",
-    "generate:db": "kysely-codegen --camel-case --dialect postgres --out-file ./src/types/db.d.ts",
+    "generate:db": "kysely-codegen --camel-case --dialect postgres --out-file ./src/types/db.d.ts && tsx src/utils/cleanDbTypes.ts",
     "scrape-events": "tsx src/cronjobs/scrape-events.ts",
     "postinstall": "npx playwright install chromium"
   },

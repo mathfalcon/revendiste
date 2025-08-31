@@ -1,5 +1,5 @@
-import { Route, Get, Tags } from '@tsoa/runtime';
-import { HealthService } from '~/services';
+import {Route, Get, Tags} from '@tsoa/runtime';
+import {HealthService} from '~/services';
 
 const healthService = new HealthService();
 
@@ -11,7 +11,7 @@ export class HealthController {
   public async basic() {
     return {
       status: 'ok',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 

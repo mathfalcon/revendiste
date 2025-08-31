@@ -6,7 +6,7 @@ import {jsonArrayFrom} from 'kysely/helpers/postgres';
 import {mapToPaginatedResponse} from '~/middleware';
 import {NotFoundError} from '~/errors';
 export class EventsRepository {
-  constructor(private db: Kysely<DB>) {}
+  constructor(private readonly db: Kysely<DB>) {}
 
   // Upsert event with all related data in a single transaction
   async upsertScrapedEvent(event: ScrapedEventData) {
