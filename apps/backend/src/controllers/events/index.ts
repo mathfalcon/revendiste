@@ -7,6 +7,7 @@ import {
   Request,
   Queries,
   Path,
+  Query,
 } from '@tsoa/runtime';
 import {EventsService} from '~/services';
 import {
@@ -21,6 +22,8 @@ type GetEventsPaginatedResponse = Promise<
   ReturnType<EventsService['getAllEventsPaginated']>
 >;
 type GetEventByIdResponse = Promise<ReturnType<EventsService['getEventById']>>;
+type SearchEventsResponse = Promise<ReturnType<EventsService['getBySearch']>>;
+
 @Route('events')
 @Tags('Events')
 export class EventsController {
@@ -35,6 +38,14 @@ export class EventsController {
     return this.service.getAllEventsPaginated({
       pagination: request.pagination!,
     });
+  }
+
+  @Get('/search')
+  public async getBySearch(
+    @Query() query: string,
+    @Query() limit?: number,
+  ): Promise<SearchEventsResponse> {
+    return this.service.getBySearch(query, limit);
   }
 
   @Get('/{eventId}')

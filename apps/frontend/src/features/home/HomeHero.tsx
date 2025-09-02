@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import heroImageUrl from '~/assets/backgrounds/homepage.png?url';
-import {SearchInput} from '~/components/SearchInput';
+import {EventSearchInput} from '~/components/SearchInput';
 
 const homePageTaglines = [
   'Si no vas, que tu entrada no quede tirada. Vendela fácil y seguro',
@@ -79,7 +79,7 @@ export const HomeHero = () => {
       <AnimatedTagline taglines={homePageTaglines} index={taglineIndex} />
 
       <div className='w-[45dvw]'>
-        <SearchInput
+        <EventSearchInput
           placeholder='¿A qué fiesta te sumás?'
           className='z-10 bg-background h-[48px]'
         />

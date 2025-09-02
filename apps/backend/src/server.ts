@@ -24,8 +24,12 @@ app.use(express.json());
 
 app.use(clerkMiddleware());
 
-registerSwaggerRoutes(app);
-RegisterRoutes(app);
+const router = express.Router();
+
+registerSwaggerRoutes(router);
+RegisterRoutes(router);
+
+app.use('/api', router);
 
 // Global error handler (must be last)
 app.use(errorHandler);

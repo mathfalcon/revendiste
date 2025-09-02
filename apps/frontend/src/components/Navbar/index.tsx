@@ -1,7 +1,7 @@
 import {Button, buttonVariants} from '~/components/ui/button';
 import {FullLogo} from '~/assets';
 import {ModeToggle} from '../ModeToggle';
-import {SearchInput} from '../SearchInput';
+import {EventSearchInput} from '../SearchInput';
 import {Link} from '@tanstack/react-router';
 import {SignedIn, SignedOut, SignInButton} from '@clerk/tanstack-react-start';
 import {cn} from '~/lib/utils';
@@ -57,7 +57,7 @@ export const Navbar = () => {
         {/* Center side */}
 
         <div className='items-center gap-2 hidden md:flex w-full max-w-[400px]'>
-          <SearchInput />
+          <EventSearchInput />
         </div>
 
         {/* Right side */}

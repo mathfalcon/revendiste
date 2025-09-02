@@ -12,3 +12,11 @@ export const getEventByIdQuery = (eventId: string) =>
     queryKey: ['events', eventId],
     queryFn: () => api.events.getById(eventId).then(res => res.data),
   });
+
+export const getEventBySearchQuery = (searchQuery: string) =>
+  queryOptions({
+    queryKey: ['events', 'search', searchQuery],
+    queryFn: () =>
+      api.events.getBySearch({query: searchQuery}).then(res => res.data),
+    enabled: searchQuery.length > 0,
+  });

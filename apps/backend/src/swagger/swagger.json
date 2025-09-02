@@ -179,6 +179,89 @@
 			"PaginationQuery": {
 				"$ref": "#/components/schemas/infer_typeofPaginationSchema_"
 			},
+			"ReturnType_EventsService-at-getBySearch_": {
+				"items": {
+					"properties": {
+						"eventImages": {
+							"items": {
+								"properties": {
+									"imageType": {
+										"$ref": "#/components/schemas/EventImageType"
+									},
+									"url": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"imageType",
+									"url"
+								],
+								"type": "object"
+							},
+							"type": "array"
+						},
+						"venueName": {
+							"type": "string",
+							"nullable": true
+						},
+						"venueAddress": {
+							"type": "string"
+						},
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"status": {
+							"type": "string"
+						},
+						"name": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						},
+						"externalUrl": {
+							"type": "string"
+						},
+						"eventStartDate": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"eventEndDate": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"description": {
+							"type": "string",
+							"nullable": true
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						}
+					},
+					"required": [
+						"eventImages",
+						"venueName",
+						"venueAddress",
+						"updatedAt",
+						"status",
+						"name",
+						"id",
+						"externalUrl",
+						"eventStartDate",
+						"eventEndDate",
+						"description",
+						"createdAt"
+					],
+					"type": "object"
+				},
+				"type": "array",
+				"description": "Obtain the return type of a function type"
+			},
+			"SearchEventsResponse": {
+				"$ref": "#/components/schemas/ReturnType_EventsService-at-getBySearch_"
+			},
 			"EventTicketCurrency": {
 				"type": "string",
 				"enum": [
@@ -548,6 +631,46 @@
 						"in": "query",
 						"name": "page",
 						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/events/search": {
+			"get": {
+				"operationId": "GetBySearch",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SearchEventsResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "query",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
 						"schema": {
 							"format": "double",
 							"type": "number"

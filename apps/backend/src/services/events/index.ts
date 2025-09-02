@@ -144,4 +144,12 @@ export class EventsService {
   async getEventById(eventId: string) {
     return this.eventsRepository.getById(eventId);
   }
+
+  async getBySearch(query: string, limit: number = 20) {
+    if (!query || query.trim().length === 0) {
+      return [];
+    }
+
+    return this.eventsRepository.getBySearch(query.trim(), limit);
+  }
 }

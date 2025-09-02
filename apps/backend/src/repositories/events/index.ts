@@ -5,6 +5,8 @@ import {logger} from '~/utils';
 import {jsonArrayFrom} from 'kysely/helpers/postgres';
 import {mapToPaginatedResponse} from '~/middleware';
 import {NotFoundError} from '~/errors';
+import {sql} from 'kysely';
+
 export class EventsRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
@@ -349,5 +351,54 @@ export class EventsRepository {
     }
 
     return event;
+  }
+
+  // Search events by name using trigram similarity for fuzzy matching
+  async getBySearch(query: string, limit: number = 20) {
+    const events = await this.db
+      .selectFrom('events')
+      .select(eb => [
+        'id',
+        'name',
+        'description',
+        'eventStartDate',
+        'eventEndDate',
+        'venueName',
+        'venueAddress',
+        'externalUrl',
+        'status',
+        'createdAt',
+        'updatedAt',
+        // Only include flyer images for the search results
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventImages')
+            .select(['eventImages.url', 'eventImages.imageType'])
+            .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.imageType', '=', 'flyer')
+            .orderBy('eventImages.displayOrder'),
+        ).as('eventImages'),
+      ])
+      .where('deletedAt', 'is', null)
+      .where('status', '=', 'active')
+      // Use more flexible search: trigram similarity OR ILIKE for short queries
+      .where(
+        eb =>
+          query.length <= 3
+            ? sql`${eb.ref('name')} ILIKE ${`%${query}%`}` // For short queries, use simple substring search
+            : sql`${eb.ref('name')} % ${query}`, // For longer queries, use trigram similarity
+      )
+      // Order by relevance: exact matches first, then similarity, then date
+      .orderBy(
+        eb =>
+          query.length <= 3
+            ? sql`CASE WHEN ${eb.ref('name')} ILIKE ${query} THEN 0 ELSE 1 END` // Exact matches first
+            : sql`${eb.ref('name')} <<-> ${query}`, // Similarity ranking
+      )
+      .orderBy('eventStartDate', 'asc')
+      .limit(limit)
+      .execute();
+
+    return events;
   }
 }
