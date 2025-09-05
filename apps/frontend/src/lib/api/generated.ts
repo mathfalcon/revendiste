@@ -109,6 +109,7 @@ export interface ReturnTypeEventsServiceAtGetEventById {
     faceValue: string;
     currency: EventTicketCurrency;
     name: string;
+    id: string;
     description: string | null;
   }[];
   eventImages: {

@@ -12,7 +12,7 @@ import {
   CommandEmpty,
   CommandInput,
 } from '../ui/command';
-import {useNavigate} from '@tanstack/react-router';
+import {Link, useNavigate} from '@tanstack/react-router';
 
 export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -30,7 +30,7 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
 
   return (
     <div className='relative w-full' ref={ref}>
-      <Command className='bg-background'>
+      <Command className='bg-background' shouldFilter={false} loop>
         <CommandInput
           id='event-search'
           name='event-search'
@@ -53,32 +53,38 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
                 });
                 setIsFocused(false);
               };
+
               return (
                 <CommandItem
                   key={event.id}
                   value={event.name}
                   className='flex'
                   onSelect={handleSelect}
-                  onClick={() => {
-                    console.log('onClick');
-                  }}
                 >
-                  {flyerImage && (
-                    <img
-                      src={flyerImage.url}
-                      alt={event.name}
-                      width={32}
-                      height='auto'
-                    />
-                  )}
-                  <div className='flex flex-col'>
-                    <span className='font-medium'>{event.name}</span>
-                    {event.venueName && (
-                      <span className='text-xs text-muted-foreground'>
-                        {event.venueName}
-                      </span>
+                  <Link
+                    to='/eventos/$eventId'
+                    params={{eventId: event.id}}
+                    key={event.id}
+                    className='flex w-full gap-3 h-[32px]'
+                  >
+                    {flyerImage && (
+                      <img
+                        src={flyerImage.url}
+                        alt={event.name}
+                        height={32}
+                        width={32}
+                        className='object-cover'
+                      />
                     )}
-                  </div>
+                    <div className='flex flex-col'>
+                      <span className='font-medium'>{event.name}</span>
+                      {event.venueName && (
+                        <span className='text-xs text-muted-foreground'>
+                          {event.venueName}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
                 </CommandItem>
               );
             })}

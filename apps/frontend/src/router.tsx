@@ -13,7 +13,7 @@ import {FullScreenLoading} from './components';
 export function createRouter() {
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: {retry: false},
+      queries: {retry: false, staleTime: 1000 * 60 * 5},
       mutations: {retry: false},
     },
   });

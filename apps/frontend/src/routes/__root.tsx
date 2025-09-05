@@ -112,7 +112,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
         </head>
         <body>
           <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
-            <div className='flex flex-col min-h-screen bg-background-secondary'>
+            <div className='flex flex-col h-screen bg-background-secondary'>
               {!shouldHideNavbar && <Navbar />}
               {children}
               <TanStackRouterDevtools position='bottom-right' />

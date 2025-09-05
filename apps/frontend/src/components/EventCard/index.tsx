@@ -5,6 +5,8 @@ import {getCurrencySymbol} from '~/utils';
 import {Link} from '@tanstack/react-router';
 import {Separator} from '../ui/separator';
 import {Calendar, MapPin} from '~/assets';
+import {TextEllipsis} from '../ui/text-ellipsis';
+import {EventTicketCurrency} from '~/lib';
 
 type EventCardProps = {
   id: string;
@@ -14,7 +16,7 @@ type EventCardProps = {
   description: string;
   venueName: string;
   startPrice: number;
-  currency: 'USD' | 'UYU';
+  currency: EventTicketCurrency;
 };
 
 export const EventCard = (props: EventCardProps) => {
@@ -56,18 +58,12 @@ export const EventCard = (props: EventCardProps) => {
               </span>
             </div>
           </div>
-          <p
+          <TextEllipsis
             className={`text-xs overflow-hidden text-ellipsis h-[3.75rem] max-h-[3.75rem] ${description ? '' : 'text-muted-foreground'}`}
-            style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 4,
-              WebkitBoxOrient: 'vertical',
-              whiteSpace: 'normal',
-            }}
-            title={description || 'Sin descripción'}
+            maxLines={4}
           >
             {description || 'Sin descripción'}
-          </p>
+          </TextEllipsis>
         </div>
         <div className='flex flex-col gap-2'>
           <Separator />
@@ -91,3 +87,5 @@ export const EventCard = (props: EventCardProps) => {
     </article>
   );
 };
+
+export * from './SkeletonEventCard';

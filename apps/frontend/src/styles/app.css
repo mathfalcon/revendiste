@@ -16,6 +16,7 @@
   html,
   body {
     @apply text-gray-900 bg-gray-50 dark:bg-gray-950 dark:text-gray-200;
+    background-color: hsl(var(--background-secondary));
   }
 
   .using-mouse * {
@@ -57,6 +58,7 @@
     --chart-5: 27 87% 67%;
 
     --event-card-width: 300px;
+    --navbar-height: 65px;
   }
 
   /* Use background-image (not the shorthand) so nothing overrides it */

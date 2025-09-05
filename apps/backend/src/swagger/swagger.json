@@ -289,6 +289,9 @@
 								"name": {
 									"type": "string"
 								},
+								"id": {
+									"type": "string"
+								},
 								"description": {
 									"type": "string",
 									"nullable": true
@@ -300,6 +303,7 @@
 								"faceValue",
 								"currency",
 								"name",
+								"id",
 								"description"
 							],
 							"type": "object"

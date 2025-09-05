@@ -11,6 +11,7 @@ export const getEventByIdQuery = (eventId: string) =>
   queryOptions({
     queryKey: ['events', eventId],
     queryFn: () => api.events.getById(eventId).then(res => res.data),
+    enabled: !!eventId && eventId.length > 0,
   });
 
 export const getEventBySearchQuery = (searchQuery: string) =>
@@ -18,5 +19,4 @@ export const getEventBySearchQuery = (searchQuery: string) =>
     queryKey: ['events', 'search', searchQuery],
     queryFn: () =>
       api.events.getBySearch({query: searchQuery}).then(res => res.data),
-    enabled: searchQuery.length > 0,
   });

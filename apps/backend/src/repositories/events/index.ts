@@ -329,6 +329,7 @@ export class EventsRepository {
           eb
             .selectFrom('eventTicketWaves')
             .select([
+              'eventTicketWaves.id',
               'eventTicketWaves.name',
               'eventTicketWaves.faceValue',
               'eventTicketWaves.currency',
@@ -351,6 +352,44 @@ export class EventsRepository {
     }
 
     return event;
+  }
+
+  // Get upcoming events ordered by start date
+  async getUpcomingEvents(limit: number = 8) {
+    const now = new Date();
+
+    const events = await this.db
+      .selectFrom('events')
+      .select(eb => [
+        'id',
+        'name',
+        'description',
+        'eventStartDate',
+        'eventEndDate',
+        'venueName',
+        'venueAddress',
+        'externalUrl',
+        'status',
+        'createdAt',
+        'updatedAt',
+        // Only include flyer images for the search results
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventImages')
+            .select(['eventImages.url', 'eventImages.imageType'])
+            .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.imageType', '=', 'flyer')
+            .orderBy('eventImages.displayOrder'),
+        ).as('eventImages'),
+      ])
+      .where('deletedAt', 'is', null)
+      .where('status', '=', 'active')
+      .where('eventStartDate', '>=', now)
+      .orderBy('eventStartDate', 'asc')
+      .limit(limit)
+      .execute();
+
+    return events;
   }
 
   // Search events by name using trigram similarity for fuzzy matching

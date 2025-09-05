@@ -147,7 +147,7 @@ export class EventsService {
 
   async getBySearch(query: string, limit: number = 20) {
     if (!query || query.trim().length === 0) {
-      return [];
+      return this.eventsRepository.getUpcomingEvents(8);
     }
 
     return this.eventsRepository.getBySearch(query.trim(), limit);

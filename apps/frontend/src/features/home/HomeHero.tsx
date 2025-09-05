@@ -70,7 +70,7 @@ export const HomeHero = () => {
   const taglineIndex = useRotatingTagline(homePageTaglines);
 
   return (
-    <section className='hero min-h-[50dvh] h-[50dvh] overflow-hidden relative flex flex-col items-center justify-center'>
+    <section className='hero min-h-[50dvh] h-[50dvh]  relative flex flex-col items-center justify-center'>
       <img
         src={heroImageUrl}
         alt='People partying'
