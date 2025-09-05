@@ -1,0 +1,13 @@
+import {mutationOptions} from '@tanstack/react-query';
+import {api, CreateTicketListingDto} from '..';
+import {toast} from 'sonner';
+
+export const postTicketListingMutation = () =>
+  mutationOptions({
+    mutationKey: ['create-ticket-listing'],
+    mutationFn: (data: CreateTicketListingDto) =>
+      api.ticketListings.create(data),
+    onSuccess() {
+      toast.success('Entradas publicadas con éxito');
+    },
+  });

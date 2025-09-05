@@ -16,11 +16,12 @@ import {Check} from 'lucide-react';
 import {cn} from '~/lib/utils';
 import {TicketListingFormValues} from './TicketListingForm';
 import {useDebounceCallback} from 'usehooks-ts';
-import {useQuery} from '@tanstack/react-query';
+import {useMutation, useQuery} from '@tanstack/react-query';
 import {
   EventTicketCurrency,
   getEventByIdQuery,
   getEventBySearchQuery,
+  postTicketListingMutation,
 } from '~/lib';
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
@@ -40,9 +41,15 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
 
   const eventsQuery = useQuery(getEventBySearchQuery(eventSearchValue));
   const eventDetailsQuery = useQuery(getEventByIdQuery(form.watch('eventId')));
+  const createTicketListingMutation = useMutation(postTicketListingMutation());
 
-  const onSubmit: SubmitHandler<TicketListingFormValues> = _data => {
-    // TODO: Implement form submission
+  const onSubmit: SubmitHandler<TicketListingFormValues> = async data => {
+    await createTicketListingMutation.mutateAsync({
+      eventId: data.eventId,
+      ticketWaveId: data.eventTicketWaveId,
+      price: data.price,
+      quantity: data.quantity,
+    });
   };
 
   const eventsComboboxOptions = useMemo(() => {
@@ -223,7 +230,11 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
         }}
       />
 
-      <Button type='submit' className='w-full'>
+      <Button
+        type='submit'
+        className='w-full'
+        disabled={form.formState.isSubmitting}
+      >
         {mode === 'create' ? 'Publicar' : 'Actualizar'}
       </Button>
     </form>

@@ -16,4 +16,5 @@ api.instance.interceptors.response.use(
 );
 
 export * from './events';
+export * from './ticket-listings';
 export * from './generated';

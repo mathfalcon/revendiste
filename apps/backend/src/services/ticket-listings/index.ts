@@ -9,7 +9,6 @@ import {NotFoundError, ValidationError} from '~/errors';
 export interface CreateTicketListingDto {
   eventId: string;
   ticketWaveId: string;
-  publisherUserId: string;
   price: number;
   quantity: number;
 }
@@ -21,7 +20,10 @@ export class TicketListingsService {
     private readonly eventTicketWavesRepository: EventTicketWavesRepository,
   ) {}
 
-  async createTicketListing(data: CreateTicketListingDto) {
+  async createTicketListing(
+    data: CreateTicketListingDto,
+    publisherUserId: string,
+  ) {
     // Validate that the event exists and hasn't finished
     const event = await this.eventsRepository.getById(data.eventId);
     if (!event) {
@@ -64,7 +66,7 @@ export class TicketListingsService {
     // Create multiple listings in a single batch operation (already atomic)
     const createdListings = await this.ticketListingsRepository.createBatch(
       Array.from({length: data.quantity}, () => ({
-        publisherUserId: data.publisherUserId,
+        publisherUserId: publisherUserId,
         eventId: data.eventId,
         ticketWaveId: data.ticketWaveId,
         price: data.price.toString(),
@@ -72,7 +74,7 @@ export class TicketListingsService {
     );
 
     logger.info(
-      `Created ${data.quantity} ticket listings for user ${data.publisherUserId} on event ${data.eventId}`,
+      `Created ${data.quantity} ticket listings for user ${publisherUserId} on event ${data.eventId}`,
     );
 
     return createdListings;

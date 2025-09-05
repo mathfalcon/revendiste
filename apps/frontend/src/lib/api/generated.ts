@@ -182,10 +182,45 @@ export type ReturnTypeTicketListingsServiceAtCreateTicketListing = {
 export type CreateTicketListingResponse =
   ReturnTypeTicketListingsServiceAtCreateTicketListing;
 
+export interface UnauthorizedError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+}
+
+export interface BadRequestError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+}
+
+export interface NotFoundError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+}
+
+export interface ValidationError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+}
+
 export interface CreateTicketListingDto {
   eventId: string;
   ticketWaveId: string;
-  publisherUserId: string;
   /** @format double */
   price: number;
   /** @format double */
@@ -584,7 +619,10 @@ export class Api<
      * @request POST:/ticket-listings
      */
     create: (data: CreateTicketListingDto, params: RequestParams = {}) =>
-      this.request<CreateTicketListingResponse, any>({
+      this.request<
+        CreateTicketListingResponse,
+        BadRequestError | UnauthorizedError | NotFoundError | ValidationError
+      >({
         path: `/ticket-listings`,
         method: "POST",
         body: data,

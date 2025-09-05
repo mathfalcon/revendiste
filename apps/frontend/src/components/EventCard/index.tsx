@@ -13,8 +13,8 @@ type EventCardProps = {
   imageUrl?: string;
   name: string;
   date: string;
-  description: string;
-  venueName: string;
+  description: string | null;
+  venueName: string | null;
   startPrice: number;
   currency: EventTicketCurrency;
 };
@@ -62,7 +62,7 @@ export const EventCard = (props: EventCardProps) => {
             className={`text-xs overflow-hidden text-ellipsis h-[3.75rem] max-h-[3.75rem] ${description ? '' : 'text-muted-foreground'}`}
             maxLines={4}
           >
-            {description || 'Sin descripción'}
+            {description ?? 'Sin descripción'}
           </TextEllipsis>
         </div>
         <div className='flex flex-col gap-2'>

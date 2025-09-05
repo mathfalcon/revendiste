@@ -18,6 +18,7 @@ import {Navbar} from '~/components';
 import {ThemeProvider} from '~/components/ThemeProvider';
 import {ClerkProvider} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
+import {Toaster} from '~/components/ui/sonner';
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -118,6 +119,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
               <TanStackRouterDevtools position='bottom-right' />
               <ReactQueryDevtools buttonPosition='bottom-left' />
               <Scripts />
+              <Toaster position='top-center' />
             </div>
           </ThemeProvider>
         </body>

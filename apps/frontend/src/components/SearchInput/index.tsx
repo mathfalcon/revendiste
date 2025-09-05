@@ -1,17 +1,9 @@
-import {SearchIcon} from 'lucide-react';
-import {Input} from '../ui/input';
 import {cx} from 'class-variance-authority';
 import {useRef, useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useDebounceCallback, useOnClickOutside} from 'usehooks-ts';
 import {getEventBySearchQuery} from '~/lib';
-import {
-  Command,
-  CommandList,
-  CommandItem,
-  CommandEmpty,
-  CommandInput,
-} from '../ui/command';
+import {Command, CommandList, CommandItem, CommandInput} from '../ui/command';
 import {Link, useNavigate} from '@tanstack/react-router';
 
 export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
@@ -42,7 +34,7 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
           className={cx('h-8 pe-1', props.className)}
         />
         {isFocused && (
-          <CommandList className='absolute bg-background w-full rounded-md top-full mt-2'>
+          <CommandList className='absolute bg-background w-full rounded-md top-full mt-2 py-1.5 px-1'>
             {events.map(event => {
               const flyerImage = event.eventImages[0] ?? null;
 
