@@ -41,7 +41,7 @@ export const EventPage = () => {
           loading='eager'
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageLoaded(true)}
-          className='rounded-lg h-auto w-full transition-opacity duration-300'
+          className='rounded-lg transition-opacity duration-300 max-h-[480px] w-full object-contain'
         />
 
         <div className='grid grid-cols-2 gap-10'>

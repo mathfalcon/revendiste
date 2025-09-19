@@ -3,11 +3,11 @@
  * Please do not edit it manually.
  */
 
-import type {ColumnType} from 'kysely';
+import type { ColumnType } from "kysely";
 
-export type EventImageType = 'flyer' | 'hero';
+export type EventImageType = "flyer" | "hero";
 
-export type EventTicketCurrency = 'USD' | 'UYU';
+export type EventTicketCurrency = "USD" | "UYU";
 
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
@@ -27,9 +27,7 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
-export type QrAvailabilityTiming = '12h' | '24h' | '48h' | '6h' | '72h';
-
-export type TicketListingStatus = 'active' | 'cancelled' | 'expired' | 'sold';
+export type QrAvailabilityTiming = "12h" | "24h" | "48h" | "6h" | "72h";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
@@ -81,16 +79,25 @@ export interface EventTicketWaves {
   updatedAt: Generated<Timestamp>;
 }
 
-export interface TicketListings {
+export interface Listings {
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
-  eventId: string;
   id: Generated<string>;
-  price: Numeric;
   publisherUserId: string;
   soldAt: Timestamp | null;
-  status: Generated<TicketListingStatus>;
   ticketWaveId: string;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface ListingTickets {
+  cancelledAt: Timestamp | null;
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  listingId: string;
+  price: Numeric;
+  soldAt: Timestamp | null;
+  ticketNumber: number;
   updatedAt: Generated<Timestamp>;
 }
 
@@ -112,6 +119,7 @@ export interface DB {
   eventImages: EventImages;
   events: Events;
   eventTicketWaves: EventTicketWaves;
-  ticketListings: TicketListings;
+  listings: Listings;
+  listingTickets: ListingTickets;
   users: Users;
 }

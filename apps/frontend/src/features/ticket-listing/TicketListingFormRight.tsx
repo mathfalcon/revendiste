@@ -221,6 +221,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
                     )
                   }
                   min={1}
+                  max={10}
                 />
               </FormControl>
 

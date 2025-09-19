@@ -274,14 +274,38 @@
 					"ticketWaves": {
 						"items": {
 							"properties": {
-								"isSoldOut": {
-									"type": "boolean"
-								},
-								"isAvailable": {
-									"type": "boolean"
-								},
-								"faceValue": {
-									"type": "string"
+								"waveListings": {
+									"items": {
+										"properties": {
+											"listingTickets": {
+												"items": {
+													"properties": {
+														"price": {
+															"type": "string"
+														},
+														"id": {
+															"type": "string"
+														}
+													},
+													"required": [
+														"price",
+														"id"
+													],
+													"type": "object"
+												},
+												"type": "array"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"listingTickets",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
 								},
 								"currency": {
 									"$ref": "#/components/schemas/EventTicketCurrency"
@@ -298,9 +322,7 @@
 								}
 							},
 							"required": [
-								"isSoldOut",
-								"isAvailable",
-								"faceValue",
+								"waveListings",
 								"currency",
 								"name",
 								"id",
@@ -474,67 +496,256 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ReturnType_TicketListingsService-at-createTicketListing_": {
-				"items": {
-					"properties": {
-						"ticketWaveId": {
-							"type": "string"
-						},
-						"soldAt": {
-							"type": "string",
-							"format": "date-time",
-							"nullable": true
-						},
-						"publisherUserId": {
-							"type": "string"
-						},
-						"price": {
-							"type": "string"
-						},
-						"eventId": {
-							"type": "string"
-						},
-						"updatedAt": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"status": {
-							"type": "string",
-							"enum": [
-								"active",
-								"cancelled",
-								"expired",
-								"sold"
-							]
-						},
-						"id": {
-							"type": "string"
-						},
-						"deletedAt": {
-							"type": "string",
-							"format": "date-time",
-							"nullable": true
-						},
-						"createdAt": {
-							"type": "string",
-							"format": "date-time"
-						}
+			"ColumnType_Date.string-or-Date-or-undefined.string-or-Date_": {
+				"properties": {
+					"__update__": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "string",
+								"format": "date-time"
+							}
+						]
 					},
-					"required": [
-						"ticketWaveId",
-						"soldAt",
-						"publisherUserId",
-						"price",
-						"eventId",
-						"updatedAt",
-						"status",
-						"id",
-						"deletedAt",
-						"createdAt"
-					],
-					"type": "object"
+					"__insert__": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "string",
+								"format": "date-time"
+							}
+						]
+					},
+					"__select__": {
+						"type": "string",
+						"format": "date-time"
+					}
 				},
-				"type": "array",
+				"required": [
+					"__update__",
+					"__select__"
+				],
+				"type": "object",
+				"description": "This type can be used to specify a different type for\nselect, insert and update operations.\n\nAlso see the {@link Generated} type.\n\n### Examples\n\nThe next example defines a number column that is optional\nin inserts and updates. All columns are always optional\nin updates so therefore we don't need to specify `undefined`\nfor the update type. The type below is useful for all kinds of\ndatabase generated columns like identifiers. The `Generated`\ntype is actually just a shortcut for the type in this example:\n\n```ts\ntype GeneratedNumber = ColumnType<number, number | undefined, number>\n```\n\nThe above example makes the column optional in inserts\nand updates, but you can still choose to provide the\ncolumn. If you want to prevent insertion/update you\ncan se the type as `never`:\n\n```ts\ntype ReadonlyNumber = ColumnType<number, never, never>\n```\n\nHere's one more example where the type is different\nfor each different operation:\n\n```ts\ntype UnupdateableDate = ColumnType<Date, string, never>\n```"
+			},
+			"Generated_Timestamp_": {
+				"$ref": "#/components/schemas/ColumnType_Date.string-or-Date-or-undefined.string-or-Date_"
+			},
+			"ColumnType_Date.Date-or-string.Date-or-string_": {
+				"properties": {
+					"__update__": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"__insert__": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"__select__": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"__update__",
+					"__insert__",
+					"__select__"
+				],
+				"type": "object",
+				"description": "This type can be used to specify a different type for\nselect, insert and update operations.\n\nAlso see the {@link Generated} type.\n\n### Examples\n\nThe next example defines a number column that is optional\nin inserts and updates. All columns are always optional\nin updates so therefore we don't need to specify `undefined`\nfor the update type. The type below is useful for all kinds of\ndatabase generated columns like identifiers. The `Generated`\ntype is actually just a shortcut for the type in this example:\n\n```ts\ntype GeneratedNumber = ColumnType<number, number | undefined, number>\n```\n\nThe above example makes the column optional in inserts\nand updates, but you can still choose to provide the\ncolumn. If you want to prevent insertion/update you\ncan se the type as `never`:\n\n```ts\ntype ReadonlyNumber = ColumnType<number, never, never>\n```\n\nHere's one more example where the type is different\nfor each different operation:\n\n```ts\ntype UnupdateableDate = ColumnType<Date, string, never>\n```"
+			},
+			"Timestamp": {
+				"$ref": "#/components/schemas/ColumnType_Date.Date-or-string.Date-or-string_"
+			},
+			"ColumnType_string.string-or-undefined.string_": {
+				"properties": {
+					"__update__": {
+						"type": "string"
+					},
+					"__insert__": {
+						"type": "string"
+					},
+					"__select__": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"__update__",
+					"__select__"
+				],
+				"type": "object",
+				"description": "This type can be used to specify a different type for\nselect, insert and update operations.\n\nAlso see the {@link Generated} type.\n\n### Examples\n\nThe next example defines a number column that is optional\nin inserts and updates. All columns are always optional\nin updates so therefore we don't need to specify `undefined`\nfor the update type. The type below is useful for all kinds of\ndatabase generated columns like identifiers. The `Generated`\ntype is actually just a shortcut for the type in this example:\n\n```ts\ntype GeneratedNumber = ColumnType<number, number | undefined, number>\n```\n\nThe above example makes the column optional in inserts\nand updates, but you can still choose to provide the\ncolumn. If you want to prevent insertion/update you\ncan se the type as `never`:\n\n```ts\ntype ReadonlyNumber = ColumnType<number, never, never>\n```\n\nHere's one more example where the type is different\nfor each different operation:\n\n```ts\ntype UnupdateableDate = ColumnType<Date, string, never>\n```"
+			},
+			"Generated_string_": {
+				"$ref": "#/components/schemas/ColumnType_string.string-or-undefined.string_"
+			},
+			"Listings": {
+				"properties": {
+					"createdAt": {
+						"$ref": "#/components/schemas/Generated_Timestamp_"
+					},
+					"deletedAt": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timestamp"
+							}
+						],
+						"nullable": true
+					},
+					"id": {
+						"$ref": "#/components/schemas/Generated_string_"
+					},
+					"publisherUserId": {
+						"type": "string"
+					},
+					"soldAt": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timestamp"
+							}
+						],
+						"nullable": true
+					},
+					"ticketWaveId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Generated_Timestamp_"
+					}
+				},
+				"required": [
+					"createdAt",
+					"deletedAt",
+					"id",
+					"publisherUserId",
+					"soldAt",
+					"ticketWaveId",
+					"updatedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ReturnType_TicketListingsService-at-createTicketListing_": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/Listings"
+					},
+					{
+						"properties": {
+							"ticketWaveId": {
+								"type": "string"
+							},
+							"soldAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"publisherUserId": {
+								"type": "string"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"id": {
+								"type": "string"
+							},
+							"deletedAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"listingTickets": {
+								"items": {
+									"properties": {
+										"ticketNumber": {
+											"type": "number",
+											"format": "double"
+										},
+										"price": {
+											"type": "string"
+										},
+										"listingId": {
+											"type": "string"
+										},
+										"cancelledAt": {
+											"type": "string",
+											"format": "date-time",
+											"nullable": true
+										},
+										"soldAt": {
+											"type": "string",
+											"format": "date-time",
+											"nullable": true
+										},
+										"updatedAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"id": {
+											"type": "string"
+										},
+										"deletedAt": {
+											"type": "string",
+											"format": "date-time",
+											"nullable": true
+										},
+										"createdAt": {
+											"type": "string",
+											"format": "date-time"
+										}
+									},
+									"required": [
+										"ticketNumber",
+										"price",
+										"listingId",
+										"cancelledAt",
+										"soldAt",
+										"updatedAt",
+										"id",
+										"deletedAt",
+										"createdAt"
+									],
+									"type": "object"
+								},
+								"type": "array"
+							}
+						},
+						"required": [
+							"ticketWaveId",
+							"soldAt",
+							"publisherUserId",
+							"updatedAt",
+							"id",
+							"deletedAt",
+							"createdAt",
+							"listingTickets"
+						],
+						"type": "object"
+					}
+				],
 				"description": "Obtain the return type of a function type"
 			},
 			"CreateTicketListingResponse": {
@@ -652,31 +863,30 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"CreateTicketListingDto": {
+			"CreateTicketListingRouteBody": {
 				"properties": {
-					"eventId": {
-						"type": "string"
-					},
-					"ticketWaveId": {
-						"type": "string"
+					"quantity": {
+						"type": "number",
+						"format": "double"
 					},
 					"price": {
 						"type": "number",
 						"format": "double"
 					},
-					"quantity": {
-						"type": "number",
-						"format": "double"
+					"ticketWaveId": {
+						"type": "string"
+					},
+					"eventId": {
+						"type": "string"
 					}
 				},
 				"required": [
-					"eventId",
-					"ticketWaveId",
+					"quantity",
 					"price",
-					"quantity"
+					"ticketWaveId",
+					"eventId"
 				],
-				"type": "object",
-				"additionalProperties": false
+				"type": "object"
 			}
 		},
 		"securitySchemes": {}
@@ -1136,7 +1346,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CreateTicketListingDto"
+								"$ref": "#/components/schemas/CreateTicketListingRouteBody"
 							}
 						}
 					}

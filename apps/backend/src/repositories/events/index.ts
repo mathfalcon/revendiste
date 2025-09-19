@@ -328,14 +328,32 @@ export class EventsRepository {
         jsonArrayFrom(
           eb
             .selectFrom('eventTicketWaves')
-            .select([
+            .select(eb => [
               'eventTicketWaves.id',
               'eventTicketWaves.name',
-              'eventTicketWaves.faceValue',
               'eventTicketWaves.currency',
-              'eventTicketWaves.isSoldOut',
-              'eventTicketWaves.isAvailable',
               'eventTicketWaves.description',
+              'eventTicketWaves.faceValue',
+              jsonArrayFrom(
+                eb
+                  .selectFrom('listingTickets')
+                  .innerJoin(
+                    'listings',
+                    'listings.id',
+                    'listingTickets.listingId',
+                  )
+                  .select(eb => [
+                    'listingTickets.price',
+                    eb.fn.count('listingTickets.id').as('availableTickets'),
+                  ])
+                  .where('listingTickets.cancelledAt', 'is', null)
+                  .where('listingTickets.soldAt', 'is', null)
+                  .where('listingTickets.deletedAt', 'is', null)
+                  .where('listings.deletedAt', 'is', null)
+                  .whereRef('listings.ticketWaveId', '=', 'eventTicketWaves.id')
+                  .groupBy('listingTickets.price')
+                  .orderBy('listingTickets.price', 'asc'),
+              ).as('priceGroups'),
             ])
             .whereRef('eventTicketWaves.eventId', '=', 'events.id')
             .orderBy('eventTicketWaves.faceValue', 'asc'),

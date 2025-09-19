@@ -1,17 +1,6 @@
 import express from 'express';
-import {
-  Route,
-  Post,
-  Tags,
-  Middlewares,
-  Request,
-  Body,
-  Response,
-} from '@tsoa/runtime';
-import {
-  TicketListingsService,
-  CreateTicketListingDto,
-} from '~/services/ticket-listings';
+import {Route, Post, Tags, Middlewares, Request, Response} from '@tsoa/runtime';
+import {TicketListingsService} from '~/services/ticket-listings';
 import {requireAuthMiddleware} from '~/middleware';
 import {
   TicketListingsRepository,
@@ -25,6 +14,11 @@ import {
   UnauthorizedError,
   BadRequestError,
 } from '~/errors';
+import {
+  CreateTicketListingRouteBody,
+  CreateTicketListingRouteSchema,
+} from './validation';
+import {Body, ValidateBody, ValidateParams} from '~/decorators';
 
 type CreateTicketListingResponse = Promise<
   ReturnType<TicketListingsService['createTicketListing']>
@@ -51,8 +45,9 @@ export class TicketListingsController {
     'Validation failed: Cannot create listing for finished event, ticket wave does not belong to event, price exceeds face value, or quantity must be greater than 0',
   )
   @Middlewares(requireAuthMiddleware)
+  @ValidateBody(CreateTicketListingRouteSchema)
   public async create(
-    @Body() body: CreateTicketListingDto,
+    @Body() body: CreateTicketListingRouteBody,
     @Request() request: express.Request,
   ): CreateTicketListingResponse {
     return this.service.createTicketListing(

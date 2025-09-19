@@ -104,9 +104,13 @@ export type SearchEventsResponse = ReturnTypeEventsServiceAtGetBySearch;
 /** Obtain the return type of a function type */
 export interface ReturnTypeEventsServiceAtGetEventById {
   ticketWaves: {
-    isSoldOut: boolean;
-    isAvailable: boolean;
-    faceValue: string;
+    waveListings: {
+      listingTickets: {
+        price: string;
+        id: string;
+      }[];
+      id: string;
+    }[];
     currency: EventTicketCurrency;
     name: string;
     id: string;
@@ -161,23 +165,181 @@ export interface HealthCheck {
   };
 }
 
-/** Obtain the return type of a function type */
-export type ReturnTypeTicketListingsServiceAtCreateTicketListing = {
-  ticketWaveId: string;
+/**
+ * This type can be used to specify a different type for
+ * select, insert and update operations.
+ *
+ * Also see the {@link Generated} type.
+ *
+ * ### Examples
+ *
+ * The next example defines a number column that is optional
+ * in inserts and updates. All columns are always optional
+ * in updates so therefore we don't need to specify `undefined`
+ * for the update type. The type below is useful for all kinds of
+ * database generated columns like identifiers. The `Generated`
+ * type is actually just a shortcut for the type in this example:
+ *
+ * ```ts
+ * type GeneratedNumber = ColumnType<number, number | undefined, number>
+ * ```
+ *
+ * The above example makes the column optional in inserts
+ * and updates, but you can still choose to provide the
+ * column. If you want to prevent insertion/update you
+ * can se the type as `never`:
+ *
+ * ```ts
+ * type ReadonlyNumber = ColumnType<number, never, never>
+ * ```
+ *
+ * Here's one more example where the type is different
+ * for each different operation:
+ *
+ * ```ts
+ * type UnupdateableDate = ColumnType<Date, string, never>
+ * ```
+ */
+export interface ColumnTypeDateStringOrDateOrUndefinedStringOrDate {
+  __update__: string;
+  __insert__?: string;
   /** @format date-time */
-  soldAt: string | null;
+  __select__: string;
+}
+
+export type GeneratedTimestamp =
+  ColumnTypeDateStringOrDateOrUndefinedStringOrDate;
+
+/**
+ * This type can be used to specify a different type for
+ * select, insert and update operations.
+ *
+ * Also see the {@link Generated} type.
+ *
+ * ### Examples
+ *
+ * The next example defines a number column that is optional
+ * in inserts and updates. All columns are always optional
+ * in updates so therefore we don't need to specify `undefined`
+ * for the update type. The type below is useful for all kinds of
+ * database generated columns like identifiers. The `Generated`
+ * type is actually just a shortcut for the type in this example:
+ *
+ * ```ts
+ * type GeneratedNumber = ColumnType<number, number | undefined, number>
+ * ```
+ *
+ * The above example makes the column optional in inserts
+ * and updates, but you can still choose to provide the
+ * column. If you want to prevent insertion/update you
+ * can se the type as `never`:
+ *
+ * ```ts
+ * type ReadonlyNumber = ColumnType<number, never, never>
+ * ```
+ *
+ * Here's one more example where the type is different
+ * for each different operation:
+ *
+ * ```ts
+ * type UnupdateableDate = ColumnType<Date, string, never>
+ * ```
+ */
+export interface ColumnTypeDateDateOrStringDateOrString {
+  __update__: string;
+  __insert__: string;
+  /** @format date-time */
+  __select__: string;
+}
+
+export type Timestamp = ColumnTypeDateDateOrStringDateOrString;
+
+/**
+ * This type can be used to specify a different type for
+ * select, insert and update operations.
+ *
+ * Also see the {@link Generated} type.
+ *
+ * ### Examples
+ *
+ * The next example defines a number column that is optional
+ * in inserts and updates. All columns are always optional
+ * in updates so therefore we don't need to specify `undefined`
+ * for the update type. The type below is useful for all kinds of
+ * database generated columns like identifiers. The `Generated`
+ * type is actually just a shortcut for the type in this example:
+ *
+ * ```ts
+ * type GeneratedNumber = ColumnType<number, number | undefined, number>
+ * ```
+ *
+ * The above example makes the column optional in inserts
+ * and updates, but you can still choose to provide the
+ * column. If you want to prevent insertion/update you
+ * can se the type as `never`:
+ *
+ * ```ts
+ * type ReadonlyNumber = ColumnType<number, never, never>
+ * ```
+ *
+ * Here's one more example where the type is different
+ * for each different operation:
+ *
+ * ```ts
+ * type UnupdateableDate = ColumnType<Date, string, never>
+ * ```
+ */
+export interface ColumnTypeStringStringOrUndefinedString {
+  __update__: string;
+  __insert__?: string;
+  __select__: string;
+}
+
+export type GeneratedString = ColumnTypeStringStringOrUndefinedString;
+
+export interface Listings {
+  createdAt: GeneratedTimestamp;
+  deletedAt: Timestamp | null;
+  id: GeneratedString;
   publisherUserId: string;
-  price: string;
-  eventId: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: "active" | "cancelled" | "expired" | "sold";
-  id: string;
-  /** @format date-time */
-  deletedAt: string | null;
-  /** @format date-time */
-  createdAt: string;
-}[];
+  soldAt: Timestamp | null;
+  ticketWaveId: string;
+  updatedAt: GeneratedTimestamp;
+}
+
+/** Obtain the return type of a function type */
+export type ReturnTypeTicketListingsServiceAtCreateTicketListing =
+  | Listings
+  | {
+      ticketWaveId: string;
+      /** @format date-time */
+      soldAt: string | null;
+      publisherUserId: string;
+      /** @format date-time */
+      updatedAt: string;
+      id: string;
+      /** @format date-time */
+      deletedAt: string | null;
+      /** @format date-time */
+      createdAt: string;
+      listingTickets: {
+        /** @format double */
+        ticketNumber: number;
+        price: string;
+        listingId: string;
+        /** @format date-time */
+        cancelledAt: string | null;
+        /** @format date-time */
+        soldAt: string | null;
+        /** @format date-time */
+        updatedAt: string;
+        id: string;
+        /** @format date-time */
+        deletedAt: string | null;
+        /** @format date-time */
+        createdAt: string;
+      }[];
+    };
 
 export type CreateTicketListingResponse =
   ReturnTypeTicketListingsServiceAtCreateTicketListing;
@@ -218,13 +380,13 @@ export interface ValidationError {
   isOperational: boolean;
 }
 
-export interface CreateTicketListingDto {
-  eventId: string;
-  ticketWaveId: string;
-  /** @format double */
-  price: number;
+export interface CreateTicketListingRouteBody {
   /** @format double */
   quantity: number;
+  /** @format double */
+  price: number;
+  ticketWaveId: string;
+  eventId: string;
 }
 
 import type {
@@ -618,7 +780,7 @@ export class Api<
      * @name Create
      * @request POST:/ticket-listings
      */
-    create: (data: CreateTicketListingDto, params: RequestParams = {}) =>
+    create: (data: CreateTicketListingRouteBody, params: RequestParams = {}) =>
       this.request<
         CreateTicketListingResponse,
         BadRequestError | UnauthorizedError | NotFoundError | ValidationError

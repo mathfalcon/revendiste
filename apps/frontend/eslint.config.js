@@ -134,6 +134,7 @@ export default tseslint.config([
         },
       ],
       '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/only-throw-error': 'off',
 
       // General rules
       'no-console': 'warn',

@@ -15,7 +15,10 @@ const TicketListingFormSchema = z
     eventTicketWaveId: z.string('Requerido').nonempty('Requerido'),
     maxPrice: z.number('Requerido'),
     price: z.number('Requerido').min(1, 'El precio deber ser mayor a 0'),
-    quantity: z.number('Requerido').min(1, 'La cantidad deber ser mayor a 0'),
+    quantity: z
+      .number('Requerido')
+      .min(1, 'La cantidad deber ser mayor a 0')
+      .max(10, 'La cantidad no puede ser mayor a 10'),
     acceptTerms: z.boolean().default(false),
   })
   .check(ctx => {

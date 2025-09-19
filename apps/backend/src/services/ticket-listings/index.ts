@@ -5,13 +5,7 @@ import {
 } from '~/repositories';
 import {logger} from '~/utils';
 import {NotFoundError, ValidationError} from '~/errors';
-
-export interface CreateTicketListingDto {
-  eventId: string;
-  ticketWaveId: string;
-  price: number;
-  quantity: number;
-}
+import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
 
 export class TicketListingsService {
   constructor(
@@ -21,7 +15,7 @@ export class TicketListingsService {
   ) {}
 
   async createTicketListing(
-    data: CreateTicketListingDto,
+    data: CreateTicketListingRouteBody,
     publisherUserId: string,
   ) {
     // Validate that the event exists and hasn't finished
@@ -64,14 +58,10 @@ export class TicketListingsService {
     }
 
     // Create multiple listings in a single batch operation (already atomic)
-    const createdListings = await this.ticketListingsRepository.createBatch(
-      Array.from({length: data.quantity}, () => ({
-        publisherUserId: publisherUserId,
-        eventId: data.eventId,
-        ticketWaveId: data.ticketWaveId,
-        price: data.price.toString(),
-      })),
-    );
+    const createdListings = await this.ticketListingsRepository.createBatch({
+      publisherUserId: publisherUserId,
+      ...data,
+    });
 
     logger.info(
       `Created ${data.quantity} ticket listings for user ${publisherUserId} on event ${data.eventId}`,
