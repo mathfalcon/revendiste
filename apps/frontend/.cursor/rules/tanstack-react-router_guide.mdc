@@ -169,12 +169,252 @@ You can _optionally_, also use the [Non-Redirected Authentication](#non-redirect
 
 This approach can also be used in conjunction with Pathless or Layout Route to protect all routes under their parent route.
 
+## Related How-To Guides
+
+For detailed, step-by-step implementation guides, see:
+
+- [How to Set Up Basic Authentication](../../how-to/setup-authentication.md) - Complete setup with React Context and protected routes
+- [How to Integrate Authentication Providers](../../how-to/setup-auth-providers.md) - Use Auth0, Clerk, or Supabase
+- [How to Set Up Role-Based Access Control](../../how-to/setup-rbac.md) - Implement permissions and role-based routing
+
+## Examples
+
+Working authentication examples are available in the repository:
+
+- [Basic Authentication Example](https://github.com/TanStack/router/tree/main/examples/react/authenticated-routes) - Simple authentication with context
+- [Firebase Authentication](https://github.com/TanStack/router/tree/main/examples/react/authenticated-routes-firebase) - Firebase Auth integration
+- [TanStack Start Auth Examples](https://github.com/TanStack/router/tree/main/examples/react) - Various auth implementations with TanStack Start
+
 # Automatic Code Splitting
 
-> [!TIP]
-> We'll be filling in this guide soon about the wonderful world of automatic code splitting with TanStack Router and the many customization options available to you. Stay tuned!
+The automatic code splitting feature in TanStack Router allows you to optimize your application's bundle size by lazily loading route components and their associated data. This is particularly useful for large applications where you want to minimize the initial load time by only loading the necessary code for the current route.
 
-<!-- Include the basic configuration details and the code splitting groupings available which were introduced in https://github.com/TanStack/router/pull/3355-->
+To turn this feature on, simply set the `autoCodeSplitting` option to `true` in your bundler plugin configuration. This enables the router to automatically handle code splitting for your routes without requiring any additional setup.
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
+
+export default defineConfig({
+  plugins: [
+    tanstackRouter({
+      autoCodeSplitting: true, // Enable automatic code splitting
+    }),
+  ],
+})
+```
+
+But that's just the beginning! TanStack Router's automatic code splitting is not only easy to enable, but it also provides powerful customization options to tailor how your routes are split into chunks. This allows you to optimize your application's performance based on your specific needs and usage patterns.
+
+## How does it work?
+
+TanStack Router's automatic code splitting works by transforming your route files both during 'development' and at 'build' time. It rewrites the route definitions to use lazy-loading wrappers for components and loaders, which allows the bundler to group these properties into separate chunks.
+
+> [!TIP]
+> A **chunk** is a file that contains a portion of your application's code, which can be loaded on demand. This helps reduce the initial load time of your application by only loading the code that is needed for the current route.
+
+So when your application loads, it doesn't include all the code for every route. Instead, it only includes the code for the routes that are initially needed. As users navigate through your application, additional chunks are loaded on demand.
+
+This happens seamlessly, without requiring you to manually split your code or manage lazy loading. The TanStack Router bundler plugin takes care of everything, ensuring that your routes are optimized for performance right out of the box.
+
+### The transformation process
+
+When you enable automatic code splitting, the bundler plugin does this by using static code analysis look at your the code in your route files to transform them into optimized outputs.
+
+This transformation process produces two key outputs when each of your route files are processed:
+
+1. **Reference File**: The bundler plugin takes your original route file (e.g., `posts.route.tsx`) and modifies the values for properties like `component` or `pendingComponent` to use special lazy-loading wrappers that'll fetch the actual code later. These wrappers point to a "virtual" file that the bundler will resolve later on.
+2. **Virtual File**: When the bundler sees a request for one of these virtual files (e.g., `posts.route.tsx?tsr-split=component`), it intercepts it to generate a new, minimal on-the-fly file that _only_ contains the code for the requested properties (e.g., just the `PostsComponent`).
+
+This process ensures that your original code remains clean and readable, while the actual bundled output is optimized for initial bundle size.
+
+### What gets code split?
+
+The decision of what to split into separate chunks is crucial for optimizing your application's performance. TanStack Router uses a concept called "**Split Groupings**" to determine how different parts of your route should be bundled together.
+
+Split groupings are arrays of properties that tell TanStack Router how to bundle different parts of your route together. Each grouping is an list of property names that you want to bundle together into a single lazy-loaded chunk.
+
+The available properties to split are:
+
+- `component`
+- `errorComponent`
+- `pendingComponent`
+- `notFoundComponent`
+- `loader`
+
+By default, TanStack Router uses the following split groupings:
+
+```sh
+[
+  ['component'],
+  ['errorComponent'],
+  ['notFoundComponent']
+]
+```
+
+This means that it creates three separate lazy-loaded chunks for each route. Resulting in:
+
+- One for the main component
+- One for the error component
+- And one for the not-found component.
+
+### Rules of Splitting
+
+For automatic code splitting to work, there are some rules in-place to make sure that this process can reliably and predictably happen.
+
+#### Do not export route properties
+
+Route properties like `component`, `loader`, etc., should not be exported from the route file. Exporting these properties results in them being bundled into the main application bundle, which means that they will not be code-split.
+
+```tsx
+import { createRoute } from '@tanstack/react-router'
+
+export const Route = createRoute('/posts')({
+  // ...
+  notFoundComponent: PostsNotFoundComponent,
+})
+
+// ❌ Do NOT do this!
+// Exporting the notFoundComponent will prevent it from being code-split
+// and will be included in the main bundle.
+export function PostsNotFoundComponent() {
+  // ❌
+  // ...
+}
+
+function PostsNotFoundComponent() {
+  // ✅
+  // ...
+}
+```
+
+**That's it!** There are no other restrictions. You can use any other JavaScript or TypeScript features in your route files as you normally would. If you run into any issues, please [open an issue](https://github.com/tanstack/router/issues) on GitHub.
+
+## Granular control
+
+For most applications, the default behavior of using `autoCodeSplitting: true` is sufficient. However, TanStack Router provides several options to customize how your routes are split into chunks, allowing you to optimize for specific use cases or performance needs.
+
+### Global code splitting behavior (`defaultBehavior`)
+
+You can change how TanStack Router splits your routes by changing the `defaultBehavior` option in your bundler plugin configuration. This allows you to define how different properties of your routes should be bundled together.
+
+For example, to bundle all UI-related components into a single chunk, you could configure it like this:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
+
+export default defineConfig({
+  plugins: [
+    tanstackRouter({
+      autoCodeSplitting: true,
+      codeSplittingOptions: {
+        defaultBehavior: [
+          [
+            'component',
+            'pendingComponent',
+            'errorComponent',
+            'notFoundComponent',
+          ], // Bundle all UI components together
+        ],
+      },
+    }),
+  ],
+})
+```
+
+### Advanced programmatic control (`splitBehavior`)
+
+For complex rulesets, you can use the `splitBehavior` function in your vite config to programmatically define how routes should be split into chunks based on their `routeId`. This function allows you to implement custom logic for grouping properties together, giving you fine-grained control over the code splitting behavior.
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
+
+export default defineConfig({
+  plugins: [
+    tanstackRouter({
+      autoCodeSplitting: true,
+      codeSplittingOptions: {
+        splitBehavior: ({ routeId }) => {
+          // For all routes under /posts, bundle the loader and component together
+          if (routeId.startsWith('/posts')) {
+            return [['loader', 'component']]
+          }
+          // All other routes will use the `defaultBehavior`
+        },
+      },
+    }),
+  ],
+})
+```
+
+### Per-route overrides (`codeSplitGroupings`)
+
+For ultimate control, you can override the global configuration directly inside a route file by adding a `codeSplitGroupings` property. This is useful for routes that have unique optimization needs.
+
+```tsx
+// src/routes/posts.route.tsx
+import { createFileRoute } from '@tanstack/react-router'
+import { loadPostsData } from './-heavy-posts-utils'
+
+export const Route = createFileRoute('/posts')({
+  // For this specific route, bundle the loader and component together.
+  codeSplitGroupings: [['loader', 'component']],
+  loader: () => loadPostsData(),
+  component: PostsComponent,
+})
+
+function PostsComponent() {
+  // ...
+}
+```
+
+This will create a single chunk that includes both the `loader` and the `component` for this specific route, overriding both the default behavior and any programmatic split behavior defined in your bundler config.
+
+### Configuration order matters
+
+This guide has so far describe three different ways to configure how TanStack Router splits your routes into chunks.
+
+To make sure that the different configurations do not conflict with each other, TanStack Router uses the following order of precedence:
+
+1. **Per-route overrides**: The `codeSplitGroupings` property inside a route file takes the highest precedence. This allows you to define specific split groupings for individual routes.
+2. **Programmatic split behavior**: The `splitBehavior` function in your bundler config allows you to define custom logic for how routes should be split based on their `routeId`.
+3. **Default behavior**: The `defaultBehavior` option in your bundler config serves as the fallback for any routes that do not have specific overrides or custom logic defined. This is the base configuration that applies to all routes unless overridden.
+
+### Splitting the Data Loader
+
+The `loader` function is responsible for fetching data needed by the route. By default, it is bundled with into your "reference file" and loaded in the initial bundle. However, you can also split the `loader` into its own chunk if you want to optimize further.
+
+> [!CAUTION]
+> Moving the `loader` into its own chunk is a **performance trade-off**. It introduces an additional trip to the server before the data can be fetched, which can lead to slower initial page loads. This is because the `loader` **must** be fetched and executed before the route can render its component.
+> Therefore, we recommend keeping the `loader` in the initial bundle unless you have a specific reason to split it.
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
+
+export default defineConfig({
+  plugins: [
+    tanstackRouter({
+      autoCodeSplitting: true,
+      codeSplittingOptions: {
+        defaultBehavior: [
+          ['loader'], // The loader will be in its own chunk
+          ['component'],
+          // ... other component groupings
+        ],
+      },
+    }),
+  ],
+})
+```
+
+We highly discourage splitting the `loader` unless you have a specific use case that requires it. In most cases, not splitting off the `loader` and keep it in the main bundle is the best choice for performance.
 
 # Code Splitting
 
@@ -189,7 +429,6 @@ Code splitting and lazy loading is a powerful technique for improving the bundle
 TanStack Router separates code into two categories:
 
 - **Critical Route Configuration** - The code that is required to render the current route and kick off the data loading process as early as possible.
-
   - Path Parsing/Serialization
   - Search Param Validation
   - Loaders, Before Load
@@ -609,59 +848,38 @@ Here are some examples of how you can use `createLink` with third-party librarie
 
 ### React Aria Components example
 
-React Aria Components'
-[Link](https://react-spectrum.adobe.com/react-aria/Link.html) component does not support the standard `onMouseEnter` and `onMouseLeave` events.
-Therefore, you cannot use it directly with TanStack Router's `preload (intent)` prop.
-
-Explanation for this can be found here:
-
-- [https://react-spectrum.adobe.com/react-aria/interactions.html](https://react-spectrum.adobe.com/react-aria/interactions.html)
-- [https://react-spectrum.adobe.com/blog/building-a-button-part-2.html](https://react-spectrum.adobe.com/blog/building-a-button-part-2.html)
-
-It is possible to work around this by using the [useLink](https://react-spectrum.adobe.com/react-aria/useLink.html) hook from [React Aria Hooks](https://react-spectrum.adobe.com/react-aria/hooks.html) with a standard anchor element.
+React Aria Components v1.11.0 and later works with TanStack Router's `preload (intent)` prop. Use `createLink` to wrap each React Aria component that you use as a link.
 
 ```tsx
-import * as React from 'react'
-import { createLink, LinkComponent } from '@tanstack/react-router'
-import {
-  mergeProps,
-  useFocusRing,
-  useHover,
-  useLink,
-  useObjectRef,
-} from 'react-aria'
-import type { AriaLinkOptions } from 'react-aria'
+import { createLink } from '@tanstack/react-router'
+import { Link as RACLink, MenuItem } from 'react-aria-components'
 
-interface RACLinkProps extends Omit<AriaLinkOptions, 'href'> {
-  children?: React.ReactNode
+export const Link = createLink(RACLink)
+export const MenuItemLink = createLink(MenuItem)
+```
+
+To use React Aria's render props, including the `className`, `style`, and `children` functions, create a wrapper component and pass that to `createLink`.
+
+```tsx
+import { createLink } from '@tanstack/react-router'
+import { Link as RACLink, type LinkProps } from 'react-aria-components'
+
+interface MyLinkProps extends LinkProps {
+  // your props
 }
 
-const RACLinkComponent = React.forwardRef<HTMLAnchorElement, RACLinkProps>(
-  (props, forwardedRef) => {
-    const ref = useObjectRef(forwardedRef)
-
-    const { isPressed, linkProps } = useLink(props, ref)
-    const { isHovered, hoverProps } = useHover(props)
-    const { isFocusVisible, isFocused, focusProps } = useFocusRing(props)
-
-    return (
-      <a
-        {...mergeProps(linkProps, hoverProps, focusProps, props)}
-        ref={ref}
-        data-hovered={isHovered || undefined}
-        data-pressed={isPressed || undefined}
-        data-focus-visible={isFocusVisible || undefined}
-        data-focused={isFocused || undefined}
-      />
-    )
-  },
-)
-
-const CreatedLinkComponent = createLink(RACLinkComponent)
-
-export const CustomLink: LinkComponent<typeof RACLinkComponent> = (props) => {
-  return <CreatedLinkComponent preload={'intent'} {...props} />
+function MyLink(props: MyLinkProps) {
+  return (
+    <RACLink
+      {...props}
+      style={({ isHovered }) => ({
+        color: isHovered ? 'red' : 'blue',
+      })}
+    />
+  )
 }
+
+export const Link = createLink(MyLink)
 ```
 
 ### Chakra UI example
@@ -1111,7 +1329,10 @@ export const Route = createFileRoute('/posts')({
 The `loader` function receives a single object with the following properties:
 
 - `abortController` - The route's abortController. Its signal is cancelled when the route is unloaded or when the Route is no longer relevant and the current invocation of the `loader` function becomes outdated.
-- `cause` - The cause of the current route match, either `enter` or `stay`.
+- `cause` - The cause of the current route match. Can be either one of the following:
+  - `enter` - When the route is matched and loaded after not being matched in the previous location.
+  - `preload` - When the route is being preloaded.
+  - `stay` - When the route is matched and loaded after being matched in the previous location.
 - `context` - The route's context object, which is a merged union of:
   - Parent route context
   - This route's context as provided by the `beforeLoad` option
@@ -1728,7 +1949,7 @@ TanStack Router is designed to run loaders in parallel and wait for all of them 
 
 Deferred data loading is a pattern that allows the router to render the next location's critical data/markup while slower, non-critical route data is resolved in the background. This process works on both the client and server (via streaming) and is a great way to improve the perceived performance of your application.
 
-If you are using a library like [TanStack Query](https://react-query.tanstack.com) or any other data fetching library, then deferred data loading works a bit differently. Skip ahead to the [Deferred Data Loading with External Libraries](#deferred-data-loading-with-external-libraries) section for more information.
+If you are using a library like [TanStack Query](https://tanstack.com/query/latest) or any other data fetching library, then deferred data loading works a bit differently. Skip ahead to the [Deferred Data Loading with External Libraries](#deferred-data-loading-with-external-libraries) section for more information.
 
 ## Deferred Data Loading with `Await`
 
@@ -1925,9 +2146,9 @@ export const Route = createRootRoute({
         children: `p {
                   color: blue;
                   background-color: yellow;
-                }`
-      }
-    ]
+                }`,
+      },
+    ],
     scripts: [
       {
         src: 'https://www.google-analytics.com/analytics.js',
@@ -1997,7 +2218,7 @@ To do this, you must:
 
 ```tsx
 export const Route = createRootRoute({
-  scripts: [
+  scripts: () => [
     {
       children: 'console.log("Hello, world!")',
     },
@@ -2072,7 +2293,7 @@ Literally any library that **can return a promise and read/write data** can be i
 
 ## Using Loaders to ensure data is loaded
 
-The easiest way to use integrate and external caching/data library into Router is to use `route.loader`s to ensure that the data required inside of a route has been loaded and is ready to be displayed.
+The easiest way to integrate external caching/data library into Router is to use `route.loader`s to ensure that the data required inside of a route has been loaded and is ready to be displayed.
 
 > ⚠️ BUT WHY? It's very important to preload your critical render data in the loader for a few reasons:
 >
@@ -2140,7 +2361,7 @@ export const Route = createFileRoute('/posts')({
 
 ### Error handling with TanStack Query
 
-When an error occurs while using `suspense` with `Tanstack Query`, you'll need to let queries know that you want to try again when re-rendering. This can be done by using the `reset` function provided by the `useQueryErrorResetBoundary` hook. We can invoke this function in an effect as soon as the error component mounts. This will make sure that the query is reset and will try to fetch data again when the route component is rendered again. This will also cover cases where users navigate away from our route instead of clicking the `retry` button.
+When an error occurs while using `suspense` with `TanStack Query`, you need to let queries know that you want to try again when re-rendering. This can be done by using the `reset` function provided by the `useQueryErrorResetBoundary` hook. You can invoke this function in an effect as soon as the error component mounts. This will make sure that the query is reset and will try to fetch data again when the route component is rendered again. This will also cover cases where users navigate away from the route instead of clicking the `retry` button.
 
 ```tsx
 export const Route = createFileRoute('/')({
@@ -2682,7 +2903,7 @@ type ToOptions<
   TTo extends string = '',
 > = {
   // `from` is an optional route ID or path. If it is not supplied, only absolute paths will be auto-completed and type-safe. It's common to supply the route.fullPath of the origin route you are rendering from for convenience. If you don't know the origin route, leave this empty and work with absolute paths or unsafe relative paths.
-  from: string
+  from?: string
   // `to` can be an absolute route path or a relative path from the `from` option to a valid route path. ⚠️ Do not interpolate path params, hash or search params into the `to` options. Use the `params`, `search`, and `hash` options instead.
   to: string
   // `params` is either an object of path params to interpolate into the `to` option or a function that supplies the previous params and allows you to return new ones. This is the only way to interpolate dynamic parameters into the final URL. Depending on the `from` and `to` route, you may need to supply none, some or all of the path params. TypeScript will notify you of the required params if there are any.
@@ -2837,7 +3058,12 @@ Keep in mind that normally dynamic segment params are `string` values, but they 
 
 By default, all links are absolute unless a `from` route path is provided. This means that the above link will always navigate to the `/about` route regardless of what route you are currently on.
 
-If you want to make a link that is relative to the current route, you can provide a `from` route path:
+Relative links can be combined with a `from` route path. If a from route path isn't provided, relative paths default to the current active location.
+
+> [!NOTE]
+> Keep in mind that when calling useNavigate as a method on the route, for example `Route.useNavigate`, then the `from` location is predefined to be the route it's called on.
+>
+> Another common pitfall is when using this in a pathless layout route, since the pathless layout route does not have an actual path, the `from` location is regarded as the parent of the pathless layout route. Hence relative routing will be resolved from this parent.
 
 ```tsx
 const postIdRoute = createRoute({
@@ -2852,6 +3078,37 @@ const link = (
 ```
 
 As seen above, it's common to provide the `route.fullPath` as the `from` route path. This is because the `route.fullPath` is a reference that will update if you refactor your application. However, sometimes it's not possible to import the route directly, in which case it's fine to provide the route path directly as a string. It will still get type-checked as per usual!
+
+### Special relative paths: `"."` and `".."`
+
+Quite often you might want to reload the current location or another `from` path, for example, to rerun the loaders on the current and/or parent routes, or maybe navigate back to a parent route. This can be achieved by specifying a `to` route path of `"."` which will reload the current location or provided `from` path.
+
+Another common need is to navigate one route back relative to the current location or another path. By specifying a `to` route path of `".."` navigation will be resolved to the first parent route preceding the current location.
+
+```tsx
+export const Route = createFileRoute('/posts/$postId')({
+  component: PostComponent,
+})
+
+function PostComponent() {
+  return (
+    <div>
+      <Link to=".">Reload the current route of /posts/$postId</Link>
+      <Link to="..">Navigate back to /posts</Link>
+      // the below are all equivalent
+      <Link to="/posts">Navigate back to /posts</Link>
+      <Link from="/posts" to=".">
+        Navigate back to /posts
+      </Link>
+      // the below are all equivalent
+      <Link to="/">Navigate to root</Link>
+      <Link from="/posts" to="..">
+        Navigate to root
+      </Link>
+    </div>
+  )
+}
+```
 
 ### Search Param Links
 
@@ -3290,13 +3547,13 @@ With preloading enabled and relatively quick asynchronous route dependencies (if
 
 What's even better is that by using a cache-first library like `@tanstack/query`, preloaded routes will stick around and be ready for a stale-while-revalidate experience if the user decides to navigate to the route later on.
 
-### Link Preloading Timeout
+### Link Preloading Delay
 
-Along with preloading is a configurable timeout which determines how long a user must hover over a link to trigger the intent-based preloading. The default timeout is 50 milliseconds, but you can change this by passing a `preloadTimeout` prop to the `Link` component with the number of milliseconds you'd like to wait:
+Along with preloading is a configurable delay which determines how long a user must hover over a link to trigger the intent-based preloading. The default delay is 50 milliseconds, but you can change this by passing a `preloadDelay` prop to the `Link` component with the number of milliseconds you'd like to wait:
 
 ```tsx
 const link = (
-  <Link to="/blog/post/$postId" preload="intent" preloadTimeout={100}>
+  <Link to="/blog/post/$postId" preload="intent" preloadDelay={100}>
     Blog Post
   </Link>
 )
@@ -3579,6 +3836,8 @@ The not-found error above will be handled by the same route or nearest parent ro
 
 If neither the route nor any suitable parent route is found to handle the error, the root route will handle it using TanStack Router's **extremely basic (and purposefully undesirable)** default not-found component that simply renders `<div>Not Found</div>`. It's highly recommended to either attach at least one `notFoundComponent` to the root route or configure a router-wide `defaultNotFoundComponent` to handle not-found errors.
 
+> ⚠️ Throwing a notFound error in a beforeLoad method will always trigger the __root notFoundComponent. Since beforeLoad methods are run prior to the route loader methods, there is no guarantee that any required data for layouts have successfully loaded before the error is thrown.
+
 ## Specifying Which Routes Handle Not Found Errors
 
 Sometimes you may want to trigger a not-found on a specific parent route and bypass the normal not-found component propagation. To do this, pass in a route id to the `route` option in the `notFound` function.
@@ -3858,21 +4117,95 @@ function Component() {
 
 Notice that the function style is useful when you need to persist params that are already in the URL for other routes. This is because the function style will receive the current params as an argument, allowing you to modify them as needed and return the final params object.
 
-## Allowed Characters
+## Prefixes and Suffixes for Path Params
 
-By default, path params are escaped with `encodeURIComponent`. If you want to allow other valid URI characters (e.g. `@` or `+`), you can specify that in your [RouterOptions](../../api/router/RouterOptionsType.md#pathparamsallowedcharacters-property)
+You can also use **prefixes** and **suffixes** with path params to create more complex routing patterns. This allows you to match specific URL structures while still capturing the dynamic segments.
 
-Example usage:
+When using either prefixes or suffixes, you can define them by wrapping the path param in curly braces `{}` and placing the prefix or suffix before or after the variable name.
+
+### Defining Prefixes
+
+Prefixes are defined by placing the prefix text outside the curly braces before the variable name. For example, if you want to match a URL that starts with `post-` followed by a post ID, you can define it like this:
 
 ```tsx
-const router = createRouter({
-  ...
-  pathParamsAllowedCharacters: ['@']
+// src/routes/posts/post-{$postId}.tsx
+export const Route = createFileRoute('/posts/post-{$postId}')({
+  component: PostComponent,
 })
+
+function PostComponent() {
+  const { postId } = Route.useParams()
+  // postId will be the value after 'post-'
+  return <div>Post ID: {postId}</div>
+}
 ```
 
-The following is the list of accepted allowed characters:
-`;` `:` `@` `&` `=` `+` `$` `,`
+You can even combines prefixes with wildcard routes to create more complex patterns:
+
+```tsx
+// src/routes/on-disk/storage-{$}
+export const Route = createFileRoute('/on-disk/storage-{$postId}/$')({
+  component: StorageComponent,
+})
+
+function StorageComponent() {
+  const { _splat } = Route.useParams()
+  // _splat, will be value after 'storage-'
+  // i.e. my-drive/documents/foo.txt
+  return <div>Storage Location: /{_splat}</div>
+}
+```
+
+### Defining Suffixes
+
+Suffixes are defined by placing the suffix text outside the curly braces after the variable name. For example, if you want to match a URL a filename that ends with `txt`, you can define it like this:
+
+```tsx
+// src/routes/files/{$fileName}txt
+export const Route = createFileRoute('/files/{$fileName}.txt')({
+  component: FileComponent,
+})
+
+function FileComponent() {
+  const { fileName } = Route.useParams()
+  // fileName will be the value before 'txt'
+  return <div>File Name: {fileName}</div>
+}
+```
+
+You can also combine suffixes with wildcards for more complex routing patterns:
+
+```tsx
+// src/routes/files/{$}[.]txt
+export const Route = createFileRoute('/files/{$fileName}[.]txt')({
+  component: FileComponent,
+})
+
+function FileComponent() {
+  const { _splat } = Route.useParams()
+  // _splat will be the value before '.txt'
+  return <div>File Splat: {_splat}</div>
+}
+```
+
+### Combining Prefixes and Suffixes
+
+You can combine both prefixes and suffixes to create very specific routing patterns. For example, if you want to match a URL that starts with `user-` and ends with `.json`, you can define it like this:
+
+```tsx
+// src/routes/users/user-{$userId}.json
+export const Route = createFileRoute('/users/user-{$userId}.json')({
+  component: UserComponent,
+})
+
+function UserComponent() {
+  const { userId } = Route.useParams()
+  // userId will be the value between 'user-' and '.json'
+  return <div>User ID: {userId}</div>
+}
+```
+
+Similar to the previous examples, you can also use wildcards with prefixes and suffixes. Go wild!
 
 ## Optional Path Parameters
 
@@ -4086,6 +4419,354 @@ function PostsComponent() {
   Category 123
 </Link>
 ```
+
+## Internationalization (i18n) with Optional Path Parameters
+
+Optional path parameters are excellent for implementing internationalization (i18n) routing patterns. You can use prefix patterns to handle multiple languages while maintaining clean, SEO-friendly URLs.
+
+### Prefix-based i18n
+
+Use optional language prefixes to support URLs like `/en/about`, `/fr/about`, or just `/about` (default language):
+
+```tsx
+// Route: /{-$locale}/about
+export const Route = createFileRoute('/{-$locale}/about')({
+  component: AboutComponent,
+})
+
+function AboutComponent() {
+  const { locale } = Route.useParams()
+  const currentLocale = locale || 'en' // Default to English
+
+  const content = {
+    en: { title: 'About Us', description: 'Learn more about our company.' },
+    fr: {
+      title: 'À Propos',
+      description: 'En savoir plus sur notre entreprise.',
+    },
+    es: {
+      title: 'Acerca de',
+      description: 'Conoce más sobre nuestra empresa.',
+    },
+  }
+
+  return (
+    <div>
+      <h1>{content[currentLocale]?.title}</h1>
+      <p>{content[currentLocale]?.description}</p>
+    </div>
+  )
+}
+```
+
+This pattern matches:
+
+- `/about` (default locale)
+- `/en/about` (explicit English)
+- `/fr/about` (French)
+- `/es/about` (Spanish)
+
+### Complex i18n Patterns
+
+Combine optional parameters for more sophisticated i18n routing:
+
+```tsx
+// Route: /{-$locale}/blog/{-$category}/$slug
+export const Route = createFileRoute('/{-$locale}/blog/{-$category}/$slug')({
+  beforeLoad: async ({ params }) => {
+    const locale = params.locale || 'en'
+    const category = params.category
+
+    // Validate locale and category
+    const validLocales = ['en', 'fr', 'es', 'de']
+    if (locale && !validLocales.includes(locale)) {
+      throw new Error('Invalid locale')
+    }
+
+    return { locale, category }
+  },
+  loader: async ({ params, context }) => {
+    const { locale } = context
+    const { slug, category } = params
+
+    return fetchBlogPost({ slug, category, locale })
+  },
+  component: BlogPostComponent,
+})
+
+function BlogPostComponent() {
+  const { locale, category, slug } = Route.useParams()
+  const data = Route.useLoaderData()
+
+  return (
+    <article>
+      <h1>{data.title}</h1>
+      <p>
+        Category: {category || 'All'} | Language: {locale || 'en'}
+      </p>
+      <div>{data.content}</div>
+    </article>
+  )
+}
+```
+
+This supports URLs like:
+
+- `/blog/tech/my-post` (default locale, tech category)
+- `/fr/blog/my-post` (French, no category)
+- `/en/blog/tech/my-post` (explicit English, tech category)
+- `/es/blog/tecnologia/mi-post` (Spanish, Spanish category)
+
+### Language Navigation
+
+Create language switchers using optional i18n parameters with function-style params:
+
+```tsx
+function LanguageSwitcher() {
+  const currentParams = useParams({ strict: false })
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'fr', name: 'Français' },
+    { code: 'es', name: 'Español' },
+  ]
+
+  return (
+    <div className="language-switcher">
+      {languages.map(({ code, name }) => (
+        <Link
+          key={code}
+          to="/{-$locale}/blog/{-$category}/$slug"
+          params={(prev) => ({
+            ...prev,
+            locale: code === 'en' ? undefined : code, // Remove 'en' for clean URLs
+          })}
+          className={currentParams.locale === code ? 'active' : ''}
+        >
+          {name}
+        </Link>
+      ))}
+    </div>
+  )
+}
+```
+
+You can also create more sophisticated language switching logic:
+
+```tsx
+function AdvancedLanguageSwitcher() {
+  const currentParams = useParams({ strict: false })
+
+  const handleLanguageChange = (newLocale: string) => {
+    return (prev: any) => {
+      // Preserve all existing params but update locale
+      const updatedParams = { ...prev }
+
+      if (newLocale === 'en') {
+        // Remove locale for clean English URLs
+        delete updatedParams.locale
+      } else {
+        updatedParams.locale = newLocale
+      }
+
+      return updatedParams
+    }
+  }
+
+  return (
+    <div className="language-switcher">
+      <Link
+        to="/{-$locale}/blog/{-$category}/$slug"
+        params={handleLanguageChange('fr')}
+      >
+        Français
+      </Link>
+
+      <Link
+        to="/{-$locale}/blog/{-$category}/$slug"
+        params={handleLanguageChange('es')}
+      >
+        Español
+      </Link>
+
+      <Link
+        to="/{-$locale}/blog/{-$category}/$slug"
+        params={handleLanguageChange('en')}
+      >
+        English
+      </Link>
+    </div>
+  )
+}
+```
+
+### Advanced i18n with Optional Parameters
+
+Organize i18n routes using optional parameters for flexible locale handling:
+
+```tsx
+// Route structure:
+// routes/
+//   {-$locale}/
+//     index.tsx        // /, /en, /fr
+//     about.tsx        // /about, /en/about, /fr/about
+//     blog/
+//       index.tsx      // /blog, /en/blog, /fr/blog
+//       $slug.tsx      // /blog/post, /en/blog/post, /fr/blog/post
+
+// routes/{-$locale}/index.tsx
+export const Route = createFileRoute('/{-$locale}/')({
+  component: HomeComponent,
+})
+
+function HomeComponent() {
+  const { locale } = Route.useParams()
+  const isRTL = ['ar', 'he', 'fa'].includes(locale || '')
+
+  return (
+    <div dir={isRTL ? 'rtl' : 'ltr'}>
+      <h1>Welcome ({locale || 'en'})</h1>
+      {/* Localized content */}
+    </div>
+  )
+}
+
+// routes/{-$locale}/about.tsx
+export const Route = createFileRoute('/{-$locale}/about')({
+  component: AboutComponent,
+})
+```
+
+### SEO and Canonical URLs
+
+Handle SEO for i18n routes properly:
+
+```tsx
+export const Route = createFileRoute('/{-$locale}/products/$id')({
+  component: ProductComponent,
+  head: ({ params, loaderData }) => {
+    const locale = params.locale || 'en'
+    const product = loaderData
+
+    return {
+      title: product.title[locale] || product.title.en,
+      meta: [
+        {
+          name: 'description',
+          content: product.description[locale] || product.description.en,
+        },
+        {
+          property: 'og:locale',
+          content: locale,
+        },
+      ],
+      links: [
+        // Canonical URL (always use default locale format)
+        {
+          rel: 'canonical',
+          href: `https://example.com/products/${params.id}`,
+        },
+        // Alternate language versions
+        {
+          rel: 'alternate',
+          hreflang: 'en',
+          href: `https://example.com/products/${params.id}`,
+        },
+        {
+          rel: 'alternate',
+          hreflang: 'fr',
+          href: `https://example.com/fr/products/${params.id}`,
+        },
+        {
+          rel: 'alternate',
+          hreflang: 'es',
+          href: `https://example.com/es/products/${params.id}`,
+        },
+      ],
+    }
+  },
+})
+```
+
+### Type Safety for i18n
+
+Ensure type safety for your i18n implementations:
+
+```tsx
+// Define supported locales
+type Locale = 'en' | 'fr' | 'es' | 'de'
+
+// Type-safe locale validation
+function validateLocale(locale: string | undefined): locale is Locale {
+  return ['en', 'fr', 'es', 'de'].includes(locale as Locale)
+}
+
+export const Route = createFileRoute('/{-$locale}/shop/{-$category}')({
+  beforeLoad: async ({ params }) => {
+    const { locale } = params
+
+    // Type-safe locale validation
+    if (locale && !validateLocale(locale)) {
+      throw redirect({
+        to: '/shop/{-$category}',
+        params: { category: params.category },
+      })
+    }
+
+    return {
+      locale: (locale as Locale) || 'en',
+      isDefaultLocale: !locale || locale === 'en',
+    }
+  },
+  component: ShopComponent,
+})
+
+function ShopComponent() {
+  const { locale, category } = Route.useParams()
+  const { isDefaultLocale } = Route.useRouteContext()
+
+  // TypeScript knows locale is Locale | undefined
+  // and we have validated it in beforeLoad
+
+  return (
+    <div>
+      <h1>Shop {category ? `- ${category}` : ''}</h1>
+      <p>Language: {locale || 'en'}</p>
+      {!isDefaultLocale && (
+        <Link to="/shop/{-$category}" params={{ category }}>
+          View in English
+        </Link>
+      )}
+    </div>
+  )
+}
+```
+
+Optional path parameters provide a powerful and flexible foundation for implementing internationalization in your TanStack Router applications. Whether you prefer prefix-based or combined approaches, you can create clean, SEO-friendly URLs while maintaining excellent developer experience and type safety.
+
+## Allowed Characters
+
+By default, path params are escaped with `encodeURIComponent`. If you want to allow other valid URI characters (e.g. `@` or `+`), you can specify that in your [RouterOptions](../../api/router/RouterOptionsType.md#pathparamsallowedcharacters-property).
+
+Example usage:
+
+```tsx
+const router = createRouter({
+  // ...
+  pathParamsAllowedCharacters: ['@'],
+})
+```
+
+The following is the list of accepted allowed characters:
+
+- `;`
+- `:`
+- `@`
+- `&`
+- `=`
+- `+`
+- `$`
+- `,`
 
 # Preloading
 
@@ -4506,6 +5187,9 @@ const router = createRouter({
   routeTree,
 })
 ```
+
+> [!TIP]
+> `MyRouterContext` only needs to contain content that will be passed directly to `createRouter` below. All other context added in `beforeLoad` will be inferred.
 
 ## Passing the initial Router Context
 
@@ -5756,9 +6440,9 @@ declare module '@tanstack/react-router' {
 
 ### Rendering the Application on the Server
 
-Now that you have a router instance that has loaded all of the critical data for the current URL, you can render your application on the server:
+Now that you have a router instance that has loaded all the critical data for the current URL, you can render your application on the server:
 
-using `defaultRenderToString`
+using `defaultRenderHandler`
 
 ```tsx
 // src/entry-server.tsx
@@ -5771,7 +6455,7 @@ import { createRouter } from './router'
 export async function render({ request }: { request: Request }) {
   const handler = createRequestHandler({ request, createRouter })
 
-  return await handler(defaultRenderToString)
+  return await handler(defaultRenderHandler)
 }
 ```
 
@@ -5830,7 +6514,7 @@ With this setup, your application will be rendered on the server and then hydrat
 
 ## Streaming SSR
 
-Streaming SSR is the most modern flavor of SSR and is the process of continuously and incrementally sending HTML markup to the client as it is rendered on the server. This is slightly different from traditional SSR in concept because beyond being able to dehydrate and rehydrate a critical first paint, markup and data with less priority or slower response times can be streamed to the client after the initial render, but in the same request.
+Streaming SSR is the most modern flavor of SSR and is the process of continuously and incrementally sending HTML markup to the client as it is rendered on the server. This is slightly different from traditional SSR in concept because beyond being able to dehydrate and rehydrate a critical first paint, markup and data with lower priority or slower response times can be streamed to the client after the initial render, but in the same request.
 
 This pattern can be useful for pages that have slow or high-latency data fetching requirements. For example, if you have a page that needs to fetch data from a third-party API, you can stream the critical initial markup and data to the client and then stream the less-critical third-party data to the client as it is resolved.
 
@@ -5977,256 +6661,6 @@ declare module '@tanstack/react-router' {
 ```
 
 As long as there are any required properties on the `StaticDataRouteOption`, you'll be required to pass in an object.
-
-# TanStack Start
-
-TanStack Start is a full-stack framework for building server-rendered React applications built on top of [TanStack Router](https://tanstack.com/router).
-
-To set up a TanStack Start project, you'll need to:
-
-1. Install the dependencies
-2. Add a configuration file
-3. Create required templating
-
-Follow this guide to build a basic TanStack Start web application. Together, we will use TanStack Start to:
-
-- Serve an index page...
-- Which displays a counter...
-- With a button to increment the counter persistently.
-
-[Here is what that will look like](https://stackblitz.com/github/tanstack/router/tree/main/examples/react/start-basic-counter)
-
-Create a new project if you're starting fresh.
-
-```shell
-mkdir myApp
-cd myApp
-npm init -y
-```
-
-Create a `tsconfig.json` file with at least the following settings:
-
-```jsonc
-{
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "moduleResolution": "Bundler",
-    "module": "Preserve",
-    "target": "ES2022",
-    "skipLibCheck": true,
-  },
-}
-```
-
-# Install Dependencies
-
-TanStack Start is powered by the following packages and need to be installed as dependencies:
-
-- [@tanstack/start](https://github.com/tanstack/start)
-- [@tanstack/react-router](https://tanstack.com/router)
-- [Vite](https://vite.dev/)
-
-To install them, run:
-
-```shell
-npm i @tanstack/react-start @tanstack/react-router vite
-```
-
-You'll also need React and the Vite React plugin, so install their dependencies as well:
-
-```shell
-npm i react react-dom @vitejs/plugin-react
-```
-
-Please, for you, your fellow developers, and your users' sake, use TypeScript:
-
-```shell
-npm i -D typescript @types/react @types/react-dom
-```
-
-# Update Configuration Files
-
-We'll then update our `package.json` to use Vite's CLI and set `"type": "module"`:
-
-```jsonc
-{
-  // ...
-  "type": "module",
-  "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "start": "vite start",
-  },
-}
-```
-
-Then configure TanStack Start's `app.config.ts` file:
-
-```typescript
-// app.config.ts
-import { defineConfig } from '@tanstack/react-start/config'
-
-export default defineConfig({})
-```
-
-# Add the Basic Templating
-
-There are 2 required files for TanStack Start usage:
-
-1. The router configuration
-2. The root of your application
-
-Once configuration is done, we'll have a file tree that looks like the following:
-
-```
-.
-├── app/
-│   ├── routes/
-│   │   └── `__root.tsx`
-│   ├── `router.tsx`
-│   ├── `routeTree.gen.ts`
-├── `.gitignore`
-├── `app.config.ts`
-├── `package.json`
-└── `tsconfig.json`
-```
-
-## The Router Configuration
-
-This is the file that will dictate the behavior of TanStack Router used within Start for both the server and the client. Here, you can configure everything
-from the default [preloading functionality](../preloading.md) to [caching staleness](../data-loading.md).
-
-```tsx
-// app/router.tsx
-import { createRouter as createTanStackRouter } from '@tanstack/react-router'
-import { routeTree } from './routeTree.gen'
-
-export function createRouter() {
-  const router = createTanStackRouter({
-    routeTree,
-  })
-
-  return router
-}
-
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: ReturnType<typeof createRouter>
-  }
-}
-```
-
-> `routeTree.gen.ts` is not a file you're expected to have at this point.
-> It will be generated when you run TanStack Start (via `npm run dev` or `npm run start`) for the first time.
-
-## The Root of Your Application
-
-Finally, we need to create the root of our application. This is the entry point for all application routes. The code in this file will wrap all other routes in the application.
-
-```tsx
-// app/routes/__root.tsx
-import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
-import { Outlet } from '@tanstack/react-router'
-import * as React from 'react'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'TanStack Start Starter',
-      },
-    ],
-  }),
-  component: RootComponent,
-})
-
-function RootComponent() {
-  return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
-  )
-}
-
-function RootDocument({ children }: { children: React.ReactNode }) {
-  return (
-    <html>
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  )
-}
-```
-
-# Writing Your First Route
-
-Now that we have the basic templating setup, we can write our first route. This is done by creating a new file in the `app/routes` directory.
-
-```tsx
-// app/routes/index.tsx
-import * as fs from 'fs'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
-
-const filePath = 'count.txt'
-
-async function readCount() {
-  return parseInt(
-    await fs.promises.readFile(filePath, 'utf-8').catch(() => '0'),
-  )
-}
-
-const getCount = createServerFn({
-  method: 'GET',
-}).handler(() => {
-  return readCount()
-})
-
-const updateCount = createServerFn({ method: 'POST' })
-  .validator((d: number) => d)
-  .handler(async ({ data }) => {
-    const count = await readCount()
-    await fs.promises.writeFile(filePath, `${count + data}`)
-  })
-
-export const Route = createFileRoute('/')({
-  component: Home,
-  loader: async () => await getCount(),
-})
-
-function Home() {
-  const router = useRouter()
-  const state = Route.useLoaderData()
-
-  return (
-    <button
-      onClick={() => {
-        updateCount({ data: 1 }).then(() => {
-          router.invalidate()
-        })
-      }}
-    >
-      Add 1 to {state}?
-    </button>
-  )
-}
-```
-
-That's it! 🤯 You've now set up a TanStack Start project and written your first route. 🎉
-
-You can now run `npm run dev` to start your server and navigate to `http://localhost:3000` to see your route in action.
 
 # Type Safety
 

@@ -1,5 +1,13 @@
 import express from 'express';
-import {Route, Post, Tags, Middlewares, Request, Response} from '@tsoa/runtime';
+import {
+  Route,
+  Post,
+  Get,
+  Tags,
+  Middlewares,
+  Request,
+  Response,
+} from '@tsoa/runtime';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {requireAuthMiddleware} from '~/middleware';
 import {
@@ -18,10 +26,14 @@ import {
   CreateTicketListingRouteBody,
   CreateTicketListingRouteSchema,
 } from './validation';
-import {Body, ValidateBody, ValidateParams} from '~/decorators';
+import {Body, ValidateBody} from '~/decorators';
 
-type CreateTicketListingResponse = Promise<
-  ReturnType<TicketListingsService['createTicketListing']>
+type CreateTicketListingResponse = ReturnType<
+  TicketListingsService['createTicketListing']
+>;
+
+type GetUserListingsResponse = ReturnType<
+  TicketListingsService['getUserListingsWithTickets']
 >;
 
 @Route('ticket-listings')
@@ -49,12 +61,21 @@ export class TicketListingsController {
   public async create(
     @Body() body: CreateTicketListingRouteBody,
     @Request() request: express.Request,
-  ): CreateTicketListingResponse {
+  ): Promise<CreateTicketListingResponse> {
     return this.service.createTicketListing(
       {
         ...body,
       },
       request.user.id,
     );
+  }
+
+  @Get('/my-listings')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Middlewares(requireAuthMiddleware)
+  public async getMyListings(
+    @Request() request: express.Request,
+  ): Promise<GetUserListingsResponse> {
+    return this.service.getUserListingsWithTickets(request.user.id);
   }
 }

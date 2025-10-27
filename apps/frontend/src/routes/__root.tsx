@@ -19,6 +19,14 @@ import {ThemeProvider} from '~/components/ThemeProvider';
 import {ClerkProvider} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
 import {Toaster} from '~/components/ui/sonner';
+import {createServerFn} from '@tanstack/react-start';
+import {auth} from '@clerk/tanstack-react-start/server';
+
+const fetchClerkAuth = createServerFn({method: 'GET'}).handler(async () => {
+  const {isAuthenticated, userId} = await auth();
+
+  return {isAuthenticated, userId};
+});
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -81,6 +89,13 @@ export const Route = createRootRouteWithContext<{
   },
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
+  beforeLoad: async () => {
+    const {userId} = await fetchClerkAuth();
+
+    return {
+      userId,
+    };
+  },
 });
 
 function RootComponent() {

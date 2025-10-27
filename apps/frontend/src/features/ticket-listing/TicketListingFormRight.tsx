@@ -26,6 +26,7 @@ import {
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {getCurrencySymbol} from '~/utils';
+import {useNavigate} from '@tanstack/react-router';
 
 interface TicketListingFormProps {
   mode: 'create' | 'edit';
@@ -33,6 +34,7 @@ interface TicketListingFormProps {
 
 export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
   const form = useFormContext<TicketListingFormValues>();
+  const navigate = useNavigate();
   const [eventSearchValue, setEventSearchValue] = useState('');
   const debouncedSetEventSearchValue = useDebounceCallback(
     setEventSearchValue,
@@ -50,6 +52,8 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
       price: data.price,
       quantity: data.quantity,
     });
+
+    await navigate({to: '/'});
   };
 
   const eventsComboboxOptions = useMemo(() => {

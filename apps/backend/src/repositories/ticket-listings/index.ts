@@ -1,6 +1,8 @@
 import {Kysely} from 'kysely';
+import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
 import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
-import {DB, Listings} from '~/types';
+import {ValidationError} from '~/errors';
+import {DB} from '~/types';
 
 export class TicketListingsRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -9,7 +11,7 @@ export class TicketListingsRepository {
     ticketListings: CreateTicketListingRouteBody & {publisherUserId: string},
   ) {
     if (ticketListings.quantity === 0) {
-      return {} as Listings;
+      throw new ValidationError('Quantity must be greater than 0');
     }
 
     return this.db.transaction().execute(async tx => {
@@ -39,5 +41,66 @@ export class TicketListingsRepository {
         listingTickets: createdListingTickets,
       };
     });
+  }
+
+  async getListingsWithTicketsByUserId(userId: string) {
+    return await this.db
+      .selectFrom('listings')
+      .innerJoin(
+        'eventTicketWaves',
+        'listings.ticketWaveId',
+        'eventTicketWaves.id',
+      )
+      .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
+      .select(eb => [
+        'listings.id',
+        'listings.soldAt',
+        'listings.createdAt',
+        'listings.updatedAt',
+        jsonObjectFrom(
+          eb
+            .selectFrom('eventTicketWaves')
+            .select([
+              'eventTicketWaves.id',
+              'eventTicketWaves.name',
+              'eventTicketWaves.currency',
+            ])
+            .whereRef('eventTicketWaves.id', '=', 'listings.ticketWaveId'),
+        ).as('ticketWave'),
+        jsonObjectFrom(
+          eb
+            .selectFrom('events')
+            .select([
+              'events.id',
+              'events.name',
+              'events.eventStartDate',
+              'events.eventEndDate',
+              'events.venueName',
+              'events.venueAddress',
+              'events.description',
+            ])
+            .whereRef('events.id', '=', 'eventTicketWaves.eventId'),
+        ).as('event'),
+        jsonArrayFrom(
+          eb
+            .selectFrom('listingTickets')
+            .select([
+              'listingTickets.id',
+              'listingTickets.ticketNumber',
+              'listingTickets.price',
+              'listingTickets.soldAt',
+              'listingTickets.cancelledAt',
+              'listingTickets.createdAt',
+              'listingTickets.updatedAt',
+            ])
+            .whereRef('listingTickets.listingId', '=', 'listings.id')
+            .where('listingTickets.deletedAt', 'is', null)
+            .orderBy('listingTickets.ticketNumber', 'asc'),
+        ).as('tickets'),
+      ])
+      .where('listings.publisherUserId', '=', userId)
+      .where('listings.deletedAt', 'is', null)
+      .orderBy('listings.createdAt', 'desc')
+      .execute();
   }
 }

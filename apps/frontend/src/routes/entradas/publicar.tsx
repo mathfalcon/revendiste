@@ -2,8 +2,8 @@ import {Suspense} from 'react';
 import z from 'zod';
 import {FullScreenLoading} from '~/components';
 import {TicketListingForm} from '~/features/ticket-listing';
-import {createFileRoute} from '@tanstack/react-router';
-import {redirectToSignInIfNotAuthenticated} from '~/utils/auth';
+import {createFileRoute, redirect} from '@tanstack/react-router';
+import {beforeLoadRedirectToSignInIfNotAuthenticated} from '~/utils/auth';
 
 const CreateTicketListingSearchSchema = z.object({
   eventId: z.uuid().optional(),
@@ -12,7 +12,9 @@ const CreateTicketListingSearchSchema = z.object({
 export const Route = createFileRoute('/entradas/publicar')({
   component: RouteComponent,
   validateSearch: search => CreateTicketListingSearchSchema.parse(search),
-  beforeLoad: () => redirectToSignInIfNotAuthenticated(),
+  beforeLoad: ({context, location}) => {
+    beforeLoadRedirectToSignInIfNotAuthenticated(context.userId, location);
+  },
   loaderDeps: ({search: {eventId}}) => ({eventId}),
   loader: ({deps: {eventId}}) => {
     // Prefetch event data for the form if eventId is provided in search params

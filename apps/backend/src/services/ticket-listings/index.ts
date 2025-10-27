@@ -69,4 +69,15 @@ export class TicketListingsService {
 
     return createdListings;
   }
+
+  async getUserListingsWithTickets(userId: string) {
+    const listings =
+      await this.ticketListingsRepository.getListingsWithTicketsByUserId(
+        userId,
+      );
+
+    logger.info(`Retrieved ${listings.length} listings for user ${userId}`);
+
+    return listings;
+  }
 }

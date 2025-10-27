@@ -268,7 +268,7 @@ The `NavigateOptions` object accepts the following properties:
 - Optional
 - Defaults to `false`.
 - If `true`, navigation will be called using `document.startViewTransition()`.
-- If [`ViewTransitionOptions`](../ViewTransitionOptionsType.md), route navigations will be called using `document.startViewTransition({update, types})` where `types` will be the strings array passed with `ViewTransitionOptions["types"]`. If the browser does not support viewTransition types, the navigation will fall back to normal `document.startTransition()`, same as if `true` was passed.
+- If [`ViewTransitionOptions`](../ViewTransitionOptionsType.md), route navigations will be called using `document.startViewTransition({update, types})` where `types` will determine the strings array passed with `ViewTransitionOptions["types"]`. If the browser does not support viewTransition types, the navigation will fall back to normal `document.startTransition()`, same as if `true` was passed.
 - If the browser does not support this api, this option will be ignored.
 - See [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Document/startViewTransition) for more information on how this function works.
 - See [Google](https://developer.chrome.com/docs/web-platform/view-transitions/same-document#view-transition-types) for more information on viewTransition types
@@ -305,6 +305,7 @@ export type NotFoundError = {
   data?: any
   throw?: boolean
   routeId?: string
+  headers?: HeadersInit
 }
 ```
 
@@ -312,17 +313,23 @@ export type NotFoundError = {
 
 The `NotFoundError` object accepts/contains the following properties:
 
+### `global` property (⚠️ deprecated, use `routeId: rootRouteId` instead)
+
+- Type: `boolean`
+- Optional - `default: false`
+- If true, the not-found error will be handled by the `notFoundComponent` of the root route instead of bubbling up from the route that threw it. This has the same behavior as importing the root route and calling `RootRoute.notFound()`.
+
 ### `data` property
 
 - Type: `any`
 - Optional
 - Custom data that is passed into to `notFoundComponent` when the not-found error is handled
 
-### `global` property
+### `throw` property
 
 - Type: `boolean`
 - Optional - `default: false`
-- If true, the not-found error will be handled by the `notFoundComponent` of the root route instead of bubbling up from the route that threw it. This has the same behavior as importing the root route and calling `RootRoute.notFound()`.
+- If provided, will throw the not-found object instead of returning it. This can be useful in places where `throwing` in a function might cause it to have a return type of `never`. In that case, you can use `notFound({ throw: true })` to throw the not-found object instead of returning it.
 
 ### `route` property
 
@@ -330,11 +337,11 @@ The `NotFoundError` object accepts/contains the following properties:
 - Optional
 - The ID of the route that will attempt to handle the not-found error. If the route does not have a `notFoundComponent`, the error will bubble up to the parent route (and be handled by the root route if necessary). By default, TanStack Router will attempt to handle the not-found error with the route that threw it.
 
-### `throw` property
+### `headers` property
 
-- Type: `boolean`
-- Optional - `default: false`
-- If provided, will throw the not-found object instead of returning it. This can be useful in places where `throwing` in a function might cause it to have a return type of `never`. In that case, you can use `notFound({ throw: true })` to throw the not-found object instead of returning it.
+- Type: `HeadersInit`
+- Optional
+- HTTP headers to be included when the not-found error is handled on the server side.
 
 # NotFoundRoute class
 
@@ -451,6 +458,15 @@ The `Redirect` object accepts/contains the following properties:
 - Type: `HeadersInit`
 - Optional
 - The HTTP headers to use when redirecting.
+
+### Navigation Properties
+
+Since `Redirect` extends `NavigateOptions`, it also supports navigation properties:
+
+- **`to`**: Use for internal application routes (e.g., `/dashboard`, `../profile`)
+- **`href`**: Use for external URLs (e.g., `https://example.com`, `https://authprovider.com`)
+
+> **Important**: For external URLs, always use the `href` property instead of `to`. The `to` property is designed for internal navigation within your application.
 
 # Register type
 
@@ -797,20 +813,20 @@ interface RouteMatch {
   routeId: string
   pathname: string
   params: Route['allParams']
-  status: 'pending' | 'success' | 'error'
-  isFetching: boolean
+  status: 'pending' | 'success' | 'error' | 'redirected' | 'notFound'
+  isFetching: false | 'beforeLoad' | 'loader'
   showPending: boolean
   error: unknown
   paramsError: unknown
   searchError: unknown
   updatedAt: number
-  loadPromise?: Promise<void>
   loaderData?: Route['loaderData']
   context: Route['allContext']
   search: Route['fullSearchSchema']
   fetchedAt: number
   abortController: AbortController
   cause: 'enter' | 'stay'
+  ssr?: boolean | 'data-only'
 }
 ```
 
@@ -1114,6 +1130,72 @@ If you want to configure to remount a route component upon `params` change, use:
 remountDeps: ({ params }) => params
 ```
 
+### `headers` method
+
+- Type:
+
+```tsx
+type headers = (opts: {
+  matches: Array<RouteMatch>
+  match: RouteMatch
+  params: TAllParams
+  loaderData?: TLoaderData
+}) => Promise<Record<string, string>> | Record<string, string>
+```
+
+- Optional
+- Allows you to specify custom HTTP headers to be sent when this route is rendered during SSR. The function receives the current match context and should return a plain object of header name/value pairs.
+
+### `head` method
+
+- Type:
+
+```tsx
+type head = (ctx: {
+  matches: Array<RouteMatch>
+  match: RouteMatch
+  params: TAllParams
+  loaderData?: TLoaderData
+}) =>
+  | Promise<{
+      links?: RouteMatch['links']
+      scripts?: RouteMatch['headScripts']
+      meta?: RouteMatch['meta']
+      styles?: RouteMatch['styles']
+    }>
+  | {
+      links?: RouteMatch['links']
+      scripts?: RouteMatch['headScripts']
+      meta?: RouteMatch['meta']
+      styles?: RouteMatch['styles']
+    }
+```
+
+- Optional
+- Returns additional elements to inject into the document `<head>` for this route. Use it to add route-level SEO metadata, preload links, inline styles, or custom scripts.
+
+### `scripts` method
+
+- Type:
+
+```tsx
+type scripts = (ctx: {
+  matches: Array<RouteMatch>
+  match: RouteMatch
+  params: TAllParams
+  loaderData?: TLoaderData
+}) => Promise<RouteMatch['scripts']> | RouteMatch['scripts']
+```
+
+- Optional
+- A shorthand helper to return only `<script>` elements. Equivalent to returning the `scripts` field from the `head` method.
+
+### `codeSplitGroupings` property
+
+- Type: `Array<Array<'loader' | 'component' | 'pendingComponent' | 'notFoundComponent' | 'errorComponent'>>`
+- Optional
+- Fine-grained control over how the router groups lazy-loaded pieces of a route into chunks. Each inner array represents a group of assets that will be placed into the same bundle during code-splitting.
+
 # Route type
 
 The `Route` type is used to describe a route instance.
@@ -1412,6 +1494,14 @@ The `RouterOptions` type accepts an object with the following properties and met
 - Optional
 - The default `onCatch` handler for errors caught by the Router ErrorBoundary
 
+### `disableGlobalCatchBoundary` property
+
+- Type: `boolean`
+- Optional
+- Defaults to `false`
+- When `true`, disables the global catch boundary that normally wraps all route matches. This allows unhandled errors to bubble up to top-level error handlers in the browser.
+- Useful for testing tools, error reporting services, and debugging scenarios.
+
 ### `defaultViewTransition` property
 
 - Type: `boolean | ViewTransitionOptions`
@@ -1445,7 +1535,7 @@ The `RouterOptions` type accepts an object with the following properties and met
 - Type: `string`
 - Optional
 - Defaults to `/`
-- The basepath for then entire router. This is useful for mounting a router instance at a subpath.
+- The basepath for the entire router. This is useful for mounting a router instance at a subpath.
 
 ### `context` property
 
@@ -1673,7 +1763,7 @@ An instance of the `Router` has the following properties and methods:
 
 ### `.matchRoutes` method
 
-- Type: `(pathname: string, locationSearch: Record<string, any>, opts?: { throwOnError?: boolean; }) => RouteMatch[]`
+- Type: `(pathname: string, locationSearch?: Record<string, any>, opts?: { throwOnError?: boolean; }) => RouteMatch[]`
 - Matches a pathname and search params against the router's route tree and returns an array of route matches.
 - If `opts.throwOnError` is `true`, any errors that occur during the matching process will be thrown (in addition to being returned in the route match's `error` property).
 
@@ -1918,7 +2008,15 @@ The `ViewTransitionOptions` type is used to define a
 
 ```tsx
 interface ViewTransitionOptions {
-  types: Array<string>
+  types:
+    | Array<string>
+    | ((locationChangeInfo: {
+        fromLocation?: ParsedLocation
+        toLocation: ParsedLocation
+        pathChanged: boolean
+        hrefChanged: boolean
+        hashChanged: boolean
+      }) => Array<string> | false)
 }
 ```
 
@@ -1928,9 +2026,19 @@ The `ViewTransitionOptions` type accepts an object with a single property:
 
 ### `types` property
 
-- Type: `Array<string>`
+- Type: `Array<string> | ((locationChangeInfo: {
+  fromLocation?: ParsedLocation
+  toLocation: ParsedLocation
+  pathChanged: boolean
+  hrefChanged: boolean
+  hashChanged: boolean
+}) => (Array<string> | false))`
 - Required
-- The types array that will be passed to the `document.startViewTransition({update, types}) call`;
+- Either one of:
+  - An array of strings that will be passed to the `document.startViewTransition({update, types}) call`
+  - A function that accepts `locationChangeInfo` object and returns either:
+    - An array of strings that will be passed to the `document.startViewTransition({update, types}) call`
+    - or `false` to skip the view transition
 
 # Await component
 
@@ -2542,8 +2650,14 @@ The `ErrorComponent` component accepts the following props:
 
 ### `props.error` prop
 
-- Type: `any`
+- Type: `TError` (defaults to `Error`)
 - The error that was thrown by the component's children
+
+### `props.info` prop
+
+- Type: `{ componentStack: string }`
+- Optional
+- Additional information about where the error was thrown, such as the React component stack trace.
 
 ### `props.reset` prop
 
@@ -2917,11 +3031,19 @@ The `redirect` function accepts a single argument, the `options` to determine th
 import { redirect } from '@tanstack/react-router'
 
 const route = createRoute({
-  // throwing a redirect object
+  // throwing an internal redirect object using 'to' property
   loader: () => {
     if (!user) {
       throw redirect({
         to: '/login',
+      })
+    }
+  },
+  // throwing an external redirect object using 'href' property
+  loader: () => {
+    if (needsExternalAuth) {
+      throw redirect({
+        href: 'https://authprovider.com/login',
       })
     }
   },

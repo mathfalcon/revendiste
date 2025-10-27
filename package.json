@@ -24,5 +24,10 @@
   },
   "dependencies": {
     "tsoa": "link:../../../AppData/Local/pnpm/global/5/node_modules/tsoa"
+  },
+  "pnpm": {
+    "overrides": {
+      "srvx": "0.8.15"
+    }
   }
 }

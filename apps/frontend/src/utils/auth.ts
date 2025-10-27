@@ -1,20 +1,16 @@
-import {redirect} from '@tanstack/react-router';
-import {createServerFn} from '@tanstack/react-start';
-import {getAuth} from '@clerk/tanstack-react-start/server';
-import {getWebRequest} from '@tanstack/react-start/server';
+import {ParsedLocation, redirect} from '@tanstack/react-router';
 
-export const redirectToSignInIfNotAuthenticated = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  // Use `getAuth()` to access `isAuthenticated` and the user's ID
-  const {isAuthenticated} = await getAuth(getWebRequest());
-
-  // Protect the server function by checking if the user is signed in
-  if (!isAuthenticated) {
+export const beforeLoadRedirectToSignInIfNotAuthenticated = (
+  userId: string | null,
+  location: ParsedLocation,
+) => {
+  if (!userId) {
     throw redirect({
       to: '/ingresar/$',
+      search: {
+        redirectUrl: location.href,
+      },
+      replace: true,
     });
   }
-
-  return;
-});
+};

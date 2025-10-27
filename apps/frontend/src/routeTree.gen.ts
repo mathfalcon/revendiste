@@ -10,15 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
+import { Route as CuentaRouteRouteImport } from './routes/cuenta/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RegistrarseSplatRouteImport } from './routes/registrarse.$'
 import { Route as IngresarSplatRouteImport } from './routes/ingresar.$'
 import { Route as EventosEventIdRouteImport } from './routes/eventos/$eventId'
 import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar'
+import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
+import { Route as CuentaPerfilRouteImport } from './routes/cuenta/perfil'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 
 const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
   id: '/_pathlessLayout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CuentaRouteRoute = CuentaRouteRouteImport.update({
+  id: '/cuenta',
+  path: '/cuenta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -46,6 +54,16 @@ const EntradasPublicarRoute = EntradasPublicarRouteImport.update({
   path: '/entradas/publicar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CuentaPublicacionesRoute = CuentaPublicacionesRouteImport.update({
+  id: '/publicaciones',
+  path: '/publicaciones',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
+const CuentaPerfilRoute = CuentaPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
 const EntradasEditarListingIdRoute = EntradasEditarListingIdRouteImport.update({
   id: '/entradas/editar/$listingId',
   path: '/entradas/editar/$listingId',
@@ -54,6 +72,9 @@ const EntradasEditarListingIdRoute = EntradasEditarListingIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/cuenta/perfil': typeof CuentaPerfilRoute
+  '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
@@ -62,6 +83,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/cuenta/perfil': typeof CuentaPerfilRoute
+  '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
@@ -71,7 +95,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cuenta': typeof CuentaRouteRouteWithChildren
   '/_pathlessLayout': typeof PathlessLayoutRoute
+  '/cuenta/perfil': typeof CuentaPerfilRoute
+  '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
@@ -82,6 +109,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cuenta'
+    | '/cuenta/perfil'
+    | '/cuenta/publicaciones'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
@@ -90,6 +120,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cuenta'
+    | '/cuenta/perfil'
+    | '/cuenta/publicaciones'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
@@ -98,7 +131,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/cuenta'
     | '/_pathlessLayout'
+    | '/cuenta/perfil'
+    | '/cuenta/publicaciones'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
@@ -108,6 +144,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
   PathlessLayoutRoute: typeof PathlessLayoutRoute
   EntradasPublicarRoute: typeof EntradasPublicarRoute
   EventosEventIdRoute: typeof EventosEventIdRoute
@@ -123,6 +160,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof PathlessLayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cuenta': {
+      id: '/cuenta'
+      path: '/cuenta'
+      fullPath: '/cuenta'
+      preLoaderRoute: typeof CuentaRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -160,6 +204,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntradasPublicarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cuenta/publicaciones': {
+      id: '/cuenta/publicaciones'
+      path: '/publicaciones'
+      fullPath: '/cuenta/publicaciones'
+      preLoaderRoute: typeof CuentaPublicacionesRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
+    '/cuenta/perfil': {
+      id: '/cuenta/perfil'
+      path: '/perfil'
+      fullPath: '/cuenta/perfil'
+      preLoaderRoute: typeof CuentaPerfilRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
     '/entradas/editar/$listingId': {
       id: '/entradas/editar/$listingId'
       path: '/entradas/editar/$listingId'
@@ -170,8 +228,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface CuentaRouteRouteChildren {
+  CuentaPerfilRoute: typeof CuentaPerfilRoute
+  CuentaPublicacionesRoute: typeof CuentaPublicacionesRoute
+}
+
+const CuentaRouteRouteChildren: CuentaRouteRouteChildren = {
+  CuentaPerfilRoute: CuentaPerfilRoute,
+  CuentaPublicacionesRoute: CuentaPublicacionesRoute,
+}
+
+const CuentaRouteRouteWithChildren = CuentaRouteRoute._addFileChildren(
+  CuentaRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CuentaRouteRoute: CuentaRouteRouteWithChildren,
   PathlessLayoutRoute: PathlessLayoutRoute,
   EntradasPublicarRoute: EntradasPublicarRoute,
   EventosEventIdRoute: EventosEventIdRoute,
@@ -182,3 +255,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

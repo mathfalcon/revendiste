@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import {Link} from '@tanstack/react-router';
 
 export const UserProfile = () => {
   const {user} = useUser();
@@ -23,6 +24,9 @@ export const UserProfile = () => {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className='bg-background'>
+        <DropdownMenuItem asChild>
+          <Link to='/cuenta/publicaciones'>Publicaciones</Link>
+        </DropdownMenuItem>
         <SignOutButton>
           <DropdownMenuItem className='text-destructive'>
             Cerrar sesión
