@@ -66,7 +66,9 @@ export class TicketListingsRepository {
               'eventTicketWaves.currency',
             ])
             .whereRef('eventTicketWaves.id', '=', 'listings.ticketWaveId'),
-        ).as('ticketWave'),
+        )
+          .$notNull()
+          .as('ticketWave'),
         jsonObjectFrom(
           eb
             .selectFrom('events')
@@ -80,7 +82,9 @@ export class TicketListingsRepository {
               'events.description',
             ])
             .whereRef('events.id', '=', 'eventTicketWaves.eventId'),
-        ).as('event'),
+        )
+          .$notNull()
+          .as('event'),
         jsonArrayFrom(
           eb
             .selectFrom('listingTickets')
@@ -96,7 +100,9 @@ export class TicketListingsRepository {
             .whereRef('listingTickets.listingId', '=', 'listings.id')
             .where('listingTickets.deletedAt', 'is', null)
             .orderBy('listingTickets.ticketNumber', 'asc'),
-        ).as('tickets'),
+        )
+          .$notNull()
+          .as('tickets'),
       ])
       .where('listings.publisherUserId', '=', userId)
       .where('listings.deletedAt', 'is', null)

@@ -5,34 +5,49 @@ import {UnauthorizedError} from '~/errors';
 import {UsersRepository} from '~/repositories';
 import {UsersService} from '~/services';
 
-export const requireAuthMiddleware = async (
+// Global middleware that populates req.user when available (optional auth)
+export const optionalAuthMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const {isAuthenticated, userId} = getAuth(req);
 
-  if (!isAuthenticated) {
-    throw new UnauthorizedError();
+  if (isAuthenticated && userId) {
+    try {
+      const clerkUser = await clerkClient.users.getUser(userId);
+      const usersService = new UsersService(new UsersRepository(db));
+
+      const user = await usersService.getOrCreateUser({
+        clerkId: clerkUser.id,
+        email: clerkUser.primaryEmailAddress!.emailAddress,
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+        imageUrl: clerkUser.imageUrl,
+        lastActiveAt: clerkUser.lastActiveAt
+          ? new Date(clerkUser.lastActiveAt)
+          : null,
+        metadata: {},
+      });
+
+      req.user = user;
+    } catch (error) {
+      // If there's an error getting user info, just continue without authentication
+      console.warn('Failed to populate user from auth:', error);
+    }
   }
 
-  const clerkUser = await clerkClient.users.getUser(userId);
+  return next();
+};
 
-  const usersService = new UsersService(new UsersRepository(db));
-
-  const user = await usersService.getOrCreateUser({
-    clerkId: clerkUser.id,
-    email: clerkUser.primaryEmailAddress!.emailAddress,
-    firstName: clerkUser.firstName,
-    lastName: clerkUser.lastName,
-    imageUrl: clerkUser.imageUrl,
-    lastActiveAt: clerkUser.lastActiveAt
-      ? new Date(clerkUser.lastActiveAt)
-      : null,
-    metadata: {},
-  });
-
-  req.user = user;
+export const requireAuthMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.user) {
+    throw new UnauthorizedError();
+  }
 
   return next();
 };

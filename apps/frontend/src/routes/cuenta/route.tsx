@@ -32,7 +32,7 @@ function RouteComponent() {
 
   return (
     <Tabs
-      className='flex w-full flex-row gap-2 container mx-auto my-auto max-h-[60vh] h-full max-w-3xl'
+      className='flex w-full flex-row gap-2 container mx-auto max-w-3xl mt-20'
       defaultValue={path}
     >
       <TabsList className='flex h-auto flex-col justify-start bg-inherit'>

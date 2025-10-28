@@ -27,6 +27,8 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
+export type OrderStatus = "cancelled" | "confirmed" | "expired" | "pending";
+
 export type QrAvailabilityTiming = "12h" | "24h" | "48h" | "6h" | "72h";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
@@ -101,6 +103,47 @@ export interface ListingTickets {
   updatedAt: Generated<Timestamp>;
 }
 
+export interface OrderItems {
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  orderId: string;
+  pricePerTicket: Numeric;
+  quantity: number;
+  subtotal: Numeric;
+  ticketWaveId: string;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface Orders {
+  cancelledAt: Timestamp | null;
+  confirmedAt: Timestamp | null;
+  createdAt: Generated<Timestamp>;
+  currency: string;
+  deletedAt: Timestamp | null;
+  eventId: string;
+  id: Generated<string>;
+  platformCommission: Numeric;
+  reservationExpiresAt: Timestamp;
+  status: Generated<OrderStatus>;
+  subtotalAmount: Numeric;
+  totalAmount: Numeric;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+  vatOnCommission: Numeric;
+}
+
+export interface OrderTicketReservations {
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  listingTicketId: string;
+  orderId: string;
+  reservedAt: Generated<Timestamp>;
+  reservedUntil: Timestamp;
+  updatedAt: Generated<Timestamp>;
+}
+
 export interface Users {
   clerkId: string;
   createdAt: Generated<Timestamp>;
@@ -121,5 +164,8 @@ export interface DB {
   eventTicketWaves: EventTicketWaves;
   listings: Listings;
   listingTickets: ListingTickets;
+  orderItems: OrderItems;
+  orders: Orders;
+  orderTicketReservations: OrderTicketReservations;
   users: Users;
 }

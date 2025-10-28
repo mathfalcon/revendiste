@@ -141,8 +141,8 @@ export class EventsService {
     }
   }
 
-  async getEventById(eventId: string) {
-    return this.eventsRepository.getById(eventId);
+  async getEventById(eventId: string, userId?: string) {
+    return this.eventsRepository.getById(eventId, userId);
   }
 
   async getBySearch(query: string, limit: number = 20) {

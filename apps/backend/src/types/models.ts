@@ -1,6 +1,21 @@
 import {Selectable} from 'kysely';
-import {TicketListings, Users} from './db';
+import {
+  Listings,
+  Users,
+  Orders,
+  OrderItems,
+  ListingTickets,
+  OrderTicketReservations,
+} from './db';
 
 export type User = Selectable<Users>;
 
-export type TicketListing = Selectable<TicketListings>;
+export type Listing = Selectable<Listings>;
+
+export type Order = Selectable<Orders>;
+
+export type OrderItem = Selectable<OrderItems>;
+
+export type ListingTicket = Selectable<ListingTickets>;
+
+export type OrderTicketReservation = Selectable<OrderTicketReservations>;

@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
 import { Route as CuentaRouteRouteImport } from './routes/cuenta/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RegistrarseSplatRouteImport } from './routes/registrarse.$'
@@ -20,10 +19,6 @@ import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publica
 import { Route as CuentaPerfilRouteImport } from './routes/cuenta/perfil'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 
-const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
-  id: '/_pathlessLayout',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CuentaRouteRoute = CuentaRouteRouteImport.update({
   id: '/cuenta',
   path: '/cuenta',
@@ -96,7 +91,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/_pathlessLayout': typeof PathlessLayoutRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
@@ -132,7 +126,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cuenta'
-    | '/_pathlessLayout'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/entradas/publicar'
@@ -145,7 +138,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
-  PathlessLayoutRoute: typeof PathlessLayoutRoute
   EntradasPublicarRoute: typeof EntradasPublicarRoute
   EventosEventIdRoute: typeof EventosEventIdRoute
   IngresarSplatRoute: typeof IngresarSplatRoute
@@ -155,13 +147,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_pathlessLayout': {
-      id: '/_pathlessLayout'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof PathlessLayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/cuenta': {
       id: '/cuenta'
       path: '/cuenta'
@@ -245,7 +230,6 @@ const CuentaRouteRouteWithChildren = CuentaRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CuentaRouteRoute: CuentaRouteRouteWithChildren,
-  PathlessLayoutRoute: PathlessLayoutRoute,
   EntradasPublicarRoute: EntradasPublicarRoute,
   EventosEventIdRoute: EventosEventIdRoute,
   IngresarSplatRoute: IngresarSplatRoute,

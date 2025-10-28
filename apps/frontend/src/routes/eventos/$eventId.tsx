@@ -1,3 +1,4 @@
+import {auth} from '@clerk/tanstack-react-start/server';
 import {createFileRoute} from '@tanstack/react-router';
 import {Suspense} from 'react';
 import {FullScreenLoading} from '~/components';
@@ -6,9 +7,8 @@ import {getEventByIdQuery} from '~/lib';
 
 export const Route = createFileRoute('/eventos/$eventId')({
   component: RouteComponent,
-  loader: ({context, params}) => {
-    // Kick off loading as early as possible!
-    void context.queryClient.prefetchQuery(getEventByIdQuery(params.eventId));
+  loader: async ({context, params}) => {
+    void context.queryClient.ensureQueryData(getEventByIdQuery(params.eventId));
   },
 });
 

@@ -49,7 +49,10 @@ export class EventsController {
   }
 
   @Get('/{eventId}')
-  public async getById(@Path() eventId: string): Promise<GetEventByIdResponse> {
-    return this.service.getEventById(eventId);
+  public async getById(
+    @Path() eventId: string,
+    @Request() request: express.Request,
+  ): Promise<GetEventByIdResponse> {
+    return this.service.getEventById(eventId, request.user?.id);
   }
 }

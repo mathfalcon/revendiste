@@ -5,6 +5,7 @@ import {routeTree} from './routeTree.gen';
 import {DefaultCatchBoundary} from './components/DefaultCatchBoundary';
 import {NotFound} from './components/NotFound';
 import {FullScreenLoading} from './components';
+import {auth} from '@clerk/tanstack-react-start/server';
 
 // NOTE: Most of the integration code found here is experimental and will
 // definitely end up in a more streamlined API in the future. This is just

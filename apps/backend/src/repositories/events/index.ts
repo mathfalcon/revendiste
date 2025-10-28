@@ -303,7 +303,7 @@ export class EventsRepository {
   }
 
   // Retrieve event information with ticket waves and images
-  async getById(eventId: string) {
+  async getById(eventId: string, userId?: string) {
     const event = await this.db
       .selectFrom('events')
       .select(eb => [
@@ -350,6 +350,9 @@ export class EventsRepository {
                   .where('listingTickets.soldAt', 'is', null)
                   .where('listingTickets.deletedAt', 'is', null)
                   .where('listings.deletedAt', 'is', null)
+                  .$if(!!userId, eb =>
+                    eb.where('listings.publisherUserId', '!=', userId!),
+                  )
                   .whereRef('listings.ticketWaveId', '=', 'eventTicketWaves.id')
                   .groupBy('listingTickets.price')
                   .orderBy('listingTickets.price', 'asc'),

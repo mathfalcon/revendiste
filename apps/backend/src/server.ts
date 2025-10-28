@@ -2,7 +2,7 @@ import express, {NextFunction, Request, Response} from 'express';
 import cors from 'cors';
 
 import {PORT} from './config/env';
-import {errorHandler} from './middleware/errorHandler';
+import {errorHandler, optionalAuthMiddleware} from './middleware';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
 import {logger} from './utils';
@@ -23,6 +23,9 @@ app.use(
 app.use(express.json());
 
 app.use(clerkMiddleware());
+
+// Optional authentication middleware - populates req.user when available
+app.use(optionalAuthMiddleware);
 
 const router = express.Router();
 

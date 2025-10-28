@@ -265,16 +265,12 @@ export type ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets = {
     description: string | null;
   };
   ticketWave: {
-    faceValue: string;
     currency: EventTicketCurrency;
     name: string;
     id: string;
-    description: string | null;
   };
-  ticketWaveId: string;
   /** @format date-time */
   soldAt: string | null;
-  publisherUserId: string;
   /** @format date-time */
   updatedAt: string;
   id: string;
@@ -284,6 +280,42 @@ export type ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets = {
 
 export type GetUserListingsResponse =
   ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets;
+
+/** Obtain the return type of a function type */
+export interface ReturnTypeOrdersServiceAtCreateOrder {
+  vatOnCommission: string;
+  userId: string;
+  totalAmount: string;
+  subtotalAmount: string;
+  /** @format date-time */
+  reservationExpiresAt: string;
+  platformCommission: string;
+  /** @format date-time */
+  confirmedAt: string | null;
+  /** @format date-time */
+  cancelledAt: string | null;
+  currency: string;
+  eventId: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "confirmed" | "expired" | "pending";
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export type CreateOrderResponse = ReturnTypeOrdersServiceAtCreateOrder;
+
+/** Construct a type with a set of properties K of type T */
+export type RecordStringRecordStringNumber = object;
+
+export interface CreateOrderRouteBody {
+  /** Construct a type with a set of properties K of type T */
+  ticketSelections: RecordStringRecordStringNumber;
+  eventId: string;
+}
 
 import type {
   AxiosInstance,
@@ -700,6 +732,27 @@ export class Api<
       this.request<GetUserListingsResponse, UnauthorizedError>({
         path: `/ticket-listings/my-listings`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+  };
+  orders = {
+    /**
+     * No description
+     *
+     * @tags Orders
+     * @name Create
+     * @request POST:/orders
+     */
+    create: (data: CreateOrderRouteBody, params: RequestParams = {}) =>
+      this.request<
+        CreateOrderResponse,
+        BadRequestError | UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/orders`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

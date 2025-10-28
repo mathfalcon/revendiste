@@ -20,34 +20,8 @@ export const formatPrice = (
   price: number,
   currency: EventTicketCurrency = EventTicketCurrency.UYU,
 ) => {
-  return `${getCurrencySymbol(currency)} ${price.toLocaleString('es-ES')}`;
+  return `${getCurrencySymbol(currency)} ${Math.round(price).toLocaleString('es-ES')}`;
 };
 
-export const calculateSellerAmount = (
-  sellingPrice: number,
-  currency: EventTicketCurrency = EventTicketCurrency.UYU,
-) => {
-  const PLATFORM_COMMISSION_RATE = 0.06; // 6%
-  const VAT_RATE = 0.22; // 22% IVA in Uruguay
-
-  // Calculate platform commission
-  const platformCommission = sellingPrice * PLATFORM_COMMISSION_RATE;
-
-  // Calculate VAT on the platform commission (not on the entire price)
-  const vatOnCommission = platformCommission * VAT_RATE;
-
-  // Calculate total deductions
-  const totalDeductions = platformCommission + vatOnCommission;
-
-  // Calculate what the seller receives
-  const sellerAmount = sellingPrice - totalDeductions;
-
-  return {
-    sellingPrice,
-    platformCommission,
-    vatOnCommission,
-    totalDeductions,
-    sellerAmount,
-    currency,
-  };
-};
+// Re-export fee calculation functions for backward compatibility
+export {calculateSellerAmount} from './fees';

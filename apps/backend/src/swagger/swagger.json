@@ -810,14 +810,10 @@
 								"eventEndDate",
 								"description"
 							],
-							"type": "object",
-							"nullable": true
+							"type": "object"
 						},
 						"ticketWave": {
 							"properties": {
-								"faceValue": {
-									"type": "string"
-								},
 								"currency": {
 									"$ref": "#/components/schemas/EventTicketCurrency"
 								},
@@ -826,32 +822,19 @@
 								},
 								"id": {
 									"type": "string"
-								},
-								"description": {
-									"type": "string",
-									"nullable": true
 								}
 							},
 							"required": [
-								"faceValue",
 								"currency",
 								"name",
-								"id",
-								"description"
+								"id"
 							],
-							"type": "object",
-							"nullable": true
-						},
-						"ticketWaveId": {
-							"type": "string"
+							"type": "object"
 						},
 						"soldAt": {
 							"type": "string",
 							"format": "date-time",
 							"nullable": true
-						},
-						"publisherUserId": {
-							"type": "string"
 						},
 						"updatedAt": {
 							"type": "string",
@@ -869,9 +852,7 @@
 						"tickets",
 						"event",
 						"ticketWave",
-						"ticketWaveId",
 						"soldAt",
-						"publisherUserId",
 						"updatedAt",
 						"id",
 						"createdAt"
@@ -883,6 +864,112 @@
 			},
 			"GetUserListingsResponse": {
 				"$ref": "#/components/schemas/ReturnType_TicketListingsService-at-getUserListingsWithTickets_"
+			},
+			"ReturnType_OrdersService-at-createOrder_": {
+				"properties": {
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"userId": {
+						"type": "string"
+					},
+					"totalAmount": {
+						"type": "string"
+					},
+					"subtotalAmount": {
+						"type": "string"
+					},
+					"reservationExpiresAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"confirmedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"cancelledAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"currency": {
+						"type": "string"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"cancelled",
+							"confirmed",
+							"expired",
+							"pending"
+						]
+					},
+					"id": {
+						"type": "string"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"vatOnCommission",
+					"userId",
+					"totalAmount",
+					"subtotalAmount",
+					"reservationExpiresAt",
+					"platformCommission",
+					"confirmedAt",
+					"cancelledAt",
+					"currency",
+					"eventId",
+					"updatedAt",
+					"status",
+					"id",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object",
+				"description": "Obtain the return type of a function type"
+			},
+			"CreateOrderResponse": {
+				"$ref": "#/components/schemas/ReturnType_OrdersService-at-createOrder_"
+			},
+			"Record_string.Record_string.number__": {
+				"properties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"CreateOrderRouteBody": {
+				"properties": {
+					"ticketSelections": {
+						"$ref": "#/components/schemas/Record_string.Record_string.number__"
+					},
+					"eventId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"ticketSelections",
+					"eventId"
+				],
+				"type": "object"
 			}
 		},
 		"securitySchemes": {}
@@ -1379,6 +1466,78 @@
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/orders": {
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateOrderResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid request body, missing required fields, or invalid data types",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BadRequestError"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Event not found or ticket wave not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: Not enough tickets available, event has ended, or invalid ticket selection",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateOrderRouteBody"
+							}
+						}
+					}
+				}
 			}
 		}
 	},
