@@ -29,6 +29,14 @@ export type Numeric = ColumnType<string, number | string, number | string>;
 
 export type OrderStatus = "cancelled" | "confirmed" | "expired" | "pending";
 
+export type PaymentEventType = "chargeback_received" | "dispute_opened" | "dispute_resolved" | "fraud_check_failed" | "manual_review_required" | "payment_created" | "refund_completed" | "refund_initiated" | "status_change" | "webhook_received";
+
+export type PaymentMethod = "bank_transfer" | "cash" | "credit_card" | "debit_card" | "other" | "pix" | "voucher";
+
+export type PaymentProvider = "dlocal" | "mercadopago" | "paypal" | "stripe";
+
+export type PaymentStatus = "cancelled" | "expired" | "failed" | "paid" | "partially_refunded" | "pending" | "processing" | "refunded";
+
 export type QrAvailabilityTiming = "12h" | "24h" | "48h" | "6h" | "72h";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
@@ -119,7 +127,7 @@ export interface Orders {
   cancelledAt: Timestamp | null;
   confirmedAt: Timestamp | null;
   createdAt: Generated<Timestamp>;
-  currency: string;
+  currency: EventTicketCurrency;
   deletedAt: Timestamp | null;
   eventId: string;
   id: Generated<string>;
@@ -141,6 +149,52 @@ export interface OrderTicketReservations {
   orderId: string;
   reservedAt: Generated<Timestamp>;
   reservedUntil: Timestamp;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface PaymentEvents {
+  createdAt: Generated<Timestamp>;
+  eventData: Generated<Json | null>;
+  eventType: PaymentEventType;
+  fromStatus: PaymentStatus | null;
+  id: Generated<string>;
+  ipAddress: string | null;
+  paymentId: string;
+  toStatus: PaymentStatus | null;
+  userAgent: string | null;
+}
+
+export interface Payments {
+  amount: Numeric;
+  approvedAt: Timestamp | null;
+  backUrl: string | null;
+  balanceAmount: Numeric | null;
+  balanceCurrency: string | null;
+  balanceFee: Numeric | null;
+  cancelledAt: Timestamp | null;
+  createdAt: Generated<Timestamp>;
+  currency: string;
+  deletedAt: Timestamp | null;
+  expiredAt: Timestamp | null;
+  failedAt: Timestamp | null;
+  failureReason: string | null;
+  id: Generated<string>;
+  notificationUrl: string | null;
+  orderId: string;
+  payerCountry: string | null;
+  payerDocument: string | null;
+  payerDocumentType: string | null;
+  payerEmail: string | null;
+  payerFirstName: string | null;
+  payerLastName: string | null;
+  paymentMethod: PaymentMethod | null;
+  provider: PaymentProvider;
+  providerMetadata: Generated<Json | null>;
+  providerPaymentId: string;
+  redirectUrl: string | null;
+  refundedAt: Timestamp | null;
+  status: Generated<PaymentStatus>;
+  successUrl: string | null;
   updatedAt: Generated<Timestamp>;
 }
 
@@ -167,5 +221,7 @@ export interface DB {
   orderItems: OrderItems;
   orders: Orders;
   orderTicketReservations: OrderTicketReservations;
+  paymentEvents: PaymentEvents;
+  payments: Payments;
   users: Users;
 }

@@ -6,6 +6,8 @@ import {
   OrderItems,
   ListingTickets,
   OrderTicketReservations,
+  Payments,
+  PaymentEvents,
 } from './db';
 
 export type User = Selectable<Users>;
@@ -19,3 +21,7 @@ export type OrderItem = Selectable<OrderItems>;
 export type ListingTicket = Selectable<ListingTickets>;
 
 export type OrderTicketReservation = Selectable<OrderTicketReservations>;
+
+export type Payment = Selectable<Payments>;
+
+export type PaymentEvent = Selectable<PaymentEvents>;

@@ -15,6 +15,5 @@ export async function down(db: Kysely<any>): Promise<void> {
   // Drop the unique constraint
   await db.schema
     .dropIndex('order_ticket_reservations_unique_active_reservation')
-    .on('order_ticket_reservations')
     .execute();
 }

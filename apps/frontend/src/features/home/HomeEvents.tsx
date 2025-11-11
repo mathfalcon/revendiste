@@ -1,18 +1,26 @@
-import {useQuery} from '@tanstack/react-query';
+import {useInfiniteQuery} from '@tanstack/react-query';
 import {EventCard, SkeletonEventCard} from '~/components';
 import {Separator} from '~/components/ui/separator';
+import {useInfiniteScroll} from '~/hooks';
 import {
   EventImageType,
   EventTicketCurrency,
-  getEventsPaginatedQuery,
+  getEventsInfiniteQuery,
 } from '~/lib';
 
 export const HomeEvents = () => {
-  const {data, isLoading} = useQuery(
-    getEventsPaginatedQuery({limit: 20, page: 1}),
-  );
+  const {data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage} =
+    useInfiniteQuery(getEventsInfiniteQuery(20));
 
-  const events = data?.data ?? [];
+  // Flatten all pages into a single array
+  const events = data?.pages.flatMap(page => page.data) ?? [];
+
+  // Use the infinite scroll hook
+  const sentinelRef = useInfiniteScroll({
+    hasNextPage: hasNextPage ?? false,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   return (
     <div className='mx-auto flex flex-col gap-4 my-6'>
@@ -44,6 +52,15 @@ export const HomeEvents = () => {
                 />
               );
             })}
+        {/* Show skeletons while loading next page */}
+        {isFetchingNextPage &&
+          Array.from({length: 3}).map((_, index) => (
+            <SkeletonEventCard key={`loading-next-page-${index}`} />
+          ))}
+        {/* Sentinel element for infinite scroll */}
+        {hasNextPage && (
+          <div ref={sentinelRef} className='col-span-full' aria-hidden='true' />
+        )}
       </main>
     </div>
   );

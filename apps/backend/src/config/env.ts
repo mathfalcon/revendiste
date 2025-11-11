@@ -15,6 +15,11 @@ const EnvSchema = z.object({
   // Fee configuration
   PLATFORM_COMMISSION_RATE: z.coerce.number().min(0).max(1).default(0.06), // 6%
   VAT_RATE: z.coerce.number().min(0).max(1).default(0.22), // 22%
+  DLOCAL_API_KEY: z.string(),
+  DLOCAL_SECRET_KEY: z.string(),
+  DLOCAL_BASE_URL: z.url(),
+  APP_BASE_URL: z.url(),
+  API_BASE_URL: z.url(),
 });
 
 export const env = EnvSchema.safeParse(process.env);
@@ -37,4 +42,9 @@ export const {
   CLERK_SECRET_KEY,
   PLATFORM_COMMISSION_RATE,
   VAT_RATE,
+  DLOCAL_API_KEY,
+  DLOCAL_SECRET_KEY,
+  DLOCAL_BASE_URL,
+  APP_BASE_URL,
+  API_BASE_URL,
 } = env.data;

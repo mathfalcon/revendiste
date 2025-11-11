@@ -23,6 +23,20 @@ export class OrdersService {
   ) {}
 
   async createOrder(data: CreateOrderRouteBody, userId: string) {
+    console.log(JSON.stringify(data, null, 2));
+    // Check if user already has a pending order for this event
+    const existingOrder =
+      await this.ordersRepository.getPendingOrderByUserAndEvent(
+        userId,
+        data.eventId,
+      );
+    if (existingOrder) {
+      throw new ValidationError(
+        ORDER_ERROR_MESSAGES.PENDING_ORDER_EXISTS(existingOrder.id),
+        {orderId: existingOrder.id},
+      );
+    }
+
     // Validate that the event exists and hasn't finished
     const event = await this.eventsRepository.getById(data.eventId);
     if (!event) {
@@ -48,6 +62,7 @@ export class OrdersService {
       quantity: number;
       ticketIds: string[];
     }> = [];
+    const ticketWaveCurrencies: Set<string> = new Set();
 
     // Process each ticket wave selection
     for (const [ticketWaveId, priceGroups] of Object.entries(
@@ -68,6 +83,9 @@ export class OrdersService {
           ORDER_ERROR_MESSAGES.TICKET_WAVE_INVALID_EVENT(ticketWaveId),
         );
       }
+
+      // Track currency for validation
+      ticketWaveCurrencies.add(ticketWave.currency);
 
       // Process each price group within the ticket wave
       for (const [priceStr, quantity] of Object.entries(priceGroups)) {
@@ -134,6 +152,14 @@ export class OrdersService {
       }
     }
 
+    // Validate that all ticket waves have the same currency
+    if (ticketWaveCurrencies.size > 1) {
+      const currencies = Array.from(ticketWaveCurrencies).join(', ');
+      throw new ValidationError(
+        ORDER_ERROR_MESSAGES.MIXED_CURRENCIES(currencies),
+      );
+    }
+
     // Validate total ticket limit
     if (totalTickets > 10) {
       throw new ValidationError(ORDER_ERROR_MESSAGES.TOO_MANY_TICKETS);
@@ -146,7 +172,7 @@ export class OrdersService {
     // Calculate fees using centralized utility
     const feeCalculation = calculateOrderFees(subtotalAmount);
 
-    // Get currency from first ticket wave
+    // Get currency from first ticket wave (all currencies are the same after validation)
     const firstTicketWave = await this.eventTicketWavesRepository.getById(
       Object.keys(data.ticketSelections)[0],
     );
@@ -181,9 +207,14 @@ export class OrdersService {
         })),
       );
 
+      // Clean up expired reservations for the tickets we're trying to reserve
+      // This ensures expired reservations don't block new ones (soft-deleted for history)
+      // This is a safety net - we also have a scheduled job, but this ensures immediate cleanup
+      const allTicketIds = ticketsToReserve.flatMap(r => r.ticketIds);
+      await reservationsRepo.cleanupExpiredReservationsForTickets(allTicketIds);
+
       // Create ticket reservations with error handling for race conditions
       const reservedUntil = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
-      const allTicketIds = ticketsToReserve.flatMap(r => r.ticketIds);
 
       try {
         await reservationsRepo.createReservations(
@@ -192,12 +223,14 @@ export class OrdersService {
           reservedUntil,
         );
       } catch (error: any) {
-        // Handle unique constraint violation (race condition)
+        // Handle unique constraint violation (race condition with another user)
         if (
           error.code === '23505' &&
           error.constraint ===
             'order_ticket_reservations_unique_active_reservation'
         ) {
+          // This means another user just reserved these tickets
+          // Expired reservations have been cleaned up, so this is a real conflict
           throw new ValidationError(
             ORDER_ERROR_MESSAGES.TICKETS_NO_LONGER_AVAILABLE,
           );
@@ -211,5 +244,20 @@ export class OrdersService {
 
       return order;
     });
+  }
+
+  async getOrderById(orderId: string, userId: string) {
+    const order = await this.ordersRepository.getByIdWithItems(orderId);
+
+    if (!order) {
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+    }
+
+    // Ensure user can only access their own orders
+    if (order.userId !== userId) {
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+    }
+
+    return order;
   }
 }

@@ -28,12 +28,21 @@ export const ORDER_ERROR_MESSAGES = {
   CANNOT_BUY_OWN_TICKETS: 'No puedes comprar tus propias entradas',
   TICKETS_NO_LONGER_AVAILABLE:
     'Las entradas seleccionadas ya no están disponibles. Por favor, actualiza tu selección e intenta nuevamente.',
+  MIXED_CURRENCIES: (currencies: string) =>
+    `No se pueden mezclar diferentes monedas en una misma orden. Las entradas seleccionadas tienen las siguientes monedas: ${currencies}. Por favor selecciona entradas con la misma moneda.`,
 
   // Validation schema errors
   INVALID_EVENT_ID: 'ID de evento inválido',
   INVALID_QUANTITY_TYPE: 'La cantidad debe ser un número',
   QUANTITY_TOO_LOW: 'La cantidad debe ser mayor o igual a 0',
   QUANTITY_TOO_HIGH: 'No se pueden pedir más de 10 entradas a la vez',
+
+  // Order not found
+  ORDER_NOT_FOUND: 'Orden no encontrada',
+
+  // Duplicate order errors
+  PENDING_ORDER_EXISTS: (orderId: string) =>
+    `Ya tienes una orden pendiente para este evento. Por favor completa el pago de tu orden existente antes de crear una nueva.`,
 } as const;
 
 // Type for error message keys (useful for type safety)

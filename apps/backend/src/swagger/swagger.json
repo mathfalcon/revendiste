@@ -695,6 +695,9 @@
 					},
 					"isOperational": {
 						"type": "boolean"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.any_"
 					}
 				},
 				"required": [
@@ -897,7 +900,7 @@
 						"nullable": true
 					},
 					"currency": {
-						"type": "string"
+						"$ref": "#/components/schemas/EventTicketCurrency"
 					},
 					"eventId": {
 						"type": "string"
@@ -970,6 +973,222 @@
 					"eventId"
 				],
 				"type": "object"
+			},
+			"ReturnType_OrdersService-at-getOrderById_": {
+				"properties": {
+					"items": {
+						"items": {
+							"properties": {
+								"ticketWaveName": {
+									"type": "string",
+									"nullable": true
+								},
+								"subtotal": {
+									"type": "string",
+									"nullable": true
+								},
+								"quantity": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
+								},
+								"pricePerTicket": {
+									"type": "string",
+									"nullable": true
+								},
+								"ticketWaveId": {
+									"type": "string",
+									"nullable": true
+								},
+								"id": {
+									"type": "string",
+									"nullable": true
+								},
+								"currency": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/EventTicketCurrency"
+										}
+									],
+									"nullable": true
+								}
+							},
+							"required": [
+								"ticketWaveName",
+								"subtotal",
+								"quantity",
+								"pricePerTicket",
+								"ticketWaveId",
+								"id",
+								"currency"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"event": {
+						"properties": {
+							"images": {
+								"items": {
+									"properties": {
+										"imageType": {
+											"$ref": "#/components/schemas/EventImageType"
+										},
+										"url": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"imageType",
+										"url"
+									],
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"venueName": {
+								"type": "string",
+								"nullable": true
+							},
+							"venueAddress": {
+								"type": "string",
+								"nullable": true
+							},
+							"name": {
+								"type": "string",
+								"nullable": true
+							},
+							"id": {
+								"type": "string",
+								"nullable": true
+							},
+							"eventStartDate": {
+								"type": "string",
+								"nullable": true
+							},
+							"eventEndDate": {
+								"type": "string",
+								"nullable": true
+							}
+						},
+						"required": [
+							"images",
+							"venueName",
+							"venueAddress",
+							"name",
+							"id",
+							"eventStartDate",
+							"eventEndDate"
+						],
+						"type": "object",
+						"nullable": true
+					},
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"userId": {
+						"type": "string"
+					},
+					"totalAmount": {
+						"type": "string"
+					},
+					"subtotalAmount": {
+						"type": "string"
+					},
+					"reservationExpiresAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"confirmedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"cancelledAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"cancelled",
+							"confirmed",
+							"expired",
+							"pending"
+						]
+					},
+					"id": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"items",
+					"event",
+					"vatOnCommission",
+					"userId",
+					"totalAmount",
+					"subtotalAmount",
+					"reservationExpiresAt",
+					"platformCommission",
+					"confirmedAt",
+					"cancelledAt",
+					"currency",
+					"eventId",
+					"updatedAt",
+					"status",
+					"id",
+					"createdAt"
+				],
+				"type": "object",
+				"description": "Obtain the return type of a function type"
+			},
+			"GetOrderByIdResponse": {
+				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getOrderById_"
+			},
+			"DLocalWebhookrRouteBody": {
+				"properties": {
+					"payment_id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"payment_id"
+				],
+				"type": "object"
+			},
+			"CreatePaymentLinkResponse": {
+				"properties": {
+					"redirectUrl": {
+						"type": "string"
+					},
+					"paymentId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"redirectUrl",
+					"paymentId"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {}
@@ -1538,6 +1757,160 @@
 						}
 					}
 				}
+			}
+		},
+		"/orders/{orderId}": {
+			"get": {
+				"operationId": "GetById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetOrderByIdResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Order not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/webhooks/dlocal": {
+			"post": {
+				"operationId": "HandleDLocalWebhook",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"received": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"received"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"description": "Receives payment status notifications from dLocal",
+				"summary": "dLocal payment webhook",
+				"tags": [
+					"Webhooks"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/DLocalWebhookrRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/payments/create-link/{orderId}": {
+			"post": {
+				"operationId": "CreatePaymentLink",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreatePaymentLinkResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Order not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Order has expired or payment already processed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payments"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},

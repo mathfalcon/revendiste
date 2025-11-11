@@ -342,6 +342,20 @@ export class EventsRepository {
                     'listings.id',
                     'listingTickets.listingId',
                   )
+                  .leftJoin('orderTicketReservations', join =>
+                    join
+                      .onRef(
+                        'orderTicketReservations.listingTicketId',
+                        '=',
+                        'listingTickets.id',
+                      )
+                      .on('orderTicketReservations.deletedAt', 'is', null)
+                      .on(
+                        'orderTicketReservations.reservedUntil',
+                        '>',
+                        new Date(),
+                      ),
+                  )
                   .select(eb => [
                     'listingTickets.price',
                     eb.fn.count('listingTickets.id').as('availableTickets'),
@@ -350,6 +364,7 @@ export class EventsRepository {
                   .where('listingTickets.soldAt', 'is', null)
                   .where('listingTickets.deletedAt', 'is', null)
                   .where('listings.deletedAt', 'is', null)
+                  .where('orderTicketReservations.id', 'is', null) // Not reserved
                   .$if(!!userId, eb =>
                     eb.where('listings.publisherUserId', '!=', userId!),
                   )

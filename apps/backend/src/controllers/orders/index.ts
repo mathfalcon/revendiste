@@ -1,5 +1,14 @@
 import express from 'express';
-import {Route, Post, Tags, Middlewares, Request, Response} from '@tsoa/runtime';
+import {
+  Route,
+  Post,
+  Get,
+  Tags,
+  Middlewares,
+  Request,
+  Response,
+  Path,
+} from '@tsoa/runtime';
 import {OrdersService} from '~/services/orders';
 import {requireAuthMiddleware} from '~/middleware';
 import {
@@ -18,11 +27,13 @@ import {
   BadRequestError,
 } from '~/errors';
 import {CreateOrderRouteBody, CreateOrderRouteSchema} from './validation';
-import {Body, ValidateBody} from '~/decorators';
+import {ValidateBody, Body} from '~/decorators';
 
 type CreateOrderResponse = ReturnType<OrdersService['createOrder']>;
+type GetOrderByIdResponse = ReturnType<OrdersService['getOrderById']>;
 
 @Route('orders')
+@Middlewares(requireAuthMiddleware)
 @Tags('Orders')
 export class OrdersController {
   private service = new OrdersService(
@@ -45,7 +56,6 @@ export class OrdersController {
     422,
     'Validation failed: Not enough tickets available, event has ended, or invalid ticket selection',
   )
-  @Middlewares(requireAuthMiddleware)
   @ValidateBody(CreateOrderRouteSchema)
   public async create(
     @Body() body: CreateOrderRouteBody,
@@ -57,5 +67,15 @@ export class OrdersController {
       },
       request.user.id,
     );
+  }
+
+  @Get('/{orderId}')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<NotFoundError>(404, 'Order not found')
+  public async getById(
+    @Path() orderId: string,
+    @Request() request: express.Request,
+  ): Promise<GetOrderByIdResponse> {
+    return this.service.getOrderById(orderId, request.user.id);
   }
 }

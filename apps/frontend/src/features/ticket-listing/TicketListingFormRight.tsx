@@ -53,7 +53,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
       quantity: data.quantity,
     });
 
-    await navigate({to: '/'});
+    await navigate({to: '/cuenta/publicaciones'});
   };
 
   const eventsComboboxOptions = useMemo(() => {

@@ -232,6 +232,8 @@ export interface ValidationError {
   /** @format double */
   statusCode: number;
   isOperational: boolean;
+  /** Construct a type with a set of properties K of type T */
+  metadata?: RecordStringAny;
 }
 
 export interface CreateTicketListingRouteBody {
@@ -294,7 +296,7 @@ export interface ReturnTypeOrdersServiceAtCreateOrder {
   confirmedAt: string | null;
   /** @format date-time */
   cancelledAt: string | null;
-  currency: string;
+  currency: EventTicketCurrency;
   eventId: string;
   /** @format date-time */
   updatedAt: string;
@@ -315,6 +317,62 @@ export interface CreateOrderRouteBody {
   /** Construct a type with a set of properties K of type T */
   ticketSelections: RecordStringRecordStringNumber;
   eventId: string;
+}
+
+/** Obtain the return type of a function type */
+export interface ReturnTypeOrdersServiceAtGetOrderById {
+  items: {
+    ticketWaveName: string | null;
+    subtotal: string | null;
+    /** @format double */
+    quantity: number | null;
+    pricePerTicket: string | null;
+    ticketWaveId: string | null;
+    id: string | null;
+    currency: EventTicketCurrency | null;
+  }[];
+  event: {
+    images: {
+      imageType: EventImageType;
+      url: string;
+    }[];
+    venueName: string | null;
+    venueAddress: string | null;
+    name: string | null;
+    id: string | null;
+    eventStartDate: string | null;
+    eventEndDate: string | null;
+  };
+  vatOnCommission: string;
+  userId: string;
+  totalAmount: string;
+  subtotalAmount: string;
+  /** @format date-time */
+  reservationExpiresAt: string;
+  platformCommission: string;
+  /** @format date-time */
+  confirmedAt: string | null;
+  /** @format date-time */
+  cancelledAt: string | null;
+  currency: EventTicketCurrency;
+  eventId: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "confirmed" | "expired" | "pending";
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export type GetOrderByIdResponse = ReturnTypeOrdersServiceAtGetOrderById;
+
+export interface DLocalWebhookrRouteBody {
+  payment_id: string;
+}
+
+export interface CreatePaymentLinkResponse {
+  redirectUrl: string;
+  paymentId: string;
 }
 
 import type {
@@ -753,6 +811,67 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Orders
+     * @name GetById
+     * @request GET:/orders/{orderId}
+     */
+    getById: (orderId: string, params: RequestParams = {}) =>
+      this.request<GetOrderByIdResponse, UnauthorizedError | NotFoundError>({
+        path: `/orders/${orderId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+  };
+  webhooks = {
+    /**
+     * @description Receives payment status notifications from dLocal
+     *
+     * @tags Webhooks
+     * @name HandleDLocalWebhook
+     * @summary dLocal payment webhook
+     * @request POST:/webhooks/dlocal
+     */
+    handleDLocalWebhook: (
+      data: DLocalWebhookrRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          received: boolean;
+        },
+        any
+      >({
+        path: `/webhooks/dlocal`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  payments = {
+    /**
+     * No description
+     *
+     * @tags Payments
+     * @name CreatePaymentLink
+     * @request POST:/payments/create-link/{orderId}
+     */
+    createPaymentLink: (orderId: string, params: RequestParams = {}) =>
+      this.request<
+        CreatePaymentLinkResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/payments/create-link/${orderId}`,
+        method: "POST",
         format: "json",
         ...params,
       }),

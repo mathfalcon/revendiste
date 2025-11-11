@@ -52,7 +52,7 @@ export const EventPage = () => {
             venueName={event.venueName}
             venueAddress={event.venueAddress}
           />
-          <EventRightSide ticketWaves={event.ticketWaves} />
+          <EventRightSide ticketWaves={event.ticketWaves} eventId={params.eventId} />
         </div>
       </div>
     </>

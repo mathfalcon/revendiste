@@ -17,6 +17,7 @@ import { Route as EventosEventIdRouteImport } from './routes/eventos/$eventId'
 import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar'
 import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
 import { Route as CuentaPerfilRouteImport } from './routes/cuenta/perfil'
+import { Route as CheckoutOrderIdRouteImport } from './routes/checkout/$orderId'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 
 const CuentaRouteRoute = CuentaRouteRouteImport.update({
@@ -59,6 +60,11 @@ const CuentaPerfilRoute = CuentaPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => CuentaRouteRoute,
 } as any)
+const CheckoutOrderIdRoute = CheckoutOrderIdRouteImport.update({
+  id: '/checkout/$orderId',
+  path: '/checkout/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EntradasEditarListingIdRoute = EntradasEditarListingIdRouteImport.update({
   id: '/entradas/editar/$listingId',
   path: '/entradas/editar/$listingId',
@@ -68,6 +74,7 @@ const EntradasEditarListingIdRoute = EntradasEditarListingIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/checkout/$orderId': typeof CheckoutOrderIdRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/checkout/$orderId': typeof CheckoutOrderIdRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/checkout/$orderId': typeof CheckoutOrderIdRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cuenta'
+    | '/checkout/$orderId'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/entradas/publicar'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cuenta'
+    | '/checkout/$orderId'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/entradas/publicar'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cuenta'
+    | '/checkout/$orderId'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/entradas/publicar'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
+  CheckoutOrderIdRoute: typeof CheckoutOrderIdRoute
   EntradasPublicarRoute: typeof EntradasPublicarRoute
   EventosEventIdRoute: typeof EventosEventIdRoute
   IngresarSplatRoute: typeof IngresarSplatRoute
@@ -203,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CuentaPerfilRouteImport
       parentRoute: typeof CuentaRouteRoute
     }
+    '/checkout/$orderId': {
+      id: '/checkout/$orderId'
+      path: '/checkout/$orderId'
+      fullPath: '/checkout/$orderId'
+      preLoaderRoute: typeof CheckoutOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/entradas/editar/$listingId': {
       id: '/entradas/editar/$listingId'
       path: '/entradas/editar/$listingId'
@@ -230,6 +250,7 @@ const CuentaRouteRouteWithChildren = CuentaRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CuentaRouteRoute: CuentaRouteRouteWithChildren,
+  CheckoutOrderIdRoute: CheckoutOrderIdRoute,
   EntradasPublicarRoute: EntradasPublicarRoute,
   EventosEventIdRoute: EventosEventIdRoute,
   IngresarSplatRoute: IngresarSplatRoute,

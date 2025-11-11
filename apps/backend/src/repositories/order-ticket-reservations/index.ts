@@ -102,4 +102,31 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
       .returningAll()
       .execute();
   }
+
+  async cleanupExpiredReservationsForTickets(ticketIds: string[]) {
+    // Soft-delete expired reservations for specific tickets
+    // Used on-demand when creating new reservations to ensure expired ones don't block
+    const now = new Date();
+    return await this.db
+      .updateTable('orderTicketReservations')
+      .set({deletedAt: now})
+      .where('listingTicketId', 'in', ticketIds)
+      .where('deletedAt', 'is', null)
+      .where('reservedUntil', '<', now)
+      .returningAll()
+      .execute();
+  }
+
+  async extendReservationsByOrderId(orderId: string, newReservedUntil: Date) {
+    return await this.db
+      .updateTable('orderTicketReservations')
+      .set({
+        reservedUntil: newReservedUntil,
+        updatedAt: new Date(),
+      })
+      .where('orderId', '=', orderId)
+      .where('deletedAt', 'is', null)
+      .returningAll()
+      .execute();
+  }
 }

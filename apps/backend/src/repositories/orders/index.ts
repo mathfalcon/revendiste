@@ -1,6 +1,6 @@
 import {Kysely} from 'kysely';
 import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
-import {DB} from '~/types';
+import {DB, EventTicketCurrency} from '~/types';
 import {BaseRepository} from '../base';
 
 export class OrdersRepository extends BaseRepository<OrdersRepository> {
@@ -16,7 +16,7 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
     subtotalAmount: number;
     platformCommission: number;
     vatOnCommission: number;
-    currency: string;
+    currency: EventTicketCurrency;
     reservationExpiresAt: Date;
   }) {
     return await this.db
@@ -61,6 +61,14 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
               'events.eventEndDate',
               'events.venueName',
               'events.venueAddress',
+              jsonArrayFrom(
+                eb
+                  .selectFrom('eventImages')
+                  .select(['eventImages.url', 'eventImages.imageType'])
+                  .whereRef('eventImages.eventId', '=', 'events.id')
+                  .where('eventImages.deletedAt', 'is', null)
+                  .orderBy('eventImages.displayOrder'),
+              ).as('images'),
             ])
             .whereRef('events.id', '=', 'orders.eventId'),
         ).as('event'),
@@ -120,5 +128,38 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       .where('reservationExpiresAt', '<', new Date())
       .where('deletedAt', 'is', null)
       .execute();
+  }
+
+  async getPendingOrderByUserAndEvent(
+    userId: string,
+    eventId: string,
+  ): Promise<{id: string; reservationExpiresAt: Date} | undefined> {
+    return await this.db
+      .selectFrom('orders')
+      .select(['id', 'reservationExpiresAt'])
+      .where('userId', '=', userId)
+      .where('eventId', '=', eventId)
+      .where('status', '=', 'pending')
+      .where('reservationExpiresAt', '>', new Date()) // Not expired
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
+  }
+
+  async update(
+    orderId: string,
+    data: {
+      reservationExpiresAt?: Date;
+      status?: 'pending' | 'confirmed' | 'cancelled' | 'expired';
+    },
+  ) {
+    return await this.db
+      .updateTable('orders')
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where('id', '=', orderId)
+      .returningAll()
+      .executeTakeFirstOrThrow();
   }
 }

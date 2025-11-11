@@ -15,8 +15,16 @@ import {z} from 'zod';
 import {Form} from '~/components/ui/form';
 import {toast} from 'sonner';
 import {calculateOrderFees} from '~/utils';
+import {useUser} from '@clerk/tanstack-react-start';
+import {useNavigate} from '@tanstack/react-router';
+import {useMutation} from '@tanstack/react-query';
+import {postOrderMutation} from '~/lib/api/order';
+import {useFormPersist} from '~/hooks';
+import {redirectToLogin} from '~/utils';
 
-type EventRightSideProps = Pick<GetEventByIdResponse, 'ticketWaves'>;
+type EventRightSideProps = Pick<GetEventByIdResponse, 'ticketWaves'> & {
+  eventId: string;
+};
 
 // Schema for ticket selection form
 const TicketSelectionSchema = z.record(
@@ -26,13 +34,59 @@ const TicketSelectionSchema = z.record(
 
 export type TicketSelectionFormValues = z.infer<typeof TicketSelectionSchema>;
 
+// LocalStorage key for persisting form data
+const FORM_DATA_STORAGE_KEY = 'pending-order-form-data';
+
 export const EventRightSide = (props: EventRightSideProps) => {
-  const {ticketWaves} = props;
+  const {ticketWaves, eventId} = props;
+  const {isLoaded, isSignedIn} = useUser();
+  const navigate = useNavigate();
 
   const form = useForm<TicketSelectionFormValues>({
     resolver: zodResolver(TicketSelectionSchema),
     defaultValues: {},
   });
+
+  // Persist form data to localStorage and restore on mount
+  const {clear: clearPersistedData} = useFormPersist(FORM_DATA_STORAGE_KEY, {
+    watch: form.watch,
+    setValue: form.setValue,
+    reset: form.reset,
+    metadata: {eventId},
+    onDataRestored: () => {
+      toast.info('Tus selecciones han sido restauradas', {
+        description: 'Continúa con tu compra.',
+        duration: 3000,
+      });
+    },
+  });
+
+  const createOrderMutation = useMutation(
+    postOrderMutation({
+      onOrderCreated: orderId => {
+        // Clear persisted form data after successful submission
+        clearPersistedData();
+        // Reset form after successful submission
+        form.reset();
+        // Redirect to checkout page
+        navigate({
+          to: '/checkout/$orderId',
+          params: {
+            orderId,
+          },
+        });
+      },
+      onPendingOrderFound: orderId => {
+        // User has an existing pending order, redirect to checkout
+        navigate({
+          to: '/checkout/$orderId',
+          params: {
+            orderId,
+          },
+        });
+      },
+    }),
+  );
 
   // Filter ticket waves that have available tickets
   const availableTicketWaves = ticketWaves.filter(ticketWave =>
@@ -84,8 +138,27 @@ export const EventRightSide = (props: EventRightSideProps) => {
   };
 
   const onSubmit: SubmitHandler<TicketSelectionFormValues> = async data => {
-    // TODO: Implement purchase logic
-    console.log('Purchase tickets:', data);
+    // Wait for Clerk to load before checking auth
+    if (!isLoaded) {
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!isSignedIn) {
+      // Form data is automatically persisted by useFormPersist hook
+      // Redirect to login with current page as redirect URL
+      redirectToLogin(navigate, {
+        message: 'Por favor inicia sesión para continuar con tu compra',
+      });
+      return;
+    }
+
+    // User is authenticated, proceed with order creation
+    await createOrderMutation.mutateAsync({
+      eventId: eventId,
+      ticketSelections: data,
+    });
+    // Success and error handling (including redirects) are handled in the mutation options
   };
 
   if (availableTicketWaves.length === 0) {
@@ -244,8 +317,14 @@ export const EventRightSide = (props: EventRightSideProps) => {
 
             {/* Purchase Button */}
             <div className='flex justify-end'>
-              <Button type='submit' className='bg-primary-gradient h-12 w-40'>
-                Comprar ({totalSelectedTickets})
+              <Button
+                type='submit'
+                className='bg-primary-gradient h-12 w-40'
+                disabled={createOrderMutation.isPending || !isLoaded}
+              >
+                {createOrderMutation.isPending
+                  ? 'Procesando...'
+                  : `Comprar (${totalSelectedTickets})`}
               </Button>
             </div>
           </div>
