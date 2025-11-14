@@ -366,6 +366,51 @@ export interface ReturnTypeOrdersServiceAtGetOrderById {
 
 export type GetOrderByIdResponse = ReturnTypeOrdersServiceAtGetOrderById;
 
+/** Recursively unwraps the "awaited type" of a type. Non-promise "thenables" should resolve to `never`. This emulates the behavior of `await`. */
+export type AwaitedReturnTypeOrdersServiceAtGetUserOrders = {
+  items: {
+    ticketWaveName: string | null;
+    subtotal: string;
+    /** @format double */
+    quantity: number;
+    pricePerTicket: string;
+    ticketWaveId: string;
+    id: string;
+    currency: EventTicketCurrency | null;
+  }[];
+  event: {
+    images: {
+      imageType: EventImageType;
+      url: string;
+    }[];
+    venueName: string | null;
+    venueAddress: string | null;
+    name: string | null;
+    id: string | null;
+    eventStartDate: string | null;
+    eventEndDate: string | null;
+  };
+  vatOnCommission: string;
+  userId: string;
+  totalAmount: string;
+  subtotalAmount: string;
+  /** @format date-time */
+  reservationExpiresAt: string;
+  platformCommission: string;
+  /** @format date-time */
+  confirmedAt: string | null;
+  /** @format date-time */
+  cancelledAt: string | null;
+  currency: EventTicketCurrency;
+  eventId: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "confirmed" | "expired" | "pending";
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}[];
+
 export interface DLocalWebhookrRouteBody {
   payment_id: string;
 }
@@ -811,6 +856,24 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Orders
+     * @name GetMyOrders
+     * @request GET:/orders
+     */
+    getMyOrders: (params: RequestParams = {}) =>
+      this.request<
+        AwaitedReturnTypeOrdersServiceAtGetUserOrders,
+        UnauthorizedError
+      >({
+        path: `/orders`,
+        method: "GET",
         format: "json",
         ...params,
       }),

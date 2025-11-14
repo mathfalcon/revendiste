@@ -109,4 +109,40 @@ export class TicketListingsRepository {
       .orderBy('listings.createdAt', 'desc')
       .execute();
   }
+
+  async markListingAsSold(listingId: string) {
+    return await this.db
+      .updateTable('listings')
+      .set({
+        soldAt: new Date(),
+      })
+      .where('id', '=', listingId)
+      .returningAll()
+      .executeTakeFirst();
+  }
+
+  async checkAndMarkListingsAsSold(listingIds: string[]) {
+    // For each listing, check if all tickets are sold
+    const results = [];
+
+    for (const listingId of listingIds) {
+      const tickets = await this.db
+        .selectFrom('listingTickets')
+        .select(['id', 'soldAt'])
+        .where('listingId', '=', listingId)
+        .where('deletedAt', 'is', null)
+        .where('cancelledAt', 'is', null)
+        .execute();
+
+      // Check if all tickets are sold
+      const allTicketsSold = tickets.every(ticket => ticket.soldAt !== null);
+
+      if (allTicketsSold && tickets.length > 0) {
+        const result = await this.markListingAsSold(listingId);
+        results.push(result);
+      }
+    }
+
+    return results;
+  }
 }

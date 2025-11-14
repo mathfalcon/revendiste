@@ -4,7 +4,7 @@ import {
   Link,
   useLocation,
 } from '@tanstack/react-router';
-import {Ticket, User} from 'lucide-react';
+import {Ticket, User, ScanQrCode} from 'lucide-react';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
 
 const TAB_CONFIG = [
@@ -19,6 +19,12 @@ const TAB_CONFIG = [
     label: 'Publicaciones',
     icon: Ticket,
     to: '/cuenta/publicaciones',
+  },
+  {
+    value: 'compras',
+    label: 'Mis compras',
+    icon: ScanQrCode,
+    to: '/cuenta/compras',
   },
 ] as const;
 

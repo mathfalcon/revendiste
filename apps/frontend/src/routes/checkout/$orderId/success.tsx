@@ -1,8 +1,8 @@
 import {createFileRoute} from '@tanstack/react-router';
 import {getOrderByIdQuery} from '~/lib';
-import {CheckoutPage} from '~/features/checkout';
+import {CheckoutSuccessPage} from '~/features/checkout/CheckoutSuccess';
 
-export const Route = createFileRoute('/checkout/$orderId')({
+export const Route = createFileRoute('/checkout/$orderId/success')({
   component: RouteComponent,
   loader: async ({context, params}) => {
     void context.queryClient.ensureQueryData(getOrderByIdQuery(params.orderId));
@@ -11,5 +11,5 @@ export const Route = createFileRoute('/checkout/$orderId')({
 
 function RouteComponent() {
   const {orderId} = Route.useParams();
-  return <CheckoutPage orderId={orderId} />;
+  return <CheckoutSuccessPage orderId={orderId} />;
 }

@@ -260,4 +260,9 @@ export class OrdersService {
 
     return order;
   }
+
+  async getUserOrders(userId: string) {
+    const orders = await this.ordersRepository.getByUserId(userId);
+    return orders;
+  }
 }

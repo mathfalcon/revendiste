@@ -130,18 +130,19 @@ export class PaymentsService {
     });
 
     try {
+      const urls = {
+        successUrl: `${APP_BASE_URL}/checkout/${order.id}/success`,
+        backUrl: `${APP_BASE_URL}/checkout/${order.id}`,
+        notificationUrl: `${API_BASE_URL}/api/webhooks/${this.paymentProvider.name}`,
+      };
       // Create payment with provider (external API call, must be OUTSIDE transaction)
       const providerPayment = await this.paymentProvider.createPayment({
         orderId: order.id,
         amount: Number(order.totalAmount),
         currency: order.currency,
-        description: `Order ${order.id} - ${
-          order.event?.name || 'Event tickets'
-        }`,
-        successUrl: `${API_BASE_URL}/checkout/${order.id}/success`,
-        backUrl: `${API_BASE_URL}/checkout/${order.id}`,
-        notificationUrl: `${API_BASE_URL}/api/webhooks/${this.paymentProvider.name}`,
+        description: `${order.event?.name || 'Tickets'} - (ID: ${order.id})`,
         expirationMinutes: PAYMENT_WINDOW_MINUTES,
+        ...urls,
       });
 
       // Create payment record and log creation event in a single transaction
@@ -162,10 +163,8 @@ export class PaymentsService {
             amount: String(Number(order.totalAmount)),
             currency: order.currency,
             redirectUrl: providerPayment.redirectUrl,
-            notificationUrl: `${API_BASE_URL}/api/webhooks/${this.paymentProvider.name}`,
-            successUrl: `${API_BASE_URL}/checkout/${order.id}/success`,
-            backUrl: `${API_BASE_URL}/checkout/${order.id}`,
             providerMetadata: JSON.stringify(providerPayment),
+            ...urls,
           });
 
           // Log payment creation event (immutable audit record)

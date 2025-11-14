@@ -52,8 +52,7 @@ export function generateApiPlugin(
   let hasRun = false;
   let isRunning = false;
 
-  const sleep = (ms: number) =>
-    new Promise(resolve => setTimeout(resolve, ms));
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const runCommand = async (attempt = 1): Promise<void> => {
     // Prevent concurrent runs
@@ -66,11 +65,13 @@ export function generateApiPlugin(
 
     try {
       if (attempt > 1) {
-        console.log(`🔄 Generating API types (attempt ${attempt}/${retries + 1})...`);
+        console.log(
+          `🔄 Generating API types (attempt ${attempt}/${retries + 1})...`,
+        );
       } else {
         console.log('🔄 Generating API types...');
       }
-      
+
       const {stdout, stderr} = await execAsync(command, {
         cwd: process.cwd(),
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer

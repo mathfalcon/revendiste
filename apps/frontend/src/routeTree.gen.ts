@@ -17,8 +17,10 @@ import { Route as EventosEventIdRouteImport } from './routes/eventos/$eventId'
 import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar'
 import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
 import { Route as CuentaPerfilRouteImport } from './routes/cuenta/perfil'
-import { Route as CheckoutOrderIdRouteImport } from './routes/checkout/$orderId'
+import { Route as CuentaComprasRouteImport } from './routes/cuenta/compras'
+import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
+import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
 
 const CuentaRouteRoute = CuentaRouteRouteImport.update({
   id: '/cuenta',
@@ -60,9 +62,14 @@ const CuentaPerfilRoute = CuentaPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => CuentaRouteRoute,
 } as any)
-const CheckoutOrderIdRoute = CheckoutOrderIdRouteImport.update({
-  id: '/checkout/$orderId',
-  path: '/checkout/$orderId',
+const CuentaComprasRoute = CuentaComprasRouteImport.update({
+  id: '/compras',
+  path: '/compras',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
+const CheckoutOrderIdIndexRoute = CheckoutOrderIdIndexRouteImport.update({
+  id: '/checkout/$orderId/',
+  path: '/checkout/$orderId/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntradasEditarListingIdRoute = EntradasEditarListingIdRouteImport.update({
@@ -70,92 +77,110 @@ const EntradasEditarListingIdRoute = EntradasEditarListingIdRouteImport.update({
   path: '/entradas/editar/$listingId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutOrderIdSuccessRoute = CheckoutOrderIdSuccessRouteImport.update({
+  id: '/checkout/$orderId/success',
+  path: '/checkout/$orderId/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/checkout/$orderId': typeof CheckoutOrderIdRoute
+  '/cuenta/compras': typeof CuentaComprasRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
+  '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/entradas/editar/$listingId': typeof EntradasEditarListingIdRoute
+  '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/checkout/$orderId': typeof CheckoutOrderIdRoute
+  '/cuenta/compras': typeof CuentaComprasRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
+  '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/entradas/editar/$listingId': typeof EntradasEditarListingIdRoute
+  '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/checkout/$orderId': typeof CheckoutOrderIdRoute
+  '/cuenta/compras': typeof CuentaComprasRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
+  '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/entradas/editar/$listingId': typeof EntradasEditarListingIdRoute
+  '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/cuenta'
-    | '/checkout/$orderId'
+    | '/cuenta/compras'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
     | '/registrarse/$'
+    | '/checkout/$orderId/success'
     | '/entradas/editar/$listingId'
+    | '/checkout/$orderId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cuenta'
-    | '/checkout/$orderId'
+    | '/cuenta/compras'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
     | '/registrarse/$'
+    | '/checkout/$orderId/success'
     | '/entradas/editar/$listingId'
+    | '/checkout/$orderId'
   id:
     | '__root__'
     | '/'
     | '/cuenta'
-    | '/checkout/$orderId'
+    | '/cuenta/compras'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
     | '/registrarse/$'
+    | '/checkout/$orderId/success'
     | '/entradas/editar/$listingId'
+    | '/checkout/$orderId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
-  CheckoutOrderIdRoute: typeof CheckoutOrderIdRoute
   EntradasPublicarRoute: typeof EntradasPublicarRoute
   EventosEventIdRoute: typeof EventosEventIdRoute
   IngresarSplatRoute: typeof IngresarSplatRoute
   RegistrarseSplatRoute: typeof RegistrarseSplatRoute
+  CheckoutOrderIdSuccessRoute: typeof CheckoutOrderIdSuccessRoute
   EntradasEditarListingIdRoute: typeof EntradasEditarListingIdRoute
+  CheckoutOrderIdIndexRoute: typeof CheckoutOrderIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -216,11 +241,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CuentaPerfilRouteImport
       parentRoute: typeof CuentaRouteRoute
     }
-    '/checkout/$orderId': {
-      id: '/checkout/$orderId'
+    '/cuenta/compras': {
+      id: '/cuenta/compras'
+      path: '/compras'
+      fullPath: '/cuenta/compras'
+      preLoaderRoute: typeof CuentaComprasRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
+    '/checkout/$orderId/': {
+      id: '/checkout/$orderId/'
       path: '/checkout/$orderId'
       fullPath: '/checkout/$orderId'
-      preLoaderRoute: typeof CheckoutOrderIdRouteImport
+      preLoaderRoute: typeof CheckoutOrderIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entradas/editar/$listingId': {
@@ -230,15 +262,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntradasEditarListingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/$orderId/success': {
+      id: '/checkout/$orderId/success'
+      path: '/checkout/$orderId/success'
+      fullPath: '/checkout/$orderId/success'
+      preLoaderRoute: typeof CheckoutOrderIdSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface CuentaRouteRouteChildren {
+  CuentaComprasRoute: typeof CuentaComprasRoute
   CuentaPerfilRoute: typeof CuentaPerfilRoute
   CuentaPublicacionesRoute: typeof CuentaPublicacionesRoute
 }
 
 const CuentaRouteRouteChildren: CuentaRouteRouteChildren = {
+  CuentaComprasRoute: CuentaComprasRoute,
   CuentaPerfilRoute: CuentaPerfilRoute,
   CuentaPublicacionesRoute: CuentaPublicacionesRoute,
 }
@@ -250,12 +291,13 @@ const CuentaRouteRouteWithChildren = CuentaRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CuentaRouteRoute: CuentaRouteRouteWithChildren,
-  CheckoutOrderIdRoute: CheckoutOrderIdRoute,
   EntradasPublicarRoute: EntradasPublicarRoute,
   EventosEventIdRoute: EventosEventIdRoute,
   IngresarSplatRoute: IngresarSplatRoute,
   RegistrarseSplatRoute: RegistrarseSplatRoute,
+  CheckoutOrderIdSuccessRoute: CheckoutOrderIdSuccessRoute,
   EntradasEditarListingIdRoute: EntradasEditarListingIdRoute,
+  CheckoutOrderIdIndexRoute: CheckoutOrderIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

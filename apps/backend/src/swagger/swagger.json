@@ -1163,6 +1163,190 @@
 			"GetOrderByIdResponse": {
 				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getOrderById_"
 			},
+			"Awaited_ReturnType_OrdersService-at-getUserOrders__": {
+				"items": {
+					"properties": {
+						"items": {
+							"items": {
+								"properties": {
+									"ticketWaveName": {
+										"type": "string",
+										"nullable": true
+									},
+									"subtotal": {
+										"type": "string"
+									},
+									"quantity": {
+										"type": "number",
+										"format": "double"
+									},
+									"pricePerTicket": {
+										"type": "string"
+									},
+									"ticketWaveId": {
+										"type": "string"
+									},
+									"id": {
+										"type": "string"
+									},
+									"currency": {
+										"allOf": [
+											{
+												"$ref": "#/components/schemas/EventTicketCurrency"
+											}
+										],
+										"nullable": true
+									}
+								},
+								"required": [
+									"ticketWaveName",
+									"subtotal",
+									"quantity",
+									"pricePerTicket",
+									"ticketWaveId",
+									"id",
+									"currency"
+								],
+								"type": "object"
+							},
+							"type": "array"
+						},
+						"event": {
+							"properties": {
+								"images": {
+									"items": {
+										"properties": {
+											"imageType": {
+												"$ref": "#/components/schemas/EventImageType"
+											},
+											"url": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"imageType",
+											"url"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"venueName": {
+									"type": "string",
+									"nullable": true
+								},
+								"venueAddress": {
+									"type": "string",
+									"nullable": true
+								},
+								"name": {
+									"type": "string",
+									"nullable": true
+								},
+								"id": {
+									"type": "string",
+									"nullable": true
+								},
+								"eventStartDate": {
+									"type": "string",
+									"nullable": true
+								},
+								"eventEndDate": {
+									"type": "string",
+									"nullable": true
+								}
+							},
+							"required": [
+								"images",
+								"venueName",
+								"venueAddress",
+								"name",
+								"id",
+								"eventStartDate",
+								"eventEndDate"
+							],
+							"type": "object",
+							"nullable": true
+						},
+						"vatOnCommission": {
+							"type": "string"
+						},
+						"userId": {
+							"type": "string"
+						},
+						"totalAmount": {
+							"type": "string"
+						},
+						"subtotalAmount": {
+							"type": "string"
+						},
+						"reservationExpiresAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"platformCommission": {
+							"type": "string"
+						},
+						"confirmedAt": {
+							"type": "string",
+							"format": "date-time",
+							"nullable": true
+						},
+						"cancelledAt": {
+							"type": "string",
+							"format": "date-time",
+							"nullable": true
+						},
+						"currency": {
+							"$ref": "#/components/schemas/EventTicketCurrency"
+						},
+						"eventId": {
+							"type": "string"
+						},
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"status": {
+							"type": "string",
+							"enum": [
+								"cancelled",
+								"confirmed",
+								"expired",
+								"pending"
+							]
+						},
+						"id": {
+							"type": "string"
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						}
+					},
+					"required": [
+						"items",
+						"event",
+						"vatOnCommission",
+						"userId",
+						"totalAmount",
+						"subtotalAmount",
+						"reservationExpiresAt",
+						"platformCommission",
+						"confirmedAt",
+						"cancelledAt",
+						"currency",
+						"eventId",
+						"updatedAt",
+						"status",
+						"id",
+						"createdAt"
+					],
+					"type": "object"
+				},
+				"type": "array",
+				"description": "Recursively unwraps the \"awaited type\" of a type. Non-promise \"thenables\" should resolve to `never`. This emulates the behavior of `await`."
+			},
 			"DLocalWebhookrRouteBody": {
 				"properties": {
 					"payment_id": {
@@ -1757,6 +1941,36 @@
 						}
 					}
 				}
+			},
+			"get": {
+				"operationId": "GetMyOrders",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Awaited_ReturnType_OrdersService-at-getUserOrders__"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": []
 			}
 		},
 		"/orders/{orderId}": {

@@ -78,4 +78,12 @@ export class OrdersController {
   ): Promise<GetOrderByIdResponse> {
     return this.service.getOrderById(orderId, request.user.id);
   }
+
+  @Get('/')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  public async getMyOrders(
+    @Request() request: express.Request,
+  ): Promise<Awaited<ReturnType<OrdersService['getUserOrders']>>> {
+    return this.service.getUserOrders(request.user.id);
+  }
 }

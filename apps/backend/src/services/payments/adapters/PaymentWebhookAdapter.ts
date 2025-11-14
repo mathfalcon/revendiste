@@ -5,6 +5,8 @@ import {
   OrderTicketReservationsRepository,
   PaymentsRepository,
   PaymentEventsRepository,
+  ListingTicketsRepository,
+  TicketListingsRepository,
 } from '~/repositories';
 import {NotFoundError, ValidationError} from '~/errors';
 import {logger} from '~/utils';
@@ -59,6 +61,8 @@ export class PaymentWebhookAdapter {
   private orderTicketReservationsRepository: OrderTicketReservationsRepository;
   private paymentsRepository: PaymentsRepository;
   private paymentEventsRepository: PaymentEventsRepository;
+  private listingTicketsRepository: ListingTicketsRepository;
+  private ticketListingsRepository: TicketListingsRepository;
 
   constructor(private provider: PaymentProvider, private db: Kysely<DB>) {
     this.ordersRepository = new OrdersRepository(db);
@@ -66,6 +70,8 @@ export class PaymentWebhookAdapter {
       new OrderTicketReservationsRepository(db);
     this.paymentsRepository = new PaymentsRepository(db);
     this.paymentEventsRepository = new PaymentEventsRepository(db);
+    this.listingTicketsRepository = new ListingTicketsRepository(db);
+    this.ticketListingsRepository = new TicketListingsRepository(db);
   }
 
   /**
@@ -318,17 +324,36 @@ export class PaymentWebhookAdapter {
       const reservationsRepo =
         this.orderTicketReservationsRepository.withTransaction(trx);
 
+      // Step 1: Update order status to confirmed
       await ordersRepo.updateStatus(orderId, 'confirmed', {
         confirmedAt: new Date(),
       });
 
+      // Step 2: Confirm order reservations (marks them as deleted)
       await reservationsRepo.confirmOrderReservations(orderId);
+
+      // Step 3: Mark tickets as sold
+      const soldTickets =
+        await this.listingTicketsRepository.markTicketsAsSoldByOrderId(orderId);
+
+      // Step 4: Get unique listing IDs from sold tickets
+      const uniqueListingIds = [
+        ...new Set(soldTickets.map(ticket => ticket.listingId)),
+      ];
+
+      // Step 5: Check if all tickets from each listing are sold and mark listings as sold
+      const soldListings =
+        await this.ticketListingsRepository.checkAndMarkListingsAsSold(
+          uniqueListingIds,
+        );
 
       logger.info('Order confirmed successfully', {
         orderId,
         paymentId: paymentData.providerPaymentId,
         paymentMethod: paymentData.paymentMethod,
         provider: this.provider.name,
+        ticketsSold: soldTickets.length,
+        listingsSoldOut: soldListings.length,
       });
     });
   }

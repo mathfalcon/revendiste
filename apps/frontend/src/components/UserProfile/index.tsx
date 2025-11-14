@@ -4,8 +4,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import {Link} from '@tanstack/react-router';
@@ -26,6 +24,9 @@ export const UserProfile = () => {
       <DropdownMenuContent className='bg-background'>
         <DropdownMenuItem asChild>
           <Link to='/cuenta/publicaciones'>Publicaciones</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to='/cuenta/compras'>Mis compras</Link>
         </DropdownMenuItem>
         <SignOutButton>
           <DropdownMenuItem className='text-destructive'>

@@ -42,3 +42,9 @@ export const getOrderByIdQuery = (orderId: string) =>
     queryFn: () => api.orders.getById(orderId).then(res => res.data),
     enabled: !!orderId && orderId.length > 0,
   });
+
+export const getMyOrdersQuery = () =>
+  queryOptions({
+    queryKey: ['orders', 'my-orders'],
+    queryFn: () => api.orders.getMyOrders().then(res => res.data),
+  });

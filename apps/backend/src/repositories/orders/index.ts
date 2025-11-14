@@ -162,4 +162,71 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       .returningAll()
       .executeTakeFirstOrThrow();
   }
+
+  async getByUserId(userId: string) {
+    return await this.db
+      .selectFrom('orders')
+      .leftJoin('events', 'orders.eventId', 'events.id')
+      .select(eb => [
+        'orders.id',
+        'orders.userId',
+        'orders.eventId',
+        'orders.status',
+        'orders.totalAmount',
+        'orders.subtotalAmount',
+        'orders.platformCommission',
+        'orders.vatOnCommission',
+        'orders.currency',
+        'orders.reservationExpiresAt',
+        'orders.confirmedAt',
+        'orders.cancelledAt',
+        'orders.createdAt',
+        'orders.updatedAt',
+        jsonObjectFrom(
+          eb
+            .selectFrom('events')
+            .select([
+              'events.id',
+              'events.name',
+              'events.eventStartDate',
+              'events.eventEndDate',
+              'events.venueName',
+              'events.venueAddress',
+              jsonArrayFrom(
+                eb
+                  .selectFrom('eventImages')
+                  .select(['eventImages.url', 'eventImages.imageType'])
+                  .whereRef('eventImages.eventId', '=', 'events.id')
+                  .where('eventImages.deletedAt', 'is', null)
+                  .orderBy('eventImages.displayOrder'),
+              ).as('images'),
+            ])
+            .whereRef('events.id', '=', 'orders.eventId'),
+        ).as('event'),
+        jsonArrayFrom(
+          eb
+            .selectFrom('orderItems')
+            .leftJoin(
+              'eventTicketWaves',
+              'orderItems.ticketWaveId',
+              'eventTicketWaves.id',
+            )
+            .select([
+              'orderItems.id',
+              'orderItems.ticketWaveId',
+              'orderItems.pricePerTicket',
+              'orderItems.quantity',
+              'orderItems.subtotal',
+              'eventTicketWaves.name as ticketWaveName',
+              'eventTicketWaves.currency',
+            ])
+            .whereRef('orderItems.orderId', '=', 'orders.id')
+            .where('orderItems.deletedAt', 'is', null),
+        ).as('items'),
+      ])
+      .where('orders.userId', '=', userId)
+      .where('orders.deletedAt', 'is', null)
+      .orderBy('orders.createdAt', 'desc')
+      .execute();
+  }
 }

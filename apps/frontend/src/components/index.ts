@@ -8,3 +8,4 @@ export * from './SignInModal';
 export * from './Combobox';
 export * from './ui/text-ellipsis';
 export * from './ListingCard';
+export * from './OrderCard';
