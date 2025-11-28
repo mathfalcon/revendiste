@@ -1,0 +1,494 @@
+---
+description: Core patterns, conventions, and learnings for the Revendiste codebase
+alwaysApply: true
+---
+
+# Revendiste Codebase Patterns
+
+## Kysely Query Patterns
+
+### Nested Subqueries with Type Safety
+
+**Always use the callback form for `select` when using nested subqueries** to enable proper type inference and reference resolution:
+
+```typescript
+// ✅ CORRECT - Callback form enables whereRef in nested queries
+.select(eb => [
+  'parentTable.id',
+  jsonObjectFrom(
+    eb
+      .selectFrom('childTable')
+      .whereRef('childTable.parentId', '=', 'parentTable.id') // Works!
+  ).as('child'),
+])
+
+// ❌ WRONG - Array form breaks type inference
+.select([
+  'parentTable.id',
+  jsonObjectFrom(
+    eb.selectFrom('childTable')
+      .whereRef('childTable.parentId', '=', 'parentTable.id') // Type error!
+  )
+])
+```
+
+**Key Points:**
+
+- Use `.select(eb => [...])` when you have nested `jsonObjectFrom` or `jsonArrayFrom`
+- `whereRef` in nested subqueries can reference outer query columns when using callback form
+- The `eb` parameter provides the necessary type context for correlated subqueries
+
+### Column Naming
+
+- **Always use camelCase** for table and column names in Kysely queries (e.g., `listingTickets`, `ticketId`, `isPrimary`)
+- Database uses snake_case, but Kysely types use camelCase
+- Use `whereRef` for column-to-column comparisons in joins and subqueries
+
+## Repository Pattern
+
+### Base Repository Extension
+
+All repositories must extend `BaseRepository<T>`:
+
+```typescript
+export class MyRepository extends BaseRepository<MyRepository> {
+  withTransaction(trx: Kysely<DB>): MyRepository {
+    return new MyRepository(trx);
+  }
+
+  async getById(id: string) {
+    // Never type return types - let Kysely infer them
+    return await this.db
+      .selectFrom('myTable')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst();
+  }
+}
+```
+
+**Rules:**
+
+- ✅ Extend `BaseRepository<T>` where T is the repository class itself
+- ✅ Implement `withTransaction(trx)` method
+- ✅ **Never type return types explicitly** - Kysely's type system is excellent, let it infer
+- ✅ Use `this.executeTransaction()` from BaseRepository for transactions
+- ✅ Use `this.db` for queries
+
+### Transaction Pattern
+
+```typescript
+await this.executeTransaction(async (trx: Kysely<DB>) => {
+  const repo = this.withTransaction(trx);
+  // Use repo for all operations in transaction
+});
+```
+
+## Service Layer Patterns
+
+### Service Responsibilities
+
+- Services orchestrate repositories
+- Business logic belongs in services, not repositories
+- Services can enrich repository data with computed fields
+- Services handle validation and error handling
+
+### Data Enrichment Pattern
+
+```typescript
+async getResourceWithComputedFields(id: string) {
+  const data = await this.repository.getById(id);
+
+  // Enrich with computed fields
+  return {
+    ...data,
+    computedField: computeValue(data),
+    nestedItems: data.items.map(item => ({
+      ...item,
+      computed: computeItemValue(item),
+    })),
+  };
+}
+```
+
+## External API Integration Patterns
+
+### Provider Pattern
+
+When integrating with external services (payments, third-party APIs), use the **Provider Pattern** to decouple external APIs from business logic:
+
+- **Provider Interface**: Defines the contract all providers must implement
+- **Provider Implementations**: Handle API communication AND map provider-specific data to standardized types
+- **Service Layer**: Provider-agnostic orchestration that handles business logic
+
+**Key Principle**: Providers map provider-specific data to standardized types. Business logic lives in the service layer.
+
+### Transaction Safety (CRITICAL)
+
+**External API calls MUST be OUTSIDE database transactions:**
+
+```typescript
+// ❌ WRONG: Network call inside transaction
+await this.repository.executeTransaction(async trx => {
+  await repo.create({...});
+  await this.externalApi.call({...}); // Network call!
+  await repo.update({...});
+});
+
+// ✅ CORRECT: External call outside transaction
+const apiResult = await this.externalApi.call({...}); // OUTSIDE
+await this.repository.executeTransaction(async trx => {
+  const repo = this.repository.withTransaction(trx);
+  await repo.create({...});
+  await repo.update({...});
+});
+```
+
+**Why?**
+
+- Network calls can take seconds (keeps transactions short)
+- Prevents database lock contention
+- Avoids transaction timeouts
+- External failures don't rollback database work
+
+### Webhook Handling Pattern (CRITICAL)
+
+**Webhook handlers MUST return immediately (fire-and-forget):**
+
+```typescript
+// ✅ CORRECT: Return immediately, process async
+@Post('/webhook')
+@Middlewares(validateWebhookSignature)
+public async handleWebhook(@Body() body: WebhookPayload): Promise<{received: boolean}> {
+  // Process asynchronously (no await!)
+  this.service
+    .handleWebhook(body.id, {ipAddress, userAgent})
+    .then(() => logger.info('Webhook processed'))
+    .catch(error => logger.error('Webhook processing failed', error));
+
+  return {received: true}; // Return immediately
+}
+
+// ❌ WRONG: Processing synchronously
+public async handleWebhook(...) {
+  await this.service.handleWebhook(...); // Blocks!
+  return {received: true};
+}
+```
+
+**Why?**
+
+- External services timeout if response takes too long
+- Services retry on timeout (causes duplicate processing)
+- Immediate acknowledgment prevents retry loops
+- Idempotency handles duplicate webhooks safely
+
+### Webhook Security
+
+**ALWAYS validate webhook signatures before processing:**
+
+- Use HMAC signature validation in middleware
+- Use constant-time comparison (`crypto.timingSafeEqual`)
+- Log IP address and User Agent for audit trails
+- Prevents unauthorized calls and replay attacks
+
+### Immutable Audit Logs
+
+For critical operations (payments, financial transactions), use immutable audit logs:
+
+- **Never update or delete** audit log records
+- Only INSERT operations
+- Enables complete forensic trail
+- Required for compliance (PCI-DSS, GDPR, SOC 2)
+
+## Frontend Patterns
+
+### Routing & Navigation
+
+- Use `@tanstack/react-router` for routing
+- User-facing query parameters **must be in Spanish** (e.g., `subirTicket` not `uploadTicket`)
+- Use `useSearch({from: '/route'})` for typed search params
+- Use `useNavigate({from: '/route'})` for type-safe navigation
+- Validate search params with Zod schemas in route files
+
+### Component Organization
+
+- **Reusable components**: `apps/frontend/src/components/`
+- **Feature-specific logic**: `apps/frontend/src/features/`
+- Route files should be thin, importing from features
+- Use `shadcn/ui` components for UI elements
+
+### Data Fetching
+
+- Use `@tanstack/react-query` for all server state
+- Create query options in `apps/frontend/src/lib/api/`
+- Use `useSuspenseQuery` in route loaders
+- Use `useQuery` in components
+- Use `useMutation` for mutations
+- Always invalidate relevant queries on mutation success
+
+### Loading States & Suspense
+
+- Use `useSuspenseQuery` in route loaders for automatic loading states
+- Use `useQuery` with `isPending` for component-level loading states
+- Wrap routes with Suspense boundaries for error boundaries
+- Show loading spinners or skeletons during data fetching
+- Use `isPending` from mutations to disable buttons during submission
+
+### File Uploads
+
+- Frontend: Use `FormData` with file input
+- Backend: Use `multer` middleware with `@UploadedFile` decorator
+- Field name must match: `@UploadedFile('file')` and `formData.append('file', file)`
+
+## API Generation Workflow
+
+### Backend (TSOA)
+
+```bash
+cd apps/backend
+pnpm tsoa:both  # Generates routes and OpenAPI spec
+```
+
+### Frontend (Type Generation)
+
+```bash
+cd apps/frontend
+pnpm generate:api  # Generates TypeScript types from OpenAPI spec
+```
+
+**Important:**
+
+- Always regenerate after backend API changes
+- Generated types are in `apps/frontend/src/lib/api/generated.ts`
+- Manually add methods to generated client if needed
+
+### Frontend API Generation Plugin
+
+The frontend uses a custom Vite plugin that automatically generates API types on dev server start with retry logic to handle backend startup timing.
+
+**Pattern:** When frontend depends on backend being ready, implement retry logic with exponential backoff or fixed delays.
+
+## Database Patterns
+
+### UUID Generation
+
+- **Always use `gen_random_uuid()`** in migrations, not `uuid_generate_v4()`
+- PostgreSQL's built-in function doesn't require extensions
+
+### Indexing Strategy
+
+- **Foreign keys do NOT automatically create indexes** in PostgreSQL
+- Create indexes explicitly when needed for performance
+- Composite indexes can efficiently serve single-column queries
+- Example: A composite index on `(column_a, column_b)` can efficiently serve queries on just `column_a`
+
+### Migration Best Practices
+
+- Use raw SQL `DO $$ BEGIN ... EXCEPTION ... END $$;` blocks for conditional operations
+- Avoid try-catch in TypeScript migrations (causes transaction rollbacks)
+- Always provide both `up` and `down` functions
+
+### Soft Delete Pattern
+
+For tables that need audit trails, use soft deletes instead of hard deletes:
+
+- Add `deletedAt: timestamp` column (nullable)
+- Filter out deleted records in queries: `.where('deletedAt', 'is', null)`
+- Never hard delete records that need audit trails
+- Soft delete by setting `deletedAt` to current timestamp
+- Allows data recovery and maintains referential integrity
+
+## Platform-Specific Business Logic
+
+### Extensible Platform Rules
+
+Create platform-specific helpers in service layer to centralize business rules:
+
+```typescript
+export function computePlatformRule(
+  platform: string,
+  context: PlatformContext,
+): RuleResult {
+  switch (platform.toLowerCase()) {
+    case 'platform1':
+      // Platform-specific logic
+      return computeRule1(context);
+    case 'platform2':
+      return computeRule2(context);
+    // Add more platforms as needed
+  }
+}
+```
+
+**Pattern:**
+
+- Centralize platform logic in helper functions
+- Easy to extend for new platforms
+- No database changes required for new platforms
+
+## Validation Patterns
+
+### Backend Validation
+
+- Use Zod schemas for request body validation in TSOA controllers
+- Validate at the controller level before passing to services
+- Services can perform additional business rule validation
+- Always return descriptive validation error messages
+
+### Frontend Validation
+
+- Use Zod schemas for form validation and search params
+- Validate search params in route files with `validateSearch`
+- Use `react-hook-form` with Zod resolver for form validation
+- Display validation errors inline with form fields
+
+## Error Handling
+
+### Backend Errors
+
+- Use custom error classes: `NotFoundError`, `ValidationError`, `UnauthorizedError`, `BadRequestError`
+- Services throw errors, controllers catch and return appropriate HTTP status
+- Always provide descriptive error messages
+
+### Frontend Error Handling
+
+- Use `toast` from `sonner` for user notifications
+- Handle errors in mutation `onError` callbacks
+- Display user-friendly error messages
+
+## Type Safety Best Practices
+
+### Database Enum Types
+
+**Always use enum types from `~/types/db` instead of string literals:**
+
+```typescript
+// ✅ CORRECT - Import and use enum types
+import type {OrderStatus, PaymentStatus} from '~/types/db';
+
+const status: OrderStatus = 'pending';
+const paymentStatus: PaymentStatus = 'paid';
+
+// ❌ WRONG - Using string literals
+const status: string = 'pending'; // No type safety!
+```
+
+**Critical for:**
+
+- All database enum types (order statuses, payment statuses, etc.)
+- Never use `string` when an enum type exists
+- Import enum types from `~/types/db`
+
+### Type Assertions
+
+When TypeScript can't infer types correctly, use double casting:
+
+```typescript
+const value = data.field as unknown as TargetType;
+```
+
+**However**, prefer fixing the root cause (proper typing) over assertions. Type assertions should be rare exceptions.
+
+### Kysely Type Inference
+
+- Trust Kysely's type system - don't add explicit return types
+- Let Kysely infer from query structure
+- Use `$notNull()` for guaranteed non-null results
+
+## Common Patterns
+
+### Modal State Management
+
+Use URL search parameters for modal state (enables deep linking):
+
+```typescript
+// Route file
+const schema = z.object({
+  modalId: z.string().optional(), // User-facing params in Spanish
+});
+
+// Component
+const search = useSearch({from: '/route'});
+const navigate = useNavigate({from: '/route'});
+
+// Open modal
+navigate({search: prev => ({...prev, modalId: id})});
+
+// Close modal
+navigate({search: prev => ({...prev, modalId: undefined})});
+```
+
+### Cache Invalidation
+
+Always invalidate queries after mutations:
+
+```typescript
+const mutation = useMutation({
+  mutationFn: updateResource,
+  onSuccess: () => {
+    queryClient.invalidateQueries({queryKey: ['resource']});
+  },
+});
+```
+
+## File Organization
+
+### Backend Structure
+
+```
+apps/backend/src/
+  controllers/     # TSOA route handlers
+  services/         # Business logic
+  repositories/     # Data access layer
+  db/migrations/    # Database migrations
+  types/            # TypeScript types
+```
+
+### Frontend Structure
+
+```
+apps/frontend/src/
+  components/       # Reusable UI components
+  features/         # Feature-specific logic
+  routes/           # Route definitions (thin)
+  lib/api/          # API client and query options
+```
+
+## Testing Considerations
+
+- Backend: Test repository methods with actual database
+- Frontend: Test components with React Query providers
+- Integration: Test full flows (upload → API → database)
+
+## Documentation
+
+- Documentation is not needed if the code is simple and self-explanatory
+- Create docs in `apps/backend/docs/` for complex backend features
+- Create docs in `apps/frontend/docs/` for complex frontend features
+- Document platform-specific logic and business rules
+- Include examples and usage patterns when helpful
+
+## Security Best Practices
+
+### General Security Rules
+
+**DO ✅:**
+
+- Always validate webhook/external API signatures
+- Log IP address and User Agent for critical operations
+- Use immutable audit logs for financial/critical operations
+- Return webhooks immediately (fire-and-forget pattern)
+- Keep external API calls outside database transactions
+- Use environment variables for secrets (never commit to git)
+- Use constant-time comparison for signature validation (`crypto.timingSafeEqual`)
+- Validate amounts/values from external sources before processing
+
+**DON'T ❌:**
+
+- Never skip signature validation for external webhooks
+- Never process webhooks synchronously
+- Never put API calls inside transactions
+- Never use `as any` for enum types or critical fields
+- Never hard delete records that need audit trails (soft delete only)
+- Never commit secrets to version control

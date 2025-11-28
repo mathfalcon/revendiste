@@ -10,6 +10,12 @@
  * ---------------------------------------------------------------
  */
 
+export enum UploadAvailabilityReason {
+  EventEnded = "event_ended",
+  TooEarly = "too_early",
+  Unknown = "unknown",
+}
+
 export enum EventTicketCurrency {
   USD = "USD",
   UYU = "UYU",
@@ -247,19 +253,10 @@ export interface CreateTicketListingRouteBody {
 
 /** Obtain the return type of a function type */
 export type ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets = {
-  tickets: {
-    /** @format double */
-    ticketNumber: number;
-    price: string;
-    cancelledAt: string | null;
-    soldAt: string | null;
-    updatedAt: string;
-    id: string;
-    createdAt: string;
-  }[];
   event: {
     venueName: string | null;
     venueAddress: string;
+    platform: string;
     name: string;
     id: string;
     eventStartDate: string;
@@ -278,10 +275,62 @@ export type ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets = {
   id: string;
   /** @format date-time */
   createdAt: string;
+  tickets: {
+    document: {
+      uploadedAt: string;
+      status: string;
+      id: string;
+    } | null;
+    /** @format double */
+    ticketNumber: number;
+    price: string;
+    cancelledAt: string | null;
+    soldAt: string | null;
+    updatedAt: string;
+    id: string;
+    createdAt: string;
+    uploadUnavailableReason?: UploadAvailabilityReason;
+    canUploadDocument: boolean;
+    hasDocument: boolean;
+  }[];
 }[];
 
 export type GetUserListingsResponse =
   ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets;
+
+/** Recursively unwraps the "awaited type" of a type. Non-promise "thenables" should resolve to `never`. This emulates the behavior of `await`. */
+export interface AwaitedReturnTypeTicketDocumentServiceAtUploadTicketDocument {
+  documentUrl: string;
+  document?: {
+    /** @format double */
+    version: number;
+    verifiedBy: string | null;
+    /** @format date-time */
+    verifiedAt: string | null;
+    /** @format date-time */
+    uploadedAt: string;
+    ticketId: string;
+    storagePath: string;
+    /** @format double */
+    sizeBytes: number;
+    originalName: string;
+    mimeType: string;
+    isPrimary: boolean;
+    fileName: string;
+    documentType: string;
+    /** @format date-time */
+    updatedAt: string;
+    status: string;
+    id: string;
+    /** @format date-time */
+    deletedAt: string | null;
+    /** @format date-time */
+    createdAt: string;
+  };
+}
+
+export type UploadDocumentResponse =
+  AwaitedReturnTypeTicketDocumentServiceAtUploadTicketDocument;
 
 /** Obtain the return type of a function type */
 export interface ReturnTypeOrdersServiceAtCreateOrder {
@@ -835,6 +884,66 @@ export class Api<
       this.request<GetUserListingsResponse, UnauthorizedError>({
         path: `/ticket-listings/my-listings`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Upload a ticket document Sellers can upload PDF/image documents for their sold tickets. Documents must be uploaded before the event ends.
+     *
+     * @tags Ticket Listings
+     * @name UploadDocument
+     * @request POST:/ticket-listings/tickets/{ticketId}/document
+     */
+    uploadDocument: (
+      ticketId: string,
+      data: {
+        /**
+         * - Document file (PDF, PNG, JPG, JPEG - max 10MB)
+         * @format binary
+         */
+        file: File;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UploadDocumentResponse,
+        BadRequestError | UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-listings/tickets/${ticketId}/document`,
+        method: "POST",
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Update/replace a ticket document Uploads a new version of the document. Previous versions are kept for audit trail. Can only update before the event ends.
+     *
+     * @tags Ticket Listings
+     * @name UpdateDocument
+     * @request PUT:/ticket-listings/tickets/{ticketId}/document
+     */
+    updateDocument: (
+      ticketId: string,
+      data: {
+        /**
+         * - New document file (PDF, PNG, JPG, JPEG - max 10MB)
+         * @format binary
+         */
+        file: File;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UploadDocumentResponse,
+        BadRequestError | UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-listings/tickets/${ticketId}/document`,
+        method: "PUT",
+        body: data,
+        type: ContentType.FormData,
         format: "json",
         ...params,
       }),

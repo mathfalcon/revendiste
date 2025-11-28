@@ -1,6 +1,7 @@
 import {useQuery} from '@tanstack/react-query';
+import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
-import {ListingCard} from '~/components';
+import {ListingCard, TicketDocumentUploadModal} from '~/components';
 import {
   Accordion,
   AccordionContent,
@@ -11,8 +12,26 @@ import {Package, Archive} from 'lucide-react';
 import {LoadingSpinner} from '~/components/LoadingScreen';
 import {Card, CardContent} from '~/components/ui/card';
 
-export function PublicacionesView() {
+export function PublicationsView() {
   const {data: listings, isPending} = useQuery(getMyListingsQuery());
+  const search = useSearch({from: '/cuenta/publicaciones'});
+  const navigate = useNavigate({from: '/cuenta/publicaciones'});
+
+  // Find the ticket to upload based on search param
+  const ticketToUpload = search.subirTicket
+    ? listings
+        ?.flatMap(listing => listing.tickets)
+        .find(ticket => ticket.id === search.subirTicket)
+    : null;
+
+  const handleCloseModal = () => {
+    navigate({
+      search: prev => ({
+        ...prev,
+        subirTicket: undefined,
+      }),
+    });
+  };
 
   if (isPending) {
     return (
@@ -105,7 +124,20 @@ export function PublicacionesView() {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+
+      {/* Upload Modal */}
+      {ticketToUpload && (
+        <TicketDocumentUploadModal
+          ticketId={ticketToUpload.id}
+          hasExistingDocument={ticketToUpload.hasDocument || false}
+          open={!!search.subirTicket}
+          onOpenChange={open => {
+            if (!open) {
+              handleCloseModal();
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
-

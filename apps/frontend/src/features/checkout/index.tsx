@@ -268,9 +268,9 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                 ? 'Reserva expirada'
                 : isRedirecting
                   ? 'Redirigiendo...'
-                  : createPaymentLink.isPending
-                    ? 'Creando link de pago...'
-                    : 'Continuar con el pago'}
+                : createPaymentLink.isPending
+                  ? 'Creando link de pago...'
+                  : 'Continuar con el pago'}
             </Button>
           </div>
         </div>

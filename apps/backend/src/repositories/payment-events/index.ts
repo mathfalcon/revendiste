@@ -13,7 +13,7 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
   /**
    * Creates a new payment event (immutable)
    */
-  async create(event: Insertable<PaymentEvents>): Promise<PaymentEvent> {
+  async create(event: Insertable<PaymentEvents>) {
     return await this.db
       .insertInto('paymentEvents')
       .values(event)
@@ -24,7 +24,7 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
   /**
    * Gets all events for a payment
    */
-  async getByPaymentId(paymentId: string): Promise<PaymentEvent[]> {
+  async getByPaymentId(paymentId: string) {
     return await this.db
       .selectFrom('paymentEvents')
       .selectAll()
@@ -36,7 +36,7 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
   /**
    * Gets the latest event for a payment
    */
-  async getLatestByPaymentId(paymentId: string): Promise<PaymentEvent | null> {
+  async getLatestByPaymentId(paymentId: string) {
     return (
       (await this.db
         .selectFrom('paymentEvents')
@@ -59,7 +59,7 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
       ipAddress?: string;
       userAgent?: string;
     },
-  ): Promise<PaymentEvent> {
+  ) {
     return await this.create({
       paymentId,
       eventType: 'status_change' as PaymentEventType,
@@ -81,7 +81,7 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
       ipAddress?: string;
       userAgent?: string;
     },
-  ): Promise<PaymentEvent> {
+  ) {
     return await this.create({
       paymentId,
       eventType: 'webhook_received' as PaymentEventType,
@@ -103,7 +103,7 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
       ipAddress?: string;
       userAgent?: string;
     },
-  ): Promise<PaymentEvent> {
+  ) {
     return await this.create({
       paymentId,
       eventType: 'refund_initiated' as PaymentEventType,
@@ -125,7 +125,7 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
       ipAddress?: string;
       userAgent?: string;
     },
-  ): Promise<PaymentEvent> {
+  ) {
     return await this.create({
       paymentId,
       eventType: 'refund_completed' as PaymentEventType,

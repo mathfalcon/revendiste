@@ -1,6 +1,6 @@
 import {createFileRoute} from '@tanstack/react-router';
-import {MisComprasView} from '~/features';
+import {MyPurchasesView} from '~/features';
 
 export const Route = createFileRoute('/cuenta/compras')({
-  component: MisComprasView,
+  component: MyPurchasesView,
 });

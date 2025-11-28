@@ -1,3 +1,4 @@
-export * from './MisComprasView';
-export * from './PublicacionesView';
-export * from './PerfilView';
+export * from './MyPurchasesView';
+export * from './PublicationsView';
+export * from './ProfileView';
+export * from './UploadTicketsView';

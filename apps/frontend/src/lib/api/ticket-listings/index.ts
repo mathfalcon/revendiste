@@ -18,3 +18,61 @@ export const getMyListingsQuery = () =>
     queryKey: ['listings'],
     queryFn: () => api.ticketListings.getMyListings().then(data => data.data),
   });
+
+export const uploadTicketDocumentMutation = (ticketId: string) =>
+  mutationOptions({
+    mutationKey: ['upload-ticket-document', ticketId],
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return api.ticketListings
+        .uploadDocument(
+          ticketId,
+          {file},
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          },
+        )
+        .then(res => res.data);
+    },
+    onSuccess: () => {
+      toast.success('Documento subido exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message ||
+          'Error al subir el documento. Por favor intenta nuevamente.',
+      );
+    },
+  });
+
+export const updateTicketDocumentMutation = (ticketId: string) =>
+  mutationOptions({
+    mutationKey: ['update-ticket-document', ticketId],
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return api.ticketListings
+        .updateDocument(
+          ticketId,
+          {file},
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          },
+        )
+        .then(res => res.data);
+    },
+    onSuccess: () => {
+      toast.success('Documento actualizado exitosamente');
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message ||
+          'Error al actualizar el documento. Por favor intenta nuevamente.',
+      );
+    },
+  });

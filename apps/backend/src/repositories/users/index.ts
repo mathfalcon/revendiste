@@ -2,9 +2,12 @@ import {type Kysely} from 'kysely';
 import type {DB} from '../../types/db';
 import {logger} from '~/utils';
 import {User} from '~/types';
+import {BaseRepository} from '../base';
 
-export class UsersRepository {
-  constructor(private readonly db: Kysely<DB>) {}
+export class UsersRepository extends BaseRepository<UsersRepository> {
+  withTransaction(trx: Kysely<DB>): UsersRepository {
+    return new UsersRepository(trx);
+  }
 
   // Find user by Clerk ID
   async findByClerkId(clerkId: string) {

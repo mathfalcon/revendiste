@@ -198,6 +198,26 @@ export interface Payments {
   updatedAt: Generated<Timestamp>;
 }
 
+export interface TicketDocuments {
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  documentType: Generated<string>;
+  fileName: string;
+  id: Generated<string>;
+  isPrimary: Generated<boolean>;
+  mimeType: string;
+  originalName: string;
+  sizeBytes: number;
+  status: Generated<string>;
+  storagePath: string;
+  ticketId: string;
+  updatedAt: Generated<Timestamp>;
+  uploadedAt: Generated<Timestamp>;
+  verifiedAt: Timestamp | null;
+  verifiedBy: string | null;
+  version: Generated<number>;
+}
+
 export interface Users {
   clerkId: string;
   createdAt: Generated<Timestamp>;
@@ -223,5 +243,6 @@ export interface DB {
   orderTicketReservations: OrderTicketReservations;
   paymentEvents: PaymentEvents;
   payments: Payments;
+  ticketDocuments: TicketDocuments;
   users: Users;
 }

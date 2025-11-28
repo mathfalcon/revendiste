@@ -13,7 +13,7 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   /**
    * Creates a new payment record
    */
-  async create(payment: Insertable<Payments>): Promise<Payment> {
+  async create(payment: Insertable<Payments>) {
     return await this.db
       .insertInto('payments')
       .values(payment)
@@ -24,7 +24,7 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   /**
    * Finds a payment by ID
    */
-  async getById(id: string): Promise<Payment | null> {
+  async getById(id: string) {
     return (
       (await this.db
         .selectFrom('payments')
@@ -38,7 +38,7 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   /**
    * Finds a payment by order ID
    */
-  async getByOrderId(orderId: string): Promise<Payment | null> {
+  async getByOrderId(orderId: string) {
     return (
       (await this.db
         .selectFrom('payments')
@@ -53,7 +53,7 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   /**
    * Finds all payments for an order
    */
-  async getAllByOrderId(orderId: string): Promise<Payment[]> {
+  async getAllByOrderId(orderId: string) {
     return await this.db
       .selectFrom('payments')
       .selectAll()
@@ -66,10 +66,7 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   /**
    * Finds a payment by provider and provider payment ID
    */
-  async getByProviderPaymentId(
-    provider: string,
-    providerPaymentId: string,
-  ): Promise<Payment | null> {
+  async getByProviderPaymentId(provider: string, providerPaymentId: string) {
     return (
       (await this.db
         .selectFrom('payments')
@@ -84,7 +81,7 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   /**
    * Updates a payment record
    */
-  async update(id: string, data: Updateable<Payments>): Promise<Payment> {
+  async update(id: string, data: Updateable<Payments>) {
     return await this.db
       .updateTable('payments')
       .set({
@@ -118,7 +115,7 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
       refundedAt?: Date;
       failureReason?: string;
     },
-  ): Promise<Payment> {
+  ) {
     return await this.db
       .updateTable('payments')
       .set({
@@ -134,7 +131,7 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   /**
    * Soft deletes a payment
    */
-  async softDelete(id: string): Promise<void> {
+  async softDelete(id: string) {
     await this.db
       .updateTable('payments')
       .set({deletedAt: new Date()})

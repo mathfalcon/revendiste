@@ -6,9 +6,12 @@ import {jsonArrayFrom} from 'kysely/helpers/postgres';
 import {mapToPaginatedResponse} from '~/middleware';
 import {NotFoundError} from '~/errors';
 import {sql} from 'kysely';
+import {BaseRepository} from '../base';
 
-export class EventsRepository {
-  constructor(private readonly db: Kysely<DB>) {}
+export class EventsRepository extends BaseRepository<EventsRepository> {
+  withTransaction(trx: Kysely<DB>): EventsRepository {
+    return new EventsRepository(trx);
+  }
 
   // Upsert event with all related data in a single transaction
   async upsertScrapedEvent(event: ScrapedEventData) {
@@ -237,7 +240,7 @@ export class EventsRepository {
   }
 
   // Get all active event external IDs (for comparison with scraped results)
-  async getAllActiveEventExternalIds(): Promise<string[]> {
+  async getAllActiveEventExternalIds() {
     const result = await this.db
       .selectFrom('events')
       .select('externalId')

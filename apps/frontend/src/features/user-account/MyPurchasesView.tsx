@@ -11,7 +11,7 @@ import {CheckCircle, XCircle, Clock} from 'lucide-react';
 import {LoadingSpinner} from '~/components/LoadingScreen';
 import {Card, CardContent} from '~/components/ui/card';
 
-export function MisComprasView() {
+export function MyPurchasesView() {
   const {data: orders, isPending} = useQuery(getMyOrdersQuery());
 
   if (isPending) {

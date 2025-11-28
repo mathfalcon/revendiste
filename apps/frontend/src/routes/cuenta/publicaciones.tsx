@@ -1,6 +1,12 @@
 import {createFileRoute} from '@tanstack/react-router';
-import {PublicacionesView} from '~/features';
+import {PublicationsView} from '~/features';
+import {z} from 'zod';
+
+const publicacionesSearchSchema = z.object({
+  subirTicket: z.string().optional(),
+});
 
 export const Route = createFileRoute('/cuenta/publicaciones')({
-  component: PublicacionesView,
+  component: PublicationsView,
+  validateSearch: publicacionesSearchSchema,
 });

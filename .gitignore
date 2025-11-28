@@ -144,4 +144,7 @@ yarn.lock
 /blob-report/
 /playwright/.cache/
 
+# Backend uploaded files (tickets, documents, etc.)
 /apps/backend/storage
+/apps/backend/uploads
+/uploads

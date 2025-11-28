@@ -5,3 +5,5 @@ export * from './ticket-listings';
 export * from './orders';
 export * from './payments';
 export * from './webhooks';
+export * from './ticket-documents';
+export * from './storage';

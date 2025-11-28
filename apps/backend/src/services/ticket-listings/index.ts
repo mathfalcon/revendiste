@@ -6,6 +6,7 @@ import {
 import {logger} from '~/utils';
 import {NotFoundError, ValidationError} from '~/errors';
 import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
+import {canUploadDocumentForPlatform} from './platform-helpers';
 
 export class TicketListingsService {
   constructor(
@@ -78,6 +79,35 @@ export class TicketListingsService {
 
     logger.info(`Retrieved ${listings.length} listings for user ${userId}`);
 
-    return listings;
+    // Enrich each ticket with upload availability based on platform rules
+    const enrichedListings = listings.map(listing => {
+      const eventStartDate = new Date(listing.event.eventStartDate);
+      const eventEndDate = new Date(listing.event.eventEndDate);
+      const platform = listing.event.platform;
+
+      const enrichedTickets = listing.tickets.map(ticket => {
+        const hasDocument = !!ticket.document;
+        const uploadAvailability = canUploadDocumentForPlatform(
+          platform,
+          eventStartDate,
+          eventEndDate,
+          hasDocument,
+        );
+
+        return {
+          ...ticket,
+          hasDocument,
+          canUploadDocument: uploadAvailability.canUpload,
+          uploadUnavailableReason: uploadAvailability.reason,
+        };
+      });
+
+      return {
+        ...listing,
+        tickets: enrichedTickets,
+      };
+    });
+
+    return enrichedListings;
   }
 }

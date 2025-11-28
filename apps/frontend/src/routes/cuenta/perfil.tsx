@@ -1,6 +1,6 @@
 import {createFileRoute} from '@tanstack/react-router';
-import {PerfilView} from '~/features';
+import {ProfileView} from '~/features';
 
 export const Route = createFileRoute('/cuenta/perfil')({
-  component: PerfilView,
+  component: ProfileView,
 });

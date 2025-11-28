@@ -1,8 +1,11 @@
 import {Kysely} from 'kysely';
 import {DB} from '~/types';
+import {BaseRepository} from '../base';
 
-export class EventTicketWavesRepository {
-  constructor(private readonly db: Kysely<DB>) {}
+export class EventTicketWavesRepository extends BaseRepository<EventTicketWavesRepository> {
+  withTransaction(trx: Kysely<DB>): EventTicketWavesRepository {
+    return new EventTicketWavesRepository(trx);
+  }
 
   async getById(id: string) {
     const result = await this.db

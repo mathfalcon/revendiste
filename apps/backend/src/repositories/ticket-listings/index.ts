@@ -3,9 +3,12 @@ import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
 import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
 import {ValidationError} from '~/errors';
 import {DB} from '~/types';
+import {BaseRepository} from '../base';
 
-export class TicketListingsRepository {
-  constructor(private readonly db: Kysely<DB>) {}
+export class TicketListingsRepository extends BaseRepository<TicketListingsRepository> {
+  withTransaction(trx: Kysely<DB>): TicketListingsRepository {
+    return new TicketListingsRepository(trx);
+  }
 
   async createBatch(
     ticketListings: CreateTicketListingRouteBody & {publisherUserId: string},
@@ -75,6 +78,7 @@ export class TicketListingsRepository {
             .select([
               'events.id',
               'events.name',
+              'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',
               'events.venueName',
@@ -88,7 +92,7 @@ export class TicketListingsRepository {
         jsonArrayFrom(
           eb
             .selectFrom('listingTickets')
-            .select([
+            .select(eb => [
               'listingTickets.id',
               'listingTickets.ticketNumber',
               'listingTickets.price',
@@ -96,7 +100,29 @@ export class TicketListingsRepository {
               'listingTickets.cancelledAt',
               'listingTickets.createdAt',
               'listingTickets.updatedAt',
+              jsonObjectFrom(
+                eb
+                  .selectFrom('ticketDocuments')
+                  .select([
+                    'ticketDocuments.id',
+                    'ticketDocuments.status',
+                    'ticketDocuments.uploadedAt',
+                  ])
+                  .whereRef(
+                    'ticketDocuments.ticketId',
+                    '=',
+                    'listingTickets.id',
+                  )
+                  .where('ticketDocuments.isPrimary', '=', true)
+                  .where('ticketDocuments.deletedAt', 'is', null),
+              ).as('document'),
             ])
+            .leftJoin('ticketDocuments', join =>
+              join
+                .onRef('ticketDocuments.ticketId', '=', 'listingTickets.id')
+                .on('ticketDocuments.isPrimary', '=', true)
+                .on('ticketDocuments.deletedAt', 'is', null),
+            )
             .whereRef('listingTickets.listingId', '=', 'listings.id')
             .where('listingTickets.deletedAt', 'is', null)
             .orderBy('listingTickets.ticketNumber', 'asc'),

@@ -9,3 +9,4 @@ export {ListingTicketsRepository} from './listing-tickets';
 export {OrderTicketReservationsRepository} from './order-ticket-reservations';
 export {PaymentsRepository} from './payments';
 export {PaymentEventsRepository} from './payment-events';
+export {TicketDocumentsRepository} from './ticket-documents';
