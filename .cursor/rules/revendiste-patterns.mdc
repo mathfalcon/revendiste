@@ -111,6 +111,64 @@ async getResourceWithComputedFields(id: string) {
 }
 ```
 
+### API Response Structure (Nested Resources)
+
+**Always use nested structures to represent resources and relationships** - this standardizes API responses across the codebase and correctly represents resource hierarchies:
+
+```typescript
+// ✅ CORRECT - Nested structure represents resources
+return {
+  orderId: order.id,
+  event: {
+    name: order.event?.name || null,
+    eventStartDate: order.event?.eventStartDate || null,
+  },
+  tickets: tickets.map(ticket => ({
+    id: ticket.id,
+    price: ticket.price,
+    ticketWave: {
+      name: ticket.ticketWaveName,
+    },
+    document: ticket.document
+      ? {
+          id: ticket.document.id,
+          url: ticket.document.url,
+        }
+      : null,
+  })),
+};
+
+// ❌ WRONG - Flat structure doesn't represent relationships
+return {
+  orderId: order.id,
+  eventName: order.event?.name || null,
+  eventStartDate: order.event?.eventStartDate || null,
+  tickets: tickets.map(ticket => ({
+    id: ticket.id,
+    price: ticket.price,
+    ticketWaveName: ticket.ticketWaveName,
+    documentId: ticket.document?.id || null,
+    documentUrl: ticket.document?.url || null,
+  })),
+};
+```
+
+**Key Principles:**
+
+- **Nest related resources** - Group related data into objects (e.g., `event: { name, startDate }` instead of `eventName`, `eventStartDate`)
+- **Represent relationships** - Use nested objects to show entity relationships (e.g., `ticketWave: { name }` inside tickets)
+- **Consistency** - All API responses should follow the same nested pattern
+- **Extensibility** - Easy to add more fields to nested objects without breaking changes
+- **RESTful alignment** - Better represents resource structure and follows REST principles
+
+**Benefits:**
+
+- ✅ Better resource representation - clearly shows relationships between entities
+- ✅ Consistency across endpoints - matches patterns like `getOrderById` which uses nested `event` and `items`
+- ✅ Easier to extend - can add fields to nested objects without changing the top-level structure
+- ✅ More maintainable - clearer data model that matches the database relationships
+- ✅ Better type safety - nested structures provide clearer TypeScript types
+
 ## External API Integration Patterns
 
 ### Provider Pattern
@@ -250,6 +308,40 @@ cd apps/backend
 pnpm tsoa:both  # Generates routes and OpenAPI spec
 ```
 
+**Controller Return Type Naming:**
+
+**All controller method return types MUST use named type aliases** - never use inline `Awaited<ReturnType<Service['method']>>`:
+
+```typescript
+// ✅ CORRECT - Named type alias
+type GetOrderTicketsResponse = Awaited<ReturnType<OrdersService['getOrderTickets']>>;
+
+@Get('/{orderId}/tickets')
+public async getOrderTickets(...): Promise<GetOrderTicketsResponse> {
+  return this.service.getOrderTickets(...);
+}
+
+// ❌ WRONG - Inline type generates bad Swagger type names
+@Get('/{orderId}/tickets')
+public async getOrderTickets(...): Promise<Awaited<ReturnType<OrdersService['getOrderTickets']>>> {
+  return this.service.getOrderTickets(...);
+}
+```
+
+**Why?**
+
+- TSOA uses the return type name for Swagger/OpenAPI schema generation
+- Named types produce clean names like `GetOrderTicketsResponse`
+- Inline types produce ugly names like `AwaitedReturnTypeOrdersServiceAtGetOrderTickets`
+- Frontend type generation uses these Swagger type names, affecting developer experience
+
+**Pattern:**
+
+- Define type aliases at the top of the controller file
+- Use descriptive names: `{Action}{Resource}Response` (e.g., `GetOrderTicketsResponse`, `CreateOrderResponse`)
+- Use `Awaited<ReturnType<Service['method']>>` for async service methods
+- Use `ReturnType<Service['method']>` for sync service methods
+
 ### Frontend (Type Generation)
 
 ```bash
@@ -345,11 +437,41 @@ export function computePlatformRule(
 
 ## Error Handling
 
+### Error Message Management
+
+**All error messages MUST be centralized in error message constant files:**
+
+- Error messages are stored in `apps/backend/src/constants/error-messages.ts`
+- **Always reference error messages from these constant files** - never hardcode error messages
+- Error messages **must be in Spanish** to prepare for future internationalization (i18n)
+- Use descriptive, user-friendly messages
+
+```typescript
+// ✅ CORRECT - Reference from constants file
+import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
+
+throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+throw new ValidationError(
+  ORDER_ERROR_MESSAGES.INSUFFICIENT_TICKETS(5, 100, 'VIP', 10),
+);
+
+// ❌ WRONG - Hardcoded error messages
+throw new NotFoundError('Order not found');
+throw new ValidationError('Not enough tickets available');
+```
+
+**Pattern:**
+
+- Group error messages by domain (e.g., `ORDER_ERROR_MESSAGES`, `TICKET_ERROR_MESSAGES`)
+- Use functions for parameterized messages: `MESSAGE: (param: string) => string`
+- Messages should be clear and actionable for end users
+- Centralized messages make i18n implementation straightforward
+
 ### Backend Errors
 
 - Use custom error classes: `NotFoundError`, `ValidationError`, `UnauthorizedError`, `BadRequestError`
 - Services throw errors, controllers catch and return appropriate HTTP status
-- Always provide descriptive error messages
+- **Always use error messages from constants files** (see Error Message Management above)
 
 ### Frontend Error Handling
 
@@ -395,6 +517,36 @@ const value = data.field as unknown as TargetType;
 - Trust Kysely's type system - don't add explicit return types
 - Let Kysely infer from query structure
 - Use `$notNull()` for guaranteed non-null results
+
+**When Kysely can't infer that a result will always be non-null, use `.$notNull()`:**
+
+```typescript
+// ✅ CORRECT - Use $notNull() when you know the result will always exist
+jsonObjectFrom(
+  eb
+    .selectFrom('events')
+    .select(['events.id', 'events.name'])
+    .whereRef('events.id', '=', 'listings.eventId'),
+)
+  .$notNull()  // Tells TypeScript this will never be null
+  .as('event'),
+
+jsonArrayFrom(
+  eb
+    .selectFrom('listingTickets')
+    .select(['listingTickets.id', 'listingTickets.ticketNumber'])
+    .whereRef('listingTickets.listingId', '=', 'listings.id'),
+)
+  .$notNull()  // Tells TypeScript this will never be null (empty array, but not null)
+  .as('tickets'),
+```
+
+**Key Points:**
+
+- Use `.$notNull()` on `jsonObjectFrom` and `jsonArrayFrom` results when you're certain they will always exist
+- This removes `null` from the type, making the result non-nullable
+- For `jsonArrayFrom`, `.$notNull()` ensures the result is always an array (never null), though it may be empty
+- Only use when you're certain the relationship will always exist (e.g., required foreign keys, inner joins)
 
 ## Common Patterns
 

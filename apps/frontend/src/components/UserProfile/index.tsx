@@ -26,7 +26,7 @@ export const UserProfile = () => {
           <Link to='/cuenta/publicaciones'>Publicaciones</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to='/cuenta/compras'>Mis compras</Link>
+          <Link to='/cuenta/tickets'>Mis tickets</Link>
         </DropdownMenuItem>
         <SignOutButton>
           <DropdownMenuItem className='text-destructive'>

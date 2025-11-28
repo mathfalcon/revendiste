@@ -7,6 +7,7 @@ import {logger} from '~/utils';
 import {NotFoundError, ValidationError} from '~/errors';
 import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
 import {canUploadDocumentForPlatform} from './platform-helpers';
+import {TICKET_LISTING_ERROR_MESSAGES} from '~/constants/error-messages';
 
 export class TicketListingsService {
   constructor(
@@ -22,12 +23,12 @@ export class TicketListingsService {
     // Validate that the event exists and hasn't finished
     const event = await this.eventsRepository.getById(data.eventId);
     if (!event) {
-      throw new NotFoundError('Event not found');
+      throw new NotFoundError(TICKET_LISTING_ERROR_MESSAGES.EVENT_NOT_FOUND);
     }
 
     if (new Date() > event.eventEndDate) {
       throw new ValidationError(
-        'Cannot create listing for an event that has already finished',
+        TICKET_LISTING_ERROR_MESSAGES.EVENT_FINISHED,
       );
     }
 
@@ -37,25 +38,32 @@ export class TicketListingsService {
     );
 
     if (!ticketWave) {
-      throw new NotFoundError('Ticket wave not found');
+      throw new NotFoundError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_WAVE_NOT_FOUND,
+      );
     }
 
     if (ticketWave.eventId !== data.eventId) {
       throw new ValidationError(
-        'Ticket wave does not belong to the specified event',
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_WAVE_INVALID_EVENT,
       );
     }
 
     // Validate price doesn't exceed face value
     if (data.price > Number(ticketWave.faceValue)) {
       throw new ValidationError(
-        `Price cannot exceed face value of ${ticketWave.faceValue} ${ticketWave.currency}`,
+        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_FACE_VALUE(
+          String(ticketWave.faceValue),
+          ticketWave.currency,
+        ),
       );
     }
 
     // Validate quantity is positive
     if (data.quantity <= 0) {
-      throw new ValidationError('Quantity must be greater than 0');
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.INVALID_QUANTITY,
+      );
     }
 
     // Create multiple listings in a single batch operation (already atomic)

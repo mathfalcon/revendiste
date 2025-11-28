@@ -11,6 +11,10 @@ import type {Kysely} from 'kysely';
 import type {DB} from '~/types';
 import {DLocalService} from '~/services/dlocal';
 import type {PaymentProvider} from './providers';
+import {
+  ORDER_ERROR_MESSAGES,
+  PAYMENT_ERROR_MESSAGES,
+} from '~/constants/error-messages';
 
 interface CreatePaymentLinkParams {
   orderId: string;
@@ -45,18 +49,18 @@ export class PaymentsService {
   ): Promise<CreatePaymentLinkResult> {
     const {orderId, userId} = params;
 
-    logger.info('Creating payment link', {orderId, userId});
+    logger.debug('Creating payment link', {orderId, userId});
 
     // Get order with details
     const order = await this.ordersRepository.getByIdWithItems(orderId);
 
     if (!order) {
-      throw new NotFoundError('Order not found');
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
     }
 
     // Verify user owns the order
     if (order.userId !== userId) {
-      throw new NotFoundError('Order not found');
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
     }
 
     // Check if order has expired
@@ -65,13 +69,13 @@ export class PaymentsService {
       order.reservationExpiresAt &&
       new Date(order.reservationExpiresAt) < now
     ) {
-      throw new ValidationError('Order has expired');
+      throw new ValidationError(PAYMENT_ERROR_MESSAGES.ORDER_EXPIRED);
     }
 
     // Check if order is still pending
     if (order.status !== 'pending') {
       throw new ValidationError(
-        `Order is already ${order.status}. Cannot create payment link.`,
+        PAYMENT_ERROR_MESSAGES.ORDER_NOT_PENDING(order.status),
       );
     }
 
@@ -82,7 +86,7 @@ export class PaymentsService {
       existingPayment.redirectUrl &&
       existingPayment.status === 'pending'
     ) {
-      logger.info(
+      logger.debug(
         'Existing pending payment found, redirecting to existing payment link',
         {
           orderId,
@@ -203,7 +207,7 @@ export class PaymentsService {
         stack: error.stack,
       });
       throw new ValidationError(
-        `Failed to create payment link: ${error.message}`,
+        PAYMENT_ERROR_MESSAGES.PAYMENT_CREATION_FAILED(error.message),
       );
     }
   }

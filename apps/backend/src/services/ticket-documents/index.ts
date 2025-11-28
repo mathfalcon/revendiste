@@ -8,6 +8,7 @@ import {
 import {getStorageProvider} from '~/services/storage';
 import {NotFoundError, UnauthorizedError, ValidationError} from '~/errors';
 import {logger} from '~/utils';
+import {TICKET_DOCUMENT_ERROR_MESSAGES} from '~/constants/error-messages';
 
 /**
  * Ticket Document Service
@@ -50,22 +51,28 @@ export class TicketDocumentService {
     const ticket = await this.listingTicketsRepository.getTicketById(ticketId);
 
     if (!ticket) {
-      throw new NotFoundError('Ticket not found');
+      throw new NotFoundError(
+        TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND,
+      );
     }
 
     if (ticket.publisherUserId !== userId) {
       throw new UnauthorizedError(
-        'You are not authorized to upload documents for this ticket',
+        TICKET_DOCUMENT_ERROR_MESSAGES.UNAUTHORIZED_UPLOAD,
       );
     }
 
     if (!ticket.soldAt) {
-      throw new ValidationError('Cannot upload document for unsold ticket');
+      throw new ValidationError(
+        TICKET_DOCUMENT_ERROR_MESSAGES.UNSOLD_TICKET,
+      );
     }
 
     // Validate event hasn't ended
     if (ticket.eventEndDate && new Date(ticket.eventEndDate) < new Date()) {
-      throw new ValidationError('Cannot upload document after event has ended');
+      throw new ValidationError(
+        TICKET_DOCUMENT_ERROR_MESSAGES.EVENT_ENDED,
+      );
     }
 
     // Validate file type
@@ -73,9 +80,10 @@ export class TicketDocumentService {
 
     // Validate file size (max 10MB)
     const maxSizeBytes = 10 * 1024 * 1024;
+    const maxSizeMB = maxSizeBytes / 1024 / 1024;
     if (file.sizeBytes > maxSizeBytes) {
       throw new ValidationError(
-        `File size exceeds maximum allowed size of ${maxSizeBytes / 1024 / 1024}MB`,
+        TICKET_DOCUMENT_ERROR_MESSAGES.FILE_SIZE_EXCEEDED(maxSizeMB),
       );
     }
 
@@ -169,12 +177,14 @@ export class TicketDocumentService {
       );
 
       if (!ticket) {
-        throw new NotFoundError('Ticket not found for this order');
+        throw new NotFoundError(
+          TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND_FOR_ORDER,
+        );
       }
 
       if (ticket.buyerUserId !== userId) {
         throw new UnauthorizedError(
-          'You are not authorized to access this ticket',
+          TICKET_DOCUMENT_ERROR_MESSAGES.UNAUTHORIZED_ACCESS,
         );
       }
     } else {
@@ -182,12 +192,14 @@ export class TicketDocumentService {
       ticket = await this.listingTicketsRepository.getTicketById(ticketId);
 
       if (!ticket) {
-        throw new NotFoundError('Ticket not found');
+        throw new NotFoundError(
+          TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND,
+        );
       }
 
       if (ticket.publisherUserId !== userId) {
         throw new UnauthorizedError(
-          'You are not authorized to access this ticket',
+          TICKET_DOCUMENT_ERROR_MESSAGES.UNAUTHORIZED_ACCESS,
         );
       }
     }
@@ -197,7 +209,9 @@ export class TicketDocumentService {
       await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
 
     if (!document) {
-      throw new NotFoundError('No document uploaded for this ticket yet');
+      throw new NotFoundError(
+        TICKET_DOCUMENT_ERROR_MESSAGES.DOCUMENT_NOT_FOUND,
+      );
     }
 
     // Get document from storage
@@ -222,12 +236,14 @@ export class TicketDocumentService {
     const ticket = await this.listingTicketsRepository.getTicketById(ticketId);
 
     if (!ticket) {
-      throw new NotFoundError('Ticket not found');
+      throw new NotFoundError(
+        TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND,
+      );
     }
 
     if (ticket.publisherUserId !== userId) {
       throw new UnauthorizedError(
-        'You are not authorized to delete this ticket document',
+        TICKET_DOCUMENT_ERROR_MESSAGES.UNAUTHORIZED_DELETE,
       );
     }
 
@@ -236,7 +252,9 @@ export class TicketDocumentService {
       await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
 
     if (!document) {
-      throw new NotFoundError('No document uploaded for this ticket');
+      throw new NotFoundError(
+        TICKET_DOCUMENT_ERROR_MESSAGES.DOCUMENT_NOT_FOUND_FOR_DELETE,
+      );
     }
 
     // Delete from storage
@@ -302,12 +320,14 @@ export class TicketDocumentService {
     const ticket = await this.listingTicketsRepository.getTicketById(ticketId);
 
     if (!ticket) {
-      throw new NotFoundError('Ticket not found');
+      throw new NotFoundError(
+        TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND,
+      );
     }
 
     if (ticket.publisherUserId !== userId) {
       throw new UnauthorizedError(
-        'You are not authorized to view this ticket',
+        TICKET_DOCUMENT_ERROR_MESSAGES.UNAUTHORIZED_VIEW,
       );
     }
 
@@ -370,7 +390,10 @@ export class TicketDocumentService {
 
     if (!allowedTypes.includes(mimeType.toLowerCase())) {
       throw new ValidationError(
-        `File type ${mimeType} is not allowed. Allowed types: ${allowedTypes.join(', ')}`,
+        TICKET_DOCUMENT_ERROR_MESSAGES.INVALID_FILE_TYPE(
+          mimeType,
+          allowedTypes,
+        ),
       );
     }
   }

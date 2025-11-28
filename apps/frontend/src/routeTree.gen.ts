@@ -15,10 +15,10 @@ import { Route as RegistrarseSplatRouteImport } from './routes/registrarse.$'
 import { Route as IngresarSplatRouteImport } from './routes/ingresar.$'
 import { Route as EventosEventIdRouteImport } from './routes/eventos/$eventId'
 import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar'
+import { Route as CuentaTicketsRouteImport } from './routes/cuenta/tickets'
 import { Route as CuentaSubirTicketsRouteImport } from './routes/cuenta/subir-tickets'
 import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
 import { Route as CuentaPerfilRouteImport } from './routes/cuenta/perfil'
-import { Route as CuentaComprasRouteImport } from './routes/cuenta/compras'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
@@ -53,6 +53,11 @@ const EntradasPublicarRoute = EntradasPublicarRouteImport.update({
   path: '/entradas/publicar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CuentaTicketsRoute = CuentaTicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
 const CuentaSubirTicketsRoute = CuentaSubirTicketsRouteImport.update({
   id: '/subir-tickets',
   path: '/subir-tickets',
@@ -66,11 +71,6 @@ const CuentaPublicacionesRoute = CuentaPublicacionesRouteImport.update({
 const CuentaPerfilRoute = CuentaPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
-  getParentRoute: () => CuentaRouteRoute,
-} as any)
-const CuentaComprasRoute = CuentaComprasRouteImport.update({
-  id: '/compras',
-  path: '/compras',
   getParentRoute: () => CuentaRouteRoute,
 } as any)
 const CheckoutOrderIdIndexRoute = CheckoutOrderIdIndexRouteImport.update({
@@ -92,10 +92,10 @@ const CheckoutOrderIdSuccessRoute = CheckoutOrderIdSuccessRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/cuenta/compras': typeof CuentaComprasRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
+  '/cuenta/tickets': typeof CuentaTicketsRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
@@ -107,10 +107,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/cuenta/compras': typeof CuentaComprasRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
+  '/cuenta/tickets': typeof CuentaTicketsRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
@@ -123,10 +123,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/cuenta/compras': typeof CuentaComprasRoute
   '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
+  '/cuenta/tickets': typeof CuentaTicketsRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
@@ -140,10 +140,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cuenta'
-    | '/cuenta/compras'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/cuenta/subir-tickets'
+    | '/cuenta/tickets'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
@@ -155,10 +155,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cuenta'
-    | '/cuenta/compras'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/cuenta/subir-tickets'
+    | '/cuenta/tickets'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
@@ -170,10 +170,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cuenta'
-    | '/cuenta/compras'
     | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/cuenta/subir-tickets'
+    | '/cuenta/tickets'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
@@ -239,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntradasPublicarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cuenta/tickets': {
+      id: '/cuenta/tickets'
+      path: '/tickets'
+      fullPath: '/cuenta/tickets'
+      preLoaderRoute: typeof CuentaTicketsRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
     '/cuenta/subir-tickets': {
       id: '/cuenta/subir-tickets'
       path: '/subir-tickets'
@@ -258,13 +265,6 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/cuenta/perfil'
       preLoaderRoute: typeof CuentaPerfilRouteImport
-      parentRoute: typeof CuentaRouteRoute
-    }
-    '/cuenta/compras': {
-      id: '/cuenta/compras'
-      path: '/compras'
-      fullPath: '/cuenta/compras'
-      preLoaderRoute: typeof CuentaComprasRouteImport
       parentRoute: typeof CuentaRouteRoute
     }
     '/checkout/$orderId/': {
@@ -292,17 +292,17 @@ declare module '@tanstack/react-router' {
 }
 
 interface CuentaRouteRouteChildren {
-  CuentaComprasRoute: typeof CuentaComprasRoute
   CuentaPerfilRoute: typeof CuentaPerfilRoute
   CuentaPublicacionesRoute: typeof CuentaPublicacionesRoute
   CuentaSubirTicketsRoute: typeof CuentaSubirTicketsRoute
+  CuentaTicketsRoute: typeof CuentaTicketsRoute
 }
 
 const CuentaRouteRouteChildren: CuentaRouteRouteChildren = {
-  CuentaComprasRoute: CuentaComprasRoute,
   CuentaPerfilRoute: CuentaPerfilRoute,
   CuentaPublicacionesRoute: CuentaPublicacionesRoute,
   CuentaSubirTicketsRoute: CuentaSubirTicketsRoute,
+  CuentaTicketsRoute: CuentaTicketsRoute,
 }
 
 const CuentaRouteRouteWithChildren = CuentaRouteRoute._addFileChildren(

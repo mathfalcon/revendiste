@@ -1,8 +1,11 @@
 import {Link} from '@tanstack/react-router';
-import {CheckCircle, XCircle, Clock, Calendar} from 'lucide-react';
+import {CheckCircle, XCircle, Clock, Calendar, Ticket} from 'lucide-react';
 import {Card, CardContent} from '~/components/ui/card';
 import {EventTicketCurrency} from '~/lib';
 import {formatPrice, formatEventDate} from '~/utils';
+import {TicketViewModal} from '~/components';
+import {useState} from 'react';
+import {Button} from '~/components/ui/button';
 
 interface OrderCardProps {
   order: {
@@ -54,6 +57,24 @@ const STATUS_CONFIG = {
     icon: XCircle,
   },
 } as const;
+
+function ViewTicketsButton({orderId}: {orderId: string}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        onClick={() => setOpen(true)}
+        variant='outline'
+        className='flex items-center gap-2'
+      >
+        <Ticket className='h-4 w-4' />
+        Ver tickets
+      </Button>
+      <TicketViewModal orderId={orderId} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
 
 export function OrderCard({order}: OrderCardProps) {
   const status = STATUS_CONFIG[order.status];
@@ -165,9 +186,9 @@ export function OrderCard({order}: OrderCardProps) {
               </span>
             </div>
 
-            {/* Action buttons for pending orders */}
-            {order.status === 'pending' && (
-              <div className='flex gap-2 pt-2'>
+            {/* Action buttons */}
+            <div className='flex gap-2 pt-2'>
+              {order.status === 'pending' && (
                 <Link
                   to='/checkout/$orderId'
                   params={{orderId: order.id}}
@@ -175,8 +196,11 @@ export function OrderCard({order}: OrderCardProps) {
                 >
                   Completar pago
                 </Link>
-              </div>
-            )}
+              )}
+              {order.status === 'confirmed' && (
+                <ViewTicketsButton orderId={order.id} />
+              )}
+            </div>
           </div>
         </div>
       </CardContent>

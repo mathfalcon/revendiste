@@ -415,8 +415,8 @@ export interface ReturnTypeOrdersServiceAtGetOrderById {
 
 export type GetOrderByIdResponse = ReturnTypeOrdersServiceAtGetOrderById;
 
-/** Recursively unwraps the "awaited type" of a type. Non-promise "thenables" should resolve to `never`. This emulates the behavior of `await`. */
-export type AwaitedReturnTypeOrdersServiceAtGetUserOrders = {
+/** Obtain the return type of a function type */
+export type ReturnTypeOrdersServiceAtGetUserOrders = {
   items: {
     ticketWaveName: string | null;
     subtotal: string;
@@ -459,6 +459,41 @@ export type AwaitedReturnTypeOrdersServiceAtGetUserOrders = {
   /** @format date-time */
   createdAt: string;
 }[];
+
+export type GetUserOrdersResponse = ReturnTypeOrdersServiceAtGetUserOrders;
+
+/** Obtain the return type of a function type */
+export interface ReturnTypeOrdersServiceAtGetOrderTickets {
+  tickets: {
+    document: {
+      url: string;
+      mimeType: string | null;
+      uploadedAt: string | null;
+      status: string | null;
+      id: string | null;
+    };
+    ticketWave: {
+      name: string;
+    } | null;
+    hasDocument: boolean;
+    /** @format date-time */
+    soldAt: string | null;
+    price: string;
+    id: string;
+  }[];
+  currency: EventTicketCurrency;
+  vatOnCommission: string;
+  platformCommission: string;
+  totalAmount: string;
+  subtotalAmount: string;
+  event: {
+    eventStartDate: string | null;
+    name: string | null;
+  };
+  orderId: string;
+}
+
+export type GetOrderTicketsResponse = ReturnTypeOrdersServiceAtGetOrderTickets;
 
 export interface DLocalWebhookrRouteBody {
   payment_id: string;
@@ -977,10 +1012,7 @@ export class Api<
      * @request GET:/orders
      */
     getMyOrders: (params: RequestParams = {}) =>
-      this.request<
-        AwaitedReturnTypeOrdersServiceAtGetUserOrders,
-        UnauthorizedError
-      >({
+      this.request<GetUserOrdersResponse, UnauthorizedError>({
         path: `/orders`,
         method: "GET",
         format: "json",
@@ -997,6 +1029,21 @@ export class Api<
     getById: (orderId: string, params: RequestParams = {}) =>
       this.request<GetOrderByIdResponse, UnauthorizedError | NotFoundError>({
         path: `/orders/${orderId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Orders
+     * @name GetOrderTickets
+     * @request GET:/orders/{orderId}/tickets
+     */
+    getOrderTickets: (orderId: string, params: RequestParams = {}) =>
+      this.request<GetOrderTicketsResponse, UnauthorizedError | NotFoundError>({
+        path: `/orders/${orderId}/tickets`,
         method: "GET",
         format: "json",
         ...params,

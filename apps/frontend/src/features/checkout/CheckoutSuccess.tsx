@@ -221,7 +221,7 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
           {/* Action Buttons */}
           <div className='flex flex-col sm:flex-row gap-3 justify-center'>
             <Button asChild variant='outline' size='lg'>
-              <Link to='/cuenta/compras'>Ver mis compras</Link>
+              <Link to='/cuenta/tickets'>Ver mis tickets</Link>
             </Button>
             {order.eventId && (
               <Button asChild size='lg' className='bg-primary-gradient'>

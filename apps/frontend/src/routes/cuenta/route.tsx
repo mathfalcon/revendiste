@@ -18,6 +18,12 @@ const TAB_CONFIG = [
     to: '/cuenta/perfil',
   },
   {
+    value: 'tickets',
+    label: 'Mis tickets',
+    icon: ScanQrCode,
+    to: '/cuenta/tickets',
+  },
+  {
     value: 'publicaciones',
     label: 'Publicaciones',
     icon: Ticket,
@@ -37,12 +43,6 @@ const TAB_CONFIG = [
           {count}
         </Badge>
       ) : null,
-  },
-  {
-    value: 'compras',
-    label: 'Mis compras',
-    icon: ScanQrCode,
-    to: '/cuenta/compras',
   },
 ] as const;
 

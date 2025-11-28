@@ -11,7 +11,7 @@ import {CheckCircle, XCircle, Clock} from 'lucide-react';
 import {LoadingSpinner} from '~/components/LoadingScreen';
 import {Card, CardContent} from '~/components/ui/card';
 
-export function MyPurchasesView() {
+export function MyTicketsView() {
   const {data: orders, isPending} = useQuery(getMyOrdersQuery());
 
   if (isPending) {
@@ -47,9 +47,9 @@ export function MyPurchasesView() {
   return (
     <div className='space-y-6'>
       <div>
-        <h2 className='text-2xl font-semibold'>Mis órdenes</h2>
+        <h2 className='text-2xl font-semibold'>Mis tickets</h2>
         <p className='text-muted-foreground'>
-          Administra y revisa tus órdenes de compra
+          Accede a tus tickets en cualquier momento
         </p>
       </div>
 
@@ -59,29 +59,25 @@ export function MyPurchasesView() {
         className='w-full flex flex-col gap-4'
       >
         {/* Pending Orders */}
-        <AccordionItem value='pending' className='border-none'>
-          <AccordionTrigger className='rounded-lg border bg-card px-4 py-3 hover:no-underline'>
-            <div className='flex items-center gap-2'>
-              <Clock className='h-4 w-4 text-yellow-500' />
-              <span className='font-semibold'>
-                Órdenes pendientes ({pendingOrders.length})
-              </span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className='pt-4'>
-            {pendingOrders.length > 0 ? (
+        {pendingOrders.length > 0 && (
+          <AccordionItem value='pending' className='border-none'>
+            <AccordionTrigger className='rounded-lg border bg-card px-4 py-3 hover:no-underline'>
+              <div className='flex items-center gap-2'>
+                <Clock className='h-4 w-4 text-yellow-500' />
+                <span className='font-semibold'>
+                  Órdenes pendientes ({pendingOrders.length})
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className='pt-4'>
               <div className='space-y-4'>
                 {pendingOrders.map(order => (
                   <OrderCard key={order.id} order={order} />
                 ))}
               </div>
-            ) : (
-              <p className='py-8 text-center text-muted-foreground'>
-                No tienes órdenes pendientes
-              </p>
-            )}
-          </AccordionContent>
-        </AccordionItem>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
         {/* Confirmed Orders */}
         <AccordionItem value='confirmed' className='border-none'>

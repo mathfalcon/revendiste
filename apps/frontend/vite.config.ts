@@ -13,20 +13,19 @@ export default defineConfig({
     tsConfigPaths({
       projects: ['./tsconfig.json'],
     }),
-
+    // Run API generation on dev server start
+    generateApiPlugin({
+      command: 'pnpm generate:api',
+      runOnStart: true,
+      // Retry 3 times with 2 second delays if backend isn't ready yet
+      retries: 3,
+      retryDelay: 2000,
+      // Optionally run on file changes
+      runOnChange: true,
+      watchFiles: ['../backend/src/swagger/swagger.json'],
+    }),
     tanstackStart(),
     viteReact(),
     tailwindcss(),
-    // // Run API generation on dev server start
-    // generateApiPlugin({
-    //   command: 'pnpm generate:api',
-    //   runOnStart: true,
-    //   // Retry 3 times with 2 second delays if backend isn't ready yet
-    //   retries: 3,
-    //   retryDelay: 2000,
-    //   // Optionally run on file changes
-    //   runOnChange: true,
-    //   watchFiles: ['../backend/src/swagger/swagger.json'],
-    // }),
   ],
 });

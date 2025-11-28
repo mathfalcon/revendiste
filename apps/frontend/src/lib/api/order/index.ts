@@ -48,3 +48,10 @@ export const getMyOrdersQuery = () =>
     queryKey: ['orders', 'my-orders'],
     queryFn: () => api.orders.getMyOrders().then(res => res.data),
   });
+
+export const getOrderTicketsQuery = (orderId: string) =>
+  queryOptions({
+    queryKey: ['orders', orderId, 'tickets'],
+    queryFn: () => api.orders.getOrderTickets(orderId).then(res => res.data),
+    enabled: !!orderId && orderId.length > 0,
+  });

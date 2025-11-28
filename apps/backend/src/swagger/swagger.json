@@ -1307,7 +1307,7 @@
 			"GetOrderByIdResponse": {
 				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getOrderById_"
 			},
-			"Awaited_ReturnType_OrdersService-at-getUserOrders__": {
+			"ReturnType_OrdersService-at-getUserOrders_": {
 				"items": {
 					"properties": {
 						"items": {
@@ -1489,7 +1489,139 @@
 					"type": "object"
 				},
 				"type": "array",
-				"description": "Recursively unwraps the \"awaited type\" of a type. Non-promise \"thenables\" should resolve to `never`. This emulates the behavior of `await`."
+				"description": "Obtain the return type of a function type"
+			},
+			"GetUserOrdersResponse": {
+				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getUserOrders_"
+			},
+			"ReturnType_OrdersService-at-getOrderTickets_": {
+				"properties": {
+					"tickets": {
+						"items": {
+							"properties": {
+								"document": {
+									"properties": {
+										"url": {
+											"type": "string"
+										},
+										"mimeType": {
+											"type": "string",
+											"nullable": true
+										},
+										"uploadedAt": {
+											"type": "string",
+											"nullable": true
+										},
+										"status": {
+											"type": "string",
+											"nullable": true
+										},
+										"id": {
+											"type": "string",
+											"nullable": true
+										}
+									},
+									"required": [
+										"url",
+										"mimeType",
+										"uploadedAt",
+										"status",
+										"id"
+									],
+									"type": "object",
+									"nullable": true
+								},
+								"ticketWave": {
+									"properties": {
+										"name": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"name"
+									],
+									"type": "object",
+									"nullable": true
+								},
+								"hasDocument": {
+									"type": "boolean"
+								},
+								"soldAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"price": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"document",
+								"ticketWave",
+								"hasDocument",
+								"soldAt",
+								"price",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"totalAmount": {
+						"type": "string"
+					},
+					"subtotalAmount": {
+						"type": "string"
+					},
+					"event": {
+						"properties": {
+							"eventStartDate": {
+								"type": "string",
+								"nullable": true
+							},
+							"name": {
+								"type": "string",
+								"nullable": true
+							}
+						},
+						"required": [
+							"eventStartDate",
+							"name"
+						],
+						"type": "object",
+						"nullable": true
+					},
+					"orderId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"tickets",
+					"currency",
+					"vatOnCommission",
+					"platformCommission",
+					"totalAmount",
+					"subtotalAmount",
+					"event",
+					"orderId"
+				],
+				"type": "object",
+				"description": "Obtain the return type of a function type"
+			},
+			"GetOrderTicketsResponse": {
+				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getOrderTickets_"
 			},
 			"DLocalWebhookrRouteBody": {
 				"properties": {
@@ -2278,7 +2410,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Awaited_ReturnType_OrdersService-at-getUserOrders__"
+									"$ref": "#/components/schemas/GetUserOrdersResponse"
 								}
 							}
 						}
@@ -2317,6 +2449,67 @@
 					},
 					"401": {
 						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Order not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/orders/{orderId}/tickets": {
+			"get": {
+				"operationId": "GetOrderTickets",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetOrderTicketsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Not authorized to view tickets for this order",
 						"content": {
 							"application/json": {
 								"schema": {

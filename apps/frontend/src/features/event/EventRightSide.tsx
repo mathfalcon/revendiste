@@ -59,6 +59,7 @@ export const EventRightSide = (props: EventRightSideProps) => {
         duration: 3000,
       });
     },
+    timeout: 1000 * 60 * 15, // 15 minutes
   });
 
   const createOrderMutation = useMutation(

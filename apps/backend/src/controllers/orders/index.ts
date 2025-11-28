@@ -31,6 +31,8 @@ import {ValidateBody, Body} from '~/decorators';
 
 type CreateOrderResponse = ReturnType<OrdersService['createOrder']>;
 type GetOrderByIdResponse = ReturnType<OrdersService['getOrderById']>;
+type GetUserOrdersResponse = ReturnType<OrdersService['getUserOrders']>;
+type GetOrderTicketsResponse = ReturnType<OrdersService['getOrderTickets']>;
 
 @Route('orders')
 @Middlewares(requireAuthMiddleware)
@@ -83,7 +85,21 @@ export class OrdersController {
   @Response<UnauthorizedError>(401, 'Authentication required')
   public async getMyOrders(
     @Request() request: express.Request,
-  ): Promise<Awaited<ReturnType<OrdersService['getUserOrders']>>> {
+  ): Promise<GetUserOrdersResponse> {
     return this.service.getUserOrders(request.user.id);
+  }
+
+  @Get('/{orderId}/tickets')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<NotFoundError>(404, 'Order not found')
+  @Response<UnauthorizedError>(
+    403,
+    'Not authorized to view tickets for this order',
+  )
+  public async getOrderTickets(
+    @Path() orderId: string,
+    @Request() request: express.Request,
+  ): Promise<GetOrderTicketsResponse> {
+    return this.service.getOrderTickets(orderId, request.user.id);
   }
 }

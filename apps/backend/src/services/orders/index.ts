@@ -7,10 +7,14 @@ import {
   OrderTicketReservationsRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
-import {NotFoundError, ValidationError} from '~/errors';
+import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateOrderRouteBody} from '~/controllers/orders/validation';
-import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
+import {
+  ORDER_ERROR_MESSAGES,
+  TICKET_DOCUMENT_ERROR_MESSAGES,
+} from '~/constants/error-messages';
 import {calculateOrderFees} from '~/utils/fees';
+import {getStorageProvider} from '~/services/storage';
 
 export class OrdersService {
   constructor(
@@ -23,7 +27,6 @@ export class OrdersService {
   ) {}
 
   async createOrder(data: CreateOrderRouteBody, userId: string) {
-    console.log(JSON.stringify(data, null, 2));
     // Check if user already has a pending order for this event
     const existingOrder =
       await this.ordersRepository.getPendingOrderByUserAndEvent(
@@ -264,5 +267,63 @@ export class OrdersService {
   async getUserOrders(userId: string) {
     const orders = await this.ordersRepository.getByUserId(userId);
     return orders;
+  }
+
+  async getOrderTickets(orderId: string, userId: string) {
+    // Verify order exists and belongs to user
+    const order = await this.ordersRepository.getByIdWithItems(orderId);
+    if (!order) {
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+    }
+
+    if (order.userId !== userId) {
+      throw new UnauthorizedError(
+        ORDER_ERROR_MESSAGES.UNAUTHORIZED_TICKET_ACCESS,
+      );
+    }
+
+    // Get tickets for this order
+    const tickets =
+      await this.orderTicketReservationsRepository.getTicketsByOrderId(orderId);
+
+    // Enrich with document URLs if available
+    const storageProvider = getStorageProvider();
+    const enrichedTickets = tickets.map(ticket => ({
+      id: ticket.id,
+      price: ticket.price,
+      soldAt: ticket.soldAt,
+      hasDocument: !!ticket.document,
+      ticketWave: ticket.ticketWaveName
+        ? {
+            name: ticket.ticketWaveName,
+          }
+        : null,
+      document:
+        ticket.document && ticket.document.storagePath
+          ? {
+              id: ticket.document.id,
+              status: ticket.document.status,
+              uploadedAt: ticket.document.uploadedAt,
+              mimeType: ticket.document.mimeType,
+              url: storageProvider.getUrl(ticket.document.storagePath),
+            }
+          : null,
+    }));
+
+    return {
+      orderId: order.id,
+      event: order.event
+        ? {
+            name: order.event.name || null,
+            eventStartDate: order.event.eventStartDate || null,
+          }
+        : null,
+      subtotalAmount: order.subtotalAmount.toString(),
+      totalAmount: order.totalAmount.toString(),
+      platformCommission: order.platformCommission.toString(),
+      vatOnCommission: order.vatOnCommission.toString(),
+      currency: order.currency,
+      tickets: enrichedTickets,
+    };
   }
 }

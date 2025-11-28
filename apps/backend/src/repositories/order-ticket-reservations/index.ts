@@ -1,4 +1,5 @@
 import {Kysely} from 'kysely';
+import {jsonObjectFrom} from 'kysely/helpers/postgres';
 import {DB} from '~/types';
 import {BaseRepository} from '../base';
 
@@ -127,6 +128,63 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
       .where('orderId', '=', orderId)
       .where('deletedAt', 'is', null)
       .returningAll()
+      .execute();
+  }
+
+  /**
+   * Get tickets for an order with document status
+   * Used by buyers to view their purchased tickets
+   * Works for both pending (active reservations) and confirmed (soft-deleted reservations) orders
+   */
+  async getTicketsByOrderId(orderId: string) {
+    return await this.db
+      .selectFrom('orderTicketReservations')
+      .innerJoin(
+        'listingTickets',
+        'orderTicketReservations.listingTicketId',
+        'listingTickets.id',
+      )
+      .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
+      .innerJoin(
+        'eventTicketWaves',
+        'listings.ticketWaveId',
+        'eventTicketWaves.id',
+      )
+      .innerJoin('orders', 'orderTicketReservations.orderId', 'orders.id')
+      .leftJoin('ticketDocuments', join =>
+        join
+          .onRef('ticketDocuments.ticketId', '=', 'listingTickets.id')
+          .on('ticketDocuments.isPrimary', '=', true)
+          .on('ticketDocuments.deletedAt', 'is', null),
+      )
+      .select(eb => [
+        'listingTickets.id',
+        'listingTickets.price',
+        'listingTickets.soldAt',
+        'eventTicketWaves.name as ticketWaveName',
+        jsonObjectFrom(
+          eb
+            .selectFrom('ticketDocuments')
+            .select([
+              'ticketDocuments.id',
+              'ticketDocuments.status',
+              'ticketDocuments.uploadedAt',
+              'ticketDocuments.storagePath',
+              'ticketDocuments.mimeType',
+            ])
+            .whereRef('ticketDocuments.ticketId', '=', 'listingTickets.id')
+            .where('ticketDocuments.isPrimary', '=', true)
+            .where('ticketDocuments.deletedAt', 'is', null),
+        ).as('document'),
+        // Note: document is intentionally nullable (ticket may not have document yet)
+        // We don't use $notNull() here because documents are optional
+      ])
+      .where('orderTicketReservations.orderId', '=', orderId)
+      // Include both active and soft-deleted reservations (for confirmed orders)
+      // This allows us to find tickets even after order confirmation
+      // We don't filter by deletedAt on reservations to include confirmed orders
+      .where('listingTickets.deletedAt', 'is', null)
+      .orderBy('listingTickets.ticketNumber', 'asc')
       .execute();
   }
 }

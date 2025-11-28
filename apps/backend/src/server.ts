@@ -1,8 +1,9 @@
 import express, {NextFunction, Request, Response} from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import path from 'path';
 
-import {PORT} from './config/env';
+import {PORT, STORAGE_LOCAL_PATH, STORAGE_BASE_URL} from './config/env';
 import {errorHandler, optionalAuthMiddleware} from './middleware';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
@@ -66,6 +67,11 @@ registerSwaggerRoutes(router);
 RegisterRoutes(router);
 
 app.use('/api', router);
+
+// Serve static files from storage directory
+// This allows direct access to uploaded files via URL
+const storagePath = path.resolve(process.cwd(), STORAGE_LOCAL_PATH);
+app.use(STORAGE_BASE_URL, express.static(storagePath));
 
 // Global error handler (must be last)
 app.use(errorHandler);

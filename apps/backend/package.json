@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"tsx watch src/server.ts --require tsconfig-paths/register --clear-screen --ignore src/routes.ts --ignore src/swagger/swagger.json\" \"nodemon --ignore src/routes.ts --ignore src/swagger/swagger.json -x tsoa spec-and-routes\"",
+    "dev": "concurrently \"tsx watch src/server.ts --require tsconfig-paths/register --clear-screen --ignore src/routes.ts --ignore src/swagger/swagger.json\" \"nodemon --ignore src/routes.ts --ignore src/swagger/swagger.json -x tsoa spec-and-routes\" \"ngrok http 3001\"",
     "start": "node -r tsconfig-paths/register dist/server.js",
     "build": "tsc -b",
     "kysely": "kysely",

@@ -14,6 +14,10 @@ import type {
   PaymentProvider,
   ProviderPaymentData,
 } from '../providers/PaymentProvider.interface';
+import {
+  ORDER_ERROR_MESSAGES,
+  PAYMENT_ERROR_MESSAGES,
+} from '~/constants/error-messages';
 
 /**
  * Normalized payment data in our system's format
@@ -190,7 +194,7 @@ export class PaymentWebhookAdapter {
         provider: this.provider.name,
         paymentId: providerPaymentId,
       });
-      throw new NotFoundError('Payment record not found');
+      throw new NotFoundError(PAYMENT_ERROR_MESSAGES.PAYMENT_NOT_FOUND);
     }
 
     // Get associated order
@@ -203,7 +207,7 @@ export class PaymentWebhookAdapter {
         paymentId: providerPaymentId,
         orderId: paymentRecord.orderId,
       });
-      throw new NotFoundError('Order not found');
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
     }
 
     // Validate payment amount matches order
@@ -214,7 +218,9 @@ export class PaymentWebhookAdapter {
         paymentAmount: paymentData.amount,
         orderAmount: order.totalAmount,
       });
-      throw new ValidationError('Payment amount does not match order total');
+      throw new ValidationError(
+        PAYMENT_ERROR_MESSAGES.PAYMENT_AMOUNT_MISMATCH,
+      );
     }
 
     // Update payment record
