@@ -51,7 +51,7 @@ api.instance.interceptors.response.use(
   response => response,
   async (error: AxiosError) => {
     if (error.response && error.response.status === 401) {
-      return redirect({to: '/ingresar/$', throw: true});
+      throw redirect({to: '/ingresar/$', throw: true});
     }
 
     // Handle standardized error responses from backend

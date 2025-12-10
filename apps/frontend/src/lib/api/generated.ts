@@ -616,6 +616,16 @@ export interface PaginatedResponseTypedNotification {
 
 export type GetNotificationsResponse = PaginatedResponseTypedNotification;
 
+export interface GetNotificationsQuery {
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+  includeSeen?: boolean;
+}
+
 /** @format double */
 export type GetUnseenCountResponse = number;
 
@@ -1225,7 +1235,13 @@ export class Api<
      * @request GET:/notifications
      */
     getNotifications: (
-      query?: {
+      query: {
+        sortOrder?: "asc" | "desc";
+        sortBy?: string;
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
         includeSeen?: boolean;
       },
       params: RequestParams = {},

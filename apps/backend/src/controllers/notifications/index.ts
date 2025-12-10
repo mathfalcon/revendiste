@@ -26,6 +26,10 @@ import type {TypedNotification} from '~/services/notifications/types';
 import type {PaginatedResponse} from '~/types';
 import {UsersRepository} from '~/repositories';
 
+interface GetNotificationsQuery extends PaginationQuery {
+  includeSeen?: boolean;
+}
+
 type GetNotificationsResponse = PaginatedResponse<TypedNotification>;
 type GetUnseenCountResponse = number;
 type MarkAsSeenResponse = TypedNotification | null;
@@ -42,12 +46,12 @@ export class NotificationsController {
   @Middlewares(paginationMiddleware(10, 100), ensurePagination)
   @Response<UnauthorizedError>(401, 'Authentication required')
   public async getNotifications(
+    @Queries() query: GetNotificationsQuery,
     @Request() request: express.Request,
-    @Query() includeSeen?: boolean,
   ): Promise<GetNotificationsResponse> {
     return this.service.getUserNotifications(request.user.id, {
       pagination: request.pagination!,
-      includeSeen: includeSeen ?? true,
+      includeSeen: query.includeSeen ?? true,
     });
   }
 

@@ -368,6 +368,18 @@ const models: TsoaRoute.Models = {
         "type": {"ref":"PaginatedResponse_TypedNotification_","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GetNotificationsQuery": {
+        "dataType": "refObject",
+        "properties": {
+            "sortOrder": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["asc"]},{"dataType":"enum","enums":["desc"]},{"dataType":"undefined"}]},
+            "sortBy": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+            "limit": {"dataType":"double","required":true},
+            "page": {"dataType":"double","required":true},
+            "includeSeen": {"dataType":"boolean"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "GetUnseenCountResponse": {
         "dataType": "refAlias",
         "type": {"dataType":"double","validators":{}},
@@ -996,8 +1008,8 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsNotificationsController_getNotifications: Record<string, TsoaRoute.ParameterSchema> = {
+                query: {"in":"queries","name":"query","required":true,"ref":"GetNotificationsQuery"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
-                includeSeen: {"in":"query","name":"includeSeen","dataType":"boolean"},
         };
         app.get('/notifications',
             ...(fetchMiddlewares<RequestHandler>(NotificationsController)),

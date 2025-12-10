@@ -129,6 +129,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
     // Always sort by createdAt descending (most recent first) for notifications
     const notifications = await baseQuery
       .selectAll()
+      .select([channelsAsJsonb])
       .orderBy('createdAt', sortOrder)
       .limit(limit)
       .offset(offset)

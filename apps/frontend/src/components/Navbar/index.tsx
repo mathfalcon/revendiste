@@ -7,6 +7,7 @@ import {SignedIn, SignedOut, SignInButton} from '@clerk/tanstack-react-start';
 import {cn} from '~/lib/utils';
 import {UserProfile} from '../UserProfile';
 import {SignInAppearance} from '../SignInModal';
+import {NotificationBell} from '../NotificationBell';
 
 export const Navbar = () => {
   return (
@@ -30,6 +31,7 @@ export const Navbar = () => {
         {/* Right side */}
         <div className='flex items-center gap-3'>
           <ModeToggle />
+
           <SignedOut>
             <SignInButton mode='modal' appearance={SignInAppearance}>
               <Button
@@ -51,7 +53,9 @@ export const Navbar = () => {
           >
             <Link to='/entradas/publicar'>Vende tus entradas</Link>
           </Button>
-
+          <SignedIn>
+            <NotificationBell />
+          </SignedIn>
           <SignedIn>
             <UserProfile />
           </SignedIn>
