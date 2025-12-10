@@ -18,6 +18,8 @@ import {
   TicketListingsRepository,
   EventsRepository,
   EventTicketWavesRepository,
+  ListingTicketsRepository,
+  OrdersRepository,
 } from '~/repositories';
 import {db} from '~/db';
 import {
@@ -51,6 +53,9 @@ export class TicketListingsController {
     new TicketListingsRepository(db),
     new EventsRepository(db),
     new EventTicketWavesRepository(db),
+    new ListingTicketsRepository(db),
+    new OrdersRepository(db),
+    db,
   );
   private documentService = new TicketDocumentService(db);
 

@@ -1,5 +1,5 @@
 import type {Kysely} from 'kysely';
-import type {DB} from '~/types';
+import type {DB} from '~/shared';
 import {
   OrdersRepository,
   OrderTicketReservationsRepository,
@@ -7,6 +7,8 @@ import {
   PaymentEventsRepository,
   ListingTicketsRepository,
   TicketListingsRepository,
+  EventsRepository,
+  EventTicketWavesRepository,
 } from '~/repositories';
 import {NotFoundError, ValidationError} from '~/errors';
 import {logger} from '~/utils';
@@ -18,6 +20,7 @@ import {
   ORDER_ERROR_MESSAGES,
   PAYMENT_ERROR_MESSAGES,
 } from '~/constants/error-messages';
+import {TicketListingsService} from '~/services/ticket-listings';
 
 /**
  * Normalized payment data in our system's format
@@ -67,6 +70,7 @@ export class PaymentWebhookAdapter {
   private paymentEventsRepository: PaymentEventsRepository;
   private listingTicketsRepository: ListingTicketsRepository;
   private ticketListingsRepository: TicketListingsRepository;
+  private ticketListingsService: TicketListingsService;
 
   constructor(private provider: PaymentProvider, private db: Kysely<DB>) {
     this.ordersRepository = new OrdersRepository(db);
@@ -76,6 +80,14 @@ export class PaymentWebhookAdapter {
     this.paymentEventsRepository = new PaymentEventsRepository(db);
     this.listingTicketsRepository = new ListingTicketsRepository(db);
     this.ticketListingsRepository = new TicketListingsRepository(db);
+    this.ticketListingsService = new TicketListingsService(
+      this.ticketListingsRepository,
+      new EventsRepository(db),
+      new EventTicketWavesRepository(db),
+      this.listingTicketsRepository,
+      this.ordersRepository,
+      db,
+    );
   }
 
   /**
@@ -218,9 +230,7 @@ export class PaymentWebhookAdapter {
         paymentAmount: paymentData.amount,
         orderAmount: order.totalAmount,
       });
-      throw new ValidationError(
-        PAYMENT_ERROR_MESSAGES.PAYMENT_AMOUNT_MISMATCH,
-      );
+      throw new ValidationError(PAYMENT_ERROR_MESSAGES.PAYMENT_AMOUNT_MISMATCH);
     }
 
     // Update payment record
@@ -325,6 +335,9 @@ export class PaymentWebhookAdapter {
     orderId: string,
     paymentData: NormalizedPaymentData,
   ): Promise<void> {
+    let soldTickets: Array<{listingId: string}> = [];
+    let uniqueListingIds: string[] = [];
+
     await this.ordersRepository.executeTransaction(async trx => {
       const ordersRepo = this.ordersRepository.withTransaction(trx);
       const reservationsRepo =
@@ -338,12 +351,14 @@ export class PaymentWebhookAdapter {
       // Step 2: Confirm order reservations (marks them as deleted)
       await reservationsRepo.confirmOrderReservations(orderId);
 
-      // Step 3: Mark tickets as sold
-      const soldTickets =
-        await this.listingTicketsRepository.markTicketsAsSoldByOrderId(orderId);
+      // Step 3: Mark tickets as sold (notifications sent outside transaction by service)
+      soldTickets =
+        await this.ticketListingsService.markTicketsAsSoldAndNotifySellers(
+          orderId,
+        );
 
       // Step 4: Get unique listing IDs from sold tickets
-      const uniqueListingIds = [
+      uniqueListingIds = [
         ...new Set(soldTickets.map(ticket => ticket.listingId)),
       ];
 

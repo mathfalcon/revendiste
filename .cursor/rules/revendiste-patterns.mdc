@@ -310,11 +310,11 @@ pnpm tsoa:both  # Generates routes and OpenAPI spec
 
 **Controller Return Type Naming:**
 
-**All controller method return types MUST use named type aliases** - never use inline `Awaited<ReturnType<Service['method']>>`:
+**All controller method return types MUST use named type aliases** - never use inline `ReturnType<Service['method']>`:
 
 ```typescript
 // ✅ CORRECT - Named type alias
-type GetOrderTicketsResponse = Awaited<ReturnType<OrdersService['getOrderTickets']>>;
+type GetOrderTicketsResponse = ReturnType<OrdersService['getOrderTickets']>;
 
 @Get('/{orderId}/tickets')
 public async getOrderTickets(...): Promise<GetOrderTicketsResponse> {
@@ -323,7 +323,7 @@ public async getOrderTickets(...): Promise<GetOrderTicketsResponse> {
 
 // ❌ WRONG - Inline type generates bad Swagger type names
 @Get('/{orderId}/tickets')
-public async getOrderTickets(...): Promise<Awaited<ReturnType<OrdersService['getOrderTickets']>>> {
+public async getOrderTickets(...): Promise<ReturnType<OrdersService['getOrderTickets']>> {
   return this.service.getOrderTickets(...);
 }
 ```
@@ -339,7 +339,7 @@ public async getOrderTickets(...): Promise<Awaited<ReturnType<OrdersService['get
 
 - Define type aliases at the top of the controller file
 - Use descriptive names: `{Action}{Resource}Response` (e.g., `GetOrderTicketsResponse`, `CreateOrderResponse`)
-- Use `Awaited<ReturnType<Service['method']>>` for async service methods
+- Use `ReturnType<Service['method']>` for async service methods
 - Use `ReturnType<Service['method']>` for sync service methods
 
 ### Frontend (Type Generation)
@@ -381,6 +381,63 @@ The frontend uses a custom Vite plugin that automatically generates API types on
 - Avoid try-catch in TypeScript migrations (causes transaction rollbacks)
 - Always provide both `up` and `down` functions
 
+### Database Type Regeneration Workflow
+
+**After creating migrations, always regenerate database types:**
+
+```bash
+# 1. Run migration
+cd apps/backend && pnpm kysely:migrate
+
+# 2. Regenerate types
+cd apps/backend && pnpm generate:db
+```
+
+**Why?**
+
+- Kysely types are generated from the actual database schema
+- New columns won't be available in TypeScript until types are regenerated
+- Types are generated to `packages/shared/src/types/db.d.ts`
+- If you see type errors about missing columns, run `pnpm generate:db`
+
+**Pattern:**
+
+- Create migration → Add new columns/types
+- Run migration → Apply changes to database
+- Regenerate types → Update TypeScript types
+- Use new columns → Full type safety
+
+### JSONB Handling with Kysely
+
+**Kysely handles JSONB automatically - never manually stringify:**
+
+```typescript
+// ✅ CORRECT - Let Kysely handle JSONB
+await this.db
+  .insertInto('notifications')
+  .values({
+    actions: data.actions ?? null, // Kysely serializes automatically
+    metadata: data.metadata ?? null, // Kysely serializes automatically
+  })
+  .execute();
+
+// ❌ WRONG - Manual stringification is unnecessary and error-prone
+await this.db
+  .insertInto('notifications')
+  .values({
+    actions: data.actions ? JSON.stringify(data.actions) : null,
+    metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+  })
+  .execute();
+```
+
+**Key Points:**
+
+- Kysely automatically serializes JavaScript objects to JSONB
+- Kysely automatically deserializes JSONB to JavaScript objects
+- Manual `JSON.stringify()` is unnecessary and can cause double-encoding
+- Use `?? null` to convert `undefined` to `null` for nullable JSONB columns
+
 ### Soft Delete Pattern
 
 For tables that need audit trails, use soft deletes instead of hard deletes:
@@ -390,6 +447,84 @@ For tables that need audit trails, use soft deletes instead of hard deletes:
 - Never hard delete records that need audit trails
 - Soft delete by setting `deletedAt` to current timestamp
 - Allows data recovery and maintains referential integrity
+
+### Background Job Patterns
+
+**Process background jobs in parallel batches for better throughput:**
+
+```typescript
+// ✅ CORRECT - Parallel batch processing
+async processPendingItems(limit: number = 100) {
+  const pending = await this.repository.getPendingItems(limit);
+
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+    const batch = pending.slice(i, i + BATCH_SIZE);
+    await Promise.allSettled(
+      batch.map(item => this.processItem(item.id))
+    );
+  }
+
+  return pending.length;
+}
+
+// ❌ WRONG - Sequential processing is slow
+async processPendingItems(limit: number = 100) {
+  const pending = await this.repository.getPendingItems(limit);
+
+  for (const item of pending) {
+    await this.processItem(item.id);  // One at a time!
+  }
+
+  return pending.length;
+}
+```
+
+**Key Points:**
+
+- Use `Promise.allSettled()` to process items in parallel
+- Process in batches to avoid overwhelming the system
+- `allSettled` ensures one failure doesn't stop others
+- Adjust batch size based on resource constraints
+
+### Exponential Backoff Pattern
+
+**Use exponential backoff for retry logic to avoid overwhelming systems:**
+
+```typescript
+// Calculate backoff delay: baseDelay * 2^retryCount
+// retry 0: 5 minutes
+// retry 1: 10 minutes
+// retry 2: 20 minutes
+// retry 3: 40 minutes
+// retry 4: 80 minutes
+
+async getPendingItems(limit: number = 100) {
+  const now = new Date();
+
+  return await this.db
+    .selectFrom('items')
+    .selectAll()
+    .where('status', '=', 'pending')
+    .where('retryCount', '<', 5)  // Max retries
+    .execute()
+    .then(items => {
+      return items.filter(item => {
+        const baseDelay = 5 * 60 * 1000; // 5 minutes
+        const backoffDelay = baseDelay * Math.pow(2, item.retryCount);
+        const retryAfter = new Date(now.getTime() - backoffDelay);
+        return item.createdAt < retryAfter;
+      });
+    });
+}
+```
+
+**Key Points:**
+
+- Exponential backoff prevents retry storms
+- Each retry waits longer than the previous
+- Set maximum retry count to prevent infinite retries
+- Filter in application code or use SQL expressions for backoff calculation
 
 ## Platform-Specific Business Logic
 

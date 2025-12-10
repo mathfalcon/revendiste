@@ -1,6 +1,6 @@
 import {Kysely} from 'kysely';
 import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
-import {DB, EventTicketCurrency} from '~/types';
+import {DB, EventTicketCurrency} from '~/shared';
 import {BaseRepository} from '../base';
 
 export class OrdersRepository extends BaseRepository<OrdersRepository> {
@@ -57,6 +57,7 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
             .select([
               'events.id',
               'events.name',
+              'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',
               'events.venueName',
@@ -188,6 +189,7 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
             .select([
               'events.id',
               'events.name',
+              'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',
               'events.venueName',

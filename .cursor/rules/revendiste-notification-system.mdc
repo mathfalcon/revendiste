@@ -1,0 +1,588 @@
+---
+description: When using the revendiste notification system or want to send notifications
+alwaysApply: false
+---
+
+# Revendiste Notification System
+
+A type-safe, scalable notification system with email template support using React Email.
+
+## Quick Start
+
+```typescript
+import {NotificationService} from '~/services/notifications';
+import {notifyTicketSold} from '~/services/notifications/helpers';
+
+// Simple usage with helper function
+await notifyTicketSold(notificationService, {
+  buyerUserId: userId,
+  orderId: order.id,
+  eventName: order.event.name,
+  ticketCount: order.ticketCount,
+});
+
+// Or create directly
+await notificationService.createNotification({
+  userId: userId,
+  type: 'order_confirmed',
+  title: 'Orden confirmada',
+  description: 'Tu orden ha sido confirmada',
+  channels: ['in_app', 'email'],
+  actions: [
+    {
+      type: 'button',
+      label: 'Ver orden',
+      url: `${APP_BASE_URL}/orders/${orderId}`,
+    },
+  ],
+  metadata: {orderId, eventName},
+});
+```
+
+## System Architecture
+
+### Type-Safe Notification System
+
+The notification system uses **discriminated unions** and **function overloading** to provide full type safety:
+
+1. **Metadata Schemas** (`packages/shared/src/schemas/notifications.ts`)
+
+   - All notification schemas are in the shared package
+   - Each notification type has its own Zod schema
+   - Discriminated union ensures type safety
+   - Metadata type must match notification type
+   - Includes base schemas, action schemas, and notification schemas
+
+2. **Email Templates** (`packages/transactional/`)
+
+   - React Email components in `emails/` directory
+   - Each template exports its prop types
+   - Type-safe template mapping via function overloading
+
+3. **Template Builder** (`apps/backend/src/services/notifications/email-template-builder.ts`)
+
+   - Parses metadata using correct schema from shared package
+   - Maps notification types to email templates
+   - Renders React components to HTML (no React in backend)
+
+4. **Database Types** (`packages/shared/src/types/db.d.ts`)
+
+   - Generated database types from Kysely
+   - `NotificationType` enum is generated from database
+   - `Notification` model type is in `apps/backend/src/types/models.ts` as `Selectable<Notifications>`
+
+## Notification Types
+
+### Current Types
+
+- `ticket_sold_buyer` - Buyer notification after purchase
+- `ticket_sold_seller` - Seller notification when tickets are sold
+- `document_reminder` - Seller reminder to upload documents
+- `order_confirmed` - Order confirmation
+- `order_expired` - Order expiration
+- `payment_failed` - Payment failure
+- `payment_succeeded` - Payment success
+
+### Notification Channels
+
+- `in_app` - In-app notifications (bell icon)
+- `email` - Email notifications
+- `sms` - SMS notifications (future)
+
+### Notification Status
+
+- `pending` - Created but not yet sent
+- `sent` - Successfully sent (all channels succeeded or partial success)
+- `failed` - Failed to send (all channels failed, will be retried by cronjob)
+- `seen` - User has seen the notification (in-app only)
+
+### Channel-Level Tracking
+
+Each notification tracks delivery status **per channel**:
+
+- `channelStatus` (JSONB): Tracks status for each channel individually
+  - Format: `{"email": {"status": "sent", "sentAt": "..."}, "in_app": {"status": "failed", "error": "..."}}`
+  - Allows partial success (e.g., email sent but SMS failed)
+  - Overall notification status is `sent` if any channel succeeds
+
+### Retry Mechanism
+
+- `retryCount` (integer): Tracks number of retry attempts (max 5)
+- **Exponential backoff**: Wait time increases with each retry
+  - Retry 0: 5 minutes
+  - Retry 1: 10 minutes
+  - Retry 2: 20 minutes
+  - Retry 3: 40 minutes
+  - Retry 4: 80 minutes
+- Cron job processes pending notifications every 5 minutes
+- Processes in parallel batches (10 at a time) for better throughput
+
+## Adding a New Notification Type
+
+To add a new notification type, follow these steps:
+
+### Step 1: Define Metadata Schema
+
+In `packages/shared/src/schemas/notifications.ts`:
+
+```typescript
+// 1. Add metadata schema
+export const MyNewNotificationMetadataSchema = z.object({
+  type: z.literal('my_new_notification'),
+  // Add your fields here
+  orderId: z.uuid(),
+  eventName: z.string(),
+  customField: z.string(),
+});
+
+// 2. Add action schema (if needed)
+export const MyNewNotificationActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('button'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
+// 3. Add notification schema
+export const MyNewNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('my_new_notification'),
+  metadata: MyNewNotificationMetadataSchema,
+  actions: MyNewNotificationActionsSchema,
+});
+
+// 4. Add to discriminated unions
+export const NotificationMetadataSchema = z.discriminatedUnion('type', [
+  // ... existing schemas
+  MyNewNotificationMetadataSchema, // Add here
+]);
+
+export const NotificationSchema = z.discriminatedUnion('type', [
+  // ... existing schemas
+  MyNewNotificationSchema, // Add here
+]);
+```
+
+### Step 2: Create Email Template Component
+
+In `packages/transactional/emails/my-new-notification-email.tsx`:
+
+```typescript
+import {Button, Section, Text} from '@react-email/components';
+import {BaseEmail} from './base-template';
+
+export interface MyNewNotificationEmailProps {
+  eventName: string;
+  orderId: string;
+  customField: string;
+  appBaseUrl?: string;
+}
+
+export const MyNewNotificationEmail = ({
+  eventName,
+  orderId,
+  customField,
+  appBaseUrl,
+}: MyNewNotificationEmailProps) => (
+  <BaseEmail
+    title="My New Notification"
+    preview={`Notification for ${eventName}`}
+    appBaseUrl={appBaseUrl}
+  >
+    <Text className="text-foreground mb-4">Content here...</Text>
+  </BaseEmail>
+);
+
+MyNewNotificationEmail.PreviewProps = {
+  eventName: 'Example Event',
+  orderId: '123',
+  customField: 'example',
+} as MyNewNotificationEmailProps;
+
+export default MyNewNotificationEmail;
+```
+
+### Step 3: Export Template and Props
+
+In `packages/transactional/src/index.ts`:
+
+```typescript
+// Export the component
+export * from '../emails/my-new-notification-email';
+
+// Export prop types
+export type {MyNewNotificationEmailProps} from '../emails/my-new-notification-email';
+```
+
+### Step 4: Add to Email Template Mapping
+
+In `packages/transactional/src/email-templates.ts`:
+
+```typescript
+// 1. Import the component and props
+import {
+  MyNewNotificationEmail as MyNewNotificationEmailComponent,
+  type MyNewNotificationEmailProps,
+} from '../emails/my-new-notification-email';
+import type {NotificationType, TypedNotificationMetadata} from '@revendiste/shared';
+
+// Note: NotificationType is now imported from @revendiste/shared (generated from database)
+
+// 2. Add switch case in implementation
+case 'my_new_notification': {
+  const meta = metadata as TypedNotificationMetadata<'my_new_notification'>;
+  return {
+    Component: MyNewNotificationEmailComponent,
+    props: {
+      eventName: meta?.eventName || 'el evento',
+      orderId: meta?.orderId || '',
+      customField: meta?.customField || '',
+      appBaseUrl,
+    },
+  };
+}
+```
+
+**Note:** `NotificationType` is now generated from the database enum, so you don't need to manually add it to a union type. The database enum will be updated in Step 6.
+
+### Step 5: Add to Email Template Builder
+
+**Note:** The email template builder now uses a unified `getEmailTemplate()` function from the transactional package. No changes needed here - the switch statement in `packages/transactional/src/email-templates.ts` handles all notification types.
+
+### Step 6: Update Database Enum (Migration)
+
+Create a migration to add the new enum value. **Important:** PostgreSQL doesn't allow using newly added enum values in the same transaction, so use the text conversion pattern:
+
+```typescript
+// In migration file
+export async function up(db: Kysely<any>): Promise<void> {
+  // Step 1: Convert column to text temporarily
+  await sql`
+    ALTER TABLE notifications
+    ALTER COLUMN type TYPE text
+  `.execute(db);
+
+  // Step 2: Drop the old enum
+  await sql`DROP TYPE notification_type`.execute(db);
+
+  // Step 3: Create new enum with all values (including the new one)
+  await sql`
+    CREATE TYPE notification_type AS ENUM (
+      'ticket_sold_buyer',
+      'ticket_sold_seller',
+      'document_reminder',
+      'order_confirmed',
+      'order_expired',
+      'payment_failed',
+      'payment_succeeded',
+      'my_new_notification'  // Add here
+    )
+  `.execute(db);
+
+  // Step 4: Convert column back to use the new enum
+  await sql`
+    ALTER TABLE notifications
+    ALTER COLUMN type TYPE notification_type USING type::notification_type
+  `.execute(db);
+}
+```
+
+**After running the migration, regenerate database types:**
+
+```bash
+cd apps/backend && pnpm generate:db
+```
+
+This updates `NotificationType` in `packages/shared/src/types/db.d.ts`.
+
+### Step 7: Update Repository Interface
+
+**Note:** After regenerating database types (Step 6), `NotificationType` will automatically include the new value. However, you may need to update the repository interface if it uses a union type instead of importing from shared:
+
+In `apps/backend/src/repositories/notifications/index.ts`:
+
+```typescript
+import type {NotificationType} from '~/shared';
+
+export interface CreateNotificationData {
+  // ...
+  type: NotificationType; // Uses generated enum type
+  // ...
+}
+```
+
+If the interface uses a union type, update it to include the new value, or better yet, import `NotificationType` from `~/shared`.
+
+### Step 8: (Optional) Create Helper Function
+
+In `apps/backend/src/services/notifications/helpers.ts`:
+
+```typescript
+export async function notifyMyNewNotification(
+  service: NotificationService,
+  params: {
+    userId: string;
+    orderId: string;
+    eventName: string;
+    customField: string;
+  },
+) {
+  return await service.createNotification({
+    userId: params.userId,
+    type: 'my_new_notification',
+    title: 'My New Notification',
+    description: `Notification for ${params.eventName}`,
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'button',
+        label: 'View Details',
+        url: `${APP_BASE_URL}/orders/${params.orderId}`,
+      },
+    ],
+    metadata: {
+      type: 'my_new_notification' as const,
+      orderId: params.orderId,
+      eventName: params.eventName,
+      customField: params.customField,
+    },
+  });
+}
+```
+
+## Type System Architecture
+
+### Shared Package Organization
+
+**All notification schemas are in the shared package** (`packages/shared/src/schemas/notifications.ts`):
+
+- Base schemas (`BaseNotificationSchema`, `BaseActionSchema`)
+- Metadata schemas for each notification type
+- Action schemas for each notification type
+- Notification schemas for each notification type
+- Discriminated unions (`NotificationMetadataSchema`, `NotificationSchema`)
+- All related TypeScript types
+
+**Benefits:**
+
+- Single source of truth for notification schemas
+- Shared between backend and transactional packages
+- Type-safe across the monorepo
+- Easy to maintain and extend
+
+### Discriminated Union Pattern
+
+The notification system uses **discriminated unions** for type safety:
+
+```typescript
+// Each notification type has its own metadata schema (in shared package)
+export const TicketSoldBuyerMetadataSchema = z.object({
+  type: z.literal('ticket_sold_buyer'), // Discriminator
+  orderId: z.uuid(),
+  eventName: z.string(),
+  ticketCount: z.number().int().positive(),
+});
+
+// Discriminated union ensures type safety
+export const NotificationMetadataSchema = z.discriminatedUnion('type', [
+  TicketSoldBuyerMetadataSchema,
+  TicketSoldSellerMetadataSchema,
+  // ... other schemas
+]);
+
+// TypeScript infers the correct type based on 'type' field
+type Metadata = z.infer<typeof NotificationMetadataSchema>;
+// Metadata is: TicketSoldBuyerMetadata | TicketSoldSellerMetadata | ...
+```
+
+### Database Type Integration
+
+- `NotificationType` is generated from the database enum in `packages/shared/src/types/db.d.ts`
+- `Notification` model type is in `apps/backend/src/types/models.ts` as `Selectable<Notifications>`
+- Always run `pnpm generate:db` after migrations to update types
+
+### Email Template Function
+
+The `getEmailTemplate()` function maps notification types to their email templates:
+
+```typescript
+// Single function signature (no overloading needed)
+export function getEmailTemplate<T extends NotificationType>(
+  props: EmailTemplateProps<T>,
+): {
+  Component: React.ComponentType<any>;
+  props: Record<string, any>;
+};
+
+// Switch statement handles type mapping
+switch (notificationType) {
+  case 'ticket_sold_buyer': {
+    const meta = metadata as TypedNotificationMetadata<'ticket_sold_buyer'>;
+    return {
+      Component: TicketSoldEmailComponent,
+      props: {
+        /* ... */
+      },
+    };
+  }
+  // ... other cases
+}
+```
+
+**Note:** Function overloading was simplified to a single signature with a switch statement, which is sufficient for runtime type mapping.
+
+### Email Template Builder Flow
+
+1. **Parse Metadata** (`parseNotificationMetadata`)
+
+   - Validates metadata against correct schema
+   - Returns typed metadata matching notification type
+   - Throws error if metadata type doesn't match notification type
+
+2. **Build Template** (`buildEmailTemplate`)
+
+   - Maps notification type to email template
+   - Uses function overloading for type safety
+   - Renders React component to HTML in transactional package
+   - Returns HTML and plain text
+
+3. **Send Email** (`NotificationService.sendEmailNotification`)
+   - Calls template builder
+   - Sends via email provider (Resend, Console, etc.)
+
+## Email Provider Configuration
+
+### Environment Variables
+
+```env
+EMAIL_PROVIDER=resend  # Options: console, resend
+EMAIL_FROM=noreply@yourdomain.com
+RESEND_API_KEY=re_your_api_key_here  # Required when EMAIL_PROVIDER=resend
+```
+
+### Provider Pattern
+
+The system uses a factory pattern to select email providers:
+
+- **Console Provider** (default): Logs emails to console for development
+- **Resend Provider**: Production-ready email service with excellent deliverability
+
+### Switching Providers
+
+Change `EMAIL_PROVIDER` environment variable - no code changes needed.
+
+## API Endpoints
+
+- `GET /notifications` - Get user notifications (with pagination)
+- `GET /notifications/unseen-count` - Get count of unseen notifications
+- `PATCH /notifications/:id/seen` - Mark notification as seen
+- `PATCH /notifications/seen-all` - Mark all as seen
+- `DELETE /notifications/:id` - Delete notification
+
+## Key Patterns
+
+### Fire-and-Forget Processing
+
+**Notifications are sent asynchronously** - your business logic doesn't wait:
+
+```typescript
+// ✅ CORRECT - Non-blocking
+await notificationService.createNotification({...});
+// Your code continues immediately
+
+// The notification is sent in the background
+```
+
+### External API Calls Outside Transactions
+
+**Email sending happens outside database transactions** (follows Transaction Safety pattern):
+
+```typescript
+// ✅ CORRECT - Email outside transaction
+await this.repository.executeTransaction(async trx => {
+  // Database operations only
+  await repo.create({...});
+});
+
+// Email sent after transaction commits
+await notificationService.createNotification({...});
+```
+
+### Error Handling
+
+- Failed notifications are marked with status `failed` and error message
+- **Channel-level tracking**: Each channel's status is tracked individually
+- **Exponential backoff**: Retries wait longer with each attempt (5min, 10min, 20min, 40min, 80min)
+- **Max 5 retries**: Prevents infinite retry loops
+- Cronjob automatically retries failed notifications in parallel batches
+- Errors are logged but don't break your business logic
+- Partial success: If some channels succeed, notification is marked as `sent`
+
+## Template System Details
+
+### React Email Components
+
+Email templates are React components in `packages/transactional/emails/`:
+
+- Use `@react-email/components` for email-safe components
+- Export prop types for type safety
+- Use `BaseEmail` wrapper for consistent layout
+- Include `PreviewProps` for React Email preview
+
+### Template Mapping
+
+Templates are mapped via `getEmailTemplate()` in `packages/transactional/src/email-templates.ts`:
+
+- Function overloading provides type safety
+- Each notification type maps to its specific component
+- Props are extracted from metadata and actions
+- TypeScript ensures correct props for each template
+
+### Rendering Flow
+
+1. Backend calls `buildEmailTemplate()` with typed metadata
+2. Template builder calls `getEmailTemplate()` (type-safe via overloading)
+3. React component is rendered to HTML using `renderEmail()` in transactional package
+4. HTML is sent via email provider
+
+**Key Point**: React stays in the transactional package - backend never imports React directly.
+
+## Best Practices
+
+1. **Use helper functions** for common notification types
+2. **Keep notifications outside transactions** - send after database operations complete
+3. **Don't await notification creation** - let it process in background
+4. **Use appropriate channels** - email for important actions, in-app for updates
+5. **Include actions** - provide buttons/links for users to take action
+6. **Add metadata** - store relevant IDs/context for future reference
+7. **Export prop types** - enables type safety in template mapping
+8. **Use function overloading** - provides compile-time type checking
+9. **Follow discriminated union pattern** - ensures metadata matches notification type
+
+## Maintenance Checklist
+
+When adding a new notification type, ensure:
+
+- [ ] Metadata schema defined in `packages/shared/src/schemas/notifications.ts`
+- [ ] Action schema added (if needed) in `packages/shared/src/schemas/notifications.ts`
+- [ ] Notification schema added to discriminated union in `packages/shared/src/schemas/notifications.ts`
+- [ ] Email template component created with exported props in `packages/transactional/emails/`
+- [ ] Template exported from `packages/transactional/src/index.ts`
+- [ ] Switch case added in `packages/transactional/src/email-templates.ts` implementation
+- [ ] Database enum updated (migration created and run)
+- [ ] Types regenerated: `cd apps/backend && pnpm generate:db` (after migration)
+- [ ] Repository interface updated (if using union type instead of `NotificationType` from shared)
+- [ ] Helper function created in `apps/backend/src/services/notifications/helpers.ts` (optional but recommended)
+- [ ] API docs regenerated: `pnpm tsoa:both`
+
+## Type Safety Benefits
+
+The type system ensures:
+
+- ✅ **Compile-time validation** - TypeScript catches type mismatches
+- ✅ **Autocomplete support** - IDE knows what props each template needs
+- ✅ **Refactoring safety** - Changes propagate through type system
+- ✅ **Self-documenting** - Types show exactly what each notification needs
+- ✅ **No runtime checks needed** - Type system handles validation

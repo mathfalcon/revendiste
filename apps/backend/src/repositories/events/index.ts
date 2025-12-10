@@ -1,5 +1,5 @@
 import {type Kysely} from 'kysely';
-import type {DB} from '../../types/db';
+import type {DB} from '~/shared';
 import type {ScrapedEventData} from '../../services/scraping';
 import {logger} from '~/utils';
 import {jsonArrayFrom} from 'kysely/helpers/postgres';
@@ -76,7 +76,9 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         }
       }
 
-      // Upsert ticket waves by eventId and externalId
+      // Upsert ticket waves by eventId and externalId (composite unique constraint)
+      // Note: externalId is NOT globally unique - it can be reused across different events
+      // We use the composite key (eventId, externalId) for conflict resolution
       if (event.ticketWaves.length > 0) {
         for (const ticketWave of event.ticketWaves) {
           await trx

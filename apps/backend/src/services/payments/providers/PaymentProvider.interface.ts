@@ -1,7 +1,7 @@
 import type {
   PaymentStatus,
   PaymentProvider as PaymentProviderEnum,
-} from '~/types/db';
+} from '~/shared';
 
 /**
  * Payment data in the provider's native format

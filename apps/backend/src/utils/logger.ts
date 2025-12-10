@@ -29,12 +29,44 @@ const config = getLoggingConfig();
 const format = winston.format.combine(
   // Add timestamp
   winston.format.timestamp({format: 'YYYY-MM-DD HH:mm:ss:ms'}),
+  // Handle metadata passed as second argument (e.g., logger.error('msg', {data}))
+  winston.format.splat(),
   // Add colors
   winston.format.colorize({all: true}),
   // Define format of the message showing the timestamp, the level and the message
-  winston.format.printf(
-    info => `${info.timestamp} ${info.level}: ${info.message}`,
-  ),
+  winston.format.printf(info => {
+    // Extract standard winston properties
+    const {timestamp, level, message, ...metadata} = info;
+
+    // Build the base log line
+    let logLine = `${timestamp} ${level}: ${message}`;
+
+    // Add metadata if present (when logger is called with a second argument)
+    const metadataKeys = Object.keys(metadata);
+    if (metadataKeys.length > 0) {
+      // Filter out winston internal properties
+      const cleanMetadata: Record<string, any> = {};
+      for (const key of metadataKeys) {
+        // Skip winston internal symbols and properties
+        if (
+          !key.startsWith('Symbol(') &&
+          key !== 'splat' &&
+          key !== 'level' &&
+          key !== 'message' &&
+          key !== 'timestamp'
+        ) {
+          cleanMetadata[key] = metadata[key];
+        }
+      }
+
+      // Only add metadata if there's actual metadata to show
+      if (Object.keys(cleanMetadata).length > 0) {
+        logLine += ` ${JSON.stringify(cleanMetadata)}`;
+      }
+    }
+
+    return logLine;
+  }),
 );
 
 // Define transports based on configuration

@@ -1,7 +1,7 @@
 import axios, {type AxiosInstance} from 'axios';
 import {DLOCAL_API_KEY, DLOCAL_BASE_URL, DLOCAL_SECRET_KEY} from '~/config/env';
 import {logger} from '~/utils';
-import type {PaymentStatus} from '~/types/db';
+import type {PaymentStatus} from '~/shared';
 import type {
   PaymentProvider,
   CreatePaymentParams as BaseCreatePaymentParams,

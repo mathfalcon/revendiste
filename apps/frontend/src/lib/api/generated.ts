@@ -10,6 +10,16 @@
  * ---------------------------------------------------------------
  */
 
+export enum NotificationType {
+  DocumentReminder = "document_reminder",
+  OrderConfirmed = "order_confirmed",
+  OrderExpired = "order_expired",
+  PaymentFailed = "payment_failed",
+  PaymentSucceeded = "payment_succeeded",
+  TicketSoldBuyer = "ticket_sold_buyer",
+  TicketSoldSeller = "ticket_sold_seller",
+}
+
 export enum UploadAvailabilityReason {
   EventEnded = "event_ended",
   TooEarly = "too_early",
@@ -188,6 +198,15 @@ export interface ReturnTypeTicketListingsServiceAtCreateTicketListing {
     price: string;
     listingId: string;
     /** @format date-time */
+    documentUploadRequiredNotifiedAt: string | null;
+    /** @format date-time */
+    documentUploadedAt: string | null;
+    documentType: string | null;
+    /** @format double */
+    documentSizeBytes: number | null;
+    documentPath: string | null;
+    documentOriginalName: string | null;
+    /** @format date-time */
     cancelledAt: string | null;
     /** @format date-time */
     soldAt: string | null;
@@ -335,7 +354,6 @@ export type UploadDocumentResponse =
 /** Obtain the return type of a function type */
 export interface ReturnTypeOrdersServiceAtCreateOrder {
   vatOnCommission: string;
-  userId: string;
   totalAmount: string;
   subtotalAmount: string;
   /** @format date-time */
@@ -343,6 +361,7 @@ export interface ReturnTypeOrdersServiceAtCreateOrder {
   platformCommission: string;
   /** @format date-time */
   confirmedAt: string | null;
+  userId: string;
   /** @format date-time */
   cancelledAt: string | null;
   currency: EventTicketCurrency;
@@ -387,13 +406,13 @@ export interface ReturnTypeOrdersServiceAtGetOrderById {
     }[];
     venueName: string | null;
     venueAddress: string | null;
+    platform: string | null;
     name: string | null;
     id: string | null;
     eventStartDate: string | null;
     eventEndDate: string | null;
   };
   vatOnCommission: string;
-  userId: string;
   totalAmount: string;
   subtotalAmount: string;
   /** @format date-time */
@@ -401,6 +420,7 @@ export interface ReturnTypeOrdersServiceAtGetOrderById {
   platformCommission: string;
   /** @format date-time */
   confirmedAt: string | null;
+  userId: string;
   /** @format date-time */
   cancelledAt: string | null;
   currency: EventTicketCurrency;
@@ -434,13 +454,13 @@ export type ReturnTypeOrdersServiceAtGetUserOrders = {
     }[];
     venueName: string | null;
     venueAddress: string | null;
+    platform: string | null;
     name: string | null;
     id: string | null;
     eventStartDate: string | null;
     eventEndDate: string | null;
   };
   vatOnCommission: string;
-  userId: string;
   totalAmount: string;
   subtotalAmount: string;
   /** @format date-time */
@@ -448,6 +468,7 @@ export type ReturnTypeOrdersServiceAtGetUserOrders = {
   platformCommission: string;
   /** @format date-time */
   confirmedAt: string | null;
+  userId: string;
   /** @format date-time */
   cancelledAt: string | null;
   currency: EventTicketCurrency;
@@ -503,6 +524,106 @@ export interface CreatePaymentLinkResponse {
   redirectUrl: string;
   paymentId: string;
 }
+
+export type JsonArray = JsonValue[];
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
+export type JsonObject = Record<string, JsonValue>;
+
+export type JsonPrimitive = boolean | number | string | null;
+
+/** From T, pick a set of properties whose keys are in the union K */
+export interface PickNotificationExcludeKeysMetadataOrActionsOrType {
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  description: string;
+  id: string;
+  status: "pending" | "failed" | "seen" | "sent";
+  /** @format date-time */
+  updatedAt: string;
+  channels: ("email" | "in_app" | "sms")[];
+  channelStatus: string | number | boolean | JsonArray | JsonObject | null;
+  errorMessage: string | null;
+  /** @format date-time */
+  failedAt: string | null;
+  /** @format double */
+  retryCount: number;
+  /** @format date-time */
+  seenAt: string | null;
+  /** @format date-time */
+  sentAt: string | null;
+  title: string;
+  userId: string;
+}
+
+/** Construct a type with the properties of T except for those in type K. */
+export type OmitNotificationMetadataOrActionsOrType =
+  PickNotificationExcludeKeysMetadataOrActionsOrType;
+
+/**
+ * Typed metadata based on notification type
+ * Extracts the specific metadata type from the discriminated union
+ */
+export type TypedNotificationMetadataNotificationMetadata =
+  ExtractNotificationMetadataTypeNotificationMetadata;
+
+/** Extract from T those types that are assignable to U */
+export type ExtractNotificationMetadataTypeNotificationMetadata =
+  TypedNotificationMetadataNotificationMetadata;
+
+/** Extract from T those types that are assignable to U */
+export type ExtractNotificationMetadataTypeNotificationAtType =
+  TypedNotificationMetadataNotificationMetadata;
+
+/**
+ * Typed metadata based on notification type
+ * Extracts the specific metadata type from the discriminated union
+ */
+export type TypedNotificationMetadataNotificationAtType =
+  ExtractNotificationMetadataTypeNotificationAtType;
+
+/** Construct a type with a set of properties K of type T */
+export type RecordStringUnknown = object;
+
+export interface InferTypeofBaseActionSchema {
+  /** Construct a type with a set of properties K of type T */
+  data?: RecordStringUnknown;
+  url?: string;
+  label: string;
+  type: "upload_documents" | "view_order" | "retry_payment";
+}
+
+export type NotificationAction = InferTypeofBaseActionSchema;
+
+/**
+ * Typed notification response with parsed metadata and actions
+ * This ensures type safety when reading notifications from the database
+ * For backwards compatibility, uses the generic type
+ */
+export type TypedNotification = OmitNotificationMetadataOrActionsOrType & {
+  actions: NotificationAction[] | null;
+  metadata: TypedNotificationMetadataNotificationAtType | null;
+  type: NotificationType;
+};
+
+export interface PaginatedResponseTypedNotification {
+  data: TypedNotification[];
+  pagination: PaginationMeta;
+}
+
+export type GetNotificationsResponse = PaginatedResponseTypedNotification;
+
+/** @format double */
+export type GetUnseenCountResponse = number;
+
+export type MarkAsSeenResponse = TypedNotification | null;
+
+export type MarkAllAsSeenResponse = TypedNotification[];
+
+export type DeleteNotificationResponse = TypedNotification | null;
 
 import type {
   AxiosInstance,
@@ -680,7 +801,7 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title backend
+ * @title @revendiste/backend
  * @version 1.0.0
  * @license ISC
  * @baseUrl /
@@ -1091,6 +1212,91 @@ export class Api<
       >({
         path: `/payments/create-link/${orderId}`,
         method: "POST",
+        format: "json",
+        ...params,
+      }),
+  };
+  notifications = {
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name GetNotifications
+     * @request GET:/notifications
+     */
+    getNotifications: (
+      query?: {
+        includeSeen?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetNotificationsResponse, UnauthorizedError>({
+        path: `/notifications`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name GetUnseenCount
+     * @request GET:/notifications/unseen-count
+     */
+    getUnseenCount: (params: RequestParams = {}) =>
+      this.request<GetUnseenCountResponse, UnauthorizedError>({
+        path: `/notifications/unseen-count`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name MarkAsSeen
+     * @request PATCH:/notifications/{notificationId}/seen
+     */
+    markAsSeen: (notificationId: string, params: RequestParams = {}) =>
+      this.request<MarkAsSeenResponse, UnauthorizedError | NotFoundError>({
+        path: `/notifications/${notificationId}/seen`,
+        method: "PATCH",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name MarkAllAsSeen
+     * @request PATCH:/notifications/seen-all
+     */
+    markAllAsSeen: (params: RequestParams = {}) =>
+      this.request<MarkAllAsSeenResponse, UnauthorizedError>({
+        path: `/notifications/seen-all`,
+        method: "PATCH",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name DeleteNotification
+     * @request DELETE:/notifications/{notificationId}
+     */
+    deleteNotification: (notificationId: string, params: RequestParams = {}) =>
+      this.request<
+        DeleteNotificationResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/notifications/${notificationId}`,
+        method: "DELETE",
         format: "json",
         ...params,
       }),

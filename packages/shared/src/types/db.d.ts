@@ -5,6 +5,14 @@
 
 import type { ColumnType } from "kysely";
 
+export type ArrayType<T> = ArrayTypeImpl<T> extends (infer U)[]
+  ? U[]
+  : ArrayTypeImpl<T>;
+
+export type ArrayTypeImpl<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S[], I[], U[]>
+  : T[];
+
 export type EventImageType = "flyer" | "hero";
 
 export type EventTicketCurrency = "USD" | "UYU";
@@ -24,6 +32,12 @@ export type JsonObject = {
 export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
+export type NotificationChannel = "email" | "in_app" | "sms";
+
+export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
+
+export type NotificationType = "document_reminder" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "ticket_sold_buyer" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
@@ -103,12 +117,39 @@ export interface ListingTickets {
   cancelledAt: Timestamp | null;
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
+  documentOriginalName: string | null;
+  documentPath: string | null;
+  documentSizeBytes: number | null;
+  documentType: string | null;
+  documentUploadedAt: Timestamp | null;
+  documentUploadRequiredNotifiedAt: Timestamp | null;
   id: Generated<string>;
   listingId: string;
   price: Numeric;
   soldAt: Timestamp | null;
   ticketNumber: number;
   updatedAt: Generated<Timestamp>;
+}
+
+export interface Notifications {
+  actions: Json | null;
+  channels: ArrayType<NotificationChannel>;
+  channelStatus: Generated<Json | null>;
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  description: string;
+  errorMessage: string | null;
+  failedAt: Timestamp | null;
+  id: Generated<string>;
+  metadata: Json | null;
+  retryCount: Generated<number>;
+  seenAt: Timestamp | null;
+  sentAt: Timestamp | null;
+  status: Generated<NotificationStatus>;
+  title: string;
+  type: NotificationType;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
 }
 
 export interface OrderItems {
@@ -238,6 +279,7 @@ export interface DB {
   eventTicketWaves: EventTicketWaves;
   listings: Listings;
   listingTickets: ListingTickets;
+  notifications: Notifications;
   orderItems: OrderItems;
   orders: Orders;
   orderTicketReservations: OrderTicketReservations;

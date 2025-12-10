@@ -1,6 +1,6 @@
 import {Kysely} from 'kysely';
 import {jsonObjectFrom} from 'kysely/helpers/postgres';
-import {DB} from '~/types';
+import {DB} from '~/shared';
 import {BaseRepository} from '../base';
 
 export class OrderTicketReservationsRepository extends BaseRepository<OrderTicketReservationsRepository> {

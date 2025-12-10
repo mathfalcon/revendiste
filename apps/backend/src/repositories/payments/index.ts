@@ -1,5 +1,6 @@
 import {type Kysely, type Insertable, type Updateable} from 'kysely';
-import type {DB, Payments, Payment} from '~/types';
+import type {DB, Payments} from '~/shared';
+import type {Payment} from '~/types/models';
 import {BaseRepository} from '../base';
 
 export class PaymentsRepository extends BaseRepository<PaymentsRepository> {

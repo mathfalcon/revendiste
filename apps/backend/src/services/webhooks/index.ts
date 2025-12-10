@@ -2,7 +2,7 @@ import {DLocalService} from '~/services/dlocal';
 import {PaymentWebhookAdapter} from '~/services/payments/adapters';
 import {logger} from '~/utils';
 import type {Kysely} from 'kysely';
-import type {DB} from '~/types';
+import type {DB} from '~/shared';
 
 interface WebhookMetadata {
   ipAddress?: string;

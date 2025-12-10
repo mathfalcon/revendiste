@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "@revendiste/backend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -14,7 +14,7 @@
     "tsoa:spec": "tsoa spec",
     "tsoa:routes": "tsoa routes",
     "tsoa:both": "tsoa routes && tsoa spec",
-    "generate:db": "kysely-codegen --camel-case --dialect postgres --out-file ./src/types/db.d.ts",
+    "generate:db": "kysely-codegen --camel-case --dialect postgres --out-file ../../packages/shared/src/types/db.d.ts",
     "scrape-events": "tsx src/cronjobs/scrape-events.ts",
     "postinstall": "npx playwright install chromium"
   },
@@ -27,6 +27,7 @@
     "@aws-sdk/s3-request-presigner": "^3.931.0",
     "@clerk/express": "^1.7.30",
     "@date-fns/tz": "^1.4.1",
+    "@revendiste/transactional": "workspace:*",
     "@tsoa/runtime": "^6.6.0",
     "axios": "^1.12.2",
     "concurrently": "^9.2.1",
@@ -41,9 +42,10 @@
     "nodemon": "^3.1.10",
     "pg": "^8.16.3",
     "playwright": "^1.55.0",
+    "resend": "^6.5.2",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.17.0",
-    "zod": "^4.1.8"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

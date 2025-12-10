@@ -1,6 +1,6 @@
 import path from 'path';
 import type {Kysely} from 'kysely';
-import type {DB} from '~/types';
+import type {DB} from '~/shared';
 import {
   ListingTicketsRepository,
   TicketDocumentsRepository,

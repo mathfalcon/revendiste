@@ -535,6 +535,33 @@
 								"listingId": {
 									"type": "string"
 								},
+								"documentUploadRequiredNotifiedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"documentUploadedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"documentType": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentSizeBytes": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
+								},
+								"documentPath": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentOriginalName": {
+									"type": "string",
+									"nullable": true
+								},
 								"cancelledAt": {
 									"type": "string",
 									"format": "date-time",
@@ -566,6 +593,12 @@
 								"ticketNumber",
 								"price",
 								"listingId",
+								"documentUploadRequiredNotifiedAt",
+								"documentUploadedAt",
+								"documentType",
+								"documentSizeBytes",
+								"documentPath",
+								"documentOriginalName",
 								"cancelledAt",
 								"soldAt",
 								"updatedAt",
@@ -1017,9 +1050,6 @@
 					"vatOnCommission": {
 						"type": "string"
 					},
-					"userId": {
-						"type": "string"
-					},
 					"totalAmount": {
 						"type": "string"
 					},
@@ -1037,6 +1067,9 @@
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
+					},
+					"userId": {
+						"type": "string"
 					},
 					"cancelledAt": {
 						"type": "string",
@@ -1077,12 +1110,12 @@
 				},
 				"required": [
 					"vatOnCommission",
-					"userId",
 					"totalAmount",
 					"subtotalAmount",
 					"reservationExpiresAt",
 					"platformCommission",
 					"confirmedAt",
+					"userId",
 					"cancelledAt",
 					"currency",
 					"eventId",
@@ -1198,6 +1231,10 @@
 								"type": "string",
 								"nullable": true
 							},
+							"platform": {
+								"type": "string",
+								"nullable": true
+							},
 							"name": {
 								"type": "string",
 								"nullable": true
@@ -1219,6 +1256,7 @@
 							"images",
 							"venueName",
 							"venueAddress",
+							"platform",
 							"name",
 							"id",
 							"eventStartDate",
@@ -1228,9 +1266,6 @@
 						"nullable": true
 					},
 					"vatOnCommission": {
-						"type": "string"
-					},
-					"userId": {
 						"type": "string"
 					},
 					"totalAmount": {
@@ -1250,6 +1285,9 @@
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
+					},
+					"userId": {
+						"type": "string"
 					},
 					"cancelledAt": {
 						"type": "string",
@@ -1287,12 +1325,12 @@
 					"items",
 					"event",
 					"vatOnCommission",
-					"userId",
 					"totalAmount",
 					"subtotalAmount",
 					"reservationExpiresAt",
 					"platformCommission",
 					"confirmedAt",
+					"userId",
 					"cancelledAt",
 					"currency",
 					"eventId",
@@ -1383,6 +1421,10 @@
 									"type": "string",
 									"nullable": true
 								},
+								"platform": {
+									"type": "string",
+									"nullable": true
+								},
 								"name": {
 									"type": "string",
 									"nullable": true
@@ -1404,6 +1446,7 @@
 								"images",
 								"venueName",
 								"venueAddress",
+								"platform",
 								"name",
 								"id",
 								"eventStartDate",
@@ -1413,9 +1456,6 @@
 							"nullable": true
 						},
 						"vatOnCommission": {
-							"type": "string"
-						},
-						"userId": {
 							"type": "string"
 						},
 						"totalAmount": {
@@ -1435,6 +1475,9 @@
 							"type": "string",
 							"format": "date-time",
 							"nullable": true
+						},
+						"userId": {
+							"type": "string"
 						},
 						"cancelledAt": {
 							"type": "string",
@@ -1472,12 +1515,12 @@
 						"items",
 						"event",
 						"vatOnCommission",
-						"userId",
 						"totalAmount",
 						"subtotalAmount",
 						"reservationExpiresAt",
 						"platformCommission",
 						"confirmedAt",
+						"userId",
 						"cancelledAt",
 						"currency",
 						"eventId",
@@ -1649,12 +1692,315 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"JsonArray": {
+				"items": {
+					"$ref": "#/components/schemas/JsonValue"
+				},
+				"type": "array"
+			},
+			"JsonValue": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/JsonArray"
+					},
+					{
+						"$ref": "#/components/schemas/JsonObject"
+					},
+					{
+						"$ref": "#/components/schemas/JsonPrimitive"
+					}
+				]
+			},
+			"JsonObject": {
+				"properties": {},
+				"additionalProperties": {
+					"$ref": "#/components/schemas/JsonValue"
+				},
+				"type": "object"
+			},
+			"JsonPrimitive": {
+				"anyOf": [
+					{
+						"type": "boolean"
+					},
+					{
+						"type": "number",
+						"format": "double"
+					},
+					{
+						"type": "string"
+					}
+				],
+				"nullable": true
+			},
+			"Pick_Notification.Exclude_keyofNotification.metadata-or-actions-or-type__": {
+				"properties": {
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"description": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"failed",
+							"seen",
+							"sent"
+						]
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"channels": {
+						"items": {
+							"type": "string",
+							"enum": [
+								"email",
+								"in_app",
+								"sms"
+							]
+						},
+						"type": "array"
+					},
+					"channelStatus": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "number",
+								"format": "double"
+							},
+							{
+								"type": "boolean"
+							},
+							{
+								"$ref": "#/components/schemas/JsonArray"
+							},
+							{
+								"$ref": "#/components/schemas/JsonObject"
+							}
+						],
+						"nullable": true
+					},
+					"errorMessage": {
+						"type": "string",
+						"nullable": true
+					},
+					"failedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"retryCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"seenAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"sentAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"title": {
+						"type": "string"
+					},
+					"userId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"createdAt",
+					"deletedAt",
+					"description",
+					"id",
+					"status",
+					"updatedAt",
+					"channels",
+					"channelStatus",
+					"errorMessage",
+					"failedAt",
+					"retryCount",
+					"seenAt",
+					"sentAt",
+					"title",
+					"userId"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_Notification.metadata-or-actions-or-type_": {
+				"$ref": "#/components/schemas/Pick_Notification.Exclude_keyofNotification.metadata-or-actions-or-type__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"NotificationType": {
+				"type": "string",
+				"enum": [
+					"document_reminder",
+					"order_confirmed",
+					"order_expired",
+					"payment_failed",
+					"payment_succeeded",
+					"ticket_sold_buyer",
+					"ticket_sold_seller"
+				]
+			},
+			"TypedNotificationMetadata_NotificationMetadata_": {
+				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationMetadata__",
+				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
+			},
+			"Extract_NotificationMetadata._type-NotificationMetadata__": {
+				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
+				"description": "Extract from T those types that are assignable to U"
+			},
+			"Extract_NotificationMetadata._type-Notification-at-type__": {
+				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
+				"description": "Extract from T those types that are assignable to U"
+			},
+			"TypedNotificationMetadata_Notification-at-type_": {
+				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-Notification-at-type__",
+				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
+			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"infer_typeofBaseActionSchema_": {
+				"properties": {
+					"data": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"url": {
+						"type": "string"
+					},
+					"label": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"upload_documents",
+							"view_order",
+							"retry_payment"
+						]
+					}
+				},
+				"required": [
+					"label",
+					"type"
+				],
+				"type": "object"
+			},
+			"NotificationAction": {
+				"$ref": "#/components/schemas/infer_typeofBaseActionSchema_"
+			},
+			"TypedNotification": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/Omit_Notification.metadata-or-actions-or-type_"
+					},
+					{
+						"properties": {
+							"actions": {
+								"items": {
+									"$ref": "#/components/schemas/NotificationAction"
+								},
+								"type": "array",
+								"nullable": true
+							},
+							"metadata": {
+								"allOf": [
+									{
+										"$ref": "#/components/schemas/TypedNotificationMetadata_Notification-at-type_"
+									}
+								],
+								"nullable": true
+							},
+							"type": {
+								"$ref": "#/components/schemas/NotificationType"
+							}
+						},
+						"required": [
+							"actions",
+							"metadata",
+							"type"
+						],
+						"type": "object"
+					}
+				],
+				"description": "Typed notification response with parsed metadata and actions\nThis ensures type safety when reading notifications from the database\nFor backwards compatibility, uses the generic type"
+			},
+			"PaginatedResponse_TypedNotification_": {
+				"properties": {
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/TypedNotification"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetNotificationsResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse_TypedNotification_"
+			},
+			"GetUnseenCountResponse": {
+				"type": "number",
+				"format": "double"
+			},
+			"MarkAsSeenResponse": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/TypedNotification"
+					}
+				],
+				"nullable": true
+			},
+			"MarkAllAsSeenResponse": {
+				"items": {
+					"$ref": "#/components/schemas/TypedNotification"
+				},
+				"type": "array"
+			},
+			"DeleteNotificationResponse": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/TypedNotification"
+					}
+				],
+				"nullable": true
 			}
 		},
 		"securitySchemes": {}
 	},
 	"info": {
-		"title": "backend",
+		"title": "@revendiste/backend",
 		"version": "1.0.0",
 		"license": {
 			"name": "ISC"
@@ -2640,6 +2986,213 @@
 					{
 						"in": "path",
 						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/notifications": {
+			"get": {
+				"operationId": "GetNotifications",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetNotificationsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "includeSeen",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
+		"/notifications/unseen-count": {
+			"get": {
+				"operationId": "GetUnseenCount",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetUnseenCountResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/notifications/{notificationId}/seen": {
+			"patch": {
+				"operationId": "MarkAsSeen",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkAsSeenResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Notification not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "notificationId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/notifications/seen-all": {
+			"patch": {
+				"operationId": "MarkAllAsSeen",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkAllAsSeenResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/notifications/{notificationId}": {
+			"delete": {
+				"operationId": "DeleteNotification",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteNotificationResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Notification not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "notificationId",
 						"required": true,
 						"schema": {
 							"type": "string"

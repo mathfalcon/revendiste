@@ -1,5 +1,5 @@
 import type {Insertable, Updateable, Kysely} from 'kysely';
-import type {DB, TicketDocuments} from '~/types';
+import type {DB, TicketDocuments} from '~/shared';
 import {BaseRepository} from '../base';
 
 export class TicketDocumentsRepository extends BaseRepository<TicketDocumentsRepository> {

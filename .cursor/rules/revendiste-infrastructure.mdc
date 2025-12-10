@@ -1,0 +1,265 @@
+---
+description: Useful when having to manage revendiste's infrastructure
+alwaysApply: false
+---
+
+# Revendiste Infrastructure (Terraform)
+
+## Overview
+
+Revendiste uses **Terraform** to manage all cloud infrastructure on AWS. The infrastructure is designed to support multiple environments (staging, production) through environment-specific variables and workspaces.
+
+## Infrastructure Location
+
+All Terraform configuration lives in the `/infrastructure` directory at the root of the repository.
+
+## Key Principles
+
+### 1. Environment Management
+
+- **Multiple Environments**: Use the `environment` variable to deploy identical infrastructure for staging and production
+- **Workspaces**: Terraform Cloud workspaces are named `revendiste-{environment}` (e.g., `revendiste-staging`, `revendiste-production`)
+- **Variable-Driven**: All environment differences are controlled through variables, not code duplication
+
+### 2. Resource Tagging
+
+**All resources MUST include standard tags:**
+
+```hcl
+tags = {
+  Environment   = var.environment
+  Project       = "revendiste"
+  ManagedBy     = "terraform"
+  Repository    = "revendiste"
+  CostCenter    = "engineering"
+  Owner         = "platform-team"
+  Application   = "revendiste"
+  Domain        = var.domain_name
+}
+```
+
+**Additional resource-specific tags** should be added for better organization:
+
+- `Type`: Resource type (e.g., "hosted-zone", "email-authentication")
+- `Service`: Service name (e.g., "resend", "dmarc")
+- `Name`: Descriptive name following pattern: `revendiste-{environment}-{resource-type}`
+
+### 3. File Organization
+
+```
+infrastructure/
+├── core/                      # Shared infrastructure (DNS, etc.)
+│   ├── main.tf                # Provider configuration, Terraform Cloud settings
+│   ├── variables.tf           # Core variable definitions
+│   ├── outputs.tf             # Core output values
+│   ├── route53.tf             # Route53 hosted zone module usage
+│   ├── resend_dns.tf          # Resend DNS module usage
+│   └── terraform.tfvars.example
+├── staging/                   # Staging environment resources
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+├── production/                # Production environment resources
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+└── modules/                   # Reusable Terraform modules
+    ├── route53-hosted-zone/   # Route53 hosted zone module
+    └── resend-dns/            # Resend DNS records module
+```
+
+**Pattern:**
+
+- **Core folder**: Shared resources that exist once regardless of environment (DNS, Route53, Resend DNS records)
+- **Environment folders**: Environment-specific resources (staging, production)
+- **Modules folder**: Reusable, self-contained modules
+- **Module structure**: Each module has `main.tf`, `variables.tf`, `outputs.tf`
+- **One module per resource/service**: Group related resources in modules
+- **Descriptive names**: Use kebab-case for module names (e.g., `route53-hosted-zone`, `resend-dns`)
+- **Terraform Cloud workspaces**: Each folder has its own workspace (e.g., `revendiste-core`, `revendiste-staging`, `revendiste-production`)
+
+### 4. Sensitive Data Management
+
+**DO ✅:**
+
+- Store sensitive values in Terraform Cloud workspace variables (marked as sensitive)
+- Use `sensitive = true` in variable definitions
+- Never commit `terraform.tfvars` files
+- Use `terraform.tfvars.example` as a template
+
+**DON'T ❌:**
+
+- Commit actual secrets or API keys
+- Hardcode sensitive values in `.tf` files
+- Store `.tfvars` files in version control
+
+### 5. State Management
+
+- **Terraform Cloud**: All state is managed remotely in Terraform Cloud
+- **Backup**: State files are automatically backed up by Terraform Cloud
+- **Locking**: Terraform Cloud provides automatic state locking
+- **Never commit state files**: `.tfstate` files are in `.gitignore`
+
+### 6. Naming Conventions
+
+**Resource Names:**
+
+- Pattern: `revendiste-{environment}-{resource-type}`
+- Example: `revendiste-staging-hosted-zone`, `revendiste-production-s3-bucket`
+
+**Variable Names:**
+
+- Use snake_case: `environment`, `domain_name`, `aws_region`
+- Be descriptive: `resend_dkim_key` not `dkim`
+
+**Output Names:**
+
+- Use snake_case: `hosted_zone_id`, `name_servers`
+- Group related outputs together
+
+### 7. DNS and Email Configuration
+
+**Route53 Hosted Zone:**
+
+- One hosted zone per domain
+- Use `prevent_destroy = true` for critical resources like hosted zones
+- Output name servers for domain registrar configuration
+
+**Email DNS Records:**
+
+- DKIM, SPF, and DMARC records are managed in `resend_dns.tf`
+- Records follow Resend's requirements exactly
+- All email-related records are tagged with `Service = "resend"` or `Service = "dmarc"`
+
+### 8. Validation
+
+**Variable Validation:**
+
+- Use `validation` blocks to ensure correct values
+- Example: Environment must be "staging" or "production"
+- Example: DMARC policy must be "none", "quarantine", or "reject"
+
+**Resource Validation:**
+
+- Use `lifecycle` blocks for critical resources
+- `prevent_destroy = true` for production-critical resources
+
+### 9. Documentation
+
+**Every infrastructure change should:**
+
+- Include comments in `.tf` files explaining non-obvious decisions
+- Update `README.md` if adding new resources or changing patterns
+- Document outputs and their purposes
+- Document any manual steps required post-deployment
+
+### 10. Terraform Version
+
+- **Minimum Version**: Terraform 1.5.0
+- **Provider Versions**: Pin to major versions (e.g., `~> 5.0` for AWS)
+- **Version Constraints**: Specify in `main.tf` terraform block
+
+## Common Patterns
+
+### Adding a New Resource
+
+**Option 1: Simple Resource (add to existing module or root)**
+
+1. Create or update the appropriate `.tf` file
+2. Add variables to `variables.tf` if needed
+3. Add outputs to `outputs.tf` if the resource should be referenced
+4. Add tags following the standard pattern
+5. Update `README.md` if it's a significant addition
+
+**Option 2: Complex Resource (create new module)**
+
+1. Create a new module in `modules/` folder
+2. Create module structure: `main.tf`, `variables.tf`, `outputs.tf`, `README.md`
+3. Use the module in root-level `.tf` files
+4. Add module variables to root `variables.tf` if needed
+5. Add module outputs to root `outputs.tf` if needed
+6. Update main `README.md` with module documentation
+
+### Adding a New Environment
+
+1. Create a new folder in `infrastructure/` (e.g., `infrastructure/development/`)
+2. Copy structure from `staging/` or `production/` as a template
+3. Update `main.tf` with the correct Terraform Cloud workspace name
+4. Create a new Terraform Cloud workspace matching the folder name
+5. Set environment-specific variables in the workspace
+
+### Modifying DNS Records
+
+1. Update records in `resend_dns.tf` or `route53.tf`
+2. Apply changes: `terraform apply`
+3. Wait for DNS propagation (24-48 hours)
+4. Verify records using `dig` or `nslookup`
+
+## Workflow
+
+### Initial Setup
+
+1. Configure Terraform Cloud workspace
+2. Set sensitive variables in Terraform Cloud
+3. Copy `terraform.tfvars.example` to `terraform.tfvars` (local only)
+4. Run `terraform init`
+5. Run `terraform plan` to review changes
+6. Run `terraform apply` to create resources
+
+### Making Changes
+
+1. Modify `.tf` files
+2. Run `terraform plan` to review changes
+3. Review the plan carefully
+4. Run `terraform apply` to apply changes
+5. Verify resources in AWS Console
+6. Update documentation if needed
+
+### Destroying Resources
+
+**⚠️ WARNING**: Be extremely careful with `terraform destroy`
+
+1. Review what will be destroyed: `terraform plan -destroy`
+2. For production, get approval from team
+3. Use `terraform destroy` only when absolutely necessary
+4. Some resources (like hosted zones) have `prevent_destroy = true`
+
+## Best Practices
+
+1. **Always plan before apply**: `terraform plan` shows what will change
+2. **Review plans carefully**: Especially for production environments
+3. **Use workspaces**: Separate staging and production completely
+4. **Tag everything**: All resources should have standard tags
+5. **Document changes**: Update README for significant infrastructure changes
+6. **Version control**: Commit all `.tf` files, never `.tfvars` or `.tfstate`
+7. **Backup state**: Terraform Cloud handles this automatically
+8. **Test in staging first**: Always test infrastructure changes in staging before production
+
+## Troubleshooting
+
+### DNS Issues
+
+- Check Route53 console for record status
+- Verify name servers are configured in domain registrar
+- Wait 24-48 hours for DNS propagation
+- Use `dig` or `nslookup` to verify records
+
+### State Lock Issues
+
+- Check Terraform Cloud for active runs
+- Wait for previous runs to complete
+- If stuck, contact Terraform Cloud support
+
+### Variable Issues
+
+- Verify variables are set in Terraform Cloud workspace
+- Check variable types match definitions
+- Ensure sensitive variables are marked as sensitive
+
+## Resources
+
+- [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [Terraform Cloud Documentation](https://developer.hashicorp.com/terraform/cloud-docs)
+- [AWS Route53 Documentation](https://docs.aws.amazon.com/route53/)
+- [Resend DNS Setup Guide](https://resend.com/docs/dashboard/domains/introduction)
+- [AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)

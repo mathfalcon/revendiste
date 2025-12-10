@@ -65,11 +65,8 @@ export const EventRightSide = (props: EventRightSideProps) => {
   const createOrderMutation = useMutation(
     postOrderMutation({
       onOrderCreated: orderId => {
-        // Clear persisted form data after successful submission
-        clearPersistedData();
-        // Reset form after successful submission
         form.reset();
-        // Redirect to checkout page
+        clearPersistedData();
         navigate({
           to: '/checkout/$orderId',
           params: {

@@ -27,7 +27,9 @@
   },
   "pnpm": {
     "overrides": {
-      "srvx": "0.8.15"
+      "srvx": "0.8.15",
+      "kysely": "^0.28.5",
+      "typescript": "^5.9.2"
     }
   }
 }

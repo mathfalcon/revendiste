@@ -125,9 +125,9 @@ export class EntrasteScraper extends BaseScraper {
    */
   private async extractDateTimeInfo(
     page: any,
-  ): Promise<{startDate: Date | undefined; endDate: Date | undefined}> {
+    ): Promise<{startDate: Date | undefined; endDate: Date | undefined}> {
     const dateTimeText = trimTextAndDefaultToEmpty(
-      await page.textContent('.location-section h2[data-eventstart] + p'),
+      await page.textContent('.event-dates p'),
     );
 
     let parsedDateTime: {
@@ -212,11 +212,68 @@ export class EntrasteScraper extends BaseScraper {
     endDate: Date | undefined;
   } {
     logger.debug('Parsing single-day event date string:', dateString);
-    // Pattern: "Jueves 21 de agosto\ndesde las 23:59 hasta las 06:00"
-    // Also handles single-line format: "Jueves 21 de agosto desde las 23:59 hasta las 06:00"
-    const dateTimeMatch = dateString.match(
+    
+    // Normalize the string - replace line breaks and extra whitespace with single space
+    const normalizedString = dateString.replace(/\s+/g, ' ').trim();
+    
+    // Pattern 1: "Jueves 21 de agosto desde las 23:59 hasta las 06:00" (with end time)
+    let dateTimeMatch = normalizedString.match(
       /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s*(?:desde\s+)?las\s+(\d+):(\d+)\s+hasta\s+las\s+(\d+):(\d+)/,
     );
+
+    // Pattern 2: "viernes 12 de diciembre a las 23:59" (only start time, no end time)
+    if (!dateTimeMatch) {
+      dateTimeMatch = normalizedString.match(
+        /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+a\s+las\s+(\d+):(\d+)/,
+      );
+      
+      if (dateTimeMatch) {
+        // Handle events with only start time - assume default duration
+        const [
+          _fullMatch,
+          _dayOfWeek,
+          day,
+          month,
+          startHour,
+          startMinute,
+        ] = dateTimeMatch;
+
+        try {
+          logger.debug(
+            `Parsed values (start time only): day=${day}, month=${month}, start=${startHour}:${startMinute}`,
+          );
+
+          const startDate = DateUtils.fromSpanishStrings({
+            dayString: day,
+            monthString: month,
+            hour: startHour,
+            minutes: startMinute,
+            timezone: 'America/Montevideo',
+          });
+
+          // For events without explicit end time, assume a default duration
+          // If event starts late (after 20:00), assume it goes until 06:00 next day
+          // Otherwise, assume 6 hours duration
+          const startHourNum = parseInt(startHour);
+          let endDate: Date;
+          
+          if (startHourNum >= 20) {
+            // Late night event - assume it goes until 06:00 next day
+            endDate = addMinutes(startDate, (24 * 60) - (startHourNum * 60 + parseInt(startMinute)) + (6 * 60));
+            logger.debug('Late night event - assuming end time 06:00 next day');
+          } else {
+            // Regular event - assume 6 hours duration
+            endDate = addMinutes(startDate, 6 * 60);
+            logger.debug('Regular event - assuming 6 hours duration');
+          }
+
+          return DateUtils.fixNextYearEdgeCase(startDate, endDate);
+        } catch (error) {
+          logger.warn('Error parsing single-day event date (start time only):', error);
+          return {startDate: undefined, endDate: undefined};
+        }
+      }
+    }
 
     if (!dateTimeMatch) {
       logger.warn('Could not parse single-day event date:', dateString);

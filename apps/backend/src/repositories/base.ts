@@ -1,5 +1,5 @@
 import {Kysely} from 'kysely';
-import {DB} from '~/types';
+import {DB} from '~/shared';
 
 /**
  * Base repository class that provides transaction utilities

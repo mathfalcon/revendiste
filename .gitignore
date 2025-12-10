@@ -48,6 +48,14 @@ web_modules/
 # TypeScript cache
 *.tsbuildinfo
 
+# TypeScript compiled output (when using declaration: true but package uses source files)
+packages/transactional/**/*.js
+packages/transactional/**/*.js.map
+packages/transactional/**/*.d.ts.map
+
+# Generated database types (now in shared package)
+apps/backend/src/types/db.d.ts
+
 # Optional npm cache directory
 .npm
 
@@ -148,3 +156,32 @@ yarn.lock
 /apps/backend/storage
 /apps/backend/uploads
 /uploads
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data
+*.tfvars
+*.tfvars.json
+
+# Ignore override files as they are usually used to override resources locally
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore lock files (optional - some teams prefer to commit these)
+# .terraform.lock.hcl
+

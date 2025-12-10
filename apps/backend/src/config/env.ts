@@ -31,6 +31,11 @@ const EnvSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
   AWS_CLOUDFRONT_DOMAIN: z.string().optional(), // Optional CDN domain
   AWS_S3_SIGNED_URL_EXPIRY: z.coerce.number().optional().default(3600), // 1 hour default
+  // Email configuration
+  EMAIL_PROVIDER: z.enum(['console', 'resend']).default('console'),
+  EMAIL_FROM: z.string().default('noreply@revendiste.com'),
+  // Resend configuration (when EMAIL_PROVIDER=resend)
+  RESEND_API_KEY: z.string().optional(),
 });
 
 export const env = EnvSchema.safeParse(process.env);
@@ -67,4 +72,7 @@ export const {
   AWS_SECRET_ACCESS_KEY,
   AWS_CLOUDFRONT_DOMAIN,
   AWS_S3_SIGNED_URL_EXPIRY,
+  EMAIL_PROVIDER,
+  EMAIL_FROM,
+  RESEND_API_KEY,
 } = env.data;

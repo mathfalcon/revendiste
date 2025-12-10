@@ -10,6 +10,7 @@ import {RegisterRoutes} from './routes';
 import {logger} from './utils';
 import {clerkMiddleware} from '@clerk/express';
 import {startCleanupExpiredReservationsJob} from './jobs/cleanup-expired-reservations';
+import {startProcessPendingNotificationsJob} from './jobs/process-pending-notifications';
 
 const app: express.Application = express();
 
@@ -81,6 +82,7 @@ app.listen(PORT, () => {
 
   // Start scheduled jobs
   startCleanupExpiredReservationsJob();
+  startProcessPendingNotificationsJob();
 });
 
 export default app;

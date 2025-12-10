@@ -8,7 +8,8 @@ import {
   OrderTicketReservations,
   Payments,
   PaymentEvents,
-} from './db';
+  Notifications,
+} from '~/shared';
 
 export type User = Selectable<Users>;
 
@@ -25,3 +26,5 @@ export type OrderTicketReservation = Selectable<OrderTicketReservations>;
 export type Payment = Selectable<Payments>;
 
 export type PaymentEvent = Selectable<PaymentEvents>;
+
+export type Notification = Selectable<Notifications>;
