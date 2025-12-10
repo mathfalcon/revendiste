@@ -4,6 +4,7 @@
  * Sent to buyers when their order is confirmed.
  */
 
+import React from 'react';
 import {Button, Section, Text} from '@react-email/components';
 import {BaseEmail} from './base-template';
 

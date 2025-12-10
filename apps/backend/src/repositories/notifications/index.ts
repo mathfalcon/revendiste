@@ -130,7 +130,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
     const notifications = await baseQuery
       .selectAll()
       .select([channelsAsJsonb])
-      .orderBy('createdAt', sortOrder)
+      .orderBy('createdAt', 'desc')
       .limit(limit)
       .offset(offset)
       .execute();

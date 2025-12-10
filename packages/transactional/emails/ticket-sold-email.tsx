@@ -5,6 +5,7 @@
  * Prompts them to upload ticket documents.
  */
 
+import React from 'react';
 import {Button, Section, Text} from '@react-email/components';
 import {BaseEmail} from './base-template';
 

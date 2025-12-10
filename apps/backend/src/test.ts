@@ -48,6 +48,7 @@ const testOrderId7 = randomUUID();
     },
   });
   console.log('✓ Created ticket_sold_buyer notification');
+  await new Promise(resolve => setTimeout(resolve, 600)); // Rate limit: 2 req/sec
 
   // 2. ticket_sold_seller
   await notificationService.createNotification({
@@ -76,6 +77,7 @@ const testOrderId7 = randomUUID();
     },
   });
   console.log('✓ Created ticket_sold_seller notification');
+  await new Promise(resolve => setTimeout(resolve, 600));
 
   // 3. document_reminder
   await notificationService.createNotification({
@@ -102,6 +104,7 @@ const testOrderId7 = randomUUID();
     },
   });
   console.log('✓ Created document_reminder notification');
+  await new Promise(resolve => setTimeout(resolve, 600));
 
   // 4. order_confirmed
   await notificationService.createNotification({
@@ -127,6 +130,7 @@ const testOrderId7 = randomUUID();
     },
   });
   console.log('✓ Created order_confirmed notification');
+  await new Promise(resolve => setTimeout(resolve, 600));
 
   // 5. order_expired
   await notificationService.createNotification({
@@ -144,6 +148,7 @@ const testOrderId7 = randomUUID();
     },
   });
   console.log('✓ Created order_expired notification');
+  await new Promise(resolve => setTimeout(resolve, 600));
 
   // 6. payment_failed
   await notificationService.createNotification({
@@ -168,6 +173,7 @@ const testOrderId7 = randomUUID();
     },
   });
   console.log('✓ Created payment_failed notification');
+  await new Promise(resolve => setTimeout(resolve, 600));
 
   // 7. payment_succeeded
   await notificationService.createNotification({

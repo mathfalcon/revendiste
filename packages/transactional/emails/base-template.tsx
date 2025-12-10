@@ -5,7 +5,7 @@
  * Uses Tailwind CSS for styling with the design system colors.
  */
 
-import React from 'react';
+import React, {type ReactNode} from 'react';
 import {
   Body,
   Container,
@@ -25,7 +25,7 @@ import tailwindConfig from '../tailwind.config';
 interface BaseEmailProps {
   preview?: string;
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
   appBaseUrl?: string;
 }
 

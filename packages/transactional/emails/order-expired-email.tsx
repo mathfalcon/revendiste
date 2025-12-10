@@ -4,6 +4,7 @@
  * Sent to buyers when their order expires.
  */
 
+import React from 'react';
 import {Section, Text} from '@react-email/components';
 import {BaseEmail} from './base-template';
 

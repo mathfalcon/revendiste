@@ -117,7 +117,7 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
           </Button>
         )}
       </div>
-      <ScrollArea className='max-h-[400px]'>
+      <ScrollArea className='max-h-[400px] overflow-y-auto'>
         <div className='divide-y'>
           {notifications.map(notification => {
             const isUnseen = !notification.seenAt;
