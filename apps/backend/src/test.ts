@@ -29,9 +29,6 @@ const testOrderId7 = randomUUID();
   await notificationService.createNotification({
     userId: TEST_USER_ID,
     type: 'ticket_sold_buyer',
-    title: '¡Tu compra fue exitosa!',
-    description:
-      'Has comprado 2 entradas para Coldplay en Estadio Centenario. Por favor, sube los documentos de tus tickets.',
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -54,9 +51,6 @@ const testOrderId7 = randomUUID();
   await notificationService.createNotification({
     userId: TEST_USER_ID,
     type: 'ticket_sold_seller',
-    title: '¡Tus entradas han sido vendidas!',
-    description:
-      'Has vendido 3 entradas para Taylor Swift en Estadio Centenario. El evento comienza el 15 de marzo de 2024.',
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -83,9 +77,6 @@ const testOrderId7 = randomUUID();
   await notificationService.createNotification({
     userId: TEST_USER_ID,
     type: 'document_reminder',
-    title: 'Recordatorio: Sube los documentos de tus tickets',
-    description:
-      'El evento "Bad Bunny en Estadio Centenario" comienza en 12 horas. Aún tienes 1 ticket sin documentar. Por favor, sube los documentos lo antes posible.',
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -110,9 +101,6 @@ const testOrderId7 = randomUUID();
   await notificationService.createNotification({
     userId: TEST_USER_ID,
     type: 'order_confirmed',
-    title: 'Orden confirmada',
-    description:
-      'Tu orden para The Weeknd en Estadio Centenario ha sido confirmada. Total pagado: 5000 UYU.',
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -136,9 +124,6 @@ const testOrderId7 = randomUUID();
   await notificationService.createNotification({
     userId: TEST_USER_ID,
     type: 'order_expired',
-    title: 'Orden expirada',
-    description:
-      'Tu orden para Dua Lipa en Estadio Centenario ha expirado. Las entradas han sido liberadas.',
     channels: ['in_app', 'email'],
     actions: [],
     metadata: {
@@ -154,9 +139,6 @@ const testOrderId7 = randomUUID();
   await notificationService.createNotification({
     userId: TEST_USER_ID,
     type: 'payment_failed',
-    title: 'Pago fallido',
-    description:
-      'El pago para tu orden de Ed Sheeran en Estadio Centenario ha fallado. Error: Tarjeta rechazada. Por favor, intenta nuevamente.',
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -179,9 +161,6 @@ const testOrderId7 = randomUUID();
   await notificationService.createNotification({
     userId: TEST_USER_ID,
     type: 'payment_succeeded',
-    title: 'Pago exitoso',
-    description:
-      'Tu pago de 7500 UYU para Billie Eilish en Estadio Centenario fue procesado exitosamente.',
     channels: ['in_app', 'email'],
     actions: [
       {

@@ -15,18 +15,22 @@ import {
   type TypedNotificationMetadata,
   type Notification as NotificationSchemaType,
   type NotificationAction,
+  generateNotificationText,
 } from '~/shared';
 import type {Notification} from '~/types/models';
 
 /**
  * Typed notification response with parsed metadata and actions
  * This ensures type safety when reading notifications from the database
+ * Title and description are generated from type + metadata, not stored in DB
  * For backwards compatibility, uses the generic type
  */
 export type TypedNotification<
   T extends Notification['type'] = Notification['type'],
-> = Omit<Notification, 'metadata' | 'actions' | 'type'> & {
+> = Omit<Notification, 'metadata' | 'actions' | 'type' | 'title' | 'description'> & {
   type: T;
+  title: string; // Generated from type + metadata
+  description: string; // Generated from type + metadata
   metadata: TypedNotificationMetadata<T> | null;
   actions: NotificationAction[] | null;
 };
@@ -97,10 +101,28 @@ export function parseNotification(
     }
   }
 
+  // Generate title and description from metadata
+  let title = '';
+  let description = '';
+  if (parsedMetadata) {
+    try {
+      const text = generateNotificationText(
+        notification.type,
+        parsedMetadata as TypedNotificationMetadata<NotificationType>,
+      );
+      title = text.title;
+      description = text.description;
+    } catch (error) {
+      console.error('Failed to generate notification text', error);
+    }
+  }
+
   // Try to validate the full notification against its type-specific schema
   try {
     const fullNotification = {
       ...notification,
+      title,
+      description,
       metadata: parsedMetadata,
       actions: parsedActions,
     };
@@ -112,6 +134,8 @@ export function parseNotification(
     console.error('Failed to validate full notification', error);
     return {
       ...notification,
+      title,
+      description,
       metadata: parsedMetadata,
       actions: parsedActions,
     } as TypedNotification;

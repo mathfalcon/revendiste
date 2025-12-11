@@ -377,6 +377,28 @@ The frontend uses a custom Vite plugin that automatically generates API types on
 
 ### Migration Best Practices
 
+**Always create migration files using the kysely CLI command** to ensure accurate timestamps:
+
+```bash
+cd apps/backend
+pnpm kysely migrate:make {{name_of_migration}}
+```
+
+**Why?**
+
+- Kysely uses timestamps in migration filenames to ensure proper execution order
+- Manual timestamp creation can cause conflicts or incorrect ordering
+- The CLI command generates the correct file structure and timestamp format
+
+**Pattern:**
+
+- Use `pnpm kysely migrate:make` to create new migration files
+- Migration files are created in `apps/backend/src/db/migrations/`
+- Filename format: `{timestamp}_{migration_name}.ts`
+- Never manually create migration files with hardcoded timestamps
+
+**Other Best Practices:**
+
 - Use raw SQL `DO $$ BEGIN ... EXCEPTION ... END $$;` blocks for conditional operations
 - Avoid try-catch in TypeScript migrations (causes transaction rollbacks)
 - Always provide both `up` and `down` functions

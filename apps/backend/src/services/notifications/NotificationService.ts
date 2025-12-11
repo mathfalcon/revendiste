@@ -24,6 +24,7 @@ import {
   parseNotificationMetadata,
   buildEmailTemplate,
 } from './email-template-builder';
+import {generateNotificationText} from '~/shared';
 
 export interface CreateNotificationParams extends CreateNotificationData {
   // Additional params can be added here
@@ -95,21 +96,31 @@ export class NotificationService {
       }
     }
 
+    // Metadata is required to generate title/description
+    if (!validatedMetadata) {
+      throw new ValidationError(
+        'Notification metadata is required to generate title and description',
+      );
+    }
+
+    // Generate title and description from metadata for validation
+    const {title, description} = generateNotificationText(
+      params.type,
+      validatedMetadata,
+    );
+
     // Validate full notification structure using type-specific schema
     try {
       const fullNotification = {
         userId: params.userId,
         type: params.type,
-        title: params.title,
-        description: params.description,
+        title,
+        description,
         channels: params.channels,
         actions: validatedActions,
         metadata: validatedMetadata,
         status: 'pending' as const,
         seenAt: null,
-        sentAt: null,
-        failedAt: null,
-        errorMessage: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -128,8 +139,6 @@ export class NotificationService {
     const notification = await this.notificationsRepository.create({
       userId: params.userId,
       type: params.type,
-      title: params.title,
-      description: params.description,
       channels: params.channels,
       actions: validatedActions,
       metadata: validatedMetadata,
@@ -280,11 +289,7 @@ export class NotificationService {
         notificationId,
         channelStatus,
       );
-      await this.notificationsRepository.updateStatus(
-        notificationId,
-        'failed',
-        'User not found or has no email',
-      );
+      await this.notificationsRepository.updateStatus(notificationId, 'failed');
       return null;
     }
 
@@ -361,15 +366,7 @@ export class NotificationService {
     } else if (allChannelsFailed) {
       // Increment retry count for failed notifications
       await this.notificationsRepository.incrementRetryCount(notificationId);
-      const errorMessages = Object.entries(channelStatus)
-        .filter(([_, status]) => status.status === 'failed')
-        .map(([channel, status]) => `${channel}: ${status.error}`)
-        .join('; ');
-      await this.notificationsRepository.updateStatus(
-        notificationId,
-        'failed',
-        errorMessages,
-      );
+      await this.notificationsRepository.updateStatus(notificationId, 'failed');
     } else {
       // Partial success - some channels sent, some failed
       // Mark as sent (partial success is still success)
@@ -388,8 +385,6 @@ export class NotificationService {
   private async sendEmailNotification(
     notification: {
       type: string;
-      title: string;
-      description: string;
       actions?: unknown;
       metadata?: unknown;
     },
@@ -413,6 +408,9 @@ export class NotificationService {
       );
     }
 
+    // Generate title from metadata for email subject
+    const {title} = generateNotificationText(notificationType, parsedMetadata);
+
     // Parse actions (Kysely automatically parses JSONB, but we need to type it)
     const actions = notification.actions
       ? (notification.actions as NotificationAction[])
@@ -427,7 +425,7 @@ export class NotificationService {
 
     await this.emailProvider.sendEmail({
       to: userEmail,
-      subject: notification.title,
+      subject: title,
       html,
       text,
       from: EMAIL_FROM,

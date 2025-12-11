@@ -82,7 +82,7 @@ app.listen(PORT, () => {
 
   // Start scheduled jobs
   startCleanupExpiredReservationsJob();
-  startProcessPendingNotificationsJob();
+  // startProcessPendingNotificationsJob();
 });
 
 export default app;

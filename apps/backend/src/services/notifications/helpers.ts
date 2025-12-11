@@ -23,10 +23,6 @@ export async function notifyTicketSold(
   return await service.createNotification({
     userId: params.buyerUserId,
     type: 'ticket_sold_buyer',
-    title: '¡Tu compra fue exitosa!',
-    description: `Has comprado ${params.ticketCount} ${
-      params.ticketCount === 1 ? 'entrada' : 'entradas'
-    } para ${params.eventName}. Por favor, sube los documentos de tus tickets.`,
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -58,20 +54,9 @@ export async function notifyDocumentReminder(
     hoursUntilEvent: number;
   },
 ) {
-  const hoursText =
-    params.hoursUntilEvent === 1 ? '1 hora' : `${params.hoursUntilEvent} horas`;
-
   return await service.createNotification({
     userId: params.sellerUserId,
     type: 'document_reminder',
-    title: 'Recordatorio: Sube los documentos de tus tickets',
-    description: `El evento "${
-      params.eventName
-    }" comienza en ${hoursText}. Aún tienes ${params.ticketCount} ${
-      params.ticketCount === 1
-        ? 'ticket sin documentar'
-        : 'tickets sin documentar'
-    }. Por favor, sube los documentos lo antes posible.`,
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -107,8 +92,6 @@ export async function notifyOrderConfirmed(
   return await service.createNotification({
     userId: params.buyerUserId,
     type: 'order_confirmed',
-    title: 'Orden confirmada',
-    description: `Tu orden para ${params.eventName} ha sido confirmada. Total pagado: ${params.totalAmount} ${params.currency}.`,
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -141,8 +124,6 @@ export async function notifyOrderExpired(
   return await service.createNotification({
     userId: params.buyerUserId,
     type: 'order_expired',
-    title: 'Orden expirada',
-    description: `Tu orden para ${params.eventName} ha expirado. Las entradas han sido liberadas.`,
     channels: ['in_app', 'email'],
     metadata: {
       type: 'order_expired',
@@ -167,12 +148,6 @@ export async function notifyPaymentFailed(
   return await service.createNotification({
     userId: params.buyerUserId,
     type: 'payment_failed',
-    title: 'Pago fallido',
-    description: `El pago para tu orden de ${params.eventName} ha fallado. ${
-      params.errorMessage
-        ? `Error: ${params.errorMessage}`
-        : 'Por favor, intenta nuevamente.'
-    }`,
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -206,8 +181,6 @@ export async function notifyPaymentSucceeded(
   return await service.createNotification({
     userId: params.buyerUserId,
     type: 'payment_succeeded',
-    title: 'Pago exitoso',
-    description: `Tu pago de ${params.totalAmount} ${params.currency} para ${params.eventName} fue procesado exitosamente.`,
     channels: ['in_app', 'email'],
     actions: [
       {
@@ -294,47 +267,9 @@ export async function notifySellerTicketSold(
     });
   }
 
-  // Build description based on whether upload is available
-  let description: string;
-  if (shouldPrompt) {
-    description = `¡Tus ${params.ticketCount} ${
-      params.ticketCount === 1
-        ? 'entrada ha sido vendida'
-        : 'entradas han sido vendidas'
-    } para ${params.eventName}! Por favor, sube los documentos de tus tickets.`;
-  } else if (params.qrAvailabilityTiming) {
-    const hoursBeforeEvent = parseInt(
-      params.qrAvailabilityTiming.replace('h', ''),
-      10,
-    );
-    const uploadAvailableAt = new Date(params.eventStartDate);
-    uploadAvailableAt.setHours(uploadAvailableAt.getHours() - hoursBeforeEvent);
-    const hoursUntilAvailable = Math.ceil(
-      (uploadAvailableAt.getTime() - new Date().getTime()) / (1000 * 60 * 60),
-    );
-
-    description = `¡Tus ${params.ticketCount} ${
-      params.ticketCount === 1
-        ? 'entrada ha sido vendida'
-        : 'entradas han sido vendidas'
-    } para ${
-      params.eventName
-    }! Los documentos estarán disponibles en aproximadamente ${hoursUntilAvailable} ${
-      hoursUntilAvailable === 1 ? 'hora' : 'horas'
-    }.`;
-  } else {
-    description = `¡Tus ${params.ticketCount} ${
-      params.ticketCount === 1
-        ? 'entrada ha sido vendida'
-        : 'entradas han sido vendidas'
-    } para ${params.eventName}!`;
-  }
-
   return await service.createNotification({
     userId: params.sellerUserId,
     type: 'ticket_sold_seller',
-    title: '¡Tus entradas han sido vendidas!',
-    description,
     channels: ['in_app', 'email'],
     actions: actions.length > 0 ? actions : undefined,
     metadata: {

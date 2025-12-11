@@ -14,8 +14,6 @@ export interface CreateNotificationData {
     | 'order_expired'
     | 'payment_failed'
     | 'payment_succeeded';
-  title: string;
-  description: string;
   channels: ('in_app' | 'email' | 'sms')[];
   actions?: Array<{
     type: string;
@@ -41,8 +39,6 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .values({
         userId: data.userId,
         type: data.type,
-        title: data.title,
-        description: data.description,
         channels: data.channels,
         actions: data.actions ? JSON.stringify(data.actions) : undefined,
         metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
@@ -192,31 +188,13 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
   async updateStatus(
     notificationId: string,
     status: 'pending' | 'sent' | 'failed' | 'seen',
-    errorMessage?: string,
   ) {
-    const updateData: {
-      status: 'pending' | 'sent' | 'failed' | 'seen';
-      sentAt?: Date;
-      failedAt?: Date;
-      errorMessage?: string;
-      updatedAt: Date;
-    } = {
-      status,
-      updatedAt: new Date(),
-    };
-
-    if (status === 'sent') {
-      updateData.sentAt = new Date();
-    } else if (status === 'failed') {
-      updateData.failedAt = new Date();
-      if (errorMessage) {
-        updateData.errorMessage = errorMessage;
-      }
-    }
-
     return await this.db
       .updateTable('notifications')
-      .set(updateData)
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
       .where('id', '=', notificationId)
       .returningAll()
       .executeTakeFirst();

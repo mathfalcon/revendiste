@@ -137,16 +137,11 @@ export interface Notifications {
   channelStatus: Generated<Json | null>;
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
-  description: string;
-  errorMessage: string | null;
-  failedAt: Timestamp | null;
   id: Generated<string>;
   metadata: Json | null;
   retryCount: Generated<number>;
   seenAt: Timestamp | null;
-  sentAt: Timestamp | null;
   status: Generated<NotificationStatus>;
-  title: string;
   type: NotificationType;
   updatedAt: Generated<Timestamp>;
   userId: string;
