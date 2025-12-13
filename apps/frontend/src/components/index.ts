@@ -11,4 +11,5 @@ export * from './ImageWithLoading';
 export * from './ListingCard';
 export * from './OrderCard';
 export * from './TicketDocumentUploadModal';
+export * from './TicketUploadCarousel';
 export * from './TicketViewModal';

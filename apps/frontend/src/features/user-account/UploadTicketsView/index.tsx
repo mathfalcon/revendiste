@@ -1,14 +1,15 @@
+import {useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
-import {TicketDocumentUploadModal} from '~/components';
+import {TicketDocumentUploadModal, TicketUploadCarousel} from '~/components';
 import {Card, CardContent} from '~/components/ui/card';
+import {Button} from '~/components/ui/button';
 import {LoadingSpinner} from '~/components/LoadingScreen';
-import {Upload, FileCheck, Timer, XCircle} from 'lucide-react';
+import {Upload, Timer, XCircle} from 'lucide-react';
 import {EmptyState} from './EmptyState';
 import {TicketNeedingUploadCard} from './TicketCard';
 import {TicketWaitingCard} from './TicketWaitingCard';
-import {TicketWithDocumentCard} from './TicketWithDocumentCard';
 import {TicketExpiredCard} from './TicketExpiredCard';
 import {SectionHeader} from './SectionHeader';
 
@@ -16,6 +17,7 @@ export function UploadTicketsView() {
   const {data: listings, isPending} = useQuery(getMyListingsQuery());
   const search = useSearch({from: '/cuenta/subir-tickets'});
   const navigate = useNavigate({from: '/cuenta/subir-tickets'});
+  const [carouselOpen, setCarouselOpen] = useState(false);
 
   const now = new Date();
   const threeDaysAgo = new Date(now);
@@ -30,23 +32,6 @@ export function UploadTicketsView() {
           .filter(
             ticket =>
               ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
-          )
-          .map(ticket => ({
-            ...ticket,
-            listing,
-          })),
-      )
-      .filter(Boolean) || [];
-
-  // Find tickets that have documents (for reference)
-  // Only show if canUploadDocument is true (backend checks event end date)
-  const ticketsWithDocuments =
-    listings
-      ?.flatMap(listing =>
-        listing.tickets
-          .filter(
-            ticket =>
-              ticket.soldAt && ticket.hasDocument && ticket.canUploadDocument,
           )
           .map(ticket => ({
             ...ticket,
@@ -102,9 +87,7 @@ export function UploadTicketsView() {
 
   // Find the ticket to upload based on search param
   const ticketToUpload = search.subirTicket
-    ? [...ticketsNeedingUpload, ...ticketsWithDocuments].find(
-        ticket => ticket.id === search.subirTicket,
-      )
+    ? ticketsNeedingUpload.find(ticket => ticket.id === search.subirTicket)
     : null;
 
   const handleCloseModal = () => {
@@ -138,7 +121,6 @@ export function UploadTicketsView() {
   const hasNoTickets =
     ticketsNeedingUpload.length === 0 &&
     ticketsWaiting.length === 0 &&
-    ticketsWithDocuments.length === 0 &&
     ticketsExpired.length === 0;
 
   return (
@@ -153,12 +135,22 @@ export function UploadTicketsView() {
       {/* Tickets Needing Upload */}
       {ticketsNeedingUpload.length > 0 && (
         <div className='space-y-4'>
-          <SectionHeader
-            icon={Upload}
-            title='Tickets pendientes'
-            count={ticketsNeedingUpload.length}
-            className='text-orange-600'
-          />
+          <div className='flex items-center justify-between gap-4'>
+            <div className='flex-1'>
+              <SectionHeader
+                icon={Upload}
+                title='Tickets pendientes'
+                count={ticketsNeedingUpload.length}
+                className='text-orange-200'
+              />
+            </div>
+            {ticketsNeedingUpload.length > 1 && (
+              <Button onClick={() => setCarouselOpen(true)}>
+                <Upload className='mr-2 h-4 w-4' />
+                Subir todos ({ticketsNeedingUpload.length})
+              </Button>
+            )}
+          </div>
           <div className='space-y-3'>
             {ticketsNeedingUpload.map(ticket => (
               <TicketNeedingUploadCard
@@ -205,31 +197,10 @@ export function UploadTicketsView() {
         </div>
       )}
 
-      {/* Tickets With Documents (for reference) */}
-      {ticketsWithDocuments.length > 0 && (
-        <div className='space-y-4'>
-          <SectionHeader
-            icon={FileCheck}
-            title='Tickets subidos'
-            count={ticketsWithDocuments.length}
-            className='text-muted-foreground'
-          />
-          <div className='space-y-3'>
-            {ticketsWithDocuments.map(ticket => (
-              <TicketWithDocumentCard
-                key={ticket.id}
-                ticket={ticket}
-                onEditClick={handleUploadClick}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Empty State */}
       {hasNoTickets && <EmptyState />}
 
-      {/* Upload Modal */}
+      {/* Single Upload Modal */}
       {ticketToUpload && (
         <TicketDocumentUploadModal
           ticketId={ticketToUpload.id}
@@ -240,6 +211,20 @@ export function UploadTicketsView() {
               handleCloseModal();
             }
           }}
+        />
+      )}
+
+      {/* Carousel Upload Modal */}
+      {ticketsNeedingUpload.length > 0 && (
+        <TicketUploadCarousel
+          tickets={ticketsNeedingUpload}
+          open={carouselOpen}
+          onOpenChange={setCarouselOpen}
+          initialIndex={
+            search.subirTicket
+              ? ticketsNeedingUpload.findIndex(t => t.id === search.subirTicket)
+              : 0
+          }
         />
       )}
     </div>

@@ -1,54 +1,87 @@
+import {useState} from 'react';
+import {Link, useRouter, useCanGoBack} from '@tanstack/react-router';
+import type {ErrorComponentProps} from '@tanstack/react-router';
+import {Button} from '~/components/ui/button';
 import {
-  ErrorComponent,
-  Link,
-  rootRouteId,
-  useMatch,
-  useRouter,
-} from '@tanstack/react-router';
-import type { ErrorComponentProps } from '@tanstack/react-router';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '~/components/ui/card';
+import {Home, ArrowLeft, AlertCircle, RotateCw} from 'lucide-react';
 
-export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
+export function DefaultCatchBoundary({error, reset}: ErrorComponentProps) {
   const router = useRouter();
-  const isRoot = useMatch({
-    strict: false,
-    select: state => state.id === rootRouteId,
-  });
+  const canGoBack = useCanGoBack();
+  const [isRetrying, setIsRetrying] = useState(false);
 
-  // eslint-disable-next-line no-console
-  console.error(error);
+  // Log the full error details for debugging
+  console.error('Error caught by DefaultCatchBoundary:', error);
+
+  // Show a friendly message to the user instead of raw error details
+  // Tone: casual, youth-oriented for Uruguayan audience
+  const friendlyMessage = 'No te preocupes, probá de nuevo o volvé atrás.';
 
   return (
-    <div className='min-w-0 flex-1 p-4 flex flex-col items-center justify-center gap-6'>
-      <ErrorComponent error={error} />
-      <div className='flex gap-2 items-center flex-wrap'>
-        <button
-          onClick={() => {
-            void router.invalidate();
-          }}
-          className='px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded text-white uppercase font-extrabold'
-        >
-          Try Again
-        </button>
-        {isRoot ? (
-          <Link
-            to='/'
-            className='px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded text-white uppercase font-extrabold'
-          >
-            Home
-          </Link>
-        ) : (
-          <Link
-            to='/'
-            className='px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded text-white uppercase font-extrabold'
-            onClick={e => {
-              e.preventDefault();
-              window.history.back();
-            }}
-          >
-            Go Back
-          </Link>
-        )}
-      </div>
+    <div className='flex min-h-[calc(100vh-65px)] items-center justify-center p-4'>
+      <Card className='w-full max-w-md'>
+        <CardHeader className='text-center'>
+          <div className='mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10'>
+            <AlertCircle className='h-10 w-10 text-destructive' />
+          </div>
+          <CardTitle className='text-4xl font-bold'>Error</CardTitle>
+          <CardDescription className='text-lg'>Algo salió mal</CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          <p className='text-center text-sm text-muted-foreground'>
+            {friendlyMessage}
+          </p>
+          <div className='flex flex-col gap-2 sm:flex-row'>
+            <Button
+              variant='outline'
+              className='flex-1'
+              disabled={isRetrying}
+              onClick={async () => {
+                setIsRetrying(true);
+                try {
+                  // Use router.invalidate() for route load errors (recommended by TanStack Router)
+                  // This coordinates both a router reload and error boundary reset
+                  await router.invalidate();
+                  // Also call reset if available for component-level errors
+                  reset?.();
+                } catch (err) {
+                  // eslint-disable-next-line no-console
+                  console.error('Error during retry:', err);
+                } finally {
+                  setIsRetrying(false);
+                }
+              }}
+            >
+              <RotateCw
+                className={`mr-2 h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`}
+              />
+              {isRetrying ? 'Intentando...' : 'Intentar de nuevo'}
+            </Button>
+            {canGoBack && (
+              <Button
+                variant='outline'
+                className='flex-1'
+                onClick={() => router.history.back()}
+              >
+                <ArrowLeft className='mr-2 h-4 w-4' />
+                Volver
+              </Button>
+            )}
+            <Button asChild className={canGoBack ? 'flex-1' : 'w-full'}>
+              <Link to='/'>
+                <Home className='mr-2 h-4 w-4' />
+                Ir al inicio
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,21 +1,29 @@
+import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
-import {ListingCard, TicketDocumentUploadModal} from '~/components';
+import {
+  ListingCard,
+  TicketDocumentUploadModal,
+  TicketUploadCarousel,
+} from '~/components';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '~/components/ui/accordion';
-import {Package, Archive} from 'lucide-react';
+import {Button} from '~/components/ui/button';
+import {Package, Archive, Upload, AlertCircle} from 'lucide-react';
 import {LoadingSpinner} from '~/components/LoadingScreen';
 import {Card, CardContent} from '~/components/ui/card';
+import {Alert, AlertDescription} from '~/components/ui/alert';
 
 export function PublicationsView() {
   const {data: listings, isPending} = useQuery(getMyListingsQuery());
   const search = useSearch({from: '/cuenta/publicaciones'});
   const navigate = useNavigate({from: '/cuenta/publicaciones'});
+  const [carouselOpen, setCarouselOpen] = useState(false);
 
   // Find the ticket to upload based on search param
   const ticketToUpload = search.subirTicket
@@ -23,6 +31,58 @@ export function PublicationsView() {
         ?.flatMap(listing => listing.tickets)
         .find(ticket => ticket.id === search.subirTicket)
     : null;
+
+  // Separate listings into active and past
+  // A listing is active if the event hasn't ended yet (regardless of sold status)
+  const now = new Date();
+  const activeListings =
+    listings?.filter(listing => new Date(listing.event.eventEndDate) > now) ||
+    [];
+  // A listing is past if the event has ended
+  const soldListings =
+    listings?.filter(listing => new Date(listing.event.eventEndDate) <= now) ||
+    [];
+
+  // Collect all tickets needing upload across all listings
+  const allTicketsNeedingUpload =
+    listings
+      ?.flatMap(listing =>
+        listing.tickets
+          .filter(
+            ticket =>
+              ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
+          )
+          .map(ticket => ({
+            ...ticket,
+            listing,
+          })),
+      )
+      .filter(Boolean) || [];
+
+  // Find listing by ID from query parameter
+  const listingFromParam = search.subirPublicacion
+    ? listings?.find(listing => listing.id === search.subirPublicacion)
+    : null;
+
+  // Get tickets from specific listing that need upload
+  const listingTicketsNeedingUpload = listingFromParam
+    ? listingFromParam.tickets
+        .filter(
+          ticket =>
+            ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
+        )
+        .map(ticket => ({
+          ...ticket,
+          listing: listingFromParam,
+        }))
+    : [];
+
+  // Auto-open carousel when subirPublicacion parameter is present and has tickets
+  useEffect(() => {
+    if (search.subirPublicacion && listingTicketsNeedingUpload.length > 0) {
+      setCarouselOpen(true);
+    }
+  }, [search.subirPublicacion, listingTicketsNeedingUpload.length]);
 
   const handleCloseModal = () => {
     navigate({
@@ -56,9 +116,25 @@ export function PublicationsView() {
     );
   }
 
-  // Separate listings into active and sold/expired
-  const activeListings = listings.filter(listing => !listing.soldAt);
-  const soldListings = listings.filter(listing => listing.soldAt);
+  // Determine which tickets to show in carousel
+  // If subirPublicacion param is present, show only that listing's tickets
+  // Otherwise, show all tickets
+  const ticketsForCarousel = search.subirPublicacion
+    ? listingTicketsNeedingUpload
+    : allTicketsNeedingUpload;
+
+  const handleCarouselClose = (open: boolean) => {
+    setCarouselOpen(open);
+    // Clear subirPublicacion param when closing carousel
+    if (!open && search.subirPublicacion) {
+      navigate({
+        search: prev => ({
+          ...prev,
+          subirPublicacion: undefined,
+        }),
+      });
+    }
+  };
 
   return (
     <div className='space-y-6'>
@@ -69,9 +145,43 @@ export function PublicationsView() {
         </p>
       </div>
 
+      {/* Pending Tickets Alert */}
+      {allTicketsNeedingUpload.length > 0 && !search.subirPublicacion && (
+        <Alert variant='destructive' className='bg-background'>
+          <AlertCircle className='h-4 w-4' />
+          <div className='flex items-center justify-between w-full'>
+            <AlertDescription className='flex-1'>
+              Tenés {allTicketsNeedingUpload.length}{' '}
+              {allTicketsNeedingUpload.length === 1
+                ? 'ticket pendiente por subir'
+                : 'tickets pendientes por subir'}
+            </AlertDescription>
+            {allTicketsNeedingUpload.length > 1 && (
+              <Button
+                onClick={() => setCarouselOpen(true)}
+                variant='default'
+                size='sm'
+                className='ml-4'
+              >
+                <Upload className='mr-2 h-4 w-4' />
+                Subir todos ({allTicketsNeedingUpload.length})
+              </Button>
+            )}
+          </div>
+        </Alert>
+      )}
+
       <Accordion
         type='multiple'
-        defaultValue={['active']}
+        defaultValue={
+          search.subirPublicacion && listingFromParam
+            ? [
+                new Date(listingFromParam.event.eventEndDate) > now
+                  ? 'active'
+                  : 'sold',
+              ].filter(Boolean)
+            : ['active']
+        }
         className='w-full flex flex-col gap-4'
       >
         {/* Active Listings */}
@@ -125,7 +235,7 @@ export function PublicationsView() {
         </AccordionItem>
       </Accordion>
 
-      {/* Upload Modal */}
+      {/* Single Upload Modal */}
       {ticketToUpload && (
         <TicketDocumentUploadModal
           ticketId={ticketToUpload.id}
@@ -136,6 +246,20 @@ export function PublicationsView() {
               handleCloseModal();
             }
           }}
+        />
+      )}
+
+      {/* Carousel Upload Modal */}
+      {ticketsForCarousel.length > 0 && (
+        <TicketUploadCarousel
+          tickets={ticketsForCarousel}
+          open={carouselOpen}
+          onOpenChange={handleCarouselClose}
+          initialIndex={
+            search.subirTicket
+              ? ticketsForCarousel.findIndex(t => t.id === search.subirTicket)
+              : undefined
+          }
         />
       )}
     </div>

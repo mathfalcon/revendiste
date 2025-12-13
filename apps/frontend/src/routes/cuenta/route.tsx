@@ -12,12 +12,6 @@ import {Badge} from '~/components/ui/badge';
 
 const TAB_CONFIG = [
   {
-    value: 'perfil',
-    label: 'Perfil',
-    icon: User,
-    to: '/cuenta/perfil',
-  },
-  {
     value: 'tickets',
     label: 'Mis tickets',
     icon: ScanQrCode,

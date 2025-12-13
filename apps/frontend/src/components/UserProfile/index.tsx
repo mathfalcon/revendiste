@@ -1,39 +1,24 @@
-import {SignOutButton, useUser} from '@clerk/tanstack-react-start';
-import {Avatar, AvatarFallback, AvatarImage} from '../ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import {Link} from '@tanstack/react-router';
+import {UserButton} from '@clerk/tanstack-react-start';
+import {Ticket, ScanQrCode} from 'lucide-react';
+import {UserButtonAppearance} from '../SignInModal';
 
 export const UserProfile = () => {
-  const {user} = useUser();
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Avatar>
-          <AvatarImage src={user?.imageUrl} />
-          <AvatarFallback>
-            {user?.firstName?.charAt(0)}
-            {user?.lastName?.charAt(0)}
-          </AvatarFallback>
-        </Avatar>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className='bg-background'>
-        <DropdownMenuItem asChild>
-          <Link to='/cuenta/publicaciones'>Publicaciones</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to='/cuenta/tickets'>Mis tickets</Link>
-        </DropdownMenuItem>
-        <SignOutButton>
-          <DropdownMenuItem className='text-destructive'>
-            Cerrar sesión
-          </DropdownMenuItem>
-        </SignOutButton>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <UserButton appearance={UserButtonAppearance}>
+      <UserButton.MenuItems>
+        <UserButton.Link
+          label='Publicaciones'
+          labelIcon={<Ticket className='h-4 w-4' />}
+          href='/cuenta/publicaciones'
+        />
+        <UserButton.Link
+          label='Mis tickets'
+          labelIcon={<ScanQrCode className='h-4 w-4' />}
+          href='/cuenta/tickets'
+        />
+        <UserButton.Action label='manageAccount' />
+        <UserButton.Action label='signOut' />
+      </UserButton.MenuItems>
+    </UserButton>
   );
 };

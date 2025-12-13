@@ -18,7 +18,6 @@ import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar
 import { Route as CuentaTicketsRouteImport } from './routes/cuenta/tickets'
 import { Route as CuentaSubirTicketsRouteImport } from './routes/cuenta/subir-tickets'
 import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
-import { Route as CuentaPerfilRouteImport } from './routes/cuenta/perfil'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
@@ -68,11 +67,6 @@ const CuentaPublicacionesRoute = CuentaPublicacionesRouteImport.update({
   path: '/publicaciones',
   getParentRoute: () => CuentaRouteRoute,
 } as any)
-const CuentaPerfilRoute = CuentaPerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => CuentaRouteRoute,
-} as any)
 const CheckoutOrderIdIndexRoute = CheckoutOrderIdIndexRouteImport.update({
   id: '/checkout/$orderId/',
   path: '/checkout/$orderId/',
@@ -92,7 +86,6 @@ const CheckoutOrderIdSuccessRoute = CheckoutOrderIdSuccessRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
@@ -107,7 +100,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
@@ -123,7 +115,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
-  '/cuenta/perfil': typeof CuentaPerfilRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
@@ -140,7 +131,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cuenta'
-    | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
@@ -155,7 +145,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cuenta'
-    | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
@@ -170,7 +159,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cuenta'
-    | '/cuenta/perfil'
     | '/cuenta/publicaciones'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
@@ -260,13 +248,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CuentaPublicacionesRouteImport
       parentRoute: typeof CuentaRouteRoute
     }
-    '/cuenta/perfil': {
-      id: '/cuenta/perfil'
-      path: '/perfil'
-      fullPath: '/cuenta/perfil'
-      preLoaderRoute: typeof CuentaPerfilRouteImport
-      parentRoute: typeof CuentaRouteRoute
-    }
     '/checkout/$orderId/': {
       id: '/checkout/$orderId/'
       path: '/checkout/$orderId'
@@ -292,14 +273,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface CuentaRouteRouteChildren {
-  CuentaPerfilRoute: typeof CuentaPerfilRoute
   CuentaPublicacionesRoute: typeof CuentaPublicacionesRoute
   CuentaSubirTicketsRoute: typeof CuentaSubirTicketsRoute
   CuentaTicketsRoute: typeof CuentaTicketsRoute
 }
 
 const CuentaRouteRouteChildren: CuentaRouteRouteChildren = {
-  CuentaPerfilRoute: CuentaPerfilRoute,
   CuentaPublicacionesRoute: CuentaPublicacionesRoute,
   CuentaSubirTicketsRoute: CuentaSubirTicketsRoute,
   CuentaTicketsRoute: CuentaTicketsRoute,

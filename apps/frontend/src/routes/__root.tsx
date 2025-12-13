@@ -14,7 +14,7 @@ import {DefaultCatchBoundary} from '~/components/DefaultCatchBoundary';
 import {NotFound} from '~/components/NotFound';
 import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
-import {Navbar} from '~/components';
+import {ClerkVariables, Navbar} from '~/components';
 import {ThemeProvider} from '~/components/ThemeProvider';
 import {ClerkProvider} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
@@ -121,6 +121,13 @@ function RootDocument({children}: {children: React.ReactNode}) {
       localization={esUY}
       appearance={{
         cssLayerName: 'clerk',
+        elements: {
+          formButtonPrimary: {
+            background: '#de2486',
+            boxShadow: 'none',
+          },
+        },
+        variables: ClerkVariables,
       }}
     >
       <html>
