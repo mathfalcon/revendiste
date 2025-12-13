@@ -9,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '~/components/ui/accordion';
+import {Card, CardContent} from '~/components/ui/card';
 import {useForm, useFormContext, SubmitHandler} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {z} from 'zod';
@@ -156,16 +157,28 @@ export const EventRightSide = (props: EventRightSideProps) => {
       eventId: eventId,
       ticketSelections: data,
     });
-    // Success and error handling (including redirects) are handled in the mutation options
   };
 
   if (availableTicketWaves.length === 0) {
     return (
-      <div className='flex flex-col gap-6'>
-        <div className='text-center text-muted-foreground'>
-          No hay entradas disponibles
-        </div>
-      </div>
+      <Card>
+        <CardContent className='flex flex-col gap-6 pt-6'>
+          <div className='text-center text-muted-foreground'>
+            No hay entradas disponibles
+          </div>
+          <Button
+            onClick={() => {
+              void navigate({
+                to: '/entradas/publicar',
+                search: {eventoId: eventId},
+              });
+            }}
+            className='bg-primary-gradient h-12 w-full'
+          >
+            Sé el primero en vender
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 

@@ -1,4 +1,5 @@
 import {cn} from '~/lib/utils';
+import {ElementType} from 'react';
 
 export interface TextEllipsisProps {
   children: React.ReactNode;
@@ -6,6 +7,7 @@ export interface TextEllipsisProps {
   className?: string;
   showTooltip?: boolean;
   tooltipContent?: string;
+  as?: ElementType;
 }
 
 export function TextEllipsis({
@@ -14,6 +16,7 @@ export function TextEllipsis({
   className,
   showTooltip = true,
   tooltipContent,
+  as: Component = 'p',
 }: TextEllipsisProps) {
   // For Tailwind CSS v4, line-clamp utilities are built-in
   // For older versions, we'll use CSS-in-JS as fallback
@@ -30,7 +33,7 @@ export function TextEllipsis({
       : {};
 
   return (
-    <p
+    <Component
       className={cn(
         'overflow-hidden',
         maxLines === 1 ? 'truncate' : lineClampClass,
@@ -45,6 +48,6 @@ export function TextEllipsis({
       }
     >
       {children}
-    </p>
+    </Component>
   );
 }

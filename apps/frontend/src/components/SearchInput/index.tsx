@@ -5,6 +5,7 @@ import {useDebounceCallback, useOnClickOutside} from 'usehooks-ts';
 import {getEventBySearchQuery} from '~/lib';
 import {Command, CommandList, CommandItem, CommandInput} from '../ui/command';
 import {Link, useNavigate} from '@tanstack/react-router';
+import {TextEllipsis} from '../ui/text-ellipsis';
 
 export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -17,8 +18,10 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
   const navigate = useNavigate();
   const events = eventsQuery.data ?? [];
 
-  // @ts-expect-error - bad types
-  useOnClickOutside(ref, () => setIsFocused(false));
+  useOnClickOutside(
+    ref as React.RefObject<HTMLElement>,
+    () => setIsFocused(false),
+  );
 
   return (
     <div className='relative w-full' ref={ref}>
@@ -57,21 +60,23 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
                     to='/eventos/$eventId'
                     params={{eventId: event.id}}
                     key={event.id}
-                    className='flex w-full gap-3 h-[32px]'
+                    className='flex w-full gap-3 h-[32px] items-center'
                   >
                     {flyerImage && (
-                      <img
-                        src={flyerImage.url}
-                        alt={event.name}
-                        height={32}
-                        width={32}
-                        className='object-cover'
-                      />
+                      <div className='h-8 w-8 shrink-0 flex-shrink-0 overflow-hidden rounded'>
+                        <img
+                          src={flyerImage.url}
+                          alt={event.name}
+                          className='h-full w-full object-cover'
+                        />
+                      </div>
                     )}
-                    <div className='flex flex-col'>
-                      <span className='font-medium'>{event.name}</span>
+                    <div className='flex flex-col min-w-0 flex-1 overflow-hidden'>
+                      <TextEllipsis maxLines={1} className='font-medium'>
+                        {event.name}
+                      </TextEllipsis>
                       {event.venueName && (
-                        <span className='text-xs text-muted-foreground'>
+                        <span className='text-xs text-muted-foreground truncate'>
                           {event.venueName}
                         </span>
                       )}

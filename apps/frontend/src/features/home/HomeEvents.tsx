@@ -23,10 +23,12 @@ export const HomeEvents = () => {
   });
 
   return (
-    <div className='mx-auto flex flex-col gap-4 my-6'>
-      <h2 className='text-2xl font-bold'>Encontrá tu próximo evento</h2>
+    <div className='mx-auto flex flex-col gap-4 my-4 sm:my-6'>
+      <h2 className='text-lg sm:text-2xl font-bold text-center sm:text-left'>
+        Encontrá tu próximo evento
+      </h2>
       <Separator />
-      <main className='grid gap-6 m-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl'>
+      <main className='grid gap-3 sm:gap-6 m-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl px-4 sm:px-0'>
         {isLoading
           ? Array.from({length: 6}).map((_, index) => (
               <SkeletonEventCard key={`event-card-skeleton-${index}`} />
@@ -38,6 +40,20 @@ export const HomeEvents = () => {
                 image => image.imageType === EventImageType.Flyer,
               );
 
+              // Get lowest available ticket price and currency
+              // Type assertion needed until API types are regenerated
+              const eventWithPrice = event as typeof event & {
+                lowestAvailableTicketPrice?: number | null;
+                lowestAvailableTicketCurrency?: EventTicketCurrency | null;
+              };
+
+              const lowestPrice = (eventWithPrice.lowestAvailableTicketPrice ??
+                null) as number | null;
+              const currency: EventTicketCurrency =
+                (eventWithPrice.lowestAvailableTicketCurrency as
+                  | EventTicketCurrency
+                  | undefined) ?? EventTicketCurrency.UYU;
+
               return (
                 <EventCard
                   key={event.id}
@@ -47,8 +63,8 @@ export const HomeEvents = () => {
                   date={event.eventStartDate}
                   description={event.description}
                   venueName={event.venueName}
-                  startPrice={800}
-                  currency={EventTicketCurrency.UYU}
+                  startPrice={lowestPrice as number | null}
+                  currency={currency}
                 />
               );
             })}

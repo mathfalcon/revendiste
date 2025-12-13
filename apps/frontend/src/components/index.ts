@@ -1,4 +1,5 @@
 export * from './Navbar';
+export * from './Footer';
 export * from './ThemeProvider';
 export * from './ModeToggle';
 export * from './LoadingScreen';
@@ -13,3 +14,4 @@ export * from './OrderCard';
 export * from './TicketDocumentUploadModal';
 export * from './TicketUploadCarousel';
 export * from './TicketViewModal';
+export * from './EventSearchModal';

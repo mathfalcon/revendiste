@@ -1,6 +1,6 @@
 import {SubmitHandler, useFormContext} from 'react-hook-form';
 import {useState, useMemo} from 'react';
-import {Combobox} from '~/components';
+import {Combobox, TextEllipsis} from '~/components';
 import {
   FormControl,
   FormDescription,
@@ -25,8 +25,10 @@ import {
 } from '~/lib';
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
-import {getCurrencySymbol} from '~/utils';
+import {getCurrencySymbol, formatPrice, calculateSellerAmount} from '~/utils';
 import {useNavigate} from '@tanstack/react-router';
+import {Separator} from '~/components/ui/separator';
+import {Checkbox} from '~/components/ui/checkbox';
 
 interface TicketListingFormProps {
   mode: 'create' | 'edit';
@@ -56,16 +58,37 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
     await navigate({to: '/cuenta/publicaciones'});
   };
 
+  const watchEventId = form.watch('eventId');
+
   const eventsComboboxOptions = useMemo(() => {
-    return (
+    const searchResults =
       eventsQuery.data?.map(event => ({
         value: event.id,
         label: event.name,
         image: event.eventImages[0]?.url,
         date: format(event.eventStartDate, 'dd MMMM, yyyy', {locale: es}),
-      })) ?? []
-    );
-  }, [eventsQuery.data]);
+      })) ?? [];
+
+    if (
+      watchEventId &&
+      eventDetailsQuery.data &&
+      !searchResults.find(opt => opt.value === watchEventId)
+    ) {
+      return [
+        {
+          value: eventDetailsQuery.data.id,
+          label: eventDetailsQuery.data.name,
+          image: eventDetailsQuery.data.eventImages[0]?.url,
+          date: format(eventDetailsQuery.data.eventStartDate, 'dd MMMM, yyyy', {
+            locale: es,
+          }),
+        },
+        ...searchResults,
+      ];
+    }
+
+    return searchResults;
+  }, [eventsQuery.data, eventDetailsQuery.data, watchEventId]);
 
   const eventTicketWaveComboboxOptions = useMemo(() => {
     return (
@@ -86,9 +109,24 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
     );
   }, [eventDetailsQuery.data, watchEventTicketWaveId]);
 
+  const watchPrice = form.watch('price');
+  const watchQuantity = form.watch('quantity');
+
+  const sellerAmountCalculation = useMemo(() => {
+    if (!watchPrice || !selectedEventTicketWave?.currency) {
+      return null;
+    }
+    return calculateSellerAmount(watchPrice, selectedEventTicketWave.currency);
+  }, [watchPrice, selectedEventTicketWave?.currency]);
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8 '>
-      <h1 className='text-2xl font-bold text-right'>Publicá tu entrada</h1>
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className='space-y-6 md:space-y-8'
+    >
+      <h1 className='hidden md:block text-2xl font-bold text-right'>
+        Publicá tu entrada
+      </h1>
       <FormField
         control={form.control}
         name='eventId'
@@ -113,7 +151,9 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
                   className='w-12 h-12 rounded-md object-cover flex-shrink-0'
                 />
                 <div className='flex-1 text-left'>
-                  <div className='font-medium'>{option.label}</div>
+                  <TextEllipsis className='font-medium' maxLines={2}>
+                    {option.label}
+                  </TextEllipsis>
                   <div className='text-sm text-muted-foreground'>
                     {option.date}
                   </div>
@@ -233,6 +273,101 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
             </FormItem>
           );
         }}
+      />
+
+      {!!watchPrice &&
+        !!selectedEventTicketWave?.currency &&
+        !!sellerAmountCalculation && (
+          <div className='md:hidden space-y-3 p-4 bg-muted rounded-lg border'>
+            <div className='space-y-2'>
+              <div className='flex justify-between items-center'>
+                <span className='text-sm text-muted-foreground'>
+                  Precio por entrada
+                </span>
+                <span className='font-medium'>
+                  {formatPrice(watchPrice, selectedEventTicketWave.currency)}
+                </span>
+              </div>
+              <div className='flex justify-between items-center text-sm'>
+                <span className='text-muted-foreground'>
+                  Comisión ({Math.round(0.06 * 100)}%)
+                </span>
+                <span className='text-muted-foreground'>
+                  -
+                  {formatPrice(
+                    sellerAmountCalculation.platformCommission,
+                    sellerAmountCalculation.currency,
+                  )}
+                </span>
+              </div>
+              <div className='flex justify-between items-center text-sm'>
+                <span className='text-muted-foreground'>
+                  IVA sobre comisión ({Math.round(0.22 * 100)}%)
+                </span>
+                <span className='text-muted-foreground'>
+                  -
+                  {formatPrice(
+                    sellerAmountCalculation.vatOnCommission,
+                    sellerAmountCalculation.currency,
+                  )}
+                </span>
+              </div>
+              <Separator />
+              <div className='flex justify-between items-center'>
+                <span className='font-semibold text-primary'>
+                  Recibirás por entrada
+                </span>
+                <span className='font-bold text-primary text-lg'>
+                  {formatPrice(
+                    sellerAmountCalculation.sellerAmount,
+                    sellerAmountCalculation.currency,
+                  )}
+                </span>
+              </div>
+              {watchQuantity > 1 && (
+                <div className='flex justify-between items-center pt-2 border-t'>
+                  <span className='font-semibold'>
+                    Total ({watchQuantity} entradas)
+                  </span>
+                  <span className='font-bold text-lg'>
+                    {formatPrice(
+                      sellerAmountCalculation.sellerAmount * watchQuantity,
+                      sellerAmountCalculation.currency,
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+      <FormField
+        control={form.control}
+        name='acceptTerms'
+        render={({field}) => (
+          <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+            <div className='space-y-1 leading-none'>
+              <FormLabel className='text-sm font-normal'>
+                Acepto los{' '}
+                <a
+                  href='/terminos'
+                  className='text-primary underline hover:no-underline'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  términos de servicio
+                </a>
+              </FormLabel>
+              <FormMessage />
+            </div>
+          </FormItem>
+        )}
       />
 
       <Button

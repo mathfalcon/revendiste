@@ -2,11 +2,12 @@ import {Suspense} from 'react';
 import z from 'zod';
 import {FullScreenLoading} from '~/components';
 import {TicketListingForm} from '~/features/ticket-listing';
-import {createFileRoute, redirect} from '@tanstack/react-router';
+import {createFileRoute, useSearch} from '@tanstack/react-router';
 import {beforeLoadRedirectToSignInIfNotAuthenticated} from '~/utils/auth';
+import {getEventByIdQuery} from '~/lib';
 
 const CreateTicketListingSearchSchema = z.object({
-  eventId: z.uuid().optional(),
+  eventoId: z.uuid().optional(),
 });
 
 export const Route = createFileRoute('/entradas/publicar')({
@@ -15,19 +16,20 @@ export const Route = createFileRoute('/entradas/publicar')({
   beforeLoad: ({context, location}) => {
     beforeLoadRedirectToSignInIfNotAuthenticated(context.userId, location);
   },
-  loaderDeps: ({search: {eventId}}) => ({eventId}),
-  loader: ({deps: {eventId}}) => {
+  loaderDeps: ({search: {eventoId}}) => ({eventoId}),
+  loader: async ({context, deps: {eventoId}}) => {
     // Prefetch event data for the form if eventId is provided in search params
-    if (eventId) {
-      // void context.queryClient.prefetchQuery(getEventByIdQuery(search.eventId));
+    if (eventoId) {
+      await context.queryClient.ensureQueryData(getEventByIdQuery(eventoId));
     }
   },
 });
 
 function RouteComponent() {
+  const {eventoId} = useSearch({from: '/entradas/publicar'});
   return (
     <Suspense fallback={<FullScreenLoading />}>
-      <TicketListingForm mode='create' />
+      <TicketListingForm mode='create' initialEventId={eventoId} />
     </Suspense>
   );
 }

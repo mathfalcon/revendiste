@@ -50,7 +50,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
+			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -72,6 +72,15 @@
 										"type": "object"
 									},
 									"type": "array"
+								},
+								"lowestAvailableTicketCurrency": {
+									"type": "string",
+									"nullable": true
+								},
+								"lowestAvailableTicketPrice": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
 								},
 								"venueName": {
 									"type": "string",
@@ -115,6 +124,8 @@
 							},
 							"required": [
 								"images",
+								"lowestAvailableTicketCurrency",
+								"lowestAvailableTicketPrice",
 								"venueName",
 								"venueAddress",
 								"updatedAt",
@@ -143,7 +154,7 @@
 				"additionalProperties": false
 			},
 			"ReturnType_EventsService-at-getAllEventsPaginated_": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--images_58__url-string--imageType-EventImageType_-Array__",
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__",
 				"description": "Obtain the return type of a function type"
 			},
 			"GetEventsPaginatedResponse": {

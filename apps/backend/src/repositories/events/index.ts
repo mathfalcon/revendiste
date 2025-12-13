@@ -164,6 +164,8 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     const total = Number(totalResult?.total || 0);
 
     // Get events with nested images using jsonArrayFrom
+    // Get lowest available ticket price and currency from the same ticket
+    // Note: Using two identical subqueries - PostgreSQL's query planner will optimize this
     const events = await this.db
       .selectFrom('events')
       .select(eb => [
@@ -178,6 +180,48 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'status',
         'createdAt',
         'updatedAt',
+        // Get lowest available ticket price
+        sql<number | null>`
+          (
+            SELECT listing_tickets.price
+            FROM listing_tickets
+            INNER JOIN listings ON listings.id = listing_tickets.listing_id
+            INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+            LEFT JOIN order_ticket_reservations ON 
+              order_ticket_reservations.listing_ticket_id = listing_tickets.id
+              AND order_ticket_reservations.deleted_at IS NULL
+              AND order_ticket_reservations.reserved_until > NOW()
+            WHERE event_ticket_waves.event_id = events.id
+              AND listing_tickets.cancelled_at IS NULL
+              AND listing_tickets.sold_at IS NULL
+              AND listing_tickets.deleted_at IS NULL
+              AND listings.deleted_at IS NULL
+              AND order_ticket_reservations.id IS NULL
+            ORDER BY listing_tickets.price ASC
+            LIMIT 1
+          )
+        `.as('lowestAvailableTicketPrice'),
+        // Get currency from the same ticket (same subquery logic)
+        sql<string | null>`
+          (
+            SELECT event_ticket_waves.currency
+            FROM listing_tickets
+            INNER JOIN listings ON listings.id = listing_tickets.listing_id
+            INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+            LEFT JOIN order_ticket_reservations ON 
+              order_ticket_reservations.listing_ticket_id = listing_tickets.id
+              AND order_ticket_reservations.deleted_at IS NULL
+              AND order_ticket_reservations.reserved_until > NOW()
+            WHERE event_ticket_waves.event_id = events.id
+              AND listing_tickets.cancelled_at IS NULL
+              AND listing_tickets.sold_at IS NULL
+              AND listing_tickets.deleted_at IS NULL
+              AND listings.deleted_at IS NULL
+              AND order_ticket_reservations.id IS NULL
+            ORDER BY listing_tickets.price ASC
+            LIMIT 1
+          )
+        `.as('lowestAvailableTicketCurrency'),
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
@@ -433,8 +477,9 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     return events;
   }
 
-  // Search events by name using trigram similarity for fuzzy matching
+  // Search events by name using ILIKE for substring matching and trigram similarity for fuzzy matching
   async getBySearch(query: string, limit: number = 20) {
+    const searchPattern = `%${query}%`;
     const events = await this.db
       .selectFrom('events')
       .select(eb => [
@@ -461,20 +506,24 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       ])
       .where('deletedAt', 'is', null)
       .where('status', '=', 'active')
-      // Use more flexible search: trigram similarity OR ILIKE for short queries
+      // Use ILIKE for substring matching (works for partial word matches like "fideles" in "WAVES OF LIFE w/ FIDELES PDE 2026")
+      // Also use trigram similarity for fuzzy matching (handles typos and variations)
       .where(
         eb =>
-          query.length <= 3
-            ? sql`${eb.ref('name')} ILIKE ${`%${query}%`}` // For short queries, use simple substring search
-            : sql`${eb.ref('name')} % ${query}`, // For longer queries, use trigram similarity
+          sql`(${eb.ref('name')} ILIKE ${searchPattern} OR similarity(${eb.ref(
+            'name',
+          )}, ${query}) > 0.2)`,
       )
-      // Order by relevance: exact matches first, then similarity, then date
+      // Order by relevance: exact matches first, then ILIKE matches, then similarity score, then date
       .orderBy(
         eb =>
-          query.length <= 3
-            ? sql`CASE WHEN ${eb.ref('name')} ILIKE ${query} THEN 0 ELSE 1 END` // Exact matches first
-            : sql`${eb.ref('name')} <<-> ${query}`, // Similarity ranking
+          sql`CASE 
+          WHEN ${eb.ref('name')} ILIKE ${query} THEN 0
+          WHEN ${eb.ref('name')} ILIKE ${searchPattern} THEN 1
+          ELSE 2
+        END`,
       )
+      .orderBy(eb => sql`similarity(${eb.ref('name')}, ${query}) DESC`)
       .orderBy('eventStartDate', 'asc')
       .limit(limit)
       .execute();

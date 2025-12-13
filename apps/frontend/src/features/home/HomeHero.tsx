@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import heroImageUrl from '~/assets/backgrounds/homepage.png?url';
 import {EventSearchInput} from '~/components/SearchInput';
+import {EventSearchModal} from '~/components/EventSearchModal';
 
 const homePageTaglines = [
   'Si no vas, que tu entrada no quede tirada. Vendela fácil y seguro',
@@ -54,8 +55,8 @@ function AnimatedTagline({
   return (
     <h2
       className={`
-        max-w-6xl
-        text-foreground font-bold text-center text-2xl z-10
+        max-w-6xl px-4 md:px-0
+        text-white font-bold text-center text-lg md:text-2xl z-10
         transition-all duration-300 ease-in-out
         ${isAnimating ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}
       `}
@@ -68,22 +69,36 @@ function AnimatedTagline({
 
 export const HomeHero = () => {
   const taglineIndex = useRotatingTagline(homePageTaglines);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   return (
-    <section className='hero min-h-[50dvh] h-[50dvh]  relative flex flex-col items-center justify-center'>
-      <img
-        src={heroImageUrl}
-        alt='People partying'
-        className='w-full h-full object-cover absolute top-0 left-0'
-      />
-      <AnimatedTagline taglines={homePageTaglines} index={taglineIndex} />
-
-      <div className='w-[45dvw]'>
-        <EventSearchInput
-          placeholder='¿A qué fiesta te sumás?'
-          className='z-10 bg-background h-[48px]'
+    <>
+      <section className='hero min-h-[25vh] md:min-h-[50dvh] h-[25vh] md:h-[50dvh] relative flex flex-col items-center justify-center gap-4 md:gap-0'>
+        <img
+          src={heroImageUrl}
+          alt='People partying'
+          className='w-full h-full object-cover absolute top-0 left-0'
         />
-      </div>
-    </section>
+        <AnimatedTagline taglines={homePageTaglines} index={taglineIndex} />
+
+        <div className='w-full px-4 md:w-[45dvw] md:px-0'>
+          <div
+            onClick={() => setIsSearchModalOpen(true)}
+            className='cursor-pointer'
+          >
+            <EventSearchInput
+              placeholder='¿A qué fiesta te sumás?'
+              className='z-10 bg-background h-[40px] md:h-[48px] pointer-events-none'
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Fullscreen Search Modal */}
+      <EventSearchModal
+        open={isSearchModalOpen}
+        onOpenChange={setIsSearchModalOpen}
+      />
+    </>
   );
 };

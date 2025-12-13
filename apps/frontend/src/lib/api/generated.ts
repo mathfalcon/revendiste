@@ -534,34 +534,27 @@ export type JsonObject = Record<string, JsonValue>;
 export type JsonPrimitive = boolean | number | string | null;
 
 /** From T, pick a set of properties whose keys are in the union K */
-export interface PickNotificationExcludeKeysMetadataOrActionsOrType {
+export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDescription {
   /** @format date-time */
   createdAt: string;
   /** @format date-time */
   deletedAt: string | null;
-  description: string;
   id: string;
   status: "pending" | "failed" | "seen" | "sent";
   /** @format date-time */
   updatedAt: string;
   channels: ("email" | "in_app" | "sms")[];
   channelStatus: string | number | boolean | JsonArray | JsonObject | null;
-  errorMessage: string | null;
-  /** @format date-time */
-  failedAt: string | null;
   /** @format double */
   retryCount: number;
   /** @format date-time */
   seenAt: string | null;
-  /** @format date-time */
-  sentAt: string | null;
-  title: string;
   userId: string;
 }
 
 /** Construct a type with the properties of T except for those in type K. */
-export type OmitNotificationMetadataOrActionsOrType =
-  PickNotificationExcludeKeysMetadataOrActionsOrType;
+export type OmitNotificationMetadataOrActionsOrTypeOrTitleOrDescription =
+  PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDescription;
 
 /**
  * Typed metadata based on notification type
@@ -601,13 +594,17 @@ export type NotificationAction = InferTypeofBaseActionSchema;
 /**
  * Typed notification response with parsed metadata and actions
  * This ensures type safety when reading notifications from the database
+ * Title and description are generated from type + metadata, not stored in DB
  * For backwards compatibility, uses the generic type
  */
-export type TypedNotification = OmitNotificationMetadataOrActionsOrType & {
-  actions: NotificationAction[] | null;
-  metadata: TypedNotificationMetadataNotificationAtType | null;
-  type: NotificationType;
-};
+export type TypedNotification =
+  OmitNotificationMetadataOrActionsOrTypeOrTitleOrDescription & {
+    actions: NotificationAction[] | null;
+    metadata: TypedNotificationMetadataNotificationAtType | null;
+    description: string;
+    title: string;
+    type: NotificationType;
+  };
 
 export interface PaginatedResponseTypedNotification {
   data: TypedNotification[];
