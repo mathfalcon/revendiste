@@ -74,6 +74,9 @@ importers:
       kysely:
         specifier: ^0.28.5
         version: 0.28.5
+      kysely-ctl:
+        specifier: ^0.13.1
+        version: 0.13.1(kysely@0.28.5)(magicast@0.3.5)
       morgan:
         specifier: ^1.10.1
         version: 1.10.1
@@ -132,9 +135,6 @@ importers:
       kysely-codegen:
         specifier: ^0.18.5
         version: 0.18.5(kysely@0.28.5)(pg@8.16.3)(typescript@5.9.2)
-      kysely-ctl:
-        specifier: ^0.13.1
-        version: 0.13.1(kysely@0.28.5)(magicast@0.3.5)
       ts-node-dev:
         specifier: ^2.0.0
         version: 2.0.0(@types/node@24.10.1)(typescript@5.9.2)

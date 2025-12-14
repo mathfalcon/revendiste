@@ -179,9 +179,7 @@ jobs:
             # Clean up temp file
             rm -f "$ENV_FILE"
 
-            # Run database migrations
-            docker exec revendiste-backend sh -c "cd /app && node -r tsconfig-paths/register dist/scripts/migrate.js" || echo "Migration script not found, skipping..."
-
+            # Migrations are now handled automatically by the container entrypoint
             # Health check
             sleep 5
             curl -f http://localhost:3001/health || exit 1
@@ -202,8 +200,6 @@ jobs:
             # Login to ECR (IAM role handles authentication)
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
 
-            # Pull latest frontend image
-            docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:development-latest || docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
 
             # Stop and remove old frontend container
             docker stop revendiste-frontend || true
@@ -217,7 +213,7 @@ jobs:
               -e VITE_APP_API_URL="${{ secrets.VITE_APP_API_URL }}" \
               -e VITE_PLATFORM_COMMISSION_RATE="${{ secrets.VITE_PLATFORM_COMMISSION_RATE || '0.06' }}" \
               -e VITE_VAT_RATE="${{ secrets.VITE_VAT_RATE || '0.22' }}" \
-              ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:development-latest || ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+              ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
 
             # Health check
             sleep 5

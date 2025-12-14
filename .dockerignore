@@ -17,7 +17,6 @@ coverage
 *.swp
 *.swo
 *~
-deploy/
 infrastructure/
 .github/
 .cursor/
