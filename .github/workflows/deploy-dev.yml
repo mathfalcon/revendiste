@@ -1,0 +1,169 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches:
+      - development
+
+env:
+  AWS_REGION: sa-east-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.sa-east-1.amazonaws.com
+  BACKEND_IMAGE_NAME: revendiste/backend-dev
+  FRONTEND_IMAGE_NAME: revendiste/frontend-dev
+  FRONTEND_DIR: apps/frontend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Build and deploy backend
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract backend metadata
+        id: backend-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/backend.Dockerfile
+          push: true
+          tags: ${{ steps.backend-meta.outputs.tags }}
+          labels: ${{ steps.backend-meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache,mode=max
+
+      # Build and deploy frontend
+      - name: Extract frontend metadata
+        id: frontend-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/frontend.Dockerfile
+          push: true
+          tags: ${{ steps.frontend-meta.outputs.tags }}
+          labels: ${{ steps.frontend-meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:buildcache,mode=max
+
+      # Deploy backend to EC2
+      - name: Deploy backend to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_BACKEND_HOST }}
+          username: ec2-user
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          script: |
+            # Load secrets from AWS Secrets Manager
+            source /opt/revendiste/load-secrets.sh
+
+            # Login to ECR (IAM role handles authentication)
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+
+            # Pull latest backend image
+            docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:development-latest || docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+
+            # Stop and remove old backend container
+            docker stop revendiste-backend || true
+            docker rm revendiste-backend || true
+
+            # Run new backend container with environment variables
+            docker run -d \
+              --name revendiste-backend \
+              --restart unless-stopped \
+              -p 3001:3001 \
+              -e NODE_ENV \
+              -e LOG_LEVEL \
+              -e PORT \
+              -e POSTGRES_USER \
+              -e POSTGRES_PASSWORD \
+              -e POSTGRES_DB \
+              -e POSTGRES_HOST \
+              -e POSTGRES_PORT \
+              -e CLERK_PUBLISHABLE_KEY \
+              -e CLERK_SECRET_KEY \
+              -e DLOCAL_API_KEY \
+              -e DLOCAL_SECRET_KEY \
+              -e DLOCAL_BASE_URL \
+              -e APP_BASE_URL \
+              -e API_BASE_URL \
+              -e STORAGE_TYPE \
+              -e AWS_S3_BUCKET \
+              -e AWS_S3_REGION \
+              -e AWS_ACCESS_KEY_ID \
+              -e AWS_SECRET_ACCESS_KEY \
+              -e EMAIL_PROVIDER \
+              -e RESEND_API_KEY \
+              ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:development-latest || ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+
+            # Run database migrations
+            docker exec revendiste-backend sh -c "cd /app && node -r tsconfig-paths/register dist/scripts/migrate.js" || echo "Migration script not found, skipping..."
+
+            # Health check
+            sleep 5
+            curl -f http://localhost:3001/health || exit 1
+
+      # Deploy frontend to EC2
+      - name: Deploy frontend to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_FRONTEND_HOST }}
+          username: ec2-user
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          script: |
+            # Login to ECR (IAM role handles authentication)
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+
+            # Pull latest frontend image
+            docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:development-latest || docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+
+            # Stop and remove old frontend container
+            docker stop revendiste-frontend || true
+            docker rm revendiste-frontend || true
+
+            # Run new frontend container with environment variables
+            docker run -d \
+              --name revendiste-frontend \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              -e VITE_APP_API_URL="${{ secrets.VITE_APP_API_URL }}" \
+              -e VITE_PLATFORM_COMMISSION_RATE="${{ secrets.VITE_PLATFORM_COMMISSION_RATE || '0.06' }}" \
+              -e VITE_VAT_RATE="${{ secrets.VITE_VAT_RATE || '0.22' }}" \
+              ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:development-latest || ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+
+            # Health check
+            sleep 5
+            curl -f http://localhost:3000 || exit 1

@@ -1,0 +1,134 @@
+# IAM role for EC2 instances (used by both backend and frontend)
+resource "aws_iam_role" "ec2_instances" {
+  name = "${local.name_prefix}-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.name_prefix}-ec2-role"
+  }
+}
+
+# IAM instance profile
+resource "aws_iam_instance_profile" "ec2_instances" {
+  name = "${local.name_prefix}-ec2-profile"
+  role = aws_iam_role.ec2_instances.name
+}
+
+# IAM policy for EC2 to read Secrets Manager secret
+resource "aws_iam_role_policy" "ec2_secrets_manager_read" {
+  name = "${local.name_prefix}-ec2-secrets-manager-read"
+  role = aws_iam_role.ec2_instances.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+        ]
+        Resource = [
+          aws_secretsmanager_secret.backend_secrets.arn,
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+        ]
+        Resource = [
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/aws/secretsmanager",
+        ]
+        Condition = {
+          StringEquals = {
+            "kms:ViaService" = "secretsmanager.${var.aws_region}.amazonaws.com"
+          }
+        }
+      },
+    ]
+  })
+}
+
+# Note: Frontend instance also uses this IAM profile (for ECR access)
+# Backend-specific secrets access is included but frontend doesn't need it
+
+# Backend EC2 instance
+resource "aws_instance" "backend" {
+  ami                    = data.aws_ami.amazon_linux.id
+  instance_type          = var.instance_type
+  key_name               = var.key_pair_name
+  vpc_security_group_ids = [aws_security_group.backend.id]
+  iam_instance_profile   = aws_iam_instance_profile.ec2_instances.name
+
+  user_data = base64encode(templatefile("${path.module}/user-data-backend.sh", {
+    github_ssh_public_key = var.github_actions_ssh_public_key
+  }))
+
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 20
+    encrypted   = true
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-backend"
+  }
+}
+
+# Frontend EC2 instance (for SSR)
+resource "aws_instance" "frontend" {
+  ami                    = data.aws_ami.amazon_linux.id
+  instance_type          = var.instance_type
+  key_name               = var.key_pair_name
+  vpc_security_group_ids = [aws_security_group.frontend.id]
+  iam_instance_profile   = aws_iam_instance_profile.ec2_instances.name
+
+  user_data = base64encode(templatefile("${path.module}/user-data-frontend.sh", {
+    github_ssh_public_key = var.github_actions_ssh_public_key
+  }))
+
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 20
+    encrypted   = true
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-frontend"
+  }
+}
+
+# Elastic IP for backend
+resource "aws_eip" "backend" {
+  instance = aws_instance.backend.id
+  domain   = "vpc"
+
+  tags = {
+    Name = "${local.name_prefix}-backend-eip"
+  }
+}
+
+# Elastic IP for frontend
+resource "aws_eip" "frontend" {
+  instance = aws_instance.frontend.id
+  domain   = "vpc"
+
+  tags = {
+    Name = "${local.name_prefix}-frontend-eip"
+  }
+}
+
+

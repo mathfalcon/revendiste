@@ -9,7 +9,7 @@
       "@revendiste/transactional": ["../../packages/transactional/src"],
       "@revendiste/transactional/*": ["../../packages/transactional/src/*"]
     },
-    "rootDir": "../../",
+    "rootDir": ".",
     "outDir": "dist",
     "module": "CommonJS",
     "target": "ES2020",

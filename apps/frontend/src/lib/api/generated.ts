@@ -49,12 +49,15 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
   data: {
     images: {
       imageType: EventImageType;
       url: string;
     }[];
+    lowestAvailableTicketCurrency: string | null;
+    /** @format double */
+    lowestAvailableTicketPrice: number | null;
     venueName: string | null;
     venueAddress: string;
     /** @format date-time */
@@ -76,7 +79,7 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
 
 /** Obtain the return type of a function type */
 export type ReturnTypeEventsServiceAtGetAllEventsPaginated =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
 
 export type GetEventsPaginatedResponse =
   ReturnTypeEventsServiceAtGetAllEventsPaginated;

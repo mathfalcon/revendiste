@@ -73,6 +73,9 @@ export const useFormPersist = <T extends Record<string, any>>(
 ) => {
   const watchedValues = watch();
   const isRestoringRef = useRef(false);
+  const isSavingRef = useRef(false);
+  const initializedRef = useRef(false);
+  const lastValuesRef = useRef<Record<string, unknown>>({});
   // Track restoration per metadataKey to prevent double restoration
   const restoredMetadataKeysRef = useRef<Set<string>>(new Set());
   // Store callback in ref to prevent effect re-runs when callback reference changes
@@ -100,17 +103,53 @@ export const useFormPersist = <T extends Record<string, any>>(
     onDataRestoredRef.current = onDataRestored;
   }, [onDataRestored]);
 
-  // Restore data on mount
-  useEffect(() => {
-    const hasRestoredForThisMetadata =
-      restoredMetadataKeysRef.current.has(currentMetadataKey);
+  // Helper to check if values have changed
+  const valuesHaveChanged = (newValues: Record<string, unknown>): boolean => {
+    const lastValues = lastValuesRef.current;
 
-    if (!enabled || !getStorage() || hasRestoredForThisMetadata) {
+    const newKeys = Object.keys(newValues).sort();
+    const lastKeys = Object.keys(lastValues).sort();
+
+    if (
+      newKeys.length !== lastKeys.length ||
+      !newKeys.every((key, i) => key === lastKeys[i])
+    ) {
+      return true;
+    }
+
+    return newKeys.some(
+      key => JSON.stringify(newValues[key]) !== JSON.stringify(lastValues[key]),
+    );
+  };
+
+  // Restore data on mount (only once)
+  useEffect(() => {
+    // Only restore once, and not if already restoring
+    if (
+      initializedRef.current ||
+      isRestoringRef.current ||
+      !enabled ||
+      !getStorage()
+    ) {
       return;
     }
 
+    const hasRestoredForThisMetadata =
+      restoredMetadataKeysRef.current.has(currentMetadataKey);
+
+    if (hasRestoredForThisMetadata) {
+      initializedRef.current = true;
+      return;
+    }
+
+    isRestoringRef.current = true;
+
     const storageInstance = getStorage();
-    if (!storageInstance) return;
+    if (!storageInstance) {
+      isRestoringRef.current = false;
+      initializedRef.current = true;
+      return;
+    }
 
     const storedData = storageInstance.getItem(storageKey);
 
@@ -126,6 +165,8 @@ export const useFormPersist = <T extends Record<string, any>>(
           if (age > timeout) {
             onTimeout?.();
             clearStorage();
+            isRestoringRef.current = false;
+            initializedRef.current = true;
             return;
           }
         }
@@ -135,6 +176,8 @@ export const useFormPersist = <T extends Record<string, any>>(
           // If metadata is required but not present in stored data, reject
           if (!_metadata) {
             clearStorage();
+            isRestoringRef.current = false;
+            initializedRef.current = true;
             return;
           }
           // Check if all metadata keys match
@@ -144,6 +187,8 @@ export const useFormPersist = <T extends Record<string, any>>(
           if (!metadataMatches) {
             // Metadata doesn't match, clear stale data
             clearStorage();
+            isRestoringRef.current = false;
+            initializedRef.current = true;
             return;
           }
         }
@@ -155,33 +200,31 @@ export const useFormPersist = <T extends Record<string, any>>(
         Object.keys(formData).forEach(key => {
           const typedKey = key as keyof T;
           if (!exclude.includes(typedKey)) {
-            const value = formData[typedKey];
-            if (value !== undefined) {
-              dataToRestore[typedKey] = value;
-              // Cast to Path<T> to satisfy TypeScript - we know these are valid paths
-              // since they come from the form data itself
-              setValue(typedKey as Path<T>, value as any, {
-                shouldValidate: validate,
-                shouldDirty: dirty,
-                shouldTouch: touch,
-              });
+            const storedValue = formData[typedKey];
+            if (storedValue !== undefined) {
+              dataToRestore[typedKey] = storedValue;
             }
           }
         });
 
-        // Use reset if we have data to restore (more reliable for nested structures)
+        // Only restore if we have data to restore
         if (Object.keys(dataToRestore).length > 0) {
-          // Mark as restored for this specific metadata key BEFORE any operations
-          // This prevents double restoration even if React StrictMode runs effects twice
+          // Mark as restored for this specific metadata key
           restoredMetadataKeysRef.current.add(currentMetadataKey);
 
-          isRestoringRef.current = true;
+          // Store last values to prevent unnecessary saves
+          lastValuesRef.current = structuredClone(dataToRestore) as Record<
+            string,
+            unknown
+          >;
+
           reset(dataToRestore as T);
 
-          // Call the callback using the ref to avoid stale closure issues
+          // Call callback since we're actually restoring data
           onDataRestoredRef.current?.(dataToRestore);
         } else {
-          clearStorage();
+          // No data to restore, mark as restored to prevent future attempts
+          restoredMetadataKeysRef.current.add(currentMetadataKey);
         }
       } catch (error) {
         // Invalid JSON or corrupted data, clear it
@@ -189,33 +232,41 @@ export const useFormPersist = <T extends Record<string, any>>(
         clearStorage();
       }
     }
+
+    isRestoringRef.current = false;
+    initializedRef.current = true;
   }, [
     storageKey,
     storage,
-    setValue,
     reset,
     exclude,
-    validate,
-    dirty,
-    touch,
     currentMetadataKey,
     timeout,
     onTimeout,
     enabled,
+    metadata,
   ]);
 
   // Persist data when form values change
   useEffect(() => {
-    if (!enabled || !getStorage() || isRestoringRef.current) {
-      isRestoringRef.current = false;
+    // Don't save if restoring, not initialized, or already saving
+    if (
+      !enabled ||
+      !getStorage() ||
+      isRestoringRef.current ||
+      !initializedRef.current ||
+      isSavingRef.current
+    ) {
       return;
     }
 
     const storageInstance = getStorage();
     if (!storageInstance) return;
 
+    isSavingRef.current = true;
+
     // Filter out excluded fields
-    const valuesToStore = exclude.length
+    const valuesToStore: Record<string, any> = exclude.length
       ? (Object.entries(watchedValues) as [keyof T, any][])
           .filter(([key]) => !exclude.includes(key))
           .reduce(
@@ -227,12 +278,12 @@ export const useFormPersist = <T extends Record<string, any>>(
           )
       : {...watchedValues};
 
-    // Only store if there are actual values
+    // Only store if there are actual values and they've changed
     const hasValues = Object.values(valuesToStore).some(
       val => val !== undefined && val !== null && val !== '',
     );
 
-    if (hasValues) {
+    if (hasValues && valuesHaveChanged(valuesToStore)) {
       const dataToStore: Record<string, any> = {
         ...valuesToStore,
       };
@@ -249,14 +300,19 @@ export const useFormPersist = <T extends Record<string, any>>(
 
       try {
         storageInstance.setItem(storageKey, JSON.stringify(dataToStore));
+        // Update last saved values
+        lastValuesRef.current = structuredClone(valuesToStore);
       } catch (error) {
         // Storage quota exceeded or other error
         console.warn('Failed to persist form data:', error);
       }
-    } else {
+    } else if (!hasValues) {
       // No values to store, clear storage
       clearStorage();
+      lastValuesRef.current = {};
     }
+
+    isSavingRef.current = false;
   }, [watchedValues, storageKey, storage, exclude, metadata, timeout, enabled]);
 
   return {

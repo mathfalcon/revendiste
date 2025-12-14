@@ -4,6 +4,7 @@ import tsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import viteReact from '@vitejs/plugin-react';
 import {generateApiPlugin} from './vite-plugin-generate-api';
+import {nitro} from 'nitro/vite';
 
 export default defineConfig({
   server: {
@@ -24,6 +25,7 @@ export default defineConfig({
       runOnChange: true,
       watchFiles: ['../backend/src/swagger/swagger.json'],
     }),
+    nitro(),
     tanstackStart(),
     viteReact(),
     tailwindcss(),

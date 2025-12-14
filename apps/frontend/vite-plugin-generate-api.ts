@@ -151,11 +151,18 @@ export function generateApiPlugin(
     }
   };
 
+  let isBuild = false;
+
   return {
     name: 'generate-api',
     enforce: 'pre',
+    configResolved(config) {
+      // Check if we're in build mode (not dev mode)
+      isBuild = config.command === 'build';
+    },
     buildStart() {
-      if (runOnStart && !hasRun) {
+      // Only run in dev mode, not during builds
+      if (!isBuild && runOnStart && !hasRun) {
         hasRun = true;
         // Run asynchronously without blocking - don't await
         runCommand().catch(() => {
@@ -165,6 +172,7 @@ export function generateApiPlugin(
       }
     },
     configureServer(server) {
+      // configureServer only runs in dev mode, so we can safely run here
       if (runOnChange && watchFiles.length > 0) {
         server.watcher.on('change', file => {
           if (watchFiles.some(pattern => file.includes(pattern))) {
