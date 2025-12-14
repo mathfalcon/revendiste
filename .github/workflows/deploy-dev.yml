@@ -134,8 +134,27 @@ jobs:
               echo "Error: Failed to retrieve secret from AWS Secrets Manager"
               echo "$SECRET_JSON"
               echo ""
-              echo "This usually means the EC2 instance IAM role doesn't have permission."
-              echo "Please run 'terraform apply' to ensure IAM policies are up to date."
+              if echo "$SECRET_JSON" | grep -q "ResourceNotFoundException\|can't find the specified secret value"; then
+                echo "The secret exists but has no value. Please add a secret value:"
+                echo "aws secretsmanager put-secret-value \\"
+                echo "  --secret-id revendiste/dev/backend-secrets \\"
+                echo "  --secret-string '{\"KEY\":\"value\"}' \\"
+                echo "  --region ${{ env.AWS_REGION }}"
+              else
+                echo "This usually means the EC2 instance IAM role doesn't have permission."
+                echo "Please run 'terraform apply' to ensure IAM policies are up to date."
+              fi
+              exit 1
+            fi
+
+            # Check if secret value is empty
+            if [ -z "$SECRET_JSON" ] || [ "$SECRET_JSON" = "null" ]; then
+              echo "Error: Secret exists but has no value"
+              echo "Please add a secret value using:"
+              echo "aws secretsmanager put-secret-value \\"
+              echo "  --secret-id revendiste/dev/backend-secrets \\"
+              echo "  --secret-string '{\"KEY\":\"value\"}' \\"
+              echo "  --region ${{ env.AWS_REGION }}"
               exit 1
             fi
 
