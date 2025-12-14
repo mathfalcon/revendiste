@@ -103,18 +103,6 @@ jobs:
     environment: development
 
     steps:
-      - name: Validate deployment secrets
-        run: |
-          if [ -z "${{ secrets.DEV_BACKEND_HOST }}" ]; then
-            echo "Error: DEV_BACKEND_HOST secret is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.DEV_EC2_SSH_KEY }}" ]; then
-            echo "Error: DEV_EC2_SSH_KEY secret is not set"
-            exit 1
-          fi
-          echo "✓ All deployment secrets are configured"
-
       - name: Deploy backend to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -125,22 +113,41 @@ jobs:
             # Login to ECR (IAM role handles authentication)
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
 
-            # Pull latest backend image
-            docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:development-latest || docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+            # Pull latest backend image (try development tag first, then latest)
+            docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:development || docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
             # Stop and remove old backend container
             docker stop revendiste-backend || true
             docker rm revendiste-backend || true
 
             # Get secret from AWS Secrets Manager and convert to Docker env file format
+            set +e
             SECRET_JSON=$(aws secretsmanager get-secret-value \
               --secret-id revendiste/dev/backend-secrets \
+              --region ${{ env.AWS_REGION }} \
               --query 'SecretString' \
-              --output text)
+              --output text 2>&1)
+            SECRET_EXIT_CODE=$?
+            set -e
+
+            if [ $SECRET_EXIT_CODE -ne 0 ]; then
+              echo "Error: Failed to retrieve secret from AWS Secrets Manager"
+              echo "$SECRET_JSON"
+              echo ""
+              echo "This usually means the EC2 instance IAM role doesn't have permission."
+              echo "Please run 'terraform apply' to ensure IAM policies are up to date."
+              exit 1
+            fi
 
             # Convert JSON to KEY=VALUE format (one per line) for Docker --env-file
             ENV_FILE=$(mktemp)
             echo "$SECRET_JSON" | jq -r 'to_entries[] | "\(.key)=\(.value)"' > "$ENV_FILE"
+
+            # Determine which image tag to use
+            IMAGE_TAG="development"
+            if ! docker image inspect ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:development >/dev/null 2>&1; then
+              IMAGE_TAG="latest"
+            fi
 
             # Run new backend container with all environment variables from secrets
             docker run -d \
@@ -148,7 +155,7 @@ jobs:
               --restart unless-stopped \
               -p 3001:3001 \
               --env-file "$ENV_FILE" \
-              ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:development-latest || ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+              ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:$IMAGE_TAG
 
             # Clean up temp file
             rm -f "$ENV_FILE"
@@ -166,18 +173,6 @@ jobs:
     environment: development
 
     steps:
-      - name: Validate deployment secrets
-        run: |
-          if [ -z "${{ secrets.DEV_FRONTEND_HOST }}" ]; then
-            echo "Error: DEV_FRONTEND_HOST secret is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.DEV_EC2_SSH_KEY }}" ]; then
-            echo "Error: DEV_EC2_SSH_KEY secret is not set"
-            exit 1
-          fi
-          echo "✓ All deployment secrets are configured"
-
       - name: Deploy frontend to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
