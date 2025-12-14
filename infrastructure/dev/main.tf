@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.5.0"
 
   required_providers {
     aws = {
@@ -12,13 +12,12 @@ terraform {
     }
   }
 
-  # Use Terraform Cloud or local backend
-  # backend "remote" {
-  #   organization = "your-org"
-  #   workspaces {
-  #     name = "revendiste-dev"
-  #   }
-  # }
+  cloud {
+    organization = "revendiste" # Update with your Terraform Cloud organization name
+    workspaces {
+      name = "revendiste-dev"
+    }
+  }
 }
 
 # AWS Provider

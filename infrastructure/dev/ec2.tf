@@ -79,7 +79,7 @@ resource "aws_instance" "backend" {
 
   root_block_device {
     volume_type = "gp3"
-    volume_size = 20
+    volume_size = 30
     encrypted   = true
   }
 
@@ -102,7 +102,7 @@ resource "aws_instance" "frontend" {
 
   root_block_device {
     volume_type = "gp3"
-    volume_size = 20
+    volume_size = 30
     encrypted   = true
   }
 
