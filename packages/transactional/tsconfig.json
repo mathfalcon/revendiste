@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "composite": true,
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "strictNullChecks": true,
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["src/*"],
+      "@revendiste/shared": ["../shared/src"],
+      "@revendiste/shared/*": ["../shared/src/*"]
+    }
+  },
+  "include": ["src/**/*", "emails/**/*", "tailwind.config.ts"],
+  "exclude": ["node_modules", ".react-email", "dist"],
+  "references": [
+    {
+      "path": "../shared"
+    }
+  ]
+}

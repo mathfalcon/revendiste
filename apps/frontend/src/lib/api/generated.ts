@@ -10,12 +10,20 @@
  * ---------------------------------------------------------------
  */
 
-export enum VerificationStatus {
-  Unverified = "unverified",
-  Verified = "verified",
-  Transferable = "transferable",
-  Failed = "failed",
-  Expired = "expired",
+export enum NotificationType {
+  DocumentReminder = "document_reminder",
+  OrderConfirmed = "order_confirmed",
+  OrderExpired = "order_expired",
+  PaymentFailed = "payment_failed",
+  PaymentSucceeded = "payment_succeeded",
+  TicketSoldBuyer = "ticket_sold_buyer",
+  TicketSoldSeller = "ticket_sold_seller",
+}
+
+export enum UploadAvailabilityReason {
+  EventEnded = "event_ended",
+  TooEarly = "too_early",
+  Unknown = "unknown",
 }
 
 export enum EventTicketCurrency {
@@ -41,12 +49,15 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
   data: {
     images: {
       imageType: EventImageType;
       url: string;
     }[];
+    lowestAvailableTicketCurrency: string | null;
+    /** @format double */
+    lowestAvailableTicketPrice: number | null;
     venueName: string | null;
     venueAddress: string;
     /** @format date-time */
@@ -66,30 +77,12 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
   pagination: PaginationMeta;
 }
 
-export interface GetEventsPaginatedResponse {
-  data: {
-    images: {
-      imageType: EventImageType;
-      url: string;
-    }[];
-    venueName: string | null;
-    venueAddress: string;
-    /** @format date-time */
-    updatedAt: string;
-    status: string;
-    name: string;
-    id: string;
-    externalUrl: string;
-    /** @format date-time */
-    eventStartDate: string;
-    /** @format date-time */
-    eventEndDate: string;
-    description: string | null;
-    /** @format date-time */
-    createdAt: string;
-  }[];
-  pagination: PaginationMeta;
-}
+/** Obtain the return type of a function type */
+export type ReturnTypeEventsServiceAtGetAllEventsPaginated =
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
+
+export type GetEventsPaginatedResponse =
+  ReturnTypeEventsServiceAtGetAllEventsPaginated;
 
 export interface InferTypeofPaginationSchema {
   sortOrder?: "asc" | "desc";
@@ -102,13 +95,42 @@ export interface InferTypeofPaginationSchema {
 
 export type PaginationQuery = InferTypeofPaginationSchema;
 
-export interface GetEventByIdResponse {
+/** Obtain the return type of a function type */
+export type ReturnTypeEventsServiceAtGetBySearch = {
+  eventImages: {
+    imageType: EventImageType;
+    url: string;
+  }[];
+  venueName: string | null;
+  venueAddress: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  name: string;
+  id: string;
+  externalUrl: string;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  description: string | null;
+  /** @format date-time */
+  createdAt: string;
+}[];
+
+export type SearchEventsResponse = ReturnTypeEventsServiceAtGetBySearch;
+
+/** Obtain the return type of a function type */
+export interface ReturnTypeEventsServiceAtGetEventById {
   ticketWaves: {
-    isSoldOut: boolean;
-    isAvailable: boolean;
+    priceGroups: {
+      availableTickets: string | number;
+      price: string;
+    }[];
     faceValue: string;
     currency: EventTicketCurrency;
     name: string;
+    id: string;
     description: string | null;
   }[];
   eventImages: {
@@ -132,293 +154,7 @@ export interface GetEventByIdResponse {
   createdAt: string;
 }
 
-/**
- * If you want to provide custom types for the user.publicMetadata object,
- * simply redeclare this rule in the global namespace.
- * Every user object will use the provided type.
- */
-export type UserPublicMetadata = Record<string, any>;
-
-/**
- * If you want to provide custom types for the user.privateMetadata object,
- * simply redeclare this rule in the global namespace.
- * Every user object will use the provided type.
- */
-export type UserPrivateMetadata = Record<string, any>;
-
-/**
- * If you want to provide custom types for the user.unsafeMetadata object,
- * simply redeclare this rule in the global namespace.
- * Every user object will use the provided type.
- */
-export type UserUnsafeMetadata = Record<string, any>;
-
-/**
- * The URL interface represents an object providing static methods used for creating object URLs.
- *
- * [MDN Reference](https://developer.mozilla.org/docs/Web/API/URL)
- * `URL` class is a global reference for `import { URL } from 'url'`
- * https://nodejs.org/api/url.html#the-whatwg-url-api
- */
-export type UrlURL = string;
-
-/** The Backend `Verification` object describes the state of the verification process of a sign-in or sign-up attempt. */
-export interface Verification {
-  /**
-   * The state of the verification.
-   *
-   * <ul>
-   *  <li>`unverified`: The verification has not been verified yet.</li>
-   *  <li>`verified`: The verification has been verified.</li>
-   *  <li>`transferable`: The verification is transferable to between sign-in and sign-up flows.</li>
-   *  <li>`failed`: The verification has failed.</li>
-   *  <li>`expired`: The verification has expired.</li>
-   * </ul>
-   */
-  status: VerificationStatus;
-  /** The strategy pertaining to the parent sign-up or sign-in attempt. */
-  strategy: string;
-  /** The redirect URL for an external verification. */
-  externalVerificationRedirectURL: UrlURL | null;
-  /**
-   * The number of attempts related to the verification.
-   * @format double
-   */
-  attempts: number | null;
-  /**
-   * The time the verification will expire at.
-   * @format double
-   */
-  expireAt: number | null;
-  /** The [nonce](https://en.wikipedia.org/wiki/Cryptographic_nonce) pertaining to the verification. */
-  nonce: string | null;
-  /** The message that will be presented to the user's Web3 wallet for signing during authentication. This follows the [Sign-In with Ethereum (SIWE) protocol format](https://docs.login.xyz/general-information/siwe-overview/eip-4361#example-message-to-be-signed), which typically includes details like the requesting service, wallet address, terms acceptance, nonce, timestamp, and any additional resources. */
-  message: string | null;
-}
-
-/** Contains information about any identifications that might be linked to the email address. */
-export interface IdentificationLink {
-  /** The unique identifier for the identification link. */
-  id: string;
-  /** The type of the identification link, e.g., `"email_address"`, `"phone_number"`, etc. */
-  type: string;
-}
-
-/**
- * The Backend `EmailAddress` object is a model around an email address. Email addresses are one of the [identifiers](https://clerk.com/docs/authentication/configuration/sign-up-sign-in-options#identifiers) used to provide identification for users.
- *
- * Email addresses must be **verified** to ensure that they are assigned to their rightful owners. The `EmailAddress` object holds all necessary state around the verification process.
- *
- * For implementation examples for adding and verifying email addresses, see the [email link custom flow](https://clerk.com/docs/custom-flows/email-links) and [email code custom flow](https://clerk.com/docs/custom-flows/add-email) guides.
- */
-export interface EmailAddress {
-  /** The unique identifier for the email address. */
-  id: string;
-  /** The value of the email address. */
-  emailAddress: string;
-  /** An object holding information on the verification of the email address. */
-  verification: Verification | null;
-  /** An array of objects containing information about any identifications that might be linked to the email address. */
-  linkedTo: IdentificationLink[];
-}
-
-/**
- * The Backend `PhoneNumber` object describes a phone number. Phone numbers can be used as a proof of identification for users, or simply as a means of contacting users.
- *
- * Phone numbers must be **verified** to ensure that they can be assigned to their rightful owners. The `PhoneNumber` object holds all the necessary state around the verification process.
- *
- * Finally, phone numbers can be used as part of [multi-factor authentication](https://clerk.com/docs/authentication/configuration/sign-up-sign-in-options#multi-factor-authentication). During sign in, users can opt in to an extra verification step where they will receive an SMS message with a one-time code. This code must be entered to complete the sign in process.
- */
-export interface PhoneNumber {
-  /** The unique identifier for this phone number. */
-  id: string;
-  /** The value of this phone number, in [E.164 format](https://en.wikipedia.org/wiki/E.164). */
-  phoneNumber: string;
-  /** Set to `true` if this phone number is reserved for multi-factor authentication (2FA). Set to `false` otherwise. */
-  reservedForSecondFactor: boolean;
-  /** Set to `true` if this phone number is the default second factor. Set to `false` otherwise. A user must have exactly one default second factor, if multi-factor authentication (2FA) is enabled. */
-  defaultSecondFactor: boolean;
-  /** An object holding information on the verification of this phone number. */
-  verification: Verification | null;
-  /** An object containing information about any other identification that might be linked to this phone number. */
-  linkedTo: IdentificationLink[];
-}
-
-/**
- * The Backend `Web3Wallet` object describes a Web3 wallet address. The address can be used as a proof of identification for users.
- *
- * Web3 addresses must be verified to ensure that they can be assigned to their rightful owners. The verification is completed via Web3 wallet browser extensions, such as [Metamask](https://metamask.io/), [Coinbase Wallet](https://www.coinbase.com/wallet), and [OKX Wallet](https://www.okx.com/help/section/faq-web3-wallet). The `Web3Wallet3` object holds all the necessary state around the verification process.
- */
-export interface Web3Wallet {
-  /** The unique ID for the Web3 wallet. */
-  id: string;
-  /** The Web3 wallet address, made up of 0x + 40 hexadecimal characters. */
-  web3Wallet: string;
-  /** An object holding information on the verification of this Web3 wallet. */
-  verification: Verification | null;
-}
-
-/** Construct a type with a set of properties K of type T */
-export type RecordStringUnknown = Record<string, any>;
-
-/**
- * The Backend `ExternalAccount` object is a model around an identification obtained by an external provider (e.g. a social provider such as Google).
- *
- * External account must be verified, so that you can make sure they can be assigned to their rightful owners. The `ExternalAccount` object holds all necessary state around the verification process.
- */
-export interface ExternalAccount {
-  /** The unique identifier for this external account. */
-  id: string;
-  /** The provider name (e.g., `google`). */
-  provider: string;
-  /** The identification with which this external account is associated. */
-  identificationId: string;
-  /** The unique ID of the user in the provider. */
-  externalId: string;
-  /** The scopes that the user has granted access to. */
-  approvedScopes: string;
-  /** The user's email address. */
-  emailAddress: string;
-  /** The user's first name. */
-  firstName: string;
-  /** The user's last name. */
-  lastName: string;
-  /** The user's image URL. */
-  imageUrl: string;
-  /** The user's username. */
-  username: string | null;
-  /** The phone number related to this specific external account. */
-  phoneNumber: string | null;
-  /** Metadata that can be read from the Frontend API and Backend API and can be set only from the Backend API. */
-  publicMetadata: RecordStringUnknown | null;
-  /** A descriptive label to differentiate multiple external accounts of the same user for the same provider. */
-  label: string | null;
-  /** An object holding information on the verification of this external account. */
-  verification: Verification | null;
-}
-
-export interface SamlAccountConnection {
-  id: string;
-  name: string;
-  domain: string;
-  active: boolean;
-  provider: string;
-  syncUserAttributes: boolean;
-  allowSubdomains: boolean;
-  allowIdpInitiated: boolean;
-  /** @format double */
-  createdAt: number;
-  /** @format double */
-  updatedAt: number;
-}
-
-/** The Backend `SamlAccount` object describes a SAML account. */
-export interface SamlAccount {
-  /** The unique identifier for the SAML account. */
-  id: string;
-  /** The provider of the SAML account. */
-  provider: string;
-  /** The user's ID as used in the provider. */
-  providerUserId: string | null;
-  /** A boolean that indicates whether the SAML account is active. */
-  active: boolean;
-  /** The email address of the SAML account. */
-  emailAddress: string;
-  /** The first name of the SAML account. */
-  firstName: string;
-  /** The last name of the SAML account. */
-  lastName: string;
-  /** The verification of the SAML account. */
-  verification: Verification | null;
-  /** The SAML connection of the SAML account. */
-  samlConnection: SamlAccountConnection | null;
-}
-
-/** The Backend `User` object is similar to the `User` object as it holds information about a user of your application, such as their unique identifier, name, email addresses, phone numbers, and more. However, the Backend `User` object is different from the `User` object in that it is used in the [Backend API](https://clerk.com/docs/reference/backend-api/tag/Users#operation/GetUser){{ target: '_blank' }} and is not directly accessible from the Frontend API. */
-export interface User {
-  /** The unique identifier for the user. */
-  id: string;
-  /** A boolean indicating whether the user has a password on their account. */
-  passwordEnabled: boolean;
-  /** A boolean indicating whether the user has enabled TOTP by generating a TOTP secret and verifying it via an authenticator app. */
-  totpEnabled: boolean;
-  /** A boolean indicating whether the user has enabled Backup codes. */
-  backupCodeEnabled: boolean;
-  /** A boolean indicating whether the user has enabled two-factor authentication. */
-  twoFactorEnabled: boolean;
-  /** A boolean indicating whether the user is banned or not. */
-  banned: boolean;
-  /** A boolean indicating whether the user is banned or not. */
-  locked: boolean;
-  /**
-   * The date when the user was first created.
-   * @format double
-   */
-  createdAt: number;
-  /**
-   * The date when the user was last updated.
-   * @format double
-   */
-  updatedAt: number;
-  /** The URL of the user's profile image. */
-  imageUrl: string;
-  /** A getter boolean to check if the user has uploaded an image or one was copied from OAuth. Returns `false` if Clerk is displaying an avatar for the user. */
-  hasImage: boolean;
-  /** The ID for the `EmailAddress` that the user has set as primary. */
-  primaryEmailAddressId: string | null;
-  /** The ID for the `PhoneNumber` that the user has set as primary. */
-  primaryPhoneNumberId: string | null;
-  /** The ID for the [`Web3Wallet`](https://clerk.com/docs/references/backend/types/backend-web3-wallet) that the user signed up with. */
-  primaryWeb3WalletId: string | null;
-  /**
-   * The date when the user last signed in. May be empty if the user has never signed in.
-   * @format double
-   */
-  lastSignInAt: number | null;
-  /** The ID of the user as used in your external systems. Must be unique across your instance. */
-  externalId: string | null;
-  /** The user's username. */
-  username: string | null;
-  /** The user's first name. */
-  firstName: string | null;
-  /** The user's last name. */
-  lastName: string | null;
-  /** Metadata that can be read from the Frontend API and [Backend API](https://clerk.com/docs/reference/backend-api){{ target: '_blank' }} and can be set only from the Backend API. */
-  publicMetadata: UserPublicMetadata;
-  /** Metadata that can be read and set only from the [Backend API](https://clerk.com/docs/reference/backend-api){{ target: '_blank' }}. */
-  privateMetadata: UserPrivateMetadata;
-  /** Metadata that can be read and set from the Frontend API. It's considered unsafe because it can be modified from the frontend. */
-  unsafeMetadata: UserUnsafeMetadata;
-  /** An array of all the `EmailAddress` objects associated with the user. Includes the primary. */
-  emailAddresses: EmailAddress[];
-  /** An array of all the `PhoneNumber` objects associated with the user. Includes the primary. */
-  phoneNumbers: PhoneNumber[];
-  /** An array of all the `Web3Wallet` objects associated with the user. Includes the primary. */
-  web3Wallets: Web3Wallet[];
-  /** An array of all the `ExternalAccount` objects associated with the user via OAuth. **Note**: This includes both verified & unverified external accounts. */
-  externalAccounts: ExternalAccount[];
-  /** An array of all the `SamlAccount` objects associated with the user via SAML. */
-  samlAccounts: SamlAccount[];
-  /**
-   * Date when the user was last active.
-   * @format double
-   */
-  lastActiveAt: number | null;
-  /** A boolean indicating whether the organization creation is enabled for the user or not. */
-  createOrganizationEnabled: boolean;
-  /**
-   * An integer indicating the number of organizations that can be created by the user. If the value is `0`, then the user can create unlimited organizations. Default is `null`.
-   * @format double
-   */
-  createOrganizationsLimit: number | null;
-  /** A boolean indicating whether the user can delete their own account. */
-  deleteSelfEnabled: boolean;
-  /**
-   * The unix timestamp of when the user accepted the legal requirements. `null` if [**Require express consent to legal documents**](https://clerk.com/docs/authentication/configuration/legal-compliance) is not enabled.
-   * @format double
-   */
-  legalAcceptedAt: number | null;
-}
+export type GetEventByIdResponse = ReturnTypeEventsServiceAtGetEventById;
 
 /** Construct a type with a set of properties K of type T */
 export type RecordStringAny = Record<string, any>;
@@ -445,6 +181,459 @@ export interface HealthCheck {
     database?: HealthCheckResult;
   };
 }
+
+/** Obtain the return type of a function type */
+export interface ReturnTypeTicketListingsServiceAtCreateTicketListing {
+  ticketWaveId: string;
+  /** @format date-time */
+  soldAt: string | null;
+  publisherUserId: string;
+  /** @format date-time */
+  updatedAt: string;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+  listingTickets: {
+    /** @format double */
+    ticketNumber: number;
+    price: string;
+    listingId: string;
+    /** @format date-time */
+    documentUploadRequiredNotifiedAt: string | null;
+    /** @format date-time */
+    documentUploadedAt: string | null;
+    documentType: string | null;
+    /** @format double */
+    documentSizeBytes: number | null;
+    documentPath: string | null;
+    documentOriginalName: string | null;
+    /** @format date-time */
+    cancelledAt: string | null;
+    /** @format date-time */
+    soldAt: string | null;
+    /** @format date-time */
+    updatedAt: string;
+    id: string;
+    /** @format date-time */
+    deletedAt: string | null;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+}
+
+export type CreateTicketListingResponse =
+  ReturnTypeTicketListingsServiceAtCreateTicketListing;
+
+export interface UnauthorizedError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+}
+
+export interface BadRequestError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+}
+
+export interface NotFoundError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+}
+
+export interface ValidationError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+  /** Construct a type with a set of properties K of type T */
+  metadata?: RecordStringAny;
+}
+
+export interface CreateTicketListingRouteBody {
+  /** @format double */
+  quantity: number;
+  /** @format double */
+  price: number;
+  ticketWaveId: string;
+  eventId: string;
+}
+
+/** Obtain the return type of a function type */
+export type ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets = {
+  event: {
+    venueName: string | null;
+    venueAddress: string;
+    platform: string;
+    name: string;
+    id: string;
+    eventStartDate: string;
+    eventEndDate: string;
+    description: string | null;
+  };
+  ticketWave: {
+    currency: EventTicketCurrency;
+    name: string;
+    id: string;
+  };
+  /** @format date-time */
+  soldAt: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+  tickets: {
+    document: {
+      uploadedAt: string;
+      status: string;
+      id: string;
+    } | null;
+    /** @format double */
+    ticketNumber: number;
+    price: string;
+    cancelledAt: string | null;
+    soldAt: string | null;
+    updatedAt: string;
+    id: string;
+    createdAt: string;
+    uploadUnavailableReason?: UploadAvailabilityReason;
+    canUploadDocument: boolean;
+    hasDocument: boolean;
+  }[];
+}[];
+
+export type GetUserListingsResponse =
+  ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets;
+
+/** Recursively unwraps the "awaited type" of a type. Non-promise "thenables" should resolve to `never`. This emulates the behavior of `await`. */
+export interface AwaitedReturnTypeTicketDocumentServiceAtUploadTicketDocument {
+  documentUrl: string;
+  document?: {
+    /** @format double */
+    version: number;
+    verifiedBy: string | null;
+    /** @format date-time */
+    verifiedAt: string | null;
+    /** @format date-time */
+    uploadedAt: string;
+    ticketId: string;
+    storagePath: string;
+    /** @format double */
+    sizeBytes: number;
+    originalName: string;
+    mimeType: string;
+    isPrimary: boolean;
+    fileName: string;
+    documentType: string;
+    /** @format date-time */
+    updatedAt: string;
+    status: string;
+    id: string;
+    /** @format date-time */
+    deletedAt: string | null;
+    /** @format date-time */
+    createdAt: string;
+  };
+}
+
+export type UploadDocumentResponse =
+  AwaitedReturnTypeTicketDocumentServiceAtUploadTicketDocument;
+
+/** Obtain the return type of a function type */
+export interface ReturnTypeOrdersServiceAtCreateOrder {
+  vatOnCommission: string;
+  totalAmount: string;
+  subtotalAmount: string;
+  /** @format date-time */
+  reservationExpiresAt: string;
+  platformCommission: string;
+  /** @format date-time */
+  confirmedAt: string | null;
+  userId: string;
+  /** @format date-time */
+  cancelledAt: string | null;
+  currency: EventTicketCurrency;
+  eventId: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "confirmed" | "expired" | "pending";
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export type CreateOrderResponse = ReturnTypeOrdersServiceAtCreateOrder;
+
+/** Construct a type with a set of properties K of type T */
+export type RecordStringRecordStringNumber = object;
+
+export interface CreateOrderRouteBody {
+  /** Construct a type with a set of properties K of type T */
+  ticketSelections: RecordStringRecordStringNumber;
+  eventId: string;
+}
+
+/** Obtain the return type of a function type */
+export interface ReturnTypeOrdersServiceAtGetOrderById {
+  items: {
+    ticketWaveName: string | null;
+    subtotal: string | null;
+    /** @format double */
+    quantity: number | null;
+    pricePerTicket: string | null;
+    ticketWaveId: string | null;
+    id: string | null;
+    currency: EventTicketCurrency | null;
+  }[];
+  event: {
+    images: {
+      imageType: EventImageType;
+      url: string;
+    }[];
+    venueName: string | null;
+    venueAddress: string | null;
+    platform: string | null;
+    name: string | null;
+    id: string | null;
+    eventStartDate: string | null;
+    eventEndDate: string | null;
+  };
+  vatOnCommission: string;
+  totalAmount: string;
+  subtotalAmount: string;
+  /** @format date-time */
+  reservationExpiresAt: string;
+  platformCommission: string;
+  /** @format date-time */
+  confirmedAt: string | null;
+  userId: string;
+  /** @format date-time */
+  cancelledAt: string | null;
+  currency: EventTicketCurrency;
+  eventId: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "confirmed" | "expired" | "pending";
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export type GetOrderByIdResponse = ReturnTypeOrdersServiceAtGetOrderById;
+
+/** Obtain the return type of a function type */
+export type ReturnTypeOrdersServiceAtGetUserOrders = {
+  items: {
+    ticketWaveName: string | null;
+    subtotal: string;
+    /** @format double */
+    quantity: number;
+    pricePerTicket: string;
+    ticketWaveId: string;
+    id: string;
+    currency: EventTicketCurrency | null;
+  }[];
+  event: {
+    images: {
+      imageType: EventImageType;
+      url: string;
+    }[];
+    venueName: string | null;
+    venueAddress: string | null;
+    platform: string | null;
+    name: string | null;
+    id: string | null;
+    eventStartDate: string | null;
+    eventEndDate: string | null;
+  };
+  vatOnCommission: string;
+  totalAmount: string;
+  subtotalAmount: string;
+  /** @format date-time */
+  reservationExpiresAt: string;
+  platformCommission: string;
+  /** @format date-time */
+  confirmedAt: string | null;
+  userId: string;
+  /** @format date-time */
+  cancelledAt: string | null;
+  currency: EventTicketCurrency;
+  eventId: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "confirmed" | "expired" | "pending";
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}[];
+
+export type GetUserOrdersResponse = ReturnTypeOrdersServiceAtGetUserOrders;
+
+/** Obtain the return type of a function type */
+export interface ReturnTypeOrdersServiceAtGetOrderTickets {
+  tickets: {
+    document: {
+      url: string;
+      mimeType: string | null;
+      uploadedAt: string | null;
+      status: string | null;
+      id: string | null;
+    };
+    ticketWave: {
+      name: string;
+    } | null;
+    hasDocument: boolean;
+    /** @format date-time */
+    soldAt: string | null;
+    price: string;
+    id: string;
+  }[];
+  currency: EventTicketCurrency;
+  vatOnCommission: string;
+  platformCommission: string;
+  totalAmount: string;
+  subtotalAmount: string;
+  event: {
+    eventStartDate: string | null;
+    name: string | null;
+  };
+  orderId: string;
+}
+
+export type GetOrderTicketsResponse = ReturnTypeOrdersServiceAtGetOrderTickets;
+
+export interface DLocalWebhookrRouteBody {
+  payment_id: string;
+}
+
+export interface CreatePaymentLinkResponse {
+  redirectUrl: string;
+  paymentId: string;
+}
+
+export type JsonArray = JsonValue[];
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
+export type JsonObject = Record<string, JsonValue>;
+
+export type JsonPrimitive = boolean | number | string | null;
+
+/** From T, pick a set of properties whose keys are in the union K */
+export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDescription {
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  id: string;
+  status: "pending" | "failed" | "seen" | "sent";
+  /** @format date-time */
+  updatedAt: string;
+  channels: ("email" | "in_app" | "sms")[];
+  channelStatus: string | number | boolean | JsonArray | JsonObject | null;
+  /** @format double */
+  retryCount: number;
+  /** @format date-time */
+  seenAt: string | null;
+  userId: string;
+}
+
+/** Construct a type with the properties of T except for those in type K. */
+export type OmitNotificationMetadataOrActionsOrTypeOrTitleOrDescription =
+  PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDescription;
+
+/**
+ * Typed metadata based on notification type
+ * Extracts the specific metadata type from the discriminated union
+ */
+export type TypedNotificationMetadataNotificationMetadata =
+  ExtractNotificationMetadataTypeNotificationMetadata;
+
+/** Extract from T those types that are assignable to U */
+export type ExtractNotificationMetadataTypeNotificationMetadata =
+  TypedNotificationMetadataNotificationMetadata;
+
+/** Extract from T those types that are assignable to U */
+export type ExtractNotificationMetadataTypeNotificationAtType =
+  TypedNotificationMetadataNotificationMetadata;
+
+/**
+ * Typed metadata based on notification type
+ * Extracts the specific metadata type from the discriminated union
+ */
+export type TypedNotificationMetadataNotificationAtType =
+  ExtractNotificationMetadataTypeNotificationAtType;
+
+/** Construct a type with a set of properties K of type T */
+export type RecordStringUnknown = object;
+
+export interface InferTypeofBaseActionSchema {
+  /** Construct a type with a set of properties K of type T */
+  data?: RecordStringUnknown;
+  url?: string;
+  label: string;
+  type: "upload_documents" | "view_order" | "retry_payment";
+}
+
+export type NotificationAction = InferTypeofBaseActionSchema;
+
+/**
+ * Typed notification response with parsed metadata and actions
+ * This ensures type safety when reading notifications from the database
+ * Title and description are generated from type + metadata, not stored in DB
+ * For backwards compatibility, uses the generic type
+ */
+export type TypedNotification =
+  OmitNotificationMetadataOrActionsOrTypeOrTitleOrDescription & {
+    actions: NotificationAction[] | null;
+    metadata: TypedNotificationMetadataNotificationAtType | null;
+    description: string;
+    title: string;
+    type: NotificationType;
+  };
+
+export interface PaginatedResponseTypedNotification {
+  data: TypedNotification[];
+  pagination: PaginationMeta;
+}
+
+export type GetNotificationsResponse = PaginatedResponseTypedNotification;
+
+export interface GetNotificationsQuery {
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+  includeSeen?: boolean;
+}
+
+/** @format double */
+export type GetUnseenCountResponse = number;
+
+export type MarkAsSeenResponse = TypedNotification | null;
+
+export type MarkAllAsSeenResponse = TypedNotification[];
+
+export type DeleteNotificationResponse = TypedNotification | null;
 
 import type {
   AxiosInstance,
@@ -622,7 +811,7 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title backend
+ * @title @revendiste/backend
  * @version 1.0.0
  * @license ISC
  * @baseUrl /
@@ -662,13 +851,21 @@ export class Api<
      * No description
      *
      * @tags Events
-     * @name GetById
-     * @request GET:/events/{eventId}
+     * @name GetBySearch
+     * @request GET:/events/search
      */
-    getById: (eventId: string, params: RequestParams = {}) =>
-      this.request<GetEventByIdResponse, any>({
-        path: `/events/${eventId}`,
+    getBySearch: (
+      query: {
+        query: string;
+        /** @format double */
+        limit?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<SearchEventsResponse, any>({
+        path: `/events/search`,
         method: "GET",
+        query: query,
         format: "json",
         ...params,
       }),
@@ -677,12 +874,12 @@ export class Api<
      * No description
      *
      * @tags Events
-     * @name GetProtected
-     * @request GET:/events/protected
+     * @name GetById
+     * @request GET:/events/{eventId}
      */
-    getProtected: (params: RequestParams = {}) =>
-      this.request<User, any>({
-        path: `/events/protected`,
+    getById: (eventId: string, params: RequestParams = {}) =>
+      this.request<GetEventByIdResponse, any>({
+        path: `/events/${eventId}`,
         method: "GET",
         format: "json",
         ...params,
@@ -817,6 +1014,305 @@ export class Api<
       >({
         path: `/health/live`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+  };
+  ticketListings = {
+    /**
+     * No description
+     *
+     * @tags Ticket Listings
+     * @name Create
+     * @request POST:/ticket-listings
+     */
+    create: (data: CreateTicketListingRouteBody, params: RequestParams = {}) =>
+      this.request<
+        CreateTicketListingResponse,
+        BadRequestError | UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-listings`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Listings
+     * @name GetMyListings
+     * @request GET:/ticket-listings/my-listings
+     */
+    getMyListings: (params: RequestParams = {}) =>
+      this.request<GetUserListingsResponse, UnauthorizedError>({
+        path: `/ticket-listings/my-listings`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Upload a ticket document Sellers can upload PDF/image documents for their sold tickets. Documents must be uploaded before the event ends.
+     *
+     * @tags Ticket Listings
+     * @name UploadDocument
+     * @request POST:/ticket-listings/tickets/{ticketId}/document
+     */
+    uploadDocument: (
+      ticketId: string,
+      data: {
+        /**
+         * - Document file (PDF, PNG, JPG, JPEG - max 10MB)
+         * @format binary
+         */
+        file: File;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UploadDocumentResponse,
+        BadRequestError | UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-listings/tickets/${ticketId}/document`,
+        method: "POST",
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Update/replace a ticket document Uploads a new version of the document. Previous versions are kept for audit trail. Can only update before the event ends.
+     *
+     * @tags Ticket Listings
+     * @name UpdateDocument
+     * @request PUT:/ticket-listings/tickets/{ticketId}/document
+     */
+    updateDocument: (
+      ticketId: string,
+      data: {
+        /**
+         * - New document file (PDF, PNG, JPG, JPEG - max 10MB)
+         * @format binary
+         */
+        file: File;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UploadDocumentResponse,
+        BadRequestError | UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-listings/tickets/${ticketId}/document`,
+        method: "PUT",
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+  };
+  orders = {
+    /**
+     * No description
+     *
+     * @tags Orders
+     * @name Create
+     * @request POST:/orders
+     */
+    create: (data: CreateOrderRouteBody, params: RequestParams = {}) =>
+      this.request<
+        CreateOrderResponse,
+        BadRequestError | UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/orders`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Orders
+     * @name GetMyOrders
+     * @request GET:/orders
+     */
+    getMyOrders: (params: RequestParams = {}) =>
+      this.request<GetUserOrdersResponse, UnauthorizedError>({
+        path: `/orders`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Orders
+     * @name GetById
+     * @request GET:/orders/{orderId}
+     */
+    getById: (orderId: string, params: RequestParams = {}) =>
+      this.request<GetOrderByIdResponse, UnauthorizedError | NotFoundError>({
+        path: `/orders/${orderId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Orders
+     * @name GetOrderTickets
+     * @request GET:/orders/{orderId}/tickets
+     */
+    getOrderTickets: (orderId: string, params: RequestParams = {}) =>
+      this.request<GetOrderTicketsResponse, UnauthorizedError | NotFoundError>({
+        path: `/orders/${orderId}/tickets`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+  };
+  webhooks = {
+    /**
+     * @description Receives payment status notifications from dLocal
+     *
+     * @tags Webhooks
+     * @name HandleDLocalWebhook
+     * @summary dLocal payment webhook
+     * @request POST:/webhooks/dlocal
+     */
+    handleDLocalWebhook: (
+      data: DLocalWebhookrRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          received: boolean;
+        },
+        any
+      >({
+        path: `/webhooks/dlocal`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  payments = {
+    /**
+     * No description
+     *
+     * @tags Payments
+     * @name CreatePaymentLink
+     * @request POST:/payments/create-link/{orderId}
+     */
+    createPaymentLink: (orderId: string, params: RequestParams = {}) =>
+      this.request<
+        CreatePaymentLinkResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/payments/create-link/${orderId}`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+  };
+  notifications = {
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name GetNotifications
+     * @request GET:/notifications
+     */
+    getNotifications: (
+      query: {
+        sortOrder?: "asc" | "desc";
+        sortBy?: string;
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
+        includeSeen?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetNotificationsResponse, UnauthorizedError>({
+        path: `/notifications`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name GetUnseenCount
+     * @request GET:/notifications/unseen-count
+     */
+    getUnseenCount: (params: RequestParams = {}) =>
+      this.request<GetUnseenCountResponse, UnauthorizedError>({
+        path: `/notifications/unseen-count`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name MarkAsSeen
+     * @request PATCH:/notifications/{notificationId}/seen
+     */
+    markAsSeen: (notificationId: string, params: RequestParams = {}) =>
+      this.request<MarkAsSeenResponse, UnauthorizedError | NotFoundError>({
+        path: `/notifications/${notificationId}/seen`,
+        method: "PATCH",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name MarkAllAsSeen
+     * @request PATCH:/notifications/seen-all
+     */
+    markAllAsSeen: (params: RequestParams = {}) =>
+      this.request<MarkAllAsSeenResponse, UnauthorizedError>({
+        path: `/notifications/seen-all`,
+        method: "PATCH",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name DeleteNotification
+     * @request DELETE:/notifications/{notificationId}
+     */
+    deleteNotification: (notificationId: string, params: RequestParams = {}) =>
+      this.request<
+        DeleteNotificationResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/notifications/${notificationId}`,
+        method: "DELETE",
         format: "json",
         ...params,
       }),

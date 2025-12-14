@@ -7,22 +7,22 @@ import {
   Request,
   Queries,
   Path,
+  Query,
 } from '@tsoa/runtime';
 import {EventsService} from '~/services';
 import {
   ensurePagination,
   paginationMiddleware,
   PaginationQuery,
-  requireAuthMiddleware,
 } from '~/middleware';
 import {EventsRepository} from '~/repositories';
 import {db} from '~/db';
-import {clerkClient, getAuth} from '@clerk/express';
 
-interface GetEventsPaginatedResponse
-  extends ReturnType<EventsService['getAllEventsPaginated']> {}
-interface GetEventByIdResponse
-  extends ReturnType<EventsService['getEventById']> {}
+type GetEventsPaginatedResponse = Promise<
+  ReturnType<EventsService['getAllEventsPaginated']>
+>;
+type GetEventByIdResponse = Promise<ReturnType<EventsService['getEventById']>>;
+type SearchEventsResponse = Promise<ReturnType<EventsService['getBySearch']>>;
 
 @Route('events')
 @Tags('Events')
@@ -40,14 +40,19 @@ export class EventsController {
     });
   }
 
-  @Get('/protected')
-  @Middlewares(requireAuthMiddleware)
-  public async getProtected(@Request() req: express.Request) {
-    return req.user;
+  @Get('/search')
+  public async getBySearch(
+    @Query() query: string,
+    @Query() limit?: number,
+  ): Promise<SearchEventsResponse> {
+    return this.service.getBySearch(query, limit);
   }
 
   @Get('/{eventId}')
-  public async getById(@Path() eventId: string): Promise<GetEventByIdResponse> {
-    return this.service.getEventById(eventId);
+  public async getById(
+    @Path() eventId: string,
+    @Request() request: express.Request,
+  ): Promise<GetEventByIdResponse> {
+    return this.service.getEventById(eventId, request.user?.id);
   }
 }

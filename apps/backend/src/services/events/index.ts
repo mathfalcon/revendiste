@@ -141,7 +141,15 @@ export class EventsService {
     }
   }
 
-  async getEventById(eventId: string) {
-    return this.eventsRepository.getById(eventId);
+  async getEventById(eventId: string, userId?: string) {
+    return this.eventsRepository.getById(eventId, userId);
+  }
+
+  async getBySearch(query: string, limit: number = 20) {
+    if (!query || query.trim().length === 0) {
+      return this.eventsRepository.getUpcomingEvents(8);
+    }
+
+    return this.eventsRepository.getBySearch(query.trim(), limit);
   }
 }

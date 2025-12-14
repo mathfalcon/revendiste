@@ -3,9 +3,10 @@
     "compilerOptions": {
       "outDir": "./dist",
       "rootDir": "./src",
-      "composite": true,          // for project references
+      "composite": true,
       "declaration": true,
       "declarationMap": true,
+      "esModuleInterop": true,
       "paths": {
         "~/*": ["./src/*"]
       }

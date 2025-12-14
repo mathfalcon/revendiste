@@ -76,15 +76,45 @@ export function ValidateBody(validationSchema: ValidationSchema) {
         );
       }
       const bodyIndex = bodyCandidates[0] as number;
-      // we've found the body in the list of parameters
-      // now we check if its payload is valid against the passed Zod schema
+
+      // Find the Request parameter to get the raw body
+      // TSOA may use different metadata keys, so we search for an Express Request-like object
+      // Look for an object with 'body', 'method', 'headers' properties (Express Request)
+      let rawBody = args[bodyIndex];
+      let request: any = null;
+
+      // Try to find the Request object in args
+      for (const arg of args) {
+        if (
+          arg &&
+          typeof arg === 'object' &&
+          'body' in arg &&
+          'method' in arg &&
+          'headers' in arg
+        ) {
+          request = arg;
+          break;
+        }
+      }
+
+      // Use the original body preserved in middleware before TSOA processes it
+      // TSOA's getValidatedArgs strips nested Record types, so we need the original
+      if (request) {
+        const originalBody = (request as any).originalBody;
+        if (originalBody) {
+          // Use the original body that was preserved before TSOA processing
+          rawBody = originalBody;
+        } else {
+          // Fallback to request.body if originalBody wasn't preserved
+          rawBody = request.body;
+        }
+      }
 
       const bodySchema = validationSchema.shape.body;
       if (bodySchema) {
-        const check = await bodySchema.safeParseAsync(args[bodyIndex]);
+        const check = await bodySchema.safeParseAsync(rawBody);
+
         if (!check.success) {
-          // throw new Error(check.error.issues.map(issue => `${issue.message} for field/s [${issue.path.join(',')}]`).join(', '));
-          // return { status: 400, error: check.error.issues.map(issue => `${issue.message} for field/s [${issue.path.join(',')}]`).join(', ') };
           const errorPayload: FieldErrors = {};
           check.error.issues.map(issue => {
             errorPayload[issue.path.join(',')] = {
@@ -94,8 +124,12 @@ export function ValidateBody(validationSchema: ValidationSchema) {
           });
           throw new ValidateError(errorPayload, '');
         }
+
+        // Replace the body argument with the validated data
+        // This ensures the controller receives the correctly parsed body
+        args[bodyIndex] = check.data;
       }
-      
+
       // the payload checkout!
       // Call the original method with the arguments
       return originalMethod.apply(this, args);

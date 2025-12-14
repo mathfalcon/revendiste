@@ -1,10 +1,13 @@
 import {type Kysely} from 'kysely';
-import type {DB} from '../../types/db';
+import type {DB} from '~/shared';
 import {logger} from '~/utils';
 import {User} from '~/types';
+import {BaseRepository} from '../base';
 
-export class UsersRepository {
-  constructor(private db: Kysely<DB>) {}
+export class UsersRepository extends BaseRepository<UsersRepository> {
+  withTransaction(trx: Kysely<DB>): UsersRepository {
+    return new UsersRepository(trx);
+  }
 
   // Find user by Clerk ID
   async findByClerkId(clerkId: string) {
@@ -102,6 +105,18 @@ export class UsersRepository {
       .selectFrom('users')
       .selectAll()
       .where('email', '=', email)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
+
+    return user;
+  }
+
+  // Find user by ID
+  async getById(id: string) {
+    const user = await this.db
+      .selectFrom('users')
+      .selectAll()
+      .where('id', '=', id)
       .where('deletedAt', 'is', null)
       .executeTakeFirst();
 

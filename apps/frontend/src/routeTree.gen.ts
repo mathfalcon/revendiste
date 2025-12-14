@@ -9,14 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PathlessLayoutRouteImport } from './routes/_pathlessLayout'
+import { Route as CuentaRouteRouteImport } from './routes/cuenta/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RegistrarseSplatRouteImport } from './routes/registrarse.$'
 import { Route as IngresarSplatRouteImport } from './routes/ingresar.$'
 import { Route as EventosEventIdRouteImport } from './routes/eventos/$eventId'
+import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar'
+import { Route as CuentaTicketsRouteImport } from './routes/cuenta/tickets'
+import { Route as CuentaSubirTicketsRouteImport } from './routes/cuenta/subir-tickets'
+import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
+import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
+import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
+import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
 
-const PathlessLayoutRoute = PathlessLayoutRouteImport.update({
-  id: '/_pathlessLayout',
+const CuentaRouteRoute = CuentaRouteRouteImport.update({
+  id: '/cuenta',
+  path: '/cuenta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -39,56 +47,149 @@ const EventosEventIdRoute = EventosEventIdRouteImport.update({
   path: '/eventos/$eventId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EntradasPublicarRoute = EntradasPublicarRouteImport.update({
+  id: '/entradas/publicar',
+  path: '/entradas/publicar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CuentaTicketsRoute = CuentaTicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
+const CuentaSubirTicketsRoute = CuentaSubirTicketsRouteImport.update({
+  id: '/subir-tickets',
+  path: '/subir-tickets',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
+const CuentaPublicacionesRoute = CuentaPublicacionesRouteImport.update({
+  id: '/publicaciones',
+  path: '/publicaciones',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
+const CheckoutOrderIdIndexRoute = CheckoutOrderIdIndexRouteImport.update({
+  id: '/checkout/$orderId/',
+  path: '/checkout/$orderId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntradasEditarListingIdRoute = EntradasEditarListingIdRouteImport.update({
+  id: '/entradas/editar/$listingId',
+  path: '/entradas/editar/$listingId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutOrderIdSuccessRoute = CheckoutOrderIdSuccessRouteImport.update({
+  id: '/checkout/$orderId/success',
+  path: '/checkout/$orderId/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
+  '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
+  '/cuenta/tickets': typeof CuentaTicketsRoute
+  '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
+  '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
+  '/entradas/editar/$listingId': typeof EntradasEditarListingIdRoute
+  '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
+  '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
+  '/cuenta/tickets': typeof CuentaTicketsRoute
+  '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
+  '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
+  '/entradas/editar/$listingId': typeof EntradasEditarListingIdRoute
+  '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_pathlessLayout': typeof PathlessLayoutRoute
+  '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
+  '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
+  '/cuenta/tickets': typeof CuentaTicketsRoute
+  '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
+  '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
+  '/entradas/editar/$listingId': typeof EntradasEditarListingIdRoute
+  '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/eventos/$eventId' | '/ingresar/$' | '/registrarse/$'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/eventos/$eventId' | '/ingresar/$' | '/registrarse/$'
-  id:
-    | '__root__'
+  fullPaths:
     | '/'
-    | '/_pathlessLayout'
+    | '/cuenta'
+    | '/cuenta/publicaciones'
+    | '/cuenta/subir-tickets'
+    | '/cuenta/tickets'
+    | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
     | '/registrarse/$'
+    | '/checkout/$orderId/success'
+    | '/entradas/editar/$listingId'
+    | '/checkout/$orderId'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/cuenta'
+    | '/cuenta/publicaciones'
+    | '/cuenta/subir-tickets'
+    | '/cuenta/tickets'
+    | '/entradas/publicar'
+    | '/eventos/$eventId'
+    | '/ingresar/$'
+    | '/registrarse/$'
+    | '/checkout/$orderId/success'
+    | '/entradas/editar/$listingId'
+    | '/checkout/$orderId'
+  id:
+    | '__root__'
+    | '/'
+    | '/cuenta'
+    | '/cuenta/publicaciones'
+    | '/cuenta/subir-tickets'
+    | '/cuenta/tickets'
+    | '/entradas/publicar'
+    | '/eventos/$eventId'
+    | '/ingresar/$'
+    | '/registrarse/$'
+    | '/checkout/$orderId/success'
+    | '/entradas/editar/$listingId'
+    | '/checkout/$orderId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  PathlessLayoutRoute: typeof PathlessLayoutRoute
+  CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
+  EntradasPublicarRoute: typeof EntradasPublicarRoute
   EventosEventIdRoute: typeof EventosEventIdRoute
   IngresarSplatRoute: typeof IngresarSplatRoute
   RegistrarseSplatRoute: typeof RegistrarseSplatRoute
+  CheckoutOrderIdSuccessRoute: typeof CheckoutOrderIdSuccessRoute
+  EntradasEditarListingIdRoute: typeof EntradasEditarListingIdRoute
+  CheckoutOrderIdIndexRoute: typeof CheckoutOrderIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_pathlessLayout': {
-      id: '/_pathlessLayout'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof PathlessLayoutRouteImport
+    '/cuenta': {
+      id: '/cuenta'
+      path: '/cuenta'
+      fullPath: '/cuenta'
+      preLoaderRoute: typeof CuentaRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -119,16 +220,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventosEventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/entradas/publicar': {
+      id: '/entradas/publicar'
+      path: '/entradas/publicar'
+      fullPath: '/entradas/publicar'
+      preLoaderRoute: typeof EntradasPublicarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cuenta/tickets': {
+      id: '/cuenta/tickets'
+      path: '/tickets'
+      fullPath: '/cuenta/tickets'
+      preLoaderRoute: typeof CuentaTicketsRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
+    '/cuenta/subir-tickets': {
+      id: '/cuenta/subir-tickets'
+      path: '/subir-tickets'
+      fullPath: '/cuenta/subir-tickets'
+      preLoaderRoute: typeof CuentaSubirTicketsRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
+    '/cuenta/publicaciones': {
+      id: '/cuenta/publicaciones'
+      path: '/publicaciones'
+      fullPath: '/cuenta/publicaciones'
+      preLoaderRoute: typeof CuentaPublicacionesRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
+    '/checkout/$orderId/': {
+      id: '/checkout/$orderId/'
+      path: '/checkout/$orderId'
+      fullPath: '/checkout/$orderId'
+      preLoaderRoute: typeof CheckoutOrderIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entradas/editar/$listingId': {
+      id: '/entradas/editar/$listingId'
+      path: '/entradas/editar/$listingId'
+      fullPath: '/entradas/editar/$listingId'
+      preLoaderRoute: typeof EntradasEditarListingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/$orderId/success': {
+      id: '/checkout/$orderId/success'
+      path: '/checkout/$orderId/success'
+      fullPath: '/checkout/$orderId/success'
+      preLoaderRoute: typeof CheckoutOrderIdSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface CuentaRouteRouteChildren {
+  CuentaPublicacionesRoute: typeof CuentaPublicacionesRoute
+  CuentaSubirTicketsRoute: typeof CuentaSubirTicketsRoute
+  CuentaTicketsRoute: typeof CuentaTicketsRoute
+}
+
+const CuentaRouteRouteChildren: CuentaRouteRouteChildren = {
+  CuentaPublicacionesRoute: CuentaPublicacionesRoute,
+  CuentaSubirTicketsRoute: CuentaSubirTicketsRoute,
+  CuentaTicketsRoute: CuentaTicketsRoute,
+}
+
+const CuentaRouteRouteWithChildren = CuentaRouteRoute._addFileChildren(
+  CuentaRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  PathlessLayoutRoute: PathlessLayoutRoute,
+  CuentaRouteRoute: CuentaRouteRouteWithChildren,
+  EntradasPublicarRoute: EntradasPublicarRoute,
   EventosEventIdRoute: EventosEventIdRoute,
   IngresarSplatRoute: IngresarSplatRoute,
   RegistrarseSplatRoute: RegistrarseSplatRoute,
+  CheckoutOrderIdSuccessRoute: CheckoutOrderIdSuccessRoute,
+  EntradasEditarListingIdRoute: EntradasEditarListingIdRoute,
+  CheckoutOrderIdIndexRoute: CheckoutOrderIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

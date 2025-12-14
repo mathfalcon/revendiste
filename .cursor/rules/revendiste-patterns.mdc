@@ -1,0 +1,803 @@
+---
+description: Core patterns, conventions, and learnings for the Revendiste codebase
+alwaysApply: true
+---
+
+# Revendiste Codebase Patterns
+
+## Kysely Query Patterns
+
+### Nested Subqueries with Type Safety
+
+**Always use the callback form for `select` when using nested subqueries** to enable proper type inference and reference resolution:
+
+```typescript
+// ✅ CORRECT - Callback form enables whereRef in nested queries
+.select(eb => [
+  'parentTable.id',
+  jsonObjectFrom(
+    eb
+      .selectFrom('childTable')
+      .whereRef('childTable.parentId', '=', 'parentTable.id') // Works!
+  ).as('child'),
+])
+
+// ❌ WRONG - Array form breaks type inference
+.select([
+  'parentTable.id',
+  jsonObjectFrom(
+    eb.selectFrom('childTable')
+      .whereRef('childTable.parentId', '=', 'parentTable.id') // Type error!
+  )
+])
+```
+
+**Key Points:**
+
+- Use `.select(eb => [...])` when you have nested `jsonObjectFrom` or `jsonArrayFrom`
+- `whereRef` in nested subqueries can reference outer query columns when using callback form
+- The `eb` parameter provides the necessary type context for correlated subqueries
+
+### Column Naming
+
+- **Always use camelCase** for table and column names in Kysely queries (e.g., `listingTickets`, `ticketId`, `isPrimary`)
+- Database uses snake_case, but Kysely types use camelCase
+- Use `whereRef` for column-to-column comparisons in joins and subqueries
+
+## Repository Pattern
+
+### Base Repository Extension
+
+All repositories must extend `BaseRepository<T>`:
+
+```typescript
+export class MyRepository extends BaseRepository<MyRepository> {
+  withTransaction(trx: Kysely<DB>): MyRepository {
+    return new MyRepository(trx);
+  }
+
+  async getById(id: string) {
+    // Never type return types - let Kysely infer them
+    return await this.db
+      .selectFrom('myTable')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst();
+  }
+}
+```
+
+**Rules:**
+
+- ✅ Extend `BaseRepository<T>` where T is the repository class itself
+- ✅ Implement `withTransaction(trx)` method
+- ✅ **Never type return types explicitly** - Kysely's type system is excellent, let it infer
+- ✅ Use `this.executeTransaction()` from BaseRepository for transactions
+- ✅ Use `this.db` for queries
+
+### Transaction Pattern
+
+```typescript
+await this.executeTransaction(async (trx: Kysely<DB>) => {
+  const repo = this.withTransaction(trx);
+  // Use repo for all operations in transaction
+});
+```
+
+## Service Layer Patterns
+
+### Service Responsibilities
+
+- Services orchestrate repositories
+- Business logic belongs in services, not repositories
+- Services can enrich repository data with computed fields
+- Services handle validation and error handling
+
+### Data Enrichment Pattern
+
+```typescript
+async getResourceWithComputedFields(id: string) {
+  const data = await this.repository.getById(id);
+
+  // Enrich with computed fields
+  return {
+    ...data,
+    computedField: computeValue(data),
+    nestedItems: data.items.map(item => ({
+      ...item,
+      computed: computeItemValue(item),
+    })),
+  };
+}
+```
+
+### API Response Structure (Nested Resources)
+
+**Always use nested structures to represent resources and relationships** - this standardizes API responses across the codebase and correctly represents resource hierarchies:
+
+```typescript
+// ✅ CORRECT - Nested structure represents resources
+return {
+  orderId: order.id,
+  event: {
+    name: order.event?.name || null,
+    eventStartDate: order.event?.eventStartDate || null,
+  },
+  tickets: tickets.map(ticket => ({
+    id: ticket.id,
+    price: ticket.price,
+    ticketWave: {
+      name: ticket.ticketWaveName,
+    },
+    document: ticket.document
+      ? {
+          id: ticket.document.id,
+          url: ticket.document.url,
+        }
+      : null,
+  })),
+};
+
+// ❌ WRONG - Flat structure doesn't represent relationships
+return {
+  orderId: order.id,
+  eventName: order.event?.name || null,
+  eventStartDate: order.event?.eventStartDate || null,
+  tickets: tickets.map(ticket => ({
+    id: ticket.id,
+    price: ticket.price,
+    ticketWaveName: ticket.ticketWaveName,
+    documentId: ticket.document?.id || null,
+    documentUrl: ticket.document?.url || null,
+  })),
+};
+```
+
+**Key Principles:**
+
+- **Nest related resources** - Group related data into objects (e.g., `event: { name, startDate }` instead of `eventName`, `eventStartDate`)
+- **Represent relationships** - Use nested objects to show entity relationships (e.g., `ticketWave: { name }` inside tickets)
+- **Consistency** - All API responses should follow the same nested pattern
+- **Extensibility** - Easy to add more fields to nested objects without breaking changes
+- **RESTful alignment** - Better represents resource structure and follows REST principles
+
+**Benefits:**
+
+- ✅ Better resource representation - clearly shows relationships between entities
+- ✅ Consistency across endpoints - matches patterns like `getOrderById` which uses nested `event` and `items`
+- ✅ Easier to extend - can add fields to nested objects without changing the top-level structure
+- ✅ More maintainable - clearer data model that matches the database relationships
+- ✅ Better type safety - nested structures provide clearer TypeScript types
+
+## External API Integration Patterns
+
+### Provider Pattern
+
+When integrating with external services (payments, third-party APIs), use the **Provider Pattern** to decouple external APIs from business logic:
+
+- **Provider Interface**: Defines the contract all providers must implement
+- **Provider Implementations**: Handle API communication AND map provider-specific data to standardized types
+- **Service Layer**: Provider-agnostic orchestration that handles business logic
+
+**Key Principle**: Providers map provider-specific data to standardized types. Business logic lives in the service layer.
+
+### Transaction Safety (CRITICAL)
+
+**External API calls MUST be OUTSIDE database transactions:**
+
+```typescript
+// ❌ WRONG: Network call inside transaction
+await this.repository.executeTransaction(async trx => {
+  await repo.create({...});
+  await this.externalApi.call({...}); // Network call!
+  await repo.update({...});
+});
+
+// ✅ CORRECT: External call outside transaction
+const apiResult = await this.externalApi.call({...}); // OUTSIDE
+await this.repository.executeTransaction(async trx => {
+  const repo = this.repository.withTransaction(trx);
+  await repo.create({...});
+  await repo.update({...});
+});
+```
+
+**Why?**
+
+- Network calls can take seconds (keeps transactions short)
+- Prevents database lock contention
+- Avoids transaction timeouts
+- External failures don't rollback database work
+
+### Webhook Handling Pattern (CRITICAL)
+
+**Webhook handlers MUST return immediately (fire-and-forget):**
+
+```typescript
+// ✅ CORRECT: Return immediately, process async
+@Post('/webhook')
+@Middlewares(validateWebhookSignature)
+public async handleWebhook(@Body() body: WebhookPayload): Promise<{received: boolean}> {
+  // Process asynchronously (no await!)
+  this.service
+    .handleWebhook(body.id, {ipAddress, userAgent})
+    .then(() => logger.info('Webhook processed'))
+    .catch(error => logger.error('Webhook processing failed', error));
+
+  return {received: true}; // Return immediately
+}
+
+// ❌ WRONG: Processing synchronously
+public async handleWebhook(...) {
+  await this.service.handleWebhook(...); // Blocks!
+  return {received: true};
+}
+```
+
+**Why?**
+
+- External services timeout if response takes too long
+- Services retry on timeout (causes duplicate processing)
+- Immediate acknowledgment prevents retry loops
+- Idempotency handles duplicate webhooks safely
+
+### Webhook Security
+
+**ALWAYS validate webhook signatures before processing:**
+
+- Use HMAC signature validation in middleware
+- Use constant-time comparison (`crypto.timingSafeEqual`)
+- Log IP address and User Agent for audit trails
+- Prevents unauthorized calls and replay attacks
+
+### Immutable Audit Logs
+
+For critical operations (payments, financial transactions), use immutable audit logs:
+
+- **Never update or delete** audit log records
+- Only INSERT operations
+- Enables complete forensic trail
+- Required for compliance (PCI-DSS, GDPR, SOC 2)
+
+## Frontend Patterns
+
+### Routing & Navigation
+
+- Use `@tanstack/react-router` for routing
+- User-facing query parameters **must be in Spanish** (e.g., `subirTicket` not `uploadTicket`)
+- Use `useSearch({from: '/route'})` for typed search params
+- Use `useNavigate({from: '/route'})` for type-safe navigation
+- Validate search params with Zod schemas in route files
+
+### Component Organization
+
+- **Reusable components**: `apps/frontend/src/components/`
+- **Feature-specific logic**: `apps/frontend/src/features/`
+- Route files should be thin, importing from features
+- Use `shadcn/ui` components for UI elements
+
+### Data Fetching
+
+- Use `@tanstack/react-query` for all server state
+- Create query options in `apps/frontend/src/lib/api/`
+- Use `useSuspenseQuery` in route loaders
+- Use `useQuery` in components
+- Use `useMutation` for mutations
+- Always invalidate relevant queries on mutation success
+
+### Loading States & Suspense
+
+- Use `useSuspenseQuery` in route loaders for automatic loading states
+- Use `useQuery` with `isPending` for component-level loading states
+- Wrap routes with Suspense boundaries for error boundaries
+- Show loading spinners or skeletons during data fetching
+- Use `isPending` from mutations to disable buttons during submission
+
+### File Uploads
+
+- Frontend: Use `FormData` with file input
+- Backend: Use `multer` middleware with `@UploadedFile` decorator
+- Field name must match: `@UploadedFile('file')` and `formData.append('file', file)`
+
+## API Generation Workflow
+
+### Backend (TSOA)
+
+```bash
+cd apps/backend
+pnpm tsoa:both  # Generates routes and OpenAPI spec
+```
+
+**Controller Return Type Naming:**
+
+**All controller method return types MUST use named type aliases** - never use inline `ReturnType<Service['method']>`:
+
+```typescript
+// ✅ CORRECT - Named type alias
+type GetOrderTicketsResponse = ReturnType<OrdersService['getOrderTickets']>;
+
+@Get('/{orderId}/tickets')
+public async getOrderTickets(...): Promise<GetOrderTicketsResponse> {
+  return this.service.getOrderTickets(...);
+}
+
+// ❌ WRONG - Inline type generates bad Swagger type names
+@Get('/{orderId}/tickets')
+public async getOrderTickets(...): Promise<ReturnType<OrdersService['getOrderTickets']>> {
+  return this.service.getOrderTickets(...);
+}
+```
+
+**Why?**
+
+- TSOA uses the return type name for Swagger/OpenAPI schema generation
+- Named types produce clean names like `GetOrderTicketsResponse`
+- Inline types produce ugly names like `AwaitedReturnTypeOrdersServiceAtGetOrderTickets`
+- Frontend type generation uses these Swagger type names, affecting developer experience
+
+**Pattern:**
+
+- Define type aliases at the top of the controller file
+- Use descriptive names: `{Action}{Resource}Response` (e.g., `GetOrderTicketsResponse`, `CreateOrderResponse`)
+- Use `ReturnType<Service['method']>` for async service methods
+- Use `ReturnType<Service['method']>` for sync service methods
+
+### Frontend (Type Generation)
+
+```bash
+cd apps/frontend
+pnpm generate:api  # Generates TypeScript types from OpenAPI spec
+```
+
+**Important:**
+
+- Always regenerate after backend API changes
+- Generated types are in `apps/frontend/src/lib/api/generated.ts`
+- Manually add methods to generated client if needed
+
+### Frontend API Generation Plugin
+
+The frontend uses a custom Vite plugin that automatically generates API types on dev server start with retry logic to handle backend startup timing.
+
+**Pattern:** When frontend depends on backend being ready, implement retry logic with exponential backoff or fixed delays.
+
+## Database Patterns
+
+### UUID Generation
+
+- **Always use `gen_random_uuid()`** in migrations, not `uuid_generate_v4()`
+- PostgreSQL's built-in function doesn't require extensions
+
+### Indexing Strategy
+
+- **Foreign keys do NOT automatically create indexes** in PostgreSQL
+- Create indexes explicitly when needed for performance
+- Composite indexes can efficiently serve single-column queries
+- Example: A composite index on `(column_a, column_b)` can efficiently serve queries on just `column_a`
+
+### Migration Best Practices
+
+**Always create migration files using the kysely CLI command** to ensure accurate timestamps:
+
+```bash
+cd apps/backend
+pnpm kysely migrate:make {{name_of_migration}}
+```
+
+**Why?**
+
+- Kysely uses timestamps in migration filenames to ensure proper execution order
+- Manual timestamp creation can cause conflicts or incorrect ordering
+- The CLI command generates the correct file structure and timestamp format
+
+**Pattern:**
+
+- Use `pnpm kysely migrate:make` to create new migration files
+- Migration files are created in `apps/backend/src/db/migrations/`
+- Filename format: `{timestamp}_{migration_name}.ts`
+- Never manually create migration files with hardcoded timestamps
+
+**Other Best Practices:**
+
+- Use raw SQL `DO $$ BEGIN ... EXCEPTION ... END $$;` blocks for conditional operations
+- Avoid try-catch in TypeScript migrations (causes transaction rollbacks)
+- Always provide both `up` and `down` functions
+
+### Database Type Regeneration Workflow
+
+**After creating migrations, always regenerate database types:**
+
+```bash
+# 1. Run migration
+cd apps/backend && pnpm kysely:migrate
+
+# 2. Regenerate types
+cd apps/backend && pnpm generate:db
+```
+
+**Why?**
+
+- Kysely types are generated from the actual database schema
+- New columns won't be available in TypeScript until types are regenerated
+- Types are generated to `packages/shared/src/types/db.d.ts`
+- If you see type errors about missing columns, run `pnpm generate:db`
+
+**Pattern:**
+
+- Create migration → Add new columns/types
+- Run migration → Apply changes to database
+- Regenerate types → Update TypeScript types
+- Use new columns → Full type safety
+
+### JSONB Handling with Kysely
+
+**Kysely handles JSONB automatically - never manually stringify:**
+
+```typescript
+// ✅ CORRECT - Let Kysely handle JSONB
+await this.db
+  .insertInto('notifications')
+  .values({
+    actions: data.actions ?? null, // Kysely serializes automatically
+    metadata: data.metadata ?? null, // Kysely serializes automatically
+  })
+  .execute();
+
+// ❌ WRONG - Manual stringification is unnecessary and error-prone
+await this.db
+  .insertInto('notifications')
+  .values({
+    actions: data.actions ? JSON.stringify(data.actions) : null,
+    metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+  })
+  .execute();
+```
+
+**Key Points:**
+
+- Kysely automatically serializes JavaScript objects to JSONB
+- Kysely automatically deserializes JSONB to JavaScript objects
+- Manual `JSON.stringify()` is unnecessary and can cause double-encoding
+- Use `?? null` to convert `undefined` to `null` for nullable JSONB columns
+
+### Soft Delete Pattern
+
+For tables that need audit trails, use soft deletes instead of hard deletes:
+
+- Add `deletedAt: timestamp` column (nullable)
+- Filter out deleted records in queries: `.where('deletedAt', 'is', null)`
+- Never hard delete records that need audit trails
+- Soft delete by setting `deletedAt` to current timestamp
+- Allows data recovery and maintains referential integrity
+
+### Background Job Patterns
+
+**Process background jobs in parallel batches for better throughput:**
+
+```typescript
+// ✅ CORRECT - Parallel batch processing
+async processPendingItems(limit: number = 100) {
+  const pending = await this.repository.getPendingItems(limit);
+
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+    const batch = pending.slice(i, i + BATCH_SIZE);
+    await Promise.allSettled(
+      batch.map(item => this.processItem(item.id))
+    );
+  }
+
+  return pending.length;
+}
+
+// ❌ WRONG - Sequential processing is slow
+async processPendingItems(limit: number = 100) {
+  const pending = await this.repository.getPendingItems(limit);
+
+  for (const item of pending) {
+    await this.processItem(item.id);  // One at a time!
+  }
+
+  return pending.length;
+}
+```
+
+**Key Points:**
+
+- Use `Promise.allSettled()` to process items in parallel
+- Process in batches to avoid overwhelming the system
+- `allSettled` ensures one failure doesn't stop others
+- Adjust batch size based on resource constraints
+
+### Exponential Backoff Pattern
+
+**Use exponential backoff for retry logic to avoid overwhelming systems:**
+
+```typescript
+// Calculate backoff delay: baseDelay * 2^retryCount
+// retry 0: 5 minutes
+// retry 1: 10 minutes
+// retry 2: 20 minutes
+// retry 3: 40 minutes
+// retry 4: 80 minutes
+
+async getPendingItems(limit: number = 100) {
+  const now = new Date();
+
+  return await this.db
+    .selectFrom('items')
+    .selectAll()
+    .where('status', '=', 'pending')
+    .where('retryCount', '<', 5)  // Max retries
+    .execute()
+    .then(items => {
+      return items.filter(item => {
+        const baseDelay = 5 * 60 * 1000; // 5 minutes
+        const backoffDelay = baseDelay * Math.pow(2, item.retryCount);
+        const retryAfter = new Date(now.getTime() - backoffDelay);
+        return item.createdAt < retryAfter;
+      });
+    });
+}
+```
+
+**Key Points:**
+
+- Exponential backoff prevents retry storms
+- Each retry waits longer than the previous
+- Set maximum retry count to prevent infinite retries
+- Filter in application code or use SQL expressions for backoff calculation
+
+## Platform-Specific Business Logic
+
+### Extensible Platform Rules
+
+Create platform-specific helpers in service layer to centralize business rules:
+
+```typescript
+export function computePlatformRule(
+  platform: string,
+  context: PlatformContext,
+): RuleResult {
+  switch (platform.toLowerCase()) {
+    case 'platform1':
+      // Platform-specific logic
+      return computeRule1(context);
+    case 'platform2':
+      return computeRule2(context);
+    // Add more platforms as needed
+  }
+}
+```
+
+**Pattern:**
+
+- Centralize platform logic in helper functions
+- Easy to extend for new platforms
+- No database changes required for new platforms
+
+## Validation Patterns
+
+### Backend Validation
+
+- Use Zod schemas for request body validation in TSOA controllers
+- Validate at the controller level before passing to services
+- Services can perform additional business rule validation
+- Always return descriptive validation error messages
+
+### Frontend Validation
+
+- Use Zod schemas for form validation and search params
+- Validate search params in route files with `validateSearch`
+- Use `react-hook-form` with Zod resolver for form validation
+- Display validation errors inline with form fields
+
+## Error Handling
+
+### Error Message Management
+
+**All error messages MUST be centralized in error message constant files:**
+
+- Error messages are stored in `apps/backend/src/constants/error-messages.ts`
+- **Always reference error messages from these constant files** - never hardcode error messages
+- Error messages **must be in Spanish** to prepare for future internationalization (i18n)
+- Use descriptive, user-friendly messages
+
+```typescript
+// ✅ CORRECT - Reference from constants file
+import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
+
+throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+throw new ValidationError(
+  ORDER_ERROR_MESSAGES.INSUFFICIENT_TICKETS(5, 100, 'VIP', 10),
+);
+
+// ❌ WRONG - Hardcoded error messages
+throw new NotFoundError('Order not found');
+throw new ValidationError('Not enough tickets available');
+```
+
+**Pattern:**
+
+- Group error messages by domain (e.g., `ORDER_ERROR_MESSAGES`, `TICKET_ERROR_MESSAGES`)
+- Use functions for parameterized messages: `MESSAGE: (param: string) => string`
+- Messages should be clear and actionable for end users
+- Centralized messages make i18n implementation straightforward
+
+### Backend Errors
+
+- Use custom error classes: `NotFoundError`, `ValidationError`, `UnauthorizedError`, `BadRequestError`
+- Services throw errors, controllers catch and return appropriate HTTP status
+- **Always use error messages from constants files** (see Error Message Management above)
+
+### Frontend Error Handling
+
+- Use `toast` from `sonner` for user notifications
+- Handle errors in mutation `onError` callbacks
+- Display user-friendly error messages
+
+## Type Safety Best Practices
+
+### Database Enum Types
+
+**Always use enum types from `~/types/db` instead of string literals:**
+
+```typescript
+// ✅ CORRECT - Import and use enum types
+import type {OrderStatus, PaymentStatus} from '~/types/db';
+
+const status: OrderStatus = 'pending';
+const paymentStatus: PaymentStatus = 'paid';
+
+// ❌ WRONG - Using string literals
+const status: string = 'pending'; // No type safety!
+```
+
+**Critical for:**
+
+- All database enum types (order statuses, payment statuses, etc.)
+- Never use `string` when an enum type exists
+- Import enum types from `~/types/db`
+
+### Type Assertions
+
+When TypeScript can't infer types correctly, use double casting:
+
+```typescript
+const value = data.field as unknown as TargetType;
+```
+
+**However**, prefer fixing the root cause (proper typing) over assertions. Type assertions should be rare exceptions.
+
+### Kysely Type Inference
+
+- Trust Kysely's type system - don't add explicit return types
+- Let Kysely infer from query structure
+- Use `$notNull()` for guaranteed non-null results
+
+**When Kysely can't infer that a result will always be non-null, use `.$notNull()`:**
+
+```typescript
+// ✅ CORRECT - Use $notNull() when you know the result will always exist
+jsonObjectFrom(
+  eb
+    .selectFrom('events')
+    .select(['events.id', 'events.name'])
+    .whereRef('events.id', '=', 'listings.eventId'),
+)
+  .$notNull()  // Tells TypeScript this will never be null
+  .as('event'),
+
+jsonArrayFrom(
+  eb
+    .selectFrom('listingTickets')
+    .select(['listingTickets.id', 'listingTickets.ticketNumber'])
+    .whereRef('listingTickets.listingId', '=', 'listings.id'),
+)
+  .$notNull()  // Tells TypeScript this will never be null (empty array, but not null)
+  .as('tickets'),
+```
+
+**Key Points:**
+
+- Use `.$notNull()` on `jsonObjectFrom` and `jsonArrayFrom` results when you're certain they will always exist
+- This removes `null` from the type, making the result non-nullable
+- For `jsonArrayFrom`, `.$notNull()` ensures the result is always an array (never null), though it may be empty
+- Only use when you're certain the relationship will always exist (e.g., required foreign keys, inner joins)
+
+## Common Patterns
+
+### Modal State Management
+
+Use URL search parameters for modal state (enables deep linking):
+
+```typescript
+// Route file
+const schema = z.object({
+  modalId: z.string().optional(), // User-facing params in Spanish
+});
+
+// Component
+const search = useSearch({from: '/route'});
+const navigate = useNavigate({from: '/route'});
+
+// Open modal
+navigate({search: prev => ({...prev, modalId: id})});
+
+// Close modal
+navigate({search: prev => ({...prev, modalId: undefined})});
+```
+
+### Cache Invalidation
+
+Always invalidate queries after mutations:
+
+```typescript
+const mutation = useMutation({
+  mutationFn: updateResource,
+  onSuccess: () => {
+    queryClient.invalidateQueries({queryKey: ['resource']});
+  },
+});
+```
+
+## File Organization
+
+### Backend Structure
+
+```
+apps/backend/src/
+  controllers/     # TSOA route handlers
+  services/         # Business logic
+  repositories/     # Data access layer
+  db/migrations/    # Database migrations
+  types/            # TypeScript types
+```
+
+### Frontend Structure
+
+```
+apps/frontend/src/
+  components/       # Reusable UI components
+  features/         # Feature-specific logic
+  routes/           # Route definitions (thin)
+  lib/api/          # API client and query options
+```
+
+## Testing Considerations
+
+- Backend: Test repository methods with actual database
+- Frontend: Test components with React Query providers
+- Integration: Test full flows (upload → API → database)
+
+## Documentation
+
+- Documentation is not needed if the code is simple and self-explanatory
+- Create docs in `apps/backend/docs/` for complex backend features
+- Create docs in `apps/frontend/docs/` for complex frontend features
+- Document platform-specific logic and business rules
+- Include examples and usage patterns when helpful
+
+## Security Best Practices
+
+### General Security Rules
+
+**DO ✅:**
+
+- Always validate webhook/external API signatures
+- Log IP address and User Agent for critical operations
+- Use immutable audit logs for financial/critical operations
+- Return webhooks immediately (fire-and-forget pattern)
+- Keep external API calls outside database transactions
+- Use environment variables for secrets (never commit to git)
+- Use constant-time comparison for signature validation (`crypto.timingSafeEqual`)
+- Validate amounts/values from external sources before processing
+
+**DON'T ❌:**
+
+- Never skip signature validation for external webhooks
+- Never process webhooks synchronously
+- Never put API calls inside transactions
+- Never use `as any` for enum types or critical fields
+- Never hard delete records that need audit trails (soft delete only)
+- Never commit secrets to version control

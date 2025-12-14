@@ -43,8 +43,11 @@ export class ConflictError extends AppError {
 }
 
 export class ValidationError extends AppError {
-  constructor(message = 'Validation Error') {
+  public readonly metadata?: Record<string, any>;
+
+  constructor(message = 'Validation Error', metadata?: Record<string, any>) {
     super(message, 422)
+    this.metadata = metadata
   }
 }
 

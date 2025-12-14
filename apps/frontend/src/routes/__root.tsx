@@ -14,10 +14,20 @@ import {DefaultCatchBoundary} from '~/components/DefaultCatchBoundary';
 import {NotFound} from '~/components/NotFound';
 import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
-import {Navbar} from '~/components';
+import {ClerkVariables, Navbar, Footer} from '~/components';
 import {ThemeProvider} from '~/components/ThemeProvider';
 import {ClerkProvider} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
+import {Toaster} from '~/components/ui/sonner';
+import {createServerFn} from '@tanstack/react-start';
+import {auth} from '@clerk/tanstack-react-start/server';
+import {api} from '~/lib';
+
+const fetchClerkAuth = createServerFn({method: 'GET'}).handler(async () => {
+  const {isAuthenticated, userId} = await auth();
+
+  return {isAuthenticated, userId};
+});
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -80,6 +90,13 @@ export const Route = createRootRouteWithContext<{
   },
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
+  beforeLoad: async () => {
+    const {userId} = await fetchClerkAuth();
+
+    return {
+      userId,
+    };
+  },
 });
 
 function RootComponent() {
@@ -104,6 +121,13 @@ function RootDocument({children}: {children: React.ReactNode}) {
       localization={esUY}
       appearance={{
         cssLayerName: 'clerk',
+        elements: {
+          formButtonPrimary: {
+            background: '#de2486',
+            boxShadow: 'none',
+          },
+        },
+        variables: ClerkVariables,
       }}
     >
       <html>
@@ -112,12 +136,14 @@ function RootDocument({children}: {children: React.ReactNode}) {
         </head>
         <body>
           <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
-            <div className='flex flex-col min-h-screen bg-background-secondary'>
+            <div className='flex flex-col h-screen bg-background-secondary'>
               {!shouldHideNavbar && <Navbar />}
-              {children}
+              <main className='flex-1'>{children}</main>
+              {!shouldHideNavbar && <Footer />}
               <TanStackRouterDevtools position='bottom-right' />
               <ReactQueryDevtools buttonPosition='bottom-left' />
               <Scripts />
+              <Toaster position='top-center' />
             </div>
           </ThemeProvider>
         </body>

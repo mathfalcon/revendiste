@@ -7,7 +7,7 @@ import {
   POSTGRES_PASSWORD,
   POSTGRES_DB,
 } from '../config/env';
-import {DB} from '~/types';
+import {DB} from '~/shared';
 
 export const db = new Kysely<DB>({
   dialect: new PostgresDialect({

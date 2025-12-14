@@ -1,0 +1,18 @@
+# Example Terraform variables file for core infrastructure
+# Copy this to terraform.tfvars and update with your values
+# DO NOT commit terraform.tfvars to version control
+
+domain_name = "revendiste.com"
+
+aws_region = "sa-east-1" # São Paulo region
+
+# Resend configuration
+# These values are provided by Resend
+resend_dkim_key    = "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1zemEE7Ew2gK/XC0KBGNO1JLkxg6GxTVUudq2NBRs9igo3kwNOgXBt2mz7Fx5ylvG8azrDa0nf3MEQ4iu4Lugef0Ofl5EWwwyU/KoOB1JLcwUGa05sW1owkpmX3R46qYzOEEGkeq9ef3Z7f1vB5h2/ubeqwsyUWJLDpOEeS2kYQIDAQAB"
+resend_smtp_server = "feedback-smtp.sa-east-1.amazonses.com"
+resend_smtp_priority = 10
+
+# DMARC configuration
+enable_dmarc = true
+dmarc_policy = "none" # Options: none, quarantine, reject
+

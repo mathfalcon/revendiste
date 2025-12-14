@@ -12,6 +12,30 @@ const EnvSchema = z.object({
   POSTGRES_HOST: z.string().default('localhost'),
   CLERK_PUBLISHABLE_KEY: z.string(),
   CLERK_SECRET_KEY: z.string(),
+  // Fee configuration
+  PLATFORM_COMMISSION_RATE: z.coerce.number().min(0).max(1).default(0.06), // 6%
+  VAT_RATE: z.coerce.number().min(0).max(1).default(0.22), // 22%
+  DLOCAL_API_KEY: z.string(),
+  DLOCAL_SECRET_KEY: z.string(),
+  DLOCAL_BASE_URL: z.url(),
+  APP_BASE_URL: z.url(),
+  API_BASE_URL: z.url(),
+  // Storage configuration
+  STORAGE_TYPE: z.enum(['local', 's3']).default('local'),
+  STORAGE_LOCAL_PATH: z.string().default('./uploads'),
+  STORAGE_BASE_URL: z.string().default('/uploads'),
+  // AWS S3 configuration (only required when STORAGE_TYPE=s3)
+  AWS_S3_BUCKET: z.string().optional(),
+  AWS_S3_REGION: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_CLOUDFRONT_DOMAIN: z.string().optional(), // Optional CDN domain
+  AWS_S3_SIGNED_URL_EXPIRY: z.coerce.number().optional().default(3600), // 1 hour default
+  // Email configuration
+  EMAIL_PROVIDER: z.enum(['console', 'resend']).default('console'),
+  EMAIL_FROM: z.string().default('noreply@revendiste.com'),
+  // Resend configuration (when EMAIL_PROVIDER=resend)
+  RESEND_API_KEY: z.string().optional(),
 });
 
 export const env = EnvSchema.safeParse(process.env);
@@ -32,4 +56,23 @@ export const {
   POSTGRES_HOST,
   CLERK_PUBLISHABLE_KEY,
   CLERK_SECRET_KEY,
+  PLATFORM_COMMISSION_RATE,
+  VAT_RATE,
+  DLOCAL_API_KEY,
+  DLOCAL_SECRET_KEY,
+  DLOCAL_BASE_URL,
+  APP_BASE_URL,
+  API_BASE_URL,
+  STORAGE_TYPE,
+  STORAGE_LOCAL_PATH,
+  STORAGE_BASE_URL,
+  AWS_S3_BUCKET,
+  AWS_S3_REGION,
+  AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY,
+  AWS_CLOUDFRONT_DOMAIN,
+  AWS_S3_SIGNED_URL_EXPIRY,
+  EMAIL_PROVIDER,
+  EMAIL_FROM,
+  RESEND_API_KEY,
 } = env.data;

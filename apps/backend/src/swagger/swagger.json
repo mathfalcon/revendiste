@@ -50,7 +50,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
+			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -72,6 +72,15 @@
 										"type": "object"
 									},
 									"type": "array"
+								},
+								"lowestAvailableTicketCurrency": {
+									"type": "string",
+									"nullable": true
+								},
+								"lowestAvailableTicketPrice": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
 								},
 								"venueName": {
 									"type": "string",
@@ -115,6 +124,8 @@
 							},
 							"required": [
 								"images",
+								"lowestAvailableTicketCurrency",
+								"lowestAvailableTicketPrice",
 								"venueName",
 								"venueAddress",
 								"updatedAt",
@@ -142,97 +153,12 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ReturnType_EventsService-at-getAllEventsPaginated_": {
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__",
+				"description": "Obtain the return type of a function type"
+			},
 			"GetEventsPaginatedResponse": {
-				"properties": {
-					"data": {
-						"items": {
-							"properties": {
-								"images": {
-									"items": {
-										"properties": {
-											"imageType": {
-												"$ref": "#/components/schemas/EventImageType"
-											},
-											"url": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"imageType",
-											"url"
-										],
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"venueName": {
-									"type": "string",
-									"nullable": true
-								},
-								"venueAddress": {
-									"type": "string"
-								},
-								"updatedAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"status": {
-									"type": "string"
-								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								},
-								"externalUrl": {
-									"type": "string"
-								},
-								"eventStartDate": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"eventEndDate": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"description": {
-									"type": "string",
-									"nullable": true
-								},
-								"createdAt": {
-									"type": "string",
-									"format": "date-time"
-								}
-							},
-							"required": [
-								"images",
-								"venueName",
-								"venueAddress",
-								"updatedAt",
-								"status",
-								"name",
-								"id",
-								"externalUrl",
-								"eventStartDate",
-								"eventEndDate",
-								"description",
-								"createdAt"
-							],
-							"type": "object"
-						},
-						"type": "array"
-					},
-					"pagination": {
-						"$ref": "#/components/schemas/PaginationMeta"
-					}
-				},
-				"required": [
-					"data",
-					"pagination"
-				],
-				"type": "object",
-				"additionalProperties": false
+				"$ref": "#/components/schemas/ReturnType_EventsService-at-getAllEventsPaginated_"
 			},
 			"infer_typeofPaginationSchema_": {
 				"properties": {
@@ -264,638 +190,88 @@
 			"PaginationQuery": {
 				"$ref": "#/components/schemas/infer_typeofPaginationSchema_"
 			},
-			"UserPublicMetadata": {
-				"description": "If you want to provide custom types for the user.publicMetadata object,\nsimply redeclare this rule in the global namespace.\nEvery user object will use the provided type.",
-				"properties": {},
-				"type": "object",
-				"additionalProperties": {}
-			},
-			"UserPrivateMetadata": {
-				"description": "If you want to provide custom types for the user.privateMetadata object,\nsimply redeclare this rule in the global namespace.\nEvery user object will use the provided type.",
-				"properties": {},
-				"type": "object",
-				"additionalProperties": {}
-			},
-			"UserUnsafeMetadata": {
-				"description": "If you want to provide custom types for the user.unsafeMetadata object,\nsimply redeclare this rule in the global namespace.\nEvery user object will use the provided type.",
-				"properties": {},
-				"type": "object",
-				"additionalProperties": {}
-			},
-			"VerificationStatus": {
-				"type": "string",
-				"enum": [
-					"unverified",
-					"verified",
-					"transferable",
-					"failed",
-					"expired"
-				]
-			},
-			"url.URL": {
-				"type": "string",
-				"description": "The URL interface represents an object providing static methods used for creating object URLs.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/URL)\n`URL` class is a global reference for `import { URL } from 'url'`\nhttps://nodejs.org/api/url.html#the-whatwg-url-api"
-			},
-			"Verification": {
-				"description": "The Backend `Verification` object describes the state of the verification process of a sign-in or sign-up attempt.",
-				"properties": {
-					"status": {
-						"$ref": "#/components/schemas/VerificationStatus",
-						"description": "The state of the verification.\n\n<ul>\n <li>`unverified`: The verification has not been verified yet.</li>\n <li>`verified`: The verification has been verified.</li>\n <li>`transferable`: The verification is transferable to between sign-in and sign-up flows.</li>\n <li>`failed`: The verification has failed.</li>\n <li>`expired`: The verification has expired.</li>\n</ul>"
-					},
-					"strategy": {
-						"type": "string",
-						"description": "The strategy pertaining to the parent sign-up or sign-in attempt."
-					},
-					"externalVerificationRedirectURL": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/url.URL"
-							}
-						],
-						"nullable": true,
-						"description": "The redirect URL for an external verification."
-					},
-					"attempts": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "The number of attempts related to the verification."
-					},
-					"expireAt": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "The time the verification will expire at."
-					},
-					"nonce": {
-						"type": "string",
-						"nullable": true,
-						"description": "The [nonce](https://en.wikipedia.org/wiki/Cryptographic_nonce) pertaining to the verification."
-					},
-					"message": {
-						"type": "string",
-						"nullable": true,
-						"description": "The message that will be presented to the user's Web3 wallet for signing during authentication. This follows the [Sign-In with Ethereum (SIWE) protocol format](https://docs.login.xyz/general-information/siwe-overview/eip-4361#example-message-to-be-signed), which typically includes details like the requesting service, wallet address, terms acceptance, nonce, timestamp, and any additional resources."
-					}
-				},
-				"required": [
-					"status",
-					"strategy",
-					"externalVerificationRedirectURL",
-					"attempts",
-					"expireAt",
-					"nonce",
-					"message"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"IdentificationLink": {
-				"description": "Contains information about any identifications that might be linked to the email address.",
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier for the identification link."
-					},
-					"type": {
-						"type": "string",
-						"description": "The type of the identification link, e.g., `\"email_address\"`, `\"phone_number\"`, etc."
-					}
-				},
-				"required": [
-					"id",
-					"type"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"EmailAddress": {
-				"description": "The Backend `EmailAddress` object is a model around an email address. Email addresses are one of the [identifiers](https://clerk.com/docs/authentication/configuration/sign-up-sign-in-options#identifiers) used to provide identification for users.\n\nEmail addresses must be **verified** to ensure that they are assigned to their rightful owners. The `EmailAddress` object holds all necessary state around the verification process.\n\nFor implementation examples for adding and verifying email addresses, see the [email link custom flow](https://clerk.com/docs/custom-flows/email-links) and [email code custom flow](https://clerk.com/docs/custom-flows/add-email) guides.",
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier for the email address."
-					},
-					"emailAddress": {
-						"type": "string",
-						"description": "The value of the email address."
-					},
-					"verification": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Verification"
-							}
-						],
-						"nullable": true,
-						"description": "An object holding information on the verification of the email address."
-					},
-					"linkedTo": {
-						"items": {
-							"$ref": "#/components/schemas/IdentificationLink"
+			"ReturnType_EventsService-at-getBySearch_": {
+				"items": {
+					"properties": {
+						"eventImages": {
+							"items": {
+								"properties": {
+									"imageType": {
+										"$ref": "#/components/schemas/EventImageType"
+									},
+									"url": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"imageType",
+									"url"
+								],
+								"type": "object"
+							},
+							"type": "array"
 						},
-						"type": "array",
-						"description": "An array of objects containing information about any identifications that might be linked to the email address."
-					}
-				},
-				"required": [
-					"id",
-					"emailAddress",
-					"verification",
-					"linkedTo"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"PhoneNumber": {
-				"description": "The Backend `PhoneNumber` object describes a phone number. Phone numbers can be used as a proof of identification for users, or simply as a means of contacting users.\n\nPhone numbers must be **verified** to ensure that they can be assigned to their rightful owners. The `PhoneNumber` object holds all the necessary state around the verification process.\n\nFinally, phone numbers can be used as part of [multi-factor authentication](https://clerk.com/docs/authentication/configuration/sign-up-sign-in-options#multi-factor-authentication). During sign in, users can opt in to an extra verification step where they will receive an SMS message with a one-time code. This code must be entered to complete the sign in process.",
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier for this phone number."
-					},
-					"phoneNumber": {
-						"type": "string",
-						"description": "The value of this phone number, in [E.164 format](https://en.wikipedia.org/wiki/E.164)."
-					},
-					"reservedForSecondFactor": {
-						"type": "boolean",
-						"description": "Set to `true` if this phone number is reserved for multi-factor authentication (2FA). Set to `false` otherwise."
-					},
-					"defaultSecondFactor": {
-						"type": "boolean",
-						"description": "Set to `true` if this phone number is the default second factor. Set to `false` otherwise. A user must have exactly one default second factor, if multi-factor authentication (2FA) is enabled."
-					},
-					"verification": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Verification"
-							}
-						],
-						"nullable": true,
-						"description": "An object holding information on the verification of this phone number."
-					},
-					"linkedTo": {
-						"items": {
-							"$ref": "#/components/schemas/IdentificationLink"
+						"venueName": {
+							"type": "string",
+							"nullable": true
 						},
-						"type": "array",
-						"description": "An object containing information about any other identification that might be linked to this phone number."
-					}
-				},
-				"required": [
-					"id",
-					"phoneNumber",
-					"reservedForSecondFactor",
-					"defaultSecondFactor",
-					"verification",
-					"linkedTo"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"Web3Wallet": {
-				"description": "The Backend `Web3Wallet` object describes a Web3 wallet address. The address can be used as a proof of identification for users.\n\nWeb3 addresses must be verified to ensure that they can be assigned to their rightful owners. The verification is completed via Web3 wallet browser extensions, such as [Metamask](https://metamask.io/), [Coinbase Wallet](https://www.coinbase.com/wallet), and [OKX Wallet](https://www.okx.com/help/section/faq-web3-wallet). The `Web3Wallet3` object holds all the necessary state around the verification process.",
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique ID for the Web3 wallet."
-					},
-					"web3Wallet": {
-						"type": "string",
-						"description": "The Web3 wallet address, made up of 0x + 40 hexadecimal characters."
-					},
-					"verification": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Verification"
-							}
-						],
-						"nullable": true,
-						"description": "An object holding information on the verification of this Web3 wallet."
-					}
-				},
-				"required": [
-					"id",
-					"web3Wallet",
-					"verification"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"Record_string.unknown_": {
-				"properties": {},
-				"additionalProperties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
-			},
-			"ExternalAccount": {
-				"description": "The Backend `ExternalAccount` object is a model around an identification obtained by an external provider (e.g. a social provider such as Google).\n\nExternal account must be verified, so that you can make sure they can be assigned to their rightful owners. The `ExternalAccount` object holds all necessary state around the verification process.",
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier for this external account."
-					},
-					"provider": {
-						"type": "string",
-						"description": "The provider name (e.g., `google`)."
-					},
-					"identificationId": {
-						"type": "string",
-						"description": "The identification with which this external account is associated."
-					},
-					"externalId": {
-						"type": "string",
-						"description": "The unique ID of the user in the provider."
-					},
-					"approvedScopes": {
-						"type": "string",
-						"description": "The scopes that the user has granted access to."
-					},
-					"emailAddress": {
-						"type": "string",
-						"description": "The user's email address."
-					},
-					"firstName": {
-						"type": "string",
-						"description": "The user's first name."
-					},
-					"lastName": {
-						"type": "string",
-						"description": "The user's last name."
-					},
-					"imageUrl": {
-						"type": "string",
-						"description": "The user's image URL."
-					},
-					"username": {
-						"type": "string",
-						"nullable": true,
-						"description": "The user's username."
-					},
-					"phoneNumber": {
-						"type": "string",
-						"nullable": true,
-						"description": "The phone number related to this specific external account."
-					},
-					"publicMetadata": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Record_string.unknown_"
-							}
-						],
-						"nullable": true,
-						"description": "Metadata that can be read from the Frontend API and Backend API and can be set only from the Backend API."
-					},
-					"label": {
-						"type": "string",
-						"nullable": true,
-						"description": "A descriptive label to differentiate multiple external accounts of the same user for the same provider."
-					},
-					"verification": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Verification"
-							}
-						],
-						"nullable": true,
-						"description": "An object holding information on the verification of this external account."
-					}
-				},
-				"required": [
-					"id",
-					"provider",
-					"identificationId",
-					"externalId",
-					"approvedScopes",
-					"emailAddress",
-					"firstName",
-					"lastName",
-					"imageUrl",
-					"username",
-					"phoneNumber",
-					"publicMetadata",
-					"label",
-					"verification"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SamlAccountConnection": {
-				"properties": {
-					"id": {
-						"type": "string"
-					},
-					"name": {
-						"type": "string"
-					},
-					"domain": {
-						"type": "string"
-					},
-					"active": {
-						"type": "boolean"
-					},
-					"provider": {
-						"type": "string"
-					},
-					"syncUserAttributes": {
-						"type": "boolean"
-					},
-					"allowSubdomains": {
-						"type": "boolean"
-					},
-					"allowIdpInitiated": {
-						"type": "boolean"
-					},
-					"createdAt": {
-						"type": "number",
-						"format": "double"
-					},
-					"updatedAt": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"id",
-					"name",
-					"domain",
-					"active",
-					"provider",
-					"syncUserAttributes",
-					"allowSubdomains",
-					"allowIdpInitiated",
-					"createdAt",
-					"updatedAt"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SamlAccount": {
-				"description": "The Backend `SamlAccount` object describes a SAML account.",
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier for the SAML account."
-					},
-					"provider": {
-						"type": "string",
-						"description": "The provider of the SAML account."
-					},
-					"providerUserId": {
-						"type": "string",
-						"nullable": true,
-						"description": "The user's ID as used in the provider."
-					},
-					"active": {
-						"type": "boolean",
-						"description": "A boolean that indicates whether the SAML account is active."
-					},
-					"emailAddress": {
-						"type": "string",
-						"description": "The email address of the SAML account."
-					},
-					"firstName": {
-						"type": "string",
-						"description": "The first name of the SAML account."
-					},
-					"lastName": {
-						"type": "string",
-						"description": "The last name of the SAML account."
-					},
-					"verification": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Verification"
-							}
-						],
-						"nullable": true,
-						"description": "The verification of the SAML account."
-					},
-					"samlConnection": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SamlAccountConnection"
-							}
-						],
-						"nullable": true,
-						"description": "The SAML connection of the SAML account."
-					}
-				},
-				"required": [
-					"id",
-					"provider",
-					"providerUserId",
-					"active",
-					"emailAddress",
-					"firstName",
-					"lastName",
-					"verification",
-					"samlConnection"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"User": {
-				"description": "The Backend `User` object is similar to the `User` object as it holds information about a user of your application, such as their unique identifier, name, email addresses, phone numbers, and more. However, the Backend `User` object is different from the `User` object in that it is used in the [Backend API](https://clerk.com/docs/reference/backend-api/tag/Users#operation/GetUser){{ target: '_blank' }} and is not directly accessible from the Frontend API.",
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier for the user."
-					},
-					"passwordEnabled": {
-						"type": "boolean",
-						"description": "A boolean indicating whether the user has a password on their account."
-					},
-					"totpEnabled": {
-						"type": "boolean",
-						"description": "A boolean indicating whether the user has enabled TOTP by generating a TOTP secret and verifying it via an authenticator app."
-					},
-					"backupCodeEnabled": {
-						"type": "boolean",
-						"description": "A boolean indicating whether the user has enabled Backup codes."
-					},
-					"twoFactorEnabled": {
-						"type": "boolean",
-						"description": "A boolean indicating whether the user has enabled two-factor authentication."
-					},
-					"banned": {
-						"type": "boolean",
-						"description": "A boolean indicating whether the user is banned or not."
-					},
-					"locked": {
-						"type": "boolean",
-						"description": "A boolean indicating whether the user is banned or not."
-					},
-					"createdAt": {
-						"type": "number",
-						"format": "double",
-						"description": "The date when the user was first created."
-					},
-					"updatedAt": {
-						"type": "number",
-						"format": "double",
-						"description": "The date when the user was last updated."
-					},
-					"imageUrl": {
-						"type": "string",
-						"description": "The URL of the user's profile image."
-					},
-					"hasImage": {
-						"type": "boolean",
-						"description": "A getter boolean to check if the user has uploaded an image or one was copied from OAuth. Returns `false` if Clerk is displaying an avatar for the user."
-					},
-					"primaryEmailAddressId": {
-						"type": "string",
-						"nullable": true,
-						"description": "The ID for the `EmailAddress` that the user has set as primary."
-					},
-					"primaryPhoneNumberId": {
-						"type": "string",
-						"nullable": true,
-						"description": "The ID for the `PhoneNumber` that the user has set as primary."
-					},
-					"primaryWeb3WalletId": {
-						"type": "string",
-						"nullable": true,
-						"description": "The ID for the [`Web3Wallet`](https://clerk.com/docs/references/backend/types/backend-web3-wallet) that the user signed up with."
-					},
-					"lastSignInAt": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "The date when the user last signed in. May be empty if the user has never signed in."
-					},
-					"externalId": {
-						"type": "string",
-						"nullable": true,
-						"description": "The ID of the user as used in your external systems. Must be unique across your instance."
-					},
-					"username": {
-						"type": "string",
-						"nullable": true,
-						"description": "The user's username."
-					},
-					"firstName": {
-						"type": "string",
-						"nullable": true,
-						"description": "The user's first name."
-					},
-					"lastName": {
-						"type": "string",
-						"nullable": true,
-						"description": "The user's last name."
-					},
-					"publicMetadata": {
-						"$ref": "#/components/schemas/UserPublicMetadata",
-						"description": "Metadata that can be read from the Frontend API and [Backend API](https://clerk.com/docs/reference/backend-api){{ target: '_blank' }} and can be set only from the Backend API."
-					},
-					"privateMetadata": {
-						"$ref": "#/components/schemas/UserPrivateMetadata",
-						"description": "Metadata that can be read and set only from the [Backend API](https://clerk.com/docs/reference/backend-api){{ target: '_blank' }}."
-					},
-					"unsafeMetadata": {
-						"$ref": "#/components/schemas/UserUnsafeMetadata",
-						"description": "Metadata that can be read and set from the Frontend API. It's considered unsafe because it can be modified from the frontend."
-					},
-					"emailAddresses": {
-						"items": {
-							"$ref": "#/components/schemas/EmailAddress"
+						"venueAddress": {
+							"type": "string"
 						},
-						"type": "array",
-						"description": "An array of all the `EmailAddress` objects associated with the user. Includes the primary."
-					},
-					"phoneNumbers": {
-						"items": {
-							"$ref": "#/components/schemas/PhoneNumber"
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
 						},
-						"type": "array",
-						"description": "An array of all the `PhoneNumber` objects associated with the user. Includes the primary."
-					},
-					"web3Wallets": {
-						"items": {
-							"$ref": "#/components/schemas/Web3Wallet"
+						"status": {
+							"type": "string"
 						},
-						"type": "array",
-						"description": "An array of all the `Web3Wallet` objects associated with the user. Includes the primary."
-					},
-					"externalAccounts": {
-						"items": {
-							"$ref": "#/components/schemas/ExternalAccount"
+						"name": {
+							"type": "string"
 						},
-						"type": "array",
-						"description": "An array of all the `ExternalAccount` objects associated with the user via OAuth. **Note**: This includes both verified & unverified external accounts."
-					},
-					"samlAccounts": {
-						"items": {
-							"$ref": "#/components/schemas/SamlAccount"
+						"id": {
+							"type": "string"
 						},
-						"type": "array",
-						"description": "An array of all the `SamlAccount` objects associated with the user via SAML."
+						"externalUrl": {
+							"type": "string"
+						},
+						"eventStartDate": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"eventEndDate": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"description": {
+							"type": "string",
+							"nullable": true
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						}
 					},
-					"lastActiveAt": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Date when the user was last active."
-					},
-					"createOrganizationEnabled": {
-						"type": "boolean",
-						"description": "A boolean indicating whether the organization creation is enabled for the user or not."
-					},
-					"createOrganizationsLimit": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "An integer indicating the number of organizations that can be created by the user. If the value is `0`, then the user can create unlimited organizations. Default is `null`."
-					},
-					"deleteSelfEnabled": {
-						"type": "boolean",
-						"description": "A boolean indicating whether the user can delete their own account."
-					},
-					"legalAcceptedAt": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "The unix timestamp of when the user accepted the legal requirements. `null` if [**Require express consent to legal documents**](https://clerk.com/docs/authentication/configuration/legal-compliance) is not enabled."
-					}
+					"required": [
+						"eventImages",
+						"venueName",
+						"venueAddress",
+						"updatedAt",
+						"status",
+						"name",
+						"id",
+						"externalUrl",
+						"eventStartDate",
+						"eventEndDate",
+						"description",
+						"createdAt"
+					],
+					"type": "object"
 				},
-				"required": [
-					"id",
-					"passwordEnabled",
-					"totpEnabled",
-					"backupCodeEnabled",
-					"twoFactorEnabled",
-					"banned",
-					"locked",
-					"createdAt",
-					"updatedAt",
-					"imageUrl",
-					"hasImage",
-					"primaryEmailAddressId",
-					"primaryPhoneNumberId",
-					"primaryWeb3WalletId",
-					"lastSignInAt",
-					"externalId",
-					"username",
-					"firstName",
-					"lastName",
-					"publicMetadata",
-					"privateMetadata",
-					"unsafeMetadata",
-					"emailAddresses",
-					"phoneNumbers",
-					"web3Wallets",
-					"externalAccounts",
-					"samlAccounts",
-					"lastActiveAt",
-					"createOrganizationEnabled",
-					"createOrganizationsLimit",
-					"deleteSelfEnabled",
-					"legalAcceptedAt"
-				],
-				"type": "object",
-				"additionalProperties": false
+				"type": "array",
+				"description": "Obtain the return type of a function type"
+			},
+			"SearchEventsResponse": {
+				"$ref": "#/components/schemas/ReturnType_EventsService-at-getBySearch_"
 			},
 			"EventTicketCurrency": {
 				"type": "string",
@@ -904,16 +280,36 @@
 					"UYU"
 				]
 			},
-			"GetEventByIdResponse": {
+			"ReturnType_EventsService-at-getEventById_": {
 				"properties": {
 					"ticketWaves": {
 						"items": {
 							"properties": {
-								"isSoldOut": {
-									"type": "boolean"
-								},
-								"isAvailable": {
-									"type": "boolean"
+								"priceGroups": {
+									"items": {
+										"properties": {
+											"availableTickets": {
+												"anyOf": [
+													{
+														"type": "string"
+													},
+													{
+														"type": "number",
+														"format": "double"
+													}
+												]
+											},
+											"price": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"availableTickets",
+											"price"
+										],
+										"type": "object"
+									},
+									"type": "array"
 								},
 								"faceValue": {
 									"type": "string"
@@ -924,17 +320,20 @@
 								"name": {
 									"type": "string"
 								},
+								"id": {
+									"type": "string"
+								},
 								"description": {
 									"type": "string",
 									"nullable": true
 								}
 							},
 							"required": [
-								"isSoldOut",
-								"isAvailable",
+								"priceGroups",
 								"faceValue",
 								"currency",
 								"name",
+								"id",
 								"description"
 							],
 							"type": "object"
@@ -1015,7 +414,10 @@
 					"createdAt"
 				],
 				"type": "object",
-				"additionalProperties": false
+				"description": "Obtain the return type of a function type"
+			},
+			"GetEventByIdResponse": {
+				"$ref": "#/components/schemas/ReturnType_EventsService-at-getEventById_"
 			},
 			"Record_string.any_": {
 				"properties": {},
@@ -1101,12 +503,1529 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"ReturnType_TicketListingsService-at-createTicketListing_": {
+				"properties": {
+					"ticketWaveId": {
+						"type": "string"
+					},
+					"soldAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"publisherUserId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"listingTickets": {
+						"items": {
+							"properties": {
+								"ticketNumber": {
+									"type": "number",
+									"format": "double"
+								},
+								"price": {
+									"type": "string"
+								},
+								"listingId": {
+									"type": "string"
+								},
+								"documentUploadRequiredNotifiedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"documentUploadedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"documentType": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentSizeBytes": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
+								},
+								"documentPath": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentOriginalName": {
+									"type": "string",
+									"nullable": true
+								},
+								"cancelledAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"soldAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"id": {
+									"type": "string"
+								},
+								"deletedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								}
+							},
+							"required": [
+								"ticketNumber",
+								"price",
+								"listingId",
+								"documentUploadRequiredNotifiedAt",
+								"documentUploadedAt",
+								"documentType",
+								"documentSizeBytes",
+								"documentPath",
+								"documentOriginalName",
+								"cancelledAt",
+								"soldAt",
+								"updatedAt",
+								"id",
+								"deletedAt",
+								"createdAt"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"ticketWaveId",
+					"soldAt",
+					"publisherUserId",
+					"updatedAt",
+					"id",
+					"deletedAt",
+					"createdAt",
+					"listingTickets"
+				],
+				"type": "object",
+				"description": "Obtain the return type of a function type"
+			},
+			"CreateTicketListingResponse": {
+				"$ref": "#/components/schemas/ReturnType_TicketListingsService-at-createTicketListing_"
+			},
+			"UnauthorizedError": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double"
+					},
+					"isOperational": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"name",
+					"message",
+					"statusCode",
+					"isOperational"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"BadRequestError": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double"
+					},
+					"isOperational": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"name",
+					"message",
+					"statusCode",
+					"isOperational"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NotFoundError": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double"
+					},
+					"isOperational": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"name",
+					"message",
+					"statusCode",
+					"isOperational"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ValidationError": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double"
+					},
+					"isOperational": {
+						"type": "boolean"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.any_"
+					}
+				},
+				"required": [
+					"name",
+					"message",
+					"statusCode",
+					"isOperational"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateTicketListingRouteBody": {
+				"properties": {
+					"quantity": {
+						"type": "number",
+						"format": "double"
+					},
+					"price": {
+						"type": "number",
+						"format": "double"
+					},
+					"ticketWaveId": {
+						"type": "string"
+					},
+					"eventId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"quantity",
+					"price",
+					"ticketWaveId",
+					"eventId"
+				],
+				"type": "object"
+			},
+			"UploadAvailabilityReason": {
+				"type": "string",
+				"enum": [
+					"event_ended",
+					"too_early",
+					"unknown"
+				]
+			},
+			"ReturnType_TicketListingsService-at-getUserListingsWithTickets_": {
+				"items": {
+					"properties": {
+						"event": {
+							"properties": {
+								"venueName": {
+									"type": "string",
+									"nullable": true
+								},
+								"venueAddress": {
+									"type": "string"
+								},
+								"platform": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								},
+								"eventStartDate": {
+									"type": "string"
+								},
+								"eventEndDate": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string",
+									"nullable": true
+								}
+							},
+							"required": [
+								"venueName",
+								"venueAddress",
+								"platform",
+								"name",
+								"id",
+								"eventStartDate",
+								"eventEndDate",
+								"description"
+							],
+							"type": "object"
+						},
+						"ticketWave": {
+							"properties": {
+								"currency": {
+									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"name": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"currency",
+								"name",
+								"id"
+							],
+							"type": "object"
+						},
+						"soldAt": {
+							"type": "string",
+							"format": "date-time",
+							"nullable": true
+						},
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"id": {
+							"type": "string"
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"tickets": {
+							"items": {
+								"properties": {
+									"document": {
+										"properties": {
+											"uploadedAt": {
+												"type": "string"
+											},
+											"status": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"uploadedAt",
+											"status",
+											"id"
+										],
+										"type": "object",
+										"nullable": true
+									},
+									"ticketNumber": {
+										"type": "number",
+										"format": "double"
+									},
+									"price": {
+										"type": "string"
+									},
+									"cancelledAt": {
+										"type": "string",
+										"nullable": true
+									},
+									"soldAt": {
+										"type": "string",
+										"nullable": true
+									},
+									"updatedAt": {
+										"type": "string"
+									},
+									"id": {
+										"type": "string"
+									},
+									"createdAt": {
+										"type": "string"
+									},
+									"uploadUnavailableReason": {
+										"$ref": "#/components/schemas/UploadAvailabilityReason"
+									},
+									"canUploadDocument": {
+										"type": "boolean"
+									},
+									"hasDocument": {
+										"type": "boolean"
+									}
+								},
+								"required": [
+									"document",
+									"ticketNumber",
+									"price",
+									"cancelledAt",
+									"soldAt",
+									"updatedAt",
+									"id",
+									"createdAt",
+									"canUploadDocument",
+									"hasDocument"
+								],
+								"type": "object"
+							},
+							"type": "array"
+						}
+					},
+					"required": [
+						"event",
+						"ticketWave",
+						"soldAt",
+						"updatedAt",
+						"id",
+						"createdAt",
+						"tickets"
+					],
+					"type": "object"
+				},
+				"type": "array",
+				"description": "Obtain the return type of a function type"
+			},
+			"GetUserListingsResponse": {
+				"$ref": "#/components/schemas/ReturnType_TicketListingsService-at-getUserListingsWithTickets_"
+			},
+			"Awaited_ReturnType_TicketDocumentService-at-uploadTicketDocument__": {
+				"properties": {
+					"documentUrl": {
+						"type": "string"
+					},
+					"document": {
+						"properties": {
+							"version": {
+								"type": "number",
+								"format": "double"
+							},
+							"verifiedBy": {
+								"type": "string",
+								"nullable": true
+							},
+							"verifiedAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"uploadedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"ticketId": {
+								"type": "string"
+							},
+							"storagePath": {
+								"type": "string"
+							},
+							"sizeBytes": {
+								"type": "number",
+								"format": "double"
+							},
+							"originalName": {
+								"type": "string"
+							},
+							"mimeType": {
+								"type": "string"
+							},
+							"isPrimary": {
+								"type": "boolean"
+							},
+							"fileName": {
+								"type": "string"
+							},
+							"documentType": {
+								"type": "string"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"status": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							},
+							"deletedAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"version",
+							"verifiedBy",
+							"verifiedAt",
+							"uploadedAt",
+							"ticketId",
+							"storagePath",
+							"sizeBytes",
+							"originalName",
+							"mimeType",
+							"isPrimary",
+							"fileName",
+							"documentType",
+							"updatedAt",
+							"status",
+							"id",
+							"deletedAt",
+							"createdAt"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"documentUrl"
+				],
+				"type": "object",
+				"description": "Recursively unwraps the \"awaited type\" of a type. Non-promise \"thenables\" should resolve to `never`. This emulates the behavior of `await`."
+			},
+			"UploadDocumentResponse": {
+				"$ref": "#/components/schemas/Awaited_ReturnType_TicketDocumentService-at-uploadTicketDocument__"
+			},
+			"ReturnType_OrdersService-at-createOrder_": {
+				"properties": {
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"totalAmount": {
+						"type": "string"
+					},
+					"subtotalAmount": {
+						"type": "string"
+					},
+					"reservationExpiresAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"confirmedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"userId": {
+						"type": "string"
+					},
+					"cancelledAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"cancelled",
+							"confirmed",
+							"expired",
+							"pending"
+						]
+					},
+					"id": {
+						"type": "string"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"vatOnCommission",
+					"totalAmount",
+					"subtotalAmount",
+					"reservationExpiresAt",
+					"platformCommission",
+					"confirmedAt",
+					"userId",
+					"cancelledAt",
+					"currency",
+					"eventId",
+					"updatedAt",
+					"status",
+					"id",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object",
+				"description": "Obtain the return type of a function type"
+			},
+			"CreateOrderResponse": {
+				"$ref": "#/components/schemas/ReturnType_OrdersService-at-createOrder_"
+			},
+			"Record_string.Record_string.number__": {
+				"properties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"CreateOrderRouteBody": {
+				"properties": {
+					"ticketSelections": {
+						"$ref": "#/components/schemas/Record_string.Record_string.number__"
+					},
+					"eventId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"ticketSelections",
+					"eventId"
+				],
+				"type": "object"
+			},
+			"ReturnType_OrdersService-at-getOrderById_": {
+				"properties": {
+					"items": {
+						"items": {
+							"properties": {
+								"ticketWaveName": {
+									"type": "string",
+									"nullable": true
+								},
+								"subtotal": {
+									"type": "string",
+									"nullable": true
+								},
+								"quantity": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
+								},
+								"pricePerTicket": {
+									"type": "string",
+									"nullable": true
+								},
+								"ticketWaveId": {
+									"type": "string",
+									"nullable": true
+								},
+								"id": {
+									"type": "string",
+									"nullable": true
+								},
+								"currency": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/EventTicketCurrency"
+										}
+									],
+									"nullable": true
+								}
+							},
+							"required": [
+								"ticketWaveName",
+								"subtotal",
+								"quantity",
+								"pricePerTicket",
+								"ticketWaveId",
+								"id",
+								"currency"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"event": {
+						"properties": {
+							"images": {
+								"items": {
+									"properties": {
+										"imageType": {
+											"$ref": "#/components/schemas/EventImageType"
+										},
+										"url": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"imageType",
+										"url"
+									],
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"venueName": {
+								"type": "string",
+								"nullable": true
+							},
+							"venueAddress": {
+								"type": "string",
+								"nullable": true
+							},
+							"platform": {
+								"type": "string",
+								"nullable": true
+							},
+							"name": {
+								"type": "string",
+								"nullable": true
+							},
+							"id": {
+								"type": "string",
+								"nullable": true
+							},
+							"eventStartDate": {
+								"type": "string",
+								"nullable": true
+							},
+							"eventEndDate": {
+								"type": "string",
+								"nullable": true
+							}
+						},
+						"required": [
+							"images",
+							"venueName",
+							"venueAddress",
+							"platform",
+							"name",
+							"id",
+							"eventStartDate",
+							"eventEndDate"
+						],
+						"type": "object",
+						"nullable": true
+					},
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"totalAmount": {
+						"type": "string"
+					},
+					"subtotalAmount": {
+						"type": "string"
+					},
+					"reservationExpiresAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"confirmedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"userId": {
+						"type": "string"
+					},
+					"cancelledAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"cancelled",
+							"confirmed",
+							"expired",
+							"pending"
+						]
+					},
+					"id": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"items",
+					"event",
+					"vatOnCommission",
+					"totalAmount",
+					"subtotalAmount",
+					"reservationExpiresAt",
+					"platformCommission",
+					"confirmedAt",
+					"userId",
+					"cancelledAt",
+					"currency",
+					"eventId",
+					"updatedAt",
+					"status",
+					"id",
+					"createdAt"
+				],
+				"type": "object",
+				"description": "Obtain the return type of a function type"
+			},
+			"GetOrderByIdResponse": {
+				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getOrderById_"
+			},
+			"ReturnType_OrdersService-at-getUserOrders_": {
+				"items": {
+					"properties": {
+						"items": {
+							"items": {
+								"properties": {
+									"ticketWaveName": {
+										"type": "string",
+										"nullable": true
+									},
+									"subtotal": {
+										"type": "string"
+									},
+									"quantity": {
+										"type": "number",
+										"format": "double"
+									},
+									"pricePerTicket": {
+										"type": "string"
+									},
+									"ticketWaveId": {
+										"type": "string"
+									},
+									"id": {
+										"type": "string"
+									},
+									"currency": {
+										"allOf": [
+											{
+												"$ref": "#/components/schemas/EventTicketCurrency"
+											}
+										],
+										"nullable": true
+									}
+								},
+								"required": [
+									"ticketWaveName",
+									"subtotal",
+									"quantity",
+									"pricePerTicket",
+									"ticketWaveId",
+									"id",
+									"currency"
+								],
+								"type": "object"
+							},
+							"type": "array"
+						},
+						"event": {
+							"properties": {
+								"images": {
+									"items": {
+										"properties": {
+											"imageType": {
+												"$ref": "#/components/schemas/EventImageType"
+											},
+											"url": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"imageType",
+											"url"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"venueName": {
+									"type": "string",
+									"nullable": true
+								},
+								"venueAddress": {
+									"type": "string",
+									"nullable": true
+								},
+								"platform": {
+									"type": "string",
+									"nullable": true
+								},
+								"name": {
+									"type": "string",
+									"nullable": true
+								},
+								"id": {
+									"type": "string",
+									"nullable": true
+								},
+								"eventStartDate": {
+									"type": "string",
+									"nullable": true
+								},
+								"eventEndDate": {
+									"type": "string",
+									"nullable": true
+								}
+							},
+							"required": [
+								"images",
+								"venueName",
+								"venueAddress",
+								"platform",
+								"name",
+								"id",
+								"eventStartDate",
+								"eventEndDate"
+							],
+							"type": "object",
+							"nullable": true
+						},
+						"vatOnCommission": {
+							"type": "string"
+						},
+						"totalAmount": {
+							"type": "string"
+						},
+						"subtotalAmount": {
+							"type": "string"
+						},
+						"reservationExpiresAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"platformCommission": {
+							"type": "string"
+						},
+						"confirmedAt": {
+							"type": "string",
+							"format": "date-time",
+							"nullable": true
+						},
+						"userId": {
+							"type": "string"
+						},
+						"cancelledAt": {
+							"type": "string",
+							"format": "date-time",
+							"nullable": true
+						},
+						"currency": {
+							"$ref": "#/components/schemas/EventTicketCurrency"
+						},
+						"eventId": {
+							"type": "string"
+						},
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"status": {
+							"type": "string",
+							"enum": [
+								"cancelled",
+								"confirmed",
+								"expired",
+								"pending"
+							]
+						},
+						"id": {
+							"type": "string"
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						}
+					},
+					"required": [
+						"items",
+						"event",
+						"vatOnCommission",
+						"totalAmount",
+						"subtotalAmount",
+						"reservationExpiresAt",
+						"platformCommission",
+						"confirmedAt",
+						"userId",
+						"cancelledAt",
+						"currency",
+						"eventId",
+						"updatedAt",
+						"status",
+						"id",
+						"createdAt"
+					],
+					"type": "object"
+				},
+				"type": "array",
+				"description": "Obtain the return type of a function type"
+			},
+			"GetUserOrdersResponse": {
+				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getUserOrders_"
+			},
+			"ReturnType_OrdersService-at-getOrderTickets_": {
+				"properties": {
+					"tickets": {
+						"items": {
+							"properties": {
+								"document": {
+									"properties": {
+										"url": {
+											"type": "string"
+										},
+										"mimeType": {
+											"type": "string",
+											"nullable": true
+										},
+										"uploadedAt": {
+											"type": "string",
+											"nullable": true
+										},
+										"status": {
+											"type": "string",
+											"nullable": true
+										},
+										"id": {
+											"type": "string",
+											"nullable": true
+										}
+									},
+									"required": [
+										"url",
+										"mimeType",
+										"uploadedAt",
+										"status",
+										"id"
+									],
+									"type": "object",
+									"nullable": true
+								},
+								"ticketWave": {
+									"properties": {
+										"name": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"name"
+									],
+									"type": "object",
+									"nullable": true
+								},
+								"hasDocument": {
+									"type": "boolean"
+								},
+								"soldAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"price": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"document",
+								"ticketWave",
+								"hasDocument",
+								"soldAt",
+								"price",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"totalAmount": {
+						"type": "string"
+					},
+					"subtotalAmount": {
+						"type": "string"
+					},
+					"event": {
+						"properties": {
+							"eventStartDate": {
+								"type": "string",
+								"nullable": true
+							},
+							"name": {
+								"type": "string",
+								"nullable": true
+							}
+						},
+						"required": [
+							"eventStartDate",
+							"name"
+						],
+						"type": "object",
+						"nullable": true
+					},
+					"orderId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"tickets",
+					"currency",
+					"vatOnCommission",
+					"platformCommission",
+					"totalAmount",
+					"subtotalAmount",
+					"event",
+					"orderId"
+				],
+				"type": "object",
+				"description": "Obtain the return type of a function type"
+			},
+			"GetOrderTicketsResponse": {
+				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getOrderTickets_"
+			},
+			"DLocalWebhookrRouteBody": {
+				"properties": {
+					"payment_id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"payment_id"
+				],
+				"type": "object"
+			},
+			"CreatePaymentLinkResponse": {
+				"properties": {
+					"redirectUrl": {
+						"type": "string"
+					},
+					"paymentId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"redirectUrl",
+					"paymentId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"JsonArray": {
+				"items": {
+					"$ref": "#/components/schemas/JsonValue"
+				},
+				"type": "array"
+			},
+			"JsonValue": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/JsonArray"
+					},
+					{
+						"$ref": "#/components/schemas/JsonObject"
+					},
+					{
+						"$ref": "#/components/schemas/JsonPrimitive"
+					}
+				]
+			},
+			"JsonObject": {
+				"properties": {},
+				"additionalProperties": {
+					"$ref": "#/components/schemas/JsonValue"
+				},
+				"type": "object"
+			},
+			"JsonPrimitive": {
+				"anyOf": [
+					{
+						"type": "boolean"
+					},
+					{
+						"type": "number",
+						"format": "double"
+					},
+					{
+						"type": "string"
+					}
+				],
+				"nullable": true
+			},
+			"Pick_Notification.Exclude_keyofNotification.metadata-or-actions-or-type-or-title-or-description__": {
+				"properties": {
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"id": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"failed",
+							"seen",
+							"sent"
+						]
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"channels": {
+						"items": {
+							"type": "string",
+							"enum": [
+								"email",
+								"in_app",
+								"sms"
+							]
+						},
+						"type": "array"
+					},
+					"channelStatus": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "number",
+								"format": "double"
+							},
+							{
+								"type": "boolean"
+							},
+							{
+								"$ref": "#/components/schemas/JsonArray"
+							},
+							{
+								"$ref": "#/components/schemas/JsonObject"
+							}
+						],
+						"nullable": true
+					},
+					"retryCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"seenAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"userId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"createdAt",
+					"deletedAt",
+					"id",
+					"status",
+					"updatedAt",
+					"channels",
+					"channelStatus",
+					"retryCount",
+					"seenAt",
+					"userId"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_Notification.metadata-or-actions-or-type-or-title-or-description_": {
+				"$ref": "#/components/schemas/Pick_Notification.Exclude_keyofNotification.metadata-or-actions-or-type-or-title-or-description__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"NotificationType": {
+				"type": "string",
+				"enum": [
+					"document_reminder",
+					"order_confirmed",
+					"order_expired",
+					"payment_failed",
+					"payment_succeeded",
+					"ticket_sold_buyer",
+					"ticket_sold_seller"
+				]
+			},
+			"TypedNotificationMetadata_NotificationMetadata_": {
+				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationMetadata__",
+				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
+			},
+			"Extract_NotificationMetadata._type-NotificationMetadata__": {
+				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
+				"description": "Extract from T those types that are assignable to U"
+			},
+			"Extract_NotificationMetadata._type-Notification-at-type__": {
+				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
+				"description": "Extract from T those types that are assignable to U"
+			},
+			"TypedNotificationMetadata_Notification-at-type_": {
+				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-Notification-at-type__",
+				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
+			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"infer_typeofBaseActionSchema_": {
+				"properties": {
+					"data": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"url": {
+						"type": "string"
+					},
+					"label": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"upload_documents",
+							"view_order",
+							"retry_payment"
+						]
+					}
+				},
+				"required": [
+					"label",
+					"type"
+				],
+				"type": "object"
+			},
+			"NotificationAction": {
+				"$ref": "#/components/schemas/infer_typeofBaseActionSchema_"
+			},
+			"TypedNotification": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/Omit_Notification.metadata-or-actions-or-type-or-title-or-description_"
+					},
+					{
+						"properties": {
+							"actions": {
+								"items": {
+									"$ref": "#/components/schemas/NotificationAction"
+								},
+								"type": "array",
+								"nullable": true
+							},
+							"metadata": {
+								"allOf": [
+									{
+										"$ref": "#/components/schemas/TypedNotificationMetadata_Notification-at-type_"
+									}
+								],
+								"nullable": true
+							},
+							"description": {
+								"type": "string"
+							},
+							"title": {
+								"type": "string"
+							},
+							"type": {
+								"$ref": "#/components/schemas/NotificationType"
+							}
+						},
+						"required": [
+							"actions",
+							"metadata",
+							"description",
+							"title",
+							"type"
+						],
+						"type": "object"
+					}
+				],
+				"description": "Typed notification response with parsed metadata and actions\nThis ensures type safety when reading notifications from the database\nTitle and description are generated from type + metadata, not stored in DB\nFor backwards compatibility, uses the generic type"
+			},
+			"PaginatedResponse_TypedNotification_": {
+				"properties": {
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/TypedNotification"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetNotificationsResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse_TypedNotification_"
+			},
+			"GetNotificationsQuery": {
+				"properties": {
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
+					},
+					"sortBy": {
+						"type": "string"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"includeSeen": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"limit",
+					"page"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetUnseenCountResponse": {
+				"type": "number",
+				"format": "double"
+			},
+			"MarkAsSeenResponse": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/TypedNotification"
+					}
+				],
+				"nullable": true
+			},
+			"MarkAllAsSeenResponse": {
+				"items": {
+					"$ref": "#/components/schemas/TypedNotification"
+				},
+				"type": "array"
+			},
+			"DeleteNotificationResponse": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/TypedNotification"
+					}
+				],
+				"nullable": true
 			}
 		},
 		"securitySchemes": {}
 	},
 	"info": {
-		"title": "backend",
+		"title": "@revendiste/backend",
 		"version": "1.0.0",
 		"license": {
 			"name": "ISC"
@@ -1175,16 +2094,16 @@
 				]
 			}
 		},
-		"/events/protected": {
+		"/events/search": {
 			"get": {
-				"operationId": "GetProtected",
+				"operationId": "GetBySearch",
 				"responses": {
 					"200": {
 						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/User"
+									"$ref": "#/components/schemas/SearchEventsResponse"
 								}
 							}
 						}
@@ -1194,7 +2113,25 @@
 					"Events"
 				],
 				"security": [],
-				"parameters": []
+				"parameters": [
+					{
+						"in": "query",
+						"name": "query",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
 			}
 		},
 		"/events/{eventId}": {
@@ -1475,6 +2412,856 @@
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/ticket-listings": {
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateTicketListingResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid request body, missing required fields, or invalid data types",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BadRequestError"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Event not found or ticket wave not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: Cannot create listing for finished event, ticket wave does not belong to event, price exceeds face value, or quantity must be greater than 0",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Listings"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTicketListingRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/ticket-listings/my-listings": {
+			"get": {
+				"operationId": "GetMyListings",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetUserListingsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Listings"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/ticket-listings/tickets/{ticketId}/document": {
+			"post": {
+				"operationId": "UploadDocument",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UploadDocumentResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "No file uploaded or invalid file",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BadRequestError"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required or not authorized to upload for this ticket",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Ticket not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: ticket not sold, event has ended, invalid file type, or file too large",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Upload a ticket document\n\nSellers can upload PDF/image documents for their sold tickets.\nDocuments must be uploaded before the event ends.",
+				"tags": [
+					"Ticket Listings"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "- ID of the ticket",
+						"in": "path",
+						"name": "ticketId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary",
+										"description": "- Document file (PDF, PNG, JPG, JPEG - max 10MB)"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"operationId": "UpdateDocument",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UploadDocumentResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "No file uploaded or invalid file",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BadRequestError"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required or not authorized to upload for this ticket",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Ticket not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: ticket not sold, event has ended, invalid file type, or file too large",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Update/replace a ticket document\n\nUploads a new version of the document. Previous versions are kept for audit trail.\nCan only update before the event ends.",
+				"tags": [
+					"Ticket Listings"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "- ID of the ticket",
+						"in": "path",
+						"name": "ticketId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary",
+										"description": "- New document file (PDF, PNG, JPG, JPEG - max 10MB)"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		"/orders": {
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateOrderResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid request body, missing required fields, or invalid data types",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BadRequestError"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Event not found or ticket wave not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: Not enough tickets available, event has ended, or invalid ticket selection",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateOrderRouteBody"
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "GetMyOrders",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetUserOrdersResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/orders/{orderId}": {
+			"get": {
+				"operationId": "GetById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetOrderByIdResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Order not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/orders/{orderId}/tickets": {
+			"get": {
+				"operationId": "GetOrderTickets",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetOrderTicketsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Not authorized to view tickets for this order",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Order not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/webhooks/dlocal": {
+			"post": {
+				"operationId": "HandleDLocalWebhook",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"received": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"received"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"description": "Receives payment status notifications from dLocal",
+				"summary": "dLocal payment webhook",
+				"tags": [
+					"Webhooks"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/DLocalWebhookrRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/payments/create-link/{orderId}": {
+			"post": {
+				"operationId": "CreatePaymentLink",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreatePaymentLinkResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Order not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Order has expired or payment already processed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payments"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/notifications": {
+			"get": {
+				"operationId": "GetNotifications",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetNotificationsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "includeSeen",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
+		"/notifications/unseen-count": {
+			"get": {
+				"operationId": "GetUnseenCount",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetUnseenCountResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/notifications/{notificationId}/seen": {
+			"patch": {
+				"operationId": "MarkAsSeen",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkAsSeenResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Notification not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "notificationId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/notifications/seen-all": {
+			"patch": {
+				"operationId": "MarkAllAsSeen",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkAllAsSeenResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/notifications/{notificationId}": {
+			"delete": {
+				"operationId": "DeleteNotification",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteNotificationResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Notification not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "notificationId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},

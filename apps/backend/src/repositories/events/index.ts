@@ -1,12 +1,17 @@
 import {type Kysely} from 'kysely';
-import type {DB} from '../../types/db';
+import type {DB} from '~/shared';
 import type {ScrapedEventData} from '../../services/scraping';
 import {logger} from '~/utils';
 import {jsonArrayFrom} from 'kysely/helpers/postgres';
 import {mapToPaginatedResponse} from '~/middleware';
 import {NotFoundError} from '~/errors';
-export class EventsRepository {
-  constructor(private db: Kysely<DB>) {}
+import {sql} from 'kysely';
+import {BaseRepository} from '../base';
+
+export class EventsRepository extends BaseRepository<EventsRepository> {
+  withTransaction(trx: Kysely<DB>): EventsRepository {
+    return new EventsRepository(trx);
+  }
 
   // Upsert event with all related data in a single transaction
   async upsertScrapedEvent(event: ScrapedEventData) {
@@ -71,7 +76,9 @@ export class EventsRepository {
         }
       }
 
-      // Upsert ticket waves by eventId and externalId
+      // Upsert ticket waves by eventId and externalId (composite unique constraint)
+      // Note: externalId is NOT globally unique - it can be reused across different events
+      // We use the composite key (eventId, externalId) for conflict resolution
       if (event.ticketWaves.length > 0) {
         for (const ticketWave of event.ticketWaves) {
           await trx
@@ -157,6 +164,8 @@ export class EventsRepository {
     const total = Number(totalResult?.total || 0);
 
     // Get events with nested images using jsonArrayFrom
+    // Get lowest available ticket price and currency from the same ticket
+    // Note: Using two identical subqueries - PostgreSQL's query planner will optimize this
     const events = await this.db
       .selectFrom('events')
       .select(eb => [
@@ -171,6 +180,48 @@ export class EventsRepository {
         'status',
         'createdAt',
         'updatedAt',
+        // Get lowest available ticket price
+        sql<number | null>`
+          (
+            SELECT listing_tickets.price
+            FROM listing_tickets
+            INNER JOIN listings ON listings.id = listing_tickets.listing_id
+            INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+            LEFT JOIN order_ticket_reservations ON 
+              order_ticket_reservations.listing_ticket_id = listing_tickets.id
+              AND order_ticket_reservations.deleted_at IS NULL
+              AND order_ticket_reservations.reserved_until > NOW()
+            WHERE event_ticket_waves.event_id = events.id
+              AND listing_tickets.cancelled_at IS NULL
+              AND listing_tickets.sold_at IS NULL
+              AND listing_tickets.deleted_at IS NULL
+              AND listings.deleted_at IS NULL
+              AND order_ticket_reservations.id IS NULL
+            ORDER BY listing_tickets.price ASC
+            LIMIT 1
+          )
+        `.as('lowestAvailableTicketPrice'),
+        // Get currency from the same ticket (same subquery logic)
+        sql<string | null>`
+          (
+            SELECT event_ticket_waves.currency
+            FROM listing_tickets
+            INNER JOIN listings ON listings.id = listing_tickets.listing_id
+            INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+            LEFT JOIN order_ticket_reservations ON 
+              order_ticket_reservations.listing_ticket_id = listing_tickets.id
+              AND order_ticket_reservations.deleted_at IS NULL
+              AND order_ticket_reservations.reserved_until > NOW()
+            WHERE event_ticket_waves.event_id = events.id
+              AND listing_tickets.cancelled_at IS NULL
+              AND listing_tickets.sold_at IS NULL
+              AND listing_tickets.deleted_at IS NULL
+              AND listings.deleted_at IS NULL
+              AND order_ticket_reservations.id IS NULL
+            ORDER BY listing_tickets.price ASC
+            LIMIT 1
+          )
+        `.as('lowestAvailableTicketCurrency'),
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
@@ -235,7 +286,7 @@ export class EventsRepository {
   }
 
   // Get all active event external IDs (for comparison with scraped results)
-  async getAllActiveEventExternalIds(): Promise<string[]> {
+  async getAllActiveEventExternalIds() {
     const result = await this.db
       .selectFrom('events')
       .select('externalId')
@@ -301,7 +352,7 @@ export class EventsRepository {
   }
 
   // Retrieve event information with ticket waves and images
-  async getById(eventId: string) {
+  async getById(eventId: string, userId?: string) {
     const event = await this.db
       .selectFrom('events')
       .select(eb => [
@@ -326,13 +377,50 @@ export class EventsRepository {
         jsonArrayFrom(
           eb
             .selectFrom('eventTicketWaves')
-            .select([
+            .select(eb => [
+              'eventTicketWaves.id',
               'eventTicketWaves.name',
-              'eventTicketWaves.faceValue',
               'eventTicketWaves.currency',
-              'eventTicketWaves.isSoldOut',
-              'eventTicketWaves.isAvailable',
               'eventTicketWaves.description',
+              'eventTicketWaves.faceValue',
+              jsonArrayFrom(
+                eb
+                  .selectFrom('listingTickets')
+                  .innerJoin(
+                    'listings',
+                    'listings.id',
+                    'listingTickets.listingId',
+                  )
+                  .leftJoin('orderTicketReservations', join =>
+                    join
+                      .onRef(
+                        'orderTicketReservations.listingTicketId',
+                        '=',
+                        'listingTickets.id',
+                      )
+                      .on('orderTicketReservations.deletedAt', 'is', null)
+                      .on(
+                        'orderTicketReservations.reservedUntil',
+                        '>',
+                        new Date(),
+                      ),
+                  )
+                  .select(eb => [
+                    'listingTickets.price',
+                    eb.fn.count('listingTickets.id').as('availableTickets'),
+                  ])
+                  .where('listingTickets.cancelledAt', 'is', null)
+                  .where('listingTickets.soldAt', 'is', null)
+                  .where('listingTickets.deletedAt', 'is', null)
+                  .where('listings.deletedAt', 'is', null)
+                  .where('orderTicketReservations.id', 'is', null) // Not reserved
+                  .$if(!!userId, eb =>
+                    eb.where('listings.publisherUserId', '!=', userId!),
+                  )
+                  .whereRef('listings.ticketWaveId', '=', 'eventTicketWaves.id')
+                  .groupBy('listingTickets.price')
+                  .orderBy('listingTickets.price', 'asc'),
+              ).as('priceGroups'),
             ])
             .whereRef('eventTicketWaves.eventId', '=', 'events.id')
             .orderBy('eventTicketWaves.faceValue', 'asc'),
@@ -349,5 +437,97 @@ export class EventsRepository {
     }
 
     return event;
+  }
+
+  // Get upcoming events ordered by start date
+  async getUpcomingEvents(limit: number = 8) {
+    const now = new Date();
+
+    const events = await this.db
+      .selectFrom('events')
+      .select(eb => [
+        'id',
+        'name',
+        'description',
+        'eventStartDate',
+        'eventEndDate',
+        'venueName',
+        'venueAddress',
+        'externalUrl',
+        'status',
+        'createdAt',
+        'updatedAt',
+        // Only include flyer images for the search results
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventImages')
+            .select(['eventImages.url', 'eventImages.imageType'])
+            .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.imageType', '=', 'flyer')
+            .orderBy('eventImages.displayOrder'),
+        ).as('eventImages'),
+      ])
+      .where('deletedAt', 'is', null)
+      .where('status', '=', 'active')
+      .where('eventStartDate', '>=', now)
+      .orderBy('eventStartDate', 'asc')
+      .limit(limit)
+      .execute();
+
+    return events;
+  }
+
+  // Search events by name using ILIKE for substring matching and trigram similarity for fuzzy matching
+  async getBySearch(query: string, limit: number = 20) {
+    const searchPattern = `%${query}%`;
+    const events = await this.db
+      .selectFrom('events')
+      .select(eb => [
+        'id',
+        'name',
+        'description',
+        'eventStartDate',
+        'eventEndDate',
+        'venueName',
+        'venueAddress',
+        'externalUrl',
+        'status',
+        'createdAt',
+        'updatedAt',
+        // Only include flyer images for the search results
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventImages')
+            .select(['eventImages.url', 'eventImages.imageType'])
+            .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.imageType', '=', 'flyer')
+            .orderBy('eventImages.displayOrder'),
+        ).as('eventImages'),
+      ])
+      .where('deletedAt', 'is', null)
+      .where('status', '=', 'active')
+      // Use ILIKE for substring matching (works for partial word matches like "fideles" in "WAVES OF LIFE w/ FIDELES PDE 2026")
+      // Also use trigram similarity for fuzzy matching (handles typos and variations)
+      .where(
+        eb =>
+          sql`(${eb.ref('name')} ILIKE ${searchPattern} OR similarity(${eb.ref(
+            'name',
+          )}, ${query}) > 0.2)`,
+      )
+      // Order by relevance: exact matches first, then ILIKE matches, then similarity score, then date
+      .orderBy(
+        eb =>
+          sql`CASE 
+          WHEN ${eb.ref('name')} ILIKE ${query} THEN 0
+          WHEN ${eb.ref('name')} ILIKE ${searchPattern} THEN 1
+          ELSE 2
+        END`,
+      )
+      .orderBy(eb => sql`similarity(${eb.ref('name')}, ${query}) DESC`)
+      .orderBy('eventStartDate', 'asc')
+      .limit(limit)
+      .execute();
+
+    return events;
   }
 }

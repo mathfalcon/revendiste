@@ -1,6 +1,11 @@
 import {Request, Response, NextFunction} from 'express';
 import {ZodError} from 'zod';
-import {AppError, ZodValidationError, InternalServerError} from '~/errors';
+import {
+  AppError,
+  ZodValidationError,
+  InternalServerError,
+  ValidationError,
+} from '~/errors';
 import {ValidateError} from '@tsoa/runtime';
 import {logger} from '~/utils';
 
@@ -39,7 +44,7 @@ export const errorHandler = (
 
   // Handle custom AppError instances
   if (error instanceof AppError) {
-    const errorResponse: ErrorResponse = {
+    const errorResponse: ErrorResponse & {metadata?: Record<string, any>} = {
       error: error.constructor.name,
       message: error.message,
       statusCode: error.statusCode,
@@ -47,6 +52,11 @@ export const errorHandler = (
       path: req.path,
       method: req.method,
     };
+
+    // Include metadata if available (e.g., orderId for duplicate order errors)
+    if (error instanceof ValidationError && error.metadata) {
+      errorResponse.metadata = error.metadata;
+    }
 
     // Include stack trace in development
     if (process.env.NODE_ENV === 'development') {

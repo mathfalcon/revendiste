@@ -1,0 +1,17 @@
+{
+  "extends": "../../.eslintrc.json",
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@tsoa/runtime",
+            "importNames": ["Body", "Query", "Params"],
+            "message": "Import Body, Query, and Params from '~/decorators' instead of '@tsoa/runtime' to ensure proper validation behavior."
+          }
+        ]
+      }
+    ]
+  }
+}

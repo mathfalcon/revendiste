@@ -1,4 +1,4 @@
 export * from './pagination';
 export * from './request';
-export * from './db';
 export * from './models';
+// DB types are now in @revendiste/shared - import from '~/shared'
