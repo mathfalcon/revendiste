@@ -61,11 +61,13 @@ output "frontend_ecr_repository_url" {
 output "backend_ssh_command" {
   description = "Command to SSH into the backend instance"
   value       = "ssh -i ~/.ssh/${var.key_pair_name}.pem ec2-user@${aws_eip.backend.public_ip}"
+  sensitive   = true
 }
 
 output "frontend_ssh_command" {
   description = "Command to SSH into the frontend instance"
   value       = "ssh -i ~/.ssh/${var.key_pair_name}.pem ec2-user@${aws_eip.frontend.public_ip}"
+  sensitive   = true
 }
 
 output "backend_secrets_arn" {
@@ -80,6 +82,7 @@ output "backend_secrets_name" {
 
 output "deployment_instructions" {
   description = "Instructions for deployment"
+  sensitive   = true
   value       = <<-EOT
     To deploy your application:
     
