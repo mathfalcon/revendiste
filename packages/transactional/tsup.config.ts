@@ -4,7 +4,7 @@ import {esbuildPluginFilePathExtensions} from 'esbuild-plugin-file-path-extensio
 export default defineConfig({
   entry: ['src/**/*.ts', 'emails/**/*.tsx', 'tailwind.config.ts'],
   format: ['esm'],
-  dts: false, // Generate types separately with tsc
+  dts: false, // Generate declarations separately with tsc to respect project references
   splitting: false,
   sourcemap: true,
   clean: true,

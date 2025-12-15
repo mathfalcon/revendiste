@@ -6,7 +6,7 @@ RUN npm install -g pnpm@10.13.1
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files for dependency installation (layer caching optimization)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
@@ -15,14 +15,12 @@ COPY packages/transactional/package.json ./packages/transactional/
 # Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
+# Copy source code and build configs
 COPY apps/backend ./apps/backend
 COPY packages ./packages
-COPY tsconfig.json tsconfig.gts.json ./
-COPY turbo.json ./turbo.json
+COPY tsconfig.json tsconfig.gts.json turbo.json ./
 
 # Build backend and all its dependencies
-WORKDIR /app
 RUN pnpm build --filter @revendiste/backend...
 
 # Runtime stage
@@ -37,47 +35,41 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
   adduser --system --uid 1001 nodejs
 
-# Copy package files for production install
-COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nodejs:nodejs /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=builder --chown=nodejs:nodejs /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/package.json ./apps/backend/package.json
-COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/package.json ./packages/shared/package.json
-COPY --from=builder --chown=nodejs:nodejs /app/packages/transactional/package.json ./packages/transactional/package.json
+# Copy package files for production install (needed for pnpm workspace resolution)
+COPY --from=builder --chown=nodejs:nodejs /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
+COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/package.json ./apps/backend/
+COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/package.json ./packages/shared/
+COPY --from=builder --chown=nodejs:nodejs /app/packages/transactional/package.json ./packages/transactional/
 
 # Install production dependencies only
 # kysely-ctl is now in dependencies (needed at runtime for migrations)
 RUN pnpm install --frozen-lockfile --prod --filter @revendiste/backend...
 
-# Copy built application and workspace packages
+# Copy built application
 COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/dist ./apps/backend/dist
-# Copy kysely config file (kysely-ctl can load TypeScript configs)
-COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/kysely.config.ts ./apps/backend/kysely.config.ts
-# Copy migrations folder
-COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/src/db/migrations ./apps/backend/src/db/migrations
-# Copy src/db and src/config folders (needed by kysely.config.ts and src/db/index.ts)
-# We need the source files because kysely-ctl loads the TS config which imports from src/db
-# and src/db/index.ts imports from ../config/env
-COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/src/db ./apps/backend/src/db
-COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/src/config ./apps/backend/src/config
-COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
 
-# Ensure backend directory exists and copy entrypoint script
-RUN mkdir -p /app/apps/backend
+# Copy kysely config and required source files for migrations
+# kysely-ctl loads TypeScript config which imports src/db/index.ts -> src/config/env.ts
+COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/kysely.config.ts ./apps/backend/
+COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/src/db/migrations ./apps/backend/src/db/migrations
+COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/src/db/index.ts ./apps/backend/src/db/
+COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/src/config/env.ts ./apps/backend/src/config/
+
+# Copy built workspace packages (dist folders only - package.json already copied above)
+COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder --chown=nodejs:nodejs /app/packages/transactional/dist ./packages/transactional/dist
+
+# Copy entrypoint script
 COPY deploy/backend-entrypoint.sh /app/apps/backend/entrypoint.sh
 
 # Note: Environment variables will be injected by AWS Secrets Manager at runtime
 # No .env file is copied for security reasons
 
-# Fix line endings (convert CRLF to LF) and make executable
-# This prevents "no such file or directory" errors from Windows line endings
+# Fix line endings (CRLF to LF) and make executable
+# Change ownership of node_modules (created by pnpm install, owned by root)
 RUN sed -i 's/\r$//' /app/apps/backend/entrypoint.sh && \
   chmod +x /app/apps/backend/entrypoint.sh && \
-  chown nodejs:nodejs /app/apps/backend/entrypoint.sh
-
-# Change ownership of node_modules only (created by pnpm install, owned by root)
-# This is much faster than chown -R /app because node_modules is the main culprit
-RUN chown -R nodejs:nodejs /app/node_modules
+  chown -R nodejs:nodejs /app/node_modules
 
 USER nodejs
 
@@ -91,5 +83,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Use entrypoint script that runs migrations before starting server
 # The entrypoint will run migrations, then exec the CMD
 WORKDIR /app/apps/backend
-ENTRYPOINT ["/app/apps/backend/entrypoint.sh"]
+# ENTRYPOINT ["/app/apps/backend/entrypoint.sh"]
 CMD ["node", "dist/src/server.js"]

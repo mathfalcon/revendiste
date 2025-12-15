@@ -6,17 +6,20 @@
       "persistent": true
     },
     "build": {
-      "dependsOn": [
-        "^build"
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "emails/**/*.tsx",
+        "tsup.config.ts",
+        "tsconfig.json",
+        "package.json"
       ],
-      "outputs": [
-        "apps/**/build/**",
-        "packages/**/dist/**"
-      ]
+      "outputs": ["apps/**/build/**", "packages/**/dist/**"]
     },
     "lint": {
-      "dependsOn": [], 
-      "outputs": [], 
+      "dependsOn": [],
+      "outputs": [],
       "cache": false,
       "persistent": false
     }
