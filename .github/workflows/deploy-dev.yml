@@ -106,7 +106,7 @@ jobs:
       - name: Deploy backend to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEV_BACKEND_HOST }}
+          host: ${{ secrets.DEV_APP_HOST }}
           username: ec2-user
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           script: |
@@ -179,10 +179,40 @@ jobs:
             # Clean up temp file
             rm -f "$ENV_FILE"
 
-            # Migrations are now handled automatically by the container entrypoint
-            # Health check
-            sleep 5
-            curl -f http://localhost:3001/health || exit 1
+            # Wait for migrations and server startup (migrations can take time)
+            echo "Waiting for migrations and server to start..."
+            sleep 30
+
+            # Check if container is still running (if it exited, migrations or server startup failed)
+            if ! docker ps | grep -q revendiste-backend; then
+              echo "Error: Container exited immediately. Checking logs..."
+              docker logs revendiste-backend
+              exit 1
+            fi
+
+            # Check container logs for errors
+            echo "Container logs:"
+            docker logs revendiste-backend --tail 50
+
+            # Health check with retries (migrations may still be running)
+            echo "Performing health check (migrations may still be running)..."
+            MAX_RETRIES=10
+            RETRY_COUNT=0
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if curl -f http://localhost:3001/health >/dev/null 2>&1; then
+                echo "Health check passed!"
+                exit 0
+              fi
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "Health check failed, retry $RETRY_COUNT/$MAX_RETRIES (migrations may still be running)..."
+              sleep 10
+            done
+
+            # If we get here, health check failed
+            echo "Error: Health check failed after $MAX_RETRIES attempts"
+            echo "Container logs:"
+            docker logs revendiste-backend --tail 100
+            exit 1
 
   deploy-frontend:
     runs-on: ubuntu-latest
@@ -193,17 +223,25 @@ jobs:
       - name: Deploy frontend to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEV_FRONTEND_HOST }}
+          host: ${{ secrets.DEV_APP_HOST }}
           username: ec2-user
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           script: |
             # Login to ECR (IAM role handles authentication)
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
 
+            # Pull latest frontend image (try development tag first, then latest)
+            docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:development || docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
 
             # Stop and remove old frontend container
             docker stop revendiste-frontend || true
             docker rm revendiste-frontend || true
+
+            # Determine which image tag to use
+            IMAGE_TAG="development"
+            if ! docker image inspect ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:development >/dev/null 2>&1; then
+              IMAGE_TAG="latest"
+            fi
 
             # Run new frontend container with environment variables
             docker run -d \
@@ -213,7 +251,7 @@ jobs:
               -e VITE_APP_API_URL="${{ secrets.VITE_APP_API_URL }}" \
               -e VITE_PLATFORM_COMMISSION_RATE="${{ secrets.VITE_PLATFORM_COMMISSION_RATE || '0.06' }}" \
               -e VITE_VAT_RATE="${{ secrets.VITE_VAT_RATE || '0.22' }}" \
-              ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+              ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:$IMAGE_TAG
 
             # Health check
             sleep 5

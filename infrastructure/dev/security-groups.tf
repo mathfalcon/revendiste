@@ -1,7 +1,7 @@
-# Security group for frontend EC2 instance (created first to avoid circular dependency)
-resource "aws_security_group" "frontend" {
-  name        = "${local.name_prefix}-frontend"
-  description = "Security group for revendiste dev frontend EC2 instance"
+# Security group for combined app EC2 instance
+resource "aws_security_group" "app" {
+  name        = "${local.name_prefix}-app"
+  description = "Security group for revendiste dev app EC2 instance (frontend + backend)"
 
   # SSH access
   ingress {
@@ -12,7 +12,7 @@ resource "aws_security_group" "frontend" {
     cidr_blocks = var.allowed_ssh_cidr_blocks
   }
 
-  # HTTP access
+  # HTTP access (for Let's Encrypt validation and redirect)
   ingress {
     description = "HTTP from allowed CIDR blocks"
     from_port   = 80
@@ -30,58 +30,22 @@ resource "aws_security_group" "frontend" {
     cidr_blocks = var.allowed_http_cidr_blocks
   }
 
-  # Frontend SSR port
+  # Frontend container port (internal, nginx proxies to it)
   ingress {
-    description = "Frontend SSR port"
+    description = "Frontend container port (internal)"
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = var.allowed_http_cidr_blocks
+    cidr_blocks = ["127.0.0.1/32"]
   }
 
-  # Allow all outbound traffic
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${local.name_prefix}-frontend-sg"
-  }
-}
-
-# Security group for backend EC2 instance
-resource "aws_security_group" "backend" {
-  name        = "${local.name_prefix}-backend"
-  description = "Security group for revendiste dev backend EC2 instance"
-
-  # SSH access
+  # Backend container port (internal, nginx proxies to it)
   ingress {
-    description = "SSH from allowed CIDR blocks"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_ssh_cidr_blocks
-  }
-
-  # Backend API port (accessible from frontend and external)
-  ingress {
-    description     = "Backend API port from frontend"
-    from_port       = var.port
-    to_port         = var.port
-    protocol        = "tcp"
-    security_groups = [aws_security_group.frontend.id]
-  }
-
-  ingress {
-    description = "Backend API port from external"
+    description = "Backend container port (internal)"
     from_port   = var.port
     to_port     = var.port
     protocol    = "tcp"
-    cidr_blocks = var.allowed_http_cidr_blocks
+    cidr_blocks = ["127.0.0.1/32"]
   }
 
   # Allow all outbound traffic
@@ -94,7 +58,7 @@ resource "aws_security_group" "backend" {
   }
 
   tags = {
-    Name = "${local.name_prefix}-backend-sg"
+    Name = "${local.name_prefix}-app-sg"
   }
 }
 

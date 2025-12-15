@@ -4,13 +4,15 @@ Terraform configuration for deploying the Revendiste backend and frontend to AWS
 
 ## Architecture
 
-- **Backend EC2 Instance**:
-  - Runs Docker container with backend application (Express API)
-  - Exposes port 3001
-- **Frontend EC2 Instance**:
-  - Runs Docker container with frontend SSR server (TanStack Start)
-  - Exposes port 3000
-  - Server-side rendering for SEO and server functions
+- **Single EC2 Instance** (cost-optimized for dev):
+  - Runs both frontend and backend Docker containers
+  - Frontend: TanStack Start SSR server on port 3000
+  - Backend: Express API on port 3001
+  - Nginx reverse proxy routes traffic based on domain:
+    - `dev.revendiste.com` → frontend container (port 3000)
+    - `api.dev.revendiste.com` → backend container (port 3001)
+  - SSL/TLS certificates via Let's Encrypt (certbot)
+  - HTTP to HTTPS redirection
 - **Cloudflare R2**: Object storage (S3-compatible)
 - **AWS Secrets Manager**: Secrets management (single JSON secret, $0.40/month)
 - **Route 53**: DNS for `dev.revendiste.com` (frontend) and `api.dev.revendiste.com` (backend)
@@ -38,8 +40,7 @@ Terraform configuration for deploying the Revendiste backend and frontend to AWS
    - `AWS_ACCOUNT_ID`: Your AWS account ID (12 digits)
    - `AWS_ACCESS_KEY_ID`: AWS access key for GitHub Actions
    - `AWS_SECRET_ACCESS_KEY`: AWS secret key for GitHub Actions
-   - `DEV_BACKEND_HOST`: Backend EC2 public IP (set after Terraform apply)
-   - `DEV_FRONTEND_HOST`: Frontend EC2 public IP (set after Terraform apply)
+   - `DEV_APP_HOST`: App EC2 public IP (set after Terraform apply)
    - `DEV_EC2_SSH_KEY`: Private SSH key for EC2 access
    - `VITE_APP_API_URL`: Frontend API URL (e.g., `https://api.dev.revendiste.com`)
    - `VITE_PLATFORM_COMMISSION_RATE`: Platform commission rate (default: `0.06`)
@@ -239,14 +240,13 @@ docker run -d --name revendiste-frontend \
 - `main.tf`: Provider configuration and data sources
 - `variables.tf`: Input variables
 - `outputs.tf`: Output values
-- `ec2.tf`: EC2 instances (backend and frontend), IAM role, Elastic IPs
-- `security-groups.tf`: Security group rules for both instances
+- `ec2.tf`: Single EC2 instance (frontend + backend), IAM role, Elastic IP
+- `security-groups.tf`: Security group rules for the app instance
 - `route53.tf`: DNS records (frontend and API)
 - `r2.tf`: Cloudflare R2 bucket
 - `ecr.tf`: ECR repositories for Docker images
 - `secrets.tf`: AWS Secrets Manager secret (single JSON secret)
-- `user-data-backend.sh`: Backend EC2 bootstrap script (installs Docker)
-- `user-data-frontend.sh`: Frontend EC2 bootstrap script (installs Docker)
+- `user-data-app.sh`: Combined app EC2 bootstrap script (installs Docker, nginx, certbot for both frontend and backend)
 
 **Dockerfiles** are located in `/deploy` at the root of the repository:
 
@@ -321,4 +321,3 @@ The frontend container runs the TanStack Start SSR server, which handles:
 - Check security group allows port 3001
 - Verify DNS points to backend instance IP
 - Check frontend can reach backend (security group rules)
-

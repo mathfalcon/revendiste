@@ -65,15 +65,15 @@ resource "aws_iam_role_policy" "ec2_secrets_manager_read" {
 # Note: Frontend instance also uses this IAM profile (for ECR access)
 # Backend-specific secrets access is included but frontend doesn't need it
 
-# Backend EC2 instance
-resource "aws_instance" "backend" {
+# Single EC2 instance for both frontend and backend
+resource "aws_instance" "app" {
   ami                    = data.aws_ami.amazon_linux.id
   instance_type          = var.instance_type
   key_name               = var.key_pair_name
-  vpc_security_group_ids = [aws_security_group.backend.id]
+  vpc_security_group_ids = [aws_security_group.app.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2_instances.name
 
-  user_data = base64encode(templatefile("${path.module}/user-data-backend.sh", {
+  user_data = base64encode(templatefile("${path.module}/user-data-app.sh", {
     github_ssh_public_key = var.github_actions_ssh_public_key
   }))
 
@@ -84,50 +84,17 @@ resource "aws_instance" "backend" {
   }
 
   tags = {
-    Name = "${local.name_prefix}-backend"
+    Name = "${local.name_prefix}-app"
   }
 }
 
-# Frontend EC2 instance (for SSR)
-resource "aws_instance" "frontend" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = var.instance_type
-  key_name               = var.key_pair_name
-  vpc_security_group_ids = [aws_security_group.frontend.id]
-  iam_instance_profile   = aws_iam_instance_profile.ec2_instances.name
-
-  user_data = base64encode(templatefile("${path.module}/user-data-frontend.sh", {
-    github_ssh_public_key = var.github_actions_ssh_public_key
-  }))
-
-  root_block_device {
-    volume_type = "gp3"
-    volume_size = 30
-    encrypted   = true
-  }
-
-  tags = {
-    Name = "${local.name_prefix}-frontend"
-  }
-}
-
-# Elastic IP for backend
-resource "aws_eip" "backend" {
-  instance = aws_instance.backend.id
+# Elastic IP for app instance
+resource "aws_eip" "app" {
+  instance = aws_instance.app.id
   domain   = "vpc"
 
   tags = {
-    Name = "${local.name_prefix}-backend-eip"
-  }
-}
-
-# Elastic IP for frontend
-resource "aws_eip" "frontend" {
-  instance = aws_instance.frontend.id
-  domain   = "vpc"
-
-  tags = {
-    Name = "${local.name_prefix}-frontend-eip"
+    Name = "${local.name_prefix}-app-eip"
   }
 }
 
