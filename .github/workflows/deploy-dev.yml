@@ -199,7 +199,7 @@ jobs:
             MAX_RETRIES=10
             RETRY_COUNT=0
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              if curl -f http://localhost:3001/health >/dev/null 2>&1; then
+              if curl -f http://localhost:3001/api/health >/dev/null 2>&1; then
                 echo "Health check passed!"
                 exit 0
               fi

@@ -1,9 +1,13 @@
-import express, {NextFunction, Request, Response} from 'express';
+import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import path from 'path';
-
-import {PORT, STORAGE_LOCAL_PATH, STORAGE_BASE_URL} from './config/env';
+import {
+  PORT,
+  STORAGE_LOCAL_PATH,
+  STORAGE_BASE_URL,
+  APP_BASE_URL,
+} from './config/env';
 import {errorHandler, optionalAuthMiddleware} from './middleware';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
@@ -17,7 +21,11 @@ const app: express.Application = express();
 // CORS configuration
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      APP_BASE_URL,
+    ].filter(Boolean), // Remove any undefined values
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
