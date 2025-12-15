@@ -6,6 +6,7 @@ import {
   POSTGRES_USER,
   POSTGRES_PASSWORD,
   POSTGRES_DB,
+  NODE_ENV,
 } from '../config/env';
 import {DB} from '~/shared';
 
@@ -17,6 +18,7 @@ export const db = new Kysely<DB>({
       user: POSTGRES_USER,
       password: POSTGRES_PASSWORD,
       database: POSTGRES_DB,
+      ssl: NODE_ENV !== 'local',
     }),
   }),
   plugins: [new CamelCasePlugin()],
