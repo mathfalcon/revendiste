@@ -11,13 +11,13 @@ import {
   type TypedNotificationMetadata,
   NotificationMetadataSchema,
   type NotificationAction,
-} from '~/shared';
+} from '@revendiste/shared';
 import {
   getEmailTemplate,
   renderEmail,
   renderEmailToText,
 } from '@revendiste/transactional';
-import type {NotificationType} from '~/shared';
+import type {NotificationType} from '@revendiste/shared';
 import {APP_BASE_URL} from '~/config/env';
 
 /**

@@ -1,5 +1,5 @@
 import {Kysely} from 'kysely';
-import {DB} from '~/shared';
+import {DB} from '@revendiste/shared';
 
 /**
  * Base repository class that provides transaction utilities

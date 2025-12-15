@@ -2,7 +2,7 @@ import {Kysely} from 'kysely';
 import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
 import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
 import {ValidationError} from '~/errors';
-import {DB} from '~/shared';
+import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 
 export class TicketListingsRepository extends BaseRepository<TicketListingsRepository> {

@@ -1,5 +1,5 @@
 import {Kysely} from 'kysely';
-import {DB} from '~/shared';
+import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 
 export class OrderItemsRepository extends BaseRepository<OrderItemsRepository> {

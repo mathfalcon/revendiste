@@ -1,6 +1,6 @@
 import {NotificationService, type CreateNotificationParams} from './index';
 import {APP_BASE_URL} from '~/config/env';
-import type {QrAvailabilityTiming} from '~/shared';
+import type {QrAvailabilityTiming} from '@revendiste/shared';
 
 /**
  * Helper functions for creating common notification types

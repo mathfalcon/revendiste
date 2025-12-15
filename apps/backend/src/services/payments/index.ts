@@ -8,7 +8,7 @@ import {NotFoundError, ValidationError} from '~/errors';
 import {API_BASE_URL, APP_BASE_URL} from '~/config/env';
 import {logger} from '~/utils';
 import type {Kysely} from 'kysely';
-import type {DB} from '~/shared';
+import type {DB} from '@revendiste/shared';
 import {DLocalService} from '~/services/dlocal';
 import type {PaymentProvider} from './providers';
 import {

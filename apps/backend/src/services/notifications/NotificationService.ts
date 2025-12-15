@@ -1,5 +1,5 @@
 import {Kysely} from 'kysely';
-import {DB} from '~/shared';
+import {DB} from '@revendiste/shared';
 import {PaginatedResponse} from '~/types';
 import {logger} from '~/utils';
 import {NotificationsRepository, UsersRepository} from '~/repositories';
@@ -12,19 +12,19 @@ import {
   type TypedNotification,
   validateNotification,
 } from './types';
-import type {NotificationType} from '~/shared';
+import type {NotificationType} from '@revendiste/shared';
 import {
   NotificationMetadataSchema,
   NotificationActionsSchema,
   type NotificationAction,
-} from '~/shared';
+} from '@revendiste/shared';
 import {WithPagination} from '~/types';
 import {ValidationError} from '~/errors';
 import {
   parseNotificationMetadata,
   buildEmailTemplate,
 } from './email-template-builder';
-import {generateNotificationText} from '~/shared';
+import {generateNotificationText} from '@revendiste/shared';
 
 export interface CreateNotificationParams extends CreateNotificationData {
   // Additional params can be added here

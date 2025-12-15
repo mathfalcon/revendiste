@@ -1,5 +1,5 @@
 import {type Kysely, type Insertable} from 'kysely';
-import type {DB, PaymentEvents, PaymentEventType} from '~/shared';
+import type {DB, PaymentEvents, PaymentEventType} from '@revendiste/shared';
 import type {PaymentEvent} from '~/types/models';
 import {BaseRepository} from '../base';
 

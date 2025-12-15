@@ -6,7 +6,7 @@
  * All schemas are imported from the shared package.
  */
 
-import type {NotificationType} from '~/shared';
+import type {NotificationType} from '@revendiste/shared';
 import {
   NotificationMetadataSchema,
   NotificationSchema,
@@ -16,7 +16,7 @@ import {
   type Notification as NotificationSchemaType,
   type NotificationAction,
   generateNotificationText,
-} from '~/shared';
+} from '@revendiste/shared';
 import type {Notification} from '~/types/models';
 
 /**

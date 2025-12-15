@@ -1,5 +1,5 @@
 import {type Kysely} from 'kysely';
-import type {DB} from '~/shared';
+import type {DB} from '@revendiste/shared';
 import type {ScrapedEventData} from '../../services/scraping';
 import {logger} from '~/utils';
 import {jsonArrayFrom} from 'kysely/helpers/postgres';

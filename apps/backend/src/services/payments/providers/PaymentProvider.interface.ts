@@ -1,7 +1,7 @@
 import type {
   PaymentStatus,
   PaymentProvider as PaymentProviderEnum,
-} from '~/shared';
+} from '@revendiste/shared';
 
 /**
  * Payment data in the provider's native format

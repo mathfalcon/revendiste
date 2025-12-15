@@ -8,7 +8,7 @@ import {
   POSTGRES_DB,
   NODE_ENV,
 } from '../config/env';
-import {DB} from '~/shared';
+import {DB} from '@revendiste/shared';
 
 export const db = new Kysely<DB>({
   dialect: new PostgresDialect({

@@ -9,7 +9,7 @@ import {
   Payments,
   PaymentEvents,
   Notifications,
-} from '~/shared';
+} from '@revendiste/shared';
 
 export type User = Selectable<Users>;
 

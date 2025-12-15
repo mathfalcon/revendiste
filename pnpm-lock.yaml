@@ -44,6 +44,9 @@ importers:
       '@date-fns/tz':
         specifier: ^1.4.1
         version: 1.4.1
+      '@revendiste/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@revendiste/transactional':
         specifier: workspace:*
         version: link:../../packages/transactional
@@ -393,9 +396,15 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.1
         version: 19.2.3(@types/react@19.2.7)
+      esbuild-plugin-file-path-extensions:
+        specifier: ^2.1.4
+        version: 2.1.4
       react-email:
         specifier: 5.0.5
         version: 5.0.5
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
 
 packages:
 
@@ -4801,6 +4810,10 @@ packages:
 
   es6-promise@4.2.8:
     resolution: {integrity: sha512-HJDGx5daxeIvxdBxvG2cb9g4tEvwIk3i8+nhX0yGrYmZUzbkdg8QbDevheDB8gd0//uPj4c1EQua8Q+MViT0/w==}
+
+  esbuild-plugin-file-path-extensions@2.1.4:
+    resolution: {integrity: sha512-lNjylaAsJMprYg28zjUyBivP3y0ms9b7RJZ5tdhDUFLa3sCbqZw4wDnbFUSmnyZYWhCYDPxxp7KkXM2TXGw3PQ==}
+    engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
 
   esbuild@0.25.12:
     resolution: {integrity: sha512-bbPBYYrtZbkt6Os6FiTLCTFxvq4tt3JKall1vRwshA3fdVztsLAatFaZobhkBC8/BrPetoa0oksYoKXoG4ryJg==}
@@ -13501,6 +13514,8 @@ snapshots:
   es6-promise@3.3.1: {}
 
   es6-promise@4.2.8: {}
+
+  esbuild-plugin-file-path-extensions@2.1.4: {}
 
   esbuild@0.25.12:
     optionalDependencies:

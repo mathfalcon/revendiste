@@ -1,8 +1,8 @@
 import {Kysely, sql} from 'kysely';
-import {DB} from '~/shared';
+import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 import {mapToPaginatedResponse} from '~/middleware';
-import type {NotificationChannel, NotificationMetadata} from '~/shared';
+import type {NotificationChannel, NotificationMetadata} from '@revendiste/shared';
 
 export interface CreateNotificationData {
   userId: string;

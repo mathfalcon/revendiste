@@ -14,7 +14,7 @@ import {TICKET_LISTING_ERROR_MESSAGES} from '~/constants/error-messages';
 import {NotificationService} from '~/services/notifications';
 import {notifySellerTicketSold} from '~/services/notifications/helpers';
 import type {Kysely} from 'kysely';
-import type {DB} from '~/shared';
+import type {DB} from '@revendiste/shared';
 
 export class TicketListingsService {
   private notificationService: NotificationService;

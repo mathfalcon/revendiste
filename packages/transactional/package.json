@@ -6,22 +6,24 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsup && tsc --emitDeclarationOnly",
     "dev": "email dev -p 3003",
     "export": "email export"
   },
   "dependencies": {
     "@react-email/components": "1.0.1",
     "@react-email/render": "2.0.0",
+    "@revendiste/shared": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@revendiste/shared": "workspace:*",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@react-email/preview-server": "5.0.5",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
-    "react-email": "5.0.5"
+    "esbuild-plugin-file-path-extensions": "^2.1.4",
+    "react-email": "5.0.5",
+    "tsup": "^8.5.0"
   }
 }
