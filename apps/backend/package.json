@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently \"tsx watch src/server.ts --require tsconfig-paths/register --clear-screen --ignore src/routes.ts --ignore src/swagger/swagger.json\" \"nodemon --ignore src/routes.ts --ignore src/swagger/swagger.json -x tsoa spec-and-routes\" \"ngrok http 3001\"",
     "start": "node dist/server.js",
-    "build": "tsc -b && tsc-alias",
+    "build": "tsc -b && tsc-alias && node fix-paths.js",
     "kysely": "kysely",
     "kysely:migrate": "kysely migrate:latest",
     "kysely:generate": "kysely generate",
