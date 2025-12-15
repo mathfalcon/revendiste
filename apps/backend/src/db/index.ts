@@ -18,7 +18,7 @@ export const db = new Kysely<DB>({
       user: POSTGRES_USER,
       password: POSTGRES_PASSWORD,
       database: POSTGRES_DB,
-      ssl: NODE_ENV !== 'local',
+      ssl: true,
     }),
   }),
   plugins: [new CamelCasePlugin()],

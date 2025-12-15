@@ -40,9 +40,19 @@ function fixPaths() {
     let content = fs.readFileSync(file, 'utf8');
     const originalContent = content;
 
-    // Calculate relative path from this file to packages/shared/src
+    // Calculate relative path from this file to packages/shared/dist
+    // Use dist for production builds, src for development
     const fileDir = path.dirname(file);
-    const sharedPath = path.resolve(__dirname, '../../packages/shared/src');
+    const sharedDistPath = path.resolve(
+      __dirname,
+      '../../packages/shared/dist',
+    );
+    const sharedSrcPath = path.resolve(__dirname, '../../packages/shared/src');
+
+    // Prefer dist if it exists (production build), otherwise use src (development)
+    const sharedPath = fs.existsSync(sharedDistPath)
+      ? sharedDistPath
+      : sharedSrcPath;
     const relativePath = path.relative(fileDir, sharedPath).replace(/\\/g, '/');
 
     // Ensure path starts with ./ or ../ for relative imports
