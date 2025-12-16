@@ -17,9 +17,9 @@ output "resend_dkim_record" {
   description = "Resend DKIM record details"
   sensitive   = true
   value = {
-    name  = cloudflare_record.resend_dkim.name
-    type  = cloudflare_record.resend_dkim.type
-    value = cloudflare_record.resend_dkim.value
+    name    = cloudflare_record.resend_dkim.name
+    type    = cloudflare_record.resend_dkim.type
+    content = cloudflare_record.resend_dkim.content
   }
 }
 
@@ -31,12 +31,12 @@ output "resend_spf_records" {
       name     = cloudflare_record.resend_smtp_mx.name
       type     = cloudflare_record.resend_smtp_mx.type
       priority = cloudflare_record.resend_smtp_mx.priority
-      value    = cloudflare_record.resend_smtp_mx.value
+      content  = cloudflare_record.resend_smtp_mx.content
     }
     txt = {
-      name  = cloudflare_record.resend_spf.name
-      type  = cloudflare_record.resend_spf.type
-      value = cloudflare_record.resend_spf.value
+      name    = cloudflare_record.resend_spf.name
+      type    = cloudflare_record.resend_spf.type
+      content = cloudflare_record.resend_spf.content
     }
   }
 }
@@ -45,9 +45,9 @@ output "dmarc_record" {
   description = "DMARC record details"
   sensitive   = true
   value = var.enable_dmarc ? {
-    name  = cloudflare_record.dmarc[0].name
-    type  = cloudflare_record.dmarc[0].type
-    value = cloudflare_record.dmarc[0].value
+    name    = cloudflare_record.dmarc[0].name
+    type    = cloudflare_record.dmarc[0].type
+    content = cloudflare_record.dmarc[0].content
   } : null
 }
 

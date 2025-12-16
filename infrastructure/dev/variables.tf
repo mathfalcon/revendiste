@@ -46,9 +46,9 @@ variable "allowed_http_cidr_blocks" {
   default     = ["0.0.0.0/0"]
 }
 
-# Cloudflare R2 variables
+# Cloudflare variables
 variable "cloudflare_api_token" {
-  description = "Cloudflare API token for R2 bucket management"
+  description = "Cloudflare API token for R2 bucket management and DNS (requires Account R2:Edit, Zone:Read, Zone:DNS:Edit permissions)"
   type        = string
   sensitive   = true
 }
