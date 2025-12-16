@@ -13,9 +13,9 @@ output "app_instance_public_dns" {
   value       = aws_instance.app.public_dns
 }
 
-output "api_domain" {
-  description = "API domain name"
-  value       = "${var.api_subdomain}.revendiste.com"
+output "api_url" {
+  description = "API base URL"
+  value       = "https://${var.domain_name}/api"
 }
 
 output "frontend_domain" {

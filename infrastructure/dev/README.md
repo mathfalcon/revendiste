@@ -8,13 +8,13 @@ Terraform configuration for deploying the Revendiste backend and frontend to AWS
   - Runs both frontend and backend Docker containers
   - Frontend: TanStack Start SSR server on port 3000
   - Backend: Express API on port 3001
-  - Nginx reverse proxy routes traffic based on domain:
+  - Nginx reverse proxy routes traffic based on path:
+    - `dev.revendiste.com/api` → backend container (port 3001)
     - `dev.revendiste.com` → frontend container (port 3000)
-    - `api.dev.revendiste.com` → backend container (port 3001)
   - SSL/TLS and HTTP to HTTPS redirection via Cloudflare proxy
 - **Cloudflare R2**: Object storage (S3-compatible)
 - **AWS Secrets Manager**: Secrets management (single JSON secret, $0.40/month)
-- **Cloudflare DNS**: DNS for `dev.revendiste.com` (frontend) and `api.dev.revendiste.com` (backend)
+- **Cloudflare DNS**: DNS for `dev.revendiste.com` (serves both frontend and API at `/api`)
 - **GitHub Actions**: Automated deployment on merge to `development` branch
 
 ## Prerequisites
@@ -41,7 +41,7 @@ Terraform configuration for deploying the Revendiste backend and frontend to AWS
    - `AWS_SECRET_ACCESS_KEY`: AWS secret key for GitHub Actions
    - `DEV_APP_HOST`: App EC2 public IP (set after Terraform apply)
    - `DEV_EC2_SSH_KEY`: Private SSH key for EC2 access
-   - `VITE_APP_API_URL`: Frontend API URL (e.g., `https://api.dev.revendiste.com`)
+   - `VITE_APP_API_URL`: Frontend API URL (e.g., `https://dev.revendiste.com/api`)
    - `VITE_PLATFORM_COMMISSION_RATE`: Platform commission rate (default: `0.06`)
    - `VITE_VAT_RATE`: VAT rate (default: `0.22`)
 
@@ -125,7 +125,7 @@ After Terraform creates the secret resource, manually populate it via AWS Consol
   "DLOCAL_SECRET_KEY": "your-dlocal-secret-key",
   "DLOCAL_BASE_URL": "https://api.dlocal.com",
   "APP_BASE_URL": "https://dev.revendiste.com",
-  "API_BASE_URL": "https://api.dev.revendiste.com",
+  "API_BASE_URL": "https://dev.revendiste.com/api",
   "STORAGE_TYPE": "s3",
   "AWS_S3_BUCKET": "revendiste-dev-storage",
   "AWS_S3_REGION": "auto",
@@ -167,7 +167,7 @@ After Terraform apply, note the EC2 public IPs from outputs, then set GitHub sec
 - `DEV_BACKEND_HOST`: Backend EC2 public IP (from Terraform output `backend_instance_public_ip`)
 - `DEV_FRONTEND_HOST`: Frontend EC2 public IP (from Terraform output `frontend_instance_public_ip`)
 - `DEV_EC2_SSH_KEY`: Contents of `~/.ssh/revendiste-dev-keypair.pem`
-- `VITE_APP_API_URL`: `https://api.dev.revendiste.com`
+- `VITE_APP_API_URL`: `https://dev.revendiste.com/api`
 - `VITE_PLATFORM_COMMISSION_RATE`: `0.06` (optional, has default)
 - `VITE_VAT_RATE`: `0.22` (optional, has default)
 
@@ -209,7 +209,7 @@ ssh -i ~/.ssh/revendiste-dev-keypair.pem ec2-user@<FRONTEND_EC2_IP>
 docker pull <your-frontend-image>
 docker run -d --name revendiste-frontend \
   -p 3000:3000 \
-  -e VITE_APP_API_URL=https://api.dev.revendiste.com \
+  -e VITE_APP_API_URL=https://dev.revendiste.com/api \
   <your-frontend-image>
 ```
 
@@ -259,7 +259,7 @@ The frontend runs as a **Server-Side Rendering (SSR) server** using TanStack Sta
 - **Frontend instance**: Separate EC2 instance running Docker container
 - **SSR server**: TanStack Start SSR server on port 3000
 - **Frontend domain**: `dev.revendiste.com` → Frontend EC2 instance
-- **Backend domain**: `api.dev.revendiste.com` → Backend EC2 instance
+- **Backend API**: `dev.revendiste.com/api` → Backend container (port 3001)
 - **Benefits**:
   - ✅ Server-side rendering for SEO
   - ✅ Server functions work correctly

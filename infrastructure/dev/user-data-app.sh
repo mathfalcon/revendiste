@@ -23,14 +23,13 @@ rm -f /etc/nginx/conf.d/default.conf
 # Cloudflare handles SSL/TLS termination and HTTP->HTTPS redirects
 # Origin only needs to serve HTTP on port 80
 cat > /etc/nginx/conf.d/revendiste.conf << 'EOF'
-# Frontend domain - dev.revendiste.com
 server {
     listen 80;
     server_name dev.revendiste.com;
 
-    # Proxy to frontend container
-    location / {
-        proxy_pass http://localhost:3000;
+    # Proxy API requests to backend container
+    location /api {
+        proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -40,16 +39,10 @@ server {
         proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
         proxy_cache_bypass $http_upgrade;
     }
-}
 
-# API domain - api.dev.revendiste.com
-server {
-    listen 80;
-    server_name api.dev.revendiste.com;
-
-    # Proxy to backend container
+    # Proxy all other requests to frontend container
     location / {
-        proxy_pass http://localhost:3001;
+        proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
