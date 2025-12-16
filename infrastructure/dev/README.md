@@ -15,14 +15,14 @@ Terraform configuration for deploying the Revendiste backend and frontend to AWS
   - HTTP to HTTPS redirection
 - **Cloudflare R2**: Object storage (S3-compatible)
 - **AWS Secrets Manager**: Secrets management (single JSON secret, $0.40/month)
-- **Route 53**: DNS for `dev.revendiste.com` (frontend) and `api.dev.revendiste.com` (backend)
+- **Cloudflare DNS**: DNS for `dev.revendiste.com` (frontend) and `api.dev.revendiste.com` (backend)
 - **GitHub Actions**: Automated deployment on merge to `development` branch
 
 ## Prerequisites
 
 1. **AWS Account** with:
 
-   - Route 53 hosted zone for `revendiste.com`
+   - Cloudflare zone for `revendiste.com`
    - AWS Key Pair for SSH access
    - Terraform Cloud workspace (or local backend)
 
@@ -223,7 +223,7 @@ docker run -d --name revendiste-frontend \
 - **ECR Data Transfer**: Free (within same region)
 - **Cloudflare R2**: Free tier (10GB storage, 1M operations)
 - **AWS Secrets Manager**: $0.40/month (single JSON secret)
-- **Route 53**: ~$0.50/month per hosted zone
+- **Cloudflare DNS**: Free (included with Cloudflare account)
 
 **Total: ~$15.40-21.40/month** for dev environment (two instances for SSR + Secrets Manager)
 
@@ -242,7 +242,7 @@ docker run -d --name revendiste-frontend \
 - `outputs.tf`: Output values
 - `ec2.tf`: Single EC2 instance (frontend + backend), IAM role, Elastic IP
 - `security-groups.tf`: Security group rules for the app instance
-- `route53.tf`: DNS records (frontend and API)
+- `cloudflare_dns.tf`: DNS records (frontend and API)
 - `r2.tf`: Cloudflare R2 bucket
 - `ecr.tf`: ECR repositories for Docker images
 - `secrets.tf`: AWS Secrets Manager secret (single JSON secret)
