@@ -27,8 +27,8 @@ server {
     listen 80;
     server_name dev.revendiste.com;
 
-    # Proxy API requests to backend container
-    location /api {
+    # Proxy API requests to backend container (^~ ensures this takes precedence)
+    location ^~ /api {
         proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
