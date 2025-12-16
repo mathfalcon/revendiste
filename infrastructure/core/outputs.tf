@@ -3,23 +3,23 @@ output "domain_name" {
   value       = var.domain_name
 }
 
-output "hosted_zone_id" {
-  description = "Route53 hosted zone ID"
-  value       = aws_route53_zone.main.zone_id
+output "cloudflare_zone_id" {
+  description = "Cloudflare zone ID"
+  value       = data.cloudflare_zone.main.id
 }
 
-output "hosted_zone_name_servers" {
-  description = "Name servers for the hosted zone (configure these in your domain registrar)"
-  value       = aws_route53_zone.main.name_servers
+output "cloudflare_zone_name_servers" {
+  description = "Name servers for the Cloudflare zone (configure these in your domain registrar)"
+  value       = data.cloudflare_zone.main.name_servers
 }
 
 output "resend_dkim_record" {
   description = "Resend DKIM record details"
   sensitive   = true
   value = {
-    name   = aws_route53_record.resend_dkim.name
-    type   = aws_route53_record.resend_dkim.type
-    record = tolist(aws_route53_record.resend_dkim.records)[0]
+    name  = cloudflare_record.resend_dkim.name
+    type  = cloudflare_record.resend_dkim.type
+    value = cloudflare_record.resend_dkim.value
   }
 }
 
@@ -28,14 +28,15 @@ output "resend_spf_records" {
   sensitive   = true
   value = {
     mx = {
-      name   = aws_route53_record.resend_smtp_mx.name
-      type   = aws_route53_record.resend_smtp_mx.type
-      record = tolist(aws_route53_record.resend_smtp_mx.records)[0]
+      name     = cloudflare_record.resend_smtp_mx.name
+      type     = cloudflare_record.resend_smtp_mx.type
+      priority = cloudflare_record.resend_smtp_mx.priority
+      value    = cloudflare_record.resend_smtp_mx.value
     }
     txt = {
-      name   = aws_route53_record.resend_spf.name
-      type   = aws_route53_record.resend_spf.type
-      record = tolist(aws_route53_record.resend_spf.records)[0]
+      name  = cloudflare_record.resend_spf.name
+      type  = cloudflare_record.resend_spf.type
+      value = cloudflare_record.resend_spf.value
     }
   }
 }
@@ -44,9 +45,9 @@ output "dmarc_record" {
   description = "DMARC record details"
   sensitive   = true
   value = var.enable_dmarc ? {
-    name   = aws_route53_record.dmarc[0].name
-    type   = aws_route53_record.dmarc[0].type
-    record = tolist(aws_route53_record.dmarc[0].records)[0]
+    name  = cloudflare_record.dmarc[0].name
+    type  = cloudflare_record.dmarc[0].type
+    value = cloudflare_record.dmarc[0].value
   } : null
 }
 

@@ -4,6 +4,12 @@ variable "domain_name" {
   default     = "revendiste.com"
 }
 
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token for DNS management"
+  type        = string
+  sensitive   = true
+}
+
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string
