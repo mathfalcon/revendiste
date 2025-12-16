@@ -9,6 +9,7 @@ resource "cloudflare_record" "api" {
   name    = "${var.api_subdomain}.revendiste.com"
   type    = "A"
   content = aws_eip.app.public_ip
+  ttl     = 1
   proxied = true
 
   depends_on = [aws_eip.app]
@@ -20,6 +21,7 @@ resource "cloudflare_record" "frontend" {
   name    = var.domain_name
   type    = "A"
   content = aws_eip.app.public_ip
+  ttl     = 1
   proxied = true
 
   depends_on = [aws_eip.app]

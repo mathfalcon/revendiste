@@ -74,9 +74,6 @@ output "deployment_instructions" {
     
     3. Use GitHub Actions workflow for automatic deployment!
     
-    4. To set up SSL certificates, SSH into the instance and run:
-       sudo certbot --nginx -d dev.revendiste.com -d api.dev.revendiste.com --non-interactive --agree-tos --email your-email@example.com
-    
     Secrets are stored in AWS Secrets Manager (${aws_secretsmanager_secret.backend_secrets.name}) and can be loaded using:
     aws secretsmanager get-secret-value --secret-id ${aws_secretsmanager_secret.backend_secrets.name} --query 'SecretString' --output text
   EOT

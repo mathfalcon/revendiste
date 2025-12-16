@@ -13,24 +13,20 @@ systemctl start docker
 systemctl enable docker
 usermod -a -G docker ec2-user
 
-yum install -y aws-cli jq nginx certbot python3-certbot-nginx
+yum install -y aws-cli jq nginx
 
 # Configure nginx as reverse proxy for both frontend and backend
 # Remove default nginx config to avoid conflicts
 rm -f /etc/nginx/conf.d/default.conf
 
-# Create initial nginx config (HTTP only, certbot will add HTTPS)
-# Routes based on domain: api.dev.revendiste.com -> backend, dev.revendiste.com -> frontend
+# Create nginx config for Cloudflare proxied traffic
+# Cloudflare handles SSL/TLS termination and HTTP->HTTPS redirects
+# Origin only needs to serve HTTP on port 80
 cat > /etc/nginx/conf.d/revendiste.conf << 'EOF'
 # Frontend domain - dev.revendiste.com
 server {
     listen 80;
     server_name dev.revendiste.com;
-
-    # Let's Encrypt challenge location
-    location /.well-known/acme-challenge/ {
-        root /usr/share/nginx/html;
-    }
 
     # Proxy to frontend container
     location / {
@@ -39,9 +35,9 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $http_cf_connecting_ip;
+        proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
         proxy_cache_bypass $http_upgrade;
     }
 }
@@ -51,11 +47,6 @@ server {
     listen 80;
     server_name api.dev.revendiste.com;
 
-    # Let's Encrypt challenge location
-    location /.well-known/acme-challenge/ {
-        root /usr/share/nginx/html;
-    }
-
     # Proxy to backend container
     location / {
         proxy_pass http://localhost:3001;
@@ -63,9 +54,9 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $http_cf_connecting_ip;
+        proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
         proxy_cache_bypass $http_upgrade;
     }
 }
@@ -106,21 +97,6 @@ EOF
 # Start and enable nginx
 systemctl start nginx
 systemctl enable nginx
-
-# Set up automatic certificate renewal
-mkdir -p /etc/cron.daily
-cat > /etc/cron.daily/certbot-renew << 'EOF'
-#!/bin/bash
-certbot renew --quiet --nginx
-EOF
-chmod +x /etc/cron.daily/certbot-renew
-
-# Note: To get the initial SSL certificates, SSH into the instance and run:
-# sudo certbot --nginx -d dev.revendiste.com -d api.dev.revendiste.com --non-interactive --agree-tos --email mathiasfalcon@gmail.com
-# This will automatically:
-# - Request certificates from Let's Encrypt for both domains
-# - Configure nginx for HTTPS
-# - Set up HTTP to HTTPS redirect for both domains
 
 # Create directory for application
 mkdir -p /opt/revendiste

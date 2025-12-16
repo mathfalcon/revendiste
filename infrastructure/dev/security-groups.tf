@@ -12,7 +12,7 @@ resource "aws_security_group" "app" {
     cidr_blocks = var.allowed_ssh_cidr_blocks
   }
 
-  # HTTP access (for Let's Encrypt validation and redirect)
+  # HTTP access
   ingress {
     description = "HTTP from allowed CIDR blocks"
     from_port   = 80

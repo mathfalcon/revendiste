@@ -11,8 +11,7 @@ Terraform configuration for deploying the Revendiste backend and frontend to AWS
   - Nginx reverse proxy routes traffic based on domain:
     - `dev.revendiste.com` → frontend container (port 3000)
     - `api.dev.revendiste.com` → backend container (port 3001)
-  - SSL/TLS certificates via Let's Encrypt (certbot)
-  - HTTP to HTTPS redirection
+  - SSL/TLS and HTTP to HTTPS redirection via Cloudflare proxy
 - **Cloudflare R2**: Object storage (S3-compatible)
 - **AWS Secrets Manager**: Secrets management (single JSON secret, $0.40/month)
 - **Cloudflare DNS**: DNS for `dev.revendiste.com` (frontend) and `api.dev.revendiste.com` (backend)
@@ -246,7 +245,7 @@ docker run -d --name revendiste-frontend \
 - `r2.tf`: Cloudflare R2 bucket
 - `ecr.tf`: ECR repositories for Docker images
 - `secrets.tf`: AWS Secrets Manager secret (single JSON secret)
-- `user-data-app.sh`: Combined app EC2 bootstrap script (installs Docker, nginx, certbot for both frontend and backend)
+- `user-data-app.sh`: Combined app EC2 bootstrap script (installs Docker, nginx for both frontend and backend)
 
 **Dockerfiles** are located in `/deploy` at the root of the repository:
 
