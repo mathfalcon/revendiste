@@ -6,6 +6,7 @@ import {
   GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
+import {Readable} from 'stream';
 import crypto from 'crypto';
 import path from 'path';
 import {logger} from '~/utils';
@@ -103,9 +104,14 @@ export class S3StorageProvider implements IStorageProvider {
         originalName: options.originalName,
       });
 
+      // Generate URL (synchronous for S3)
+      const url = this.cloudFrontDomain
+        ? `https://${this.cloudFrontDomain}/${key}`
+        : `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
+
       return {
         path: key,
-        url: this.getUrl(key),
+        url,
         sizeBytes: options.sizeBytes,
       };
     } catch (error) {
@@ -141,7 +147,7 @@ export class S3StorageProvider implements IStorageProvider {
     }
   }
 
-  getUrl(key: string): string {
+  async getUrl(key: string): Promise<string> {
     if (this.cloudFrontDomain) {
       // Use CloudFront URL if configured (better for CDN)
       return `https://${this.cloudFrontDomain}/${key}`;
@@ -161,8 +167,12 @@ export class S3StorageProvider implements IStorageProvider {
       await this.s3Client.send(command);
       return true;
     } catch (error) {
-      // HeadObject throws error if object doesn't exist
-      if ((error as any)?.name === 'NotFound') {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'name' in error &&
+        error.name === 'NotFound'
+      ) {
         return false;
       }
 
@@ -195,8 +205,13 @@ export class S3StorageProvider implements IStorageProvider {
       }
 
       const chunks: Uint8Array[] = [];
-      for await (const chunk of stream as any) {
-        chunks.push(chunk);
+      if (stream instanceof Readable) {
+        for await (const chunk of stream) {
+          chunks.push(chunk);
+        }
+      } else {
+        const arrayBuffer = await (stream as Blob).arrayBuffer();
+        chunks.push(new Uint8Array(arrayBuffer));
       }
 
       return Buffer.concat(chunks);

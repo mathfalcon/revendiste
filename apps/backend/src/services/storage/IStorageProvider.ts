@@ -73,11 +73,13 @@ export interface IStorageProvider {
   delete(path: string): Promise<boolean>;
 
   /**
-   * Get the public URL for a file
+   * Get the URL for a file
+   * For public files, returns the public URL
+   * For private files (R2), returns a signed URL
    * @param path - Path or key of the file
    * @returns Full URL to access the file
    */
-  getUrl(path: string): string;
+  getUrl(path: string): Promise<string>;
 
   /**
    * Check if a file exists
@@ -92,4 +94,12 @@ export interface IStorageProvider {
    * @returns File buffer
    */
   getBuffer(path: string): Promise<Buffer>;
+
+  /**
+   * Generate a signed URL for secure temporary access (optional, for providers that support it)
+   * @param path - Path or key of the file
+   * @param expiresIn - URL expiry in seconds
+   * @returns Signed URL
+   */
+  getSignedUrl?(path: string, expiresIn?: number): Promise<string>;
 }

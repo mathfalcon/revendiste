@@ -19,21 +19,42 @@ yum install -y aws-cli jq nginx
 # Remove default nginx config to avoid conflicts
 rm -f /etc/nginx/conf.d/default.conf
 
+# Create SSL certificate directories
+mkdir -p /etc/ssl/certs
+mkdir -p /etc/ssl/private
+chmod 755 /etc/ssl/certs
+chmod 750 /etc/ssl/private
+
+# Note: Cloudflare Origin CA certificate and private key should be uploaded manually
+# Certificate: /etc/ssl/certs/cloudflare-origin.pem
+# Private key: /etc/ssl/private/cloudflare-origin.key
+# chmod 644 /etc/ssl/certs/cloudflare-origin.pem
+# chmod 600 /etc/ssl/private/cloudflare-origin.key
+
 # Create nginx config for Cloudflare proxied traffic
-# Cloudflare handles SSL/TLS termination and HTTP->HTTPS redirects
-# Origin only needs to serve HTTP on port 80
-# Block direct IP access - only allow requests from Cloudflare
+# Origin serves HTTPS on port 443 (Full SSL mode)
+# HTTP on port 80 redirects to HTTPS
 cat > /etc/nginx/conf.d/revendiste.conf << 'EOF'
+# HTTP server - redirect to HTTPS
 server {
     listen 80;
     server_name dev.revendiste.com;
-    
-    # Block direct IP access - reject requests without Cloudflare headers
-    # CF-Connecting-IP is always present when proxied through Cloudflare
-    # Direct IP access won't have this header
-    if ($http_cf_connecting_ip = "") {
-        return 403 "Direct IP access not allowed. Please use dev.revendiste.com";
-    }
+    return 301 https://$server_name$request_uri;
+}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    server_name dev.revendiste.com;
+
+    # SSL certificate (Cloudflare Origin CA)
+    ssl_certificate /etc/ssl/certs/cloudflare-origin.pem;
+    ssl_certificate_key /etc/ssl/private/cloudflare-origin.key;
+
+    # SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
 
     # Proxy API requests to backend container (^~ ensures this takes precedence)
     location ^~ /api {
@@ -44,7 +65,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $http_cf_connecting_ip;
         proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
-        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
     }
 
@@ -57,7 +78,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $http_cf_connecting_ip;
         proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
-        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
     }
 }

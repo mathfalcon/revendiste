@@ -16,7 +16,7 @@ resource "aws_security_group" "app" {
   # Cloudflare IP ranges (IPv4 and IPv6) - updated as of 2024
   # See: https://www.cloudflare.com/ips/ and https://www.cloudflare.com/ips-v6/
   ingress {
-    description = "HTTP from Cloudflare IP ranges (IPv4)"
+    description = "HTTP from Cloudflare IP ranges"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -49,7 +49,7 @@ resource "aws_security_group" "app" {
 
   # HTTPS access - restricted to Cloudflare IP ranges
   ingress {
-    description = "HTTPS from Cloudflare IP ranges (IPv4)"
+    description = "HTTPS from Cloudflare IP ranges"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"

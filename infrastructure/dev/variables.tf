@@ -59,10 +59,10 @@ variable "cloudflare_account_id" {
   sensitive   = true
 }
 
-variable "r2_bucket_name" {
-  description = "Name of the R2 bucket for dev storage"
+variable "environment" {
+  description = "Environment name (dev, staging, production)"
   type        = string
-  default     = "revendiste-dev-storage"
+  default     = "dev"
 }
 
 variable "r2_bucket_location" {

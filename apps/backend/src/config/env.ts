@@ -21,7 +21,7 @@ const EnvSchema = z.object({
   APP_BASE_URL: z.url(),
   API_BASE_URL: z.url(),
   // Storage configuration
-  STORAGE_TYPE: z.enum(['local', 's3']).default('local'),
+  STORAGE_TYPE: z.enum(['local', 's3', 'r2']).default('local'),
   STORAGE_LOCAL_PATH: z.string().default('./uploads'),
   STORAGE_BASE_URL: z.string().default('/uploads'),
   // AWS S3 configuration (only required when STORAGE_TYPE=s3)
@@ -31,6 +31,14 @@ const EnvSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
   AWS_CLOUDFRONT_DOMAIN: z.string().optional(), // Optional CDN domain
   AWS_S3_SIGNED_URL_EXPIRY: z.coerce.number().optional().default(3600), // 1 hour default
+  // Cloudflare R2 configuration (only required when STORAGE_TYPE=r2)
+  R2_PUBLIC_BUCKET: z.string().optional(),
+  R2_PRIVATE_BUCKET: z.string().optional(),
+  R2_ACCOUNT_ID: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_CDN_DOMAIN: z.string().optional(), // Optional CDN domain (e.g., 'cdn-dev.revendiste.com')
+  R2_SIGNED_URL_EXPIRY: z.coerce.number().optional().default(3600), // 1 hour default
   // Email configuration
   EMAIL_PROVIDER: z.enum(['console', 'resend']).default('console'),
   EMAIL_FROM: z.string().default('noreply@revendiste.com'),
@@ -72,6 +80,13 @@ export const {
   AWS_SECRET_ACCESS_KEY,
   AWS_CLOUDFRONT_DOMAIN,
   AWS_S3_SIGNED_URL_EXPIRY,
+  R2_PUBLIC_BUCKET,
+  R2_PRIVATE_BUCKET,
+  R2_ACCOUNT_ID,
+  R2_ACCESS_KEY_ID,
+  R2_SECRET_ACCESS_KEY,
+  R2_CDN_DOMAIN,
+  R2_SIGNED_URL_EXPIRY,
   EMAIL_PROVIDER,
   EMAIL_FROM,
   RESEND_API_KEY,

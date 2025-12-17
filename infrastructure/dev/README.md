@@ -156,6 +156,150 @@ After Terraform creates the secret resource, manually populate it via AWS Consol
 
 **Why manual?** This ensures secrets never touch Terraform state, variables, or GitHub Actions, providing maximum security.
 
+**Note:** The same secret also stores Cloudflare Origin CA certificate and private key (see step 7.1 below).
+
+### 7.1. Setup Cloudflare Origin CA SSL Certificate
+
+To enable Full SSL mode (encrypted connection between Cloudflare and origin), you need to install Cloudflare Origin CA certificates on the EC2 instance.
+
+**1. Create Cloudflare Origin CA Certificate:**
+
+1. Go to Cloudflare Dashboard → SSL/TLS → Origin Server
+2. Click "Create Certificate"
+3. Select "Cloudflare Origin CA"
+4. Choose "Let Cloudflare generate a private key and a CSR"
+5. Set hostnames: `dev.revendiste.com` (or `*.revendiste.com` for wildcard)
+6. Set validity: 15 years (maximum)
+7. Click "Create"
+8. Copy both the **Origin Certificate** and **Private Key**
+
+**2. Store Certificate in Secrets Manager:**
+
+Add the certificate and private key to the same Secrets Manager secret (`revendiste/dev/backend-secrets`):
+
+```json
+{
+  "NODE_ENV": "development",
+  "LOG_LEVEL": "info",
+  "PORT": "3001",
+  "POSTGRES_USER": "your-neon-user",
+  "POSTGRES_PASSWORD": "your-neon-password",
+  "POSTGRES_DB": "your-neon-database",
+  "POSTGRES_HOST": "your-neon-host.neon.tech",
+  "POSTGRES_PORT": "5432",
+  "CLERK_PUBLISHABLE_KEY": "pk_test_...",
+  "CLERK_SECRET_KEY": "sk_test_...",
+  "DLOCAL_API_KEY": "your-dlocal-api-key",
+  "DLOCAL_SECRET_KEY": "your-dlocal-secret-key",
+  "DLOCAL_BASE_URL": "https://api.dlocal.com",
+  "APP_BASE_URL": "https://dev.revendiste.com",
+  "API_BASE_URL": "https://dev.revendiste.com/api",
+  "STORAGE_TYPE": "s3",
+  "AWS_S3_BUCKET": "revendiste-dev-storage",
+  "AWS_S3_REGION": "auto",
+  "AWS_ACCESS_KEY_ID": "your-r2-access-key-id",
+  "AWS_SECRET_ACCESS_KEY": "your-r2-secret-access-key",
+  "EMAIL_PROVIDER": "resend",
+  "RESEND_API_KEY": "re_...",
+  "CLOUDFLARE_ORIGIN_CERT": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+  "CLOUDFLARE_ORIGIN_KEY": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+}
+```
+
+**3. Install Certificate on EC2 Instance:**
+
+SSH into the EC2 instance and create the certificate files:
+
+```bash
+# SSH into the instance
+ssh -i ~/.ssh/revendiste-dev-keypair.pem ec2-user@<EC2_PUBLIC_IP>
+
+# Retrieve certificate and key from Secrets Manager
+SECRET=$(aws secretsmanager get-secret-value --secret-id revendiste/dev/backend-secrets --query SecretString --output text)
+CERT=$(echo $SECRET | jq -r '.CLOUDFLARE_ORIGIN_CERT')
+KEY=$(echo $SECRET | jq -r '.CLOUDFLARE_ORIGIN_KEY')
+
+# Create certificate file
+sudo bash -c "cat > /etc/ssl/certs/cloudflare-origin.pem << 'CERT_EOF'
+$CERT
+CERT_EOF"
+
+# Create private key file
+sudo bash -c "cat > /etc/ssl/private/cloudflare-origin.key << 'KEY_EOF'
+$KEY
+KEY_EOF"
+
+# Set correct permissions
+sudo chmod 644 /etc/ssl/certs/cloudflare-origin.pem
+sudo chmod 600 /etc/ssl/private/cloudflare-origin.key
+```
+
+**4. Update Nginx Configuration:**
+
+```bash
+sudo tee /etc/nginx/conf.d/revendiste.conf > /dev/null << 'EOF'
+# HTTP server - redirect to HTTPS
+server {
+    listen 80;
+    server_name dev.revendiste.com;
+    return 301 https://$server_name$request_uri;
+}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    server_name dev.revendiste.com;
+
+    # SSL certificate (Cloudflare Origin CA)
+    ssl_certificate /etc/ssl/certs/cloudflare-origin.pem;
+    ssl_certificate_key /etc/ssl/private/cloudflare-origin.key;
+
+    # SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # Proxy API requests to backend container
+    location ^~ /api {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $http_cf_connecting_ip;
+        proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Proxy all other requests to frontend container
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $http_cf_connecting_ip;
+        proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+EOF
+
+# Test and reload nginx
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+**5. Configure Cloudflare SSL/TLS Mode:**
+
+1. Go to Cloudflare Dashboard → SSL/TLS → Overview
+2. Set encryption mode to **"Full"** (or "Full (Strict)" for stricter validation)
+3. This enables end-to-end encryption between Cloudflare and your origin server
+
+**Note:** If you prefer not to use SSL certificates on the origin, you can use "Flexible" mode instead, which only encrypts between visitors and Cloudflare (not between Cloudflare and origin).
+
 ### 8. Create AWS IAM User for GitHub Actions
 
 Create an IAM user with permissions to push to ECR:

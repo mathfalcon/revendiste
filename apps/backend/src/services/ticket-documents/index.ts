@@ -51,9 +51,7 @@ export class TicketDocumentService {
     const ticket = await this.listingTicketsRepository.getTicketById(ticketId);
 
     if (!ticket) {
-      throw new NotFoundError(
-        TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND,
-      );
+      throw new NotFoundError(TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND);
     }
 
     if (ticket.publisherUserId !== userId) {
@@ -63,16 +61,12 @@ export class TicketDocumentService {
     }
 
     if (!ticket.soldAt) {
-      throw new ValidationError(
-        TICKET_DOCUMENT_ERROR_MESSAGES.UNSOLD_TICKET,
-      );
+      throw new ValidationError(TICKET_DOCUMENT_ERROR_MESSAGES.UNSOLD_TICKET);
     }
 
     // Validate event hasn't ended
     if (ticket.eventEndDate && new Date(ticket.eventEndDate) < new Date()) {
-      throw new ValidationError(
-        TICKET_DOCUMENT_ERROR_MESSAGES.EVENT_ENDED,
-      );
+      throw new ValidationError(TICKET_DOCUMENT_ERROR_MESSAGES.EVENT_ENDED);
     }
 
     // Validate file type
@@ -92,11 +86,12 @@ export class TicketDocumentService {
       await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
 
     // Upload new document to storage
+    // Use 'private/tickets/' prefix for R2 bucket clarity
     const uploadResult = await this.storageProvider.upload(file.buffer, {
       originalName: file.originalName,
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
-      directory: `tickets/${ticket.eventId}`,
+      directory: `private/tickets/${ticket.eventId}`,
       filename: `ticket-${ticketId}`,
     });
 
@@ -109,7 +104,9 @@ export class TicketDocumentService {
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
       documentType: 'ticket',
-      version: existingDocument ? (existingDocument.version as unknown as number) + 1 : 1,
+      version: existingDocument
+        ? (existingDocument.version as unknown as number) + 1
+        : 1,
       isPrimary: true,
       status: 'verified',
       uploadedAt: new Date(),
@@ -205,8 +202,9 @@ export class TicketDocumentService {
     }
 
     // Get the primary document for this ticket
-    const document =
-      await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
+    const document = await this.ticketDocumentsRepository.getPrimaryDocument(
+      ticketId,
+    );
 
     if (!document) {
       throw new NotFoundError(
@@ -236,9 +234,7 @@ export class TicketDocumentService {
     const ticket = await this.listingTicketsRepository.getTicketById(ticketId);
 
     if (!ticket) {
-      throw new NotFoundError(
-        TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND,
-      );
+      throw new NotFoundError(TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND);
     }
 
     if (ticket.publisherUserId !== userId) {
@@ -248,8 +244,9 @@ export class TicketDocumentService {
     }
 
     // Get the primary document
-    const document =
-      await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
+    const document = await this.ticketDocumentsRepository.getPrimaryDocument(
+      ticketId,
+    );
 
     if (!document) {
       throw new NotFoundError(
@@ -261,7 +258,9 @@ export class TicketDocumentService {
     await this.storageProvider.delete(document.storagePath);
 
     // Soft delete the document record
-    await this.ticketDocumentsRepository.softDelete(document.id as unknown as string);
+    await this.ticketDocumentsRepository.softDelete(
+      document.id as unknown as string,
+    );
 
     logger.info('Ticket document deleted successfully', {
       ticketId,
@@ -320,9 +319,7 @@ export class TicketDocumentService {
     const ticket = await this.listingTicketsRepository.getTicketById(ticketId);
 
     if (!ticket) {
-      throw new NotFoundError(
-        TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND,
-      );
+      throw new NotFoundError(TICKET_DOCUMENT_ERROR_MESSAGES.TICKET_NOT_FOUND);
     }
 
     if (ticket.publisherUserId !== userId) {
@@ -332,12 +329,14 @@ export class TicketDocumentService {
     }
 
     // Get primary document (if any)
-    const document =
-      await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
+    const document = await this.ticketDocumentsRepository.getPrimaryDocument(
+      ticketId,
+    );
 
     // Get all documents for version history
-    const allDocuments =
-      await this.ticketDocumentsRepository.getAllDocuments(ticketId);
+    const allDocuments = await this.ticketDocumentsRepository.getAllDocuments(
+      ticketId,
+    );
 
     return {
       id: ticket.id,
@@ -355,7 +354,7 @@ export class TicketDocumentService {
             sizeBytes: document.sizeBytes,
             version: document.version,
             status: document.status,
-            url: this.storageProvider.getUrl(document.storagePath),
+            url: await this.storageProvider.getUrl(document.storagePath),
           }
         : null,
       documentHistory: allDocuments.map(doc => ({
@@ -398,4 +397,3 @@ export class TicketDocumentService {
     }
   }
 }
-

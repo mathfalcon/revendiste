@@ -23,14 +23,24 @@ output "frontend_domain" {
   value       = var.domain_name
 }
 
-output "r2_bucket_name" {
-  description = "R2 bucket name"
-  value       = cloudflare_r2_bucket.dev_storage.name
+output "r2_public_bucket_name" {
+  description = "R2 public bucket name"
+  value       = cloudflare_r2_bucket.dev_public.name
+}
+
+output "r2_private_bucket_name" {
+  description = "R2 private bucket name"
+  value       = cloudflare_r2_bucket.dev_private.name
 }
 
 output "r2_bucket_location" {
   description = "R2 bucket location"
-  value       = cloudflare_r2_bucket.dev_storage.location
+  value       = cloudflare_r2_bucket.dev_public.location
+}
+
+output "cdn_domain" {
+  description = "CDN domain for public assets"
+  value       = cloudflare_r2_custom_domain.dev_cdn.domain_name
 }
 
 output "backend_ecr_repository_url" {

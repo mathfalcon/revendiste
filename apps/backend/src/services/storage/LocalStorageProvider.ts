@@ -59,9 +59,13 @@ export class LocalStorageProvider implements IStorageProvider {
         originalName: options.originalName,
       });
 
+      // Generate URL (synchronous for local storage)
+      const normalizedPath = relativePath.replace(/\\/g, '/');
+      const url = `${this.baseUrl}/${normalizedPath}`;
+
       return {
-        path: relativePath.replace(/\\/g, '/'), // normalize path separators for Windows
-        url: this.getUrl(relativePath),
+        path: normalizedPath,
+        url,
         sizeBytes: options.sizeBytes,
       };
     } catch (error) {
@@ -99,7 +103,7 @@ export class LocalStorageProvider implements IStorageProvider {
     }
   }
 
-  getUrl(filePath: string): string {
+  async getUrl(filePath: string): Promise<string> {
     // Normalize path separators for URLs
     const normalizedPath = filePath.replace(/\\/g, '/');
     return `${this.baseUrl}/${normalizedPath}`;
