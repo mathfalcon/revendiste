@@ -40,7 +40,7 @@ output "r2_bucket_location" {
 
 output "cdn_domain" {
   description = "CDN domain for public assets"
-  value       = cloudflare_r2_custom_domain.dev_cdn.domain_name
+  value       = cloudflare_r2_custom_domain.dev_cdn.domain
 }
 
 output "backend_ecr_repository_url" {

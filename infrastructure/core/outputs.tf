@@ -5,21 +5,21 @@ output "domain_name" {
 
 output "cloudflare_zone_id" {
   description = "Cloudflare zone ID"
-  value       = data.cloudflare_zone.main.id
+  value       = data.cloudflare_zones.main.result[0].id
 }
 
 output "cloudflare_zone_name_servers" {
   description = "Name servers for the Cloudflare zone (configure these in your domain registrar)"
-  value       = data.cloudflare_zone.main.name_servers
+  value       = data.cloudflare_zones.main.result[0].name_servers
 }
 
 output "resend_dkim_record" {
   description = "Resend DKIM record details"
   sensitive   = true
   value = {
-    name    = cloudflare_record.resend_dkim.name
-    type    = cloudflare_record.resend_dkim.type
-    content = cloudflare_record.resend_dkim.content
+    name    = cloudflare_dns_record.resend_dkim.name
+    type    = cloudflare_dns_record.resend_dkim.type
+    content = cloudflare_dns_record.resend_dkim.content
   }
 }
 
@@ -28,15 +28,15 @@ output "resend_spf_records" {
   sensitive   = true
   value = {
     mx = {
-      name     = cloudflare_record.resend_smtp_mx.name
-      type     = cloudflare_record.resend_smtp_mx.type
-      priority = cloudflare_record.resend_smtp_mx.priority
-      content  = cloudflare_record.resend_smtp_mx.content
+      name     = cloudflare_dns_record.resend_smtp_mx.name
+      type     = cloudflare_dns_record.resend_smtp_mx.type
+      priority = cloudflare_dns_record.resend_smtp_mx.priority
+      content  = cloudflare_dns_record.resend_smtp_mx.content
     }
     txt = {
-      name    = cloudflare_record.resend_spf.name
-      type    = cloudflare_record.resend_spf.type
-      content = cloudflare_record.resend_spf.content
+      name    = cloudflare_dns_record.resend_spf.name
+      type    = cloudflare_dns_record.resend_spf.type
+      content = cloudflare_dns_record.resend_spf.content
     }
   }
 }
@@ -45,9 +45,9 @@ output "dmarc_record" {
   description = "DMARC record details"
   sensitive   = true
   value = var.enable_dmarc ? {
-    name    = cloudflare_record.dmarc[0].name
-    type    = cloudflare_record.dmarc[0].type
-    content = cloudflare_record.dmarc[0].content
+    name    = cloudflare_dns_record.dmarc[0].name
+    type    = cloudflare_dns_record.dmarc[0].type
+    content = cloudflare_dns_record.dmarc[0].content
   } : null
 }
 

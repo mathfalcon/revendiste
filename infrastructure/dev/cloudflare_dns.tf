@@ -1,12 +1,12 @@
 # Get Cloudflare zone for revendiste.com
-data "cloudflare_zone" "main" {
+data "cloudflare_zones" "main" {
   name = "revendiste.com"
 }
 
 # A record for dev subdomain (points to single app instance)
 # API is served at dev.revendiste.com/api, frontend at dev.revendiste.com
-resource "cloudflare_record" "frontend" {
-  zone_id = data.cloudflare_zone.main.id
+resource "cloudflare_dns_record" "frontend" {
+  zone_id = data.cloudflare_zones.main.result[0].id
   name    = var.domain_name
   type    = "A"
   content = aws_eip.app.public_ip

@@ -1,8 +1,8 @@
 # Resend DNS Records for email authentication
 # These records are required for Resend to send emails on behalf of your domain
 
-resource "cloudflare_record" "resend_dkim" {
-  zone_id = data.cloudflare_zone.main.id
+resource "cloudflare_dns_record" "resend_dkim" {
+  zone_id = data.cloudflare_zones.main.result[0].id
   # Full FQDN: resend._domainkey.notificaciones.revendiste.com
   name    = "resend._domainkey.notificaciones"
   type    = "TXT"
@@ -10,8 +10,8 @@ resource "cloudflare_record" "resend_dkim" {
   content = var.resend_dkim_key
 }
 
-resource "cloudflare_record" "resend_smtp_mx" {
-  zone_id = data.cloudflare_zone.main.id
+resource "cloudflare_dns_record" "resend_smtp_mx" {
+  zone_id = data.cloudflare_zones.main.result[0].id
   # Full FQDN: send.notificaciones.revendiste.com
   name     = "send.notificaciones"
   type     = "MX"
@@ -20,8 +20,8 @@ resource "cloudflare_record" "resend_smtp_mx" {
   content  = var.resend_smtp_server
 }
 
-resource "cloudflare_record" "resend_spf" {
-  zone_id = data.cloudflare_zone.main.id
+resource "cloudflare_dns_record" "resend_spf" {
+  zone_id = data.cloudflare_zones.main.result[0].id
   # Full FQDN: send.notificaciones.revendiste.com
   name    = "send.notificaciones"
   type    = "TXT"
@@ -31,9 +31,9 @@ resource "cloudflare_record" "resend_spf" {
 
 # DMARC Record (Optional)
 # This helps prevent email spoofing and provides reporting
-resource "cloudflare_record" "dmarc" {
+resource "cloudflare_dns_record" "dmarc" {
   count   = var.enable_dmarc ? 1 : 0
-  zone_id = data.cloudflare_zone.main.id
+  zone_id = data.cloudflare_zones.main.result[0].id
   # DMARC for the subdomain notificaciones.revendiste.com
   # Full FQDN: _dmarc.notificaciones.revendiste.com
   name    = "_dmarc.notificaciones"

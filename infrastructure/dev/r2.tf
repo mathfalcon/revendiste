@@ -21,10 +21,11 @@ resource "cloudflare_r2_bucket" "dev_private" {
 }
 
 # Custom domain for R2 public bucket CDN
-# This resource automatically creates the DNS record (CNAME) pointing to R2
 # Reference: https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/r2_custom_domain
 resource "cloudflare_r2_custom_domain" "dev_cdn" {
   account_id  = var.cloudflare_account_id
   bucket_name = cloudflare_r2_bucket.dev_public.name
-  domain_name = "cdn-${var.environment}.revendiste.com"
+  domain      = "cdn-${var.environment}.revendiste.com"
+  zone_id     = data.cloudflare_zones.main.result[0].id
+  enabled     = true
 }

@@ -16,10 +16,9 @@ api_subdomain = "api.dev"
 allowed_ssh_cidr_blocks  = ["0.0.0.0/0"]  # Restrict in production!
 allowed_http_cidr_blocks = ["0.0.0.0/0"]
 
-# Cloudflare R2 Configuration
+# Cloudflare Configuration
 cloudflare_api_token = "your-cloudflare-api-token"
 cloudflare_account_id = "your-cloudflare-account-id"
-r2_bucket_name       = "revendiste-dev-storage"
 r2_bucket_location   = "WEUR"  # Western Europe
 
 # NOTE: Secrets are NOT stored in Terraform variables for security
