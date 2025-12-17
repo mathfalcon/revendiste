@@ -22,10 +22,18 @@ rm -f /etc/nginx/conf.d/default.conf
 # Create nginx config for Cloudflare proxied traffic
 # Cloudflare handles SSL/TLS termination and HTTP->HTTPS redirects
 # Origin only needs to serve HTTP on port 80
+# Block direct IP access - only allow requests from Cloudflare
 cat > /etc/nginx/conf.d/revendiste.conf << 'EOF'
 server {
     listen 80;
     server_name dev.revendiste.com;
+    
+    # Block direct IP access - reject requests without Cloudflare headers
+    # CF-Connecting-IP is always present when proxied through Cloudflare
+    # Direct IP access won't have this header
+    if ($http_cf_connecting_ip = "") {
+        return 403 "Direct IP access not allowed. Please use dev.revendiste.com";
+    }
 
     # Proxy API requests to backend container (^~ ensures this takes precedence)
     location ^~ /api {

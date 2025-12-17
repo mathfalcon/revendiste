@@ -49,10 +49,26 @@ Terraform configuration for deploying the Revendiste backend and frontend to AWS
 
 ### 1. Create AWS Key Pair
 
+**Option A: Create a new key pair for this computer (recommended if you have multiple computers)**
+
 ```bash
-aws ec2 create-key-pair --key-name revendiste-dev-keypair --query 'KeyMaterial' --output text > ~/.ssh/revendiste-dev-keypair.pem
-chmod 400 ~/.ssh/revendiste-dev-keypair.pem
+# Use a unique name for this computer (e.g., add your computer name or username)
+aws ec2 create-key-pair --key-name revendiste-dev-keypair-$(whoami) --query 'KeyMaterial' --output text > ~/.ssh/revendiste-dev-keypair-$(whoami).pem
+chmod 400 ~/.ssh/revendiste-dev-keypair-$(whoami).pem
+
+# Then update your terraform.tfvars to use the new key pair name:
+# key_pair_name = "revendiste-dev-keypair-$(whoami)"
 ```
+
+**Option B: Use existing key pair (if you already have the .pem file)**
+
+If you already have the key pair file from another computer, you can:
+
+1. Copy the `.pem` file to `~/.ssh/revendiste-dev-keypair.pem` on this computer
+2. Set `chmod 400 ~/.ssh/revendiste-dev-keypair.pem`
+3. Use the existing key pair name in your `terraform.tfvars`
+
+**Note:** You can have multiple key pairs in AWS - each with a different name. Just make sure your `terraform.tfvars` uses the correct `key_pair_name` that matches the key pair you want to use.
 
 ### 2. Generate GitHub Actions SSH Key
 
@@ -316,7 +332,7 @@ The frontend container runs the TanStack Start SSR server, which handles:
 
 - Verify backend container is running: `docker ps`
 - Check backend container logs: `docker logs revendiste-backend`
-- Verify backend is accessible: `curl http://localhost:3001/health`
+- Verify backend is accessible: `curl http://localhost:3001/api/health`
 - Check security group allows port 3001
 - Verify DNS points to backend instance IP
 - Check frontend can reach backend (security group rules)
