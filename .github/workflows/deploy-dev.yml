@@ -116,6 +116,9 @@ jobs:
             # Pull latest backend image (try development tag first, then latest)
             docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:development || docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
+            # Create Docker network for container communication (idempotent)
+            docker network create revendiste-network || true
+
             # Stop and remove old backend container
             docker stop revendiste-backend || true
             docker rm revendiste-backend || true
@@ -172,6 +175,7 @@ jobs:
             docker run -d \
               --name revendiste-backend \
               --restart unless-stopped \
+              --network revendiste-network \
               -p 3001:3001 \
               --env-file "$ENV_FILE" \
               ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:$IMAGE_TAG
@@ -233,6 +237,9 @@ jobs:
             # Pull latest frontend image (try development tag first, then latest)
             docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:development || docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
 
+            # Create Docker network for container communication (idempotent)
+            docker network create revendiste-network || true
+
             # Stop and remove old frontend container
             docker stop revendiste-frontend || true
             docker rm revendiste-frontend || true
@@ -244,13 +251,13 @@ jobs:
             fi
 
             # Run new frontend container with environment variables
+            # BACKEND_IP uses container name for internal Docker network communication
             docker run -d \
               --name revendiste-frontend \
               --restart unless-stopped \
+              --network revendiste-network \
               -p 3000:3000 \
-              -e VITE_APP_API_URL="${{ secrets.VITE_APP_API_URL }}" \
-              -e VITE_PLATFORM_COMMISSION_RATE="${{ secrets.VITE_PLATFORM_COMMISSION_RATE || '0.06' }}" \
-              -e VITE_VAT_RATE="${{ secrets.VITE_VAT_RATE || '0.22' }}" \
+              -e BACKEND_IP="revendiste-backend:3001" \
               ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:$IMAGE_TAG
 
             # Health check
