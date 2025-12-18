@@ -8,7 +8,7 @@ import {
   Queries,
   Path,
   Query,
-} from '@mathfalcon/tsoa';
+} from '@mathfalcon/tsoa-runtime';
 import {EventsService} from '~/services';
 import {
   ensurePagination,
