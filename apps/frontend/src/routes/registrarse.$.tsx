@@ -3,6 +3,13 @@ import {createFileRoute} from '@tanstack/react-router';
 
 export const Route = createFileRoute('/registrarse/$')({
   component: Page,
+  head: () => ({
+    meta: [
+      {
+        title: 'Registrarse | Revendiste',
+      },
+    ],
+  }),
 });
 
 function Page() {

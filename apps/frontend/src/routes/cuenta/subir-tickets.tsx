@@ -9,4 +9,11 @@ const subirTicketsSearchSchema = z.object({
 export const Route = createFileRoute('/cuenta/subir-tickets')({
   component: UploadTicketsView,
   validateSearch: subirTicketsSearchSchema,
+  head: () => ({
+    meta: [
+      {
+        title: 'Subir Tickets | Revendiste',
+      },
+    ],
+  }),
 });

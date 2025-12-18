@@ -10,6 +10,13 @@ const productSearchSchema = z.object({
 export const Route = createFileRoute('/ingresar/$')({
   component: Page,
   validateSearch: search => productSearchSchema.parse(search),
+  head: () => ({
+    meta: [
+      {
+        title: 'Ingresar | Revendiste',
+      },
+    ],
+  }),
 });
 
 function Page() {

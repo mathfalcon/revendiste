@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapRouteImport } from './routes/sitemap'
 import { Route as CuentaRouteRouteImport } from './routes/cuenta/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RegistrarseSplatRouteImport } from './routes/registrarse.$'
@@ -22,6 +23,11 @@ import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$ord
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
 
+const SitemapRoute = SitemapRouteImport.update({
+  id: '/sitemap',
+  path: '/sitemap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CuentaRouteRoute = CuentaRouteRouteImport.update({
   id: '/cuenta',
   path: '/cuenta',
@@ -86,6 +92,7 @@ const CheckoutOrderIdSuccessRoute = CheckoutOrderIdSuccessRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/sitemap': typeof SitemapRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/sitemap': typeof SitemapRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/sitemap': typeof SitemapRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cuenta'
+    | '/sitemap'
     | '/cuenta/publicaciones'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cuenta'
+    | '/sitemap'
     | '/cuenta/publicaciones'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cuenta'
+    | '/sitemap'
     | '/cuenta/publicaciones'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
@@ -174,6 +186,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
+  SitemapRoute: typeof SitemapRoute
   EntradasPublicarRoute: typeof EntradasPublicarRoute
   EventosEventIdRoute: typeof EventosEventIdRoute
   IngresarSplatRoute: typeof IngresarSplatRoute
@@ -185,6 +198,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap': {
+      id: '/sitemap'
+      path: '/sitemap'
+      fullPath: '/sitemap'
+      preLoaderRoute: typeof SitemapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cuenta': {
       id: '/cuenta'
       path: '/cuenta'
@@ -291,6 +311,7 @@ const CuentaRouteRouteWithChildren = CuentaRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CuentaRouteRoute: CuentaRouteRouteWithChildren,
+  SitemapRoute: SitemapRoute,
   EntradasPublicarRoute: EntradasPublicarRoute,
   EventosEventIdRoute: EventosEventIdRoute,
   IngresarSplatRoute: IngresarSplatRoute,

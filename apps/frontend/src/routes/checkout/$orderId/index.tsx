@@ -27,6 +27,13 @@ export const Route = createFileRoute('/checkout/$orderId/')({
       throw error;
     }
   },
+  head: () => ({
+    meta: [
+      {
+        title: 'Checkout | Revendiste',
+      },
+    ],
+  }),
 });
 
 function RouteComponent() {

@@ -10,4 +10,11 @@ const publicacionesSearchSchema = z.object({
 export const Route = createFileRoute('/cuenta/publicaciones')({
   component: PublicationsView,
   validateSearch: publicacionesSearchSchema,
+  head: () => ({
+    meta: [
+      {
+        title: 'Mis Publicaciones | Revendiste',
+      },
+    ],
+  }),
 });

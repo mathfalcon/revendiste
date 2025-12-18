@@ -18,6 +18,13 @@ export const Route = createFileRoute('/entradas/editar/$listingId')({
       // void context.queryClient.prefetchQuery(getEventByIdQuery(search.eventId));
     }
   },
+  head: () => ({
+    meta: [
+      {
+        title: 'Editar Publicación | Revendiste',
+      },
+    ],
+  }),
 });
 
 function RouteComponent() {

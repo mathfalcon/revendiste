@@ -19,6 +19,13 @@ export const Route = createFileRoute('/checkout/$orderId/success')({
       throw error;
     }
   },
+  head: () => ({
+    meta: [
+      {
+        title: 'Compra Exitosa | Revendiste',
+      },
+    ],
+  }),
 });
 
 function RouteComponent() {

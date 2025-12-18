@@ -51,6 +51,13 @@ const TAB_CONFIG = [
 
 export const Route = createFileRoute('/cuenta')({
   component: RouteComponent,
+  head: () => ({
+    meta: [
+      {
+        title: 'Mi Cuenta | Revendiste',
+      },
+    ],
+  }),
 });
 
 function RouteComponent() {

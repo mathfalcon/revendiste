@@ -23,6 +23,13 @@ export const Route = createFileRoute('/entradas/publicar')({
       await context.queryClient.ensureQueryData(getEventByIdQuery(eventoId));
     }
   },
+  head: () => ({
+    meta: [
+      {
+        title: 'Publicar Entradas | Revendiste',
+      },
+    ],
+  }),
 });
 
 function RouteComponent() {

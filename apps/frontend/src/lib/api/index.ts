@@ -1,4 +1,4 @@
-import {VITE_APP_API_URL} from '~/config/env';
+import {VITE_APP_API_URL, BACKEND_IP} from '../../config/env';
 import {Api} from './generated';
 import {AxiosError} from 'axios';
 import {redirect} from '@tanstack/react-router';
@@ -22,8 +22,20 @@ export interface PendingOrderErrorResponse extends StandardizedErrorResponse {
   };
 }
 
+// During SSR, use backend IP directly to bypass Cloudflare
+// On client-side, use the normal API URL (through Cloudflare)
+const getApiBaseURL = () => {
+  if (typeof window === 'undefined' && BACKEND_IP) {
+    // Server-side: use direct backend IP (bypasses Cloudflare)
+    // Use HTTP since it's internal to the infrastructure
+    return `http://${BACKEND_IP}/api`;
+  }
+  // Client-side: use normal API URL (through Cloudflare)
+  return VITE_APP_API_URL;
+};
+
 export const api = new Api({
-  baseURL: VITE_APP_API_URL,
+  baseURL: getApiBaseURL(),
   withCredentials: true,
 });
 
@@ -31,14 +43,7 @@ export const api = new Api({
 api.instance.interceptors.request.use(
   async config => {
     if (typeof window === 'undefined') {
-      // Add User-Agent header for server-side requests to avoid Cloudflare blocking
-      // Cloudflare may block requests without proper User-Agent headers
-      if (!config.headers['User-Agent']) {
-        config.headers['User-Agent'] =
-          'Mozilla/5.0 (compatible; Revendiste-SSR/1.0)';
-      }
-
-      // Get fresh token for each request
+      // Get fresh token for each request during SSR
       try {
         const {getToken} = await auth();
         const token = await getToken();
@@ -66,21 +71,6 @@ api.instance.interceptors.response.use(
     // Handle 401 Unauthorized - redirect to login
     if (error.response && error.response.status === 401) {
       throw redirect({to: '/ingresar/$', throw: true});
-    }
-
-    // Handle 403 Forbidden - might be Cloudflare challenge or auth issue
-    // During SSR, if we get a 403, it might be because auth token wasn't available
-    // In this case, we should let the client-side retry handle it
-    if (error.response && error.response.status === 403) {
-      // If it's a Cloudflare challenge page (HTML response), this is likely an SSR issue
-      const contentType = error.response.headers['content-type'] || '';
-      if (contentType.includes('text/html')) {
-        // This is likely a Cloudflare challenge - log and let client-side handle it
-        console.warn(
-          'Received 403 with HTML response (likely Cloudflare challenge) during SSR',
-        );
-        // Don't throw redirect here - let the error bubble up so client-side can retry
-      }
     }
 
     // Handle standardized error responses from backend
