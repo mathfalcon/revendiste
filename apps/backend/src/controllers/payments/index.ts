@@ -7,7 +7,7 @@ import {
   Request,
   Path,
   Response,
-} from '@tsoa/runtime';
+} from '@mathfalcon/tsoa';
 import {requireAuthMiddleware} from '~/middleware';
 import {NotFoundError, UnauthorizedError, ValidationError} from '~/errors';
 import {PaymentsService} from '~/services/payments';

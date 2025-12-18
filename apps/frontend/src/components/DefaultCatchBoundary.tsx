@@ -37,7 +37,7 @@ export function DefaultCatchBoundary({error, reset}: ErrorComponentProps) {
           <p className='text-center text-sm text-muted-foreground'>
             {friendlyMessage}
           </p>
-          <div className='flex flex-col gap-2 sm:flex-row'>
+          <div className='flex flex-col gap-2 sm:flex-row flex-wrap'>
             <Button
               variant='outline'
               className='flex-1'

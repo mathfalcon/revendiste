@@ -10,7 +10,7 @@ import {
   Response,
   Path,
   UploadedFile,
-} from '@tsoa/runtime';
+} from '@mathfalcon/tsoa';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {TicketDocumentService} from '~/services/ticket-documents';
 import {requireAuthMiddleware} from '~/middleware';

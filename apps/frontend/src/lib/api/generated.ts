@@ -77,12 +77,8 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
   pagination: PaginationMeta;
 }
 
-/** Obtain the return type of a function type */
-export type ReturnTypeEventsServiceAtGetAllEventsPaginated =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
-
 export type GetEventsPaginatedResponse =
-  ReturnTypeEventsServiceAtGetAllEventsPaginated;
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
 
 export interface InferTypeofPaginationSchema {
   sortOrder?: "asc" | "desc";
@@ -95,8 +91,7 @@ export interface InferTypeofPaginationSchema {
 
 export type PaginationQuery = InferTypeofPaginationSchema;
 
-/** Obtain the return type of a function type */
-export type ReturnTypeEventsServiceAtGetBySearch = {
+export type SearchEventsResponse = {
   eventImages: {
     imageType: EventImageType;
     url: string;
@@ -118,10 +113,7 @@ export type ReturnTypeEventsServiceAtGetBySearch = {
   createdAt: string;
 }[];
 
-export type SearchEventsResponse = ReturnTypeEventsServiceAtGetBySearch;
-
-/** Obtain the return type of a function type */
-export interface ReturnTypeEventsServiceAtGetEventById {
+export interface GetEventByIdResponse {
   ticketWaves: {
     priceGroups: {
       availableTickets: string | number;
@@ -154,8 +146,6 @@ export interface ReturnTypeEventsServiceAtGetEventById {
   createdAt: string;
 }
 
-export type GetEventByIdResponse = ReturnTypeEventsServiceAtGetEventById;
-
 /** Construct a type with a set of properties K of type T */
 export type RecordStringAny = Record<string, any>;
 
@@ -182,8 +172,7 @@ export interface HealthCheck {
   };
 }
 
-/** Obtain the return type of a function type */
-export interface ReturnTypeTicketListingsServiceAtCreateTicketListing {
+export interface CreateTicketListingResponse {
   ticketWaveId: string;
   /** @format date-time */
   soldAt: string | null;
@@ -222,9 +211,6 @@ export interface ReturnTypeTicketListingsServiceAtCreateTicketListing {
     createdAt: string;
   }[];
 }
-
-export type CreateTicketListingResponse =
-  ReturnTypeTicketListingsServiceAtCreateTicketListing;
 
 export interface UnauthorizedError {
   name: string;
@@ -273,8 +259,7 @@ export interface CreateTicketListingRouteBody {
   eventId: string;
 }
 
-/** Obtain the return type of a function type */
-export type ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets = {
+export type GetUserListingsResponse = {
   event: {
     venueName: string | null;
     venueAddress: string;
@@ -317,11 +302,7 @@ export type ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets = {
   }[];
 }[];
 
-export type GetUserListingsResponse =
-  ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets;
-
-/** Recursively unwraps the "awaited type" of a type. Non-promise "thenables" should resolve to `never`. This emulates the behavior of `await`. */
-export interface AwaitedReturnTypeTicketDocumentServiceAtUploadTicketDocument {
+export interface UploadDocumentResponse {
   documentUrl: string;
   document?: {
     /** @format double */
@@ -351,11 +332,7 @@ export interface AwaitedReturnTypeTicketDocumentServiceAtUploadTicketDocument {
   };
 }
 
-export type UploadDocumentResponse =
-  AwaitedReturnTypeTicketDocumentServiceAtUploadTicketDocument;
-
-/** Obtain the return type of a function type */
-export interface ReturnTypeOrdersServiceAtCreateOrder {
+export interface CreateOrderResponse {
   vatOnCommission: string;
   totalAmount: string;
   subtotalAmount: string;
@@ -379,8 +356,6 @@ export interface ReturnTypeOrdersServiceAtCreateOrder {
   createdAt: string;
 }
 
-export type CreateOrderResponse = ReturnTypeOrdersServiceAtCreateOrder;
-
 /** Construct a type with a set of properties K of type T */
 export type RecordStringRecordStringNumber = object;
 
@@ -390,8 +365,7 @@ export interface CreateOrderRouteBody {
   eventId: string;
 }
 
-/** Obtain the return type of a function type */
-export interface ReturnTypeOrdersServiceAtGetOrderById {
+export interface GetOrderByIdResponse {
   items: {
     ticketWaveName: string | null;
     subtotal: string | null;
@@ -436,10 +410,7 @@ export interface ReturnTypeOrdersServiceAtGetOrderById {
   createdAt: string;
 }
 
-export type GetOrderByIdResponse = ReturnTypeOrdersServiceAtGetOrderById;
-
-/** Obtain the return type of a function type */
-export type ReturnTypeOrdersServiceAtGetUserOrders = {
+export type GetUserOrdersResponse = {
   items: {
     ticketWaveName: string | null;
     subtotal: string;
@@ -484,10 +455,7 @@ export type ReturnTypeOrdersServiceAtGetUserOrders = {
   createdAt: string;
 }[];
 
-export type GetUserOrdersResponse = ReturnTypeOrdersServiceAtGetUserOrders;
-
-/** Obtain the return type of a function type */
-export interface ReturnTypeOrdersServiceAtGetOrderTickets {
+export interface GetOrderTicketsResponse {
   tickets: {
     document: {
       url: string;
@@ -516,8 +484,6 @@ export interface ReturnTypeOrdersServiceAtGetOrderTickets {
   };
   orderId: string;
 }
-
-export type GetOrderTicketsResponse = ReturnTypeOrdersServiceAtGetOrderTickets;
 
 export interface DLocalWebhookrRouteBody {
   payment_id: string;
@@ -571,15 +537,15 @@ export type ExtractNotificationMetadataTypeNotificationMetadata =
   TypedNotificationMetadataNotificationMetadata;
 
 /** Extract from T those types that are assignable to U */
-export type ExtractNotificationMetadataTypeNotificationAtType =
+export type ExtractNotificationMetadataTypeNotificationType =
   TypedNotificationMetadataNotificationMetadata;
 
 /**
  * Typed metadata based on notification type
  * Extracts the specific metadata type from the discriminated union
  */
-export type TypedNotificationMetadataNotificationAtType =
-  ExtractNotificationMetadataTypeNotificationAtType;
+export type TypedNotificationMetadataNotificationType =
+  ExtractNotificationMetadataTypeNotificationType;
 
 /** Construct a type with a set of properties K of type T */
 export type RecordStringUnknown = object;
@@ -603,7 +569,7 @@ export type NotificationAction = InferTypeofBaseActionSchema;
 export type TypedNotification =
   OmitNotificationMetadataOrActionsOrTypeOrTitleOrDescription & {
     actions: NotificationAction[] | null;
-    metadata: TypedNotificationMetadataNotificationAtType | null;
+    metadata: TypedNotificationMetadataNotificationType | null;
     description: string;
     title: string;
     type: NotificationType;

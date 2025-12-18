@@ -153,12 +153,8 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ReturnType_EventsService-at-getAllEventsPaginated_": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__",
-				"description": "Obtain the return type of a function type"
-			},
 			"GetEventsPaginatedResponse": {
-				"$ref": "#/components/schemas/ReturnType_EventsService-at-getAllEventsPaginated_"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__"
 			},
 			"infer_typeofPaginationSchema_": {
 				"properties": {
@@ -190,7 +186,7 @@
 			"PaginationQuery": {
 				"$ref": "#/components/schemas/infer_typeofPaginationSchema_"
 			},
-			"ReturnType_EventsService-at-getBySearch_": {
+			"SearchEventsResponse": {
 				"items": {
 					"properties": {
 						"eventImages": {
@@ -267,11 +263,7 @@
 					],
 					"type": "object"
 				},
-				"type": "array",
-				"description": "Obtain the return type of a function type"
-			},
-			"SearchEventsResponse": {
-				"$ref": "#/components/schemas/ReturnType_EventsService-at-getBySearch_"
+				"type": "array"
 			},
 			"EventTicketCurrency": {
 				"type": "string",
@@ -280,7 +272,7 @@
 					"UYU"
 				]
 			},
-			"ReturnType_EventsService-at-getEventById_": {
+			"GetEventByIdResponse": {
 				"properties": {
 					"ticketWaves": {
 						"items": {
@@ -413,11 +405,7 @@
 					"description",
 					"createdAt"
 				],
-				"type": "object",
-				"description": "Obtain the return type of a function type"
-			},
-			"GetEventByIdResponse": {
-				"$ref": "#/components/schemas/ReturnType_EventsService-at-getEventById_"
+				"type": "object"
 			},
 			"Record_string.any_": {
 				"properties": {},
@@ -504,7 +492,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ReturnType_TicketListingsService-at-createTicketListing_": {
+			"CreateTicketListingResponse": {
 				"properties": {
 					"ticketWaveId": {
 						"type": "string"
@@ -632,11 +620,7 @@
 					"createdAt",
 					"listingTickets"
 				],
-				"type": "object",
-				"description": "Obtain the return type of a function type"
-			},
-			"CreateTicketListingResponse": {
-				"$ref": "#/components/schemas/ReturnType_TicketListingsService-at-createTicketListing_"
+				"type": "object"
 			},
 			"UnauthorizedError": {
 				"properties": {
@@ -786,7 +770,7 @@
 					"unknown"
 				]
 			},
-			"ReturnType_TicketListingsService-at-getUserListingsWithTickets_": {
+			"GetUserListingsResponse": {
 				"items": {
 					"properties": {
 						"event": {
@@ -950,13 +934,9 @@
 					],
 					"type": "object"
 				},
-				"type": "array",
-				"description": "Obtain the return type of a function type"
+				"type": "array"
 			},
-			"GetUserListingsResponse": {
-				"$ref": "#/components/schemas/ReturnType_TicketListingsService-at-getUserListingsWithTickets_"
-			},
-			"Awaited_ReturnType_TicketDocumentService-at-uploadTicketDocument__": {
+			"UploadDocumentResponse": {
 				"properties": {
 					"documentUrl": {
 						"type": "string"
@@ -1050,13 +1030,9 @@
 				"required": [
 					"documentUrl"
 				],
-				"type": "object",
-				"description": "Recursively unwraps the \"awaited type\" of a type. Non-promise \"thenables\" should resolve to `never`. This emulates the behavior of `await`."
+				"type": "object"
 			},
-			"UploadDocumentResponse": {
-				"$ref": "#/components/schemas/Awaited_ReturnType_TicketDocumentService-at-uploadTicketDocument__"
-			},
-			"ReturnType_OrdersService-at-createOrder_": {
+			"CreateOrderResponse": {
 				"properties": {
 					"vatOnCommission": {
 						"type": "string"
@@ -1136,11 +1112,7 @@
 					"deletedAt",
 					"createdAt"
 				],
-				"type": "object",
-				"description": "Obtain the return type of a function type"
-			},
-			"CreateOrderResponse": {
-				"$ref": "#/components/schemas/ReturnType_OrdersService-at-createOrder_"
+				"type": "object"
 			},
 			"Record_string.Record_string.number__": {
 				"properties": {},
@@ -1162,7 +1134,7 @@
 				],
 				"type": "object"
 			},
-			"ReturnType_OrdersService-at-getOrderById_": {
+			"GetOrderByIdResponse": {
 				"properties": {
 					"items": {
 						"items": {
@@ -1350,13 +1322,9 @@
 					"id",
 					"createdAt"
 				],
-				"type": "object",
-				"description": "Obtain the return type of a function type"
+				"type": "object"
 			},
-			"GetOrderByIdResponse": {
-				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getOrderById_"
-			},
-			"ReturnType_OrdersService-at-getUserOrders_": {
+			"GetUserOrdersResponse": {
 				"items": {
 					"properties": {
 						"items": {
@@ -1542,13 +1510,9 @@
 					],
 					"type": "object"
 				},
-				"type": "array",
-				"description": "Obtain the return type of a function type"
+				"type": "array"
 			},
-			"GetUserOrdersResponse": {
-				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getUserOrders_"
-			},
-			"ReturnType_OrdersService-at-getOrderTickets_": {
+			"GetOrderTicketsResponse": {
 				"properties": {
 					"tickets": {
 						"items": {
@@ -1671,11 +1635,7 @@
 					"event",
 					"orderId"
 				],
-				"type": "object",
-				"description": "Obtain the return type of a function type"
-			},
-			"GetOrderTicketsResponse": {
-				"$ref": "#/components/schemas/ReturnType_OrdersService-at-getOrderTickets_"
+				"type": "object"
 			},
 			"DLocalWebhookrRouteBody": {
 				"properties": {
@@ -1850,19 +1810,19 @@
 			},
 			"TypedNotificationMetadata_NotificationMetadata_": {
 				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationMetadata__",
-				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
+				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
 			},
 			"Extract_NotificationMetadata._type-NotificationMetadata__": {
 				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
 				"description": "Extract from T those types that are assignable to U"
 			},
-			"Extract_NotificationMetadata._type-Notification-at-type__": {
+			"Extract_NotificationMetadata._type-NotificationType__": {
 				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
 				"description": "Extract from T those types that are assignable to U"
 			},
-			"TypedNotificationMetadata_Notification-at-type_": {
-				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-Notification-at-type__",
-				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
+			"TypedNotificationMetadata_NotificationType_": {
+				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationType__",
+				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
 			},
 			"Record_string.unknown_": {
 				"properties": {},
@@ -1915,7 +1875,7 @@
 							"metadata": {
 								"allOf": [
 									{
-										"$ref": "#/components/schemas/TypedNotificationMetadata_Notification-at-type_"
+										"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationType_"
 									}
 								],
 								"nullable": true

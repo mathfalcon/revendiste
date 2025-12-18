@@ -6,7 +6,7 @@ import {
   InternalServerError,
   ValidationError,
 } from '~/errors';
-import {ValidateError} from '@tsoa/runtime';
+import {ValidateError} from '@mathfalcon/tsoa';
 import {logger} from '~/utils';
 
 interface ErrorResponse {
@@ -37,21 +37,22 @@ export const errorHandler = (
   // Handle Zod validation errors
   if (err instanceof ZodError) {
     const validationErrors = err.issues
-      .map((e: any) => `${e.path.join('.')}: ${e.message}`)
+      .map(e => `${e.path.join('.')}: ${e.message}`)
       .join(', ');
     error = new ZodValidationError(validationErrors);
   }
 
   // Handle custom AppError instances
   if (error instanceof AppError) {
-    const errorResponse: ErrorResponse & {metadata?: Record<string, any>} = {
-      error: error.constructor.name,
-      message: error.message,
-      statusCode: error.statusCode,
-      timestamp: new Date().toISOString(),
-      path: req.path,
-      method: req.method,
-    };
+    const errorResponse: ErrorResponse & {metadata?: Record<string, unknown>} =
+      {
+        error: error.constructor.name,
+        message: error.message,
+        statusCode: error.statusCode,
+        timestamp: new Date().toISOString(),
+        path: req.path,
+        method: req.method,
+      };
 
     // Include metadata if available (e.g., orderId for duplicate order errors)
     if (error instanceof ValidationError && error.metadata) {

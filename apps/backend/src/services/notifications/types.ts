@@ -25,15 +25,17 @@ import type {Notification} from '~/types/models';
  * Title and description are generated from type + metadata, not stored in DB
  * For backwards compatibility, uses the generic type
  */
-export type TypedNotification<
-  T extends Notification['type'] = Notification['type'],
-> = Omit<Notification, 'metadata' | 'actions' | 'type' | 'title' | 'description'> & {
-  type: T;
-  title: string; // Generated from type + metadata
-  description: string; // Generated from type + metadata
-  metadata: TypedNotificationMetadata<T> | null;
-  actions: NotificationAction[] | null;
-};
+export type TypedNotification<T extends NotificationType = NotificationType> =
+  Omit<
+    Notification,
+    'metadata' | 'actions' | 'type' | 'title' | 'description'
+  > & {
+    type: T;
+    title: string; // Generated from type + metadata
+    description: string; // Generated from type + metadata
+    metadata: TypedNotificationMetadata<T> | null;
+    actions: NotificationAction[] | null;
+  };
 
 /**
  * Validate metadata against the discriminated union schema

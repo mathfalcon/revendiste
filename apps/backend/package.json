@@ -27,9 +27,9 @@
     "@aws-sdk/s3-request-presigner": "^3.931.0",
     "@clerk/express": "^1.7.30",
     "@date-fns/tz": "^1.4.1",
+    "@mathfalcon/tsoa-runtime": "^6.6.3",
     "@revendiste/shared": "workspace:*",
     "@revendiste/transactional": "workspace:*",
-    "@tsoa/runtime": "^6.6.0",
     "axios": "^1.12.2",
     "concurrently": "^9.2.1",
     "cors": "^2.8.5",
@@ -52,6 +52,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@mathfalcon/tsoa": "^6.6.3",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/morgan": "^1.9.10",
@@ -64,7 +65,6 @@
     "ts-node-dev": "^2.0.0",
     "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
-    "tsoa": "link:..\\..\\..\\..\\AppData\\Local\\pnpm\\global\\5\\node_modules\\tsoa",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }

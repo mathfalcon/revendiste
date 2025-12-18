@@ -8,7 +8,7 @@ import {
   Request,
   Response,
   Path,
-} from '@tsoa/runtime';
+} from '@mathfalcon/tsoa';
 import {OrdersService} from '~/services/orders';
 import {requireAuthMiddleware} from '~/middleware';
 import {

@@ -1,4 +1,5 @@
-import {FieldErrors, ValidateError} from '@tsoa/runtime';
+import express from 'express';
+import {FieldErrors, ValidateError} from '@mathfalcon/tsoa';
 import {ZodObject, ZodType} from 'zod';
 
 export type ValidationSchema = ZodObject<{
@@ -77,11 +78,8 @@ export function ValidateBody(validationSchema: ValidationSchema) {
       }
       const bodyIndex = bodyCandidates[0] as number;
 
-      // Find the Request parameter to get the raw body
-      // TSOA may use different metadata keys, so we search for an Express Request-like object
-      // Look for an object with 'body', 'method', 'headers' properties (Express Request)
       let rawBody = args[bodyIndex];
-      let request: any = null;
+      let request: express.Request | null = null;
 
       // Try to find the Request object in args
       for (const arg of args) {

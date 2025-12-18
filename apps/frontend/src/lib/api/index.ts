@@ -31,12 +31,25 @@ export const api = new Api({
 api.instance.interceptors.request.use(
   async config => {
     if (typeof window === 'undefined') {
-      // Get fresh token for each request
-      const {getToken} = await auth();
-      const token = await getToken();
+      // Add User-Agent header for server-side requests to avoid Cloudflare blocking
+      // Cloudflare may block requests without proper User-Agent headers
+      if (!config.headers['User-Agent']) {
+        config.headers['User-Agent'] =
+          'Mozilla/5.0 (compatible; Revendiste-SSR/1.0)';
+      }
 
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      // Get fresh token for each request
+      try {
+        const {getToken} = await auth();
+        const token = await getToken();
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (authError) {
+        // If auth fails during SSR, log but don't block the request
+        // The request might still work if it doesn't require auth
+        console.warn('Failed to get auth token during SSR:', authError);
       }
 
       return config;
@@ -50,8 +63,24 @@ api.instance.interceptors.request.use(
 api.instance.interceptors.response.use(
   response => response,
   async (error: AxiosError) => {
+    // Handle 401 Unauthorized - redirect to login
     if (error.response && error.response.status === 401) {
       throw redirect({to: '/ingresar/$', throw: true});
+    }
+
+    // Handle 403 Forbidden - might be Cloudflare challenge or auth issue
+    // During SSR, if we get a 403, it might be because auth token wasn't available
+    // In this case, we should let the client-side retry handle it
+    if (error.response && error.response.status === 403) {
+      // If it's a Cloudflare challenge page (HTML response), this is likely an SSR issue
+      const contentType = error.response.headers['content-type'] || '';
+      if (contentType.includes('text/html')) {
+        // This is likely a Cloudflare challenge - log and let client-side handle it
+        console.warn(
+          'Received 403 with HTML response (likely Cloudflare challenge) during SSR',
+        );
+        // Don't throw redirect here - let the error bubble up so client-side can retry
+      }
     }
 
     // Handle standardized error responses from backend

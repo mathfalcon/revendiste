@@ -9,7 +9,8 @@
     "clean": "gts clean",
     "compile": "tsc",
     "fix": "gts fix",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --filter=@revendiste/frontend --filter=@revendiste/backend",
+    "dev:all": "turbo run dev",
     "build": "turbo run build"
   },
   "keywords": [],
@@ -21,15 +22,5 @@
     "gts": "^6.0.2",
     "turbo": "^2.5.4",
     "typescript": "^5.6.3"
-  },
-  "dependencies": {
-    "tsoa": "link:../../../AppData/Local/pnpm/global/5/node_modules/tsoa"
-  },
-  "pnpm": {
-    "overrides": {
-      "srvx": "0.8.15",
-      "kysely": "^0.28.5",
-      "typescript": "^5.9.2"
-    }
   }
 }

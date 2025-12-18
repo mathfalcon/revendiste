@@ -6,8 +6,10 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"],
-      "~/shared": ["../../packages/shared/src"],
-      "~/shared/*": ["../../packages/shared/src/*"]
+      "@revendiste/shared": ["../../packages/shared/src"],
+      "@revendiste/shared/*": ["../../packages/shared/src/*"],
+      "@revendiste/transactional": ["../../packages/transactional/src"],
+      "@revendiste/transactional/*": ["../../packages/transactional/src/*"]
     },
     "strictNullChecks": true
   },
