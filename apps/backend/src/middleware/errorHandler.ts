@@ -6,7 +6,7 @@ import {
   InternalServerError,
   ValidationError,
 } from '~/errors';
-import {ValidateError} from '@mathfalcon/tsoa';
+import {ValidateError} from '@mathfalcon/tsoa-runtime';
 import {logger} from '~/utils';
 
 interface ErrorResponse {

@@ -1,4 +1,4 @@
-import {Route, Get, Tags} from '@mathfalcon/tsoa';
+import {Route, Get, Tags} from '@mathfalcon/tsoa-runtime';
 import {HealthService} from '~/services';
 
 const healthService = new HealthService();

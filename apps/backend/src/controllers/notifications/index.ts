@@ -10,7 +10,7 @@ import {
   Response,
   Path,
   Queries,
-} from '@mathfalcon/tsoa';
+} from '@mathfalcon/tsoa-runtime';
 import {NotificationService} from '~/services/notifications/NotificationService';
 import {
   requireAuthMiddleware,

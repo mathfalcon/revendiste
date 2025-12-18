@@ -1,5 +1,5 @@
 import express from 'express';
-import {FieldErrors, ValidateError} from '@mathfalcon/tsoa';
+import {FieldErrors, ValidateError} from '@mathfalcon/tsoa-runtime';
 import {ZodObject, ZodType} from 'zod';
 
 export type ValidationSchema = ZodObject<{

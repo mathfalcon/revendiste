@@ -1,5 +1,11 @@
 import express from 'express';
-import {Route, Post, Tags, Request, Middlewares} from '@mathfalcon/tsoa';
+import {
+  Route,
+  Post,
+  Tags,
+  Request,
+  Middlewares,
+} from '@mathfalcon/tsoa-runtime';
 import {validateDLocalWebhook} from '~/middleware/validateDLocalWebhook';
 import {WebhooksService} from '~/services/webhooks';
 import {db} from '~/db';
