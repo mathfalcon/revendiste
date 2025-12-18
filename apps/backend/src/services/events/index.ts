@@ -1,13 +1,19 @@
 import {EventsRepository} from '~/repositories';
 import {WithPagination} from '~/types';
 import {ScrapedEventData} from '../scraping';
+import {EventImageService} from '../scraping/image-service';
 import {logger} from '~/utils';
 
 export class EventsService {
+  private readonly imageService = new EventImageService();
+
   constructor(private readonly eventsRepository: EventsRepository) {}
 
-  async getAllEventsPaginated(args: WithPagination<{}>) {
-    return this.eventsRepository.findAllPaginatedWithImages(args.pagination);
+  async getAllEventsPaginated(args: WithPagination<{}>, userId?: string) {
+    return this.eventsRepository.findAllPaginatedWithImages(
+      args.pagination,
+      userId,
+    );
   }
 
   async storeScrapedEvents(events: ScrapedEventData[]) {
@@ -15,8 +21,46 @@ export class EventsService {
       return [];
     }
 
-    // Use the repository's batch method that handles transactions for each event
-    return await this.eventsRepository.upsertEventsBatch(events);
+    const eventsWithoutImages = events.map(event => ({
+      ...event,
+      images: [],
+    }));
+
+    const upsertedEvents = await this.eventsRepository.upsertEventsBatch(
+      eventsWithoutImages,
+    );
+
+    await Promise.all(
+      upsertedEvents.map(async (upsertedEvent, index) => {
+        const originalEvent = events[index];
+        if (!originalEvent.images || originalEvent.images.length === 0) {
+          return;
+        }
+
+        try {
+          const processedImages = await this.imageService.processImages(
+            originalEvent.images,
+            upsertedEvent.id,
+          );
+
+          await this.eventsRepository.updateEventImages(
+            upsertedEvent.id,
+            processedImages.map(img => ({
+              type: img.type,
+              url: img.url,
+            })),
+          );
+        } catch (error) {
+          logger.error('Failed to process images for event', {
+            error,
+            eventId: upsertedEvent.id,
+            externalId: originalEvent.externalId,
+          });
+        }
+      }),
+    );
+
+    return upsertedEvents;
   }
 
   async cleanupStaleEvents(scrapedEvents: ScrapedEventData[]) {

@@ -35,9 +35,12 @@ export class EventsController {
     @Queries() query: PaginationQuery,
     @Request() request: express.Request,
   ): Promise<GetEventsPaginatedResponse> {
-    return this.service.getAllEventsPaginated({
-      pagination: request.pagination!,
-    });
+    return this.service.getAllEventsPaginated(
+      {
+        pagination: request.pagination!,
+      },
+      request.user?.id,
+    );
   }
 
   @Get('/search')

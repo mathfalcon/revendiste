@@ -36,7 +36,6 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       navigate({href: data.redirectUrl});
     },
     onError: err => {
-      console.log('ERROR', err);
       toast.error(
         'Error al crear el link de pago. Por favor intenta nuevamente.',
       );
@@ -268,9 +267,9 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                 ? 'Reserva expirada'
                 : isRedirecting
                   ? 'Redirigiendo...'
-                : createPaymentLink.isPending
-                  ? 'Creando link de pago...'
-                  : 'Continuar con el pago'}
+                  : createPaymentLink.isPending
+                    ? 'Creando link de pago...'
+                    : 'Continuar con el pago'}
             </Button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import {type Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
+import type {DB, EventImageType} from '@revendiste/shared';
 import type {ScrapedEventData} from '../../services/scraping';
 import {logger} from '~/utils';
 import {jsonArrayFrom} from 'kysely/helpers/postgres';
@@ -143,14 +143,45 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     return results;
   }
 
+  async updateEventImages(
+    eventId: string,
+    images: Array<{type: EventImageType; url: string}>,
+  ) {
+    return await this.db.transaction().execute(async trx => {
+      const now = new Date();
+
+      for (const image of images) {
+        await trx
+          .insertInto('eventImages')
+          .values({
+            eventId,
+            imageType: image.type,
+            url: image.url,
+            displayOrder: images.indexOf(image),
+            createdAt: now,
+          })
+          .onConflict(oc =>
+            oc.columns(['eventId', 'imageType']).doUpdateSet({
+              url: image.url,
+              displayOrder: images.indexOf(image),
+            }),
+          )
+          .execute();
+      }
+    });
+  }
+
   // Retrieve paginated events with images using jsonArrayFrom
-  async findAllPaginatedWithImages(pagination: {
-    page: number;
-    limit: number;
-    offset: number;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-  }) {
+  async findAllPaginatedWithImages(
+    pagination: {
+      page: number;
+      limit: number;
+      offset: number;
+      sortBy: string;
+      sortOrder: 'asc' | 'desc';
+    },
+    userId?: string,
+  ) {
     const {page, limit, offset, sortBy, sortOrder} = pagination;
 
     // Get total count
@@ -181,47 +212,91 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'createdAt',
         'updatedAt',
         // Get lowest available ticket price
-        sql<number | null>`
-          (
-            SELECT listing_tickets.price
-            FROM listing_tickets
-            INNER JOIN listings ON listings.id = listing_tickets.listing_id
-            INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-            LEFT JOIN order_ticket_reservations ON 
-              order_ticket_reservations.listing_ticket_id = listing_tickets.id
-              AND order_ticket_reservations.deleted_at IS NULL
-              AND order_ticket_reservations.reserved_until > NOW()
-            WHERE event_ticket_waves.event_id = events.id
-              AND listing_tickets.cancelled_at IS NULL
-              AND listing_tickets.sold_at IS NULL
-              AND listing_tickets.deleted_at IS NULL
-              AND listings.deleted_at IS NULL
-              AND order_ticket_reservations.id IS NULL
-            ORDER BY listing_tickets.price ASC
-            LIMIT 1
-          )
-        `.as('lowestAvailableTicketPrice'),
+        userId
+          ? sql<number | null>`
+              (
+                SELECT listing_tickets.price
+                FROM listing_tickets
+                INNER JOIN listings ON listings.id = listing_tickets.listing_id
+                INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+                LEFT JOIN order_ticket_reservations ON 
+                  order_ticket_reservations.listing_ticket_id = listing_tickets.id
+                  AND order_ticket_reservations.deleted_at IS NULL
+                  AND order_ticket_reservations.reserved_until > NOW()
+                WHERE event_ticket_waves.event_id = events.id
+                  AND listing_tickets.cancelled_at IS NULL
+                  AND listing_tickets.sold_at IS NULL
+                  AND listing_tickets.deleted_at IS NULL
+                  AND listings.deleted_at IS NULL
+                  AND order_ticket_reservations.id IS NULL
+                  AND listings.publisher_user_id != ${userId}
+                ORDER BY listing_tickets.price ASC
+                LIMIT 1
+              )
+            `.as('lowestAvailableTicketPrice')
+          : sql<number | null>`
+              (
+                SELECT listing_tickets.price
+                FROM listing_tickets
+                INNER JOIN listings ON listings.id = listing_tickets.listing_id
+                INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+                LEFT JOIN order_ticket_reservations ON 
+                  order_ticket_reservations.listing_ticket_id = listing_tickets.id
+                  AND order_ticket_reservations.deleted_at IS NULL
+                  AND order_ticket_reservations.reserved_until > NOW()
+                WHERE event_ticket_waves.event_id = events.id
+                  AND listing_tickets.cancelled_at IS NULL
+                  AND listing_tickets.sold_at IS NULL
+                  AND listing_tickets.deleted_at IS NULL
+                  AND listings.deleted_at IS NULL
+                  AND order_ticket_reservations.id IS NULL
+                ORDER BY listing_tickets.price ASC
+                LIMIT 1
+              )
+            `.as('lowestAvailableTicketPrice'),
         // Get currency from the same ticket (same subquery logic)
-        sql<string | null>`
-          (
-            SELECT event_ticket_waves.currency
-            FROM listing_tickets
-            INNER JOIN listings ON listings.id = listing_tickets.listing_id
-            INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-            LEFT JOIN order_ticket_reservations ON 
-              order_ticket_reservations.listing_ticket_id = listing_tickets.id
-              AND order_ticket_reservations.deleted_at IS NULL
-              AND order_ticket_reservations.reserved_until > NOW()
-            WHERE event_ticket_waves.event_id = events.id
-              AND listing_tickets.cancelled_at IS NULL
-              AND listing_tickets.sold_at IS NULL
-              AND listing_tickets.deleted_at IS NULL
-              AND listings.deleted_at IS NULL
-              AND order_ticket_reservations.id IS NULL
-            ORDER BY listing_tickets.price ASC
-            LIMIT 1
-          )
-        `.as('lowestAvailableTicketCurrency'),
+        userId
+          ? sql<string | null>`
+              (
+                SELECT event_ticket_waves.currency
+                FROM listing_tickets
+                INNER JOIN listings ON listings.id = listing_tickets.listing_id
+                INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+                LEFT JOIN order_ticket_reservations ON 
+                  order_ticket_reservations.listing_ticket_id = listing_tickets.id
+                  AND order_ticket_reservations.deleted_at IS NULL
+                  AND order_ticket_reservations.reserved_until > NOW()
+                WHERE event_ticket_waves.event_id = events.id
+                  AND listing_tickets.cancelled_at IS NULL
+                  AND listing_tickets.sold_at IS NULL
+                  AND listing_tickets.deleted_at IS NULL
+                  AND listings.deleted_at IS NULL
+                  AND order_ticket_reservations.id IS NULL
+                  AND listings.publisher_user_id != ${userId}
+                ORDER BY listing_tickets.price ASC
+                LIMIT 1
+              )
+            `.as('lowestAvailableTicketCurrency')
+          : sql<string | null>`
+              (
+                SELECT event_ticket_waves.currency
+                FROM listing_tickets
+                INNER JOIN listings ON listings.id = listing_tickets.listing_id
+                INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+                LEFT JOIN order_ticket_reservations ON 
+                  order_ticket_reservations.listing_ticket_id = listing_tickets.id
+                  AND order_ticket_reservations.deleted_at IS NULL
+                  AND order_ticket_reservations.reserved_until > NOW()
+                WHERE event_ticket_waves.event_id = events.id
+                  AND listing_tickets.cancelled_at IS NULL
+                  AND listing_tickets.sold_at IS NULL
+                  AND listing_tickets.deleted_at IS NULL
+                  AND listings.deleted_at IS NULL
+                  AND order_ticket_reservations.id IS NULL
+                ORDER BY listing_tickets.price ASC
+                LIMIT 1
+              )
+            `.as('lowestAvailableTicketCurrency'),
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')

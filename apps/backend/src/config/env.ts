@@ -38,7 +38,7 @@ const EnvSchema = z.object({
   R2_ACCESS_KEY_ID: z.string().optional(),
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_CDN_DOMAIN: z.string().optional(), // Optional CDN domain (e.g., 'cdn-dev.revendiste.com')
-  R2_SIGNED_URL_EXPIRY: z.coerce.number().optional().default(3600), // 1 hour default
+  R2_SIGNED_URL_EXPIRY: z.coerce.number().optional().default(300), // 5 minutes default
   // Email configuration
   EMAIL_PROVIDER: z.enum(['console', 'resend']).default('console'),
   EMAIL_FROM: z.string().default('noreply@revendiste.com'),

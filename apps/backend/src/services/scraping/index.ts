@@ -28,3 +28,4 @@ export class ScrapingService {
 export * from './base/types';
 export * from './base';
 export * from './entraste';
+export * from './image-service';

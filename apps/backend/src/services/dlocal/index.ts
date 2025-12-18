@@ -66,7 +66,7 @@ export class DLocalService implements PaymentProvider {
     const dlocalParams: DLocalCreatePaymentParams = {
       ...params, // Spread first for any additional dLocal-specific params
       currency: params.currency as 'USD' | 'UYU',
-      amount: params.amount,
+      amount: Math.round(params.amount),
       orderId: params.orderId,
       description: params.description,
       successUrl: params.successUrl,
@@ -150,14 +150,11 @@ export class DLocalService implements PaymentProvider {
         requestBody.max_installments = params.maxInstallments;
       if (params.acceptedBins) requestBody.accepted_bins = params.acceptedBins;
       if (params.rejectedBins) requestBody.rejected_bins = params.rejectedBins;
-      console.log(JSON.stringify(requestBody, null, 2));
 
       const response = await this.client.post<DLocalPaymentResponse>(
         '/v1/payments',
         requestBody,
       );
-
-      console.log(JSON.stringify(response.data, null, 2));
 
       logger.info('dLocal payment created successfully', {
         paymentId: response.data.id,
