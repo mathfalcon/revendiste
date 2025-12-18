@@ -21,7 +21,6 @@ import {esUY} from '@clerk/localizations';
 import {Toaster} from '~/components/ui/sonner';
 import {createServerFn} from '@tanstack/react-start';
 import {auth} from '@clerk/tanstack-react-start/server';
-import {api} from '~/lib';
 
 const fetchClerkAuth = createServerFn({method: 'GET'}).handler(async () => {
   const {isAuthenticated, userId} = await auth();

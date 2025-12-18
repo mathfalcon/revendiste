@@ -9,7 +9,8 @@ const envMiddleware = createMiddleware({
 }).server(({next}) => {
   // Only run on server (process is undefined in browser) and only once
   if (typeof process !== 'undefined' && !envLoaded) {
-    config({quiet: true});
+    config();
+
     envLoaded = true;
   }
   return next();

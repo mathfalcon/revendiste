@@ -1,4 +1,4 @@
-import {VITE_APP_API_URL, BACKEND_IP} from '../../config/env';
+import {VITE_APP_API_URL} from '../../config/env';
 import {Api} from './generated';
 import {AxiosError} from 'axios';
 import {redirect} from '@tanstack/react-router';
@@ -25,10 +25,10 @@ export interface PendingOrderErrorResponse extends StandardizedErrorResponse {
 // During SSR, use backend IP directly to bypass Cloudflare
 // On client-side, use the normal API URL (through Cloudflare)
 const getApiBaseURL = () => {
-  if (typeof window === 'undefined' && BACKEND_IP) {
+  if (typeof window === 'undefined' && process.env.BACKEND_IP) {
     // Server-side: use direct backend IP (bypasses Cloudflare)
     // Use HTTP since it's internal to the infrastructure
-    return `http://${BACKEND_IP}/api`;
+    return `http://${process.env.BACKEND_IP}/api`;
   }
   // Client-side: use normal API URL (through Cloudflare)
   return VITE_APP_API_URL;
@@ -46,8 +46,9 @@ api.instance.interceptors.request.use(
       // Get fresh token for each request during SSR
       try {
         const {getToken} = await auth();
+        const baseURL = getApiBaseURL();
         const token = await getToken();
-
+        config.baseURL = baseURL;
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
