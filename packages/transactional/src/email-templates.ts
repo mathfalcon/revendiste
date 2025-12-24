@@ -5,10 +5,6 @@
  */
 
 import {
-  TicketSoldEmail as TicketSoldEmailComponent,
-  type TicketSoldEmailProps,
-} from '../emails/ticket-sold-email';
-import {
   DocumentReminderEmail as DocumentReminderEmailComponent,
   type DocumentReminderEmailProps,
 } from '../emails/document-reminder-email';
@@ -25,9 +21,9 @@ import {
   type PaymentFailedEmailProps,
 } from '../emails/payment-failed-email';
 import {
-  PaymentSucceededEmail as PaymentSucceededEmailComponent,
-  type PaymentSucceededEmailProps,
-} from '../emails/payment-succeeded-email';
+  DocumentUploadedEmail as DocumentUploadedEmailComponent,
+  type DocumentUploadedEmailProps,
+} from '../emails/document-uploaded-email';
 import {
   SellerTicketSoldEmail as SellerTicketSoldEmailComponent,
   type SellerTicketSoldEmailProps,
@@ -67,21 +63,6 @@ export function getEmailTemplate<T extends NotificationType>(
   const retryUrl = actions?.find(a => a.type === 'retry_payment')?.url;
 
   switch (notificationType) {
-    case 'ticket_sold_buyer': {
-      const meta = metadata as TypedNotificationMetadata<'ticket_sold_buyer'>;
-      return {
-        Component: TicketSoldEmailComponent,
-        props: {
-          eventName: meta?.eventName || 'el evento',
-          ticketCount: meta?.ticketCount || 1,
-          uploadUrl:
-            uploadUrl ||
-            `${appBaseUrl}/cuenta/publicaciones?subirTicket=${meta?.orderId}`,
-          appBaseUrl,
-        },
-      };
-    }
-
     case 'document_reminder': {
       const meta = metadata as TypedNotificationMetadata<'document_reminder'>;
       return {
@@ -101,12 +82,25 @@ export function getEmailTemplate<T extends NotificationType>(
 
     case 'order_confirmed': {
       const meta = metadata as TypedNotificationMetadata<'order_confirmed'>;
+      // Find flyer image from event images if available in metadata
+      const flyerImageUrl = undefined; // Will be populated from order data if needed
       return {
         Component: OrderConfirmedEmailComponent,
         props: {
           eventName: meta?.eventName || 'el evento',
+          eventStartDate: meta?.eventStartDate,
+          eventEndDate: meta?.eventEndDate,
+          venueName: meta?.venueName,
+          venueAddress: meta?.venueAddress,
+          flyerImageUrl,
+          orderId: meta?.orderId || '',
+          confirmedAt: undefined, // Will be populated from order data if needed
           totalAmount: meta?.totalAmount || '0.00',
+          subtotalAmount: meta?.subtotalAmount || '0.00',
+          platformCommission: meta?.platformCommission || '0.00',
+          vatOnCommission: meta?.vatOnCommission || '0.00',
           currency: meta?.currency || 'EUR',
+          items: meta?.items || [],
           orderUrl:
             orderUrl || `${appBaseUrl}/cuenta/tickets?orderId=${meta?.orderId}`,
           appBaseUrl,
@@ -138,21 +132,6 @@ export function getEmailTemplate<T extends NotificationType>(
       };
     }
 
-    case 'payment_succeeded': {
-      const meta = metadata as TypedNotificationMetadata<'payment_succeeded'>;
-      return {
-        Component: PaymentSucceededEmailComponent,
-        props: {
-          eventName: meta?.eventName || 'el evento',
-          totalAmount: meta?.totalAmount || '0.00',
-          currency: meta?.currency || 'EUR',
-          orderUrl:
-            orderUrl || `${appBaseUrl}/cuenta/tickets?orderId=${meta?.orderId}`,
-          appBaseUrl,
-        },
-      };
-    }
-
     case 'ticket_sold_seller': {
       const meta = metadata as TypedNotificationMetadata<'ticket_sold_seller'>;
       return {
@@ -166,6 +145,20 @@ export function getEmailTemplate<T extends NotificationType>(
               `${appBaseUrl}/cuenta/publicaciones?subirTicket=${meta?.listingId}`
             : undefined,
           hoursUntilAvailable: undefined,
+          appBaseUrl,
+        },
+      };
+    }
+
+    case 'document_uploaded': {
+      const meta = metadata as TypedNotificationMetadata<'document_uploaded'>;
+      return {
+        Component: DocumentUploadedEmailComponent,
+        props: {
+          eventName: meta?.eventName || 'el evento',
+          ticketCount: meta?.ticketCount || 1,
+          orderUrl:
+            orderUrl || `${appBaseUrl}/cuenta/tickets?orderId=${meta?.orderId}`,
           appBaseUrl,
         },
       };

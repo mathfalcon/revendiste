@@ -136,6 +136,16 @@ export function generateNotificationText<T extends NotificationType>(
       };
     }
 
+    case 'document_uploaded': {
+      const meta = metadata as TypedNotificationMetadata<'document_uploaded'>;
+      return {
+        title: '¡Tus entradas están listas!',
+        description: `El vendedor ha subido los documentos de tus ${meta.ticketCount} ${
+          meta.ticketCount === 1 ? 'entrada' : 'entradas'
+        } para ${meta.eventName}. Ya puedes acceder a ellas.`,
+      };
+    }
+
     default: {
       // TypeScript exhaustiveness check
       const _exhaustive: never = type;

@@ -12,14 +12,13 @@ import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {
   uploadTicketDocumentMutation,
   updateTicketDocumentMutation,
+  GetUserListingsResponse,
 } from '~/lib';
 import {TicketUploadForm} from './TicketUploadForm';
-import type {ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets} from '~/lib';
 
-type TicketWithListing =
-  ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number]['tickets'][number] & {
-    listing: ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number];
-  };
+type TicketWithListing = GetUserListingsResponse[number]['tickets'][number] & {
+  listing: GetUserListingsResponse[number];
+};
 
 interface TicketUploadCarouselProps {
   tickets: TicketWithListing[];
@@ -139,7 +138,7 @@ export function TicketUploadCarousel({
           <DialogTitle>
             {hasMultipleTickets
               ? `Subir ticket (${currentIndex + 1} de ${ticketsNeedingUpload.length})`
-              : 'Subir código del ticket'}
+              : 'Subir ticket'}
           </DialogTitle>
           <DialogDescription className='mt-1'>
             <div className='space-y-1'>

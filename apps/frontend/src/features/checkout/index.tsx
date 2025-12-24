@@ -7,7 +7,7 @@ import {
   EventTicketCurrency,
   createPaymentLinkMutation,
 } from '~/lib';
-import {formatPrice, formatEventDate} from '~/utils';
+import {formatPrice, formatEventDate, getOrderStatusLabel} from '~/utils';
 import {useCountdown} from '~/hooks';
 import {Button} from '~/components/ui/button';
 import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
@@ -183,7 +183,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                 </div>
                 <div className='flex justify-between text-sm'>
                   <span className='text-muted-foreground'>Estado:</span>
-                  <span className='capitalize'>{order.status}</span>
+                  <span>{getOrderStatusLabel(order.status)}</span>
                 </div>
               </div>
             </div>

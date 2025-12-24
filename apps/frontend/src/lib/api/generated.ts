@@ -12,12 +12,18 @@
 
 export enum NotificationType {
   DocumentReminder = "document_reminder",
+  DocumentUploaded = "document_uploaded",
   OrderConfirmed = "order_confirmed",
   OrderExpired = "order_expired",
   PaymentFailed = "payment_failed",
   PaymentSucceeded = "payment_succeeded",
   TicketSoldBuyer = "ticket_sold_buyer",
   TicketSoldSeller = "ticket_sold_seller",
+}
+
+export enum PayoutType {
+  Paypal = "paypal",
+  UruguayanBank = "uruguayan_bank",
 }
 
 export enum UploadAvailabilityReason {
@@ -189,15 +195,6 @@ export interface CreateTicketListingResponse {
     ticketNumber: number;
     price: string;
     listingId: string;
-    /** @format date-time */
-    documentUploadRequiredNotifiedAt: string | null;
-    /** @format date-time */
-    documentUploadedAt: string | null;
-    documentType: string | null;
-    /** @format double */
-    documentSizeBytes: number | null;
-    documentPath: string | null;
-    documentOriginalName: string | null;
     /** @format date-time */
     cancelledAt: string | null;
     /** @format date-time */
@@ -485,13 +482,66 @@ export interface GetOrderTicketsResponse {
   orderId: string;
 }
 
-export interface DLocalWebhookrRouteBody {
-  payment_id: string;
+export interface BalanceByCurrency {
+  currency: EventTicketCurrency;
+  amount: string;
+  /** @format double */
+  count: number;
 }
 
-export interface CreatePaymentLinkResponse {
-  redirectUrl: string;
-  paymentId: string;
+export interface SellerBalance {
+  available: BalanceByCurrency[];
+  retained: BalanceByCurrency[];
+  pending: BalanceByCurrency[];
+  total: BalanceByCurrency[];
+}
+
+export type GetBalanceResponse = SellerBalance;
+
+export interface EarningsForSelection {
+  byListing: {
+    currency: EventTicketCurrency;
+    /** @format double */
+    ticketCount: number;
+    totalAmount: string;
+    publisherUserId: string;
+    listingId: string;
+  }[];
+  byTicket: {
+    publisherUserId: string;
+    listingId: string;
+    /** @format date-time */
+    holdUntil: string;
+    currency: EventTicketCurrency;
+    sellerAmount: string;
+    listingTicketId: string;
+    id: string;
+  }[];
+}
+
+export type GetAvailableEarningsResponse = EarningsForSelection;
+
+export interface GetPayoutHistoryResponse {
+  pagination: PaginationMeta;
+  data: {
+    linkedEarnings: {
+      createdAt: string;
+      currency: EventTicketCurrency;
+      sellerAmount: string;
+      listingTicketId: string;
+      id: string;
+    }[];
+    /** @format date-time */
+    completedAt: string | null;
+    /** @format date-time */
+    processedAt: string | null;
+    /** @format date-time */
+    requestedAt: string;
+    currency: EventTicketCurrency;
+    amount: string;
+    status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+    id: string;
+  }[];
 }
 
 export type JsonArray = JsonValue[];
@@ -501,6 +551,203 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 export type JsonObject = Record<string, JsonValue>;
 
 export type JsonPrimitive = boolean | number | string | null;
+
+export interface RequestPayoutResponse {
+  transactionReference: string | null;
+  sellerUserId: string;
+  /** @format date-time */
+  requestedAt: string;
+  processingFee: string | null;
+  processedBy: string | null;
+  /** @format date-time */
+  processedAt: string | null;
+  payoutMethodId: string;
+  notes: string | null;
+  /** @format date-time */
+  completedAt: string | null;
+  failureReason: string | null;
+  /** @format date-time */
+  failedAt: string | null;
+  amount: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface RequestPayoutRouteBody {
+  listingIds?: string[];
+  listingTicketIds?: string[];
+  payoutMethodId: string;
+}
+
+export type GetPayoutMethodsResponse = {
+  payoutType: PayoutType;
+  isDefault: boolean;
+  accountHolderSurname: string;
+  accountHolderName: string;
+  userId: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}[];
+
+export interface AddPayoutMethodResponse {
+  payoutType: PayoutType;
+  isDefault: boolean;
+  accountHolderSurname: string;
+  accountHolderName: string;
+  userId: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export type AddPayoutMethodRouteBody = (
+  | {
+      metadata:
+        | {
+            account_number: string;
+            bank_name: "Itau";
+          }
+        | {
+            account_number: string;
+            bank_name: "OCA Blue";
+          }
+        | {
+            account_number: string;
+            bank_name: "PREX";
+          }
+        | {
+            account_number: string;
+            bank_name: "Banco Nacion Arg";
+          }
+        | {
+            account_number: string;
+            bank_name: "Bandes";
+          }
+        | {
+            account_number: string;
+            bank_name: "BBVA";
+          }
+        | {
+            account_number: string;
+            bank_name: "BHU";
+          }
+        | {
+            account_number: string;
+            bank_name: "BROU";
+          }
+        | {
+            account_number: string;
+            bank_name: "Citibank";
+          }
+        | {
+            account_number: string;
+            bank_name: "Dinero Electronico ANDA";
+          }
+        | {
+            account_number: string;
+            bank_name: "FUCAC";
+          }
+        | {
+            account_number: string;
+            bank_name: "FUCEREP";
+          }
+        | {
+            account_number: string;
+            bank_name: "GRIN";
+          }
+        | {
+            account_number: string;
+            bank_name: "Heritage";
+          }
+        | {
+            account_number: string;
+            bank_name: "HSBC";
+          }
+        | {
+            account_number: string;
+            bank_name: "Mercadopago";
+          }
+        | {
+            account_number: string;
+            bank_name: "Midinero";
+          }
+        | {
+            account_number: string;
+            bank_name: "Santander";
+          }
+        | {
+            account_number: string;
+            bank_name: "Scotiabank";
+          };
+      payoutType: "uruguayan_bank";
+    }
+  | {
+      metadata: {
+        email: string;
+      };
+      payoutType: "paypal";
+    }
+) & {
+  isDefault?: boolean;
+  currency: "USD" | "UYU";
+  accountHolderSurname: string;
+  accountHolderName: string;
+};
+
+export interface UpdatePayoutMethodResponse {
+  payoutType: PayoutType;
+  isDefault: boolean;
+  accountHolderSurname: string;
+  accountHolderName: string;
+  userId: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface UpdatePayoutMethodRouteBody {
+  isDefault?: boolean;
+  metadata?: any;
+  currency?: "USD" | "UYU";
+  accountHolderSurname?: string;
+  accountHolderName?: string;
+}
+
+export interface DLocalWebhookrRouteBody {
+  payment_id: string;
+}
+
+export interface CreatePaymentLinkResponse {
+  redirectUrl: string;
+  paymentId: string;
+}
 
 /** From T, pick a set of properties whose keys are in the union K */
 export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDescription {
@@ -1143,6 +1390,156 @@ export class Api<
         path: `/orders/${orderId}/tickets`,
         method: "GET",
         format: "json",
+        ...params,
+      }),
+  };
+  payouts = {
+    /**
+     * No description
+     *
+     * @tags Payouts
+     * @name GetBalance
+     * @request GET:/payouts/balance
+     */
+    getBalance: (params: RequestParams = {}) =>
+      this.request<GetBalanceResponse, UnauthorizedError>({
+        path: `/payouts/balance`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payouts
+     * @name GetAvailableEarnings
+     * @request GET:/payouts/available-earnings
+     */
+    getAvailableEarnings: (params: RequestParams = {}) =>
+      this.request<GetAvailableEarningsResponse, UnauthorizedError>({
+        path: `/payouts/available-earnings`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payouts
+     * @name GetPayoutHistory
+     * @request GET:/payouts/history
+     */
+    getPayoutHistory: (
+      query: {
+        sortOrder?: "asc" | "desc";
+        sortBy?: string;
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetPayoutHistoryResponse, UnauthorizedError>({
+        path: `/payouts/history`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payouts
+     * @name RequestPayout
+     * @request POST:/payouts/request
+     */
+    requestPayout: (data: RequestPayoutRouteBody, params: RequestParams = {}) =>
+      this.request<RequestPayoutResponse, UnauthorizedError | ValidationError>({
+        path: `/payouts/request`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payouts
+     * @name GetPayoutMethods
+     * @request GET:/payouts/payout-methods
+     */
+    getPayoutMethods: (params: RequestParams = {}) =>
+      this.request<GetPayoutMethodsResponse, UnauthorizedError>({
+        path: `/payouts/payout-methods`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payouts
+     * @name AddPayoutMethod
+     * @request POST:/payouts/payout-methods
+     */
+    addPayoutMethod: (
+      data: AddPayoutMethodRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AddPayoutMethodResponse,
+        UnauthorizedError | ValidationError
+      >({
+        path: `/payouts/payout-methods`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payouts
+     * @name UpdatePayoutMethod
+     * @request PUT:/payouts/payout-methods/{payoutMethodId}
+     */
+    updatePayoutMethod: (
+      payoutMethodId: string,
+      data: UpdatePayoutMethodRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UpdatePayoutMethodResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/payouts/payout-methods/${payoutMethodId}`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payouts
+     * @name DeletePayoutMethod
+     * @request DELETE:/payouts/payout-methods/{payoutMethodId}
+     */
+    deletePayoutMethod: (payoutMethodId: string, params: RequestParams = {}) =>
+      this.request<void, UnauthorizedError | NotFoundError>({
+        path: `/payouts/payout-methods/${payoutMethodId}`,
+        method: "DELETE",
         ...params,
       }),
   };

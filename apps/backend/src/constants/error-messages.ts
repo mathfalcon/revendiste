@@ -110,6 +110,24 @@ export const NOTIFICATION_ERROR_MESSAGES = {
     `Error al enviar el correo electrónico: ${error}`,
 } as const;
 
+// Error messages for payouts
+export const PAYOUT_ERROR_MESSAGES = {
+  PAYOUT_NOT_FOUND: 'Pago no encontrado',
+  PAYOUT_METHOD_NOT_FOUND: 'Método de pago no encontrado',
+  UNAUTHORIZED_ACCESS: 'No estás autorizado para acceder a este pago',
+  INSUFFICIENT_BALANCE: 'Saldo insuficiente para realizar el pago',
+  BELOW_MINIMUM_THRESHOLD: (currency: string, minimum: number) =>
+    `El monto mínimo para retirar es ${minimum} ${currency}`,
+  NO_EARNINGS_SELECTED: 'Debes seleccionar al menos una ganancia para retirar',
+  EARNINGS_NOT_AVAILABLE: 'Las ganancias seleccionadas no están disponibles',
+  MIXED_CURRENCIES: 'No se pueden mezclar diferentes monedas en un mismo pago',
+  INVALID_PAYOUT_METHOD: 'Método de pago inválido',
+  PAYOUT_ALREADY_PROCESSED: 'Este pago ya ha sido procesado',
+  PAYOUT_NOT_PENDING: (status: string) =>
+    `El pago ya está ${status}. No se puede procesar.`,
+} as const;
+
 // Type for error message keys (useful for type safety)
 export type OrderErrorKey = keyof typeof ORDER_ERROR_MESSAGES;
 export type NotificationErrorKey = keyof typeof NOTIFICATION_ERROR_MESSAGES;
+export type PayoutErrorKey = keyof typeof PAYOUT_ERROR_MESSAGES;

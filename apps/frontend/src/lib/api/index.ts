@@ -95,4 +95,5 @@ export * from './events';
 export * from './ticket-listings';
 export * from './order';
 export * from './payments';
+export * from './payouts';
 export * from './generated';

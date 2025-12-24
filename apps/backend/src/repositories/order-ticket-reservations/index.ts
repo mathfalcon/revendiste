@@ -187,4 +187,26 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
       .orderBy('listingTickets.ticketNumber', 'asc')
       .execute();
   }
+
+  /**
+   * Get all confirmed orders that contain a specific ticket
+   * Used to notify buyers when documents are uploaded for their tickets
+   */
+  async getOrdersByTicketId(ticketId: string) {
+    return await this.db
+      .selectFrom('orderTicketReservations')
+      .innerJoin('orders', 'orderTicketReservations.orderId', 'orders.id')
+      .select([
+        'orders.id as orderId',
+        'orders.userId',
+        'orders.status',
+      ])
+      .where('orderTicketReservations.listingTicketId', '=', ticketId)
+      .where('orders.status', '=', 'confirmed')
+      .where('orders.deletedAt', 'is', null)
+      // Include both active and soft-deleted reservations (for confirmed orders)
+      // This allows us to find orders even after confirmation
+      .distinct()
+      .execute();
+  }
 }

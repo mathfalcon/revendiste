@@ -2,6 +2,7 @@ import axios, {type AxiosInstance} from 'axios';
 import {DLOCAL_API_KEY, DLOCAL_BASE_URL, DLOCAL_SECRET_KEY} from '~/config/env';
 import {logger} from '~/utils';
 import type {PaymentStatus} from '@revendiste/shared';
+import {roundOrderAmount} from '@revendiste/shared';
 import type {
   PaymentProvider,
   CreatePaymentParams as BaseCreatePaymentParams,
@@ -66,7 +67,7 @@ export class DLocalService implements PaymentProvider {
     const dlocalParams: DLocalCreatePaymentParams = {
       ...params, // Spread first for any additional dLocal-specific params
       currency: params.currency as 'USD' | 'UYU',
-      amount: Math.round(params.amount),
+      amount: roundOrderAmount(params.amount),
       orderId: params.orderId,
       description: params.description,
       successUrl: params.successUrl,
@@ -74,17 +75,56 @@ export class DLocalService implements PaymentProvider {
       notificationUrl: params.notificationUrl,
       expirationType: 'MINUTES',
       expirationValue: params.expirationMinutes,
+      // Include payer data if provided
+      payer: params.payer,
     };
 
     const result = await this.createDLocalPayment(dlocalParams);
 
+    // Log the result structure before mapping
+    logger.debug('dLocal createPayment result before mapping', {
+      hasId: !!result.id,
+      idValue: result.id,
+      idType: typeof result.id,
+      resultKeys: Object.keys(result),
+    });
+
+    // Validate that required fields exist
+    if (!result.id) {
+      logger.error('dLocal payment response missing id', {
+        orderId: params.orderId,
+        response: result,
+        responseString: JSON.stringify(result),
+      });
+      throw new Error('dLocal payment response missing required id field');
+    }
+
+    if (!result.redirect_url) {
+      logger.error('dLocal payment response missing redirect_url', {
+        orderId: params.orderId,
+        response: result,
+      });
+      throw new Error(
+        'dLocal payment response missing required redirect_url field',
+      );
+    }
+
     // Convert to standard result format with normalized status
-    return {
+    const mappedResult = {
       ...result, // Include full dLocal response first
       id: result.id,
       redirectUrl: result.redirect_url,
       status: this.normalizeStatus(result.status),
     };
+
+    // Log the mapped result to verify id is present
+    logger.debug('dLocal createPayment mapped result', {
+      hasId: !!mappedResult.id,
+      idValue: mappedResult.id,
+      idType: typeof mappedResult.id,
+    });
+
+    return mappedResult;
   }
 
   /**
@@ -160,6 +200,15 @@ export class DLocalService implements PaymentProvider {
         paymentId: response.data.id,
         orderId: params.orderId,
         redirectUrl: response.data.redirect_url,
+      });
+
+      // Log full response structure for debugging
+      logger.debug('dLocal payment response structure', {
+        hasId: !!response.data.id,
+        idValue: response.data.id,
+        idType: typeof response.data.id,
+        responseKeys: Object.keys(response.data),
+        fullResponse: JSON.stringify(response.data),
       });
 
       return response.data;

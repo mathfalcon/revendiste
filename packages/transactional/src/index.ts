@@ -23,12 +23,10 @@
 export * from '../emails/base-template';
 
 // Notification email templates
-export * from '../emails/ticket-sold-email';
 export * from '../emails/document-reminder-email';
 export * from '../emails/order-confirmed-email';
 export * from '../emails/order-expired-email';
 export * from '../emails/payment-failed-email';
-export * from '../emails/payment-succeeded-email';
 export * from '../emails/seller-ticket-sold-email';
 
 export {render, pretty, toPlainText} from '@react-email/render';
@@ -38,12 +36,10 @@ export {getEmailTemplate} from './email-templates';
 export type {NotificationType, EmailTemplateProps} from './email-templates';
 
 // Export prop types for type safety (so backend knows what props each template needs)
-export type {TicketSoldEmailProps} from '../emails/ticket-sold-email';
 export type {DocumentReminderEmailProps} from '../emails/document-reminder-email';
 export type {OrderConfirmedEmailProps} from '../emails/order-confirmed-email';
 export type {OrderExpiredEmailProps} from '../emails/order-expired-email';
 export type {PaymentFailedEmailProps} from '../emails/payment-failed-email';
-export type {PaymentSucceededEmailProps} from '../emails/payment-succeeded-email';
 export type {SellerTicketSoldEmailProps} from '../emails/seller-ticket-sold-email';
 
 /**

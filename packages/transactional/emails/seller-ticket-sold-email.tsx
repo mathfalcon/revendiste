@@ -31,11 +31,11 @@ export const SellerTicketSoldEmail = ({
 
   return (
     <BaseEmail
-      title="¡Tus entradas han sido vendidas!"
+      title="¡Tus entradas se vendieron!"
       preview={`Tus ${ticketCount} ${
         ticketCount === 1
-          ? 'entrada ha sido vendida'
-          : 'entradas han sido vendidas'
+          ? 'entrada se vendió'
+          : 'entradas se vendieron'
       } para ${eventName}`}
       appBaseUrl={appBaseUrl}
     >
@@ -44,8 +44,8 @@ export const SellerTicketSoldEmail = ({
         <strong>
           {ticketCount}{' '}
           {ticketCount === 1
-            ? 'entrada ha sido vendida'
-            : 'entradas han sido vendidas'}
+            ? 'entrada se vendió'
+            : 'entradas se vendieron'}
         </strong>{' '}
         para <strong>{eventName}</strong>.
       </Text>
@@ -69,7 +69,7 @@ export const SellerTicketSoldEmail = ({
       {canUpload ? (
         <>
           <Text className="text-foreground mb-4">
-            Para completar la venta, por favor sube los documentos de tus
+            Para completar la venta, por favor subí los documentos de tus
             tickets lo antes posible.
           </Text>
 
@@ -88,23 +88,23 @@ export const SellerTicketSoldEmail = ({
             Próximamente disponible
           </Text>
           <Text className="text-sm text-muted-foreground m-0">
-            Los documentos estarán disponibles para subir en aproximadamente{' '}
+            Los documentos van a estar disponibles para subir en aproximadamente{' '}
             <strong>
               {hoursUntilAvailable}{' '}
               {hoursUntilAvailable === 1 ? 'hora' : 'horas'}
             </strong>
-            . Recibirás una notificación cuando puedas subirlos.
+            . Te vamos a avisar cuando puedas subirlos.
           </Text>
         </Section>
       ) : (
         <Text className="text-foreground mb-6">
-          Recibirás una notificación cuando puedas subir los documentos de tus
+          Te vamos a avisar cuando puedas subir los documentos de tus
           tickets.
         </Text>
       )}
 
       <Text className="text-sm text-muted-foreground mb-0">
-        La subida de documentos es obligatoria para completar la venta y recibir
+        Subir los documentos es obligatorio para completar la venta y recibir
         el pago.
       </Text>
     </BaseEmail>

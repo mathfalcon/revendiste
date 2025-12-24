@@ -44,6 +44,22 @@ const EnvSchema = z.object({
   EMAIL_FROM: z.string().default('noreply@revendiste.com'),
   // Resend configuration (when EMAIL_PROVIDER=resend)
   RESEND_API_KEY: z.string().optional(),
+  // Payout configuration
+  PAYOUT_MINIMUM_UYU: z.coerce.number().default(1000), // $1,000 UYU
+  PAYOUT_MINIMUM_USD: z.coerce.number().default(25), // $25 USD
+  PAYOUT_HOLD_PERIOD_HOURS: z.coerce.number().default(48), // 48 hours post-event
+  // Exchange rate configuration (for currency conversion)
+  EXCHANGE_RATE_PROVIDER: z
+    .enum(['exchange_rate_api', 'uruguay_bank', 'fallback'])
+    .optional()
+    .default('exchange_rate_api'), // Default to ExchangeRate-API
+  EXCHANGE_RATE_API_KEY: z.string().optional(),
+  EXCHANGE_RATE_API_URL: z.url().optional(),
+  EXCHANGE_RATE_FALLBACK_UYU_TO_USD: z.coerce
+    .number()
+    .optional()
+    .default(0.0247), // ~40.5 UYU = 1 USD
+  EXCHANGE_RATE_CACHE_TTL_HOURS: z.coerce.number().default(1),
 });
 
 export const env = EnvSchema.safeParse(process.env);
@@ -90,4 +106,12 @@ export const {
   EMAIL_PROVIDER,
   EMAIL_FROM,
   RESEND_API_KEY,
+  PAYOUT_MINIMUM_UYU,
+  PAYOUT_MINIMUM_USD,
+  PAYOUT_HOLD_PERIOD_HOURS,
+  EXCHANGE_RATE_PROVIDER,
+  EXCHANGE_RATE_API_KEY,
+  EXCHANGE_RATE_API_URL,
+  EXCHANGE_RATE_FALLBACK_UYU_TO_USD,
+  EXCHANGE_RATE_CACHE_TTL_HOURS,
 } = env.data;

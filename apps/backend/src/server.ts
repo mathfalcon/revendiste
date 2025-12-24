@@ -15,6 +15,8 @@ import {logger} from './utils';
 import {clerkMiddleware} from '@clerk/express';
 import {startCleanupExpiredReservationsJob} from './jobs/cleanup-expired-reservations';
 import {startProcessPendingNotificationsJob} from './jobs/process-pending-notifications';
+import {startNotifyUploadAvailabilityJob} from './jobs/notify-upload-availability';
+import {startSyncPaymentStatusJob} from './jobs/sync-payment-status';
 
 const app: express.Application = express();
 
@@ -90,6 +92,9 @@ app.listen(PORT, () => {
 
   // Start scheduled jobs
   startCleanupExpiredReservationsJob();
+  startNotifyUploadAvailabilityJob();
+  const syncPaymentStatusJob = startSyncPaymentStatusJob();
+  syncPaymentStatusJob.execute();
   // startProcessPendingNotificationsJob();
 });
 

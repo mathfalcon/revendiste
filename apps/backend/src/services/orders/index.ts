@@ -290,25 +290,25 @@ export class OrdersService {
     const storageProvider = getStorageProvider();
     const enrichedTickets = await Promise.all(
       tickets.map(async ticket => ({
-        id: ticket.id,
-        price: ticket.price,
-        soldAt: ticket.soldAt,
-        hasDocument: !!ticket.document,
-        ticketWave: ticket.ticketWaveName
+      id: ticket.id,
+      price: ticket.price,
+      soldAt: ticket.soldAt,
+      hasDocument: !!ticket.document,
+      ticketWave: ticket.ticketWaveName
+        ? {
+            name: ticket.ticketWaveName,
+          }
+        : null,
+      document:
+        ticket.document && ticket.document.storagePath
           ? {
-              name: ticket.ticketWaveName,
+              id: ticket.document.id,
+              status: ticket.document.status,
+              uploadedAt: ticket.document.uploadedAt,
+              mimeType: ticket.document.mimeType,
+                url: await storageProvider.getUrl(ticket.document.storagePath),
             }
           : null,
-        document:
-          ticket.document && ticket.document.storagePath
-            ? {
-                id: ticket.document.id,
-                status: ticket.document.status,
-                uploadedAt: ticket.document.uploadedAt,
-                mimeType: ticket.document.mimeType,
-                url: await storageProvider.getUrl(ticket.document.storagePath),
-              }
-            : null,
       })),
     );
 

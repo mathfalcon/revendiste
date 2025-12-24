@@ -136,7 +136,7 @@ export class TicketListingsService {
    * Mark tickets as sold for an order and send notifications to sellers
    * This orchestrates the repository call and notification side effects
    */
-  async markTicketsAsSoldAndNotifySellers(orderId: string) {
+  async markTicketsAsSoldAndNotifySeller(orderId: string) {
     // Mark tickets as sold (repository operation)
     const soldTickets =
       await this.listingTicketsRepository.markTicketsAsSoldByOrderId(orderId);

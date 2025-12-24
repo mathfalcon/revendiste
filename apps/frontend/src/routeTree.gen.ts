@@ -18,6 +18,7 @@ import { Route as EventosEventIdRouteImport } from './routes/eventos/$eventId'
 import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar'
 import { Route as CuentaTicketsRouteImport } from './routes/cuenta/tickets'
 import { Route as CuentaSubirTicketsRouteImport } from './routes/cuenta/subir-tickets'
+import { Route as CuentaRetiroRouteImport } from './routes/cuenta/retiro'
 import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
@@ -68,6 +69,11 @@ const CuentaSubirTicketsRoute = CuentaSubirTicketsRouteImport.update({
   path: '/subir-tickets',
   getParentRoute: () => CuentaRouteRoute,
 } as any)
+const CuentaRetiroRoute = CuentaRetiroRouteImport.update({
+  id: '/retiro',
+  path: '/retiro',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
 const CuentaPublicacionesRoute = CuentaPublicacionesRouteImport.update({
   id: '/publicaciones',
   path: '/publicaciones',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/cuenta': typeof CuentaRouteRouteWithChildren
   '/sitemap': typeof SitemapRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
+  '/cuenta/retiro': typeof CuentaRetiroRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/cuenta': typeof CuentaRouteRouteWithChildren
   '/sitemap': typeof SitemapRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
+  '/cuenta/retiro': typeof CuentaRetiroRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/cuenta': typeof CuentaRouteRouteWithChildren
   '/sitemap': typeof SitemapRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
+  '/cuenta/retiro': typeof CuentaRetiroRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/sitemap'
     | '/cuenta/publicaciones'
+    | '/cuenta/retiro'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
     | '/entradas/publicar'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/sitemap'
     | '/cuenta/publicaciones'
+    | '/cuenta/retiro'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
     | '/entradas/publicar'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/sitemap'
     | '/cuenta/publicaciones'
+    | '/cuenta/retiro'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
     | '/entradas/publicar'
@@ -261,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CuentaSubirTicketsRouteImport
       parentRoute: typeof CuentaRouteRoute
     }
+    '/cuenta/retiro': {
+      id: '/cuenta/retiro'
+      path: '/retiro'
+      fullPath: '/cuenta/retiro'
+      preLoaderRoute: typeof CuentaRetiroRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
     '/cuenta/publicaciones': {
       id: '/cuenta/publicaciones'
       path: '/publicaciones'
@@ -294,12 +313,14 @@ declare module '@tanstack/react-router' {
 
 interface CuentaRouteRouteChildren {
   CuentaPublicacionesRoute: typeof CuentaPublicacionesRoute
+  CuentaRetiroRoute: typeof CuentaRetiroRoute
   CuentaSubirTicketsRoute: typeof CuentaSubirTicketsRoute
   CuentaTicketsRoute: typeof CuentaTicketsRoute
 }
 
 const CuentaRouteRouteChildren: CuentaRouteRouteChildren = {
   CuentaPublicacionesRoute: CuentaPublicacionesRoute,
+  CuentaRetiroRoute: CuentaRetiroRoute,
   CuentaSubirTicketsRoute: CuentaSubirTicketsRoute,
   CuentaTicketsRoute: CuentaTicketsRoute,
 }

@@ -2,18 +2,16 @@ import {Kysely, sql} from 'kysely';
 import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 import {mapToPaginatedResponse} from '~/middleware';
-import type {NotificationChannel, NotificationMetadata} from '@revendiste/shared';
+import type {
+  NotificationChannel,
+  NotificationMetadata,
+  NotificationType,
+} from '@revendiste/shared';
+import type {PaginationOptions} from '~/types/pagination';
 
 export interface CreateNotificationData {
   userId: string;
-  type:
-    | 'ticket_sold_buyer'
-    | 'ticket_sold_seller'
-    | 'document_reminder'
-    | 'order_confirmed'
-    | 'order_expired'
-    | 'payment_failed'
-    | 'payment_succeeded';
+  type: NotificationType;
   channels: ('in_app' | 'email' | 'sms')[];
   actions?: Array<{
     type: string;
@@ -91,13 +89,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
 
   async getByUserIdPaginated(
     userId: string,
-    pagination: {
-      page: number;
-      limit: number;
-      offset: number;
-      sortBy: string;
-      sortOrder: 'asc' | 'desc';
-    },
+    pagination: PaginationOptions,
     options?: {
       includeSeen?: boolean;
     },
@@ -158,7 +150,8 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
   }
 
   async markAsSeen(notificationId: string, userId: string) {
-    return await this.db
+    // Update the notification
+    await this.db
       .updateTable('notifications')
       .set({
         seenAt: new Date(),
@@ -167,12 +160,15 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('id', '=', notificationId)
       .where('userId', '=', userId)
       .where('deletedAt', 'is', null)
-      .returningAll()
-      .executeTakeFirst();
+      .execute();
+
+    // Query it back with proper channels transformation
+    return await this.getById(notificationId);
   }
 
   async markAllAsSeen(userId: string) {
-    return await this.db
+    // Update all notifications
+    const updated = await this.db
       .updateTable('notifications')
       .set({
         seenAt: new Date(),
@@ -181,7 +177,20 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('userId', '=', userId)
       .where('seenAt', 'is', null)
       .where('deletedAt', 'is', null)
-      .returningAll()
+      .returning('id')
+      .execute();
+
+    // Query them back with proper channels transformation
+    if (updated.length === 0) {
+      return [];
+    }
+
+    const ids = updated.map(n => n.id);
+    return await this.db
+      .selectFrom('notifications')
+      .selectAll()
+      .select([channelsAsJsonb])
+      .where('id', 'in', ids)
       .execute();
   }
 
@@ -210,6 +219,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
     return await this.db
       .selectFrom('notifications')
       .selectAll()
+      .select([channelsAsJsonb])
       .where('status', '=', 'pending')
       .where('deletedAt', 'is', null)
       .where(eb => eb(sql`COALESCE(retry_count, 0)`, '<', 5)) // Max 5 retries
@@ -279,5 +289,41 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('deletedAt', 'is', null)
       .returningAll()
       .executeTakeFirst();
+  }
+
+  /**
+   * Check if a document_reminder notification was already sent for a listing
+   * at a specific time (hoursUntilEvent)
+   * Uses approximate matching (±1 hour) to handle timing variations
+   *
+   * This checks both initial notifications (at QR availability) and milestone notifications
+   */
+  async hasDocumentReminderForListing(
+    userId: string,
+    listingId: string,
+    hoursUntilEvent: number,
+  ): Promise<boolean> {
+    // Query for document_reminder notifications with matching listingId
+    // and hoursUntilEvent within ±1 hour range (to handle timing variations)
+    const result = await this.db
+      .selectFrom('notifications')
+      .select('id')
+      .where('userId', '=', userId)
+      .where('type', '=', 'document_reminder')
+      .where('deletedAt', 'is', null)
+      .where(sql`metadata->>'listingId'`, '=', listingId)
+      .where(
+        sql`CAST(metadata->>'hoursUntilEvent' AS INTEGER)`,
+        '>=',
+        hoursUntilEvent - 1,
+      )
+      .where(
+        sql`CAST(metadata->>'hoursUntilEvent' AS INTEGER)`,
+        '<=',
+        hoursUntilEvent + 1,
+      )
+      .executeTakeFirst();
+
+    return result !== undefined;
   }
 }

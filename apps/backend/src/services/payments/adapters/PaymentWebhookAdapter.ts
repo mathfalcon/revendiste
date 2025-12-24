@@ -1,5 +1,6 @@
 import type {Kysely} from 'kysely';
 import type {DB} from '@revendiste/shared';
+import {compareAmounts} from '@revendiste/shared';
 import {
   OrdersRepository,
   OrderTicketReservationsRepository,
@@ -9,6 +10,8 @@ import {
   TicketListingsRepository,
   EventsRepository,
   EventTicketWavesRepository,
+  SellerEarningsRepository,
+  UsersRepository,
 } from '~/repositories';
 import {NotFoundError, ValidationError} from '~/errors';
 import {logger} from '~/utils';
@@ -21,6 +24,12 @@ import {
   PAYMENT_ERROR_MESSAGES,
 } from '~/constants/error-messages';
 import {TicketListingsService} from '~/services/ticket-listings';
+import {SellerEarningsService} from '~/services/seller-earnings';
+import {NotificationService} from '~/services/notifications';
+import {
+  notifyOrderConfirmed,
+  notifyPaymentFailed,
+} from '~/services/notifications/helpers';
 
 /**
  * Normalized payment data in our system's format
@@ -71,6 +80,8 @@ export class PaymentWebhookAdapter {
   private listingTicketsRepository: ListingTicketsRepository;
   private ticketListingsRepository: TicketListingsRepository;
   private ticketListingsService: TicketListingsService;
+  private sellerEarningsService: SellerEarningsService;
+  private notificationService: NotificationService;
 
   constructor(private provider: PaymentProvider, private db: Kysely<DB>) {
     this.ordersRepository = new OrdersRepository(db);
@@ -87,6 +98,15 @@ export class PaymentWebhookAdapter {
       this.listingTicketsRepository,
       this.ordersRepository,
       db,
+    );
+    this.sellerEarningsService = new SellerEarningsService(
+      new SellerEarningsRepository(db),
+      this.orderTicketReservationsRepository,
+      this.listingTicketsRepository,
+    );
+    this.notificationService = new NotificationService(
+      db,
+      new UsersRepository(db),
     );
   }
 
@@ -223,7 +243,8 @@ export class PaymentWebhookAdapter {
     }
 
     // Validate payment amount matches order
-    if (Number(paymentData.amount) !== Number(order.totalAmount)) {
+    // Use shared utility to compare amounts with consistent rounding
+    if (!compareAmounts(paymentData.amount, order.totalAmount)) {
       logger.error('Payment amount mismatch', {
         paymentId: providerPaymentId,
         orderId: order.id,
@@ -353,9 +374,12 @@ export class PaymentWebhookAdapter {
 
       // Step 3: Mark tickets as sold (notifications sent outside transaction by service)
       soldTickets =
-        await this.ticketListingsService.markTicketsAsSoldAndNotifySellers(
+        await this.ticketListingsService.markTicketsAsSoldAndNotifySeller(
           orderId,
         );
+
+      // Step 3.5: Create seller earnings for sold tickets
+      await this.sellerEarningsService.createEarningsForSoldTickets(orderId);
 
       // Step 4: Get unique listing IDs from sold tickets
       uniqueListingIds = [
@@ -377,6 +401,49 @@ export class PaymentWebhookAdapter {
         listingsSoldOut: soldListings.length,
       });
     });
+
+    // Send notification to buyer (outside transaction - fire-and-forget)
+    // Get full order data with items for notification
+    const orderWithItems = await this.ordersRepository.getByIdWithItems(
+      orderId,
+    );
+
+    if (orderWithItems && orderWithItems.event) {
+      // Fire-and-forget notification (don't await to avoid blocking)
+      notifyOrderConfirmed(this.notificationService, {
+        buyerUserId: orderWithItems.userId,
+        orderId: orderWithItems.id,
+        eventName: orderWithItems.event.name || 'el evento',
+        eventStartDate: orderWithItems.event.eventStartDate
+          ? new Date(orderWithItems.event.eventStartDate)
+          : undefined,
+        eventEndDate: orderWithItems.event.eventEndDate
+          ? new Date(orderWithItems.event.eventEndDate)
+          : undefined,
+        venueName: orderWithItems.event.venueName || undefined,
+        venueAddress: orderWithItems.event.venueAddress || undefined,
+        totalAmount: String(orderWithItems.totalAmount),
+        subtotalAmount: String(orderWithItems.subtotalAmount),
+        platformCommission: String(orderWithItems.platformCommission),
+        vatOnCommission: String(orderWithItems.vatOnCommission),
+        currency: orderWithItems.currency,
+        items: (orderWithItems.items || [])
+          .filter(item => item.id && item.quantity !== null)
+          .map(item => ({
+            id: item.id!,
+            ticketWaveName: item.ticketWaveName || 'Entrada',
+            quantity: item.quantity!,
+            pricePerTicket: String(item.pricePerTicket),
+            subtotal: String(item.subtotal),
+            currency: item.currency || undefined,
+          })),
+      }).catch(error => {
+        logger.error('Failed to send order confirmed notification', {
+          orderId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }
   }
 
   /**
@@ -406,5 +473,26 @@ export class PaymentWebhookAdapter {
         provider: this.provider.name,
       });
     });
+
+    // Send notification to buyer (outside transaction - fire-and-forget)
+    // Get order data with event name for notification
+    const orderWithItems = await this.ordersRepository.getByIdWithItems(
+      orderId,
+    );
+
+    if (orderWithItems && orderWithItems.event) {
+      // Fire-and-forget notification (don't await to avoid blocking)
+      notifyPaymentFailed(this.notificationService, {
+        buyerUserId: orderWithItems.userId,
+        orderId: orderWithItems.id,
+        eventName: orderWithItems.event.name || 'el evento',
+        errorMessage: paymentData.rejectedReason,
+      }).catch(error => {
+        logger.error('Failed to send payment failed notification', {
+          orderId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }
   }
 }

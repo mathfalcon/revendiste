@@ -4,7 +4,7 @@ import {ScrollArea} from '~/components/ui/scroll-area';
 import {TextEllipsis} from '~/components/ui/text-ellipsis';
 import {cn} from '~/lib/utils';
 import type {TypedNotification} from '~/lib/api/generated';
-import type {NotificationType} from '~/shared';
+import type {NotificationType} from '@revendiste/shared';
 import {formatDistanceToNow} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {

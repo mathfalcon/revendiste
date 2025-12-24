@@ -83,8 +83,25 @@ export const OrderConfirmedMetadataSchema = z.object({
   type: z.literal('order_confirmed'),
   orderId: z.uuid(),
   eventName: z.string(),
+  eventStartDate: z.string().optional(), // ISO string
+  eventEndDate: z.string().optional(), // ISO string
+  venueName: z.string().optional(),
+  venueAddress: z.string().optional(),
   totalAmount: z.string(),
+  subtotalAmount: z.string(),
+  platformCommission: z.string(),
+  vatOnCommission: z.string(),
   currency: z.string(),
+  items: z.array(
+    z.object({
+      id: z.string().uuid(),
+      ticketWaveName: z.string(),
+      quantity: z.number().int().positive(),
+      pricePerTicket: z.string(),
+      subtotal: z.string(),
+      currency: z.string().optional(),
+    }),
+  ),
 });
 
 export const OrderExpiredMetadataSchema = z.object({
@@ -100,12 +117,12 @@ export const PaymentFailedMetadataSchema = z.object({
   errorMessage: z.string().optional(),
 });
 
-export const PaymentSucceededMetadataSchema = z.object({
-  type: z.literal('payment_succeeded'),
+
+export const DocumentUploadedMetadataSchema = z.object({
+  type: z.literal('document_uploaded'),
   orderId: z.uuid(),
   eventName: z.string(),
-  totalAmount: z.string(),
-  currency: z.string(),
+  ticketCount: z.number().int().positive(),
 });
 
 /**
@@ -119,7 +136,7 @@ export const NotificationMetadataSchema = z.discriminatedUnion('type', [
   OrderConfirmedMetadataSchema,
   OrderExpiredMetadataSchema,
   PaymentFailedMetadataSchema,
-  PaymentSucceededMetadataSchema,
+  DocumentUploadedMetadataSchema,
 ]);
 
 /**
@@ -199,8 +216,9 @@ export const PaymentFailedActionsSchema = z
   )
   .nullable();
 
-// Actions for payment_succeeded - view order action
-export const PaymentSucceededActionsSchema = z
+
+// Actions for document_uploaded - view order action
+export const DocumentUploadedActionsSchema = z
   .array(
     BaseActionSchema.extend({
       type: z.literal('view_order'),
@@ -261,12 +279,13 @@ export const PaymentFailedNotificationSchema = BaseNotificationSchema.extend({
   actions: PaymentFailedActionsSchema,
 });
 
-// payment_succeeded
-export const PaymentSucceededNotificationSchema = BaseNotificationSchema.extend(
+
+// document_uploaded
+export const DocumentUploadedNotificationSchema = BaseNotificationSchema.extend(
   {
-    type: z.literal('payment_succeeded'),
-    metadata: PaymentSucceededMetadataSchema,
-    actions: PaymentSucceededActionsSchema,
+    type: z.literal('document_uploaded'),
+    metadata: DocumentUploadedMetadataSchema,
+    actions: DocumentUploadedActionsSchema,
   },
 );
 
@@ -282,7 +301,7 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   OrderConfirmedNotificationSchema,
   OrderExpiredNotificationSchema,
   PaymentFailedNotificationSchema,
-  PaymentSucceededNotificationSchema,
+  DocumentUploadedNotificationSchema,
 ]);
 
 /**

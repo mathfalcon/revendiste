@@ -30,10 +30,21 @@ export class EventsService {
       eventsWithoutImages,
     );
 
+    // Create a map from externalId to original event to handle cases where
+    // some events failed to upsert (indices won't match)
+    const originalEventsByExternalId = new Map(
+      events.map(event => [event.externalId, event]),
+    );
+
     await Promise.all(
-      upsertedEvents.map(async (upsertedEvent, index) => {
-        const originalEvent = events[index];
-        if (!originalEvent.images || originalEvent.images.length === 0) {
+      upsertedEvents.map(async upsertedEvent => {
+        // Use externalId to find the original event instead of array index
+        // This handles cases where upsertEventsBatch silently skips failed events
+        const originalEvent = originalEventsByExternalId.get(
+          upsertedEvent.externalId,
+        );
+
+        if (!originalEvent || !originalEvent.images || originalEvent.images.length === 0) {
           return;
         }
 
@@ -54,7 +65,7 @@ export class EventsService {
           logger.error('Failed to process images for event', {
             error,
             eventId: upsertedEvent.id,
-            externalId: originalEvent.externalId,
+            externalId: upsertedEvent.externalId,
           });
         }
       }),

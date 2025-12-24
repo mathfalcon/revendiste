@@ -4,11 +4,16 @@ import type {DB} from '@revendiste/shared';
 import {
   ListingTicketsRepository,
   TicketDocumentsRepository,
+  OrderTicketReservationsRepository,
+  OrdersRepository,
+  UsersRepository,
 } from '~/repositories';
 import {getStorageProvider} from '~/services/storage';
 import {NotFoundError, UnauthorizedError, ValidationError} from '~/errors';
 import {logger} from '~/utils';
 import {TICKET_DOCUMENT_ERROR_MESSAGES} from '~/constants/error-messages';
+import {NotificationService} from '~/services/notifications';
+import {notifyDocumentUploaded} from '~/services/notifications/helpers';
 
 /**
  * Ticket Document Service
@@ -20,11 +25,21 @@ import {TICKET_DOCUMENT_ERROR_MESSAGES} from '~/constants/error-messages';
 export class TicketDocumentService {
   private listingTicketsRepository: ListingTicketsRepository;
   private ticketDocumentsRepository: TicketDocumentsRepository;
+  private orderTicketReservationsRepository: OrderTicketReservationsRepository;
+  private ordersRepository: OrdersRepository;
+  private notificationService: NotificationService;
   private storageProvider = getStorageProvider();
 
   constructor(private db: Kysely<DB>) {
     this.listingTicketsRepository = new ListingTicketsRepository(db);
     this.ticketDocumentsRepository = new TicketDocumentsRepository(db);
+    this.orderTicketReservationsRepository =
+      new OrderTicketReservationsRepository(db);
+    this.ordersRepository = new OrdersRepository(db);
+    this.notificationService = new NotificationService(
+      db,
+      new UsersRepository(db),
+    );
   }
 
   /**
@@ -142,6 +157,45 @@ export class TicketDocumentService {
       path: uploadResult.path,
       size: file.sizeBytes,
     });
+
+    // Notify buyers (outside transaction - fire-and-forget)
+    // Find all confirmed orders containing this ticket
+    const orders =
+      await this.orderTicketReservationsRepository.getOrdersByTicketId(
+        ticketId,
+      );
+
+    // Group by order to avoid duplicate notifications
+    const uniqueOrders = Array.from(
+      new Map(orders.map(o => [o.orderId, o])).values(),
+    );
+
+    // Notify each buyer for their order
+    for (const orderInfo of uniqueOrders) {
+      // Get full order data with items to count tickets
+      const orderWithItems = await this.ordersRepository.getByIdWithItems(
+        orderInfo.orderId,
+      );
+
+      if (orderWithItems && orderWithItems.event) {
+        // Count tickets in this order for the notification
+        const ticketCount = orderWithItems.items?.length || 1;
+
+        // Fire-and-forget notification (don't await to avoid blocking)
+        notifyDocumentUploaded(this.notificationService, {
+          buyerUserId: orderInfo.userId,
+          orderId: orderInfo.orderId,
+          eventName: orderWithItems.event.name || 'el evento',
+          ticketCount,
+        }).catch(error => {
+          logger.error('Failed to send document uploaded notification', {
+            orderId: orderInfo.orderId,
+            ticketId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+      }
+    }
 
     return {
       document: newDocument,

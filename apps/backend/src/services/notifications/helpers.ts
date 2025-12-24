@@ -9,38 +9,6 @@ import type {QrAvailabilityTiming} from '@revendiste/shared';
  */
 
 /**
- * Notify buyer when their ticket is sold
- */
-export async function notifyTicketSold(
-  service: NotificationService,
-  params: {
-    buyerUserId: string;
-    orderId: string;
-    eventName: string;
-    ticketCount: number;
-  },
-) {
-  return await service.createNotification({
-    userId: params.buyerUserId,
-    type: 'ticket_sold_buyer',
-    channels: ['in_app', 'email'],
-    actions: [
-      {
-        type: 'upload_documents',
-        label: 'Subir documentos',
-        url: `${APP_BASE_URL}/cuenta/publicaciones?subirTicket=${params.orderId}`,
-      },
-    ],
-    metadata: {
-      type: 'ticket_sold_buyer',
-      orderId: params.orderId,
-      eventName: params.eventName,
-      ticketCount: params.ticketCount,
-    },
-  });
-}
-
-/**
  * Notify seller when event is close and documents haven't been uploaded
  */
 export async function notifyDocumentReminder(
@@ -85,8 +53,23 @@ export async function notifyOrderConfirmed(
     buyerUserId: string;
     orderId: string;
     eventName: string;
+    eventStartDate?: Date;
+    eventEndDate?: Date;
+    venueName?: string;
+    venueAddress?: string;
     totalAmount: string;
+    subtotalAmount: string;
+    platformCommission: string;
+    vatOnCommission: string;
     currency: string;
+    items: Array<{
+      id: string;
+      ticketWaveName: string;
+      quantity: number;
+      pricePerTicket: string;
+      subtotal: string;
+      currency?: string;
+    }>;
   },
 ) {
   return await service.createNotification({
@@ -96,7 +79,7 @@ export async function notifyOrderConfirmed(
     actions: [
       {
         type: 'view_order',
-        label: 'Ver orden',
+        label: 'Ver mis tickets',
         url: `${APP_BASE_URL}/cuenta/tickets?orderId=${params.orderId}`,
       },
     ],
@@ -104,8 +87,16 @@ export async function notifyOrderConfirmed(
       type: 'order_confirmed',
       orderId: params.orderId,
       eventName: params.eventName,
+      eventStartDate: params.eventStartDate?.toISOString(),
+      eventEndDate: params.eventEndDate?.toISOString(),
+      venueName: params.venueName,
+      venueAddress: params.venueAddress,
       totalAmount: params.totalAmount,
+      subtotalAmount: params.subtotalAmount,
+      platformCommission: params.platformCommission,
+      vatOnCommission: params.vatOnCommission,
       currency: params.currency,
+      items: params.items,
     },
   });
 }
@@ -166,35 +157,33 @@ export async function notifyPaymentFailed(
 }
 
 /**
- * Notify buyer when payment succeeds
+ * Notify buyer when seller uploads ticket documents
  */
-export async function notifyPaymentSucceeded(
+export async function notifyDocumentUploaded(
   service: NotificationService,
   params: {
     buyerUserId: string;
     orderId: string;
     eventName: string;
-    totalAmount: string;
-    currency: string;
+    ticketCount: number;
   },
 ) {
   return await service.createNotification({
     userId: params.buyerUserId,
-    type: 'payment_succeeded',
+    type: 'document_uploaded',
     channels: ['in_app', 'email'],
     actions: [
       {
         type: 'view_order',
-        label: 'Ver orden',
+        label: 'Ver y descargar entradas',
         url: `${APP_BASE_URL}/cuenta/tickets?orderId=${params.orderId}`,
       },
     ],
     metadata: {
-      type: 'payment_succeeded',
+      type: 'document_uploaded',
       orderId: params.orderId,
       eventName: params.eventName,
-      totalAmount: params.totalAmount,
-      currency: params.currency,
+      ticketCount: params.ticketCount,
     },
   });
 }

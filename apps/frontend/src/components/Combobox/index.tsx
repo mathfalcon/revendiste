@@ -37,6 +37,7 @@ export interface ComboboxProps<T extends ComboboxOption = ComboboxOption> {
   buttonClassName?: string;
   disabled?: boolean;
   renderOption?: (option: T, isSelected: boolean) => React.ReactNode;
+  renderSelectedValue?: (option: T | undefined) => React.ReactNode;
   onSearchValueChange?: (searchValue: string) => void;
   isLoading?: boolean;
 }
@@ -54,10 +55,15 @@ export function Combobox<T extends ComboboxOption = ComboboxOption>({
   buttonClassName,
   disabled = false,
   renderOption,
+  renderSelectedValue,
   onSearchValueChange,
   isLoading = false,
 }: ComboboxProps<T>) {
   const [open, setOpen] = useState(false);
+
+  const selectedOption = value
+    ? options.find(option => option.value === value)
+    : undefined;
 
   return (
     <FormItem className={cn('flex flex-col', className)}>
@@ -76,15 +82,20 @@ export function Combobox<T extends ComboboxOption = ComboboxOption>({
               )}
             >
               <span className='truncate text-left flex-1'>
-                {value
-                  ? options.find(option => option.value === value)?.label
+                {value && selectedOption
+                  ? renderSelectedValue
+                    ? renderSelectedValue(selectedOption)
+                    : selectedOption.label
                   : placeholder}
               </span>
               <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
             </Button>
           </FormControl>
         </PopoverTrigger>
-        <PopoverContent className='w-[var(--radix-popover-trigger-width)] p-0' align='start'>
+        <PopoverContent
+          className='w-[var(--radix-popover-trigger-width)] p-0'
+          align='start'
+        >
           <Command>
             <CommandInput
               placeholder={searchPlaceholder}

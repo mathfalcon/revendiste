@@ -52,7 +52,7 @@ export function TicketDocumentUploadModal({
       <DialogContent className='sm:max-w-[500px]'>
         <DialogHeader>
           <DialogTitle>
-            {hasExistingDocument ? 'Actualizar' : 'Subir'} código del ticket
+            {hasExistingDocument ? 'Actualizar' : 'Subir'} ticket
           </DialogTitle>
           <DialogDescription>ID: {ticketId}</DialogDescription>
         </DialogHeader>

@@ -37,7 +37,7 @@ export type NotificationChannel = "email" | "in_app" | "sms";
 
 export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
-export type NotificationType = "document_reminder" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "ticket_sold_buyer" | "ticket_sold_seller";
+export type NotificationType = "document_reminder" | "document_uploaded" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "ticket_sold_buyer" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
@@ -51,7 +51,15 @@ export type PaymentProvider = "dlocal" | "mercadopago" | "paypal" | "stripe";
 
 export type PaymentStatus = "cancelled" | "expired" | "failed" | "paid" | "partially_refunded" | "pending" | "processing" | "refunded";
 
+export type PayoutEventType = "admin_processed" | "cancelled" | "payout_requested" | "status_change" | "transfer_completed" | "transfer_failed" | "transfer_initiated";
+
+export type PayoutStatus = "cancelled" | "completed" | "failed" | "pending" | "processing";
+
+export type PayoutType = "paypal" | "uruguayan_bank";
+
 export type QrAvailabilityTiming = "12h" | "24h" | "48h" | "6h" | "72h";
+
+export type SellerEarningsStatus = "available" | "paid_out" | "pending" | "retained";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
@@ -117,12 +125,6 @@ export interface ListingTickets {
   cancelledAt: Timestamp | null;
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
-  documentOriginalName: string | null;
-  documentPath: string | null;
-  documentSizeBytes: number | null;
-  documentType: string | null;
-  documentUploadedAt: Timestamp | null;
-  documentUploadRequiredNotifiedAt: Timestamp | null;
   id: Generated<string>;
   listingId: string;
   price: Numeric;
@@ -234,6 +236,69 @@ export interface Payments {
   updatedAt: Generated<Timestamp>;
 }
 
+export interface PayoutEvents {
+  createdAt: Generated<Timestamp>;
+  createdBy: string | null;
+  eventData: Generated<Json | null>;
+  eventType: PayoutEventType;
+  fromStatus: PayoutStatus | null;
+  id: Generated<string>;
+  ipAddress: string | null;
+  payoutId: string;
+  toStatus: PayoutStatus | null;
+  userAgent: string | null;
+}
+
+export interface PayoutMethods {
+  accountHolderName: string;
+  accountHolderSurname: string;
+  createdAt: Generated<Timestamp>;
+  currency: EventTicketCurrency;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  isDefault: Generated<boolean>;
+  metadata: Generated<Json | null>;
+  payoutType: PayoutType;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+}
+
+export interface Payouts {
+  amount: Numeric;
+  completedAt: Timestamp | null;
+  createdAt: Generated<Timestamp>;
+  currency: EventTicketCurrency;
+  deletedAt: Timestamp | null;
+  failedAt: Timestamp | null;
+  failureReason: string | null;
+  id: Generated<string>;
+  metadata: Generated<Json | null>;
+  notes: string | null;
+  payoutMethodId: string;
+  processedAt: Timestamp | null;
+  processedBy: string | null;
+  processingFee: Numeric | null;
+  requestedAt: Generated<Timestamp>;
+  sellerUserId: string;
+  status: Generated<PayoutStatus>;
+  transactionReference: string | null;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface SellerEarnings {
+  createdAt: Generated<Timestamp>;
+  currency: EventTicketCurrency;
+  deletedAt: Timestamp | null;
+  holdUntil: Timestamp;
+  id: Generated<string>;
+  listingTicketId: string;
+  payoutId: string | null;
+  sellerAmount: Numeric;
+  sellerUserId: string;
+  status: Generated<SellerEarningsStatus>;
+  updatedAt: Generated<Timestamp>;
+}
+
 export interface TicketDocuments {
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
@@ -280,6 +345,10 @@ export interface DB {
   orderTicketReservations: OrderTicketReservations;
   paymentEvents: PaymentEvents;
   payments: Payments;
+  payoutEvents: PayoutEvents;
+  payoutMethods: PayoutMethods;
+  payouts: Payouts;
+  sellerEarnings: SellerEarnings;
   ticketDocuments: TicketDocuments;
   users: Users;
 }

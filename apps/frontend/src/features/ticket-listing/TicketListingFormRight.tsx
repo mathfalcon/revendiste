@@ -198,6 +198,20 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
             emptyMessage='No se encontraron tipos de entrada'
             description='Selecciona el tipo de entrada que quieres vender'
             options={eventTicketWaveComboboxOptions}
+            renderSelectedValue={option => {
+              if (!option) return null;
+              return (
+                <span className='flex items-center gap-2'>
+                  <span>{option.label}</span>
+                  {option.price && (
+                    <span className='text-muted-foreground'>
+                      {getCurrencySymbol(option.currency)}
+                      {option.price.toLocaleString()}
+                    </span>
+                  )}
+                </span>
+              );
+            }}
             renderOption={(option, isSelected) => (
               <div className='flex items-center justify-between w-full'>
                 <div className='flex-1'>

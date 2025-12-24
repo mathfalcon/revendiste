@@ -1,35 +1,36 @@
 /**
- * Payment Succeeded Email Template
+ * Document Uploaded Email Template
  *
- * Sent to buyers when payment is successfully processed.
+ * Sent to buyers when seller uploads ticket documents.
  */
 
 import React from 'react';
 import {Button, Section, Text} from '@react-email/components';
 import {BaseEmail} from './base-template';
 
-export interface PaymentSucceededEmailProps {
+export interface DocumentUploadedEmailProps {
   eventName: string;
-  totalAmount: string;
-  currency: string;
+  ticketCount: number;
   orderUrl: string;
   appBaseUrl?: string;
 }
 
-export const PaymentSucceededEmail = ({
+export const DocumentUploadedEmail = ({
   eventName,
-  totalAmount,
-  currency,
+  ticketCount,
   orderUrl,
   appBaseUrl,
-}: PaymentSucceededEmailProps) => (
+}: DocumentUploadedEmailProps) => (
   <BaseEmail
-    title="Pago exitoso"
-    preview={`Tu pago de ${totalAmount} ${currency} para ${eventName} fue procesado exitosamente`}
+    title="¡Tus entradas están listas!"
+    preview={`El vendedor subió los documentos de tus ${ticketCount} ${
+      ticketCount === 1 ? 'entrada' : 'entradas'
+    } para ${eventName}`}
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      ¡Excelente! Tu pago ha sido procesado exitosamente.
+      El vendedor ya subió los documentos de tus entradas para{' '}
+      <strong>{eventName}</strong>.
     </Text>
 
     <Section className="bg-primary/10 p-4 rounded-md mb-6">
@@ -40,16 +41,16 @@ export const PaymentSucceededEmail = ({
         {eventName}
       </Text>
       <Text className="text-sm text-foreground m-0 font-semibold mb-1">
-        Monto pagado:
+        Entradas listas:
       </Text>
       <Text className="text-2xl font-bold text-primary m-0">
-        {totalAmount} {currency}
+        {ticketCount} {ticketCount === 1 ? 'entrada' : 'entradas'}
       </Text>
     </Section>
 
     <Text className="text-foreground mb-6">
-      Tu orden está confirmada y procesándose. Recibirás una notificación cuando
-      el vendedor suba los documentos de tus tickets.
+      Ya podés acceder a tus entradas y descargarlas. Asegurate de tenerlas
+      listas para el día del evento.
     </Text>
 
     <Section className="text-center mb-6">
@@ -57,21 +58,21 @@ export const PaymentSucceededEmail = ({
         href={orderUrl}
         className="bg-primary text-primary-foreground px-6 py-3 rounded-md font-semibold text-base no-underline inline-block"
       >
-        Ver orden
+        Ver y descargar entradas
       </Button>
     </Section>
 
     <Text className="text-sm text-muted-foreground mb-0">
-      Guarda este correo como comprobante de tu compra.
+      Presentá tu entrada digital en la entrada del evento. Si tenés alguna
+      duda, podés contactarnos desde tu cuenta.
     </Text>
   </BaseEmail>
 );
 
-PaymentSucceededEmail.PreviewProps = {
+DocumentUploadedEmail.PreviewProps = {
   eventName: 'Key Presenta Mau P & More',
-  totalAmount: '150.00',
-  currency: 'EUR',
+  ticketCount: 2,
   orderUrl: 'https://revendiste.com/cuenta/tickets?orderId=123',
-} as PaymentSucceededEmailProps;
+} as DocumentUploadedEmailProps;
 
-export default PaymentSucceededEmail;
+export default DocumentUploadedEmail;

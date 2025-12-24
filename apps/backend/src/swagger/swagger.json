@@ -534,33 +534,6 @@
 								"listingId": {
 									"type": "string"
 								},
-								"documentUploadRequiredNotifiedAt": {
-									"type": "string",
-									"format": "date-time",
-									"nullable": true
-								},
-								"documentUploadedAt": {
-									"type": "string",
-									"format": "date-time",
-									"nullable": true
-								},
-								"documentType": {
-									"type": "string",
-									"nullable": true
-								},
-								"documentSizeBytes": {
-									"type": "number",
-									"format": "double",
-									"nullable": true
-								},
-								"documentPath": {
-									"type": "string",
-									"nullable": true
-								},
-								"documentOriginalName": {
-									"type": "string",
-									"nullable": true
-								},
 								"cancelledAt": {
 									"type": "string",
 									"format": "date-time",
@@ -592,12 +565,6 @@
 								"ticketNumber",
 								"price",
 								"listingId",
-								"documentUploadRequiredNotifiedAt",
-								"documentUploadedAt",
-								"documentType",
-								"documentSizeBytes",
-								"documentPath",
-								"documentOriginalName",
 								"cancelledAt",
 								"soldAt",
 								"updatedAt",
@@ -1637,32 +1604,241 @@
 				],
 				"type": "object"
 			},
-			"DLocalWebhookrRouteBody": {
+			"BalanceByCurrency": {
 				"properties": {
-					"payment_id": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"payment_id"
-				],
-				"type": "object"
-			},
-			"CreatePaymentLinkResponse": {
-				"properties": {
-					"redirectUrl": {
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
 						"type": "string"
 					},
-					"paymentId": {
-						"type": "string"
+					"count": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
-					"redirectUrl",
-					"paymentId"
+					"currency",
+					"amount",
+					"count"
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"SellerBalance": {
+				"properties": {
+					"available": {
+						"items": {
+							"$ref": "#/components/schemas/BalanceByCurrency"
+						},
+						"type": "array"
+					},
+					"retained": {
+						"items": {
+							"$ref": "#/components/schemas/BalanceByCurrency"
+						},
+						"type": "array"
+					},
+					"pending": {
+						"items": {
+							"$ref": "#/components/schemas/BalanceByCurrency"
+						},
+						"type": "array"
+					},
+					"total": {
+						"items": {
+							"$ref": "#/components/schemas/BalanceByCurrency"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"available",
+					"retained",
+					"pending",
+					"total"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetBalanceResponse": {
+				"$ref": "#/components/schemas/SellerBalance"
+			},
+			"EarningsForSelection": {
+				"properties": {
+					"byListing": {
+						"items": {
+							"properties": {
+								"currency": {
+									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"ticketCount": {
+									"type": "number",
+									"format": "double"
+								},
+								"totalAmount": {
+									"type": "string"
+								},
+								"publisherUserId": {
+									"type": "string"
+								},
+								"listingId": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"currency",
+								"ticketCount",
+								"totalAmount",
+								"publisherUserId",
+								"listingId"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"byTicket": {
+						"items": {
+							"properties": {
+								"publisherUserId": {
+									"type": "string"
+								},
+								"listingId": {
+									"type": "string"
+								},
+								"holdUntil": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"currency": {
+									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"sellerAmount": {
+									"type": "string"
+								},
+								"listingTicketId": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"publisherUserId",
+								"listingId",
+								"holdUntil",
+								"currency",
+								"sellerAmount",
+								"listingTicketId",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"byListing",
+					"byTicket"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetAvailableEarningsResponse": {
+				"$ref": "#/components/schemas/EarningsForSelection"
+			},
+			"GetPayoutHistoryResponse": {
+				"properties": {
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					},
+					"data": {
+						"items": {
+							"properties": {
+								"linkedEarnings": {
+									"items": {
+										"properties": {
+											"createdAt": {
+												"type": "string"
+											},
+											"currency": {
+												"$ref": "#/components/schemas/EventTicketCurrency"
+											},
+											"sellerAmount": {
+												"type": "string"
+											},
+											"listingTicketId": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"createdAt",
+											"currency",
+											"sellerAmount",
+											"listingTicketId",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"completedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"processedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"requestedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"currency": {
+									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"amount": {
+									"type": "string"
+								},
+								"status": {
+									"type": "string",
+									"enum": [
+										"cancelled",
+										"pending",
+										"completed",
+										"failed",
+										"processing"
+									]
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"linkedEarnings",
+								"completedAt",
+								"processedAt",
+								"requestedAt",
+								"currency",
+								"amount",
+								"status",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"pagination",
+					"data"
+				],
+				"type": "object"
 			},
 			"JsonArray": {
 				"items": {
@@ -1704,6 +1880,873 @@
 					}
 				],
 				"nullable": true
+			},
+			"RequestPayoutResponse": {
+				"properties": {
+					"transactionReference": {
+						"type": "string",
+						"nullable": true
+					},
+					"sellerUserId": {
+						"type": "string"
+					},
+					"requestedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"processingFee": {
+						"type": "string",
+						"nullable": true
+					},
+					"processedBy": {
+						"type": "string",
+						"nullable": true
+					},
+					"processedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"payoutMethodId": {
+						"type": "string"
+					},
+					"notes": {
+						"type": "string",
+						"nullable": true
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"failureReason": {
+						"type": "string",
+						"nullable": true
+					},
+					"failedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"amount": {
+						"type": "string"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"cancelled",
+							"pending",
+							"completed",
+							"failed",
+							"processing"
+						]
+					},
+					"metadata": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "number",
+								"format": "double"
+							},
+							{
+								"type": "boolean"
+							},
+							{
+								"$ref": "#/components/schemas/JsonArray"
+							},
+							{
+								"$ref": "#/components/schemas/JsonObject"
+							}
+						],
+						"nullable": true
+					},
+					"id": {
+						"type": "string"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"transactionReference",
+					"sellerUserId",
+					"requestedAt",
+					"processingFee",
+					"processedBy",
+					"processedAt",
+					"payoutMethodId",
+					"notes",
+					"completedAt",
+					"failureReason",
+					"failedAt",
+					"amount",
+					"currency",
+					"updatedAt",
+					"status",
+					"metadata",
+					"id",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"RequestPayoutRouteBody": {
+				"properties": {
+					"listingIds": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"listingTicketIds": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"payoutMethodId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"payoutMethodId"
+				],
+				"type": "object"
+			},
+			"PayoutType": {
+				"type": "string",
+				"enum": [
+					"paypal",
+					"uruguayan_bank"
+				]
+			},
+			"GetPayoutMethodsResponse": {
+				"items": {
+					"properties": {
+						"payoutType": {
+							"$ref": "#/components/schemas/PayoutType"
+						},
+						"isDefault": {
+							"type": "boolean"
+						},
+						"accountHolderSurname": {
+							"type": "string"
+						},
+						"accountHolderName": {
+							"type": "string"
+						},
+						"userId": {
+							"type": "string"
+						},
+						"currency": {
+							"$ref": "#/components/schemas/EventTicketCurrency"
+						},
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"metadata": {
+							"anyOf": [
+								{
+									"type": "string"
+								},
+								{
+									"type": "number",
+									"format": "double"
+								},
+								{
+									"type": "boolean"
+								},
+								{
+									"$ref": "#/components/schemas/JsonArray"
+								},
+								{
+									"$ref": "#/components/schemas/JsonObject"
+								}
+							],
+							"nullable": true
+						},
+						"id": {
+							"type": "string"
+						},
+						"deletedAt": {
+							"type": "string",
+							"format": "date-time",
+							"nullable": true
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						}
+					},
+					"required": [
+						"payoutType",
+						"isDefault",
+						"accountHolderSurname",
+						"accountHolderName",
+						"userId",
+						"currency",
+						"updatedAt",
+						"metadata",
+						"id",
+						"deletedAt",
+						"createdAt"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"AddPayoutMethodResponse": {
+				"properties": {
+					"payoutType": {
+						"$ref": "#/components/schemas/PayoutType"
+					},
+					"isDefault": {
+						"type": "boolean"
+					},
+					"accountHolderSurname": {
+						"type": "string"
+					},
+					"accountHolderName": {
+						"type": "string"
+					},
+					"userId": {
+						"type": "string"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"metadata": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "number",
+								"format": "double"
+							},
+							{
+								"type": "boolean"
+							},
+							{
+								"$ref": "#/components/schemas/JsonArray"
+							},
+							{
+								"$ref": "#/components/schemas/JsonObject"
+							}
+						],
+						"nullable": true
+					},
+					"id": {
+						"type": "string"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"payoutType",
+					"isDefault",
+					"accountHolderSurname",
+					"accountHolderName",
+					"userId",
+					"currency",
+					"updatedAt",
+					"metadata",
+					"id",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"AddPayoutMethodRouteBody": {
+				"allOf": [
+					{
+						"anyOf": [
+							{
+								"properties": {
+									"metadata": {
+										"anyOf": [
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Itau"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"OCA Blue"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"PREX"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Banco Nacion Arg"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Bandes"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"BBVA"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"BHU"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"BROU"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Citibank"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Dinero Electronico ANDA"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"FUCAC"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"FUCEREP"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"GRIN"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Heritage"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"HSBC"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Mercadopago"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Midinero"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Santander"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"account_number": {
+														"type": "string"
+													},
+													"bank_name": {
+														"type": "string",
+														"enum": [
+															"Scotiabank"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"account_number",
+													"bank_name"
+												],
+												"type": "object"
+											}
+										]
+									},
+									"payoutType": {
+										"type": "string",
+										"enum": [
+											"uruguayan_bank"
+										],
+										"nullable": false
+									}
+								},
+								"required": [
+									"metadata",
+									"payoutType"
+								],
+								"type": "object"
+							},
+							{
+								"properties": {
+									"metadata": {
+										"properties": {
+											"email": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"email"
+										],
+										"type": "object"
+									},
+									"payoutType": {
+										"type": "string",
+										"enum": [
+											"paypal"
+										],
+										"nullable": false
+									}
+								},
+								"required": [
+									"metadata",
+									"payoutType"
+								],
+								"type": "object"
+							}
+						]
+					},
+					{
+						"properties": {
+							"isDefault": {
+								"type": "boolean"
+							},
+							"currency": {
+								"type": "string",
+								"enum": [
+									"USD",
+									"UYU"
+								]
+							},
+							"accountHolderSurname": {
+								"type": "string"
+							},
+							"accountHolderName": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"currency",
+							"accountHolderSurname",
+							"accountHolderName"
+						],
+						"type": "object"
+					}
+				]
+			},
+			"UpdatePayoutMethodResponse": {
+				"properties": {
+					"payoutType": {
+						"$ref": "#/components/schemas/PayoutType"
+					},
+					"isDefault": {
+						"type": "boolean"
+					},
+					"accountHolderSurname": {
+						"type": "string"
+					},
+					"accountHolderName": {
+						"type": "string"
+					},
+					"userId": {
+						"type": "string"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"metadata": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "number",
+								"format": "double"
+							},
+							{
+								"type": "boolean"
+							},
+							{
+								"$ref": "#/components/schemas/JsonArray"
+							},
+							{
+								"$ref": "#/components/schemas/JsonObject"
+							}
+						],
+						"nullable": true
+					},
+					"id": {
+						"type": "string"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"payoutType",
+					"isDefault",
+					"accountHolderSurname",
+					"accountHolderName",
+					"userId",
+					"currency",
+					"updatedAt",
+					"metadata",
+					"id",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"UpdatePayoutMethodRouteBody": {
+				"properties": {
+					"isDefault": {
+						"type": "boolean"
+					},
+					"metadata": {},
+					"currency": {
+						"type": "string",
+						"enum": [
+							"USD",
+							"UYU"
+						]
+					},
+					"accountHolderSurname": {
+						"type": "string"
+					},
+					"accountHolderName": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"DLocalWebhookrRouteBody": {
+				"properties": {
+					"payment_id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"payment_id"
+				],
+				"type": "object"
+			},
+			"CreatePaymentLinkResponse": {
+				"properties": {
+					"redirectUrl": {
+						"type": "string"
+					},
+					"paymentId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"redirectUrl",
+					"paymentId"
+				],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"Pick_Notification.Exclude_keyofNotification.metadata-or-actions-or-type-or-title-or-description__": {
 				"properties": {
@@ -1800,6 +2843,7 @@
 				"type": "string",
 				"enum": [
 					"document_reminder",
+					"document_uploaded",
 					"order_confirmed",
 					"order_expired",
 					"payment_failed",
@@ -2868,6 +3912,388 @@
 					{
 						"in": "path",
 						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/payouts/balance": {
+			"get": {
+				"operationId": "GetBalance",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetBalanceResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payouts"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/payouts/available-earnings": {
+			"get": {
+				"operationId": "GetAvailableEarnings",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetAvailableEarningsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payouts"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/payouts/history": {
+			"get": {
+				"operationId": "GetPayoutHistory",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetPayoutHistoryResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payouts"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/payouts/request": {
+			"post": {
+				"operationId": "RequestPayout",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RequestPayoutResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: Invalid selection, below minimum threshold, or mixed currencies",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payouts"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RequestPayoutRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/payouts/payout-methods": {
+			"get": {
+				"operationId": "GetPayoutMethods",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetPayoutMethodsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payouts"
+				],
+				"security": [],
+				"parameters": []
+			},
+			"post": {
+				"operationId": "AddPayoutMethod",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AddPayoutMethodResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: Invalid payout method data",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payouts"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddPayoutMethodRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/payouts/payout-methods/{payoutMethodId}": {
+			"put": {
+				"operationId": "UpdatePayoutMethod",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UpdatePayoutMethodResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Payout method not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: Invalid payout method data",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payouts"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "payoutMethodId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdatePayoutMethodRouteBody"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeletePayoutMethod",
+				"responses": {
+					"204": {
+						"description": "No content"
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Payout method not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Payouts"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "payoutMethodId",
 						"required": true,
 						"schema": {
 							"type": "string"

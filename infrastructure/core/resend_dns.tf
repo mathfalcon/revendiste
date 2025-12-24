@@ -2,7 +2,7 @@
 # These records are required for Resend to send emails on behalf of your domain
 
 resource "cloudflare_dns_record" "resend_dkim" {
-  zone_id = data.cloudflare_zones.main.result[0].id
+  zone_id = data.cloudflare_zones.main.zones[0].id
   # Full FQDN: resend._domainkey.notificaciones.revendiste.com
   name    = "resend._domainkey.notificaciones"
   type    = "TXT"
@@ -11,7 +11,7 @@ resource "cloudflare_dns_record" "resend_dkim" {
 }
 
 resource "cloudflare_dns_record" "resend_smtp_mx" {
-  zone_id = data.cloudflare_zones.main.result[0].id
+  zone_id = data.cloudflare_zones.main.zones[0].id
   # Full FQDN: send.notificaciones.revendiste.com
   name     = "send.notificaciones"
   type     = "MX"
@@ -21,7 +21,7 @@ resource "cloudflare_dns_record" "resend_smtp_mx" {
 }
 
 resource "cloudflare_dns_record" "resend_spf" {
-  zone_id = data.cloudflare_zones.main.result[0].id
+  zone_id = data.cloudflare_zones.main.zones[0].id
   # Full FQDN: send.notificaciones.revendiste.com
   name    = "send.notificaciones"
   type    = "TXT"
@@ -33,7 +33,7 @@ resource "cloudflare_dns_record" "resend_spf" {
 # This helps prevent email spoofing and provides reporting
 resource "cloudflare_dns_record" "dmarc" {
   count   = var.enable_dmarc ? 1 : 0
-  zone_id = data.cloudflare_zones.main.result[0].id
+  zone_id = data.cloudflare_zones.main.zones[0].id
   # DMARC for the subdomain notificaciones.revendiste.com
   # Full FQDN: _dmarc.notificaciones.revendiste.com
   name    = "_dmarc.notificaciones"
