@@ -3,12 +3,6 @@ import {
   STORAGE_TYPE,
   STORAGE_LOCAL_PATH,
   STORAGE_BASE_URL,
-  AWS_S3_BUCKET,
-  AWS_S3_REGION,
-  AWS_ACCESS_KEY_ID,
-  AWS_SECRET_ACCESS_KEY,
-  AWS_CLOUDFRONT_DOMAIN,
-  AWS_S3_SIGNED_URL_EXPIRY,
   R2_PUBLIC_BUCKET,
   R2_PRIVATE_BUCKET,
   R2_ACCOUNT_ID,
@@ -18,7 +12,6 @@ import {
   R2_SIGNED_URL_EXPIRY,
 } from '~/config/env';
 import {LocalStorageProvider} from './LocalStorageProvider';
-import {S3StorageProvider} from './S3StorageProvider';
 import {R2StorageProvider} from './R2StorageProvider';
 import type {IStorageProvider} from './IStorageProvider';
 
@@ -50,9 +43,6 @@ class StorageFactory {
       case 'local':
         return this.createLocalProvider();
 
-      case 's3':
-        return this.createS3Provider();
-
       case 'r2':
         return this.createR2Provider();
 
@@ -68,43 +58,15 @@ class StorageFactory {
     // Resolve the storage path relative to the project root
     const baseDir = path.resolve(process.cwd(), STORAGE_LOCAL_PATH);
 
-    return new LocalStorageProvider(baseDir, STORAGE_BASE_URL);
-  }
+    // Ensure baseUrl includes /uploads to match the server static route
+    // If baseUrl already ends with /uploads, use it as-is; otherwise append it
+    const baseUrl = STORAGE_BASE_URL.endsWith('/uploads')
+      ? STORAGE_BASE_URL
+      : STORAGE_BASE_URL.endsWith('/')
+        ? `${STORAGE_BASE_URL}uploads`
+        : `${STORAGE_BASE_URL}/uploads`;
 
-  /**
-   * Create AWS S3 storage provider
-   */
-  private static createS3Provider(): S3StorageProvider {
-    // Validate required S3 configuration
-    if (!AWS_S3_BUCKET) {
-      throw new Error(
-        'AWS_S3_BUCKET is required when STORAGE_TYPE is set to "s3"',
-      );
-    }
-    if (!AWS_S3_REGION) {
-      throw new Error(
-        'AWS_S3_REGION is required when STORAGE_TYPE is set to "s3"',
-      );
-    }
-    if (!AWS_ACCESS_KEY_ID) {
-      throw new Error(
-        'AWS_ACCESS_KEY_ID is required when STORAGE_TYPE is set to "s3"',
-      );
-    }
-    if (!AWS_SECRET_ACCESS_KEY) {
-      throw new Error(
-        'AWS_SECRET_ACCESS_KEY is required when STORAGE_TYPE is set to "s3"',
-      );
-    }
-
-    return new S3StorageProvider({
-      bucket: AWS_S3_BUCKET,
-      region: AWS_S3_REGION,
-      accessKeyId: AWS_ACCESS_KEY_ID,
-      secretAccessKey: AWS_SECRET_ACCESS_KEY,
-      cloudFrontDomain: AWS_CLOUDFRONT_DOMAIN,
-      signedUrlExpiry: AWS_S3_SIGNED_URL_EXPIRY,
-    });
+    return new LocalStorageProvider(baseDir, baseUrl);
   }
 
   /**

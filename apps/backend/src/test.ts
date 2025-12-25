@@ -25,28 +25,6 @@ const testOrderId7 = randomUUID();
 
   console.log('Creating test notifications for user:', TEST_USER_ID);
 
-  // 1. ticket_sold_buyer
-  await notificationService.createNotification({
-    userId: TEST_USER_ID,
-    type: 'ticket_sold_buyer',
-    channels: ['in_app', 'email'],
-    actions: [
-      {
-        type: 'upload_documents',
-        label: 'Subir documentos',
-        url: `${APP_BASE_URL}/cuenta/publicaciones?subirTicket=${testOrderId1}`,
-      },
-    ],
-    metadata: {
-      type: 'ticket_sold_buyer',
-      orderId: testOrderId1,
-      eventName: 'Coldplay en Estadio Centenario',
-      ticketCount: 2,
-    },
-  });
-  console.log('✓ Created ticket_sold_buyer notification');
-  await new Promise(resolve => setTimeout(resolve, 600)); // Rate limit: 2 req/sec
-
   // 2. ticket_sold_seller
   await notificationService.createNotification({
     userId: TEST_USER_ID,

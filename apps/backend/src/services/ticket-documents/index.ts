@@ -114,7 +114,7 @@ export class TicketDocumentService {
     const newDocument = await this.ticketDocumentsRepository.create({
       ticketId: ticketId,
       storagePath: uploadResult.path,
-      fileName: path.basename(uploadResult.path),
+      fileName: uploadResult.url,
       originalName: file.originalName,
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,

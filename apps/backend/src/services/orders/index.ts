@@ -9,14 +9,13 @@ import {
 import {logger} from '~/utils';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateOrderRouteBody} from '~/controllers/orders/validation';
-import {
-  ORDER_ERROR_MESSAGES,
-  TICKET_DOCUMENT_ERROR_MESSAGES,
-} from '~/constants/error-messages';
+import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
 import {calculateOrderFees} from '~/utils/fees';
 import {getStorageProvider} from '~/services/storage';
 
 export class OrdersService {
+  private readonly storageProvider = getStorageProvider();
+
   constructor(
     private readonly ordersRepository: OrdersRepository,
     private readonly orderItemsRepository: OrderItemsRepository,
@@ -287,28 +286,29 @@ export class OrdersService {
       await this.orderTicketReservationsRepository.getTicketsByOrderId(orderId);
 
     // Enrich with document URLs if available
-    const storageProvider = getStorageProvider();
     const enrichedTickets = await Promise.all(
       tickets.map(async ticket => ({
-      id: ticket.id,
-      price: ticket.price,
-      soldAt: ticket.soldAt,
-      hasDocument: !!ticket.document,
-      ticketWave: ticket.ticketWaveName
-        ? {
-            name: ticket.ticketWaveName,
-          }
-        : null,
-      document:
-        ticket.document && ticket.document.storagePath
+        id: ticket.id,
+        price: ticket.price,
+        soldAt: ticket.soldAt,
+        hasDocument: !!ticket.document,
+        ticketWave: ticket.ticketWaveName
           ? {
-              id: ticket.document.id,
-              status: ticket.document.status,
-              uploadedAt: ticket.document.uploadedAt,
-              mimeType: ticket.document.mimeType,
-                url: await storageProvider.getUrl(ticket.document.storagePath),
+              name: ticket.ticketWaveName,
             }
           : null,
+        document:
+          ticket.document && ticket.document.storagePath
+            ? {
+                id: ticket.document.id,
+                status: ticket.document.status,
+                uploadedAt: ticket.document.uploadedAt,
+                mimeType: ticket.document.mimeType,
+                url: await this.storageProvider.getUrl(
+                  ticket.document.storagePath,
+                ),
+              }
+            : null,
       })),
     );
 

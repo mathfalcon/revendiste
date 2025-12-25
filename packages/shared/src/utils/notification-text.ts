@@ -22,18 +22,6 @@ export function generateNotificationText<T extends NotificationType>(
   metadata: TypedNotificationMetadata<T>,
 ): NotificationText {
   switch (type) {
-    case 'ticket_sold_buyer': {
-      const meta = metadata as TypedNotificationMetadata<'ticket_sold_buyer'>;
-      return {
-        title: '¡Tu compra fue exitosa!',
-        description: `Has comprado ${meta.ticketCount} ${
-          meta.ticketCount === 1 ? 'entrada' : 'entradas'
-        } para ${
-          meta.eventName
-        }. Por favor, sube los documentos de tus tickets.`,
-      };
-    }
-
     case 'ticket_sold_seller': {
       const meta = metadata as TypedNotificationMetadata<'ticket_sold_seller'>;
       let description: string;
@@ -140,7 +128,7 @@ export function generateNotificationText<T extends NotificationType>(
       const meta = metadata as TypedNotificationMetadata<'document_uploaded'>;
       return {
         title: '¡Tus entradas están listas!',
-        description: `El vendedor ha subido los documentos de tus ${meta.ticketCount} ${
+        description: `El vendedor subió los documentos de tus ${
           meta.ticketCount === 1 ? 'entrada' : 'entradas'
         } para ${meta.eventName}. Ya puedes acceder a ellas.`,
       };

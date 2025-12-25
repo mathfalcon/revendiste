@@ -534,6 +534,33 @@
 								"listingId": {
 									"type": "string"
 								},
+								"documentUploadRequiredNotifiedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"documentUploadedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"documentType": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentSizeBytes": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
+								},
+								"documentPath": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentOriginalName": {
+									"type": "string",
+									"nullable": true
+								},
 								"cancelledAt": {
 									"type": "string",
 									"format": "date-time",
@@ -565,6 +592,12 @@
 								"ticketNumber",
 								"price",
 								"listingId",
+								"documentUploadRequiredNotifiedAt",
+								"documentUploadedAt",
+								"documentType",
+								"documentSizeBytes",
+								"documentPath",
+								"documentOriginalName",
 								"cancelledAt",
 								"soldAt",
 								"updatedAt",
@@ -2848,13 +2881,12 @@
 					"order_expired",
 					"payment_failed",
 					"payment_succeeded",
-					"ticket_sold_buyer",
 					"ticket_sold_seller"
 				]
 			},
 			"TypedNotificationMetadata_NotificationMetadata_": {
 				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationMetadata__",
-				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
+				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
 			},
 			"Extract_NotificationMetadata._type-NotificationMetadata__": {
 				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
@@ -2866,7 +2898,7 @@
 			},
 			"TypedNotificationMetadata_NotificationType_": {
 				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationType__",
-				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
+				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
 			},
 			"Record_string.unknown_": {
 				"properties": {},
@@ -2944,7 +2976,7 @@
 						"type": "object"
 					}
 				],
-				"description": "Typed notification response with parsed metadata and actions\nThis ensures type safety when reading notifications from the database\nTitle and description are generated from type + metadata, not stored in DB\nFor backwards compatibility, uses the generic type"
+				"description": "Typed notification response with parsed metadata and actions\r\nThis ensures type safety when reading notifications from the database\r\nTitle and description are generated from type + metadata, not stored in DB\r\nFor backwards compatibility, uses the generic type"
 			},
 			"PaginatedResponse_TypedNotification_": {
 				"properties": {
@@ -3577,7 +3609,7 @@
 						}
 					}
 				},
-				"description": "Upload a ticket document\n\nSellers can upload PDF/image documents for their sold tickets.\nDocuments must be uploaded before the event ends.",
+				"description": "Upload a ticket document\r\n\r\nSellers can upload PDF/image documents for their sold tickets.\r\nDocuments must be uploaded before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -3668,7 +3700,7 @@
 						}
 					}
 				},
-				"description": "Update/replace a ticket document\n\nUploads a new version of the document. Previous versions are kept for audit trail.\nCan only update before the event ends.",
+				"description": "Update/replace a ticket document\r\n\r\nUploads a new version of the document. Previous versions are kept for audit trail.\r\nCan only update before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],

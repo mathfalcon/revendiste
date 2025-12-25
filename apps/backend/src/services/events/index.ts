@@ -10,10 +10,13 @@ export class EventsService {
   constructor(private readonly eventsRepository: EventsRepository) {}
 
   async getAllEventsPaginated(args: WithPagination<{}>, userId?: string) {
-    return this.eventsRepository.findAllPaginatedWithImages(
-      args.pagination,
-      userId,
-    );
+    const paginatedEvents =
+      await this.eventsRepository.findAllPaginatedWithImages(
+        args.pagination,
+        userId,
+      );
+
+    return paginatedEvents;
   }
 
   async storeScrapedEvents(events: ScrapedEventData[]) {
@@ -44,7 +47,11 @@ export class EventsService {
           upsertedEvent.externalId,
         );
 
-        if (!originalEvent || !originalEvent.images || originalEvent.images.length === 0) {
+        if (
+          !originalEvent ||
+          !originalEvent.images ||
+          originalEvent.images.length === 0
+        ) {
           return;
         }
 
@@ -197,7 +204,9 @@ export class EventsService {
   }
 
   async getEventById(eventId: string, userId?: string) {
-    return this.eventsRepository.getById(eventId, userId);
+    const event = await this.eventsRepository.getById(eventId, userId);
+
+    return event;
   }
 
   async getBySearch(query: string, limit: number = 20) {

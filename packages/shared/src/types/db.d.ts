@@ -37,7 +37,7 @@ export type NotificationChannel = "email" | "in_app" | "sms";
 
 export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
-export type NotificationType = "document_reminder" | "document_uploaded" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "ticket_sold_buyer" | "ticket_sold_seller";
+export type NotificationType = "document_reminder" | "document_uploaded" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
@@ -125,6 +125,12 @@ export interface ListingTickets {
   cancelledAt: Timestamp | null;
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
+  documentOriginalName: string | null;
+  documentPath: string | null;
+  documentSizeBytes: number | null;
+  documentType: string | null;
+  documentUploadedAt: Timestamp | null;
+  documentUploadRequiredNotifiedAt: Timestamp | null;
   id: Generated<string>;
   listingId: string;
   price: Numeric;

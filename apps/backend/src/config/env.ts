@@ -23,7 +23,7 @@ const EnvSchema = z.object({
   // Storage configuration
   STORAGE_TYPE: z.enum(['local', 's3', 'r2']).default('local'),
   STORAGE_LOCAL_PATH: z.string().default('./uploads'),
-  STORAGE_BASE_URL: z.string().default('/uploads'),
+  STORAGE_BASE_URL: z.string().default('http://localhost:3001'),
   // AWS S3 configuration (only required when STORAGE_TYPE=s3)
   AWS_S3_BUCKET: z.string().optional(),
   AWS_S3_REGION: z.string().optional(),

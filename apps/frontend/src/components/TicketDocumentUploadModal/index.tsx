@@ -13,6 +13,7 @@ import {
   updateTicketDocumentMutation,
 } from '~/lib';
 import {TicketUploadForm} from '../TicketUploadCarousel/TicketUploadForm';
+import {toast} from 'sonner';
 
 interface TicketDocumentUploadModalProps {
   ticketId: string;
@@ -29,20 +30,20 @@ export function TicketDocumentUploadModal({
 }: TicketDocumentUploadModalProps) {
   const queryClient = useQueryClient();
 
+  const handleMutationSuccess = () => {
+    queryClient.invalidateQueries({queryKey: ['listings']});
+    onOpenChange(false);
+    toast.success('Ticket subido correctamente');
+  };
+
   const uploadMutation = useMutation({
     ...uploadTicketDocumentMutation(ticketId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ['listings']});
-      onOpenChange(false);
-    },
+    onSuccess: handleMutationSuccess,
   });
 
   const updateMutation = useMutation({
     ...updateTicketDocumentMutation(ticketId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ['listings']});
-      onOpenChange(false);
-    },
+    onSuccess: handleMutationSuccess,
   });
 
   const mutation = hasExistingDocument ? updateMutation : uploadMutation;

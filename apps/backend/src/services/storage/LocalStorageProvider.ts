@@ -104,9 +104,30 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   async getUrl(filePath: string): Promise<string> {
-    // Normalize path separators for URLs
-    const normalizedPath = filePath.replace(/\\/g, '/');
-    return `${this.baseUrl}/${normalizedPath}`;
+    console.log(filePath, 'filePath');
+    // Normalize Windows backslashes to forward slashes first
+    const normalizedFilePath = filePath.replace(/\\/g, '/');
+
+    // Ensure filePath starts with / for proper URL construction
+    const normalizedPath = normalizedFilePath.startsWith('/')
+      ? normalizedFilePath
+      : `/${normalizedFilePath}`;
+
+    // Ensure baseUrl doesn't end with / to avoid double slashes
+    const normalizedBaseUrl = this.baseUrl.endsWith('/')
+      ? this.baseUrl.slice(0, -1)
+      : this.baseUrl;
+
+    const url = `${normalizedBaseUrl}${normalizedPath}`;
+
+    logger.info('Generated URL from storage path', {
+      originalPath: filePath,
+      normalizedPath,
+      baseUrl: this.baseUrl,
+      finalUrl: url,
+    });
+
+    return url;
   }
 
   async exists(filePath: string): Promise<boolean> {

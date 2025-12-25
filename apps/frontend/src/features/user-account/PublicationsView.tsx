@@ -38,6 +38,7 @@ export function PublicationsView() {
   const activeListings =
     listings?.filter(listing => new Date(listing.event.eventEndDate) > now) ||
     [];
+
   // A listing is past if the event has ended
   const soldListings =
     listings?.filter(listing => new Date(listing.event.eventEndDate) <= now) ||

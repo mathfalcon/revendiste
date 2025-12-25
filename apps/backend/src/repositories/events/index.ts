@@ -8,6 +8,7 @@ import {NotFoundError} from '~/errors';
 import {sql} from 'kysely';
 import {BaseRepository} from '../base';
 import type {PaginationOptions} from '~/types/pagination';
+import {getStorageProvider} from '~/services';
 
 export class EventsRepository extends BaseRepository<EventsRepository> {
   withTransaction(trx: Kysely<DB>): EventsRepository {

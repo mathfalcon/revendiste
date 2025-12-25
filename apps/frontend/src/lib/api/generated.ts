@@ -17,7 +17,6 @@ export enum NotificationType {
   OrderExpired = "order_expired",
   PaymentFailed = "payment_failed",
   PaymentSucceeded = "payment_succeeded",
-  TicketSoldBuyer = "ticket_sold_buyer",
   TicketSoldSeller = "ticket_sold_seller",
 }
 

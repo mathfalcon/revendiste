@@ -1,6 +1,12 @@
 import {useState} from 'react';
-import {Link, useRouter, useCanGoBack} from '@tanstack/react-router';
+import {
+  Link,
+  useRouter,
+  useCanGoBack,
+  isNotFound,
+} from '@tanstack/react-router';
 import type {ErrorComponentProps} from '@tanstack/react-router';
+import {isAxiosError} from 'axios';
 import {Button} from '~/components/ui/button';
 import {
   Card,
@@ -10,6 +16,7 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import {Home, ArrowLeft, AlertCircle, RotateCw} from 'lucide-react';
+import {NotFound} from './NotFound';
 
 export function DefaultCatchBoundary({error, reset}: ErrorComponentProps) {
   const router = useRouter();
@@ -18,6 +25,46 @@ export function DefaultCatchBoundary({error, reset}: ErrorComponentProps) {
 
   // Log the full error details for debugging
   console.error('Error caught by DefaultCatchBoundary:', error);
+
+  // Check if the error is a 404 (TanStack Router NotFoundError or AxiosError with status 404)
+  const is404Error = (() => {
+    // Check for TanStack Router NotFoundError
+    if (isNotFound(error)) {
+      return true;
+    }
+
+    // Check for AxiosError with status 404
+    if (isAxiosError(error) && error.response?.status === 404) {
+      return true;
+    }
+
+    // Check for errors with status property
+    if (
+      error &&
+      typeof error === 'object' &&
+      'status' in error &&
+      (error as {status: unknown}).status === 404
+    ) {
+      return true;
+    }
+
+    // Check for errors with statusCode property
+    if (
+      error &&
+      typeof error === 'object' &&
+      'statusCode' in error &&
+      (error as {statusCode: unknown}).statusCode === 404
+    ) {
+      return true;
+    }
+
+    return false;
+  })();
+
+  // If it's a 404 error, render the NotFound component
+  if (is404Error) {
+    return <NotFound />;
+  }
 
   // Show a friendly message to the user instead of raw error details
   // Tone: casual, youth-oriented for Uruguayan audience

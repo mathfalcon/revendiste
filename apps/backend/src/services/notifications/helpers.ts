@@ -176,7 +176,7 @@ export async function notifyDocumentUploaded(
       {
         type: 'view_order',
         label: 'Ver y descargar entradas',
-        url: `${APP_BASE_URL}/cuenta/tickets?orderId=${params.orderId}`,
+        url: `${APP_BASE_URL}/cuenta/tickets?orden=${params.orderId}`,
       },
     ],
     metadata: {
@@ -252,7 +252,7 @@ export async function notifySellerTicketSold(
     actions.push({
       type: 'upload_documents',
       label: 'Subir documentos',
-      url: `${APP_BASE_URL}/cuenta/publicaciones?subirTicket=${params.listingId}`,
+      url: `${APP_BASE_URL}/cuenta/publicaciones?subirPublicacion=${params.listingId}`,
     });
   }
 

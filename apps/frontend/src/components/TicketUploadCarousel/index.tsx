@@ -15,6 +15,7 @@ import {
   GetUserListingsResponse,
 } from '~/lib';
 import {TicketUploadForm} from './TicketUploadForm';
+import {toast} from 'sonner';
 
 type TicketWithListing = GetUserListingsResponse[number]['tickets'][number] & {
   listing: GetUserListingsResponse[number];
@@ -80,6 +81,8 @@ export function TicketUploadCarousel({
       // All done, close modal
       onOpenChange(false);
     }
+
+    toast.success('Ticket subido correctamente');
   };
 
   const uploadMutation = useMutation({

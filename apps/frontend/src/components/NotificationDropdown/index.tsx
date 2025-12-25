@@ -43,7 +43,6 @@ const getNotificationIcon = (type: NotificationType): LucideIcon => {
       return XCircle;
     case 'payment_succeeded':
       return CreditCard;
-    case 'ticket_sold_buyer':
     case 'ticket_sold_seller':
       return Ticket;
     default:
@@ -61,7 +60,6 @@ const getNotificationIconColor = (type: NotificationType): string => {
       return 'text-red-600';
     case 'document_reminder':
       return 'text-blue-600';
-    case 'ticket_sold_buyer':
     case 'ticket_sold_seller':
       return 'text-purple-600';
     default:
