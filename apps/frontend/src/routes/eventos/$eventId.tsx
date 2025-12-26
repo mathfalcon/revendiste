@@ -13,14 +13,19 @@ export const Route = createFileRoute('/eventos/$eventId')({
   component: RouteComponent,
   notFoundComponent: () => <EventEnded />,
   errorComponent: ({error}: ErrorComponentProps) => {
-    // Check if the error is a 404 (event not found or ended)
+    if (isAxiosError(error) && error.response?.status === 404) {
+      return <EventEnded />;
+    }
+
     if (
-      isAxiosError(error) &&
-      error.response?.status === 404
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      error.message.includes('404')
     ) {
       return <EventEnded />;
     }
-    // For other errors, let the default error component handle it
     throw error;
   },
   loader: async ({context, params}) => {

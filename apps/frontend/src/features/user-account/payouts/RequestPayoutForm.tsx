@@ -1,6 +1,8 @@
 import {useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {z} from 'zod';
+import {useEffect} from 'react';
+import {toast} from 'sonner';
 import {
   Form,
   FormControl,
@@ -22,6 +24,8 @@ import {
 } from '~/components/ui/select';
 import {Alert, AlertDescription} from '~/components/ui/alert';
 import {Info} from 'lucide-react';
+import {PayoutType} from '~/lib/api/generated';
+import {getPayoutMethodDropdownText} from './payout-method-utils';
 
 const requestPayoutSchema = z
   .object({
@@ -70,6 +74,7 @@ export function RequestPayoutForm({
   const requestPayout = useMutation({
     ...requestPayoutMutation(),
     onSuccess: () => {
+      toast.success('Solicitud de pago creada exitosamente');
       queryClient.invalidateQueries({queryKey: ['payouts']});
       onSuccess?.();
     },
@@ -83,6 +88,12 @@ export function RequestPayoutForm({
       listingIds: selectedListingIds,
     },
   });
+
+  // Update form values when selected IDs change
+  useEffect(() => {
+    form.setValue('listingTicketIds', selectedTicketIds);
+    form.setValue('listingIds', selectedListingIds);
+  }, [selectedTicketIds, selectedListingIds, form]);
 
   const selectedPayoutMethodId = form.watch('payoutMethodId');
   const selectedPayoutMethod = payoutMethods?.find(
@@ -101,7 +112,7 @@ export function RequestPayoutForm({
 
   // Show conversion alert if PayPal is selected and UYU earnings are present
   const showConversionAlert =
-    selectedPayoutMethod?.payoutType === ('paypal' as string) && hasUyuEarnings;
+    selectedPayoutMethod?.payoutType === PayoutType.Paypal && hasUyuEarnings;
 
   const onSubmit = async (data: RequestPayoutFormValues) => {
     await requestPayout.mutateAsync({
@@ -115,7 +126,18 @@ export function RequestPayoutForm({
           ? data.listingIds
           : undefined,
     });
-    form.reset();
+    // Only reset form on success
+    form.reset({
+      payoutMethodId: '',
+      listingTicketIds: [],
+      listingIds: [],
+    });
+  };
+
+  const onError = (errors: unknown) => {
+    // Error is handled by axios interceptor (toast notification)
+    // Form validation errors are handled by react-hook-form
+    console.error('Error submitting payout request:', errors);
   };
 
   if (!payoutMethods || payoutMethods.length === 0) {
@@ -130,7 +152,10 @@ export function RequestPayoutForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+      <form
+        onSubmit={form.handleSubmit(onSubmit, onError)}
+        className='space-y-4'
+      >
         {showConversionAlert && (
           <Alert>
             <Info className='h-4 w-4' />
@@ -157,12 +182,7 @@ export function RequestPayoutForm({
                 <SelectContent>
                   {payoutMethods.map(method => (
                     <SelectItem key={method.id} value={method.id}>
-                      {method.payoutType === ('paypal' as string)
-                        ? 'PayPal'
-                        : method.metadata &&
-                          'bank_name' in method.metadata &&
-                          method.metadata.bank_name}{' '}
-                      - {method.currency}
+                      {getPayoutMethodDropdownText(method)}
                       {method.isDefault && ' (Por defecto)'}
                     </SelectItem>
                   ))}
@@ -176,24 +196,34 @@ export function RequestPayoutForm({
           )}
         />
 
-        <div className='text-sm text-muted-foreground'>
-          <p>
-            Ganancias seleccionadas:{' '}
-            {selectedListingIds.length > 0 && (
-              <span>{selectedListingIds.length} publicación(es)</span>
-            )}
-            {selectedListingIds.length > 0 && selectedTicketIds.length > 0 && (
-              <span> y </span>
-            )}
-            {selectedTicketIds.length > 0 && (
-              <span>{selectedTicketIds.length} ticket(s)</span>
-            )}
+        {(selectedListingIds.length > 0 || selectedTicketIds.length > 0) && (
+          <div className='text-sm text-muted-foreground'>
+            <p>
+              Ganancias seleccionadas:{' '}
+              {selectedListingIds.length > 0 && (
+                <span>{selectedListingIds.length} publicación(es)</span>
+              )}
+              {selectedListingIds.length > 0 &&
+                selectedTicketIds.length > 0 && <span> y </span>}
+              {selectedTicketIds.length > 0 && (
+                <span>{selectedTicketIds.length} ticket(s)</span>
+              )}
+            </p>
+          </div>
+        )}
+        {/* Show validation error for earnings selection */}
+        {form.formState.errors.listingTicketIds && (
+          <p className='text-sm text-destructive'>
+            {form.formState.errors.listingTicketIds.message}
           </p>
-        </div>
+        )}
 
         <Button
           type='submit'
-          disabled={requestPayout.isPending}
+          disabled={
+            requestPayout.isPending ||
+            (selectedListingIds.length === 0 && selectedTicketIds.length === 0)
+          }
           className='w-full'
         >
           {requestPayout.isPending ? 'Procesando...' : 'Solicitar Pago'}

@@ -135,6 +135,7 @@ export class PayoutsService {
     return await this.payoutsRepository.executeTransaction(async trx => {
       const payoutsRepo = this.payoutsRepository.withTransaction(trx);
       const earningsRepo = this.sellerEarningsRepository.withTransaction(trx);
+      const payoutEventsRepo = this.payoutEventsRepository.withTransaction(trx);
 
       // Build payout metadata with conversion info if applicable
       const payoutMetadata: Json = {
@@ -162,7 +163,7 @@ export class PayoutsService {
       );
 
       // Log payout requested event
-      await this.payoutEventsRepository.create({
+      await payoutEventsRepo.create({
         payoutId: payout.id,
         eventType: 'payout_requested',
         eventData: {

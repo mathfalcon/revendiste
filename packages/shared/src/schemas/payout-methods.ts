@@ -45,8 +45,8 @@ export type UruguayanBankName = z.infer<typeof UruguayanBankName>;
 
 // Itau - typically 7-10 digits
 export const ItauBankMetadataSchema = z.object({
-  bank_name: z.literal('Itau'),
-  account_number: z
+  bankName: z.literal('Itau'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -55,8 +55,8 @@ export const ItauBankMetadataSchema = z.object({
 
 // OCA Blue - typically 8-12 digits
 export const OCABlueBankMetadataSchema = z.object({
-  bank_name: z.literal('OCA Blue'),
-  account_number: z
+  bankName: z.literal('OCA Blue'),
+  accountNumber: z
     .string()
     .min(8, 'El número de cuenta debe tener al menos 8 dígitos')
     .max(12, 'El número de cuenta no puede tener más de 12 dígitos')
@@ -65,8 +65,8 @@ export const OCABlueBankMetadataSchema = z.object({
 
 // PREX - typically 8-10 digits
 export const PREXBankMetadataSchema = z.object({
-  bank_name: z.literal('PREX'),
-  account_number: z
+  bankName: z.literal('PREX'),
+  accountNumber: z
     .string()
     .min(8, 'El número de cuenta debe tener al menos 8 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -75,8 +75,8 @@ export const PREXBankMetadataSchema = z.object({
 
 // Banco Nacion Arg - typically 8-12 digits
 export const BancoNacionArgBankMetadataSchema = z.object({
-  bank_name: z.literal('Banco Nacion Arg'),
-  account_number: z
+  bankName: z.literal('Banco Nacion Arg'),
+  accountNumber: z
     .string()
     .min(8, 'El número de cuenta debe tener al menos 8 dígitos')
     .max(12, 'El número de cuenta no puede tener más de 12 dígitos')
@@ -85,8 +85,8 @@ export const BancoNacionArgBankMetadataSchema = z.object({
 
 // Bandes - typically 7-10 digits
 export const BandesBankMetadataSchema = z.object({
-  bank_name: z.literal('Bandes'),
-  account_number: z
+  bankName: z.literal('Bandes'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -95,8 +95,8 @@ export const BandesBankMetadataSchema = z.object({
 
 // BBVA - typically 7-10 digits
 export const BBVABankMetadataSchema = z.object({
-  bank_name: z.literal('BBVA'),
-  account_number: z
+  bankName: z.literal('BBVA'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -105,8 +105,8 @@ export const BBVABankMetadataSchema = z.object({
 
 // BHU - typically 7-10 digits
 export const BHUBankMetadataSchema = z.object({
-  bank_name: z.literal('BHU'),
-  account_number: z
+  bankName: z.literal('BHU'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -115,8 +115,8 @@ export const BHUBankMetadataSchema = z.object({
 
 // BROU - typically 7-10 digits
 export const BROUBankMetadataSchema = z.object({
-  bank_name: z.literal('BROU'),
-  account_number: z
+  bankName: z.literal('BROU'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -125,8 +125,8 @@ export const BROUBankMetadataSchema = z.object({
 
 // Citibank - typically 7-10 digits
 export const CitibankBankMetadataSchema = z.object({
-  bank_name: z.literal('Citibank'),
-  account_number: z
+  bankName: z.literal('Citibank'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -135,8 +135,8 @@ export const CitibankBankMetadataSchema = z.object({
 
 // Dinero Electronico ANDA - typically 8-12 digits
 export const DineroElectronicoANDABankMetadataSchema = z.object({
-  bank_name: z.literal('Dinero Electronico ANDA'),
-  account_number: z
+  bankName: z.literal('Dinero Electronico ANDA'),
+  accountNumber: z
     .string()
     .min(8, 'El número de cuenta debe tener al menos 8 dígitos')
     .max(12, 'El número de cuenta no puede tener más de 12 dígitos')
@@ -145,8 +145,8 @@ export const DineroElectronicoANDABankMetadataSchema = z.object({
 
 // FUCAC - typically 7-10 digits
 export const FUCACBankMetadataSchema = z.object({
-  bank_name: z.literal('FUCAC'),
-  account_number: z
+  bankName: z.literal('FUCAC'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -155,8 +155,8 @@ export const FUCACBankMetadataSchema = z.object({
 
 // FUCEREP - typically 7-10 digits
 export const FUCEREPBankMetadataSchema = z.object({
-  bank_name: z.literal('FUCEREP'),
-  account_number: z
+  bankName: z.literal('FUCEREP'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -165,8 +165,8 @@ export const FUCEREPBankMetadataSchema = z.object({
 
 // GRIN - typically 8-12 digits
 export const GRINBankMetadataSchema = z.object({
-  bank_name: z.literal('GRIN'),
-  account_number: z
+  bankName: z.literal('GRIN'),
+  accountNumber: z
     .string()
     .min(8, 'El número de cuenta debe tener al menos 8 dígitos')
     .max(12, 'El número de cuenta no puede tener más de 12 dígitos')
@@ -175,8 +175,8 @@ export const GRINBankMetadataSchema = z.object({
 
 // Heritage - typically 7-10 digits
 export const HeritageBankMetadataSchema = z.object({
-  bank_name: z.literal('Heritage'),
-  account_number: z
+  bankName: z.literal('Heritage'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -185,8 +185,8 @@ export const HeritageBankMetadataSchema = z.object({
 
 // HSBC - typically 7-10 digits
 export const HSBCBankMetadataSchema = z.object({
-  bank_name: z.literal('HSBC'),
-  account_number: z
+  bankName: z.literal('HSBC'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -195,8 +195,8 @@ export const HSBCBankMetadataSchema = z.object({
 
 // Mercadopago - typically 8-12 digits
 export const MercadopagoBankMetadataSchema = z.object({
-  bank_name: z.literal('Mercadopago'),
-  account_number: z
+  bankName: z.literal('Mercadopago'),
+  accountNumber: z
     .string()
     .min(8, 'El número de cuenta debe tener al menos 8 dígitos')
     .max(12, 'El número de cuenta no puede tener más de 12 dígitos')
@@ -205,8 +205,8 @@ export const MercadopagoBankMetadataSchema = z.object({
 
 // Midinero - typically 8-12 digits
 export const MidineroBankMetadataSchema = z.object({
-  bank_name: z.literal('Midinero'),
-  account_number: z
+  bankName: z.literal('Midinero'),
+  accountNumber: z
     .string()
     .min(8, 'El número de cuenta debe tener al menos 8 dígitos')
     .max(12, 'El número de cuenta no puede tener más de 12 dígitos')
@@ -215,8 +215,8 @@ export const MidineroBankMetadataSchema = z.object({
 
 // Santander - typically 7-10 digits
 export const SantanderBankMetadataSchema = z.object({
-  bank_name: z.literal('Santander'),
-  account_number: z
+  bankName: z.literal('Santander'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -225,8 +225,8 @@ export const SantanderBankMetadataSchema = z.object({
 
 // Scotiabank - typically 7-10 digits
 export const ScotiabankBankMetadataSchema = z.object({
-  bank_name: z.literal('Scotiabank'),
-  account_number: z
+  bankName: z.literal('Scotiabank'),
+  accountNumber: z
     .string()
     .min(7, 'El número de cuenta debe tener al menos 7 dígitos')
     .max(10, 'El número de cuenta no puede tener más de 10 dígitos')
@@ -235,9 +235,9 @@ export const ScotiabankBankMetadataSchema = z.object({
 
 /**
  * Discriminated union of all Uruguayan bank metadata schemas
- * Uses 'bank_name' as the discriminator field for type safety
+ * Uses 'bankName' as the discriminator field for type safety
  */
-export const UruguayanBankMetadataSchema = z.discriminatedUnion('bank_name', [
+export const UruguayanBankMetadataSchema = z.discriminatedUnion('bankName', [
   ItauBankMetadataSchema,
   OCABlueBankMetadataSchema,
   PREXBankMetadataSchema,
@@ -373,7 +373,7 @@ export const PayoutMethodPayPalSchema = z.object({
  *
  * Both frontend and backend can extend these schemas with additional fields:
  * - Backend: .and(z.object({ accountHolderName, accountHolderSurname, currency, isDefault }))
- * - Frontend: .and(z.object({ accountHolderName, accountHolderSurname, currency, bank_name, account_number, isDefault }))
+ * - Frontend: .and(z.object({ accountHolderName, accountHolderSurname, currency, bankName, accountNumber, isDefault }))
  */
 export const PayoutMethodBaseSchema = z.discriminatedUnion('payoutType', [
   PayoutMethodUruguayanBankSchema,

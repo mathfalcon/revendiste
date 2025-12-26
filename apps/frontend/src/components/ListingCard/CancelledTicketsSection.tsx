@@ -4,10 +4,10 @@ import {
   AccordionTrigger,
 } from '~/components/ui/accordion';
 import {Ticket} from 'lucide-react';
-import type {ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets} from '~/lib';
+import type {GetUserListingsResponse} from '~/lib/api/generated';
 
 interface CancelledTicketsSectionProps {
-  tickets: ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number]['tickets'];
+  tickets: GetUserListingsResponse[number]['tickets'];
   ticketWaveName: string;
 }
 

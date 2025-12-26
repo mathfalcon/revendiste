@@ -7,7 +7,7 @@ import {
   UsersRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
-import {NotFoundError, ValidationError} from '~/errors';
+import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
 import {canUploadDocumentForPlatform} from './platform-helpers';
 import {TICKET_LISTING_ERROR_MESSAGES} from '~/constants/error-messages';
@@ -130,6 +130,178 @@ export class TicketListingsService {
     });
 
     return enrichedListings;
+  }
+
+  /**
+   * Update ticket price
+   * Only active tickets (not reserved, sold, or cancelled) can be updated
+   */
+  async updateTicketPrice(ticketId: string, price: number, userId: string) {
+    // Get ticket with full information including reservation status
+    const ticket = await this.listingTicketsRepository.getTicketById(ticketId);
+
+    if (!ticket) {
+      throw new NotFoundError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_NOT_FOUND,
+      );
+    }
+
+    // Validate ticket belongs to user
+    if (ticket.publisherUserId !== userId) {
+      throw new UnauthorizedError(
+        TICKET_LISTING_ERROR_MESSAGES.UNAUTHORIZED_TICKET_ACCESS,
+      );
+    }
+
+    // Validate event hasn't ended
+    if (new Date() > ticket.eventEndDate) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.EVENT_FINISHED_FOR_UPDATE,
+      );
+    }
+
+    // Check if ticket is active (not sold, cancelled, or reserved)
+    const ticketWithReservation =
+      await this.listingTicketsRepository.getTicketWithReservationStatus(
+        ticketId,
+      );
+
+    if (!ticketWithReservation) {
+      throw new NotFoundError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_NOT_FOUND,
+      );
+    }
+
+    // Check specific states and throw specific errors
+    if (ticketWithReservation.soldAt !== null) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_SOLD,
+      );
+    }
+
+    if (ticketWithReservation.cancelledAt !== null) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_CANCELLED,
+      );
+    }
+
+    if (ticketWithReservation.deletedAt !== null) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_DELETED,
+      );
+    }
+
+    if (ticketWithReservation.reservationId !== null) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_RESERVED,
+      );
+    }
+
+    // Validate price > 0
+    if (price <= 0) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.INVALID_QUANTITY,
+      );
+    }
+
+    // Validate price doesn't exceed face value
+    if (price > Number(ticket.faceValue)) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_FACE_VALUE(
+          String(ticket.faceValue),
+          ticket.currency,
+        ),
+      );
+    }
+
+    // Update ticket price
+    const updatedTicket =
+      await this.listingTicketsRepository.updateTicketPrice(ticketId, price);
+
+    logger.info(`Updated ticket ${ticketId} price to ${price}`, {
+      ticketId,
+      userId,
+      newPrice: price,
+    });
+
+    return updatedTicket;
+  }
+
+  /**
+   * Remove (soft delete) a ticket
+   * Only active tickets (not reserved, sold, or cancelled) can be removed
+   */
+  async removeTicket(ticketId: string, userId: string) {
+    // Get ticket with full information
+    const ticket = await this.listingTicketsRepository.getTicketById(ticketId);
+
+    if (!ticket) {
+      throw new NotFoundError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_NOT_FOUND,
+      );
+    }
+
+    // Validate ticket belongs to user
+    if (ticket.publisherUserId !== userId) {
+      throw new UnauthorizedError(
+        TICKET_LISTING_ERROR_MESSAGES.UNAUTHORIZED_TICKET_ACCESS,
+      );
+    }
+
+    // Validate event hasn't ended
+    if (new Date() > ticket.eventEndDate) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.EVENT_FINISHED_FOR_UPDATE,
+      );
+    }
+
+    // Check if ticket is active (not sold, cancelled, or reserved)
+    const ticketWithReservation =
+      await this.listingTicketsRepository.getTicketWithReservationStatus(
+        ticketId,
+      );
+
+    if (!ticketWithReservation) {
+      throw new NotFoundError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_NOT_FOUND,
+      );
+    }
+
+    // Check specific states and throw specific errors
+    if (ticketWithReservation.soldAt !== null) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_SOLD,
+      );
+    }
+
+    if (ticketWithReservation.cancelledAt !== null) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_CANCELLED,
+      );
+    }
+
+    if (ticketWithReservation.deletedAt !== null) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_DELETED,
+      );
+    }
+
+    if (ticketWithReservation.reservationId !== null) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_RESERVED,
+      );
+    }
+
+    // Soft delete ticket
+    const deletedTicket =
+      await this.listingTicketsRepository.softDeleteTicket(ticketId);
+
+    logger.info(`Removed ticket ${ticketId}`, {
+      ticketId,
+      userId,
+    });
+
+    return deletedTicket;
   }
 
   /**

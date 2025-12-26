@@ -84,34 +84,44 @@ export function EarningsSelectionSection({
               </CardContent>
             </Card>
           ) : (
-            byListing.map(listing => (
-              <Card key={listing.listingId}>
-                <CardContent className='p-4'>
-                  <div className='flex items-start gap-3'>
-                    <Checkbox
-                      checked={selectedListingIds.includes(listing.listingId)}
-                      onCheckedChange={() =>
-                        onListingToggle(listing.listingId)
-                      }
-                    />
-                    <div className='flex-1'>
-                      <div className='flex items-center justify-between mb-2'>
-                        <span className='font-semibold'>
-                          Publicación {listing.listingId.slice(0, 8)}
-                        </span>
-                        <Badge variant='outline'>{listing.currency}</Badge>
-                      </div>
-                      <div className='text-sm text-muted-foreground space-y-1'>
-                        <div>
-                          Total: {formatCurrency(listing.totalAmount, listing.currency)}
+            byListing.map(listing => {
+              // Check if any tickets from this listing are selected
+              const hasSelectedTickets = byTicket.some(
+                ticket =>
+                  ticket.listingId === listing.listingId &&
+                  selectedTicketIds.includes(ticket.listingTicketId),
+              );
+
+              return (
+                <Card key={listing.listingId}>
+                  <CardContent className='p-4'>
+                    <div className='flex items-start gap-3'>
+                      <Checkbox
+                        checked={selectedListingIds.includes(listing.listingId)}
+                        disabled={hasSelectedTickets}
+                        onCheckedChange={() =>
+                          onListingToggle(listing.listingId)
+                        }
+                      />
+                      <div className='flex-1'>
+                        <div className='flex items-center justify-between mb-2'>
+                          <span className='font-semibold'>
+                            Publicación {listing.listingId.slice(0, 8)}
+                          </span>
+                          <Badge variant='outline'>{listing.currency}</Badge>
                         </div>
-                        <div>{listing.ticketCount} ticket(s)</div>
+                        <div className='text-sm text-muted-foreground space-y-1'>
+                          <div>
+                            Total: {formatCurrency(listing.totalAmount, listing.currency)}
+                          </div>
+                          <div>{listing.ticketCount} ticket(s)</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       ) : (
@@ -123,39 +133,49 @@ export function EarningsSelectionSection({
               </CardContent>
             </Card>
           ) : (
-            byTicket.map(ticket => (
-              <Card key={ticket.id}>
-                <CardContent className='p-4'>
-                  <div className='flex items-start gap-3'>
-                    <Checkbox
-                      checked={selectedTicketIds.includes(ticket.listingTicketId)}
-                      onCheckedChange={() =>
-                        onTicketToggle(ticket.listingTicketId)
-                      }
-                    />
-                    <div className='flex-1'>
-                      <div className='flex items-center justify-between mb-2'>
-                        <span className='font-semibold'>
-                          Ticket {ticket.listingTicketId.slice(0, 8)}
-                        </span>
-                        <Badge variant='outline'>{ticket.currency}</Badge>
-                      </div>
-                      <div className='text-sm text-muted-foreground space-y-1'>
-                        <div>
-                          Monto: {formatCurrency(ticket.sellerAmount, ticket.currency)}
-                        </div>
-                        {ticket.holdUntil && (
-                          <div>
-                            Disponible desde:{' '}
-                            {formatDate(ticket.holdUntil)}
-                          </div>
+            byTicket.map(ticket => {
+              // Check if the listing this ticket belongs to is selected
+              const isListingSelected = selectedListingIds.includes(
+                ticket.listingId,
+              );
+
+              return (
+                <Card key={ticket.id}>
+                  <CardContent className='p-4'>
+                    <div className='flex items-start gap-3'>
+                      <Checkbox
+                        checked={selectedTicketIds.includes(
+                          ticket.listingTicketId,
                         )}
+                        disabled={isListingSelected}
+                        onCheckedChange={() =>
+                          onTicketToggle(ticket.listingTicketId)
+                        }
+                      />
+                      <div className='flex-1'>
+                        <div className='flex items-center justify-between mb-2'>
+                          <span className='font-semibold'>
+                            Ticket {ticket.listingTicketId.slice(0, 8)}
+                          </span>
+                          <Badge variant='outline'>{ticket.currency}</Badge>
+                        </div>
+                        <div className='text-sm text-muted-foreground space-y-1'>
+                          <div>
+                            Monto: {formatCurrency(ticket.sellerAmount, ticket.currency)}
+                          </div>
+                          {ticket.holdUntil && (
+                            <div>
+                              Disponible desde:{' '}
+                              {formatDate(ticket.holdUntil)}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       )}

@@ -1,14 +1,11 @@
 import {useState} from 'react';
-import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
-import {
-  getPayoutMethodsQuery,
-  deletePayoutMethodMutation,
-} from '~/lib/api/payouts';
+import {useQuery, useQueryClient} from '@tanstack/react-query';
+import {getPayoutMethodsQuery} from '~/lib/api/payouts';
 import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
 import {Badge} from '~/components/ui/badge';
 import {Button} from '~/components/ui/button';
 import {PayoutMethodForm} from './PayoutMethodForm';
-import {maskAccountNumber, maskEmail} from '~/utils';
+import {DeletePayoutMethodDialog} from './DeletePayoutMethodDialog';
 import {LoadingSpinner} from '~/components/LoadingScreen';
 import {Edit, Trash2, Plus} from 'lucide-react';
 import {
@@ -18,19 +15,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '~/components/ui/dialog';
+import {PayoutType} from '~/lib/api/generated';
+import {
+  getBankName,
+  getEmail,
+  getAccountNumber,
+  getPayoutMethodDisplayName,
+} from './payout-method-utils';
 
 export function PayoutMethodsSection() {
   const queryClient = useQueryClient();
   const {data: payoutMethods, isPending} = useQuery(getPayoutMethodsQuery());
   const [editingMethod, setEditingMethod] = useState<string | null>(null);
+  const [deletingMethod, setDeletingMethod] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-
-  const deleteMethod = useMutation({
-    ...deletePayoutMethodMutation(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ['payouts', 'payout-methods']});
-    },
-  });
 
   if (isPending) {
     return (
@@ -87,11 +85,7 @@ export function PayoutMethodsSection() {
               <CardHeader>
                 <div className='flex items-center justify-between'>
                   <CardTitle className='text-base flex items-center gap-2'>
-                    {method.payoutType === 'paypal'
-                      ? 'PayPal'
-                      : method.metadata &&
-                        'bank_name' in method.metadata &&
-                        method.metadata.bank_name}
+                    {getPayoutMethodDisplayName(method)}
                     {method.isDefault && (
                       <Badge variant='secondary' className='text-xs'>
                         Por defecto
@@ -109,16 +103,7 @@ export function PayoutMethodsSection() {
                     <Button
                       variant='outline'
                       size='sm'
-                      onClick={() => {
-                        if (
-                          confirm(
-                            '¿Estás seguro de que deseas eliminar este método de pago?',
-                          )
-                        ) {
-                          deleteMethod.mutate(method.id);
-                        }
-                      }}
-                      disabled={deleteMethod.isPending}
+                      onClick={() => setDeletingMethod(method.id)}
                     >
                       <Trash2 className='h-4 w-4' />
                     </Button>
@@ -127,16 +112,28 @@ export function PayoutMethodsSection() {
               </CardHeader>
               <CardContent className='space-y-2'>
                 <div className='text-sm'>
+                  <span className='text-muted-foreground'>Tipo:</span>{' '}
+                  <Badge variant='outline'>
+                    {method.payoutType === PayoutType.Paypal
+                      ? 'PayPal'
+                      : 'Banco Uruguayo'}
+                  </Badge>
+                </div>
+                <div className='text-sm'>
                   <span className='text-muted-foreground'>
-                    {method.payoutType === 'paypal' ? 'Email:' : 'Cuenta:'}
+                    {method.payoutType === PayoutType.Paypal
+                      ? 'Email:'
+                      : 'Cuenta:'}
                   </span>{' '}
-                  {method.payoutType === 'paypal'
-                    ? method.metadata &&
-                      'email' in method.metadata &&
-                      maskEmail(method.metadata.email)
-                    : method.metadata &&
-                      'account_number' in method.metadata &&
-                      maskAccountNumber(method.metadata.account_number)}
+                  {method.payoutType === PayoutType.Paypal
+                    ? (() => {
+                        const email = getEmail(method.metadata);
+                        return email || 'N/A';
+                      })()
+                    : (() => {
+                        const accountNumber = getAccountNumber(method.metadata);
+                        return accountNumber || 'N/A';
+                      })()}
                 </div>
                 <div className='text-sm'>
                   <span className='text-muted-foreground'>Titular:</span>{' '}
@@ -172,6 +169,16 @@ export function PayoutMethodsSection() {
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {deletingMethod && payoutMethods && (
+        <DeletePayoutMethodDialog
+          open={deletingMethod !== null}
+          onOpenChange={open => {
+            if (!open) setDeletingMethod(null);
+          }}
+          method={payoutMethods.find(m => m.id === deletingMethod)!}
+        />
       )}
     </div>
   );

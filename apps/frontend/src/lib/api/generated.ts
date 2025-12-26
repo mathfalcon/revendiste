@@ -195,6 +195,15 @@ export interface CreateTicketListingResponse {
     price: string;
     listingId: string;
     /** @format date-time */
+    documentUploadRequiredNotifiedAt: string | null;
+    /** @format date-time */
+    documentUploadedAt: string | null;
+    documentType: string | null;
+    /** @format double */
+    documentSizeBytes: number | null;
+    documentPath: string | null;
+    documentOriginalName: string | null;
+    /** @format date-time */
     cancelledAt: string | null;
     /** @format date-time */
     soldAt: string | null;
@@ -267,6 +276,7 @@ export type GetUserListingsResponse = {
     description: string | null;
   };
   ticketWave: {
+    faceValue: string;
     currency: EventTicketCurrency;
     name: string;
     id: string;
@@ -326,6 +336,65 @@ export interface UploadDocumentResponse {
     /** @format date-time */
     createdAt: string;
   };
+}
+
+export interface UpdateTicketPriceResponse {
+  /** @format double */
+  ticketNumber: number;
+  price: string;
+  listingId: string;
+  /** @format date-time */
+  documentUploadRequiredNotifiedAt: string | null;
+  /** @format date-time */
+  documentUploadedAt: string | null;
+  documentType: string | null;
+  /** @format double */
+  documentSizeBytes: number | null;
+  documentPath: string | null;
+  documentOriginalName: string | null;
+  /** @format date-time */
+  cancelledAt: string | null;
+  /** @format date-time */
+  soldAt: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface UpdateTicketPriceRouteBody {
+  /** @format double */
+  price: number;
+}
+
+export interface RemoveTicketResponse {
+  /** @format double */
+  ticketNumber: number;
+  price: string;
+  listingId: string;
+  /** @format date-time */
+  documentUploadRequiredNotifiedAt: string | null;
+  /** @format date-time */
+  documentUploadedAt: string | null;
+  documentType: string | null;
+  /** @format double */
+  documentSizeBytes: number | null;
+  documentPath: string | null;
+  documentOriginalName: string | null;
+  /** @format date-time */
+  cancelledAt: string | null;
+  /** @format date-time */
+  soldAt: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
 }
 
 export interface CreateOrderResponse {
@@ -1322,6 +1391,48 @@ export class Api<
         method: "PUT",
         body: data,
         type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Update ticket price Only active tickets (not reserved, sold, or cancelled) can have their price updated. Price cannot exceed the ticket wave face value.
+     *
+     * @tags Ticket Listings
+     * @name UpdateTicketPrice
+     * @request PUT:/ticket-listings/tickets/{ticketId}/price
+     */
+    updateTicketPrice: (
+      ticketId: string,
+      data: UpdateTicketPriceRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UpdateTicketPriceResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-listings/tickets/${ticketId}/price`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Remove a ticket from listing Only active tickets (not reserved, sold, or cancelled) can be removed. This performs a soft delete (sets deletedAt timestamp).
+     *
+     * @tags Ticket Listings
+     * @name RemoveTicket
+     * @request DELETE:/ticket-listings/tickets/{ticketId}
+     */
+    removeTicket: (ticketId: string, params: RequestParams = {}) =>
+      this.request<
+        RemoveTicketResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-listings/tickets/${ticketId}`,
+        method: "DELETE",
         format: "json",
         ...params,
       }),

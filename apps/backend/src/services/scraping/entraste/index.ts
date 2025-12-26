@@ -13,7 +13,7 @@ import {
   trimTextAndDefaultToEmpty,
   logger,
 } from '~/utils';
-import {addMinutes, isPast, setYear} from 'date-fns';
+import {addMinutes, isPast, setYear, differenceInDays} from 'date-fns';
 import {Page} from 'playwright';
 
 enum RequestLabel {
@@ -125,7 +125,7 @@ export class EntrasteScraper extends BaseScraper {
    */
   private async extractDateTimeInfo(
     page: any,
-    ): Promise<{startDate: Date | undefined; endDate: Date | undefined}> {
+  ): Promise<{startDate: Date | undefined; endDate: Date | undefined}> {
     const dateTimeText = trimTextAndDefaultToEmpty(
       await page.textContent('.event-dates p'),
     );
@@ -194,7 +194,14 @@ export class EntrasteScraper extends BaseScraper {
       timezone: 'America/Montevideo',
     });
 
-    const eventIsNextYear = isPast(startDate) && isPast(endDate);
+    const now = new Date();
+    const daysSinceStart = differenceInDays(now, startDate);
+    const daysSinceEnd = differenceInDays(now, endDate);
+    const SIGNIFICANT_PAST_THRESHOLD_DAYS = 5;
+    const eventIsNextYear =
+      daysSinceStart > SIGNIFICANT_PAST_THRESHOLD_DAYS &&
+      daysSinceEnd > SIGNIFICANT_PAST_THRESHOLD_DAYS;
+
     if (eventIsNextYear) {
       setYear(startDate, new Date().getFullYear() + 1);
       setYear(endDate, new Date().getFullYear() + 1);
@@ -212,23 +219,18 @@ export class EntrasteScraper extends BaseScraper {
     endDate: Date | undefined;
   } {
     logger.debug('Parsing single-day event date string:', dateString);
-    
-    // Normalize the string - replace line breaks and extra whitespace with single space
     const normalizedString = dateString.replace(/\s+/g, ' ').trim();
     
-    // Pattern 1: "Jueves 21 de agosto desde las 23:59 hasta las 06:00" (with end time)
     let dateTimeMatch = normalizedString.match(
       /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s*(?:desde\s+)?las\s+(\d+):(\d+)\s+hasta\s+las\s+(\d+):(\d+)/,
     );
 
-    // Pattern 2: "viernes 12 de diciembre a las 23:59" (only start time, no end time)
     if (!dateTimeMatch) {
       dateTimeMatch = normalizedString.match(
         /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+a\s+las\s+(\d+):(\d+)/,
       );
       
       if (dateTimeMatch) {
-        // Handle events with only start time - assume default duration
         const [
           _fullMatch,
           _dayOfWeek,
@@ -251,18 +253,15 @@ export class EntrasteScraper extends BaseScraper {
             timezone: 'America/Montevideo',
           });
 
-          // For events without explicit end time, assume a default duration
-          // If event starts late (after 20:00), assume it goes until 06:00 next day
-          // Otherwise, assume 6 hours duration
           const startHourNum = parseInt(startHour);
           let endDate: Date;
           
           if (startHourNum >= 20) {
-            // Late night event - assume it goes until 06:00 next day
-            endDate = addMinutes(startDate, (24 * 60) - (startHourNum * 60 + parseInt(startMinute)) + (6 * 60));
+            const minutesUntilMidnight = (24 * 60) - (startHourNum * 60 + parseInt(startMinute));
+            const minutesUntil6AM = 6 * 60;
+            endDate = addMinutes(startDate, minutesUntilMidnight + minutesUntil6AM);
             logger.debug('Late night event - assuming end time 06:00 next day');
           } else {
-            // Regular event - assume 6 hours duration
             endDate = addMinutes(startDate, 6 * 60);
             logger.debug('Regular event - assuming 6 hours duration');
           }
@@ -305,20 +304,17 @@ export class EntrasteScraper extends BaseScraper {
         timezone: 'America/Montevideo',
       });
 
-      // Calculate the time difference to determine end date
       const startHourNum = parseInt(startHour);
       const startMinuteNum = parseInt(startMinute);
       const endHourNum = parseInt(endHour);
       const endMinuteNum = parseInt(endMinute);
 
-      // Calculate total minutes from start to end
       let totalMinutes = 0;
 
       if (
         endHourNum < startHourNum ||
         (endHourNum === startHourNum && endMinuteNum < startMinuteNum)
       ) {
-        // Event crosses midnight - calculate time until midnight + time from midnight
         const minutesUntilMidnight =
           24 * 60 - (startHourNum * 60 + startMinuteNum);
         const minutesFromMidnight = endHourNum * 60 + endMinuteNum;
@@ -327,7 +323,6 @@ export class EntrasteScraper extends BaseScraper {
           `Event crosses midnight: ${totalMinutes} total minutes (${minutesUntilMidnight} until midnight + ${minutesFromMidnight} from midnight)`,
         );
       } else {
-        // Event ends on the same day
         totalMinutes =
           endHourNum * 60 + endMinuteNum - (startHourNum * 60 + startMinuteNum);
         logger.debug(`Event ends same day: ${totalMinutes} total minutes`);

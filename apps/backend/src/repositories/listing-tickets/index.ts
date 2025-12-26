@@ -101,8 +101,11 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'listingTickets.ticketNumber',
         'listingTickets.price',
         'listingTickets.soldAt',
+        'listingTickets.cancelledAt',
         'listings.publisherUserId',
         'eventTicketWaves.name as ticketWaveName',
+        'eventTicketWaves.faceValue',
+        'eventTicketWaves.currency',
         'eventTicketWaves.eventId',
         'events.name as eventName',
         'events.eventStartDate',
@@ -110,8 +113,65 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       ])
       .where('listingTickets.id', '=', ticketId)
       .where('listingTickets.deletedAt', 'is', null)
-      .where('listingTickets.cancelledAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
+      .executeTakeFirst();
+  }
+
+  /**
+   * Get ticket with reservation status
+   * Checks if ticket has an active reservation
+   */
+  async getTicketWithReservationStatus(ticketId: string) {
+    return await this.db
+      .selectFrom('listingTickets')
+      .leftJoin('orderTicketReservations', join =>
+        join
+          .onRef(
+            'orderTicketReservations.listingTicketId',
+            '=',
+            'listingTickets.id',
+          )
+          .on('orderTicketReservations.deletedAt', 'is', null)
+          .on('orderTicketReservations.reservedUntil', '>', new Date()),
+      )
+      .select([
+        'listingTickets.id',
+        'listingTickets.soldAt',
+        'listingTickets.cancelledAt',
+        'listingTickets.deletedAt',
+        'orderTicketReservations.id as reservationId',
+      ])
+      .where('listingTickets.id', '=', ticketId)
+      .executeTakeFirst();
+  }
+
+  /**
+   * Update ticket price
+   */
+  async updateTicketPrice(ticketId: string, price: number) {
+    return await this.db
+      .updateTable('listingTickets')
+      .set({
+        price: price.toString(),
+        updatedAt: new Date(),
+      })
+      .where('id', '=', ticketId)
+      .returningAll()
+      .executeTakeFirst();
+  }
+
+  /**
+   * Soft delete a ticket
+   */
+  async softDeleteTicket(ticketId: string) {
+    return await this.db
+      .updateTable('listingTickets')
+      .set({
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where('id', '=', ticketId)
+      .returningAll()
       .executeTakeFirst();
   }
 

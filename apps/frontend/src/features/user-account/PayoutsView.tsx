@@ -25,26 +25,70 @@ export function PayoutsView() {
 
   const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
   const [selectedTicketIds, setSelectedTicketIds] = useState<string[]>([]);
+  const [accordionValue, setAccordionValue] = useState<string[]>([
+    'balance',
+    'earnings',
+    'methods',
+  ]);
 
   const handleListingToggle = (listingId: string) => {
-    setSelectedListingIds(prev =>
-      prev.includes(listingId)
-        ? prev.filter(id => id !== listingId)
-        : [...prev, listingId],
-    );
+    setSelectedListingIds(prev => {
+      const isSelected = prev.includes(listingId);
+      
+      if (isSelected) {
+        // Deselecting listing - just remove it
+        return prev.filter(id => id !== listingId);
+      } else {
+        // Selecting listing - remove all tickets that belong to this listing
+        if (availableEarnings) {
+          const ticketsInListing = availableEarnings.byTicket
+            .filter(ticket => ticket.listingId === listingId)
+            .map(ticket => ticket.listingTicketId);
+          
+          setSelectedTicketIds(current =>
+            current.filter(id => !ticketsInListing.includes(id)),
+          );
+        }
+        return [...prev, listingId];
+      }
+    });
   };
 
   const handleTicketToggle = (ticketId: string) => {
-    setSelectedTicketIds(prev =>
-      prev.includes(ticketId)
-        ? prev.filter(id => id !== ticketId)
-        : [...prev, ticketId],
-    );
+    setSelectedTicketIds(prev => {
+      const isSelected = prev.includes(ticketId);
+      
+      if (isSelected) {
+        // Deselecting ticket - just remove it
+        return prev.filter(id => id !== ticketId);
+      } else {
+        // Selecting ticket - if its listing is selected, remove the listing
+        if (availableEarnings) {
+          const ticket = availableEarnings.byTicket.find(
+            t => t.listingTicketId === ticketId,
+          );
+          
+          if (ticket && selectedListingIds.includes(ticket.listingId)) {
+            setSelectedListingIds(current =>
+              current.filter(id => id !== ticket.listingId),
+            );
+          }
+        }
+        return [...prev, ticketId];
+      }
+    });
   };
 
   const handlePayoutSuccess = () => {
     setSelectedListingIds([]);
     setSelectedTicketIds([]);
+    // Open historial section to show the new payout
+    setAccordionValue(prev => {
+      if (Array.isArray(prev)) {
+        return prev.includes('history') ? prev : [...prev, 'history'];
+      }
+      return ['history'];
+    });
   };
 
   if (balancePending || earningsPending) {
@@ -68,7 +112,8 @@ export function PayoutsView() {
 
       <Accordion
         type='multiple'
-        defaultValue={['balance', 'earnings', 'methods']}
+        value={accordionValue}
+        onValueChange={setAccordionValue}
         className='w-full flex flex-col gap-4'
       >
         {/* Balance Section */}

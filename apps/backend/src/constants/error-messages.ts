@@ -60,6 +60,15 @@ export const TICKET_LISTING_ERROR_MESSAGES = {
   PRICE_EXCEEDS_FACE_VALUE: (faceValue: string, currency: string) =>
     `El precio no puede exceder el valor nominal de ${faceValue} ${currency}`,
   INVALID_QUANTITY: 'La cantidad debe ser mayor que 0',
+  TICKET_NOT_FOUND: 'Ticket no encontrado',
+  UNAUTHORIZED_TICKET_ACCESS: 'No estás autorizado para modificar este ticket',
+  TICKET_SOLD: 'No se puede modificar un ticket que ya ha sido vendido',
+  TICKET_CANCELLED: 'No se puede modificar un ticket que ha sido cancelado',
+  TICKET_RESERVED:
+    'No se puede modificar un ticket que está reservado en una orden',
+  TICKET_DELETED: 'No se puede modificar un ticket que ha sido eliminado',
+  EVENT_FINISHED_FOR_UPDATE:
+    'No se puede modificar un ticket de un evento que ya ha terminado',
 } as const;
 
 // Error messages for ticket documents
@@ -102,8 +111,7 @@ export const PAYMENT_ERROR_MESSAGES = {
 // Error messages for notifications
 export const NOTIFICATION_ERROR_MESSAGES = {
   NOTIFICATION_NOT_FOUND: 'Notificación no encontrada',
-  UNAUTHORIZED_ACCESS:
-    'No estás autorizado para acceder a esta notificación',
+  UNAUTHORIZED_ACCESS: 'No estás autorizado para acceder a esta notificación',
   INVALID_CHANNELS: 'Los canales de notificación especificados no son válidos',
   USER_NOT_FOUND: 'Usuario no encontrado',
   EMAIL_SEND_FAILED: (error: string) =>

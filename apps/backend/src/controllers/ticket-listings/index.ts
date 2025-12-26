@@ -3,6 +3,7 @@ import {
   Route,
   Post,
   Put,
+  Delete,
   Get,
   Tags,
   Middlewares,
@@ -31,6 +32,8 @@ import {
 import {
   CreateTicketListingRouteBody,
   CreateTicketListingRouteSchema,
+  UpdateTicketPriceRouteBody,
+  UpdateTicketPriceRouteSchema,
 } from './validation';
 import {Body, ValidateBody} from '~/decorators';
 
@@ -45,6 +48,12 @@ type GetUserListingsResponse = ReturnType<
 type UploadDocumentResponse = Awaited<
   ReturnType<TicketDocumentService['uploadTicketDocument']>
 >;
+
+type UpdateTicketPriceResponse = ReturnType<
+  TicketListingsService['updateTicketPrice']
+>;
+
+type RemoveTicketResponse = ReturnType<TicketListingsService['removeTicket']>;
 
 @Route('ticket-listings')
 @Tags('Ticket Listings')
@@ -176,5 +185,64 @@ export class TicketListingsController {
         sizeBytes: file.size,
       },
     );
+  }
+
+  /**
+   * Update ticket price
+   *
+   * Only active tickets (not reserved, sold, or cancelled) can have their price updated.
+   * Price cannot exceed the ticket wave face value.
+   *
+   * @param ticketId - ID of the ticket
+   * @param body - Request body containing the new price
+   */
+  @Put('/tickets/{ticketId}/price')
+  @Response<UnauthorizedError>(
+    401,
+    'Authentication required or not authorized to modify this ticket',
+  )
+  @Response<NotFoundError>(404, 'Ticket not found')
+  @Response<ValidationError>(
+    422,
+    'Validation failed: ticket not active, event has ended, or price exceeds face value',
+  )
+  @Middlewares(requireAuthMiddleware)
+  @ValidateBody(UpdateTicketPriceRouteSchema)
+  public async updateTicketPrice(
+    @Path() ticketId: string,
+    @Body() body: UpdateTicketPriceRouteBody,
+    @Request() request: express.Request,
+  ): Promise<UpdateTicketPriceResponse> {
+    return this.service.updateTicketPrice(
+      ticketId,
+      body.price,
+      request.user.id,
+    );
+  }
+
+  /**
+   * Remove a ticket from listing
+   *
+   * Only active tickets (not reserved, sold, or cancelled) can be removed.
+   * This performs a soft delete (sets deletedAt timestamp).
+   *
+   * @param ticketId - ID of the ticket to remove
+   */
+  @Delete('/tickets/{ticketId}')
+  @Response<UnauthorizedError>(
+    401,
+    'Authentication required or not authorized to modify this ticket',
+  )
+  @Response<NotFoundError>(404, 'Ticket not found')
+  @Response<ValidationError>(
+    422,
+    'Validation failed: ticket not active or event has ended',
+  )
+  @Middlewares(requireAuthMiddleware)
+  public async removeTicket(
+    @Path() ticketId: string,
+    @Request() request: express.Request,
+  ): Promise<RemoveTicketResponse> {
+    return this.service.removeTicket(ticketId, request.user.id);
   }
 }

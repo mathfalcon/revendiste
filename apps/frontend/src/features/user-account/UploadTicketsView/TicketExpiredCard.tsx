@@ -8,11 +8,11 @@ import {
 import {Badge} from '~/components/ui/badge';
 import {Calendar, XCircle} from 'lucide-react';
 import {formatEventDate} from '~/utils/string';
-import type {ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets} from '~/lib';
+import type {GetUserListingsResponse} from '~/lib/api/generated';
 
 interface TicketExpiredCardProps {
-  ticket: ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number]['tickets'][number] & {
-    listing: ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number];
+  ticket: GetUserListingsResponse[number]['tickets'][number] & {
+    listing: GetUserListingsResponse[number];
   };
 }
 

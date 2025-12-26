@@ -1,5 +1,5 @@
 import {TZDate} from '@date-fns/tz';
-import {isPast, setYear} from 'date-fns';
+import {isPast, setYear, differenceInDays} from 'date-fns';
 import {es} from 'date-fns/locale';
 
 export class DateUtils {
@@ -28,7 +28,14 @@ export class DateUtils {
   }
 
   static fixNextYearEdgeCase(startDate: Date, endDate: Date) {
-    const eventIsNextYear = isPast(startDate) && isPast(endDate);
+    const now = new Date();
+    const daysSinceStart = differenceInDays(now, startDate);
+    const daysSinceEnd = differenceInDays(now, endDate);
+    const SIGNIFICANT_PAST_THRESHOLD_DAYS = 5;
+    const eventIsNextYear =
+      daysSinceStart > SIGNIFICANT_PAST_THRESHOLD_DAYS &&
+      daysSinceEnd > SIGNIFICANT_PAST_THRESHOLD_DAYS;
+
     if (eventIsNextYear) {
       startDate = setYear(startDate, new Date().getFullYear() + 1);
       endDate = setYear(endDate, new Date().getFullYear() + 1);

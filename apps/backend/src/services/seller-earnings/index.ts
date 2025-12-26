@@ -54,7 +54,8 @@ export class SellerEarningsService {
    */
   async createEarningFromSale(listingTicketId: string): Promise<void> {
     // Get listing ticket with price and event end date via joins
-    const ticketData = await this.sellerEarningsRepository.getDb()
+    const ticketData = await this.sellerEarningsRepository
+      .getDb()
       .selectFrom('listingTickets')
       .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
       .innerJoin(
@@ -82,7 +83,8 @@ export class SellerEarningsService {
     }
 
     // Get seller user ID from listing
-    const listing = await this.sellerEarningsRepository.getDb()
+    const listing = await this.sellerEarningsRepository
+      .getDb()
       .selectFrom('listings')
       .select(['listings.publisherUserId'])
       .where('listings.id', '=', ticketData.listingId)
@@ -200,12 +202,14 @@ export class SellerEarningsService {
    * Background job logic to release holds
    * Finds earnings where hold_until <= NOW() and status = 'pending'
    * Updates to 'available' if no reports, 'retained' if reports exist
+   * Processes in batches to avoid transactional issues
    */
-  async checkHoldPeriods(): Promise<{
+  async checkHoldPeriods(limit: number = 100): Promise<{
     released: number;
     retained: number;
   }> {
-    const earningsReady = await this.sellerEarningsRepository.getEarningsReadyForRelease();
+    const earningsReady =
+      await this.sellerEarningsRepository.getEarningsReadyForRelease(limit);
 
     if (earningsReady.length === 0) {
       logger.debug('No earnings ready for release');
@@ -216,19 +220,29 @@ export class SellerEarningsService {
     // For now, assume no reports exist and release all
     const earningsToRelease = earningsReady.map(e => e.id);
 
-    await this.sellerEarningsRepository.updateStatus(
-      earningsToRelease,
-      'available',
-    );
+    // Process in batches to avoid transactional issues
+    const BATCH_SIZE = 50;
+    let totalReleased = 0;
+
+    for (let i = 0; i < earningsToRelease.length; i += BATCH_SIZE) {
+      const batch = earningsToRelease.slice(i, i + BATCH_SIZE);
+
+      // Update each batch in a transaction
+      await this.sellerEarningsRepository.executeTransaction(async trx => {
+        const repo = this.sellerEarningsRepository.withTransaction(trx);
+        await repo.updateStatus(batch, 'available');
+      });
+
+      totalReleased += batch.length;
+    }
 
     logger.info('Released earnings from hold period', {
-      count: earningsToRelease.length,
+      count: totalReleased,
     });
 
     return {
-      released: earningsToRelease.length,
+      released: totalReleased,
       retained: 0, // TODO: Update when reports system is implemented
     };
   }
 }
-

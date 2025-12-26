@@ -178,18 +178,39 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .where('status', '=', 'available')
       .where('deletedAt', 'is', null);
 
+    // Build WHERE conditions - use OR if both listingTicketIds and listingIds are provided
     if (listingTicketIds && listingTicketIds.length > 0) {
-      query = query.where('listingTicketId', 'in', listingTicketIds);
-    }
+      if (listingIds && listingIds.length > 0) {
+        // Both provided - use OR condition
+        const listingTicketIdsSubquery = this.db
+          .selectFrom('listingTickets')
+          .select('listingTickets.id')
+          .where('listingTickets.listingId', 'in', listingIds)
+          .where('listingTickets.deletedAt', 'is', null);
 
-    if (listingIds && listingIds.length > 0) {
-      query = query
-        .innerJoin(
-          'listingTickets',
-          'sellerEarnings.listingTicketId',
-          'listingTickets.id',
-        )
-        .where('listingTickets.listingId', 'in', listingIds);
+        query = query.where(eb =>
+          eb.or([
+            eb('sellerEarnings.listingTicketId', 'in', listingTicketIds),
+            eb(
+              'sellerEarnings.listingTicketId',
+              'in',
+              listingTicketIdsSubquery,
+            ),
+          ]),
+        );
+      } else {
+        // Only listingTicketIds provided
+        query = query.where('listingTicketId', 'in', listingTicketIds);
+      }
+    } else if (listingIds && listingIds.length > 0) {
+      // Only listingIds provided - use subquery
+      const listingTicketIdsSubquery = this.db
+        .selectFrom('listingTickets')
+        .select('listingTickets.id')
+        .where('listingTickets.listingId', 'in', listingIds)
+        .where('listingTickets.deletedAt', 'is', null);
+
+      query = query.where('listingTicketId', 'in', listingTicketIdsSubquery);
     }
 
     return await query.execute();
@@ -318,7 +339,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .execute();
   }
 
-  async getEarningsReadyForRelease() {
+  async getEarningsReadyForRelease(limit: number = 100) {
     const now = new Date();
     return await this.db
       .selectFrom('sellerEarnings')
@@ -326,6 +347,8 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .where('holdUntil', '<=', now)
       .where('status', '=', 'pending')
       .where('deletedAt', 'is', null)
+      .orderBy('holdUntil', 'asc')
+      .limit(limit)
       .execute();
   }
 

@@ -18,10 +18,12 @@ import {toast} from 'sonner';
 import {calculateOrderFees} from '~/utils';
 import {useUser} from '@clerk/tanstack-react-start';
 import {useNavigate} from '@tanstack/react-router';
-import {useMutation} from '@tanstack/react-query';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {postOrderMutation} from '~/lib/api/order';
 import {useFormPersist} from '~/hooks';
 import {redirectToLogin} from '~/utils';
+import {getEventByIdQuery, PendingOrderErrorResponse} from '~/lib';
+import {AxiosError} from 'axios';
 
 type EventRightSideProps = Pick<GetEventByIdResponse, 'ticketWaves'> & {
   eventId: string;
@@ -42,6 +44,7 @@ export const EventRightSide = (props: EventRightSideProps) => {
   const {ticketWaves, eventId} = props;
   const {isLoaded, isSignedIn} = useUser();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const form = useForm<TicketSelectionFormValues>({
     resolver: zodResolver(TicketSelectionSchema),
@@ -63,8 +66,8 @@ export const EventRightSide = (props: EventRightSideProps) => {
     timeout: 1000 * 60 * 15, // 15 minutes
   });
 
-  const createOrderMutation = useMutation(
-    postOrderMutation({
+  const createOrderMutation = useMutation({
+    ...postOrderMutation({
       onOrderCreated: orderId => {
         form.reset();
         clearPersistedData();
@@ -85,7 +88,26 @@ export const EventRightSide = (props: EventRightSideProps) => {
         });
       },
     }),
-  );
+    onError: (error: unknown) => {
+      // Skip refetch for pending order case (handled separately)
+      if (error instanceof AxiosError) {
+        const errorData = error.response?.data as
+          | PendingOrderErrorResponse
+          | undefined;
+
+        if (errorData?.statusCode === 422 && errorData?.metadata?.orderId) {
+          // This is a pending order case, don't refetch
+          return;
+        }
+      }
+
+      // Refetch event data to get updated available tickets when order creation fails
+      // This ensures the UI shows the current availability after an error
+      void queryClient.invalidateQueries({
+        queryKey: getEventByIdQuery(eventId).queryKey,
+      });
+    },
+  });
 
   // Filter ticket waves that have available tickets
   const availableTicketWaves = ticketWaves.filter(ticketWave =>
