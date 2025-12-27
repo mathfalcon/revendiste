@@ -6,6 +6,7 @@ import {
   PayPalPayoutMethodSchema,
   type UruguayanBankMetadata,
   type PayPalMetadata,
+  type JsonValue,
 } from '@revendiste/shared';
 import {logger} from '~/utils';
 import type {EventTicketCurrency} from '@revendiste/shared';
@@ -91,7 +92,7 @@ export class PayoutMethodsService {
       payoutType,
       ...rest,
       isDefault: false, // Always create as non-default first
-      metadata: validatedMetadata as unknown as Record<string, unknown>,
+      metadata: validatedMetadata as unknown as JsonValue,
     });
 
     // If setting as default, set it as default after creation
@@ -136,13 +137,13 @@ export class PayoutMethodsService {
     }
 
     // Validate metadata if provided
-    let validatedMetadata: Record<string, unknown> | undefined;
+    let validatedMetadata: JsonValue | undefined;
     if (updates.metadata) {
       const validated = this.validatePayoutMethodMetadata(
         payoutMethod.payoutType,
         updates.metadata,
       );
-      validatedMetadata = validated as unknown as Record<string, unknown>;
+      validatedMetadata = validated as unknown as JsonValue;
     }
 
     // Extract isDefault from updates to handle separately

@@ -1,5 +1,5 @@
 import {Kysely} from 'kysely';
-import {DB} from '@revendiste/shared';
+import {DB, JsonValue} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 
 export class PayoutEventsRepository extends BaseRepository<PayoutEventsRepository> {
@@ -19,7 +19,7 @@ export class PayoutEventsRepository extends BaseRepository<PayoutEventsRepositor
       | 'cancelled';
     fromStatus?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
     toStatus?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-    eventData?: Record<string, unknown>;
+    eventData?: JsonValue;
     createdBy?: string;
     ipAddress?: string;
     userAgent?: string;

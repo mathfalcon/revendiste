@@ -1,5 +1,5 @@
 import {Kysely} from 'kysely';
-import {DB, EventTicketCurrency} from '@revendiste/shared';
+import {DB, EventTicketCurrency, JsonValue} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 
 export class PayoutMethodsRepository extends BaseRepository<PayoutMethodsRepository> {
@@ -14,7 +14,7 @@ export class PayoutMethodsRepository extends BaseRepository<PayoutMethodsReposit
     accountHolderSurname: string;
     currency: EventTicketCurrency;
     isDefault: boolean;
-    metadata: Record<string, unknown>;
+    metadata: JsonValue;
   }) {
     return await this.db
       .insertInto('payoutMethods')
@@ -86,7 +86,7 @@ export class PayoutMethodsRepository extends BaseRepository<PayoutMethodsReposit
       accountHolderSurname?: string;
       currency?: EventTicketCurrency;
       isDefault?: boolean;
-      metadata?: Record<string, unknown>;
+      metadata?: JsonValue;
     },
   ) {
     return await this.db
@@ -113,4 +113,3 @@ export class PayoutMethodsRepository extends BaseRepository<PayoutMethodsReposit
       .executeTakeFirst();
   }
 }
-
