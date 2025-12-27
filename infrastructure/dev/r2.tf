@@ -26,6 +26,6 @@ resource "cloudflare_r2_custom_domain" "dev_cdn" {
   account_id  = var.cloudflare_account_id
   bucket_name = cloudflare_r2_bucket.dev_public.name
   domain      = "cdn-${var.environment}.revendiste.com"
-  zone_id     = data.cloudflare_zones.main.zones[0].id
+  zone_id     = data.cloudflare_zones.main.result[0].id
   enabled     = true
 }
