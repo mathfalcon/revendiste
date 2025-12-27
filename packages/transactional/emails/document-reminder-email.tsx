@@ -31,25 +31,25 @@ export const DocumentReminderEmail = ({
 
   return (
     <BaseEmail
-      title="Recordatorio: Sube los documentos de tus tickets"
-      preview={`El evento "${eventName}" comienza en ${hoursText}`}
+      title="Recordatorio: Subí los documentos de tus tickets"
+      preview={`El evento "${eventName}" empieza en ${hoursText}`}
       appBaseUrl={appBaseUrl}
     >
       <Text className="text-foreground mb-4">
-        El evento <strong>{eventName}</strong> comienza en{' '}
+        Che, el evento <strong>{eventName}</strong> empieza en{' '}
         <strong>{hoursText}</strong>.
       </Text>
 
       <Text className="text-foreground mb-4">
-        Aún tienes{' '}
+        Todavía tenés{' '}
         <strong>
           {ticketCount}{' '}
           {ticketCount === 1
             ? 'ticket sin documentar'
             : 'tickets sin documentar'}
         </strong>
-        . Por favor, sube los documentos lo antes posible para evitar
-        inconvenientes.
+        . Por favor, subí los documentos lo antes posible para evitar
+        problemas.
       </Text>
 
       <Section className="bg-muted p-4 rounded-md mb-6">
@@ -78,7 +78,7 @@ export const DocumentReminderEmail = ({
       </Section>
 
       <Text className="text-sm text-muted-foreground mb-0">
-        La subida de documentos es obligatoria para completar la venta de tus
+        Subir los documentos es obligatorio para completar la venta de tus
         tickets.
       </Text>
     </BaseEmail>

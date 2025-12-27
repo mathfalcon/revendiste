@@ -22,13 +22,13 @@ export const PaymentFailedEmail = ({
   appBaseUrl,
 }: PaymentFailedEmailProps) => (
   <BaseEmail
-    title="Pago fallido"
-    preview={`El pago para tu orden de ${eventName} ha fallado`}
+    title="El pago falló"
+    preview={`El pago para tu orden de ${eventName} falló`}
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      El pago para tu orden de <strong>{eventName}</strong> no pudo ser
-      procesado.
+      El pago para tu orden de <strong>{eventName}</strong> no se pudo
+      procesar.
     </Text>
 
     {errorMessage && (
@@ -48,8 +48,8 @@ export const PaymentFailedEmail = ({
     )}
 
     <Text className="text-foreground mb-6">
-      Por favor, verifica los datos de tu método de pago e intenta nuevamente.
-      Si el problema persiste, contacta con tu banco o método de pago.
+      Por favor, verificá los datos de tu método de pago e intentá de nuevo.
+      Si el problema sigue, contactá con tu banco o método de pago.
     </Text>
 
     <Section className="text-center mb-6">
@@ -62,8 +62,8 @@ export const PaymentFailedEmail = ({
     </Section>
 
     <Text className="text-sm text-muted-foreground mb-0">
-      Tu orden se mantendrá reservada por un tiempo limitado. Si no completas el
-      pago, la orden expirará y las entradas estarán disponibles nuevamente.
+      Tu orden se va a mantener reservada por un tiempo limitado. Si no completás el
+      pago, la orden va a expirar y las entradas van a estar disponibles de nuevo.
     </Text>
   </BaseEmail>
 );

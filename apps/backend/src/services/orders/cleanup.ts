@@ -3,8 +3,11 @@ import type {DB} from '@revendiste/shared';
 import {
   OrdersRepository,
   OrderTicketReservationsRepository,
+  UsersRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
+import {NotificationService} from '~/services/notifications';
+import {notifyOrderExpired} from '~/services/notifications/helpers';
 
 /**
  * Order Cleanup Service
@@ -16,11 +19,16 @@ import {logger} from '~/utils';
 export class OrderCleanupService {
   private ordersRepository: OrdersRepository;
   private orderTicketReservationsRepository: OrderTicketReservationsRepository;
+  private notificationService: NotificationService;
 
   constructor(private db: Kysely<DB>) {
     this.ordersRepository = new OrdersRepository(db);
     this.orderTicketReservationsRepository =
       new OrderTicketReservationsRepository(db);
+    this.notificationService = new NotificationService(
+      db,
+      new UsersRepository(db),
+    );
   }
 
   /**
@@ -105,5 +113,25 @@ export class OrderCleanupService {
         timestamp: new Date().toISOString(),
       });
     });
+
+    // Send notification to buyer (outside transaction - fire-and-forget)
+    // Get order data with event name for notification
+    const orderWithItems = await this.ordersRepository.getByIdWithItems(
+      orderId,
+    );
+
+    if (orderWithItems && orderWithItems.event) {
+      // Fire-and-forget notification (don't await to avoid blocking)
+      notifyOrderExpired(this.notificationService, {
+        buyerUserId: orderWithItems.userId,
+        orderId: orderWithItems.id,
+        eventName: orderWithItems.event.name || 'el evento',
+      }).catch(error => {
+        logger.error('Failed to send order expired notification', {
+          orderId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }
   }
 }

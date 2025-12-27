@@ -19,6 +19,9 @@ import {
 interface CreatePaymentLinkParams {
   orderId: string;
   userId: string;
+  userEmail: string;
+  userFirstName: string | null;
+  userLastName: string | null;
 }
 
 interface CreatePaymentLinkResult {
@@ -47,7 +50,7 @@ export class PaymentsService {
   async createPaymentLink(
     params: CreatePaymentLinkParams,
   ): Promise<CreatePaymentLinkResult> {
-    const {orderId, userId} = params;
+    const {orderId, userId, userEmail, userFirstName, userLastName} = params;
 
     logger.debug('Creating payment link', {orderId, userId});
 
@@ -139,6 +142,23 @@ export class PaymentsService {
         backUrl: `${APP_BASE_URL}/checkout/${order.id}`,
         notificationUrl: `${API_BASE_URL}/api/webhooks/${this.paymentProvider.name}`,
       };
+
+      // Build payer data for dLocal (only if provider supports it)
+      // dLocal uses payer object with id, name, and email
+      const payerData =
+        this.paymentProvider.name === 'dlocal'
+          ? {
+              payer: {
+                id: userId,
+                name: [userFirstName, userLastName]
+                  .filter(Boolean)
+                  .join(' ')
+                  .trim() || undefined,
+                email: userEmail,
+              },
+            }
+          : {};
+
       // Create payment with provider (external API call, must be OUTSIDE transaction)
       const providerPayment = await this.paymentProvider.createPayment({
         orderId: order.id,
@@ -147,7 +167,22 @@ export class PaymentsService {
         description: `${order.event?.name || 'Tickets'} - (ID: ${order.id})`,
         expirationMinutes: PAYMENT_WINDOW_MINUTES,
         ...urls,
+        ...payerData, // Include payer data if provider supports it
       });
+
+      // Validate provider payment response before saving
+      if (!providerPayment.id) {
+        logger.error('Provider payment missing id', {
+          orderId: order.id,
+          provider: this.paymentProvider.name,
+          providerPayment,
+        });
+        throw new ValidationError(
+          PAYMENT_ERROR_MESSAGES.PAYMENT_CREATION_FAILED(
+            'Provider payment response missing id',
+          ),
+        );
+      }
 
       // Create payment record and log creation event in a single transaction
       // This ensures atomicity - either both succeed or both fail

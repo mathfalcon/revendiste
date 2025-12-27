@@ -28,6 +28,7 @@ export const optionalAuthMiddleware = async (
           ? new Date(clerkUser.lastActiveAt)
           : null,
         metadata: {},
+        role: 'user',
       });
 
       req.user = user;

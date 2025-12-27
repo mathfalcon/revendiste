@@ -1,5 +1,5 @@
 import {mutationOptions, queryOptions} from '@tanstack/react-query';
-import {api, CreateTicketListingRouteBody} from '..';
+import {api, CreateTicketListingRouteBody, UpdateTicketPriceRouteBody} from '..';
 import {toast} from 'sonner';
 
 export const postTicketListingMutation = () =>
@@ -74,5 +74,27 @@ export const updateTicketDocumentMutation = (ticketId: string) =>
         error.response?.data?.message ||
           'Error al actualizar el documento. Por favor intenta nuevamente.',
       );
+    },
+  });
+
+export const updateTicketPriceMutation = (ticketId: string) =>
+  mutationOptions({
+    mutationKey: ['update-ticket-price', ticketId],
+    mutationFn: (data: UpdateTicketPriceRouteBody) =>
+      api.ticketListings
+        .updateTicketPrice(ticketId, data)
+        .then(res => res.data),
+    onSuccess: () => {
+      toast.success('Precio actualizado exitosamente');
+    },
+  });
+
+export const deleteTicketMutation = (ticketId: string) =>
+  mutationOptions({
+    mutationKey: ['delete-ticket', ticketId],
+    mutationFn: () =>
+      api.ticketListings.removeTicket(ticketId).then(res => res.data),
+    onSuccess: () => {
+      toast.success('Ticket retirado exitosamente');
     },
   });

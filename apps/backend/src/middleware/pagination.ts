@@ -25,7 +25,7 @@ export type PaginationQuery = z.infer<typeof PaginationSchema>;
 const validatePagination = () =>
   validateRequest(
     z.object({
-      query: PaginationSchema,
+      query: PaginationSchema.catchall(z.unknown()), // Allow extra fields like 'status'
     }),
   );
 

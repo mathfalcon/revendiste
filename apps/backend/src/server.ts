@@ -2,19 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import path from 'path';
-import {
-  PORT,
-  STORAGE_LOCAL_PATH,
-  STORAGE_BASE_URL,
-  APP_BASE_URL,
-} from './config/env';
+import {PORT, STORAGE_LOCAL_PATH, APP_BASE_URL, NODE_ENV} from './config/env';
 import {errorHandler, optionalAuthMiddleware} from './middleware';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
 import {logger} from './utils';
 import {clerkMiddleware} from '@clerk/express';
 import {startCleanupExpiredReservationsJob} from './jobs/cleanup-expired-reservations';
-import {startProcessPendingNotificationsJob} from './jobs/process-pending-notifications';
+import {startNotifyUploadAvailabilityJob} from './jobs/notify-upload-availability';
+import {startSyncPaymentStatusJob} from './jobs/sync-payment-status';
+import {startCheckPayoutHoldPeriodsJob} from './jobs/check-payout-hold-periods';
 
 const app: express.Application = express();
 
@@ -77,10 +74,37 @@ RegisterRoutes(router);
 
 app.use('/api', router);
 
-// Serve static files from storage directory
-// This allows direct access to uploaded files via URL
-const storagePath = path.resolve(process.cwd(), STORAGE_LOCAL_PATH);
-app.use(STORAGE_BASE_URL, express.static(storagePath));
+if (NODE_ENV === 'local') {
+  const storagePath = path.resolve(process.cwd(), STORAGE_LOCAL_PATH);
+  app.use(
+    '/uploads',
+    express.static(storagePath, {
+      setHeaders: (res, filePath) => {
+        // Only serve images and cache them for 1 year, immutable
+        const ext = path.extname(filePath).toLowerCase();
+        const imageExtensions = [
+          '.jpg',
+          '.jpeg',
+          '.png',
+          '.gif',
+          '.webp',
+          '.svg',
+          '.bmp',
+          '.avif',
+          '.tiff',
+          '.ico',
+        ];
+        if (imageExtensions.includes(ext)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else {
+          // Forbid non-image files
+          res.statusCode = 403;
+          res.end('Forbidden');
+        }
+      },
+    }),
+  );
+}
 
 // Global error handler (must be last)
 app.use(errorHandler);
@@ -90,6 +114,10 @@ app.listen(PORT, () => {
 
   // Start scheduled jobs
   startCleanupExpiredReservationsJob();
+  startNotifyUploadAvailabilityJob();
+  const syncPaymentStatusJob = startSyncPaymentStatusJob();
+  syncPaymentStatusJob.execute();
+  startCheckPayoutHoldPeriodsJob();
   // startProcessPendingNotificationsJob();
 });
 

@@ -38,6 +38,7 @@ export function PublicationsView() {
   const activeListings =
     listings?.filter(listing => new Date(listing.event.eventEndDate) > now) ||
     [];
+
   // A listing is past if the event has ended
   const soldListings =
     listings?.filter(listing => new Date(listing.event.eventEndDate) <= now) ||
@@ -156,7 +157,7 @@ export function PublicationsView() {
                 ? 'ticket pendiente por subir'
                 : 'tickets pendientes por subir'}
             </AlertDescription>
-            {allTicketsNeedingUpload.length > 1 && (
+            {allTicketsNeedingUpload.length > 0 && (
               <Button
                 onClick={() => setCarouselOpen(true)}
                 variant='default'
@@ -236,10 +237,12 @@ export function PublicationsView() {
       </Accordion>
 
       {/* Single Upload Modal */}
-      {ticketToUpload && (
+      {/* Render modal when subirTicket param is present, even if ticket data isn't loaded yet */}
+      {/* This allows the modal to open when coming from email links */}
+      {search.subirTicket && (
         <TicketDocumentUploadModal
-          ticketId={ticketToUpload.id}
-          hasExistingDocument={ticketToUpload.hasDocument || false}
+          ticketId={search.subirTicket}
+          hasExistingDocument={ticketToUpload?.hasDocument || false}
           open={!!search.subirTicket}
           onOpenChange={open => {
             if (!open) {

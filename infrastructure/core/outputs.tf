@@ -5,12 +5,12 @@ output "domain_name" {
 
 output "cloudflare_zone_id" {
   description = "Cloudflare zone ID"
-  value       = data.cloudflare_zones.main.result[0].id
+  value       = data.cloudflare_zones.main.zones[0].id
 }
 
 output "cloudflare_zone_name_servers" {
   description = "Name servers for the Cloudflare zone (configure these in your domain registrar)"
-  value       = data.cloudflare_zones.main.result[0].name_servers
+  value       = data.cloudflare_zones.main.zones[0].name_servers
 }
 
 output "resend_dkim_record" {

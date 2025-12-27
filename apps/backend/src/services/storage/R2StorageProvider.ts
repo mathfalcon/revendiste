@@ -47,7 +47,7 @@ export class R2StorageProvider implements IStorageProvider {
    * @param config.accessKeyId - R2 access key ID
    * @param config.secretAccessKey - R2 secret access key
    * @param config.cdnDomain - Optional CDN domain (e.g., 'cdn-dev.revendiste.com')
-   * @param config.signedUrlExpiry - Signed URL expiry in seconds (default: 3600 = 1 hour)
+   * @param config.signedUrlExpiry - Signed URL expiry in seconds (default: 300 = 5 minutes, matches R2_SIGNED_URL_EXPIRY env var)
    */
   constructor(config: {
     publicBucket: string;
@@ -62,7 +62,7 @@ export class R2StorageProvider implements IStorageProvider {
     this.privateBucket = config.privateBucket;
     this.accountId = config.accountId;
     this.cdnDomain = config.cdnDomain;
-    this.signedUrlExpiry = config.signedUrlExpiry || 3600;
+    this.signedUrlExpiry = config.signedUrlExpiry ?? 300;
 
     // R2 endpoint format: https://<account-id>.r2.cloudflarestorage.com
     const r2Endpoint = `https://${config.accountId}.r2.cloudflarestorage.com`;
@@ -147,16 +147,23 @@ export class R2StorageProvider implements IStorageProvider {
         originalName: options.originalName,
       });
 
-      const placeholderUrl =
-        bucketType === 'public' && this.cdnDomain
-          ? `https://${this.cdnDomain}/${key}`
-          : `r2://${
-              bucketType === 'public' ? this.publicBucket : this.privateBucket
-            }/${key}`;
+      // Generate actual URL (consistent with LocalStorageProvider and S3StorageProvider)
+      let url: string;
+
+      if (bucketType === 'private') {
+        // For private buckets, generate a signed URL (async operation)
+        url = await this.getSignedUrl(key);
+      } else if (this.cdnDomain) {
+        // Public bucket with CDN
+        url = `https://${this.cdnDomain}/${key}`;
+      } else {
+        // Public bucket without CDN - use R2 direct URL
+        url = `https://${this.accountId}.r2.cloudflarestorage.com/${this.publicBucket}/${key}`;
+      }
 
       return {
         path: key,
-        url: placeholderUrl,
+        url,
         sizeBytes: options.sizeBytes,
       };
     } catch (error) {

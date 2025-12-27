@@ -3,12 +3,31 @@ import {Suspense} from 'react';
 import {FullScreenLoading} from '~/components';
 import {EventPage} from '~/features/event';
 import {getEventByIdQuery, EventImageType} from '~/lib';
-import {AxiosError} from 'axios';
+import {AxiosError, isAxiosError} from 'axios';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
+import {EventEnded} from '~/components/EventEnded';
+import type {ErrorComponentProps} from '@tanstack/react-router';
 
 export const Route = createFileRoute('/eventos/$eventId')({
   component: RouteComponent,
+  notFoundComponent: () => <EventEnded />,
+  errorComponent: ({error}: ErrorComponentProps) => {
+    if (isAxiosError(error) && error.response?.status === 404) {
+      return <EventEnded />;
+    }
+
+    if (
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      error.message.includes('404')
+    ) {
+      return <EventEnded />;
+    }
+    throw error;
+  },
   loader: async ({context, params}) => {
     try {
       return await context.queryClient.ensureQueryData(

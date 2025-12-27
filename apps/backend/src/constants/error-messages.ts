@@ -60,6 +60,15 @@ export const TICKET_LISTING_ERROR_MESSAGES = {
   PRICE_EXCEEDS_FACE_VALUE: (faceValue: string, currency: string) =>
     `El precio no puede exceder el valor nominal de ${faceValue} ${currency}`,
   INVALID_QUANTITY: 'La cantidad debe ser mayor que 0',
+  TICKET_NOT_FOUND: 'Ticket no encontrado',
+  UNAUTHORIZED_TICKET_ACCESS: 'No estás autorizado para modificar este ticket',
+  TICKET_SOLD: 'No se puede modificar un ticket que ya ha sido vendido',
+  TICKET_CANCELLED: 'No se puede modificar un ticket que ha sido cancelado',
+  TICKET_RESERVED:
+    'No se puede modificar un ticket que está reservado en una orden',
+  TICKET_DELETED: 'No se puede modificar un ticket que ha sido eliminado',
+  EVENT_FINISHED_FOR_UPDATE:
+    'No se puede modificar un ticket de un evento que ya ha terminado',
 } as const;
 
 // Error messages for ticket documents
@@ -102,14 +111,37 @@ export const PAYMENT_ERROR_MESSAGES = {
 // Error messages for notifications
 export const NOTIFICATION_ERROR_MESSAGES = {
   NOTIFICATION_NOT_FOUND: 'Notificación no encontrada',
-  UNAUTHORIZED_ACCESS:
-    'No estás autorizado para acceder a esta notificación',
+  UNAUTHORIZED_ACCESS: 'No estás autorizado para acceder a esta notificación',
   INVALID_CHANNELS: 'Los canales de notificación especificados no son válidos',
   USER_NOT_FOUND: 'Usuario no encontrado',
   EMAIL_SEND_FAILED: (error: string) =>
     `Error al enviar el correo electrónico: ${error}`,
 } as const;
 
+// Error messages for payouts
+export const PAYOUT_ERROR_MESSAGES = {
+  PAYOUT_NOT_FOUND: 'Retiro no encontrado',
+  PAYOUT_METHOD_NOT_FOUND: 'Método de retiro no encontrado',
+  UNAUTHORIZED_ACCESS: 'No estás autorizado para acceder a este retiro',
+  INSUFFICIENT_BALANCE: 'Saldo insuficiente para realizar el retiro',
+  BELOW_MINIMUM_THRESHOLD: (currency: string, minimum: number) =>
+    `El monto mínimo para retirar es ${minimum} ${currency}`,
+  NO_EARNINGS_SELECTED: 'Debes seleccionar al menos una ganancia para retirar',
+  EARNINGS_NOT_AVAILABLE: 'Las ganancias seleccionadas no están disponibles',
+  MIXED_CURRENCIES: 'No se pueden mezclar diferentes monedas en un mismo retiro',
+  INVALID_PAYOUT_METHOD: 'Método de retiro inválido',
+  PAYOUT_ALREADY_PROCESSED: 'Este retiro ya ha sido procesado',
+  PAYOUT_NOT_PENDING: (status: string) =>
+    `El retiro ya está ${status}. No se puede procesar.`,
+} as const;
+
+// Error messages for admin operations
+export const ADMIN_ERROR_MESSAGES = {
+  ADMIN_ONLY: 'Solo los administradores pueden acceder a esta funcionalidad',
+  INVALID_ROLE: 'Rol de usuario inválido',
+} as const;
+
 // Type for error message keys (useful for type safety)
 export type OrderErrorKey = keyof typeof ORDER_ERROR_MESSAGES;
 export type NotificationErrorKey = keyof typeof NOTIFICATION_ERROR_MESSAGES;
+export type PayoutErrorKey = keyof typeof PAYOUT_ERROR_MESSAGES;

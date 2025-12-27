@@ -18,28 +18,28 @@ export const OrderExpiredEmail = ({
   appBaseUrl,
 }: OrderExpiredEmailProps) => (
   <BaseEmail
-    title="Orden expirada"
-    preview={`Tu orden para ${eventName} ha expirado`}
+    title="Tu orden expiró"
+    preview={`Tu orden para ${eventName} expiró`}
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      Tu orden para <strong>{eventName}</strong> ha expirado.
+      Tu orden para <strong>{eventName}</strong> expiró.
     </Text>
 
     <Text className="text-foreground mb-4">
-      Las entradas han sido liberadas y están disponibles nuevamente para otros
+      Las entradas fueron liberadas y ya están disponibles de nuevo para otros
       compradores.
     </Text>
 
     <Section className="bg-muted p-4 rounded-md mb-6">
       <Text className="text-sm text-foreground m-0">
-        Si aún estás interesado en comprar tickets para este evento, puedes
+        Si todavía estás interesado en comprar tickets para este evento, podés
         buscar nuevas ofertas disponibles.
       </Text>
     </Section>
 
     <Text className="text-sm text-muted-foreground mb-0">
-      Si realizaste un pago, el reembolso se procesará automáticamente según
+      Si hiciste un pago, el reembolso se va a procesar automáticamente según
       nuestras políticas.
     </Text>
   </BaseEmail>

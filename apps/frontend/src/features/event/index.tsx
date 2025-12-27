@@ -72,6 +72,7 @@ export const EventPage = () => {
               name={event.name}
               description={event.description}
               eventStartDate={event.eventStartDate}
+              eventEndDate={event.eventEndDate}
               venueName={event.venueName}
               venueAddress={event.venueAddress}
             />

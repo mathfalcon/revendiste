@@ -11,3 +11,8 @@ export {PaymentsRepository} from './payments';
 export {PaymentEventsRepository} from './payment-events';
 export {TicketDocumentsRepository} from './ticket-documents';
 export {NotificationsRepository} from './notifications';
+export {SellerEarningsRepository} from './seller-earnings';
+export {PayoutMethodsRepository} from './payout-methods';
+export {PayoutsRepository} from './payouts';
+export {PayoutEventsRepository} from './payout-events';
+export {PayoutDocumentsRepository} from './payout-documents';

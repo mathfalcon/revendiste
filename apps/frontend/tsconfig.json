@@ -16,8 +16,8 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"],
-      "~/shared": ["../../packages/shared/src"],
-      "~/shared/*": ["../../packages/shared/src/*"]
+      "@revendiste/shared": ["../../packages/shared/src"],
+      "@revendiste/shared/*": ["../../packages/shared/src/*"]
     },
     "noEmit": true,
     "noUncheckedIndexedAccess": true

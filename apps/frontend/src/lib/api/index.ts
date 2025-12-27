@@ -74,6 +74,12 @@ api.instance.interceptors.response.use(
       throw redirect({to: '/ingresar/$', throw: true});
     }
 
+    // Don't show toast for 404 errors on event routes (handled by notFoundComponent)
+    // This prevents showing "event not found" toasts during prefetch
+    const isEvent404 =
+      error.response?.status === 404 &&
+      error.config?.url?.includes('/events/');
+
     // Handle standardized error responses from backend
     if (error.response?.data) {
       const errorData = error.response.data as StandardizedErrorResponse;
@@ -81,7 +87,8 @@ api.instance.interceptors.response.use(
       // Check if it's a standardized error response with a message
       if (errorData?.message && typeof errorData.message === 'string') {
         // Only show toast in browser (client-side)
-        if (typeof window !== 'undefined') {
+        // Skip toasts for event 404s (they're handled by notFoundComponent)
+        if (typeof window !== 'undefined' && !isEvent404) {
           toast.error(errorData.message);
         }
       }
@@ -95,4 +102,6 @@ export * from './events';
 export * from './ticket-listings';
 export * from './order';
 export * from './payments';
+export * from './payouts';
+export * from './users';
 export * from './generated';

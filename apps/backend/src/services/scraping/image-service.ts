@@ -100,7 +100,9 @@ export class EventImageService {
       eventId,
     });
 
-    const imageUrl = await this.storageProvider.getUrl(uploadResult.path);
+    // Use the URL from uploadResult directly (it's already correctly formatted)
+    // Only call getUrl if we need to regenerate it (e.g., for existing images)
+    const imageUrl = uploadResult.url;
 
     return {
       type: imageType,

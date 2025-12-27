@@ -31,7 +31,6 @@ export const {
 
 // Helper function to get base URL
 export const getBaseUrl = () => {
-  console.log(env.data);
   if (VITE_APP_BASE_URL) {
     return VITE_APP_BASE_URL;
   }

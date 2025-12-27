@@ -4,7 +4,7 @@ import {
   Link,
   useLocation,
 } from '@tanstack/react-router';
-import {Ticket, User, ScanQrCode, Upload, Menu} from 'lucide-react';
+import {Ticket, ScanQrCode, Upload, Menu, Wallet} from 'lucide-react';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
 import {useQuery} from '@tanstack/react-query';
 import {getMyListingsQuery} from '~/lib';
@@ -46,6 +46,12 @@ const TAB_CONFIG = [
           {count}
         </Badge>
       ) : null,
+  },
+  {
+    value: 'retiro',
+    label: 'Retiros',
+    icon: Wallet,
+    to: '/cuenta/retiro',
   },
 ] as const;
 

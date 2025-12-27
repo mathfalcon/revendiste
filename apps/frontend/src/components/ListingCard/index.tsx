@@ -1,5 +1,5 @@
 import {useNavigate} from '@tanstack/react-router';
-import {type ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets} from '~/lib';
+import {type GetUserListingsResponse} from '~/lib/api/generated';
 import {Card, CardContent} from '~/components/ui/card';
 import {Accordion} from '~/components/ui/accordion';
 import {ListingCardHeader} from './ListingCardHeader';
@@ -9,7 +9,7 @@ import {SoldTicketsSection} from './SoldTicketsSection';
 import {CancelledTicketsSection} from './CancelledTicketsSection';
 
 interface ListingCardProps {
-  listing: ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number];
+  listing: GetUserListingsResponse[number];
 }
 
 export function ListingCard({listing}: ListingCardProps) {
@@ -56,6 +56,7 @@ export function ListingCard({listing}: ListingCardProps) {
             tickets={activeTickets}
             ticketWaveName={ticketWave.name}
             ticketWaveCurrency={ticketWave.currency}
+            ticketWaveFaceValue={Number(ticketWave.faceValue)}
           />
 
           <SoldTicketsSection

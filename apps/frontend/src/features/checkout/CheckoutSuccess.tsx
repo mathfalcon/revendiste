@@ -221,13 +221,13 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
           {/* Action Buttons */}
           <div className='flex flex-col sm:flex-row gap-3 justify-center'>
             <Button asChild variant='outline' size='lg'>
-              <Link to='/cuenta/tickets'>Ver mis tickets</Link>
+              <Link to='/eventos/$eventId' params={{eventId: order.eventId}}>
+                Volver al evento
+              </Link>
             </Button>
             {order.eventId && (
               <Button asChild size='lg' className='bg-primary-gradient'>
-                <Link to='/eventos/$eventId' params={{eventId: order.eventId}}>
-                  Volver al evento
-                </Link>
+                <Link to='/cuenta/tickets'>Ver mis tickets</Link>
               </Button>
             )}
           </div>

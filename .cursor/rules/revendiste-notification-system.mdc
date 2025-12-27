@@ -11,33 +11,50 @@ A type-safe, scalable notification system with email template support using Reac
 
 ```typescript
 import {NotificationService} from '~/services/notifications';
-import {notifyTicketSold} from '~/services/notifications/helpers';
+import {
+  notifySellerTicketSold,
+  notifyOrderConfirmed,
+} from '~/services/notifications/helpers';
 
 // Simple usage with helper function
-await notifyTicketSold(notificationService, {
-  buyerUserId: userId,
-  orderId: order.id,
+await notifySellerTicketSold(notificationService, {
+  sellerUserId: userId,
+  listingId: listing.id,
   eventName: order.event.name,
-  ticketCount: order.ticketCount,
+  eventStartDate: new Date(order.event.eventStartDate),
+  eventEndDate: new Date(order.event.eventEndDate),
+  platform: 'ticketmaster',
+  qrAvailabilityTiming: '12h',
+  ticketCount: 2,
 });
 
-// Or create directly
+// Or create directly (title and description are auto-generated from metadata)
 await notificationService.createNotification({
   userId: userId,
   type: 'order_confirmed',
-  title: 'Orden confirmada',
-  description: 'Tu orden ha sido confirmada',
   channels: ['in_app', 'email'],
   actions: [
     {
-      type: 'button',
+      type: 'view_order',
       label: 'Ver orden',
-      url: `${APP_BASE_URL}/orders/${orderId}`,
+      url: `${APP_BASE_URL}/cuenta/tickets?orderId=${orderId}`,
     },
   ],
-  metadata: {orderId, eventName},
+  metadata: {
+    type: 'order_confirmed',
+    orderId,
+    eventName,
+    totalAmount: '100.00',
+    subtotalAmount: '90.00',
+    platformCommission: '10.00',
+    vatOnCommission: '0.00',
+    currency: 'EUR',
+    items: [],
+  },
 });
 ```
+
+**Note:** Title and description are automatically generated from the notification type and metadata - you don't need to provide them when creating notifications.
 
 ## System Architecture
 
@@ -75,10 +92,10 @@ The notification system uses **discriminated unions** and **function overloading
 
 ### Current Types
 
-- `ticket_sold_buyer` - Buyer notification after purchase
 - `ticket_sold_seller` - Seller notification when tickets are sold
 - `document_reminder` - Seller reminder to upload documents
-- `order_confirmed` - Order confirmation
+- `document_uploaded` - Buyer notification when seller uploads ticket documents
+- `order_confirmed` - Order confirmation (replaces `ticket_sold_buyer`)
 - `order_expired` - Order expiration
 - `payment_failed` - Payment failure
 - `payment_succeeded` - Payment success
@@ -270,9 +287,9 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Step 3: Create new enum with all values (including the new one)
   await sql`
     CREATE TYPE notification_type AS ENUM (
-      'ticket_sold_buyer',
       'ticket_sold_seller',
       'document_reminder',
+      'document_uploaded',
       'order_confirmed',
       'order_expired',
       'payment_failed',
@@ -315,7 +332,23 @@ export interface CreateNotificationData {
 
 If the interface uses a union type, update it to include the new value, or better yet, import `NotificationType` from `~/shared`.
 
-### Step 8: (Optional) Create Helper Function
+### Step 8: Add Text Generation Function
+
+In `packages/shared/src/utils/notification-text.ts`, add a case to `generateNotificationText()`:
+
+```typescript
+case 'my_new_notification': {
+  const meta = metadata as TypedNotificationMetadata<'my_new_notification'>;
+  return {
+    title: 'My New Notification',
+    description: `Notification for ${meta.eventName}`,
+  };
+}
+```
+
+**Note:** Title and description are generated from metadata, not stored in the database. This function is called automatically when notifications are created or retrieved.
+
+### Step 9: (Optional) Create Helper Function
 
 In `apps/backend/src/services/notifications/helpers.ts`:
 
@@ -332,12 +365,10 @@ export async function notifyMyNewNotification(
   return await service.createNotification({
     userId: params.userId,
     type: 'my_new_notification',
-    title: 'My New Notification',
-    description: `Notification for ${params.eventName}`,
     channels: ['in_app', 'email'],
     actions: [
       {
-        type: 'button',
+        type: 'view_order',
         label: 'View Details',
         url: `${APP_BASE_URL}/orders/${params.orderId}`,
       },
@@ -351,6 +382,8 @@ export async function notifyMyNewNotification(
   });
 }
 ```
+
+**Note:** Helper functions don't need to provide `title` or `description` - they're automatically generated from the metadata.
 
 ## Type System Architecture
 
@@ -378,23 +411,29 @@ The notification system uses **discriminated unions** for type safety:
 
 ```typescript
 // Each notification type has its own metadata schema (in shared package)
-export const TicketSoldBuyerMetadataSchema = z.object({
-  type: z.literal('ticket_sold_buyer'), // Discriminator
-  orderId: z.uuid(),
+export const TicketSoldSellerMetadataSchema = z.object({
+  type: z.literal('ticket_sold_seller'), // Discriminator
+  listingId: z.uuid(),
   eventName: z.string(),
+  eventStartDate: z.string(),
   ticketCount: z.number().int().positive(),
+  platform: z.string(),
+  qrAvailabilityTiming: z.custom<QrAvailabilityTiming>().nullable().optional(),
+  shouldPromptUpload: z.boolean(),
 });
 
 // Discriminated union ensures type safety
 export const NotificationMetadataSchema = z.discriminatedUnion('type', [
-  TicketSoldBuyerMetadataSchema,
   TicketSoldSellerMetadataSchema,
+  DocumentReminderMetadataSchema,
+  DocumentUploadedMetadataSchema,
+  OrderConfirmedMetadataSchema,
   // ... other schemas
 ]);
 
 // TypeScript infers the correct type based on 'type' field
 type Metadata = z.infer<typeof NotificationMetadataSchema>;
-// Metadata is: TicketSoldBuyerMetadata | TicketSoldSellerMetadata | ...
+// Metadata is: TicketSoldSellerMetadata | DocumentReminderMetadata | ...
 ```
 
 ### Database Type Integration
@@ -418,12 +457,16 @@ export function getEmailTemplate<T extends NotificationType>(
 
 // Switch statement handles type mapping
 switch (notificationType) {
-  case 'ticket_sold_buyer': {
-    const meta = metadata as TypedNotificationMetadata<'ticket_sold_buyer'>;
+  case 'ticket_sold_seller': {
+    const meta = metadata as TypedNotificationMetadata<'ticket_sold_seller'>;
     return {
-      Component: TicketSoldEmailComponent,
+      Component: SellerTicketSoldEmailComponent,
       props: {
-        /* ... */
+        eventName: meta?.eventName || 'el evento',
+        eventStartDate: meta?.eventStartDate || new Date().toISOString(),
+        ticketCount: meta?.ticketCount || 1,
+        uploadUrl: meta?.shouldPromptUpload ? uploadUrl : undefined,
+        appBaseUrl,
       },
     };
   }
@@ -432,6 +475,44 @@ switch (notificationType) {
 ```
 
 **Note:** Function overloading was simplified to a single signature with a switch statement, which is sufficient for runtime type mapping.
+
+### Title and Description Generation
+
+**Title and description are automatically generated from metadata** - they are not stored in the database:
+
+- `generateNotificationText()` function in `packages/shared/src/utils/notification-text.ts`
+- Called automatically when notifications are created (for validation) and retrieved (for API responses)
+- Each notification type has its own text generation logic based on metadata
+- Ensures consistency and eliminates the need to store redundant text data
+
+### Notification Validation Flow
+
+When creating a notification, the system validates data in this order:
+
+1. **Metadata Validation** (`NotificationService.createNotification`)
+
+   - Validates metadata against `NotificationMetadataSchema` (discriminated union)
+   - Ensures metadata `type` field matches notification `type`
+   - Throws `ValidationError` if validation fails
+
+2. **Actions Validation**
+
+   - Validates actions against `NotificationActionsSchema` (generic array schema)
+   - Converts `null` to `undefined` for consistency
+
+3. **Title/Description Generation**
+
+   - Generates title and description from metadata using `generateNotificationText()`
+   - Metadata is required for this step (throws error if missing)
+
+4. **Full Notification Validation**
+
+   - Validates complete notification structure against type-specific schema from `NotificationSchema` (discriminated union)
+   - Ensures all fields match the expected structure for the notification type
+
+5. **Database Creation**
+   - Creates notification record with validated data
+   - Repository assumes data is already validated (no additional validation)
 
 ### Email Template Builder Flow
 
@@ -443,13 +524,14 @@ switch (notificationType) {
 
 2. **Build Template** (`buildEmailTemplate`)
 
-   - Maps notification type to email template
-   - Uses function overloading for type safety
-   - Renders React component to HTML in transactional package
-   - Returns HTML and plain text
+   - Maps notification type to email template via `getEmailTemplate()`
+   - Renders React component to HTML in transactional package using `renderEmail()`
+   - Generates both HTML and plain text versions
+   - Returns HTML and plain text ready to send
 
 3. **Send Email** (`NotificationService.sendEmailNotification`)
    - Calls template builder
+   - Generates email subject from notification title (via `generateNotificationText()`)
    - Sends via email provider (Resend, Console, etc.)
 
 ## Email Provider Configuration
@@ -483,6 +565,36 @@ Change `EMAIL_PROVIDER` environment variable - no code changes needed.
 
 ## Key Patterns
 
+### Title and Description Auto-Generation
+
+**Title and description are automatically generated from metadata** - you never provide them:
+
+```typescript
+// ✅ CORRECT - Title/description auto-generated
+await notificationService.createNotification({
+  userId: userId,
+  type: 'order_confirmed',
+  channels: ['in_app', 'email'],
+  metadata: {
+    type: 'order_confirmed',
+    orderId,
+    eventName,
+    // ... other fields
+  },
+});
+// Title: "Orden confirmada"
+// Description: Generated from metadata
+
+// ❌ WRONG - Don't provide title/description
+await notificationService.createNotification({
+  userId: userId,
+  type: 'order_confirmed',
+  title: 'Custom title', // Not accepted!
+  description: 'Custom description', // Not accepted!
+  // ...
+});
+```
+
 ### Fire-and-Forget Processing
 
 **Notifications are sent asynchronously** - your business logic doesn't wait:
@@ -513,12 +625,15 @@ await notificationService.createNotification({...});
 ### Error Handling
 
 - Failed notifications are marked with status `failed` and error message
-- **Channel-level tracking**: Each channel's status is tracked individually
+- **Channel-level tracking**: Each channel's status is tracked individually in `channelStatus` JSONB field
 - **Exponential backoff**: Retries wait longer with each attempt (5min, 10min, 20min, 40min, 80min)
-- **Max 5 retries**: Prevents infinite retry loops
-- Cronjob automatically retries failed notifications in parallel batches
+  - Calculated as: `baseDelay * 2^retryCount` where `baseDelay = 5 minutes`
+  - Filtered in application code after querying from database
+- **Max 5 retries**: Prevents infinite retry loops (retry count stored in `retryCount` column)
+- Cronjob automatically retries pending notifications in parallel batches (10 at a time)
 - Errors are logged but don't break your business logic
 - Partial success: If some channels succeed, notification is marked as `sent`
+- Notifications are skipped if already processed (status `sent` or `failed`, or all channels already processed)
 
 ## Template System Details
 
@@ -551,15 +666,16 @@ Templates are mapped via `getEmailTemplate()` in `packages/transactional/src/ema
 
 ## Best Practices
 
-1. **Use helper functions** for common notification types
+1. **Use helper functions** for common notification types - they handle metadata structure correctly
 2. **Keep notifications outside transactions** - send after database operations complete
-3. **Don't await notification creation** - let it process in background
+3. **Don't await notification creation** - let it process in background (fire-and-forget)
 4. **Use appropriate channels** - email for important actions, in-app for updates
-5. **Include actions** - provide buttons/links for users to take action
-6. **Add metadata** - store relevant IDs/context for future reference
-7. **Export prop types** - enables type safety in template mapping
-8. **Use function overloading** - provides compile-time type checking
+5. **Include actions conditionally** - some notifications may not need actions (e.g., `notifySellerTicketSold` only adds upload action if within time window)
+6. **Add metadata** - store relevant IDs/context for future reference (required for title/description generation)
+7. **Never provide title/description** - they're auto-generated from metadata
+8. **Export prop types** - enables type safety in template mapping
 9. **Follow discriminated union pattern** - ensures metadata matches notification type
+10. **Handle errors gracefully** - notification failures are logged but don't break business logic
 
 ## Maintenance Checklist
 
@@ -568,6 +684,7 @@ When adding a new notification type, ensure:
 - [ ] Metadata schema defined in `packages/shared/src/schemas/notifications.ts`
 - [ ] Action schema added (if needed) in `packages/shared/src/schemas/notifications.ts`
 - [ ] Notification schema added to discriminated union in `packages/shared/src/schemas/notifications.ts`
+- [ ] Text generation function added in `packages/shared/src/utils/notification-text.ts` (for title/description)
 - [ ] Email template component created with exported props in `packages/transactional/emails/`
 - [ ] Template exported from `packages/transactional/src/index.ts`
 - [ ] Switch case added in `packages/transactional/src/email-templates.ts` implementation

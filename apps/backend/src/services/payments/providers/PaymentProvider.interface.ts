@@ -27,6 +27,12 @@ export interface CreatePaymentParams {
   backUrl: string;
   notificationUrl?: string;
   expirationMinutes: number;
+  payer?: {
+    id: string;
+    name?: string;
+    email: string;
+    [key: string]: any; // Allow provider-specific payer fields
+  };
   [key: string]: any; // Allow provider-specific parameters
 }
 

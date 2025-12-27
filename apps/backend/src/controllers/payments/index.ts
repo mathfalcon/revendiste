@@ -35,11 +35,14 @@ export class PaymentsController {
     @Path() orderId: string,
     @Request() request: express.Request,
   ): Promise<CreatePaymentLinkResponse> {
-    const userId = request.user.id;
+    const user = request.user;
 
     return this.paymentsService.createPaymentLink({
       orderId,
-      userId,
+      userId: user.id,
+      userEmail: user.email,
+      userFirstName: user.firstName,
+      userLastName: user.lastName,
     });
   }
 }

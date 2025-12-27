@@ -7,6 +7,8 @@ import {mapToPaginatedResponse} from '~/middleware';
 import {NotFoundError} from '~/errors';
 import {sql} from 'kysely';
 import {BaseRepository} from '../base';
+import type {PaginationOptions} from '~/types/pagination';
+import {getStorageProvider} from '~/services';
 
 export class EventsRepository extends BaseRepository<EventsRepository> {
   withTransaction(trx: Kysely<DB>): EventsRepository {
@@ -173,13 +175,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
 
   // Retrieve paginated events with images using jsonArrayFrom
   async findAllPaginatedWithImages(
-    pagination: {
-      page: number;
-      limit: number;
-      offset: number;
-      sortBy: string;
-      sortOrder: 'asc' | 'desc';
-    },
+    pagination: PaginationOptions,
     userId?: string,
   ) {
     const {page, limit, offset, sortBy, sortOrder} = pagination;

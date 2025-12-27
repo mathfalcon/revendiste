@@ -5,12 +5,15 @@ import {
 } from '~/components/ui/accordion';
 import {Ticket, Upload, FileCheck, AlertCircle, Timer} from 'lucide-react';
 import {formatPrice} from '~/utils/string';
-import type {ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets} from '~/lib';
+import type {
+  GetUserListingsResponse,
+  EventTicketCurrency,
+} from '~/lib/api/generated';
 
 interface SoldTicketsSectionProps {
-  tickets: ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number]['tickets'];
+  tickets: GetUserListingsResponse[number]['tickets'];
   ticketWaveName: string;
-  ticketWaveCurrency: string;
+  ticketWaveCurrency: EventTicketCurrency;
   onUploadClick: (ticketId: string) => void;
 }
 

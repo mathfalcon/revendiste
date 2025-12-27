@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {
   AccordionContent,
   AccordionItem,
@@ -11,19 +12,31 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
 import {formatPrice} from '~/utils/string';
-import type {ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets} from '~/lib';
+import type {
+  GetUserListingsResponse,
+  EventTicketCurrency,
+} from '~/lib/api/generated';
+import {EditTicketPriceDialog} from './EditTicketPriceDialog';
+import {RemoveTicketDialog} from './RemoveTicketDialog';
 
 interface ActiveTicketsSectionProps {
-  tickets: ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number]['tickets'];
+  tickets: GetUserListingsResponse[number]['tickets'];
   ticketWaveName: string;
-  ticketWaveCurrency: string;
+  ticketWaveCurrency: EventTicketCurrency;
+  ticketWaveFaceValue: number;
 }
 
 export function ActiveTicketsSection({
   tickets,
   ticketWaveName,
   ticketWaveCurrency,
+  ticketWaveFaceValue,
 }: ActiveTicketsSectionProps) {
+  const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
+  const [removingTicketId, setRemovingTicketId] = useState<string | null>(null);
+
+  const editingTicket = tickets.find(t => t.id === editingTicketId);
+  const removingTicket = tickets.find(t => t.id === removingTicketId);
   if (tickets.length === 0) {
     return null;
   }
@@ -51,9 +64,12 @@ export function ActiveTicketsSection({
                       (ID: {ticket.id})
                     </p>
                   </div>
-                  <p className='text-xs text-muted-foreground'>{ticketWaveName}</p>
+                  <p className='text-xs text-muted-foreground'>
+                    {ticketWaveName}
+                  </p>
                   <p className='text-muted-foreground'>
-                    Precio: {formatPrice(parseFloat(ticket.price), ticketWaveCurrency)}
+                    Precio:{' '}
+                    {formatPrice(parseFloat(ticket.price), ticketWaveCurrency)}
                   </p>
                 </div>
                 <DropdownMenu>
@@ -63,11 +79,16 @@ export function ActiveTicketsSection({
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align='end'>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setEditingTicketId(ticket.id)}
+                    >
                       <Edit className='mr-2 h-4 w-4' />
                       Editar precio
                     </DropdownMenuItem>
-                    <DropdownMenuItem className='text-red-600'>
+                    <DropdownMenuItem
+                      className='text-red-600'
+                      onClick={() => setRemovingTicketId(ticket.id)}
+                    >
                       <Minus className='mr-2 h-4 w-4' />
                       Retirar
                     </DropdownMenuItem>
@@ -78,7 +99,32 @@ export function ActiveTicketsSection({
           ))}
         </div>
       </AccordionContent>
+
+      {/* Edit Price Dialog */}
+      {editingTicket && (
+        <EditTicketPriceDialog
+          open={editingTicketId !== null}
+          onOpenChange={open => {
+            if (!open) setEditingTicketId(null);
+          }}
+          ticketId={editingTicket.id}
+          currentPrice={parseFloat(editingTicket.price)}
+          maxPrice={ticketWaveFaceValue}
+          currency={ticketWaveCurrency}
+        />
+      )}
+
+      {/* Remove Ticket Dialog */}
+      {removingTicket && (
+        <RemoveTicketDialog
+          open={removingTicketId !== null}
+          onOpenChange={open => {
+            if (!open) setRemovingTicketId(null);
+          }}
+          ticketId={removingTicket.id}
+          ticketNumber={removingTicket.ticketNumber}
+        />
+      )}
     </AccordionItem>
   );
 }
-

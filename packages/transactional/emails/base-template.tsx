@@ -29,10 +29,6 @@ interface BaseEmailProps {
   appBaseUrl?: string;
 }
 
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : '';
-
 export function BaseEmail({
   preview,
   title,
@@ -79,7 +75,7 @@ export function BaseEmail({
                 Este es un mensaje automático de Revendiste. Por favor, no
                 respondas a este correo.
               </Text>
-              <Text className="text-xs text-muted-foreground text-center m-0">
+              <Text className="text-xs text-muted-foreground text-center m-0 mb-2">
                 <Link
                   href={appBaseUrl}
                   className="text-primary no-underline hover:underline"
@@ -92,6 +88,21 @@ export function BaseEmail({
                   className="text-primary no-underline hover:underline"
                 >
                   Mi Cuenta
+                </Link>
+              </Text>
+              <Text className="text-xs text-muted-foreground text-center m-0">
+                <Link
+                  href={appBaseUrl}
+                  className="text-primary no-underline hover:underline"
+                >
+                  Web
+                </Link>
+                {' • '}
+                <Link
+                  href="https://www.instagram.com/revendisteuy"
+                  className="text-primary no-underline hover:underline"
+                >
+                  Instagram
                 </Link>
               </Text>
             </Section>

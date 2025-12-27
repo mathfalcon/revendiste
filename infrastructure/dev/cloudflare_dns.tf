@@ -6,7 +6,7 @@ data "cloudflare_zones" "main" {
 # A record for dev subdomain (points to single app instance)
 # API is served at dev.revendiste.com/api, frontend at dev.revendiste.com
 resource "cloudflare_dns_record" "frontend" {
-  zone_id = data.cloudflare_zones.main.result[0].id
+  zone_id = data.cloudflare_zones.main.zones[0].id
   name    = var.domain_name
   type    = "A"
   content = aws_eip.app.public_ip

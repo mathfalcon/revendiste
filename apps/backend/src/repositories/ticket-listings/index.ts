@@ -67,6 +67,7 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
               'eventTicketWaves.id',
               'eventTicketWaves.name',
               'eventTicketWaves.currency',
+              'eventTicketWaves.faceValue',
             ])
             .whereRef('eventTicketWaves.id', '=', 'listings.ticketWaveId'),
         )

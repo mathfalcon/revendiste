@@ -12,3 +12,13 @@ export const CreateTicketListingRouteSchema = z.object({
 export type CreateTicketListingRouteBody = z.infer<
   typeof CreateTicketListingRouteSchema
 >['body'];
+
+export const UpdateTicketPriceRouteSchema = z.object({
+  body: z.object({
+    price: z.number().min(1),
+  }),
+});
+
+export type UpdateTicketPriceRouteBody = z.infer<
+  typeof UpdateTicketPriceRouteSchema
+>['body'];

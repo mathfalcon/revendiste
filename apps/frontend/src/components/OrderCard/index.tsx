@@ -1,11 +1,20 @@
 import {Link} from '@tanstack/react-router';
-import {CheckCircle, XCircle, Clock, Calendar, Ticket} from 'lucide-react';
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  Calendar,
+  Ticket,
+  FileCheck,
+} from 'lucide-react';
 import {Card, CardContent} from '~/components/ui/card';
 import {EventTicketCurrency} from '~/lib';
 import {formatPrice, formatEventDate} from '~/utils';
 import {TicketViewModal} from '~/components';
 import {useState} from 'react';
 import {Button} from '~/components/ui/button';
+import {useQuery} from '@tanstack/react-query';
+import {getOrderTicketsQuery} from '~/lib/api/order';
 
 interface OrderCardProps {
   order: {
@@ -60,15 +69,25 @@ const STATUS_CONFIG = {
 
 function ViewTicketsButton({orderId}: {orderId: string}) {
   const [open, setOpen] = useState(false);
+  const {data: orderTicketsData} = useQuery(getOrderTicketsQuery(orderId));
+
+  // Check if any tickets have documents
+  const hasDocuments = orderTicketsData?.tickets.some(
+    ticket => ticket.hasDocument,
+  );
 
   return (
     <>
       <Button
         onClick={() => setOpen(true)}
-        variant='outline'
+        variant={hasDocuments ? 'default' : 'outline'}
         className='flex items-center gap-2'
       >
-        <Ticket className='h-4 w-4' />
+        {hasDocuments ? (
+          <FileCheck className='h-4 w-4' />
+        ) : (
+          <Ticket className='h-4 w-4' />
+        )}
         Ver tickets
       </Button>
       <TicketViewModal orderId={orderId} open={open} onOpenChange={setOpen} />

@@ -139,4 +139,47 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
       .where('id', '=', id)
       .execute();
   }
+
+  /**
+   * Get pending or processing payments that need status sync
+   * Only returns payments that have a providerPaymentId (can be checked with provider)
+   * Optionally filters by age (e.g., only check payments older than X minutes)
+   */
+  async getPendingPaymentsForSync(options?: {
+    minAgeMinutes?: number; // Only check payments older than this
+    limit?: number; // Limit number of payments to process per run
+  }): Promise<
+    Array<{
+      id: string;
+      provider: string;
+      providerPaymentId: string;
+      status: string;
+      orderId: string;
+      createdAt: Date;
+    }>
+  > {
+    const now = new Date();
+    const minAge = options?.minAgeMinutes || 5; // Default: only check payments older than 5 minutes
+    const limit = options?.limit || 100; // Default: process up to 100 payments per run
+
+    const minAgeDate = new Date(now.getTime() - minAge * 60 * 1000);
+
+    return await this.db
+      .selectFrom('payments')
+      .select([
+        'id',
+        'provider',
+        'providerPaymentId',
+        'status',
+        'orderId',
+        'createdAt',
+      ])
+      .where('status', 'in', ['pending', 'processing'])
+      .where('providerPaymentId', 'is not', null)
+      .where('deletedAt', 'is', null)
+      .where('createdAt', '<', minAgeDate) // Only check payments older than minAge
+      .orderBy('createdAt', 'asc') // Process oldest first
+      .limit(limit)
+      .execute();
+  }
 }

@@ -6,12 +6,7 @@
  */
 
 import {z} from 'zod';
-import type {
-  QrAvailabilityTiming,
-  NotificationType,
-  NotificationChannel,
-  NotificationStatus,
-} from '../types';
+import type {QrAvailabilityTiming, NotificationType} from '../types';
 
 /**
  * Base notification schema with shared properties
@@ -33,6 +28,7 @@ export const NotificationActionType = z.enum([
   'upload_documents',
   'view_order',
   'retry_payment',
+  'view_payout',
 ]);
 
 export type NotificationActionType = z.infer<typeof NotificationActionType>;
@@ -49,14 +45,6 @@ export type NotificationAction = z.infer<typeof BaseActionSchema>;
 /**
  * Individual metadata schemas for each notification type
  */
-
-// ticket_sold_buyer
-export const TicketSoldBuyerMetadataSchema = z.object({
-  type: z.literal('ticket_sold_buyer'),
-  orderId: z.uuid(),
-  eventName: z.string(),
-  ticketCount: z.number().int().positive(),
-});
 
 // ticket_sold_seller
 export const TicketSoldSellerMetadataSchema = z.object({
@@ -83,8 +71,25 @@ export const OrderConfirmedMetadataSchema = z.object({
   type: z.literal('order_confirmed'),
   orderId: z.uuid(),
   eventName: z.string(),
+  eventStartDate: z.string().optional(), // ISO string
+  eventEndDate: z.string().optional(), // ISO string
+  venueName: z.string().optional(),
+  venueAddress: z.string().optional(),
   totalAmount: z.string(),
+  subtotalAmount: z.string(),
+  platformCommission: z.string(),
+  vatOnCommission: z.string(),
   currency: z.string(),
+  items: z.array(
+    z.object({
+      id: z.string().uuid(),
+      ticketWaveName: z.string(),
+      quantity: z.number().int().positive(),
+      pricePerTicket: z.string(),
+      subtotal: z.string(),
+      currency: z.string().optional(),
+    }),
+  ),
 });
 
 export const OrderExpiredMetadataSchema = z.object({
@@ -108,18 +113,67 @@ export const PaymentSucceededMetadataSchema = z.object({
   currency: z.string(),
 });
 
+export const DocumentUploadedMetadataSchema = z.object({
+  type: z.literal('document_uploaded'),
+  orderId: z.uuid(),
+  eventName: z.string(),
+  ticketCount: z.number().int().positive(),
+});
+
+// payout_processing
+export const PayoutProcessingMetadataSchema = z.object({
+  type: z.literal('payout_processing'),
+  payoutId: z.string().uuid(),
+  amount: z.string(),
+  currency: z.enum(['UYU', 'USD']),
+  processingFee: z.number().optional(),
+  transactionReference: z.string().optional(),
+});
+
+// payout_completed
+export const PayoutCompletedMetadataSchema = z.object({
+  type: z.literal('payout_completed'),
+  payoutId: z.string().uuid(),
+  amount: z.string(),
+  currency: z.enum(['UYU', 'USD']),
+  transactionReference: z.string().optional(),
+  completedAt: z.string(),
+});
+
+// payout_failed
+export const PayoutFailedMetadataSchema = z.object({
+  type: z.literal('payout_failed'),
+  payoutId: z.string().uuid(),
+  amount: z.string(),
+  currency: z.enum(['UYU', 'USD']),
+  failureReason: z.string(),
+});
+
+// payout_cancelled
+export const PayoutCancelledMetadataSchema = z.object({
+  type: z.literal('payout_cancelled'),
+  payoutId: z.string().uuid(),
+  amount: z.string(),
+  currency: z.enum(['UYU', 'USD']),
+  cancellationReason: z.string(),
+});
+
 /**
  * Discriminated union of all notification metadata types
  * Uses 'type' as the discriminator field for type safety
  */
 export const NotificationMetadataSchema = z.discriminatedUnion('type', [
-  TicketSoldBuyerMetadataSchema,
   TicketSoldSellerMetadataSchema,
   DocumentReminderMetadataSchema,
   OrderConfirmedMetadataSchema,
   OrderExpiredMetadataSchema,
   PaymentFailedMetadataSchema,
   PaymentSucceededMetadataSchema,
+  DocumentUploadedMetadataSchema,
+  PayoutProcessingMetadataSchema,
+  PayoutCompletedMetadataSchema,
+  PayoutFailedMetadataSchema,
+  PayoutCancelledMetadataSchema,
 ]);
 
 /**
@@ -140,17 +194,6 @@ export type TypedNotificationMetadata<T extends NotificationType> = Extract<
  * Action schemas for each notification type
  * Some notification types may have specific action requirements
  */
-
-// Actions for ticket_sold (buyer) - upload documents action
-export const TicketSoldBuyerActionsSchema = z
-  .array(
-    BaseActionSchema.extend({
-      type: z.literal('upload_documents'),
-      label: z.string(),
-      url: z.string().url(),
-    }),
-  )
-  .nullable();
 
 // Actions for ticket_sold (seller) - upload documents action (optional)
 export const TicketSoldSellerActionsSchema = z
@@ -210,17 +253,62 @@ export const PaymentSucceededActionsSchema = z
   )
   .nullable();
 
+// Actions for document_uploaded - view order action
+export const DocumentUploadedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_order'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
+// Actions for payout notifications - view payout action
+export const PayoutProcessingActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_payout'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
+export const PayoutCompletedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_payout'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
+export const PayoutFailedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_payout'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
+export const PayoutCancelledActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_payout'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
 /**
  * Individual notification schemas per type
  * Each extends the base schema and defines its own metadata and actions
  */
-
-// ticket_sold_buyer
-export const TicketSoldBuyerNotificationSchema = BaseNotificationSchema.extend({
-  type: z.literal('ticket_sold_buyer'),
-  metadata: TicketSoldBuyerMetadataSchema,
-  actions: TicketSoldBuyerActionsSchema,
-});
 
 // ticket_sold_seller
 export const TicketSoldSellerNotificationSchema = BaseNotificationSchema.extend(
@@ -270,19 +358,62 @@ export const PaymentSucceededNotificationSchema = BaseNotificationSchema.extend(
   },
 );
 
+// document_uploaded
+export const DocumentUploadedNotificationSchema = BaseNotificationSchema.extend(
+  {
+    type: z.literal('document_uploaded'),
+    metadata: DocumentUploadedMetadataSchema,
+    actions: DocumentUploadedActionsSchema,
+  },
+);
+
+// payout_processing
+export const PayoutProcessingNotificationSchema = BaseNotificationSchema.extend(
+  {
+    type: z.literal('payout_processing'),
+    metadata: PayoutProcessingMetadataSchema,
+    actions: PayoutProcessingActionsSchema,
+  },
+);
+
+// payout_completed
+export const PayoutCompletedNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('payout_completed'),
+  metadata: PayoutCompletedMetadataSchema,
+  actions: PayoutCompletedActionsSchema,
+});
+
+// payout_failed
+export const PayoutFailedNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('payout_failed'),
+  metadata: PayoutFailedMetadataSchema,
+  actions: PayoutFailedActionsSchema,
+});
+
+// payout_cancelled
+export const PayoutCancelledNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('payout_cancelled'),
+  metadata: PayoutCancelledMetadataSchema,
+  actions: PayoutCancelledActionsSchema,
+});
+
 /**
  * Discriminated union of all notification types
  * Uses 'type' as the discriminator field for type safety
  * Reference: https://zod.dev/api?id=discriminated-unions
  */
 export const NotificationSchema = z.discriminatedUnion('type', [
-  TicketSoldBuyerNotificationSchema,
   TicketSoldSellerNotificationSchema,
   DocumentReminderNotificationSchema,
   OrderConfirmedNotificationSchema,
   OrderExpiredNotificationSchema,
   PaymentFailedNotificationSchema,
   PaymentSucceededNotificationSchema,
+  DocumentUploadedNotificationSchema,
+  PayoutProcessingNotificationSchema,
+  PayoutCompletedNotificationSchema,
+  PayoutFailedNotificationSchema,
+  PayoutCancelledNotificationSchema,
 ]);
 
 /**
