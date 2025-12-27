@@ -46,6 +46,9 @@ type GetAvailableEarningsResponse = ReturnType<
   SellerEarningsService['getAvailableEarningsForSelection']
 >;
 type GetPayoutHistoryResponse = ReturnType<PayoutsService['getPayoutHistory']>;
+type GetUserPayoutDetailsResponse = ReturnType<
+  PayoutsService['getPayoutDetailsForUser']
+>;
 type RequestPayoutResponse = ReturnType<PayoutsService['requestPayout']>;
 type GetPayoutMethodsResponse = ReturnType<
   PayoutMethodsService['getPayoutMethods']
@@ -72,6 +75,7 @@ export class PayoutsController {
     new PayoutMethodsRepository(db),
     new SellerEarningsRepository(db),
     new PayoutEventsRepository(db),
+    db,
   );
 
   private payoutMethodsService = new PayoutMethodsService(
@@ -182,6 +186,19 @@ export class PayoutsController {
   ): Promise<void> {
     await this.payoutMethodsService.deletePayoutMethod(
       payoutMethodId,
+      request.user.id,
+    );
+  }
+
+  @Get('/{payoutId}')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<NotFoundError>(404, 'Payout not found')
+  public async getPayoutDetails(
+    @Path() payoutId: string,
+    @Request() request: express.Request,
+  ): Promise<GetUserPayoutDetailsResponse> {
+    return this.payoutsService.getPayoutDetailsForUser(
+      payoutId,
       request.user.id,
     );
   }

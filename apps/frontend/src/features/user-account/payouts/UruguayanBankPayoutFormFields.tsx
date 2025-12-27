@@ -53,7 +53,7 @@ export function UruguayanBankPayoutFormFields({
 
       <FormField
         control={form.control}
-        name='metadata.bank_name'
+        name='metadata.bankName'
         render={({field}) => (
           <FormItem>
             <FormLabel>Nombre del Banco</FormLabel>
@@ -78,7 +78,7 @@ export function UruguayanBankPayoutFormFields({
 
       <FormField
         control={form.control}
-        name='metadata.account_number'
+        name='metadata.accountNumber'
         render={({field}) => (
           <FormItem>
             <FormLabel>Número de Cuenta</FormLabel>

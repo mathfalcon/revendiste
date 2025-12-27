@@ -98,29 +98,43 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
             currency: existingMethod.currency as 'UYU' | 'USD',
             metadata:
               existingMethod.metadata &&
-              'bank_name' in existingMethod.metadata &&
-              'account_number' in existingMethod.metadata
-                ? {
-                    bank_name: existingMethod.metadata.bank_name,
-                    account_number: existingMethod.metadata.account_number,
-                  }
-                : {
-                    bank_name: undefined,
-                    account_number: '',
-                  },
+              typeof existingMethod.metadata === 'object' &&
+              existingMethod.metadata !== null &&
+              ('bankName' in existingMethod.metadata ||
+                'bank_name' in existingMethod.metadata) &&
+              ('accountNumber' in existingMethod.metadata ||
+                'account_number' in existingMethod.metadata)
+                ? ({
+                    bankName:
+                      'bankName' in existingMethod.metadata
+                        ? (existingMethod.metadata.bankName as any)
+                        : 'bank_name' in existingMethod.metadata
+                          ? (existingMethod.metadata.bank_name as any)
+                          : undefined,
+                    accountNumber:
+                      'accountNumber' in existingMethod.metadata
+                        ? (existingMethod.metadata.accountNumber as string)
+                        : 'account_number' in existingMethod.metadata
+                          ? (existingMethod.metadata.account_number as string)
+                          : '',
+                  } as any)
+                : ({
+                    bankName: undefined,
+                    accountNumber: '',
+                  } as any),
             isDefault: existingMethod.isDefault,
           }
-      : {
+      : ({
           payoutType: 'uruguayan_bank' as const,
           accountHolderName: '',
           accountHolderSurname: '',
           currency: 'UYU',
           metadata: {
-            bank_name: undefined,
-            account_number: '',
+            bankName: undefined,
+            accountNumber: '',
           },
           isDefault: false,
-        },
+        } as any),
   });
 
   const payoutType = form.watch('payoutType');
@@ -133,8 +147,8 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
     if (newType === 'uruguayan_bank') {
       form.setValue('currency', 'UYU');
       form.setValue('metadata', {
-        bank_name: undefined as any, // Will be validated when form is submitted
-        account_number: '',
+        bankName: undefined as any, // Will be validated when form is submitted
+        accountNumber: '',
       });
     } else {
       form.setValue('currency', 'USD');
@@ -159,14 +173,18 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
     } else {
       // TypeScript needs explicit narrowing for discriminated unions
       if (data.payoutType === 'uruguayan_bank') {
+        const metadata = data.metadata as {
+          bankName: string;
+          accountNumber: string;
+        };
         await addMethod.mutateAsync({
           payoutType: 'uruguayan_bank',
           accountHolderName: data.accountHolderName,
           accountHolderSurname: data.accountHolderSurname,
           currency: data.currency,
-          metadata: data.metadata as {
-            bank_name: string;
-            account_number: string;
+          metadata: {
+            bankName: metadata.bankName as any,
+            accountNumber: metadata.accountNumber,
           },
           isDefault: data.isDefault,
         });
@@ -195,7 +213,7 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
           name='payoutType'
           render={({field}) => (
             <FormItem>
-              <FormLabel>Tipo de Método de Pago</FormLabel>
+              <FormLabel>Tipo de método de retiro</FormLabel>
               <Select
                 onValueChange={value =>
                   handlePayoutTypeChange(value as 'uruguayan_bank' | 'paypal')

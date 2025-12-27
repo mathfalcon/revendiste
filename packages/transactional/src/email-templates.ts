@@ -28,6 +28,18 @@ import {
   SellerTicketSoldEmail as SellerTicketSoldEmailComponent,
   type SellerTicketSoldEmailProps,
 } from '../emails/seller-ticket-sold-email';
+import {
+  PayoutCompletedEmail as PayoutCompletedEmailComponent,
+  type PayoutCompletedEmailProps,
+} from '../emails/payout-completed-email';
+import {
+  PayoutFailedEmail as PayoutFailedEmailComponent,
+  type PayoutFailedEmailProps,
+} from '../emails/payout-failed-email';
+import {
+  PayoutCancelledEmail as PayoutCancelledEmailComponent,
+  type PayoutCancelledEmailProps,
+} from '../emails/payout-cancelled-email';
 import type {
   NotificationType,
   TypedNotificationMetadata,
@@ -61,6 +73,7 @@ export function getEmailTemplate<T extends NotificationType>(
   const uploadUrl = actions?.find(a => a.type === 'upload_documents')?.url;
   const orderUrl = actions?.find(a => a.type === 'view_order')?.url;
   const retryUrl = actions?.find(a => a.type === 'retry_payment')?.url;
+  const payoutUrl = actions?.find(a => a.type === 'view_payout')?.url;
 
   switch (notificationType) {
     case 'document_reminder': {
@@ -159,6 +172,79 @@ export function getEmailTemplate<T extends NotificationType>(
           ticketCount: meta?.ticketCount || 1,
           orderUrl:
             orderUrl || `${appBaseUrl}/cuenta/tickets?orderId=${meta?.orderId}`,
+          appBaseUrl,
+        },
+      };
+    }
+
+    case 'payout_processing': {
+      // Legacy notification type - no longer used, but kept for backward compatibility
+      // Map to completed template since processing now goes directly to completed
+      const meta = metadata as TypedNotificationMetadata<'payout_processing'>;
+      return {
+        Component: PayoutCompletedEmailComponent,
+        props: {
+          payoutId: meta?.payoutId || '',
+          amount: meta?.amount || '0.00',
+          currency: meta?.currency || 'UYU',
+          transactionReference: meta?.transactionReference,
+          completedAt: new Date().toISOString(),
+          payoutUrl:
+            payoutUrl ||
+            `${appBaseUrl}/cuenta/retiro?payoutId=${meta?.payoutId}`,
+          appBaseUrl,
+        },
+      };
+    }
+
+    case 'payout_completed': {
+      const meta = metadata as TypedNotificationMetadata<'payout_completed'>;
+      return {
+        Component: PayoutCompletedEmailComponent,
+        props: {
+          payoutId: meta?.payoutId || '',
+          amount: meta?.amount || '0.00',
+          currency: meta?.currency || 'UYU',
+          transactionReference: meta?.transactionReference,
+          completedAt: meta?.completedAt || new Date().toISOString(),
+          payoutUrl:
+            payoutUrl ||
+            `${appBaseUrl}/cuenta/retiro?payoutId=${meta?.payoutId}`,
+          appBaseUrl,
+        },
+      };
+    }
+
+    case 'payout_failed': {
+      const meta = metadata as TypedNotificationMetadata<'payout_failed'>;
+      return {
+        Component: PayoutFailedEmailComponent,
+        props: {
+          payoutId: meta?.payoutId || '',
+          amount: meta?.amount || '0.00',
+          currency: meta?.currency || 'UYU',
+          failureReason: meta?.failureReason || 'Error desconocido',
+          payoutUrl:
+            payoutUrl ||
+            `${appBaseUrl}/cuenta/retiro?payoutId=${meta?.payoutId}`,
+          appBaseUrl,
+        },
+      };
+    }
+
+    case 'payout_cancelled': {
+      const meta = metadata as TypedNotificationMetadata<'payout_cancelled'>;
+      return {
+        Component: PayoutCancelledEmailComponent,
+        props: {
+          payoutId: meta?.payoutId || '',
+          amount: meta?.amount || '0.00',
+          currency: meta?.currency || 'UYU',
+          cancellationReason:
+            meta?.cancellationReason || 'Cancelación sin motivo especificado',
+          payoutUrl:
+            payoutUrl ||
+            `${appBaseUrl}/cuenta/retiro?payoutId=${meta?.payoutId}`,
           appBaseUrl,
         },
       };

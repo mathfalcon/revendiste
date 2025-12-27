@@ -17,7 +17,29 @@ export enum NotificationType {
   OrderExpired = "order_expired",
   PaymentFailed = "payment_failed",
   PaymentSucceeded = "payment_succeeded",
+  PayoutCancelled = "payout_cancelled",
+  PayoutCompleted = "payout_completed",
+  PayoutFailed = "payout_failed",
+  PayoutProcessing = "payout_processing",
   TicketSoldSeller = "ticket_sold_seller",
+}
+
+export enum PayoutStatus {
+  Cancelled = "cancelled",
+  Completed = "completed",
+  Failed = "failed",
+  Pending = "pending",
+  Processing = "processing",
+}
+
+export enum PayoutEventType {
+  AdminProcessed = "admin_processed",
+  Cancelled = "cancelled",
+  PayoutRequested = "payout_requested",
+  StatusChange = "status_change",
+  TransferCompleted = "transfer_completed",
+  TransferFailed = "transfer_failed",
+  TransferInitiated = "transfer_initiated",
 }
 
 export enum PayoutType {
@@ -316,15 +338,15 @@ export interface UploadDocumentResponse {
     verifiedBy: string | null;
     /** @format date-time */
     verifiedAt: string | null;
+    ticketId: string;
+    isPrimary: boolean;
     /** @format date-time */
     uploadedAt: string;
-    ticketId: string;
     storagePath: string;
     /** @format double */
     sizeBytes: number;
     originalName: string;
     mimeType: string;
-    isPrimary: boolean;
     fileName: string;
     documentType: string;
     /** @format date-time */
@@ -693,80 +715,80 @@ export type AddPayoutMethodRouteBody = (
   | {
       metadata:
         | {
-            account_number: string;
-            bank_name: "Itau";
+            accountNumber: string;
+            bankName: "Itau";
           }
         | {
-            account_number: string;
-            bank_name: "OCA Blue";
+            accountNumber: string;
+            bankName: "OCA Blue";
           }
         | {
-            account_number: string;
-            bank_name: "PREX";
+            accountNumber: string;
+            bankName: "PREX";
           }
         | {
-            account_number: string;
-            bank_name: "Banco Nacion Arg";
+            accountNumber: string;
+            bankName: "Banco Nacion Arg";
           }
         | {
-            account_number: string;
-            bank_name: "Bandes";
+            accountNumber: string;
+            bankName: "Bandes";
           }
         | {
-            account_number: string;
-            bank_name: "BBVA";
+            accountNumber: string;
+            bankName: "BBVA";
           }
         | {
-            account_number: string;
-            bank_name: "BHU";
+            accountNumber: string;
+            bankName: "BHU";
           }
         | {
-            account_number: string;
-            bank_name: "BROU";
+            accountNumber: string;
+            bankName: "BROU";
           }
         | {
-            account_number: string;
-            bank_name: "Citibank";
+            accountNumber: string;
+            bankName: "Citibank";
           }
         | {
-            account_number: string;
-            bank_name: "Dinero Electronico ANDA";
+            accountNumber: string;
+            bankName: "Dinero Electronico ANDA";
           }
         | {
-            account_number: string;
-            bank_name: "FUCAC";
+            accountNumber: string;
+            bankName: "FUCAC";
           }
         | {
-            account_number: string;
-            bank_name: "FUCEREP";
+            accountNumber: string;
+            bankName: "FUCEREP";
           }
         | {
-            account_number: string;
-            bank_name: "GRIN";
+            accountNumber: string;
+            bankName: "GRIN";
           }
         | {
-            account_number: string;
-            bank_name: "Heritage";
+            accountNumber: string;
+            bankName: "Heritage";
           }
         | {
-            account_number: string;
-            bank_name: "HSBC";
+            accountNumber: string;
+            bankName: "HSBC";
           }
         | {
-            account_number: string;
-            bank_name: "Mercadopago";
+            accountNumber: string;
+            bankName: "Mercadopago";
           }
         | {
-            account_number: string;
-            bank_name: "Midinero";
+            accountNumber: string;
+            bankName: "Midinero";
           }
         | {
-            account_number: string;
-            bank_name: "Santander";
+            accountNumber: string;
+            bankName: "Santander";
           }
         | {
-            account_number: string;
-            bank_name: "Scotiabank";
+            accountNumber: string;
+            bankName: "Scotiabank";
           };
       payoutType: "uruguayan_bank";
     }
@@ -806,6 +828,446 @@ export interface UpdatePayoutMethodRouteBody {
   currency?: "USD" | "UYU";
   accountHolderSurname?: string;
   accountHolderName?: string;
+}
+
+export interface GetUserPayoutDetailsResponse {
+  linkedEarnings: {
+    sellerAmount: string;
+    listingTicketId: string;
+    currency: EventTicketCurrency;
+    id: string;
+    createdAt: string;
+  }[];
+  transactionReference: string | null;
+  sellerUserId: string;
+  /** @format date-time */
+  requestedAt: string;
+  processingFee: string | null;
+  processedBy: string | null;
+  /** @format date-time */
+  processedAt: string | null;
+  payoutMethodId: string;
+  notes: string | null;
+  /** @format date-time */
+  completedAt: string | null;
+  failureReason: string | null;
+  /** @format date-time */
+  failedAt: string | null;
+  amount: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+  payoutMethod: {
+    metadata: string | number | boolean | JsonArray | JsonObject | null;
+    currency: EventTicketCurrency;
+    accountHolderSurname: string;
+    accountHolderName: string;
+    payoutType: PayoutType;
+    id: string;
+  };
+  documents: {
+    uploadedBy: string;
+    /** @format date-time */
+    uploadedAt: string;
+    storagePath: string;
+    /** @format double */
+    sizeBytes: number;
+    payoutId: string;
+    originalName: string;
+    mimeType: string;
+    fileName: string;
+    documentType: string;
+    /** @format date-time */
+    updatedAt: string;
+    id: string;
+    /** @format date-time */
+    deletedAt: string | null;
+    /** @format date-time */
+    createdAt: string;
+    url: string;
+  }[];
+  events: {
+    createdBy: string | null;
+    payoutId: string;
+    userAgent: string | null;
+    toStatus: PayoutStatus | null;
+    ipAddress: string | null;
+    fromStatus: PayoutStatus | null;
+    eventType: PayoutEventType;
+    eventData: string | number | boolean | JsonArray | JsonObject | null;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  metadata: {
+    voucherUrl?: string;
+    currencyConversion?: {
+      convertedAt: string;
+      /** @format double */
+      exchangeRate: number;
+      originalCurrency: string;
+      /** @format double */
+      originalAmount: number;
+    };
+    listingIds: string[];
+    listingTicketIds: string[];
+  } | null;
+}
+
+export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencyAmountStringFailedAtDateOrNullFailureReasonStringOrNullCompletedAtDateOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateSellerUserIdStringTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
+  data: {
+    payoutMethod: {
+      payoutType: PayoutType;
+      accountHolderSurname: string;
+      accountHolderName: string;
+      id: string;
+    } | null;
+    seller: {
+      lastName: string | null;
+      firstName: string | null;
+      email: string;
+      id: string;
+    };
+    linkedEarnings: {
+      sellerAmount: string;
+      listingTicketId: string;
+      currency: EventTicketCurrency;
+      id: string;
+      createdAt: string;
+    }[];
+    transactionReference: string | null;
+    sellerUserId: string;
+    /** @format date-time */
+    requestedAt: string;
+    processingFee: string | null;
+    processedBy: string | null;
+    /** @format date-time */
+    processedAt: string | null;
+    payoutMethodId: string;
+    notes: string | null;
+    /** @format date-time */
+    completedAt: string | null;
+    failureReason: string | null;
+    /** @format date-time */
+    failedAt: string | null;
+    amount: string;
+    currency: EventTicketCurrency;
+    /** @format date-time */
+    updatedAt: string;
+    status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+    metadata: string | number | boolean | JsonArray | JsonObject | null;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  pagination: PaginationMeta;
+}
+
+export type GetPayoutsResponse =
+  PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencyAmountStringFailedAtDateOrNullFailureReasonStringOrNullCompletedAtDateOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateSellerUserIdStringTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
+
+export interface InferTypeofAdminPayoutsQuerySchema {
+  status?: "cancelled" | "pending" | "completed" | "failed";
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+}
+
+export type AdminPayoutsQuery = InferTypeofAdminPayoutsQuerySchema;
+
+export interface GetPayoutDetailsResponse {
+  linkedEarnings: {
+    sellerAmount: string;
+    listingTicketId: string;
+    currency: EventTicketCurrency;
+    id: string;
+    createdAt: string;
+  }[];
+  transactionReference: string | null;
+  sellerUserId: string;
+  /** @format date-time */
+  requestedAt: string;
+  processingFee: string | null;
+  processedBy: string | null;
+  /** @format date-time */
+  processedAt: string | null;
+  payoutMethodId: string;
+  notes: string | null;
+  /** @format date-time */
+  completedAt: string | null;
+  failureReason: string | null;
+  /** @format date-time */
+  failedAt: string | null;
+  amount: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+  payoutMethod: {
+    metadata: string | number | boolean | JsonArray | JsonObject | null;
+    currency: EventTicketCurrency;
+    accountHolderSurname: string;
+    accountHolderName: string;
+    payoutType: PayoutType;
+    id: string;
+  };
+  documents: {
+    uploadedBy: string;
+    /** @format date-time */
+    uploadedAt: string;
+    storagePath: string;
+    /** @format double */
+    sizeBytes: number;
+    payoutId: string;
+    originalName: string;
+    mimeType: string;
+    fileName: string;
+    documentType: string;
+    /** @format date-time */
+    updatedAt: string;
+    id: string;
+    /** @format date-time */
+    deletedAt: string | null;
+    /** @format date-time */
+    createdAt: string;
+    url: string;
+  }[];
+  metadata: {
+    voucherUrl?: string;
+    currencyConversion?: {
+      convertedAt: string;
+      /** @format double */
+      exchangeRate: number;
+      originalCurrency: string;
+      /** @format double */
+      originalAmount: number;
+    };
+    listingIds: string[];
+    listingTicketIds: string[];
+  } | null;
+}
+
+export interface ProcessPayoutResponse {
+  transactionReference: string | null;
+  sellerUserId: string;
+  /** @format date-time */
+  requestedAt: string;
+  processingFee: string | null;
+  processedBy: string | null;
+  /** @format date-time */
+  processedAt: string | null;
+  payoutMethodId: string;
+  notes: string | null;
+  /** @format date-time */
+  completedAt: string | null;
+  failureReason: string | null;
+  /** @format date-time */
+  failedAt: string | null;
+  amount: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface ProcessPayoutRouteBody {
+  voucherUrl?: string;
+  notes?: string;
+  transactionReference?: string;
+  /** @format double */
+  processingFee?: number;
+}
+
+export interface CompletePayoutResponse {
+  transactionReference: string | null;
+  sellerUserId: string;
+  /** @format date-time */
+  requestedAt: string;
+  processingFee: string | null;
+  processedBy: string | null;
+  /** @format date-time */
+  processedAt: string | null;
+  payoutMethodId: string;
+  notes: string | null;
+  /** @format date-time */
+  completedAt: string | null;
+  failureReason: string | null;
+  /** @format date-time */
+  failedAt: string | null;
+  amount: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface CompletePayoutRouteBody {
+  voucherUrl?: string;
+  transactionReference?: string;
+}
+
+export interface FailPayoutResponse {
+  transactionReference: string | null;
+  sellerUserId: string;
+  /** @format date-time */
+  requestedAt: string;
+  processingFee: string | null;
+  processedBy: string | null;
+  /** @format date-time */
+  processedAt: string | null;
+  payoutMethodId: string;
+  notes: string | null;
+  /** @format date-time */
+  completedAt: string | null;
+  failureReason: string | null;
+  /** @format date-time */
+  failedAt: string | null;
+  amount: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface FailPayoutRouteBody {
+  failureReason: string;
+}
+
+export interface UpdatePayoutResponse {
+  transactionReference: string | null;
+  sellerUserId: string;
+  /** @format date-time */
+  requestedAt: string;
+  processingFee: string | null;
+  processedBy: string | null;
+  /** @format date-time */
+  processedAt: string | null;
+  payoutMethodId: string;
+  notes: string | null;
+  /** @format date-time */
+  completedAt: string | null;
+  failureReason: string | null;
+  /** @format date-time */
+  failedAt: string | null;
+  amount: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface UpdatePayoutRouteBody {
+  transactionReference?: string;
+  voucherUrl?: string;
+  notes?: string;
+  /** @format double */
+  processingFee?: number;
+  status?: "cancelled" | "pending" | "completed" | "failed";
+}
+
+export interface CancelPayoutResponse {
+  transactionReference: string | null;
+  sellerUserId: string;
+  /** @format date-time */
+  requestedAt: string;
+  processingFee: string | null;
+  processedBy: string | null;
+  /** @format date-time */
+  processedAt: string | null;
+  payoutMethodId: string;
+  notes: string | null;
+  /** @format date-time */
+  completedAt: string | null;
+  failureReason: string | null;
+  /** @format date-time */
+  failedAt: string | null;
+  amount: string;
+  currency: EventTicketCurrency;
+  /** @format date-time */
+  updatedAt: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface CancelPayoutRouteBody {
+  failureReason: string;
+  reasonType: "error" | "other";
+}
+
+export interface UploadPayoutDocumentResponse {
+  documentUrl: string;
+  document: {
+    uploadedBy: string;
+    /** @format date-time */
+    uploadedAt: string;
+    storagePath: string;
+    /** @format double */
+    sizeBytes: number;
+    payoutId: string;
+    originalName: string;
+    mimeType: string;
+    fileName: string;
+    documentType: string;
+    /** @format date-time */
+    updatedAt: string;
+    id: string;
+    /** @format date-time */
+    deletedAt: string | null;
+    /** @format date-time */
+    createdAt: string;
+  };
+}
+
+export interface DeletePayoutDocumentResponse {
+  success: boolean;
+}
+
+export interface GetCurrentUserResponse {
+  role: "user" | "organizer" | "admin";
+  imageUrl: string | null;
+  lastName: string | null;
+  firstName: string | null;
+  email: string;
+  id: string;
 }
 
 export interface DLocalWebhookrRouteBody {
@@ -870,7 +1332,7 @@ export interface InferTypeofBaseActionSchema {
   data?: RecordStringUnknown;
   url?: string;
   label: string;
-  type: "upload_documents" | "view_order" | "retry_payment";
+  type: "upload_documents" | "view_order" | "retry_payment" | "view_payout";
 }
 
 export type NotificationAction = InferTypeofBaseActionSchema;
@@ -1650,6 +2112,250 @@ export class Api<
       this.request<void, UnauthorizedError | NotFoundError>({
         path: `/payouts/payout-methods/${payoutMethodId}`,
         method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Payouts
+     * @name GetPayoutDetails
+     * @request GET:/payouts/{payoutId}
+     */
+    getPayoutDetails: (payoutId: string, params: RequestParams = {}) =>
+      this.request<
+        GetUserPayoutDetailsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/payouts/${payoutId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+  };
+  admin = {
+    /**
+     * No description
+     *
+     * @tags Admin - Payouts
+     * @name GetPayouts
+     * @request GET:/admin/payouts
+     */
+    getPayouts: (
+      query: {
+        status?: "cancelled" | "pending" | "completed" | "failed";
+        sortOrder?: "asc" | "desc";
+        sortBy?: string;
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetPayoutsResponse, UnauthorizedError>({
+        path: `/admin/payouts`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Payouts
+     * @name GetPayoutDetails
+     * @request GET:/admin/payouts/{payoutId}
+     */
+    getPayoutDetails: (payoutId: string, params: RequestParams = {}) =>
+      this.request<GetPayoutDetailsResponse, UnauthorizedError | NotFoundError>(
+        {
+          path: `/admin/payouts/${payoutId}`,
+          method: "GET",
+          format: "json",
+          ...params,
+        },
+      ),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Payouts
+     * @name UpdatePayout
+     * @request PUT:/admin/payouts/{payoutId}
+     */
+    updatePayout: (
+      payoutId: string,
+      data: UpdatePayoutRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UpdatePayoutResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/payouts/${payoutId}`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Payouts
+     * @name ProcessPayout
+     * @request POST:/admin/payouts/{payoutId}/process
+     */
+    processPayout: (
+      payoutId: string,
+      data: ProcessPayoutRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ProcessPayoutResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/payouts/${payoutId}/process`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Payouts
+     * @name CompletePayout
+     * @request POST:/admin/payouts/{payoutId}/complete
+     */
+    completePayout: (
+      payoutId: string,
+      data: CompletePayoutRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CompletePayoutResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/payouts/${payoutId}/complete`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Payouts
+     * @name FailPayout
+     * @request POST:/admin/payouts/{payoutId}/fail
+     */
+    failPayout: (
+      payoutId: string,
+      data: FailPayoutRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        FailPayoutResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/payouts/${payoutId}/fail`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Payouts
+     * @name CancelPayout
+     * @request POST:/admin/payouts/{payoutId}/cancel
+     */
+    cancelPayout: (
+      payoutId: string,
+      data: CancelPayoutRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CancelPayoutResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/payouts/${payoutId}/cancel`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Payouts
+     * @name UploadPayoutDocument
+     * @request POST:/admin/payouts/{payoutId}/documents
+     */
+    uploadPayoutDocument: (
+      payoutId: string,
+      data: {
+        /** @format binary */
+        file: File;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UploadPayoutDocumentResponse,
+        BadRequestError | UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/payouts/${payoutId}/documents`,
+        method: "POST",
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Payouts
+     * @name DeletePayoutDocument
+     * @request DELETE:/admin/payouts/documents/{documentId}
+     */
+    deletePayoutDocument: (documentId: string, params: RequestParams = {}) =>
+      this.request<
+        DeletePayoutDocumentResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/payouts/documents/${documentId}`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+  };
+  users = {
+    /**
+     * No description
+     *
+     * @tags Users
+     * @name GetCurrentUser
+     * @request GET:/users/me
+     */
+    getCurrentUser: (params: RequestParams = {}) =>
+      this.request<GetCurrentUserResponse, UnauthorizedError>({
+        path: `/users/me`,
+        method: "GET",
+        format: "json",
         ...params,
       }),
   };

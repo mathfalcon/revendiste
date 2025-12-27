@@ -361,6 +361,59 @@ The frontend uses a custom Vite plugin that automatically generates API types on
 
 **Pattern:** When frontend depends on backend being ready, implement retry logic with exponential backoff or fixed delays.
 
+### Controller Structure Pattern
+
+**All controllers MUST follow a consistent structure with validation schemas in a separate file:**
+
+```typescript
+// ✅ CORRECT - Controller structure
+// apps/backend/src/controllers/my-resource/index.ts
+import {ValidateBody} from '~/decorators';
+import {CreateResourceRouteBody, CreateResourceRouteSchema} from './validation';
+
+@Route('my-resource')
+export class MyResourceController {
+  @Post('/')
+  @ValidateBody(CreateResourceRouteSchema)
+  public async create(
+    @Body() body: CreateResourceRouteBody,
+  ): Promise<CreateResourceResponse> {
+    // Implementation
+  }
+}
+
+// apps/backend/src/controllers/my-resource/validation.ts
+import {z} from 'zod';
+
+export const CreateResourceRouteSchema = z.object({
+  body: z.object({
+    name: z.string().min(1),
+    email: z.string().email(),
+  }),
+});
+
+export type CreateResourceRouteBody = z.infer<
+  typeof CreateResourceRouteSchema
+>['body'];
+```
+
+**Key Rules:**
+
+- ✅ Controller file: `controllers/{resource}/index.ts`
+- ✅ Validation file: `controllers/{resource}/validation.ts`
+- ✅ Validation schemas wrap body in `z.object({ body: ... })`
+- ✅ Export both schema and body type: `{Schema}RouteSchema` and `{Schema}RouteBody`
+- ✅ Body type extracted using: `z.infer<typeof Schema>['body']`
+- ✅ Import validation types in controller: `from './validation'`
+- ✅ Use `@ValidateBody(Schema)` decorator on controller methods
+
+**Why?**
+
+- Separation of concerns: validation logic separate from controller logic
+- Reusability: validation schemas can be shared or tested independently
+- Consistency: all controllers follow the same pattern
+- Type safety: TypeScript types automatically inferred from Zod schemas
+
 ## Database Patterns
 
 ### UUID Generation

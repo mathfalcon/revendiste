@@ -6,8 +6,8 @@ import {
 import {calculateSellerAmount} from '~/utils/fees';
 import {PAYOUT_HOLD_PERIOD_HOURS} from '~/config/env';
 import {logger} from '~/utils';
-import type {Kysely} from 'kysely';
-import type {DB, EventTicketCurrency} from '@revendiste/shared';
+import {roundOrderAmount} from '@revendiste/shared';
+import type {EventTicketCurrency} from '@revendiste/shared';
 
 interface BalanceByCurrency {
   currency: EventTicketCurrency;
@@ -50,30 +50,13 @@ export class SellerEarningsService {
 
   /**
    * Creates a single seller earning from a sold ticket
-   * Joins to get price and event_end_date
    */
   async createEarningFromSale(listingTicketId: string): Promise<void> {
-    // Get listing ticket with price and event end date via joins
-    const ticketData = await this.sellerEarningsRepository
-      .getDb()
-      .selectFrom('listingTickets')
-      .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
-      .innerJoin(
-        'eventTicketWaves',
-        'listings.ticketWaveId',
-        'eventTicketWaves.id',
-      )
-      .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
-      .select([
-        'listingTickets.id',
-        'listingTickets.price',
-        'listingTickets.listingId',
-        'events.eventEndDate',
-        'eventTicketWaves.currency',
-      ])
-      .where('listingTickets.id', '=', listingTicketId)
-      .where('listingTickets.deletedAt', 'is', null)
-      .executeTakeFirst();
+    // Get listing ticket with price and event end date via repository
+    const ticketData =
+      await this.sellerEarningsRepository.getTicketDataForEarnings(
+        listingTicketId,
+      );
 
     if (!ticketData) {
       logger.error('Ticket not found for earnings creation', {
@@ -82,14 +65,11 @@ export class SellerEarningsService {
       throw new Error('Ticket not found');
     }
 
-    // Get seller user ID from listing
-    const listing = await this.sellerEarningsRepository
-      .getDb()
-      .selectFrom('listings')
-      .select(['listings.publisherUserId'])
-      .where('listings.id', '=', ticketData.listingId)
-      .where('listings.deletedAt', 'is', null)
-      .executeTakeFirst();
+    // Get seller user ID from listing via repository
+    const listing =
+      await this.sellerEarningsRepository.getListingPublisherUserId(
+        ticketData.listingId,
+      );
 
     if (!listing) {
       logger.error('Listing not found for earnings creation', {
@@ -98,9 +78,9 @@ export class SellerEarningsService {
       throw new Error('Listing not found');
     }
 
-    // Calculate seller amount
+    // Calculate seller amount and round to nearest integer (same logic as payments)
     const sellerAmountCalc = calculateSellerAmount(Number(ticketData.price));
-    const sellerAmount = sellerAmountCalc.totalAmount;
+    const sellerAmount = roundOrderAmount(sellerAmountCalc.totalAmount);
 
     // Calculate hold_until (event_end_date + 48 hours)
     const holdUntil = new Date(ticketData.eventEndDate);

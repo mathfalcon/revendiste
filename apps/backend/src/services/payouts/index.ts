@@ -3,14 +3,25 @@ import {
   PayoutMethodsRepository,
   SellerEarningsRepository,
   PayoutEventsRepository,
+  UsersRepository,
 } from '~/repositories';
+import {PayoutDocumentsService} from '~/services/payout-documents';
 import {NotFoundError, ValidationError} from '~/errors';
 import {PAYOUT_ERROR_MESSAGES} from '~/constants/error-messages';
 import {PAYOUT_MINIMUM_UYU, PAYOUT_MINIMUM_USD} from '~/config/env';
 import {logger} from '~/utils';
-import type {EventTicketCurrency, Json} from '@revendiste/shared';
+import type {EventTicketCurrency, Json, PayoutStatus} from '@revendiste/shared';
+import {PayoutMetadataSchema} from '@revendiste/shared';
 import type {PaginationOptions} from '~/types/pagination';
 import {ExchangeRateService} from '~/services/exchange-rates';
+import {NotificationService} from '~/services/notifications';
+import {
+  notifyPayoutCompleted,
+  notifyPayoutFailed,
+  notifyPayoutCancelled,
+} from '~/services/notifications/helpers';
+import type {Kysely} from 'kysely';
+import type {DB} from '@revendiste/shared';
 
 interface RequestPayoutParams {
   sellerUserId: string;
@@ -37,12 +48,22 @@ interface PayoutHistoryItem {
 }
 
 export class PayoutsService {
+  private notificationService: NotificationService;
+  private payoutDocumentsService: PayoutDocumentsService;
+
   constructor(
     private readonly payoutsRepository: PayoutsRepository,
     private readonly payoutMethodsRepository: PayoutMethodsRepository,
     private readonly sellerEarningsRepository: SellerEarningsRepository,
     private readonly payoutEventsRepository: PayoutEventsRepository,
-  ) {}
+    db: Kysely<DB>,
+  ) {
+    this.notificationService = new NotificationService(
+      db,
+      new UsersRepository(db),
+    );
+    this.payoutDocumentsService = new PayoutDocumentsService(db);
+  }
 
   /**
    * Request a payout with selected tickets/listings
@@ -228,7 +249,7 @@ export class PayoutsService {
 
   /**
    * Admin processing of payout
-   * Includes processing_fee update
+   * Includes processing_fee update and optional voucherUrl
    */
   async processPayout(
     payoutId: string,
@@ -237,6 +258,7 @@ export class PayoutsService {
       processingFee?: number;
       transactionReference?: string;
       notes?: string;
+      voucherUrl?: string;
     },
   ) {
     const payout = await this.payoutsRepository.getById(payoutId);
@@ -250,14 +272,27 @@ export class PayoutsService {
       );
     }
 
-    // Update to processing
+    // Update metadata if voucherUrl is provided
+    let updatedMetadata = payout.metadata;
+    if (updates.voucherUrl) {
+      const currentMetadata = PayoutMetadataSchema.parse(payout.metadata || {});
+      updatedMetadata = {
+        ...currentMetadata,
+        voucherUrl: updates.voucherUrl,
+      } as Json;
+    }
+
+    // Update to completed (directly, no processing status needed)
     const updatedPayout = await this.payoutsRepository.updateStatus(
       payoutId,
-      'processing',
+      'completed',
       {
         processedAt: new Date(),
         processedBy: adminUserId,
-        ...updates,
+        completedAt: new Date(),
+        transactionReference: updates.transactionReference,
+        notes: updates.notes,
+        ...(updatedMetadata && {metadata: updatedMetadata}),
       },
     );
 
@@ -269,24 +304,41 @@ export class PayoutsService {
       );
     }
 
-    // Log admin processed event
+    // Log transfer completed event
     await this.payoutEventsRepository.create({
       payoutId,
-      eventType: 'admin_processed',
+      eventType: 'transfer_completed',
       fromStatus: 'pending',
-      toStatus: 'processing',
+      toStatus: 'completed',
       eventData: {
         adminUserId,
         processingFee: updates.processingFee,
         transactionReference: updates.transactionReference,
+        voucherUrl: updates.voucherUrl,
       },
       createdBy: adminUserId,
     });
 
-    logger.info('Payout processed by admin', {
+    logger.info('Payout completed by admin', {
       payoutId,
       adminUserId,
       processingFee: updates.processingFee,
+      voucherUrl: updates.voucherUrl,
+    });
+
+    // Send notification (fire-and-forget, outside transaction)
+    notifyPayoutCompleted(this.notificationService, {
+      sellerUserId: payout.sellerUserId,
+      payoutId,
+      amount: payout.amount,
+      currency: payout.currency as 'UYU' | 'USD',
+      transactionReference: updates.transactionReference,
+      completedAt: new Date(),
+    }).catch(error => {
+      logger.error('Failed to send payout completed notification', {
+        payoutId,
+        error,
+      });
     });
 
     return updatedPayout;
@@ -294,21 +346,37 @@ export class PayoutsService {
 
   /**
    * Mark payout as completed (after bank transfer)
+   * Includes optional voucherUrl for bank transfer voucher
+   * Note: This method is now mostly redundant since processPayout completes payouts directly
+   * Kept for backward compatibility and manual completion if needed
    */
   async completePayout(
     payoutId: string,
     adminUserId: string,
-    transactionReference?: string,
+    options?: {
+      transactionReference?: string;
+      voucherUrl?: string;
+    },
   ) {
     const payout = await this.payoutsRepository.getById(payoutId);
     if (!payout) {
       throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
     }
 
-    if (payout.status !== 'processing') {
+    if (payout.status !== 'pending') {
       throw new ValidationError(
         PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_PENDING(payout.status),
       );
+    }
+
+    // Update metadata if voucherUrl is provided
+    let updatedMetadata = payout.metadata;
+    if (options?.voucherUrl) {
+      const currentMetadata = PayoutMetadataSchema.parse(payout.metadata || {});
+      updatedMetadata = {
+        ...currentMetadata,
+        voucherUrl: options.voucherUrl,
+      } as Json;
     }
 
     const updatedPayout = await this.payoutsRepository.updateStatus(
@@ -316,7 +384,8 @@ export class PayoutsService {
       'completed',
       {
         completedAt: new Date(),
-        transactionReference,
+        transactionReference: options?.transactionReference,
+        ...(updatedMetadata && {metadata: updatedMetadata}),
       },
     );
 
@@ -324,11 +393,12 @@ export class PayoutsService {
     await this.payoutEventsRepository.create({
       payoutId,
       eventType: 'transfer_completed',
-      fromStatus: 'processing',
+      fromStatus: 'pending',
       toStatus: 'completed',
       eventData: {
         adminUserId,
-        transactionReference,
+        transactionReference: options?.transactionReference,
+        voucherUrl: options?.voucherUrl,
       },
       createdBy: adminUserId,
     });
@@ -336,7 +406,23 @@ export class PayoutsService {
     logger.info('Payout completed', {
       payoutId,
       adminUserId,
-      transactionReference,
+      transactionReference: options?.transactionReference,
+      voucherUrl: options?.voucherUrl,
+    });
+
+    // Send notification (fire-and-forget, outside transaction)
+    notifyPayoutCompleted(this.notificationService, {
+      sellerUserId: payout.sellerUserId,
+      payoutId,
+      amount: payout.amount,
+      currency: payout.currency as 'UYU' | 'USD',
+      transactionReference: options?.transactionReference,
+      completedAt: new Date(),
+    }).catch(error => {
+      logger.error('Failed to send payout completed notification', {
+        payoutId,
+        error,
+      });
     });
 
     return updatedPayout;
@@ -355,32 +441,393 @@ export class PayoutsService {
       throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
     }
 
-    const updatedPayout = await this.payoutsRepository.updateStatus(
-      payoutId,
-      'failed',
-      {
-        failedAt: new Date(),
-        failureReason,
+    // Wrap entire operation in transaction
+    const updatedPayout = await this.payoutsRepository.executeTransaction(
+      async trx => {
+        const payoutsRepo = this.payoutsRepository.withTransaction(trx);
+        const payoutEventsRepo =
+          this.payoutEventsRepository.withTransaction(trx);
+        const earningsRepo = this.sellerEarningsRepository.withTransaction(trx);
+
+        // Update payout status
+        const updated = await payoutsRepo.updateStatus(payoutId, 'failed', {
+          failedAt: new Date(),
+          failureReason,
+        });
+
+        // Log transfer failed event
+        await payoutEventsRepo.create({
+          payoutId,
+          eventType: 'transfer_failed',
+          fromStatus: payout.status,
+          toStatus: 'failed',
+          eventData: {
+            adminUserId,
+            failureReason,
+          },
+          createdBy: adminUserId,
+        });
+
+        // Clone earnings to make them available again
+        const clonedCount = await earningsRepo.cloneEarningsForFailedPayout(
+          payoutId,
+        );
+
+        logger.info('Payout failed and earnings cloned', {
+          payoutId,
+          adminUserId,
+          failureReason,
+          clonedEarningsCount: clonedCount,
+        });
+
+        return updated;
       },
     );
 
-    // Log transfer failed event
+    // Send notification (fire-and-forget, outside transaction)
+    notifyPayoutFailed(this.notificationService, {
+      sellerUserId: payout.sellerUserId,
+      payoutId,
+      amount: payout.amount,
+      currency: payout.currency as 'UYU' | 'USD',
+      failureReason,
+    }).catch(error => {
+      logger.error('Failed to send payout failed notification', {
+        payoutId,
+        error,
+      });
+    });
+
+    return updatedPayout;
+  }
+
+  /**
+   * Cancel a payout
+   * If reasonType is 'error', sets status to 'failed' with failedAt
+   * If reasonType is 'other', sets status to 'cancelled' without failedAt
+   */
+  async cancelPayout(
+    payoutId: string,
+    adminUserId: string,
+    reasonType: 'error' | 'other',
+    failureReason: string,
+  ) {
+    const payout = await this.payoutsRepository.getById(payoutId);
+    if (!payout) {
+      throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
+    }
+
+    // Validate payout can be cancelled
+    if (payout.status !== 'pending') {
+      throw new ValidationError(
+        `No se puede cancelar un retiro con estado: ${payout.status}. Solo se pueden cancelar retiros pendientes.`,
+      );
+    }
+
+    const newStatus = reasonType === 'error' ? 'failed' : 'cancelled';
+    const updateData: {
+      status: string;
+      failureReason: string;
+      failedAt?: Date;
+    } = {
+      status: newStatus,
+      failureReason,
+    };
+
+    // Only set failedAt if it's an error
+    if (reasonType === 'error') {
+      updateData.failedAt = new Date();
+    }
+
+    // Wrap entire operation in transaction
+    const updatedPayout = await this.payoutsRepository.executeTransaction(
+      async trx => {
+        const payoutsRepo = this.payoutsRepository.withTransaction(trx);
+        const payoutEventsRepo =
+          this.payoutEventsRepository.withTransaction(trx);
+        const earningsRepo = this.sellerEarningsRepository.withTransaction(trx);
+
+        // Update payout status
+        const updated = await payoutsRepo.updateStatus(
+          payoutId,
+          newStatus,
+          updateData,
+        );
+
+        // Log cancellation event
+        const eventType =
+          reasonType === 'error' ? 'transfer_failed' : 'cancelled';
+        await payoutEventsRepo.create({
+          payoutId,
+          eventType,
+          fromStatus: payout.status,
+          toStatus: newStatus,
+          eventData: {
+            adminUserId,
+            reasonType,
+            failureReason,
+          },
+          createdBy: adminUserId,
+        });
+
+        // Clone earnings to make them available again
+        const clonedCount = await earningsRepo.cloneEarningsForFailedPayout(
+          payoutId,
+        );
+
+        logger.info('Payout cancelled and earnings cloned', {
+          payoutId,
+          adminUserId,
+          reasonType,
+          failureReason,
+          newStatus,
+          clonedEarningsCount: clonedCount,
+        });
+
+        return updated;
+      },
+    );
+
+    // Send notification (fire-and-forget, outside transaction)
+    if (reasonType === 'error') {
+      notifyPayoutFailed(this.notificationService, {
+        sellerUserId: payout.sellerUserId,
+        payoutId,
+        amount: payout.amount,
+        currency: payout.currency as 'UYU' | 'USD',
+        failureReason,
+      }).catch(error => {
+        logger.error('Failed to send payout failed notification', {
+          payoutId,
+          error,
+        });
+      });
+    } else {
+      notifyPayoutCancelled(this.notificationService, {
+        sellerUserId: payout.sellerUserId,
+        payoutId,
+        amount: payout.amount,
+        currency: payout.currency as 'UYU' | 'USD',
+        cancellationReason: failureReason,
+      }).catch(error => {
+        logger.error('Failed to send payout cancelled notification', {
+          payoutId,
+          error,
+        });
+      });
+    }
+
+    return updatedPayout;
+  }
+
+  /**
+   * Get payouts for admin dashboard
+   * Returns paginated list of all payouts with seller and payout method info
+   */
+  async getPayoutsForAdmin(
+    pagination: PaginationOptions,
+    options?: {status?: PayoutStatus},
+  ) {
+    return await this.payoutsRepository.getPayoutsForAdminPaginated(
+      pagination,
+      options,
+    );
+  }
+
+  /**
+   * Get payout details for admin (with full information)
+   */
+  async getPayoutDetailsForAdmin(payoutId: string, adminUserId: string) {
+    const payout = await this.payoutsRepository.getWithLinkedEarnings(payoutId);
+    if (!payout) {
+      throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
+    }
+
+    // Get payout method details (needed for admin to process payout)
+    const payoutMethod = payout.payoutMethodId
+      ? await this.payoutMethodsRepository.getById(payout.payoutMethodId)
+      : null;
+
+    // Validate and parse metadata
+    const metadata = payout.metadata
+      ? PayoutMetadataSchema.parse(payout.metadata)
+      : null;
+
+    // Get documents for this payout (admin access)
+    const documents = await this.payoutDocumentsService.getPayoutDocuments(
+      payoutId,
+      adminUserId,
+      true, // isAdmin
+    );
+
+    return {
+      ...payout,
+      metadata,
+      documents,
+      payoutMethod: payoutMethod
+        ? {
+            id: payoutMethod.id,
+            payoutType: payoutMethod.payoutType,
+            accountHolderName: payoutMethod.accountHolderName,
+            accountHolderSurname: payoutMethod.accountHolderSurname,
+            currency: payoutMethod.currency,
+            metadata: payoutMethod.metadata,
+          }
+        : null,
+    };
+  }
+
+  /**
+   * Get payout details for user (with events, method details, etc.)
+   * Validates payout belongs to sellerUserId
+   */
+  async getPayoutDetailsForUser(payoutId: string, sellerUserId: string) {
+    const payout = await this.payoutsRepository.getWithLinkedEarnings(payoutId);
+    if (!payout) {
+      throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
+    }
+
+    // Validate payout belongs to seller
+    if (payout.sellerUserId !== sellerUserId) {
+      throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
+    }
+
+    // Get payout events
+    const events = await this.payoutEventsRepository.getByPayoutId(payoutId);
+
+    // Get payout method details
+    const payoutMethod = payout.payoutMethodId
+      ? await this.payoutMethodsRepository.getById(payout.payoutMethodId)
+      : null;
+
+    // Validate and parse metadata
+    const metadata = payout.metadata
+      ? PayoutMetadataSchema.parse(payout.metadata)
+      : null;
+
+    // Get documents for this payout (seller access)
+    const documents = await this.payoutDocumentsService.getPayoutDocuments(
+      payoutId,
+      sellerUserId,
+      false, // isAdmin
+    );
+
+    return {
+      ...payout,
+      metadata,
+      events,
+      documents,
+      payoutMethod: payoutMethod
+        ? {
+            id: payoutMethod.id,
+            payoutType: payoutMethod.payoutType,
+            accountHolderName: payoutMethod.accountHolderName,
+            accountHolderSurname: payoutMethod.accountHolderSurname,
+            currency: payoutMethod.currency,
+            metadata: payoutMethod.metadata,
+          }
+        : null,
+    };
+  }
+
+  /**
+   * Update payout (admin only)
+   * Allows updating status, processing fee, notes, and voucher URL
+   */
+  async updatePayout(
+    payoutId: string,
+    adminUserId: string,
+    updates: {
+      status?: 'pending' | 'completed' | 'failed' | 'cancelled';
+      processingFee?: number;
+      notes?: string;
+      voucherUrl?: string;
+      transactionReference?: string;
+    },
+  ) {
+    const payout = await this.payoutsRepository.getById(payoutId);
+    if (!payout) {
+      throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
+    }
+
+    // Update metadata if voucherUrl is provided
+    let updatedMetadata = payout.metadata;
+    if (updates.voucherUrl !== undefined) {
+      const currentMetadata = PayoutMetadataSchema.parse(payout.metadata || {});
+      updatedMetadata = {
+        ...currentMetadata,
+        voucherUrl: updates.voucherUrl || undefined,
+      } as Json;
+    }
+
+    // Build update object
+    const updateData: {
+      status?: 'pending' | 'completed' | 'failed' | 'cancelled';
+      notes?: string;
+      transactionReference?: string;
+      metadata?: Json;
+      processedAt?: Date;
+      processedBy?: string;
+      completedAt?: Date;
+      failedAt?: Date;
+      failureReason?: string;
+    } = {};
+
+    if (updates.status) {
+      updateData.status = updates.status;
+      // Set appropriate timestamps based on status
+      if (updates.status === 'completed') {
+        updateData.completedAt = new Date();
+      } else if (updates.status === 'failed') {
+        updateData.failedAt = new Date();
+      }
+    }
+
+    if (updates.notes !== undefined) {
+      updateData.notes = updates.notes;
+    }
+
+    if (updates.transactionReference !== undefined) {
+      updateData.transactionReference = updates.transactionReference;
+    }
+
+    if (updatedMetadata) {
+      updateData.metadata = updatedMetadata;
+    }
+
+    const updatedPayout = await this.payoutsRepository.updateStatus(
+      payoutId,
+      updates.status || payout.status,
+      updateData,
+    );
+
+    // Update processing fee if provided
+    if (updates.processingFee !== undefined) {
+      await this.payoutsRepository.updateProcessingFee(
+        payoutId,
+        updates.processingFee,
+      );
+    }
+
+    // Log status change event
     await this.payoutEventsRepository.create({
       payoutId,
-      eventType: 'transfer_failed',
+      eventType: 'status_change',
       fromStatus: payout.status,
-      toStatus: 'failed',
+      toStatus: updates.status || payout.status,
       eventData: {
         adminUserId,
-        failureReason,
+        processingFee: updates.processingFee,
+        voucherUrl: updates.voucherUrl,
+        transactionReference: updates.transactionReference,
       },
       createdBy: adminUserId,
     });
 
-    logger.info('Payout failed', {
+    logger.info('Payout updated by admin', {
       payoutId,
       adminUserId,
-      failureReason,
+      updates,
     });
 
     return updatedPayout;

@@ -103,4 +103,5 @@ export * from './ticket-listings';
 export * from './order';
 export * from './payments';
 export * from './payouts';
+export * from './users';
 export * from './generated';

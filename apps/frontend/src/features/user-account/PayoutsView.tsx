@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, Suspense} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {getBalanceQuery, getAvailableEarningsQuery} from '~/lib/api/payouts';
 import {
@@ -14,6 +14,7 @@ import {EarningsSelectionSection} from './payouts/EarningsSelectionSection';
 import {RequestPayoutForm} from './payouts/RequestPayoutForm';
 import {PayoutHistorySection} from './payouts/PayoutHistorySection';
 import {PayoutMethodsSection} from './payouts/PayoutMethodsSection';
+import {PayoutDetailsModal} from './payouts/PayoutDetailsModal';
 import {Wallet, DollarSign, History, CreditCard} from 'lucide-react';
 
 export function PayoutsView() {
@@ -28,13 +29,14 @@ export function PayoutsView() {
   const [accordionValue, setAccordionValue] = useState<string[]>([
     'balance',
     'earnings',
+    'history',
     'methods',
   ]);
 
   const handleListingToggle = (listingId: string) => {
     setSelectedListingIds(prev => {
       const isSelected = prev.includes(listingId);
-      
+
       if (isSelected) {
         // Deselecting listing - just remove it
         return prev.filter(id => id !== listingId);
@@ -44,7 +46,7 @@ export function PayoutsView() {
           const ticketsInListing = availableEarnings.byTicket
             .filter(ticket => ticket.listingId === listingId)
             .map(ticket => ticket.listingTicketId);
-          
+
           setSelectedTicketIds(current =>
             current.filter(id => !ticketsInListing.includes(id)),
           );
@@ -57,7 +59,7 @@ export function PayoutsView() {
   const handleTicketToggle = (ticketId: string) => {
     setSelectedTicketIds(prev => {
       const isSelected = prev.includes(ticketId);
-      
+
       if (isSelected) {
         // Deselecting ticket - just remove it
         return prev.filter(id => id !== ticketId);
@@ -67,7 +69,7 @@ export function PayoutsView() {
           const ticket = availableEarnings.byTicket.find(
             t => t.listingTicketId === ticketId,
           );
-          
+
           if (ticket && selectedListingIds.includes(ticket.listingId)) {
             setSelectedListingIds(current =>
               current.filter(id => id !== ticket.listingId),
@@ -210,6 +212,11 @@ export function PayoutsView() {
           </AccordionItem>
         </Card>
       </Accordion>
+
+      {/* Payout Details Modal */}
+      <Suspense fallback={null}>
+        <PayoutDetailsModal />
+      </Suspense>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import {useQuery} from '@tanstack/react-query';
+import {useNavigate} from '@tanstack/react-router';
 import {getPayoutHistoryQuery} from '~/lib/api/payouts';
 import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
 import {Badge} from '~/components/ui/badge';
+import {Button} from '~/components/ui/button';
 import {formatCurrency, formatDate} from '~/utils';
 import {
   Accordion,
@@ -10,10 +12,18 @@ import {
   AccordionTrigger,
 } from '~/components/ui/accordion';
 import {LoadingSpinner} from '~/components/LoadingScreen';
-import {CheckCircle, Clock, XCircle, AlertCircle} from 'lucide-react';
+import {CheckCircle, Clock, XCircle, AlertCircle, Eye} from 'lucide-react';
 
 export function PayoutHistorySection() {
   const {data: history, isPending} = useQuery(getPayoutHistoryQuery(1, 20));
+  const navigate = useNavigate({from: '/cuenta/retiro'});
+
+  const handleViewDetails = (payoutId: string) => {
+    navigate({
+      search: prev => ({...prev, payoutId}),
+      resetScroll: false,
+    });
+  };
 
   if (isPending) {
     return (
@@ -197,6 +207,18 @@ export function PayoutHistorySection() {
                   </AccordionItem>
                 </Accordion>
               )}
+
+              <div className='pt-3 border-t'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='w-full'
+                  onClick={() => handleViewDetails(payout.id)}
+                >
+                  <Eye className='mr-2 h-4 w-4' />
+                  Ver detalles
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}

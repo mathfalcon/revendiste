@@ -210,7 +210,7 @@ export const OrderConfirmedEmail = ({
 
     <Text className="text-sm text-muted-foreground mb-0">
       Presentá tu entrada digital en la entrada del evento. Si tenés alguna
-      duda, podés contactarnos desde tu cuenta.
+      duda, podés contactarnos a soporte@revendiste.com.
     </Text>
   </BaseEmail>
 );

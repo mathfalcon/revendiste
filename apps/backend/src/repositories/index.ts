@@ -15,3 +15,4 @@ export {SellerEarningsRepository} from './seller-earnings';
 export {PayoutMethodsRepository} from './payout-methods';
 export {PayoutsRepository} from './payouts';
 export {PayoutEventsRepository} from './payout-events';
+export {PayoutDocumentsRepository} from './payout-documents';

@@ -37,7 +37,7 @@ export type NotificationChannel = "email" | "in_app" | "sms";
 
 export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
-export type NotificationType = "document_reminder" | "document_uploaded" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "ticket_sold_seller";
+export type NotificationType = "document_reminder" | "document_uploaded" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
@@ -59,9 +59,11 @@ export type PayoutType = "paypal" | "uruguayan_bank";
 
 export type QrAvailabilityTiming = "12h" | "24h" | "48h" | "6h" | "72h";
 
-export type SellerEarningsStatus = "available" | "paid_out" | "pending" | "retained";
+export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | "pending" | "retained";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+
+export type UserRole = "admin" | "organizer" | "user";
 
 export interface EventImages {
   createdAt: Generated<Timestamp>;
@@ -242,6 +244,22 @@ export interface Payments {
   updatedAt: Generated<Timestamp>;
 }
 
+export interface PayoutDocuments {
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  documentType: Generated<string>;
+  fileName: string;
+  id: Generated<string>;
+  mimeType: string;
+  originalName: string;
+  payoutId: string;
+  sizeBytes: number;
+  storagePath: string;
+  updatedAt: Generated<Timestamp>;
+  uploadedAt: Generated<Timestamp>;
+  uploadedBy: string;
+}
+
 export interface PayoutEvents {
   createdAt: Generated<Timestamp>;
   createdBy: string | null;
@@ -336,6 +354,7 @@ export interface Users {
   lastActiveAt: Timestamp | null;
   lastName: string | null;
   metadata: Json | null;
+  role: Generated<UserRole>;
   updatedAt: Generated<Timestamp>;
 }
 
@@ -351,6 +370,7 @@ export interface DB {
   orderTicketReservations: OrderTicketReservations;
   paymentEvents: PaymentEvents;
   payments: Payments;
+  payoutDocuments: PayoutDocuments;
   payoutEvents: PayoutEvents;
   payoutMethods: PayoutMethods;
   payouts: Payouts;

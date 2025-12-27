@@ -44,7 +44,7 @@ export function EarningsSelectionSection({
 
   return (
     <div className='space-y-4'>
-      <div className='flex items-center justify-between'>
+      <div className='flex items-center justify-between md:flex-row flex-col gap-4 md:gap-0'>
         <div>
           <h3 className='text-lg font-semibold mb-2'>Ganancias Disponibles</h3>
           <p className='text-sm text-muted-foreground'>
@@ -92,17 +92,29 @@ export function EarningsSelectionSection({
                   selectedTicketIds.includes(ticket.listingTicketId),
               );
 
+              const isDisabled = hasSelectedTickets;
+              const isChecked = selectedListingIds.includes(listing.listingId);
+
               return (
                 <Card key={listing.listingId}>
-                  <CardContent className='p-4'>
+                  <CardContent
+                    className={`p-4 ${isDisabled ? '' : 'cursor-pointer'}`}
+                    onClick={() => {
+                      if (!isDisabled) {
+                        onListingToggle(listing.listingId);
+                      }
+                    }}
+                  >
                     <div className='flex items-start gap-3'>
-                      <Checkbox
-                        checked={selectedListingIds.includes(listing.listingId)}
-                        disabled={hasSelectedTickets}
-                        onCheckedChange={() =>
-                          onListingToggle(listing.listingId)
-                        }
-                      />
+                      <div onClick={e => e.stopPropagation()}>
+                        <Checkbox
+                          checked={isChecked}
+                          disabled={isDisabled}
+                          onCheckedChange={() =>
+                            onListingToggle(listing.listingId)
+                          }
+                        />
+                      </div>
                       <div className='flex-1'>
                         <div className='flex items-center justify-between mb-2'>
                           <span className='font-semibold'>
@@ -112,7 +124,11 @@ export function EarningsSelectionSection({
                         </div>
                         <div className='text-sm text-muted-foreground space-y-1'>
                           <div>
-                            Total: {formatCurrency(listing.totalAmount, listing.currency)}
+                            Total:{' '}
+                            {formatCurrency(
+                              listing.totalAmount,
+                              listing.currency,
+                            )}
                           </div>
                           <div>{listing.ticketCount} ticket(s)</div>
                         </div>
@@ -139,19 +155,31 @@ export function EarningsSelectionSection({
                 ticket.listingId,
               );
 
+              const isDisabled = isListingSelected;
+              const isChecked = selectedTicketIds.includes(
+                ticket.listingTicketId,
+              );
+
               return (
                 <Card key={ticket.id}>
-                  <CardContent className='p-4'>
+                  <CardContent
+                    className={`p-4 ${isDisabled ? '' : 'cursor-pointer'}`}
+                    onClick={() => {
+                      if (!isDisabled) {
+                        onTicketToggle(ticket.listingTicketId);
+                      }
+                    }}
+                  >
                     <div className='flex items-start gap-3'>
-                      <Checkbox
-                        checked={selectedTicketIds.includes(
-                          ticket.listingTicketId,
-                        )}
-                        disabled={isListingSelected}
-                        onCheckedChange={() =>
-                          onTicketToggle(ticket.listingTicketId)
-                        }
-                      />
+                      <div onClick={e => e.stopPropagation()}>
+                        <Checkbox
+                          checked={isChecked}
+                          disabled={isDisabled}
+                          onCheckedChange={() =>
+                            onTicketToggle(ticket.listingTicketId)
+                          }
+                        />
+                      </div>
                       <div className='flex-1'>
                         <div className='flex items-center justify-between mb-2'>
                           <span className='font-semibold'>
@@ -161,12 +189,15 @@ export function EarningsSelectionSection({
                         </div>
                         <div className='text-sm text-muted-foreground space-y-1'>
                           <div>
-                            Monto: {formatCurrency(ticket.sellerAmount, ticket.currency)}
+                            Monto:{' '}
+                            {formatCurrency(
+                              ticket.sellerAmount,
+                              ticket.currency,
+                            )}
                           </div>
                           {ticket.holdUntil && (
                             <div>
-                              Disponible desde:{' '}
-                              {formatDate(ticket.holdUntil)}
+                              Disponible desde: {formatDate(ticket.holdUntil)}
                             </div>
                           )}
                         </div>
@@ -182,4 +213,3 @@ export function EarningsSelectionSection({
     </div>
   );
 }
-

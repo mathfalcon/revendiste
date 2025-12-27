@@ -134,6 +134,46 @@ export function generateNotificationText<T extends NotificationType>(
       };
     }
 
+    case 'payout_processing': {
+      // Legacy notification type - no longer used, but kept for backward compatibility
+      // Map to completed text since processing now goes directly to completed
+      const meta = metadata as TypedNotificationMetadata<'payout_processing'>;
+      const refText = meta.transactionReference
+        ? ` Referencia: ${meta.transactionReference}.`
+        : '';
+      return {
+        title: 'Retiro completado',
+        description: `Tu retiro de ${meta.amount} ${meta.currency} ha sido completado exitosamente.${refText}`,
+      };
+    }
+
+    case 'payout_completed': {
+      const meta = metadata as TypedNotificationMetadata<'payout_completed'>;
+      const refText = meta.transactionReference
+        ? ` Referencia: ${meta.transactionReference}.`
+        : '';
+      return {
+        title: 'Retiro completado',
+        description: `Tu retiro de ${meta.amount} ${meta.currency} ha sido completado exitosamente.${refText}`,
+      };
+    }
+
+    case 'payout_failed': {
+      const meta = metadata as TypedNotificationMetadata<'payout_failed'>;
+      return {
+        title: 'Retiro fallido',
+        description: `Tu retiro de ${meta.amount} ${meta.currency} ha fallado: ${meta.failureReason}`,
+      };
+    }
+
+    case 'payout_cancelled': {
+      const meta = metadata as TypedNotificationMetadata<'payout_cancelled'>;
+      return {
+        title: 'Retiro cancelado',
+        description: `Tu retiro de ${meta.amount} ${meta.currency} ha sido cancelado: ${meta.cancellationReason}`,
+      };
+    }
+
     default: {
       // TypeScript exhaustiveness check
       const _exhaustive: never = type;

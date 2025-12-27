@@ -1,5 +1,5 @@
 import {queryOptions, mutationOptions} from '@tanstack/react-query';
-import {api} from '..';
+import {AddPayoutMethodRouteBody, api} from '..';
 import {toast} from 'sonner';
 
 export const getBalanceQuery = () =>
@@ -18,7 +18,20 @@ export const getPayoutHistoryQuery = (page: number = 1, limit: number = 20) =>
   queryOptions({
     queryKey: ['payouts', 'history', page, limit],
     queryFn: () =>
-      api.payouts.getPayoutHistory({page, limit}).then(res => res.data),
+      api.payouts
+        .getPayoutHistory({
+          page,
+          limit,
+          sortBy: 'requestedAt',
+          sortOrder: 'desc',
+        })
+        .then(res => res.data),
+  });
+
+export const getPayoutDetailsQuery = (payoutId: string) =>
+  queryOptions({
+    queryKey: ['payouts', 'details', payoutId],
+    queryFn: () => api.payouts.getPayoutDetails(payoutId).then(res => res.data),
   });
 
 export const requestPayoutMutation = () =>
@@ -43,30 +56,8 @@ export const getPayoutMethodsQuery = () =>
 export const addPayoutMethodMutation = () =>
   mutationOptions({
     mutationKey: ['add-payout-method'],
-    mutationFn: (
-      data:
-        | {
-            payoutType: 'uruguayan_bank';
-            accountHolderName: string;
-            accountHolderSurname: string;
-            currency: 'UYU' | 'USD';
-            metadata: {
-              bank_name: string;
-              account_number: string;
-            };
-            isDefault?: boolean;
-          }
-        | {
-            payoutType: 'paypal';
-            accountHolderName: string;
-            accountHolderSurname: string;
-            currency: 'USD';
-            metadata: {
-              email: string;
-            };
-            isDefault?: boolean;
-          },
-    ) => api.payouts.addPayoutMethod(data).then(res => res.data),
+    mutationFn: (data: AddPayoutMethodRouteBody) =>
+      api.payouts.addPayoutMethod(data).then(res => res.data),
     onSuccess: () => {
       toast.success('Método de pago agregado exitosamente');
     },
@@ -86,8 +77,8 @@ export const updatePayoutMethodMutation = () =>
         currency?: 'UYU' | 'USD';
         metadata?:
           | {
-              bank_name: string;
-              account_number: string;
+              bankName: string;
+              accountNumber: string;
             }
           | {
               email: string;

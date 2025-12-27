@@ -28,6 +28,9 @@ export * from '../emails/order-confirmed-email';
 export * from '../emails/order-expired-email';
 export * from '../emails/payment-failed-email';
 export * from '../emails/seller-ticket-sold-email';
+export * from '../emails/payout-completed-email';
+export * from '../emails/payout-failed-email';
+export * from '../emails/payout-cancelled-email';
 
 export {render, pretty, toPlainText} from '@react-email/render';
 
@@ -41,6 +44,9 @@ export type {OrderConfirmedEmailProps} from '../emails/order-confirmed-email';
 export type {OrderExpiredEmailProps} from '../emails/order-expired-email';
 export type {PaymentFailedEmailProps} from '../emails/payment-failed-email';
 export type {SellerTicketSoldEmailProps} from '../emails/seller-ticket-sold-email';
+export type {PayoutCompletedEmailProps} from '../emails/payout-completed-email';
+export type {PayoutFailedEmailProps} from '../emails/payout-failed-email';
+export type {PayoutCancelledEmailProps} from '../emails/payout-cancelled-email';
 
 /**
  * Render a React Email component to HTML string

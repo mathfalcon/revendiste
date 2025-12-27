@@ -28,6 +28,7 @@ export const NotificationActionType = z.enum([
   'upload_documents',
   'view_order',
   'retry_payment',
+  'view_payout',
 ]);
 
 export type NotificationActionType = z.infer<typeof NotificationActionType>;
@@ -119,6 +120,44 @@ export const DocumentUploadedMetadataSchema = z.object({
   ticketCount: z.number().int().positive(),
 });
 
+// payout_processing
+export const PayoutProcessingMetadataSchema = z.object({
+  type: z.literal('payout_processing'),
+  payoutId: z.string().uuid(),
+  amount: z.string(),
+  currency: z.enum(['UYU', 'USD']),
+  processingFee: z.number().optional(),
+  transactionReference: z.string().optional(),
+});
+
+// payout_completed
+export const PayoutCompletedMetadataSchema = z.object({
+  type: z.literal('payout_completed'),
+  payoutId: z.string().uuid(),
+  amount: z.string(),
+  currency: z.enum(['UYU', 'USD']),
+  transactionReference: z.string().optional(),
+  completedAt: z.string(),
+});
+
+// payout_failed
+export const PayoutFailedMetadataSchema = z.object({
+  type: z.literal('payout_failed'),
+  payoutId: z.string().uuid(),
+  amount: z.string(),
+  currency: z.enum(['UYU', 'USD']),
+  failureReason: z.string(),
+});
+
+// payout_cancelled
+export const PayoutCancelledMetadataSchema = z.object({
+  type: z.literal('payout_cancelled'),
+  payoutId: z.string().uuid(),
+  amount: z.string(),
+  currency: z.enum(['UYU', 'USD']),
+  cancellationReason: z.string(),
+});
+
 /**
  * Discriminated union of all notification metadata types
  * Uses 'type' as the discriminator field for type safety
@@ -131,6 +170,10 @@ export const NotificationMetadataSchema = z.discriminatedUnion('type', [
   PaymentFailedMetadataSchema,
   PaymentSucceededMetadataSchema,
   DocumentUploadedMetadataSchema,
+  PayoutProcessingMetadataSchema,
+  PayoutCompletedMetadataSchema,
+  PayoutFailedMetadataSchema,
+  PayoutCancelledMetadataSchema,
 ]);
 
 /**
@@ -221,6 +264,47 @@ export const DocumentUploadedActionsSchema = z
   )
   .nullable();
 
+// Actions for payout notifications - view payout action
+export const PayoutProcessingActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_payout'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
+export const PayoutCompletedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_payout'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
+export const PayoutFailedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_payout'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
+export const PayoutCancelledActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_payout'),
+      label: z.string(),
+      url: z.string().url(),
+    }),
+  )
+  .nullable();
+
 /**
  * Individual notification schemas per type
  * Each extends the base schema and defines its own metadata and actions
@@ -283,6 +367,36 @@ export const DocumentUploadedNotificationSchema = BaseNotificationSchema.extend(
   },
 );
 
+// payout_processing
+export const PayoutProcessingNotificationSchema = BaseNotificationSchema.extend(
+  {
+    type: z.literal('payout_processing'),
+    metadata: PayoutProcessingMetadataSchema,
+    actions: PayoutProcessingActionsSchema,
+  },
+);
+
+// payout_completed
+export const PayoutCompletedNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('payout_completed'),
+  metadata: PayoutCompletedMetadataSchema,
+  actions: PayoutCompletedActionsSchema,
+});
+
+// payout_failed
+export const PayoutFailedNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('payout_failed'),
+  metadata: PayoutFailedMetadataSchema,
+  actions: PayoutFailedActionsSchema,
+});
+
+// payout_cancelled
+export const PayoutCancelledNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('payout_cancelled'),
+  metadata: PayoutCancelledMetadataSchema,
+  actions: PayoutCancelledActionsSchema,
+});
+
 /**
  * Discriminated union of all notification types
  * Uses 'type' as the discriminator field for type safety
@@ -296,6 +410,10 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   PaymentFailedNotificationSchema,
   PaymentSucceededNotificationSchema,
   DocumentUploadedNotificationSchema,
+  PayoutProcessingNotificationSchema,
+  PayoutCompletedNotificationSchema,
+  PayoutFailedNotificationSchema,
+  PayoutCancelledNotificationSchema,
 ]);
 
 /**

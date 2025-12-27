@@ -120,19 +120,25 @@ export const NOTIFICATION_ERROR_MESSAGES = {
 
 // Error messages for payouts
 export const PAYOUT_ERROR_MESSAGES = {
-  PAYOUT_NOT_FOUND: 'Pago no encontrado',
-  PAYOUT_METHOD_NOT_FOUND: 'Método de pago no encontrado',
-  UNAUTHORIZED_ACCESS: 'No estás autorizado para acceder a este pago',
-  INSUFFICIENT_BALANCE: 'Saldo insuficiente para realizar el pago',
+  PAYOUT_NOT_FOUND: 'Retiro no encontrado',
+  PAYOUT_METHOD_NOT_FOUND: 'Método de retiro no encontrado',
+  UNAUTHORIZED_ACCESS: 'No estás autorizado para acceder a este retiro',
+  INSUFFICIENT_BALANCE: 'Saldo insuficiente para realizar el retiro',
   BELOW_MINIMUM_THRESHOLD: (currency: string, minimum: number) =>
     `El monto mínimo para retirar es ${minimum} ${currency}`,
   NO_EARNINGS_SELECTED: 'Debes seleccionar al menos una ganancia para retirar',
   EARNINGS_NOT_AVAILABLE: 'Las ganancias seleccionadas no están disponibles',
-  MIXED_CURRENCIES: 'No se pueden mezclar diferentes monedas en un mismo pago',
-  INVALID_PAYOUT_METHOD: 'Método de pago inválido',
-  PAYOUT_ALREADY_PROCESSED: 'Este pago ya ha sido procesado',
+  MIXED_CURRENCIES: 'No se pueden mezclar diferentes monedas en un mismo retiro',
+  INVALID_PAYOUT_METHOD: 'Método de retiro inválido',
+  PAYOUT_ALREADY_PROCESSED: 'Este retiro ya ha sido procesado',
   PAYOUT_NOT_PENDING: (status: string) =>
-    `El pago ya está ${status}. No se puede procesar.`,
+    `El retiro ya está ${status}. No se puede procesar.`,
+} as const;
+
+// Error messages for admin operations
+export const ADMIN_ERROR_MESSAGES = {
+  ADMIN_ONLY: 'Solo los administradores pueden acceder a esta funcionalidad',
+  INVALID_ROLE: 'Rol de usuario inválido',
 } as const;
 
 // Type for error message keys (useful for type safety)
