@@ -116,6 +116,7 @@ export async function notifyOrderExpired(
     userId: params.buyerUserId,
     type: 'order_expired',
     channels: ['in_app', 'email'],
+    actions: null, // Order expired notifications have no actions
     metadata: {
       type: 'order_expired',
       orderId: params.orderId,

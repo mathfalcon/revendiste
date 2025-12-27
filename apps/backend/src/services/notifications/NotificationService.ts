@@ -82,11 +82,12 @@ export class NotificationService {
           url?: string;
           data?: Record<string, unknown>;
         }>
+      | null
       | undefined = params.actions;
-    if (params.actions) {
+    if (params.actions !== undefined && params.actions !== null) {
       try {
         const parsed = NotificationActionsSchema.parse(params.actions);
-        validatedActions = parsed || undefined; // Convert null to undefined
+        validatedActions = parsed || null;
       } catch (error) {
         throw new ValidationError(
           `Invalid notification actions: ${
@@ -94,6 +95,8 @@ export class NotificationService {
           }`,
         );
       }
+    } else if (params.actions === null) {
+      validatedActions = null;
     }
 
     // Metadata is required to generate title/description
@@ -110,6 +113,7 @@ export class NotificationService {
     );
 
     // Validate full notification structure using type-specific schema
+    const actionsForValidation = validatedActions ?? null;
     try {
       const fullNotification = {
         userId: params.userId,
@@ -117,7 +121,7 @@ export class NotificationService {
         title,
         description,
         channels: params.channels,
-        actions: validatedActions,
+        actions: actionsForValidation,
         metadata: validatedMetadata,
         status: 'pending' as const,
         seenAt: null,
@@ -140,7 +144,7 @@ export class NotificationService {
       userId: params.userId,
       type: params.type,
       channels: params.channels,
-      actions: validatedActions,
+      actions: actionsForValidation,
       metadata: validatedMetadata,
     });
 

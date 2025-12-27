@@ -18,7 +18,7 @@ export interface CreateNotificationData {
     label: string;
     url?: string;
     data?: Record<string, unknown>;
-  }>;
+  }> | null;
   metadata?: NotificationMetadata;
 }
 
@@ -38,7 +38,12 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
         userId: data.userId,
         type: data.type,
         channels: data.channels,
-        actions: data.actions ? JSON.stringify(data.actions) : undefined,
+        actions:
+          data.actions === null
+            ? null
+            : data.actions
+            ? JSON.stringify(data.actions)
+            : undefined,
         metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
         status: 'pending',
       })

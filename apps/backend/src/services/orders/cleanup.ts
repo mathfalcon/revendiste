@@ -3,11 +3,14 @@ import type {DB} from '@revendiste/shared';
 import {
   OrdersRepository,
   OrderTicketReservationsRepository,
+  PaymentsRepository,
   UsersRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
 import {NotificationService} from '~/services/notifications';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
+import {PaymentWebhookAdapter} from '~/services/payments/adapters';
+import {getPaymentProvider} from '~/services/payments/providers/PaymentProviderFactory';
 
 /**
  * Order Cleanup Service
@@ -19,12 +22,14 @@ import {notifyOrderExpired} from '~/services/notifications/helpers';
 export class OrderCleanupService {
   private ordersRepository: OrdersRepository;
   private orderTicketReservationsRepository: OrderTicketReservationsRepository;
+  private paymentsRepository: PaymentsRepository;
   private notificationService: NotificationService;
 
   constructor(private db: Kysely<DB>) {
     this.ordersRepository = new OrdersRepository(db);
     this.orderTicketReservationsRepository =
       new OrderTicketReservationsRepository(db);
+    this.paymentsRepository = new PaymentsRepository(db);
     this.notificationService = new NotificationService(
       db,
       new UsersRepository(db),
@@ -93,8 +98,92 @@ export class OrderCleanupService {
   /**
    * Expires a single order and releases its reservations
    * Uses a transaction to ensure atomicity
+   *
+   * Before expiring, checks payment status with provider to ensure
+   * we don't expire orders that have actually been paid (e.g., if webhook was missed)
    */
   private async expireOrder(orderId: string): Promise<void> {
+    const payments = await this.paymentsRepository.getAllByOrderId(orderId);
+    const pendingPayments = payments.filter(
+      p => p.status === 'pending' || p.status === 'processing',
+    );
+
+    // If there are pending payments, sync their status with the provider first
+    if (pendingPayments.length > 0) {
+      logger.info('Found pending payments for expired order, syncing status', {
+        orderId,
+        paymentCount: pendingPayments.length,
+      });
+
+      // Sync each pending payment
+      for (const payment of pendingPayments) {
+        try {
+          // Get provider instance
+          const provider = getPaymentProvider(payment.provider);
+
+          // Create adapter with provider
+          const adapter = new PaymentWebhookAdapter(provider, this.db);
+
+          await adapter.processWebhook(payment.providerPaymentId);
+
+          logger.debug('Payment status synced before order expiration', {
+            orderId,
+            paymentId: payment.id,
+            provider: payment.provider,
+            providerPaymentId: payment.providerPaymentId,
+          });
+        } catch (error) {
+          logger.error(
+            'Failed to sync payment status before order expiration',
+            {
+              orderId,
+              paymentId: payment.id,
+              provider: payment.provider,
+              providerPaymentId: payment.providerPaymentId,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          );
+          // Continue with other payments even if one fails
+        }
+      }
+
+      const orderAfterSync = await this.ordersRepository.getByIdWithItems(
+        orderId,
+      );
+      if (!orderAfterSync) {
+        logger.warn('Order not found after payment sync', {orderId});
+        return;
+      }
+
+      if (orderAfterSync.status !== 'pending') {
+        logger.info(
+          'Order status changed after payment sync, skipping expiration',
+          {
+            orderId,
+            newStatus: orderAfterSync.status,
+          },
+        );
+        return;
+      }
+
+      const paymentsAfterSync = await this.paymentsRepository.getAllByOrderId(
+        orderId,
+      );
+      const paidPayments = paymentsAfterSync.filter(p => p.status === 'paid');
+
+      if (paidPayments.length > 0) {
+        logger.warn(
+          'Order has paid payments but status is still pending, skipping expiration',
+          {
+            orderId,
+            paidPaymentIds: paidPayments.map(p => p.id),
+          },
+        );
+        return;
+      }
+    }
+
+    // Proceed with expiration only if no payments succeeded
     await this.ordersRepository.executeTransaction(async trx => {
       const ordersRepo = this.ordersRepository.withTransaction(trx);
       const reservationsRepo =
