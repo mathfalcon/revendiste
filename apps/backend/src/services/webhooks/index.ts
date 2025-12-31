@@ -9,14 +9,8 @@ interface WebhookMetadata {
   userAgent?: string;
 }
 
-/**
- * Webhooks Service
- * Routes webhook notifications to the appropriate payment provider adapter
- */
 export class WebhooksService {
   private dlocalAdapter: PaymentWebhookAdapter;
-  // Future: private stripeAdapter: PaymentWebhookAdapter;
-  // Future: private paypalAdapter: PaymentWebhookAdapter;
 
   constructor(db: Kysely<DB>) {
     // Create adapters for each payment provider
@@ -31,10 +25,6 @@ export class WebhooksService {
     // this.paypalAdapter = new PaymentWebhookAdapter(new PayPalService(), db);
   }
 
-  /**
-   * Handles dLocal payment webhook notification
-   * Processes the webhook asynchronously to ensure quick response to dLocal
-   */
   async handleDLocalPaymentWebhook(
     paymentId: string,
     metadata: WebhookMetadata,
@@ -45,23 +35,14 @@ export class WebhooksService {
       userAgent: metadata.userAgent,
     });
 
-    // Process webhook asynchronously (fire and forget)
-    // This ensures we respond to dLocal immediately and avoid timeouts
     this.dlocalAdapter
       .processWebhook(paymentId, metadata)
-      .then(() => {
-        logger.info('dLocal webhook processed successfully', {
-          paymentId,
-        });
-      })
-      .catch(error => {
-        logger.error('Error processing dLocal webhook asynchronously', {
+      .then(() => logger.info('dLocal webhook processed', {paymentId}))
+      .catch(error =>
+        logger.error('Error processing dLocal webhook', {
           paymentId,
           error: error.message,
-          stack: error.stack,
-        });
-        // Errors are logged but don't affect the HTTP response
-        // Payment will need manual review if processing fails
-      });
+        }),
+      );
   }
 }

@@ -138,7 +138,6 @@ export class PaymentWebhookAdapter {
 
       const result = await this.fetchAndProcessPayment(paymentId);
 
-      // Log webhook received event
       await this.paymentEventsRepository.logWebhookReceived(
         result.paymentId,
         result.metadata,
@@ -177,7 +176,6 @@ export class PaymentWebhookAdapter {
 
       const result = await this.fetchAndProcessPayment(paymentId);
 
-      // Log status synced event
       await this.paymentEventsRepository.logStatusSynced(
         result.paymentId,
         result.metadata,
@@ -199,20 +197,11 @@ export class PaymentWebhookAdapter {
     }
   }
 
-  /**
-   * Fetches payment from provider and processes it through business logic
-   * Shared by both processWebhook and syncPaymentStatus
-   */
   private async fetchAndProcessPayment(
     paymentId: string,
   ): Promise<PaymentUpdateResult> {
-    // Step 1: Fetch payment from provider (provider-specific)
     const providerPayment = await this.provider.getPayment(paymentId);
-
-    // Step 2: Normalize to our format (provider-specific)
     const normalized = this.normalizePaymentData(providerPayment);
-
-    // Step 3: Process with our business logic (common)
     const internalPaymentId = await this.processNormalizedPayment(normalized);
 
     return {
