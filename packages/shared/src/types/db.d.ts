@@ -43,7 +43,7 @@ export type Numeric = ColumnType<string, number | string, number | string>;
 
 export type OrderStatus = "cancelled" | "confirmed" | "expired" | "pending";
 
-export type PaymentEventType = "chargeback_received" | "dispute_opened" | "dispute_resolved" | "fraud_check_failed" | "manual_review_required" | "payment_created" | "refund_completed" | "refund_initiated" | "status_change" | "webhook_received";
+export type PaymentEventType = "chargeback_received" | "dispute_opened" | "dispute_resolved" | "fraud_check_failed" | "manual_review_required" | "payment_created" | "refund_completed" | "refund_initiated" | "status_change" | "status_synced" | "webhook_received";
 
 export type PaymentMethod = "bank_transfer" | "cash" | "credit_card" | "debit_card" | "other" | "pix" | "voucher";
 

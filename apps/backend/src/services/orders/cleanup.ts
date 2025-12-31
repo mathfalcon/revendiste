@@ -124,7 +124,7 @@ export class OrderCleanupService {
           // Create adapter with provider
           const adapter = new PaymentWebhookAdapter(provider, this.db);
 
-          await adapter.processWebhook(payment.providerPaymentId);
+          await adapter.syncPaymentStatus(payment.providerPaymentId);
 
           logger.debug('Payment status synced before order expiration', {
             orderId,

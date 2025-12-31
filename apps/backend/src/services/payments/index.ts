@@ -106,7 +106,7 @@ export class PaymentsService {
 
     // Extend reservation time to give user enough time to complete payment
     // Set expiration to 10 minutes from now
-    const PAYMENT_WINDOW_MINUTES = 5;
+    const PAYMENT_WINDOW_MINUTES = 10;
     const newReservationExpiresAt = new Date(
       now.getTime() + PAYMENT_WINDOW_MINUTES * 60 * 1000,
     );
@@ -150,10 +150,11 @@ export class PaymentsService {
           ? {
               payer: {
                 id: userId,
-                name: [userFirstName, userLastName]
-                  .filter(Boolean)
-                  .join(' ')
-                  .trim() || undefined,
+                name:
+                  [userFirstName, userLastName]
+                    .filter(Boolean)
+                    .join(' ')
+                    .trim() || undefined,
                 email: userEmail,
               },
             }

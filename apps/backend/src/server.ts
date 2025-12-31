@@ -8,9 +8,8 @@ import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
 import {logger} from './utils';
 import {clerkMiddleware} from '@clerk/express';
-import {startCleanupExpiredReservationsJob} from './jobs/cleanup-expired-reservations';
 import {startNotifyUploadAvailabilityJob} from './jobs/notify-upload-availability';
-import {startSyncPaymentStatusJob} from './jobs/sync-payment-status';
+import {startSyncPaymentsAndExpireOrdersJob} from './jobs/sync-payments-and-expire-orders';
 import {startCheckPayoutHoldPeriodsJob} from './jobs/check-payout-hold-periods';
 
 const app: express.Application = express();
@@ -22,6 +21,7 @@ app.use(
       'http://localhost:3000',
       'http://127.0.0.1:3000',
       APP_BASE_URL,
+      'https://revendiste.com',
     ].filter(Boolean), // Remove any undefined values
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -113,10 +113,8 @@ app.listen(PORT, () => {
   logger.info(`🚀 API listening on http://localhost:${PORT}/api`);
 
   // Start scheduled jobs
-  startCleanupExpiredReservationsJob();
+  startSyncPaymentsAndExpireOrdersJob();
   startNotifyUploadAvailabilityJob();
-  const syncPaymentStatusJob = startSyncPaymentStatusJob();
-  syncPaymentStatusJob.execute();
   startCheckPayoutHoldPeriodsJob();
   // startProcessPendingNotificationsJob();
 });

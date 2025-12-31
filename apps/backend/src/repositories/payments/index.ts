@@ -148,16 +148,7 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   async getPendingPaymentsForSync(options?: {
     minAgeMinutes?: number; // Only check payments older than this
     limit?: number; // Limit number of payments to process per run
-  }): Promise<
-    Array<{
-      id: string;
-      provider: string;
-      providerPaymentId: string;
-      status: string;
-      orderId: string;
-      createdAt: Date;
-    }>
-  > {
+  }) {
     const now = new Date();
     const minAge = options?.minAgeMinutes || 5; // Default: only check payments older than 5 minutes
     const limit = options?.limit || 100; // Default: process up to 100 payments per run

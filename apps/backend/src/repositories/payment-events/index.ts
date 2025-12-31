@@ -95,6 +95,26 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
   }
 
   /**
+   * Logs a status synced event (manual poll from provider)
+   * Used when we actively query the provider for payment status,
+   * as opposed to receiving a webhook callback.
+   */
+  async logStatusSynced(
+    paymentId: string,
+    providerResponse: Record<string, any>,
+  ) {
+    return await this.create({
+      paymentId,
+      eventType: 'status_synced',
+      fromStatus: null,
+      toStatus: null,
+      eventData: JSON.stringify(providerResponse),
+      ipAddress: null,
+      userAgent: null,
+    });
+  }
+
+  /**
    * Logs a refund initiated event
    */
   async logRefundInitiated(

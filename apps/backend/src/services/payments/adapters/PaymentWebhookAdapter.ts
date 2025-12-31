@@ -62,6 +62,15 @@ export interface WebhookMetadata {
 }
 
 /**
+ * Result from processing a payment update
+ */
+interface PaymentUpdateResult {
+  paymentId: string;
+  status: string;
+  metadata: any;
+}
+
+/**
  * Payment Webhook Adapter
  *
  * Adapts payment provider webhooks to our internal system.
@@ -111,8 +120,11 @@ export class PaymentWebhookAdapter {
   }
 
   /**
-   * Main webhook processing method
-   * This is the public API that services call
+   * Process a webhook callback from the payment provider
+   * Logs a 'webhook_received' event for audit trail
+   *
+   * @param paymentId - The provider's payment ID
+   * @param webhookMetadata - IP address and user agent from the webhook request
    */
   async processWebhook(
     paymentId: string,
@@ -124,19 +136,19 @@ export class PaymentWebhookAdapter {
         paymentId,
       });
 
-      // Step 1: Fetch payment from provider (provider-specific)
-      const providerPayment = await this.provider.getPayment(paymentId);
+      const result = await this.fetchAndProcessPayment(paymentId);
 
-      // Step 2: Normalize to our format (provider-specific)
-      const normalized = this.normalizePaymentData(providerPayment);
-
-      // Step 3: Process with our business logic (common)
-      await this.processNormalizedPayment(normalized, webhookMetadata);
+      // Log webhook received event
+      await this.paymentEventsRepository.logWebhookReceived(
+        result.paymentId,
+        result.metadata,
+        webhookMetadata,
+      );
 
       logger.info('Webhook processed successfully', {
         provider: this.provider.name,
-        paymentId: normalized.providerPaymentId,
-        status: normalized.status,
+        paymentId: result.paymentId,
+        status: result.status,
       });
     } catch (error: any) {
       logger.error('Error processing webhook', {
@@ -147,6 +159,67 @@ export class PaymentWebhookAdapter {
       });
       throw error;
     }
+  }
+
+  /**
+   * Manually sync payment status by polling the provider
+   * Logs a 'status_synced' event for audit trail
+   * Used by background jobs when webhooks may not be reliable
+   *
+   * @param paymentId - The provider's payment ID
+   */
+  async syncPaymentStatus(paymentId: string): Promise<void> {
+    try {
+      logger.info('Syncing payment status', {
+        provider: this.provider.name,
+        paymentId,
+      });
+
+      const result = await this.fetchAndProcessPayment(paymentId);
+
+      // Log status synced event
+      await this.paymentEventsRepository.logStatusSynced(
+        result.paymentId,
+        result.metadata,
+      );
+
+      logger.info('Payment status synced successfully', {
+        provider: this.provider.name,
+        paymentId: result.paymentId,
+        status: result.status,
+      });
+    } catch (error: any) {
+      logger.error('Error syncing payment status', {
+        provider: this.provider.name,
+        paymentId,
+        error: error.message,
+        stack: error.stack,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Fetches payment from provider and processes it through business logic
+   * Shared by both processWebhook and syncPaymentStatus
+   */
+  private async fetchAndProcessPayment(
+    paymentId: string,
+  ): Promise<PaymentUpdateResult> {
+    // Step 1: Fetch payment from provider (provider-specific)
+    const providerPayment = await this.provider.getPayment(paymentId);
+
+    // Step 2: Normalize to our format (provider-specific)
+    const normalized = this.normalizePaymentData(providerPayment);
+
+    // Step 3: Process with our business logic (common)
+    const internalPaymentId = await this.processNormalizedPayment(normalized);
+
+    return {
+      paymentId: internalPaymentId,
+      status: normalized.status,
+      metadata: normalized.metadata,
+    };
   }
 
   /**
@@ -208,11 +281,11 @@ export class PaymentWebhookAdapter {
 
   /**
    * Processes normalized payment data through our business logic
+   * Returns the internal payment ID for event logging by the caller
    */
   private async processNormalizedPayment(
     paymentData: NormalizedPaymentData,
-    webhookMetadata?: WebhookMetadata,
-  ): Promise<void> {
+  ): Promise<string> {
     const {providerPaymentId} = paymentData;
 
     // Find payment record in database
@@ -285,25 +358,20 @@ export class PaymentWebhookAdapter {
       },
     );
 
-    // Log events
+    // Log status change event if status changed
     if (String(oldStatus) !== String(newStatus)) {
       await this.paymentEventsRepository.logStatusChange(
         String(paymentRecord.id),
         String(oldStatus),
         String(newStatus),
         paymentData.metadata,
-        webhookMetadata,
       );
     }
 
-    await this.paymentEventsRepository.logWebhookReceived(
-      String(paymentRecord.id),
-      paymentData.metadata,
-      webhookMetadata,
-    );
-
     // Handle order status based on payment status
     await this.handleOrderStatusUpdate(order.id, newStatus, paymentData);
+
+    return String(paymentRecord.id);
   }
 
   /**
