@@ -116,6 +116,28 @@ resource "aws_iam_role_policy" "ecs_task_logs" {
   })
 }
 
+# ECS Exec policy for accessing running containers
+resource "aws_iam_role_policy" "ecs_task_exec" {
+  name = "${local.name_prefix}-ecs-task-exec"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # IAM Role for EventBridge to run ECS tasks (for cronjobs)
 resource "aws_iam_role" "eventbridge_ecs" {
   name = "${local.name_prefix}-eventbridge-ecs-role"

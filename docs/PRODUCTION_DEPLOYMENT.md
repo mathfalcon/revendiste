@@ -565,6 +565,74 @@ aws acm describe-certificate \
 - Certificate not attached to ALB listener
 - Domain mismatch
 
+### Accessing Running Containers (ECS Exec)
+
+ECS Exec allows you to execute commands in running containers, similar to SSH:
+
+**Prerequisites**:
+
+- AWS CLI configured with appropriate permissions
+- Session Manager plugin installed: `aws session-manager-plugin` (included in AWS CLI v2)
+
+**Get Running Task ID**:
+
+```bash
+# List running tasks
+aws ecs list-tasks \
+  --cluster revendiste-production-cluster \
+  --service-name revendiste-production-backend \
+  --region sa-east-1
+
+# Get task details
+TASK_ID=$(aws ecs list-tasks \
+  --cluster revendiste-production-cluster \
+  --service-name revendiste-production-backend \
+  --region sa-east-1 \
+  --query 'taskArns[0]' \
+  --output text | awk -F/ '{print $NF}')
+```
+
+**Execute Commands in Container**:
+
+```bash
+# Interactive shell (bash)
+aws ecs execute-command \
+  --cluster revendiste-production-cluster \
+  --task $TASK_ID \
+  --container backend \
+  --interactive \
+  --command "/bin/sh" \
+  --region sa-east-1
+
+# Run a single command
+aws ecs execute-command \
+  --cluster revendiste-production-cluster \
+  --task $TASK_ID \
+  --container backend \
+  --interactive \
+  --command "node --version" \
+  --region sa-east-1
+```
+
+**Common Use Cases**:
+
+- Check environment variables: `printenv`
+- View running processes: `ps aux`
+- Check disk usage: `df -h`
+- Inspect application logs: `tail -f /path/to/logs`
+- Run database migrations manually: `node dist/src/db/migrate.js`
+
+**Note**: ECS Exec requires the Session Manager plugin. If you get an error, install it:
+
+```bash
+# macOS
+brew install --cask session-manager-plugin
+
+# Linux
+curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm" -o "session-manager-plugin.rpm"
+sudo rpm -i session-manager-plugin.rpm
+```
+
 ### Rollback Deployment
 
 If a deployment causes issues, rollback to previous task definition:

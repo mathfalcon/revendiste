@@ -117,10 +117,10 @@ app.listen(PORT, () => {
   // In production, jobs run via EventBridge + ECS RunTask using scripts/run-job.ts
   if (NODE_ENV === 'local' || NODE_ENV === 'development') {
     logger.info('Starting cronjob schedulers (dev/local mode)...');
-    startSyncPaymentsAndExpireOrdersJob();
-    startNotifyUploadAvailabilityJob();
-    startCheckPayoutHoldPeriodsJob();
-    // startProcessPendingNotificationsJob();
+  startSyncPaymentsAndExpireOrdersJob();
+  startNotifyUploadAvailabilityJob();
+  startCheckPayoutHoldPeriodsJob();
+  // startProcessPendingNotificationsJob();
     // startScrapeEventsJob(); // Commented out - resource intensive, runs via EventBridge in production
   } else {
     logger.info(

@@ -76,7 +76,7 @@ variable "db_username" {
 variable "db_engine_version" {
   description = "PostgreSQL engine version for Aurora"
   type        = string
-  default     = "15.4"
+  default     = "15.3"
 }
 
 variable "db_min_capacity" {
