@@ -86,16 +86,14 @@ async function expireOrder(orderId: string): Promise<void> {
 }
 
 /**
- * Syncs payment statuses with providers and expires orders based on provider status.
- * Runs every 5 minutes as a reliability mechanism when webhooks fail or are delayed.
+ * Runs the sync payments and expire orders job logic once
+ * Used by production EventBridge + ECS RunTask
  */
-export function startSyncPaymentsAndExpireOrdersJob() {
+export async function runSyncPaymentsAndExpireOrders() {
   const paymentsRepository = new PaymentsRepository(db);
-  const ordersRepository = new OrdersRepository(db);
 
-  const job = cron.schedule('*/5 * * * *', async () => {
-    try {
-      logger.info('Starting payment status sync and order expiration...');
+  try {
+    logger.info('Starting payment status sync and order expiration...');
 
       const pendingPayments =
         await paymentsRepository.getPendingPaymentsForSync({
@@ -212,6 +210,21 @@ export function startSyncPaymentsAndExpireOrdersJob() {
       }
     } catch (error) {
       logger.error('Error in payment sync and order expiration job:', error);
+      throw error;
+    }
+}
+
+/**
+ * Starts the cron scheduler for sync payments and expire orders job
+ * Only used in development/local environments
+ * In production, use runSyncPaymentsAndExpireOrders() via EventBridge
+ */
+export function startSyncPaymentsAndExpireOrdersJob() {
+  const job = cron.schedule('*/5 * * * *', async () => {
+    try {
+      await runSyncPaymentsAndExpireOrders();
+    } catch (error) {
+      logger.error('Error in scheduled payment sync and order expiration job:', error);
     }
   });
 

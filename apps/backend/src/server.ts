@@ -8,9 +8,10 @@ import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
 import {logger} from './utils';
 import {clerkMiddleware} from '@clerk/express';
-import {startNotifyUploadAvailabilityJob} from './jobs/notify-upload-availability';
-import {startSyncPaymentsAndExpireOrdersJob} from './jobs/sync-payments-and-expire-orders';
-import {startCheckPayoutHoldPeriodsJob} from './jobs/check-payout-hold-periods';
+import {startSyncPaymentsAndExpireOrdersJob} from './cronjobs/sync-payments-and-expire-orders';
+import {startNotifyUploadAvailabilityJob} from './cronjobs/notify-upload-availability';
+import {startCheckPayoutHoldPeriodsJob} from './cronjobs/check-payout-hold-periods';
+import {startScrapeEventsJob} from './cronjobs/scrape-events';
 
 const app: express.Application = express();
 
@@ -112,11 +113,20 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   logger.info(`🚀 API listening on http://localhost:${PORT}/api`);
 
-  // Start scheduled jobs
-  startSyncPaymentsAndExpireOrdersJob();
-  startNotifyUploadAvailabilityJob();
-  startCheckPayoutHoldPeriodsJob();
-  // startProcessPendingNotificationsJob();
+  // Start scheduled jobs only in development/local environments
+  // In production, jobs run via EventBridge + ECS RunTask using scripts/run-job.ts
+  if (NODE_ENV === 'local' || NODE_ENV === 'development') {
+    logger.info('Starting cronjob schedulers (dev/local mode)...');
+    startSyncPaymentsAndExpireOrdersJob();
+    startNotifyUploadAvailabilityJob();
+    startCheckPayoutHoldPeriodsJob();
+    // startProcessPendingNotificationsJob();
+    // startScrapeEventsJob(); // Commented out - resource intensive, runs via EventBridge in production
+  } else {
+    logger.info(
+      'Cronjobs disabled in production (using EventBridge + ECS RunTask)',
+    );
+  }
 });
 
 export default app;

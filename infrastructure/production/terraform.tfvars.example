@@ -1,0 +1,70 @@
+# Production Infrastructure Configuration
+# Copy this file to terraform.tfvars and fill in the values
+
+# AWS Configuration
+aws_region = "sa-east-1"
+
+# Domain Configuration
+domain_name = "revendiste.com"
+
+# VPC Configuration
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["sa-east-1a", "sa-east-1b"]
+
+# Database Configuration
+db_name     = "revendiste"
+db_username = "revendiste_admin" # Will be stored in Secrets Manager
+# db_password is auto-generated and stored in Secrets Manager
+
+# Database Autoscaling (Aurora Serverless v2)
+db_min_capacity = 0.5  # Minimum ACUs (0.5 = 1 GB RAM, 0.25 vCPU)
+db_max_capacity = 16   # Maximum ACUs (16 = 32 GB RAM, 8 vCPU)
+db_instance_count = 1  # Number of Aurora instances (1 for cost, 2+ for HA)
+
+# Backend ECS Configuration
+# Note: Backend API handles HTTP requests, database queries, and file uploads.
+# Playwright/Crawlee/Sharp are used in cronjobs (separate tasks), not the main API service.
+backend_cpu    = 512   # 0.5 vCPU (sufficient for API-only workloads)
+backend_memory = 1536  # 1.5 GB (sufficient for API + database pools + request handling)
+backend_port   = 3001
+backend_image_tag = "latest"
+backend_desired_count = 2
+backend_min_capacity = 1
+backend_max_capacity = 10
+backend_cpu_target    = 70  # Scale when CPU > 70%
+backend_memory_target = 80  # Scale when Memory > 80%
+
+# Frontend ECS Configuration
+frontend_cpu    = 256   # 0.25 vCPU
+frontend_memory = 512   # 0.5 GB
+frontend_port   = 3000
+frontend_image_tag = "latest"
+frontend_desired_count = 2
+frontend_min_capacity = 1
+frontend_max_capacity = 10
+frontend_cpu_target    = 70  # Scale when CPU > 70%
+frontend_memory_target = 80  # Scale when Memory > 80%
+
+# Cronjob Configuration
+# Lightweight jobs (sync-payments, notifications, etc.)
+cronjob_cpu    = 256   # 0.25 vCPU
+cronjob_memory = 512   # 0.5 GB
+
+# Scraping jobs (Playwright/Crawlee) - use these for event scraping cronjobs
+# cronjob_scraping_cpu    = 1024  # 1 vCPU (minimum for Playwright)
+# cronjob_scraping_memory = 2048  # 2 GB (minimum for Playwright + Sharp)
+
+# CloudWatch Logs
+log_retention_days = 7
+
+# Database Backup
+db_backup_retention_days = 7
+
+# Cloudflare Configuration
+# Get these from Cloudflare dashboard:
+# - API Token: https://dash.cloudflare.com/profile/api-tokens (needs Account R2:Edit, Zone:Read, Zone:DNS:Edit)
+# - Account ID: https://dash.cloudflare.com/ (right sidebar)
+cloudflare_api_token = "your-cloudflare-api-token-here"
+cloudflare_account_id = "your-cloudflare-account-id-here"
+r2_bucket_location = "WEUR" # Western Europe (options: WEUR, WNAM, ENAM, APAC)
+

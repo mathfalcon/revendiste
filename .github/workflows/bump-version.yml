@@ -1,0 +1,125 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - name: Get current version
+        id: current-version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Bump version
+        id: bump
+        run: |
+          VERSION_TYPE="${{ github.event.inputs.version_type }}"
+          CURRENT_VERSION="${{ steps.current-version.outputs.current }}"
+          
+          # Parse version components
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          # Bump version based on type
+          case $VERSION_TYPE in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update root package.json
+        run: |
+          npm version ${{ steps.bump.outputs.new }} --no-git-tag-version
+          echo "Updated root package.json to ${{ steps.bump.outputs.new }}"
+
+      - name: Update backend package.json
+        run: |
+          cd apps/backend
+          npm version ${{ steps.bump.outputs.new }} --no-git-tag-version
+          echo "Updated backend package.json to ${{ steps.bump.outputs.new }}"
+
+      - name: Update frontend package.json
+        run: |
+          cd apps/frontend
+          # Frontend doesn't have version, add it
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '${{ steps.bump.outputs.new }}';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          echo "Updated frontend package.json to ${{ steps.bump.outputs.new }}"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: bump version to ${{ steps.bump.outputs.new }}"
+          title: "Bump version to ${{ steps.bump.outputs.new }}"
+          body: |
+            ## Version Bump
+            
+            Bumped version from `${{ steps.current-version.outputs.current }}` to `${{ steps.bump.outputs.new }}`
+            
+            **Version Type:** ${{ github.event.inputs.version_type }}
+            
+            ### Updated Files
+            - `package.json` (root)
+            - `apps/backend/package.json`
+            - `apps/frontend/package.json`
+            
+            ### Next Steps
+            1. Review and merge this PR
+            2. **Automatically**: After merging, the `auto-tag-version.yml` workflow will create and push the tag `v${{ steps.bump.outputs.new }}`
+            3. The tag push will trigger the production deployment workflow
+          branch: bump-version-${{ steps.bump.outputs.new }}
+          delete-branch: true
+

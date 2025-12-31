@@ -6,6 +6,14 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.14"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
   }
 
   cloud {
@@ -24,8 +32,14 @@ provider "aws" {
   }
 }
 
-# Data source for current AWS caller identity
+# Cloudflare Provider
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
+
+# Data sources
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 # Local values for common tags and naming
 locals {
