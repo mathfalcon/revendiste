@@ -45,6 +45,13 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/transactional/package.js
 # kysely-ctl is now in dependencies (needed at runtime for migrations)
 RUN pnpm install --frozen-lockfile --prod --filter @revendiste/backend...
 
+# Install Playwright browsers (needed for scraping jobs)
+# Playwright is in dependencies, but browsers need to be installed separately
+# Use shared location so nodejs user can access browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/.playwright-browsers
+RUN cd apps/backend && npx playwright install chromium --with-deps && \
+  chown -R nodejs:nodejs /app/.playwright-browsers
+
 # Copy built application
 COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/dist ./apps/backend/dist
 
