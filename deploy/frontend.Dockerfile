@@ -35,6 +35,9 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
   adduser --system --uid 1001 nodejs
 
+# Install curl for ECS health checks
+RUN apk add --no-cache curl
+
 # Copy built application
 COPY --from=builder --chown=nodejs:nodejs /app/apps/frontend/.output ./.output
 COPY --from=builder --chown=nodejs:nodejs /app/apps/frontend/package.json ./package.json

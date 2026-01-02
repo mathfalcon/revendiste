@@ -43,7 +43,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/transactional/package.js
 
 # Install production dependencies only
 # kysely-ctl is now in dependencies (needed at runtime for migrations)
-RUN pnpm install --frozen-lockfile --prod --filter @revendiste/backend...
+RUN apk add --no-cache curl && \
+  pnpm install --frozen-lockfile --prod --filter @revendiste/backend...
 
 # Install Playwright browsers (needed for scraping jobs)
 # Playwright is in dependencies, but browsers need to be installed separately
