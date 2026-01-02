@@ -64,6 +64,7 @@ export const env = EnvSchema.safeParse(process.env);
 
 if (!env.success) {
   console.error('Invalid environment variables:', z.treeifyError(env.error));
+  console.error('Environment variables:', JSON.stringify(env.error, null, 2));
   process.exit(1);
 }
 

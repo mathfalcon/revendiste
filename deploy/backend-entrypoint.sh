@@ -18,18 +18,20 @@ fi
 
 if [ -n "$BACKEND_SECRETS_JSON" ]; then
   echo "Parsing backend secrets from Secrets Manager..."
-  # Parse backend secrets JSON and export all vars
-  # Use node to parse JSON and export each key as an environment variable
-  echo "$BACKEND_SECRETS_JSON" | node -e "
+  # Parse backend secrets JSON and export all vars in the current shell
+  # Use eval to execute exports in the current shell context (not a subshell)
+  eval "$(echo "$BACKEND_SECRETS_JSON" | node -e "
     const secrets = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
     for (const [key, value] of Object.entries(secrets)) {
       if (value !== null && value !== undefined) {
-        // Escape special characters and export
-        const escaped = String(value).replace(/'/g, \"'\\''\");
+        // Escape special characters properly for shell
+        const escaped = String(value)
+          .replace(/\\\\/g, '\\\\\\\\')
+          .replace(/'/g, \"'\\\\''\");
         process.stdout.write(\`export \${key}='\${escaped}'\n\`);
       }
     }
-  " | sh
+  ")"
 fi
 
 # Run database migrations
