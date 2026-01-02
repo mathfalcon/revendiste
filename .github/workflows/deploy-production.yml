@@ -122,6 +122,8 @@ jobs:
           push: true
           tags: ${{ steps.frontend-meta.outputs.tags }}
           labels: ${{ steps.frontend-meta.outputs.labels }}
+          build-args: |
+            ENVIRONMENT=production
           cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:buildcache,mode=max
 
