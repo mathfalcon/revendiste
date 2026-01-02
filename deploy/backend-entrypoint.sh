@@ -34,14 +34,29 @@ if [ -n "$BACKEND_SECRETS_JSON" ]; then
   ")"
 fi
 
-# Run database migrations
-echo "Running database migrations..."
-# Use npx to run kysely-ctl from local node_modules
-npx kysely-ctl migrate:latest || {
-  echo "Error: Migration failed, exiting..."
-  exit 1
-}
+# Check if this is a cronjob (command contains "run-job.js") or the server
+IS_CRONJOB=false
+for arg in "$@"; do
+  case "$arg" in
+    *run-job.js*)
+      IS_CRONJOB=true
+      break
+      ;;
+  esac
+done
+
+# Only run migrations for the server, not for cronjobs
+if [ "$IS_CRONJOB" = "false" ]; then
+  echo "Running database migrations..."
+  # Use npx to run kysely-ctl from local node_modules
+  npx kysely-ctl migrate:latest || {
+    echo "Error: Migration failed, exiting..."
+    exit 1
+  }
+  echo "Starting server..."
+else
+  echo "Skipping migrations (cronjob detected)..."
+fi
 
 # Execute the command passed from CMD (or as arguments)
-echo "Starting server..."
 exec "$@"
