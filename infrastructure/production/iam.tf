@@ -12,6 +12,18 @@ resource "aws_iam_service_linked_role" "ecs" {
   }
 }
 
+# Application Auto Scaling Service Linked Role (required for ECS autoscaling)
+# This role is required for Application Auto Scaling to function properly
+# If the role already exists in your account, import it:
+# terraform import aws_iam_service_linked_role.autoscaling arn:aws:iam::<account-id>:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
+resource "aws_iam_service_linked_role" "autoscaling" {
+  aws_service_name = "autoscaling.amazonaws.com"
+
+  lifecycle {
+    ignore_changes = [description]
+  }
+}
+
 # ECS Task Execution Role (for pulling images, CloudWatch logs, etc.)
 resource "aws_iam_role" "ecs_task_execution" {
   name = "${local.name_prefix}-ecs-task-execution-role"

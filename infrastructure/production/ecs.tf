@@ -431,6 +431,8 @@ resource "aws_appautoscaling_target" "backend" {
   resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.backend.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
+
+  depends_on = [aws_iam_service_linked_role.autoscaling]
 }
 
 resource "aws_appautoscaling_policy" "backend_cpu" {
@@ -474,6 +476,8 @@ resource "aws_appautoscaling_target" "frontend" {
   resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.frontend.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
+
+  depends_on = [aws_iam_service_linked_role.autoscaling]
 }
 
 resource "aws_appautoscaling_policy" "frontend_cpu" {
