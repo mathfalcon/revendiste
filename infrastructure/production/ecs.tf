@@ -176,7 +176,7 @@ resource "aws_ecs_task_definition" "cronjob_sync_payments" {
       image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
 
       # Run the job once using the standalone script
-      command = ["node", "dist/scripts/run-job.js", "sync-payments-and-expire-orders"]
+      command = ["node", "dist/src/scripts/run-job.js", "sync-payments-and-expire-orders"]
 
       environment = [
         {
@@ -218,7 +218,7 @@ resource "aws_ecs_task_definition" "cronjob_notify_upload" {
       name  = "cronjob"
       image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
 
-      command = ["node", "dist/scripts/run-job.js", "notify-upload-availability"]
+      command = ["node", "dist/src/scripts/run-job.js", "notify-upload-availability"]
 
       environment = [
         {
@@ -260,7 +260,7 @@ resource "aws_ecs_task_definition" "cronjob_check_payout" {
       name  = "cronjob"
       image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
 
-      command = ["node", "dist/scripts/run-job.js", "check-payout-hold-periods"]
+      command = ["node", "dist/src/scripts/run-job.js", "check-payout-hold-periods"]
 
       environment = [
         {
@@ -302,7 +302,7 @@ resource "aws_ecs_task_definition" "cronjob_scrape_events" {
       name  = "cronjob"
       image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
 
-      command = ["node", "dist/scripts/run-job.js", "scrape-events"]
+      command = ["node", "dist/src/scripts/run-job.js", "scrape-events"]
 
       environment = [
         {

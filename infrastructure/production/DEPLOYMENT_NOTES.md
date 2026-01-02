@@ -53,7 +53,7 @@ runJob();
 
 Then update cronjob task definitions to use:
 ```bash
-command = ["node", "dist/scripts/run-job.js", "sync-payments"]
+command = ["node", "dist/src/scripts/run-job.js", "sync-payments"]
 ```
 
 ## Database Connection

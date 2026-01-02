@@ -92,8 +92,8 @@ async function expireOrder(orderId: string): Promise<void> {
 export async function runSyncPaymentsAndExpireOrders() {
   const paymentsRepository = new PaymentsRepository(db);
 
-  try {
-    logger.info('Starting payment status sync and order expiration...');
+    try {
+      logger.info('Starting payment status sync and order expiration...');
 
       const pendingPayments =
         await paymentsRepository.getPendingPaymentsForSync({

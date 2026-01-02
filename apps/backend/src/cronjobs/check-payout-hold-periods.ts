@@ -24,19 +24,19 @@ export async function runCheckPayoutHoldPeriods() {
     listingTicketsRepository,
   );
 
-  try {
-    logger.info('Starting scheduled check of payout hold periods...');
+    try {
+      logger.info('Starting scheduled check of payout hold periods...');
 
-    const result = await sellerEarningsService.checkHoldPeriods(100);
+      const result = await sellerEarningsService.checkHoldPeriods(100);
 
-    if (result.released > 0 || result.retained > 0) {
-      logger.info('Payout hold periods check completed', {
-        released: result.released,
-        retained: result.retained,
-      });
-    } else {
-      logger.debug('No earnings ready for release');
-    }
+      if (result.released > 0 || result.retained > 0) {
+        logger.info('Payout hold periods check completed', {
+          released: result.released,
+          retained: result.retained,
+        });
+      } else {
+        logger.debug('No earnings ready for release');
+      }
   } catch (error) {
     logger.error('Error in scheduled payout hold periods check:', error);
     throw error;
