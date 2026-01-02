@@ -46,9 +46,7 @@ export function startScrapeEventsJob() {
     }
   });
 
-  logger.info(
-    'Scheduled job: scrape-events started (runs every 30 minutes)',
-  );
+  logger.info('Scheduled job: scrape-events started (runs every 30 minutes)');
 
   return job;
 }

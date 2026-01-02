@@ -79,11 +79,15 @@
         "iam:ListRoleTags",
         "iam:TagInstanceProfile",
         "iam:UntagInstanceProfile",
-        "iam:ListInstanceProfileTags"
+        "iam:ListInstanceProfileTags",
+        "iam:CreateServiceLinkedRole",
+        "iam:DeleteServiceLinkedRole",
+        "iam:GetServiceLinkedRoleDeletionStatus"
       ],
       "Resource": [
         "arn:aws:iam::*:role/revendiste-*",
-        "arn:aws:iam::*:instance-profile/revendiste-*"
+        "arn:aws:iam::*:instance-profile/revendiste-*",
+        "arn:aws:iam::*:role/aws-service-role/ecs.amazonaws.com/*"
       ]
     },
     {

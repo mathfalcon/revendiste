@@ -1,5 +1,17 @@
 # IAM Roles and Policies
 
+# ECS Service Linked Role (required for ECS services)
+# This role is required for ECS services to function properly
+# If the role already exists in your account, import it:
+# terraform import aws_iam_service_linked_role.ecs arn:aws:iam::<account-id>:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS
+resource "aws_iam_service_linked_role" "ecs" {
+  aws_service_name = "ecs.amazonaws.com"
+
+  lifecycle {
+    ignore_changes = [description]
+  }
+}
+
 # ECS Task Execution Role (for pulling images, CloudWatch logs, etc.)
 resource "aws_iam_role" "ecs_task_execution" {
   name = "${local.name_prefix}-ecs-task-execution-role"

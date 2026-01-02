@@ -380,7 +380,8 @@ resource "aws_ecs_service" "backend" {
   depends_on = [
     aws_lb_listener.https,
     aws_lb_listener_rule.backend,
-    aws_iam_role.ecs_task_execution
+    aws_iam_role.ecs_task_execution,
+    aws_iam_service_linked_role.ecs
   ]
 
   tags = {
@@ -414,7 +415,8 @@ resource "aws_ecs_service" "frontend" {
   depends_on = [
     aws_lb_listener.https,
     aws_lb_listener_rule.frontend,
-    aws_iam_role.ecs_task_execution
+    aws_iam_role.ecs_task_execution,
+    aws_iam_service_linked_role.ecs
   ]
 
   tags = {
