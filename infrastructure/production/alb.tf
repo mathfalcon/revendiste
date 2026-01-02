@@ -167,18 +167,19 @@ resource "aws_acm_certificate" "main" {
 }
 
 # Certificate validation
-# Note: Certificate must be validated before it can be used in ALB listener
-# After creating the certificate, add the DNS validation records to Cloudflare
-# The certificate will be validated automatically once DNS records propagate
+# DNS validation records are automatically created in Cloudflare
+# Validation will complete once DNS records propagate (usually 5-10 minutes)
 resource "aws_acm_certificate_validation" "main" {
   certificate_arn = aws_acm_certificate.main.arn
 
   timeouts {
-    create = "5m"
+    create = "10m"
   }
 
   lifecycle {
     create_before_destroy = true
   }
+
+  depends_on = [cloudflare_dns_record.acm_validation]
 }
 
