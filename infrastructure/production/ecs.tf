@@ -75,12 +75,7 @@ resource "aws_ecs_task_definition" "backend" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -190,12 +185,7 @@ resource "aws_ecs_task_definition" "cronjob_sync_payments" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -237,12 +227,7 @@ resource "aws_ecs_task_definition" "cronjob_notify_upload" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -284,12 +269,7 @@ resource "aws_ecs_task_definition" "cronjob_check_payout" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -331,12 +311,7 @@ resource "aws_ecs_task_definition" "cronjob_scrape_events" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -377,6 +352,12 @@ resource "aws_ecs_service" "backend" {
   # Enable autoscaling
   enable_execute_command = true
 
+  # Zero-downtime deployment configuration
+  # Allow up to 200% capacity during deployment (2x tasks)
+  deployment_maximum_percent = 200
+  # Keep at least 50% healthy (1 task minimum when desired_count=2)
+  deployment_minimum_healthy_percent = 50
+
   depends_on = [
     aws_lb_listener.https,
     aws_lb_listener_rule.backend,
@@ -411,6 +392,12 @@ resource "aws_ecs_service" "frontend" {
 
   # Enable autoscaling
   enable_execute_command = true
+
+  # Zero-downtime deployment configuration
+  # Allow up to 200% capacity during deployment (2x tasks)
+  deployment_maximum_percent = 200
+  # Keep at least 50% healthy (1 task minimum when desired_count=2)
+  deployment_minimum_healthy_percent = 50
 
   depends_on = [
     aws_lb_listener.https,

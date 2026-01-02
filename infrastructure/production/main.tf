@@ -50,5 +50,19 @@ locals {
   }
 
   name_prefix = "revendiste-production"
+
+  # Combined secrets configuration for all backend containers
+  # Fetches entire JSON secrets (2 API calls) instead of individual keys (21 API calls)
+  # Entrypoint script parses JSON and exports all vars
+  backend_secrets = [
+    {
+      name      = "DB_CREDENTIALS_JSON"
+      valueFrom = aws_secretsmanager_secret.db_credentials.arn
+    },
+    {
+      name      = "BACKEND_SECRETS_JSON"
+      valueFrom = aws_secretsmanager_secret.backend_secrets.arn
+    }
+  ]
 }
 

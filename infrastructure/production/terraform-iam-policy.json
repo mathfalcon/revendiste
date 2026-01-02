@@ -79,17 +79,22 @@
         "iam:ListRoleTags",
         "iam:TagInstanceProfile",
         "iam:UntagInstanceProfile",
-        "iam:ListInstanceProfileTags",
+        "iam:ListInstanceProfileTags"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:role/revendiste-*",
+        "arn:aws:iam::*:instance-profile/revendiste-*"
+      ]
+    },
+    {
+      "Sid": "IAMServiceLinkedRole",
+      "Effect": "Allow",
+      "Action": [
         "iam:CreateServiceLinkedRole",
         "iam:DeleteServiceLinkedRole",
         "iam:GetServiceLinkedRoleDeletionStatus"
       ],
-      "Resource": [
-        "arn:aws:iam::*:role/revendiste-*",
-        "arn:aws:iam::*:instance-profile/revendiste-*",
-        "arn:aws:iam::*:role/aws-service-role/ecs.amazonaws.com/*",
-        "arn:aws:iam::*:role/aws-service-role/autoscaling.amazonaws.com/*"
-      ]
+      "Resource": "*"
     },
     {
       "Sid": "IAMRead",

@@ -36,11 +36,31 @@ resource "aws_secretsmanager_secret" "backend_secrets" {
 #
 # Where secrets.json contains all backend environment variables as JSON:
 # {
-#   "CLERK_SECRET_KEY": "...",
+#   "CLERK_PUBLISHABLE_KEY": "pk_live_...",
+#   "CLERK_SECRET_KEY": "sk_live_...",
 #   "DLOCAL_API_KEY": "...",
 #   "DLOCAL_SECRET_KEY": "...",
+#   "DLOCAL_BASE_URL": "https://api.dlocal.com",
+#   "APP_BASE_URL": "https://revendiste.com",
+#   "API_BASE_URL": "https://api.revendiste.com",
 #   "RESEND_API_KEY": "...",
 #   "EXCHANGE_RATE_API_KEY": "...",
-#   ... (all other backend secrets)
+#   "STORAGE_TYPE": "r2",
+#   "R2_PUBLIC_BUCKET": "revendiste-production-public",
+#   "R2_PRIVATE_BUCKET": "revendiste-production-private",
+#   "R2_ACCOUNT_ID": "...",
+#   "R2_ACCESS_KEY_ID": "...",
+#   "R2_SECRET_ACCESS_KEY": "...",
+#   "R2_CDN_DOMAIN": "cdn.revendiste.com",
+#   ... (any other optional backend secrets)
 # }
+#
+# Required variables (must be present):
+# - CLERK_PUBLISHABLE_KEY
+# - CLERK_SECRET_KEY
+# - DLOCAL_API_KEY
+# - DLOCAL_SECRET_KEY
+# - DLOCAL_BASE_URL
+# - APP_BASE_URL
+# - API_BASE_URL
 
