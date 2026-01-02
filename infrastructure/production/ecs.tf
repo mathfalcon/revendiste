@@ -358,6 +358,13 @@ resource "aws_ecs_service" "backend" {
   # Keep at least 50% healthy (1 task minimum when desired_count=2)
   deployment_minimum_healthy_percent = 50
 
+  # Deployment circuit breaker
+  # Stops deployment if tasks fail to reach steady state and rolls back automatically
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   depends_on = [
     aws_lb_listener.https,
     aws_lb_listener_rule.backend,
@@ -398,6 +405,13 @@ resource "aws_ecs_service" "frontend" {
   deployment_maximum_percent = 200
   # Keep at least 50% healthy (1 task minimum when desired_count=2)
   deployment_minimum_healthy_percent = 50
+
+  # Deployment circuit breaker
+  # Stops deployment if tasks fail to reach steady state and rolls back automatically
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
   depends_on = [
     aws_lb_listener.https,

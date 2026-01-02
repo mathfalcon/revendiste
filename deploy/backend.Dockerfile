@@ -47,10 +47,17 @@ RUN pnpm install --frozen-lockfile --prod --filter @revendiste/backend...
 
 # Install Playwright browsers (needed for scraping jobs)
 # Playwright is in dependencies, but browsers need to be installed separately
+# Install Alpine system dependencies required by Chromium
 # Use shared location so nodejs user can access browsers
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/.playwright-browsers
-RUN cd apps/backend && npx playwright install chromium --with-deps && \
-  chown -R nodejs:nodejs /app/.playwright-browsers
+RUN apk add --no-cache \
+  nss \
+  freetype \
+  harfbuzz \
+  ca-certificates \
+  ttf-freefont \
+  && cd apps/backend && npx playwright install chromium \
+  && chown -R nodejs:nodejs /app/.playwright-browsers
 
 # Copy built application
 COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/dist ./apps/backend/dist
