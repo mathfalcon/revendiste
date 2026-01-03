@@ -107,7 +107,7 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# HTTP Listener (redirect to HTTPS, except /api/* for internal SSR requests)
+# HTTP Listener (redirect all HTTP to HTTPS)
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -119,26 +119,6 @@ resource "aws_lb_listener" "http" {
       port        = "443"
       protocol    = "HTTPS"
       status_code = "HTTP_301"
-    }
-  }
-}
-
-# Backend Listener Rule on HTTP (for internal SSR requests from frontend ECS tasks)
-# Security: ALB security group only allows HTTP from ECS tasks and Cloudflare IPs
-# Cloudflare is configured to use HTTPS to origin (Full SSL mode), so external
-# traffic won't use this HTTP path. Only internal ECS-to-ECS traffic uses HTTP.
-resource "aws_lb_listener_rule" "backend_http" {
-  listener_arn = aws_lb_listener.http.arn
-  priority     = 100
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.backend.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/api/*"]
     }
   }
 }

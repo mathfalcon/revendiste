@@ -22,16 +22,14 @@ export interface PendingOrderErrorResponse extends StandardizedErrorResponse {
   };
 }
 
-// During SSR, use backend IP directly to bypass Cloudflare
+// During SSR, use Cloud Map DNS for direct backend access
 // On client-side, use the normal API URL (through Cloudflare)
 const getApiBaseURL = () => {
   if (typeof window === 'undefined' && process.env.BACKEND_IP) {
-    // Server-side: use HTTP to ALB for internal VPC communication
-    // Why HTTP instead of HTTPS?
-    // - ALB's ACM cert is for revendiste.com, not the ALB DNS name
-    // - HTTPS would fail with certificate hostname mismatch
-    // Security: ALB security group only allows HTTP from ECS tasks and Cloudflare IPs
-    // Cloudflare uses HTTPS to origin (Full SSL mode), so external traffic won't use HTTP
+    // Server-side: use Cloud Map DNS for direct VPC communication
+    // BACKEND_IP = "backend.revendiste.local:3001"
+    // Traffic goes directly: Frontend ECS → Backend ECS (private IPs)
+    // Benefits: Lower latency, no ALB hop, no Internet Gateway roundtrip
     return `http://${process.env.BACKEND_IP}/api`;
   }
   // Client-side: use normal API URL (through Cloudflare)
