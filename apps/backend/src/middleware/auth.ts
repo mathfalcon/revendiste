@@ -17,8 +17,10 @@ export const optionalAuthMiddleware = async (
   logger.error('optionalAuthMiddleware');
   logger.error(isAuthenticated);
   logger.error(userId);
-  logger.error(req.headers);
-  logger.error(req.body);
+  logger.info('HEADERS');
+  logger.error(JSON.stringify(req.headers));
+  logger.info('BODY');
+  logger.error(JSON.stringify(req.body));
 
   if (isAuthenticated && userId) {
     try {
