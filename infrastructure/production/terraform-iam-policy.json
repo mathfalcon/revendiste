@@ -169,6 +169,12 @@
       "Effect": "Allow",
       "Action": ["acm:*"],
       "Resource": "*"
+    },
+    {
+      "Sid": "ServiceDiscovery",
+      "Effect": "Allow",
+      "Action": ["servicediscovery:*"],
+      "Resource": "*"
     }
   ]
 }

@@ -77,6 +77,7 @@ export const HomeHero = () => {
           src={'https://cdn.revendiste.com/assets/homepage-bg-1.webp'}
           alt='People partying'
           className='w-full h-full object-cover absolute top-0 left-0'
+          fetchPriority='high'
         />
         {/* Visually hidden h1 for SEO - every page needs exactly one h1 */}
         <h1 className='sr-only'>
