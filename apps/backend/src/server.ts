@@ -49,14 +49,7 @@ app.use((req, res, next) => {
   next();
 });
 
-logger.info(CLERK_PUBLISHABLE_KEY);
-logger.info(typeof CLERK_SECRET_KEY);
-app.use(
-  clerkMiddleware({
-    publishableKey: CLERK_PUBLISHABLE_KEY,
-    secretKey: CLERK_SECRET_KEY,
-  }),
-);
+app.use(clerkMiddleware());
 
 // Optional authentication middleware - populates req.user when available
 app.use(optionalAuthMiddleware);
