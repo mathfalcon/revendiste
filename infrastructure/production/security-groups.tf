@@ -93,3 +93,28 @@ resource "aws_security_group" "rds" {
   }
 }
 
+# Separate security group rules to break circular dependency
+# These allow frontend ECS tasks (SSR) to reach backend through ALB
+
+# HTTP from frontend ECS tasks (for SSR to reach backend through ALB)
+resource "aws_security_group_rule" "alb_ingress_http_from_ecs" {
+  type                     = "ingress"
+  description              = "HTTP from frontend ECS tasks (SSR)"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.ecs_tasks.id
+  security_group_id        = aws_security_group.alb.id
+}
+
+# HTTPS from frontend ECS tasks (for SSR to reach backend through ALB)
+resource "aws_security_group_rule" "alb_ingress_https_from_ecs" {
+  type                     = "ingress"
+  description              = "HTTPS from frontend ECS tasks (SSR)"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.ecs_tasks.id
+  security_group_id        = aws_security_group.alb.id
+}
+
