@@ -26,8 +26,12 @@ export interface PendingOrderErrorResponse extends StandardizedErrorResponse {
 // On client-side, use the normal API URL (through Cloudflare)
 const getApiBaseURL = () => {
   if (typeof window === 'undefined' && process.env.BACKEND_IP) {
-    // Server-side: use direct backend IP (bypasses Cloudflare)
-    // Always use HTTP for internal VPC communication (ALB handles HTTPS termination for external traffic)
+    // Server-side: use HTTP to ALB for internal VPC communication
+    // Why HTTP instead of HTTPS?
+    // - ALB's ACM cert is for revendiste.com, not the ALB DNS name
+    // - HTTPS would fail with certificate hostname mismatch
+    // Security: ALB security group only allows HTTP from ECS tasks and Cloudflare IPs
+    // Cloudflare uses HTTPS to origin (Full SSL mode), so external traffic won't use HTTP
     return `http://${process.env.BACKEND_IP}/api`;
   }
   // Client-side: use normal API URL (through Cloudflare)

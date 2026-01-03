@@ -69,6 +69,16 @@ resource "aws_lb_target_group" "frontend" {
     matcher             = "200"
   }
 
+  # Sticky sessions to prevent asset mismatch during rolling deployments
+  # Ensures all requests from the same user go to the same task
+  # This prevents: old index.html → new task → 404 for assets
+  # 10 minutes is sufficient since deployments take < 5 minutes
+  stickiness {
+    enabled         = true
+    type            = "lb_cookie"
+    cookie_duration = 600 # 10 minutes (covers deployment window + buffer)
+  }
+
   # Deregistration delay for graceful shutdown
   deregistration_delay = 30
 
@@ -97,7 +107,7 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# HTTP Listener (redirect to HTTPS)
+# HTTP Listener (redirect to HTTPS, except /api/* for internal SSR requests)
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -113,7 +123,27 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# Backend Listener Rule (path-based: /api/*)
+# Backend Listener Rule on HTTP (for internal SSR requests from frontend ECS tasks)
+# Security: ALB security group only allows HTTP from ECS tasks and Cloudflare IPs
+# Cloudflare is configured to use HTTPS to origin (Full SSL mode), so external
+# traffic won't use this HTTP path. Only internal ECS-to-ECS traffic uses HTTP.
+resource "aws_lb_listener_rule" "backend_http" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/*"]
+    }
+  }
+}
+
+# Backend Listener Rule on HTTPS (path-based: /api/*)
 resource "aws_lb_listener_rule" "backend" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 100
