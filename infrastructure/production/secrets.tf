@@ -42,7 +42,7 @@ resource "aws_secretsmanager_secret" "backend_secrets" {
 #   "DLOCAL_SECRET_KEY": "...",
 #   "DLOCAL_BASE_URL": "https://api.dlocal.com",
 #   "APP_BASE_URL": "https://revendiste.com",
-#   "API_BASE_URL": "https://api.revendiste.com",
+#   "API_BASE_URL": "https://revendiste.com/api",
 #   "RESEND_API_KEY": "...",
 #   "EXCHANGE_RATE_API_KEY": "...",
 #   "STORAGE_TYPE": "r2",

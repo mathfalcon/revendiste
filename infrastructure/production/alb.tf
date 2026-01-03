@@ -113,7 +113,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# Backend Listener Rule
+# Backend Listener Rule (path-based: /api/*)
 resource "aws_lb_listener_rule" "backend" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 100
@@ -124,13 +124,13 @@ resource "aws_lb_listener_rule" "backend" {
   }
 
   condition {
-    host_header {
-      values = ["api.${var.domain_name}"]
+    path_pattern {
+      values = ["/api/*"]
     }
   }
 }
 
-# Frontend Listener Rule
+# Frontend Listener Rule (default - everything else)
 resource "aws_lb_listener_rule" "frontend" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 200
@@ -153,8 +153,7 @@ resource "aws_acm_certificate" "main" {
   validation_method = "DNS"
 
   subject_alternative_names = [
-    "www.${var.domain_name}",
-    "api.${var.domain_name}"
+    "www.${var.domain_name}"
   ]
 
   lifecycle {

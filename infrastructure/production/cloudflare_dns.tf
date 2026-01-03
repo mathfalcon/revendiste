@@ -27,18 +27,6 @@ resource "cloudflare_dns_record" "www" {
   depends_on = [aws_lb.main]
 }
 
-# A record for API subdomain (points to ALB)
-resource "cloudflare_dns_record" "api" {
-  zone_id = data.cloudflare_zones.main.result[0].id
-  name    = "api.${var.domain_name}"
-  type    = "CNAME"
-  content = aws_lb.main.dns_name
-  ttl     = 1
-  proxied = true
-
-  depends_on = [aws_lb.main]
-}
-
 # ACM Certificate DNS Validation Records
 # These records are required for ACM certificate validation
 resource "cloudflare_dns_record" "acm_validation" {
