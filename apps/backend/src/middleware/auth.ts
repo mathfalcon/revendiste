@@ -4,6 +4,7 @@ import {db} from '~/db';
 import {UnauthorizedError} from '~/errors';
 import {UsersRepository} from '~/repositories';
 import {UsersService} from '~/services';
+import {logger} from '~/utils';
 
 // Global middleware that populates req.user when available (optional auth)
 export const optionalAuthMiddleware = async (
@@ -34,7 +35,8 @@ export const optionalAuthMiddleware = async (
       req.user = user;
     } catch (error) {
       // If there's an error getting user info, just continue without authentication
-      console.warn('Failed to populate user from auth:', error);
+      logger.warn('Failed to populate user from auth:', error);
+      logger.error(error);
     }
   }
 
@@ -47,6 +49,7 @@ export const requireAuthMiddleware = async (
   next: NextFunction,
 ) => {
   if (!req.user) {
+    logger.error('User not authenticated');
     throw new UnauthorizedError();
   }
 
