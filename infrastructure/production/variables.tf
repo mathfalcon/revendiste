@@ -134,12 +134,6 @@ variable "backend_desired_count" {
   default     = 2 # Start with 2 for high availability
 }
 
-variable "backend_min_capacity" {
-  description = "Minimum number of backend tasks"
-  type        = number
-  default     = 1
-}
-
 variable "backend_max_capacity" {
   description = "Maximum number of backend tasks"
   type        = number
@@ -187,12 +181,6 @@ variable "frontend_desired_count" {
   description = "Desired number of frontend tasks"
   type        = number
   default     = 2 # Start with 2 for high availability
-}
-
-variable "frontend_min_capacity" {
-  description = "Minimum number of frontend tasks"
-  type        = number
-  default     = 1
 }
 
 variable "frontend_max_capacity" {

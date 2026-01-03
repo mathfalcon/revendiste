@@ -21,10 +21,14 @@ export abstract class BaseScraper {
   }
 
   protected getCrawlerOptions(): PlaywrightCrawlerOptions {
+    // Use system Chromium if PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH is set (e.g., in Docker)
+    const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+
     return {
       launchContext: {
         launchOptions: {
           headless: true,
+          executablePath: executablePath || undefined,
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -53,7 +57,21 @@ export abstract class BaseScraper {
     options?: Partial<PlaywrightCrawlerOptions>,
   ): PlaywrightCrawler {
     const baseOptions = this.getCrawlerOptions();
-    const mergedOptions = {...baseOptions, ...options};
+
+    // Deep merge launchContext to preserve executablePath and other base options
+    const mergedOptions: PlaywrightCrawlerOptions = {
+      ...baseOptions,
+      ...options,
+      launchContext: {
+        ...baseOptions.launchContext,
+        ...options?.launchContext,
+        launchOptions: {
+          ...baseOptions.launchContext?.launchOptions,
+          ...options?.launchContext?.launchOptions,
+        },
+      },
+    };
+
     Configuration.set('systemInfoV2', true);
 
     return new PlaywrightCrawler(mergedOptions);

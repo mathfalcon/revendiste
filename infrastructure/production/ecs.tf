@@ -358,6 +358,13 @@ resource "aws_ecs_service" "backend" {
   # Keep at least 50% healthy (1 task minimum when desired_count=2)
   deployment_minimum_healthy_percent = 50
 
+  # Deployment circuit breaker
+  # Stops deployment if tasks fail to reach steady state and rolls back automatically
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   depends_on = [
     aws_lb_listener.https,
     aws_lb_listener_rule.backend,
@@ -399,6 +406,13 @@ resource "aws_ecs_service" "frontend" {
   # Keep at least 50% healthy (1 task minimum when desired_count=2)
   deployment_minimum_healthy_percent = 50
 
+  # Deployment circuit breaker
+  # Stops deployment if tasks fail to reach steady state and rolls back automatically
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   depends_on = [
     aws_lb_listener.https,
     aws_lb_listener_rule.frontend,
@@ -414,7 +428,7 @@ resource "aws_ecs_service" "frontend" {
 # ECS Autoscaling for Backend
 resource "aws_appautoscaling_target" "backend" {
   max_capacity       = var.backend_max_capacity
-  min_capacity       = var.backend_min_capacity
+  min_capacity       = var.backend_desired_count # Match desired_count for zero-downtime deployments
   resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.backend.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
@@ -459,7 +473,7 @@ resource "aws_appautoscaling_policy" "backend_memory" {
 # ECS Autoscaling for Frontend
 resource "aws_appautoscaling_target" "frontend" {
   max_capacity       = var.frontend_max_capacity
-  min_capacity       = var.frontend_min_capacity
+  min_capacity       = var.frontend_desired_count # Match desired_count for zero-downtime deployments
   resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.frontend.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"

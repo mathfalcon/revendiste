@@ -12,8 +12,8 @@ COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/transactional/package.json ./packages/transactional/
 
-# Install all dependencies
-RUN pnpm install --frozen-lockfile
+# Install all dependencies (skip postinstall scripts - we use system Chromium in runner stage)
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code and build configs
 COPY apps/backend ./apps/backend
@@ -43,22 +43,22 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/transactional/package.js
 
 # Install production dependencies only
 # kysely-ctl is now in dependencies (needed at runtime for migrations)
-RUN apk add --no-cache curl && \
-  pnpm install --frozen-lockfile --prod --filter @revendiste/backend...
-
-# Install Playwright browsers (needed for scraping jobs)
-# Playwright is in dependencies, but browsers need to be installed separately
-# Install Alpine system dependencies required by Chromium
-# Use shared location so nodejs user can access browsers
-ENV PLAYWRIGHT_BROWSERS_PATH=/app/.playwright-browsers
+# Install curl for ECS health checks and Chromium for Playwright
 RUN apk add --no-cache \
+  curl \
+  chromium \
   nss \
   freetype \
   harfbuzz \
   ca-certificates \
-  ttf-freefont \
-  && cd apps/backend && npx playwright install chromium \
-  && chown -R nodejs:nodejs /app/.playwright-browsers
+  ttf-freefont
+
+# Configure Playwright to use system Chromium instead of downloading its own
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Skip postinstall scripts (we use system Chromium, not Playwright's downloaded browsers)
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @revendiste/backend... 
 
 # Copy built application
 COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/dist ./apps/backend/dist
@@ -86,8 +86,6 @@ RUN sed -i 's/\r$//' /app/apps/backend/entrypoint.sh && \
   chmod +x /app/apps/backend/entrypoint.sh && \
   chown -R nodejs:nodejs /app/node_modules
 
-USER nodejs
-
 # Expose port
 EXPOSE 3001
 
@@ -97,5 +95,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Use entrypoint script to parse secrets, run migrations, and start server
 WORKDIR /app/apps/backend
+
+USER nodejs
+
 ENTRYPOINT ["/app/apps/backend/entrypoint.sh"]
 CMD ["node", "dist/src/server.js"]
