@@ -28,7 +28,9 @@ const getApiBaseURL = () => {
   if (typeof window === 'undefined' && process.env.BACKEND_IP) {
     // Server-side: use direct backend IP (bypasses Cloudflare)
     // Use HTTP since it's internal to the infrastructure
-    return `http://${process.env.BACKEND_IP}/api`;
+    return process.env.NODE_ENV === 'production'
+      ? `https://${process.env.BACKEND_IP}/api`
+      : `http://${process.env.BACKEND_IP}/api`;
   }
   // Client-side: use normal API URL (through Cloudflare)
   return VITE_APP_API_URL;
@@ -77,8 +79,7 @@ api.instance.interceptors.response.use(
     // Don't show toast for 404 errors on event routes (handled by notFoundComponent)
     // This prevents showing "event not found" toasts during prefetch
     const isEvent404 =
-      error.response?.status === 404 &&
-      error.config?.url?.includes('/events/');
+      error.response?.status === 404 && error.config?.url?.includes('/events/');
 
     // Handle standardized error responses from backend
     if (error.response?.data) {
