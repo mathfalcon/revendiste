@@ -14,6 +14,12 @@ export const optionalAuthMiddleware = async (
 ) => {
   const {isAuthenticated, userId} = getAuth(req);
 
+  logger.error('optionalAuthMiddleware');
+  logger.error(isAuthenticated);
+  logger.error(userId);
+  logger.error(req.headers);
+  logger.error(req.body);
+
   if (isAuthenticated && userId) {
     try {
       const clerkUser = await clerkClient.users.getUser(userId);
