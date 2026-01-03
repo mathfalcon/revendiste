@@ -1,13 +1,15 @@
 import {SignUp} from '@clerk/tanstack-react-start';
 import {createFileRoute} from '@tanstack/react-router';
+import {seo} from '~/utils/seo';
 
 export const Route = createFileRoute('/registrarse/$')({
   component: Page,
   head: () => ({
     meta: [
-      {
+      ...seo({
         title: 'Registrarse | Revendiste',
-      },
+        noIndex: true,
+      }),
     ],
   }),
 });

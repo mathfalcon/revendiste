@@ -107,10 +107,10 @@ export const Route = createFileRoute('/eventos/$eventId')({
       keywords,
     });
 
-    // Override og:type to 'event' for event pages
+    // Override og:type to 'event' for event pages (now using property attribute)
     const seoTags = baseSeoTags.map(tag => {
-      if (tag.name === 'og:type') {
-        return {name: 'og:type', content: 'event'};
+      if ('property' in tag && tag.property === 'og:type') {
+        return {property: 'og:type', content: 'event'};
       }
       return tag;
     });
@@ -151,15 +151,15 @@ export const Route = createFileRoute('/eventos/$eventId')({
     return {
       meta: [
         ...seoTags,
-        // Additional event-specific meta tags
+        // Additional event-specific meta tags (using property for OG tags)
         {
-          name: 'og:url',
+          property: 'og:url',
           content: canonicalUrl,
         },
         ...(event.eventStartDate
           ? [
               {
-                name: 'event:start_time',
+                property: 'event:start_time',
                 content: new Date(event.eventStartDate).toISOString(),
               },
             ]
@@ -167,7 +167,7 @@ export const Route = createFileRoute('/eventos/$eventId')({
         ...(event.eventEndDate
           ? [
               {
-                name: 'event:end_time',
+                property: 'event:end_time',
                 content: new Date(event.eventEndDate).toISOString(),
               },
             ]
@@ -175,7 +175,7 @@ export const Route = createFileRoute('/eventos/$eventId')({
         ...(event.venueName
           ? [
               {
-                name: 'event:venue:name',
+                property: 'event:venue:name',
                 content: event.venueName,
               },
             ]
@@ -183,7 +183,7 @@ export const Route = createFileRoute('/eventos/$eventId')({
         ...(event.venueAddress
           ? [
               {
-                name: 'event:venue:address',
+                property: 'event:venue:address',
                 content: event.venueAddress,
               },
             ]

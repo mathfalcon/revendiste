@@ -18,6 +18,7 @@ import {
   SheetTrigger,
 } from '~/components/ui/sheet';
 import {useState} from 'react';
+import {seo} from '~/utils/seo';
 
 const TAB_CONFIG = [
   {
@@ -59,9 +60,10 @@ export const Route = createFileRoute('/cuenta')({
   component: RouteComponent,
   head: () => ({
     meta: [
-      {
+      ...seo({
         title: 'Mi Cuenta | Revendiste',
-      },
+        noIndex: true,
+      }),
     ],
   }),
 });

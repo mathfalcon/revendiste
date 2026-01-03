@@ -15,3 +15,5 @@ export * from './TicketDocumentUploadModal';
 export * from './TicketUploadCarousel';
 export * from './TicketViewModal';
 export * from './EventSearchModal';
+export * from './MarkdownPage';
+export * from './MarkdownContent';

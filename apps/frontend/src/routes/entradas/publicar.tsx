@@ -5,6 +5,7 @@ import {TicketListingForm} from '~/features/ticket-listing';
 import {createFileRoute, useSearch} from '@tanstack/react-router';
 import {beforeLoadRedirectToSignInIfNotAuthenticated} from '~/utils/auth';
 import {getEventByIdQuery} from '~/lib';
+import {seo} from '~/utils/seo';
 
 const CreateTicketListingSearchSchema = z.object({
   eventoId: z.uuid().optional(),
@@ -25,9 +26,10 @@ export const Route = createFileRoute('/entradas/publicar')({
   },
   head: () => ({
     meta: [
-      {
+      ...seo({
         title: 'Publicar Entradas | Revendiste',
-      },
+        noIndex: true,
+      }),
     ],
   }),
 });

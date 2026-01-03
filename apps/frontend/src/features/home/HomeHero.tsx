@@ -1,5 +1,4 @@
 import {useEffect, useState} from 'react';
-import heroImageUrl from '~/assets/backgrounds/homepage.png?url';
 import {EventSearchInput} from '~/components/SearchInput';
 import {EventSearchModal} from '~/components/EventSearchModal';
 
@@ -75,10 +74,14 @@ export const HomeHero = () => {
     <>
       <section className='hero min-h-[25vh] md:min-h-[50dvh] h-[25vh] md:h-[50dvh] relative flex flex-col items-center justify-center gap-4 md:gap-0'>
         <img
-          src={heroImageUrl}
+          src={'https://cdn.revendiste.com/assets/homepage-bg-1.webp'}
           alt='People partying'
           className='w-full h-full object-cover absolute top-0 left-0'
         />
+        {/* Visually hidden h1 for SEO - every page needs exactly one h1 */}
+        <h1 className='sr-only'>
+          Revendiste - Compra y vende entradas de forma segura
+        </h1>
         <AnimatedTagline taglines={homePageTaglines} index={taglineIndex} />
 
         <div className='w-full px-4 md:w-[45dvw] md:px-0'>

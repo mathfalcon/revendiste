@@ -211,7 +211,7 @@ export const EventRightSide = (props: EventRightSideProps) => {
         className='flex flex-col gap-6'
       >
         <div className='flex flex-col gap-4'>
-          <h3 className='font-medium text-lg'>Entradas disponibles</h3>
+          <h2 className='font-medium text-lg'>Entradas disponibles</h2>
           <Accordion
             type='single'
             className='bg-background w-full px-6 py-1.5 rounded-md flex flex-col'
@@ -232,7 +232,7 @@ export const EventRightSide = (props: EventRightSideProps) => {
           <div className='space-y-4'>
             {/* Summary Section */}
             <div className='rounded-lg border bg-muted/50 p-4 space-y-3'>
-              <h4 className='font-semibold text-lg'>Resumen de compra</h4>
+              <h3 className='font-semibold text-lg'>Resumen de compra</h3>
               <div className='space-y-2'>
                 {Object.entries(ticketSelection).map(
                   ([ticketWaveId, priceGroups]) => {
@@ -393,7 +393,7 @@ const TicketWaveForm = (props: {
     <AccordionItem value={`ticket-wave-${index + 1}`}>
       <AccordionTrigger>
         <div className='flex flex-col gap-2'>
-          <h3 className='font-medium'>{ticketWave.name}</h3>
+          <h4 className='font-medium'>{ticketWave.name}</h4>
           <p className='font-sm text-foreground/25'>{ticketWave.description}</p>
         </div>
       </AccordionTrigger>

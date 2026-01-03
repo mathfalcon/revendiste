@@ -3,9 +3,18 @@ import {LayoutDashboard, Wallet, FileText} from 'lucide-react';
 import {Link, useLocation} from '@tanstack/react-router';
 import {cn} from '~/lib/utils';
 import {getCurrentUserQuery} from '~/lib';
+import {seo} from '~/utils/seo';
 
 export const Route = createFileRoute('/admin')({
   component: AdminDashboardLayout,
+  head: () => ({
+    meta: [
+      ...seo({
+        title: 'Administración | Revendiste',
+        noIndex: true,
+      }),
+    ],
+  }),
   beforeLoad: async ({context}) => {
     try {
       const user = await context.queryClient.ensureQueryData(

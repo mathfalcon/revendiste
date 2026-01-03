@@ -2,6 +2,7 @@ import {createFileRoute, redirect} from '@tanstack/react-router';
 import {getOrderByIdQuery} from '~/lib';
 import {CheckoutPage} from '~/features/checkout';
 import {AxiosError} from 'axios';
+import {seo} from '~/utils/seo';
 
 export const Route = createFileRoute('/checkout/$orderId/')({
   component: RouteComponent,
@@ -29,9 +30,10 @@ export const Route = createFileRoute('/checkout/$orderId/')({
   },
   head: () => ({
     meta: [
-      {
+      ...seo({
         title: 'Checkout | Revendiste',
-      },
+        noIndex: true,
+      }),
     ],
   }),
 });
