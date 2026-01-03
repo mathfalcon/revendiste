@@ -54,6 +54,11 @@ export const Route = createFileRoute('/')({
           property: 'og:url',
           content: baseUrl,
         },
+        // Additional meta tag for app purpose (for Google verification)
+        {
+          name: 'application-name',
+          content: 'Revendiste - Plataforma de compra y venta de entradas',
+        },
       ],
       links: [
         {
@@ -76,5 +81,19 @@ export const Route = createFileRoute('/')({
 });
 
 function Home() {
-  return <HomePage />;
+  return (
+    <>
+      {/* Noscript fallback for bots without JavaScript */}
+      <noscript>
+        <div>
+          <p>
+            Revendiste es una plataforma segura para comprar y vender entradas
+            para eventos, conciertos y fiestas en Uruguay.{' '}
+            <a href='/politica-de-privacidad'>Política de Privacidad</a>
+          </p>
+        </div>
+      </noscript>
+      <HomePage />
+    </>
+  );
 }
