@@ -77,9 +77,7 @@ resource "cloudflare_page_rule" "no_cache_html" {
   status   = "active"
 
   actions = {
-    cache_level       = "bypass"
-    edge_cache_ttl    = 120  # Minimum allowed (2 minutes)
-    browser_cache_ttl = 7200 # Minimum allowed (2 hours)
+    cache_level = "bypass"
   }
 }
 
