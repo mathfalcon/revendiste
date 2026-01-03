@@ -25,8 +25,6 @@ const EnvSchema = z.object({
   STORAGE_LOCAL_PATH: z.string().default('./uploads'),
   STORAGE_BASE_URL: z.string().default('http://localhost:3001'),
   // AWS S3 configuration (only required when STORAGE_TYPE=s3)
-  AWS_S3_BUCKET: z.string().optional(),
-  AWS_S3_REGION: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
   AWS_CLOUDFRONT_DOMAIN: z.string().optional(), // Optional CDN domain
@@ -66,6 +64,7 @@ export const env = EnvSchema.safeParse(process.env);
 
 if (!env.success) {
   console.error('Invalid environment variables:', z.treeifyError(env.error));
+  console.error('Environment variables:', JSON.stringify(env.error, null, 2));
   process.exit(1);
 }
 
@@ -90,8 +89,6 @@ export const {
   STORAGE_TYPE,
   STORAGE_LOCAL_PATH,
   STORAGE_BASE_URL,
-  AWS_S3_BUCKET,
-  AWS_S3_REGION,
   AWS_ACCESS_KEY_ID,
   AWS_SECRET_ACCESS_KEY,
   AWS_CLOUDFRONT_DOMAIN,

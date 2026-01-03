@@ -26,13 +26,15 @@ winston.addColors(colors);
 const config = getLoggingConfig();
 
 // Define different log formats
+const shouldColorize = process.env.NODE_ENV !== 'production';
+
 const format = winston.format.combine(
   // Add timestamp
   winston.format.timestamp({format: 'YYYY-MM-DD HH:mm:ss:ms'}),
   // Handle metadata passed as second argument (e.g., logger.error('msg', {data}))
   winston.format.splat(),
-  // Add colors
-  winston.format.colorize({all: true}),
+  // Conditionally add colors
+  ...(shouldColorize ? [winston.format.colorize({all: true})] : []),
   // Define format of the message showing the timestamp, the level and the message
   winston.format.printf(info => {
     // Extract standard winston properties

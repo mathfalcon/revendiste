@@ -75,12 +75,7 @@ resource "aws_ecs_task_definition" "backend" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -181,7 +176,7 @@ resource "aws_ecs_task_definition" "cronjob_sync_payments" {
       image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
 
       # Run the job once using the standalone script
-      command = ["node", "dist/scripts/run-job.js", "sync-payments-and-expire-orders"]
+      command = ["node", "dist/src/scripts/run-job.js", "sync-payments-and-expire-orders"]
 
       environment = [
         {
@@ -190,12 +185,7 @@ resource "aws_ecs_task_definition" "cronjob_sync_payments" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -228,7 +218,7 @@ resource "aws_ecs_task_definition" "cronjob_notify_upload" {
       name  = "cronjob"
       image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
 
-      command = ["node", "dist/scripts/run-job.js", "notify-upload-availability"]
+      command = ["node", "dist/src/scripts/run-job.js", "notify-upload-availability"]
 
       environment = [
         {
@@ -237,12 +227,7 @@ resource "aws_ecs_task_definition" "cronjob_notify_upload" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -275,7 +260,7 @@ resource "aws_ecs_task_definition" "cronjob_check_payout" {
       name  = "cronjob"
       image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
 
-      command = ["node", "dist/scripts/run-job.js", "check-payout-hold-periods"]
+      command = ["node", "dist/src/scripts/run-job.js", "check-payout-hold-periods"]
 
       environment = [
         {
@@ -284,12 +269,7 @@ resource "aws_ecs_task_definition" "cronjob_check_payout" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -322,7 +302,7 @@ resource "aws_ecs_task_definition" "cronjob_scrape_events" {
       name  = "cronjob"
       image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
 
-      command = ["node", "dist/scripts/run-job.js", "scrape-events"]
+      command = ["node", "dist/src/scripts/run-job.js", "scrape-events"]
 
       environment = [
         {
@@ -331,12 +311,7 @@ resource "aws_ecs_task_definition" "cronjob_scrape_events" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:database_url::"
-        }
-      ]
+      secrets = local.backend_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -377,10 +352,24 @@ resource "aws_ecs_service" "backend" {
   # Enable autoscaling
   enable_execute_command = true
 
+  # Zero-downtime deployment configuration
+  # Allow up to 200% capacity during deployment (2x tasks)
+  deployment_maximum_percent = 200
+  # Keep at least 50% healthy (1 task minimum when desired_count=2)
+  deployment_minimum_healthy_percent = 50
+
+  # Deployment circuit breaker
+  # Stops deployment if tasks fail to reach steady state and rolls back automatically
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   depends_on = [
     aws_lb_listener.https,
     aws_lb_listener_rule.backend,
-    aws_iam_role.ecs_task_execution
+    aws_iam_role.ecs_task_execution,
+    aws_iam_service_linked_role.ecs
   ]
 
   tags = {
@@ -411,10 +400,24 @@ resource "aws_ecs_service" "frontend" {
   # Enable autoscaling
   enable_execute_command = true
 
+  # Zero-downtime deployment configuration
+  # Allow up to 200% capacity during deployment (2x tasks)
+  deployment_maximum_percent = 200
+  # Keep at least 50% healthy (1 task minimum when desired_count=2)
+  deployment_minimum_healthy_percent = 50
+
+  # Deployment circuit breaker
+  # Stops deployment if tasks fail to reach steady state and rolls back automatically
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   depends_on = [
     aws_lb_listener.https,
     aws_lb_listener_rule.frontend,
-    aws_iam_role.ecs_task_execution
+    aws_iam_role.ecs_task_execution,
+    aws_iam_service_linked_role.ecs
   ]
 
   tags = {
@@ -425,10 +428,12 @@ resource "aws_ecs_service" "frontend" {
 # ECS Autoscaling for Backend
 resource "aws_appautoscaling_target" "backend" {
   max_capacity       = var.backend_max_capacity
-  min_capacity       = var.backend_min_capacity
+  min_capacity       = var.backend_desired_count # Match desired_count for zero-downtime deployments
   resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.backend.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
+
+  depends_on = [aws_iam_service_linked_role.autoscaling]
 }
 
 resource "aws_appautoscaling_policy" "backend_cpu" {
@@ -468,10 +473,12 @@ resource "aws_appautoscaling_policy" "backend_memory" {
 # ECS Autoscaling for Frontend
 resource "aws_appautoscaling_target" "frontend" {
   max_capacity       = var.frontend_max_capacity
-  min_capacity       = var.frontend_min_capacity
+  min_capacity       = var.frontend_desired_count # Match desired_count for zero-downtime deployments
   resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.frontend.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
+
+  depends_on = [aws_iam_service_linked_role.autoscaling]
 }
 
 resource "aws_appautoscaling_policy" "frontend_cpu" {

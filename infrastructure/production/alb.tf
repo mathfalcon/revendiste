@@ -83,7 +83,9 @@ resource "aws_lb_listener" "https" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = aws_acm_certificate.main.arn
+  certificate_arn = aws_acm_certificate_validation.main.certificate_arn
+
+  depends_on = [aws_acm_certificate_validation.main]
 
   default_action {
     type = "fixed-response"
@@ -164,7 +166,20 @@ resource "aws_acm_certificate" "main" {
   }
 }
 
-# Certificate validation (requires DNS records in Cloudflare)
-# Note: You'll need to add the DNS validation records to Cloudflare manually
-# or use a Cloudflare provider to automate this
+# Certificate validation
+# DNS validation records are automatically created in Cloudflare
+# Validation will complete once DNS records propagate (usually 5-10 minutes)
+resource "aws_acm_certificate_validation" "main" {
+  certificate_arn = aws_acm_certificate.main.arn
+
+  timeouts {
+    create = "10m"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  depends_on = [cloudflare_dns_record.acm_validation]
+}
 

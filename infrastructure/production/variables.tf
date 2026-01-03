@@ -76,7 +76,7 @@ variable "db_username" {
 variable "db_engine_version" {
   description = "PostgreSQL engine version for Aurora"
   type        = string
-  default     = "15.4"
+  default     = "15.8"
 }
 
 variable "db_min_capacity" {
@@ -111,9 +111,9 @@ variable "backend_cpu" {
 }
 
 variable "backend_memory" {
-  description = "Memory for backend task (MB). Backend API handles HTTP requests, database queries, and file uploads. Playwright/Crawlee/Sharp are used in cronjobs, not the main API service."
+  description = "Memory for backend task (MB). Backend API handles HTTP requests, database queries, and file uploads. Playwright/Crawlee/Sharp are used in cronjobs, not the main API service. Valid combinations for 512 CPU: 1024, 2048, 3072, 4096 MB"
   type        = number
-  default     = 1536 # 1.5 GB (sufficient for API + database connection pools + request handling)
+  default     = 1024 # 1 GB (valid for 512 CPU in Fargate)
 }
 
 variable "backend_port" {
@@ -132,12 +132,6 @@ variable "backend_desired_count" {
   description = "Desired number of backend tasks"
   type        = number
   default     = 2 # Start with 2 for high availability
-}
-
-variable "backend_min_capacity" {
-  description = "Minimum number of backend tasks"
-  type        = number
-  default     = 1
 }
 
 variable "backend_max_capacity" {
@@ -187,12 +181,6 @@ variable "frontend_desired_count" {
   description = "Desired number of frontend tasks"
   type        = number
   default     = 2 # Start with 2 for high availability
-}
-
-variable "frontend_min_capacity" {
-  description = "Minimum number of frontend tasks"
-  type        = number
-  default     = 1
 }
 
 variable "frontend_max_capacity" {

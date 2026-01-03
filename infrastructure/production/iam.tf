@@ -1,5 +1,29 @@
 # IAM Roles and Policies
 
+# ECS Service Linked Role (required for ECS services)
+# This role is required for ECS services to function properly
+# If the role already exists in your account, import it:
+# terraform import aws_iam_service_linked_role.ecs arn:aws:iam::<account-id>:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS
+resource "aws_iam_service_linked_role" "ecs" {
+  aws_service_name = "ecs.amazonaws.com"
+
+  lifecycle {
+    ignore_changes = [description]
+  }
+}
+
+# Application Auto Scaling Service Linked Role (required for ECS autoscaling)
+# This role is required for Application Auto Scaling to function properly
+# If the role already exists in your account, import it:
+# terraform import aws_iam_service_linked_role.autoscaling arn:aws:iam::<account-id>:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
+resource "aws_iam_service_linked_role" "autoscaling" {
+  aws_service_name = "autoscaling.amazonaws.com"
+
+  lifecycle {
+    ignore_changes = [description]
+  }
+}
+
 # ECS Task Execution Role (for pulling images, CloudWatch logs, etc.)
 resource "aws_iam_role" "ecs_task_execution" {
   name = "${local.name_prefix}-ecs-task-execution-role"
@@ -111,6 +135,28 @@ resource "aws_iam_role_policy" "ecs_task_logs" {
           "logs:PutLogEvents"
         ]
         Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${local.name_prefix}*"
+      }
+    ]
+  })
+}
+
+# ECS Exec policy for accessing running containers
+resource "aws_iam_role_policy" "ecs_task_exec" {
+  name = "${local.name_prefix}-ecs-task-exec"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ]
+        Resource = "*"
       }
     ]
   })
