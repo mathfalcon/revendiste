@@ -1,10 +1,9 @@
 import {useQuery} from '@tanstack/react-query';
 import {useFormContext} from 'react-hook-form';
-import {SingleTicketLogo} from '~/assets';
+import {CDN_ASSETS, SingleTicketLogo} from '~/assets';
 import {Separator} from '~/components/ui/separator';
 import {EventImageType, getEventByIdQuery} from '~/lib';
 import {TicketListingFormValues} from './TicketListingForm';
-import defaultHeroImage from '~/assets/backgrounds/homepage.png?url';
 import {PageLoading, TextEllipsis} from '~/components';
 import {formatEventDate, formatPrice, calculateSellerAmount} from '~/utils';
 import {useMemo} from 'react';
@@ -57,7 +56,7 @@ export const TicketListingFormLeft = () => {
             <>
               {/* Blurred background */}
               <img
-                src={heroImage?.url ?? defaultHeroImage}
+                src={heroImage?.url ?? CDN_ASSETS.HOMEPAGE_BG_1}
                 alt=''
                 className='absolute inset-0 h-full w-full object-cover blur-[5px] scale-110 z-0'
                 aria-hidden='true'
@@ -66,7 +65,7 @@ export const TicketListingFormLeft = () => {
               />
               {/* Foreground image */}
               <img
-                src={heroImage?.url ?? defaultHeroImage}
+                src={heroImage?.url ?? CDN_ASSETS.HOMEPAGE_BG_1}
                 alt='Hero'
                 className={cn('relative z-10 h-full w-full object-contain', {
                   ['object-cover']: !heroImage?.url,

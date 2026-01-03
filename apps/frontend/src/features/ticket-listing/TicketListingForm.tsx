@@ -7,8 +7,7 @@ import {TicketListingFormRight} from './TicketListingFormRight';
 import {useEffect, useState, useRef} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {EventImageType, getEventByIdQuery} from '~/lib';
-import defaultHeroImage from '~/assets/backgrounds/homepage.png?url';
-import {FullScreenLoading} from '~/components';
+import {CDN_ASSETS} from '~/assets';
 
 interface TicketListingFormProps {
   mode: 'create' | 'edit';
@@ -72,7 +71,7 @@ export const TicketListingForm = ({
   const heroImage = event?.eventImages.find(
     i => i.imageType === EventImageType.Hero,
   );
-  const src = heroImage?.url ?? defaultHeroImage;
+  const src = heroImage?.url ?? CDN_ASSETS.HOMEPAGE_BG_1;
 
   return (
     <Form {...form}>
