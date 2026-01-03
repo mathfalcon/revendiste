@@ -27,10 +27,8 @@ export interface PendingOrderErrorResponse extends StandardizedErrorResponse {
 const getApiBaseURL = () => {
   if (typeof window === 'undefined' && process.env.BACKEND_IP) {
     // Server-side: use direct backend IP (bypasses Cloudflare)
-    // Use HTTP since it's internal to the infrastructure
-    return process.env.NODE_ENV === 'production'
-      ? `https://${process.env.BACKEND_IP}/api`
-      : `http://${process.env.BACKEND_IP}/api`;
+    // Always use HTTP for internal VPC communication (ALB handles HTTPS termination for external traffic)
+    return `http://${process.env.BACKEND_IP}/api`;
   }
   // Client-side: use normal API URL (through Cloudflare)
   return VITE_APP_API_URL;
