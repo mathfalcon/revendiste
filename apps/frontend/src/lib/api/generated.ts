@@ -11,6 +11,13 @@
  */
 
 export enum NotificationType {
+  AuthInvitation = "auth_invitation",
+  AuthNewDeviceSignIn = "auth_new_device_sign_in",
+  AuthPasswordChanged = "auth_password_changed",
+  AuthPasswordRemoved = "auth_password_removed",
+  AuthPrimaryEmailChanged = "auth_primary_email_changed",
+  AuthResetPasswordCode = "auth_reset_password_code",
+  AuthVerificationCode = "auth_verification_code",
   DocumentReminder = "document_reminder",
   DocumentUploaded = "document_uploaded",
   OrderConfirmed = "order_confirmed",
@@ -1274,6 +1281,77 @@ export interface DLocalWebhookrRouteBody {
   payment_id: string;
 }
 
+/** Construct a type with a set of properties K of type T */
+export type RecordStringUnknown = object;
+
+export interface ClerkWebhookRouteBody {
+  event_attributes?: {
+    http_request?: {
+      user_agent?: string;
+      client_ip?: string;
+    };
+  };
+  /** @format double */
+  timestamp: number;
+  instance_id: string;
+  data: {
+    data: {
+      user?: {
+        public_metadata_fallback?: string;
+        /** Construct a type with a set of properties K of type T */
+        public_metadata?: RecordStringUnknown;
+      };
+      theme?: {
+        show_clerk_branding?: boolean;
+        button_text_color?: string;
+        primary_color?: string;
+      };
+      app?: {
+        url?: string;
+        logo_image_url?: string;
+        domain_name?: string;
+        name?: string;
+      };
+      support_email?: string;
+      revoke_session_url?: string;
+      session_created_at?: string;
+      ip_address?: string;
+      location?: string;
+      operating_system?: string;
+      browser_name?: string;
+      device_type?: string;
+      sign_in_method?: string;
+      new_email_address?: string;
+      primary_email_address?: string;
+      greeting_name?: string;
+      invitation?: {
+        /** @format double */
+        expires_in_days?: number;
+      };
+      action_url?: string;
+      inviter_name?: string;
+      requested_by?: string;
+      requested_from?: string;
+      requested_at?: string;
+      otp_code?: string;
+    };
+    user_id: string | null;
+    from_email_name: string;
+    email_address_id: string;
+    delivered_by_clerk: boolean;
+    status: string;
+    slug: string;
+    body_plain: string;
+    body: string;
+    subject: string;
+    to_email_address: string;
+    object: "email";
+    id: string;
+  };
+  type: "email.created";
+  object: "event";
+}
+
 export interface CreatePaymentLinkResponse {
   redirectUrl: string;
   paymentId: string;
@@ -1323,9 +1401,6 @@ export type ExtractNotificationMetadataTypeNotificationType =
  */
 export type TypedNotificationMetadataNotificationType =
   ExtractNotificationMetadataTypeNotificationType;
-
-/** Construct a type with a set of properties K of type T */
-export type RecordStringUnknown = object;
 
 export interface InferTypeofBaseActionSchema {
   /** Construct a type with a set of properties K of type T */
@@ -2379,6 +2454,32 @@ export class Api<
         any
       >({
         path: `/webhooks/dlocal`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Receives authentication events from Clerk
+     *
+     * @tags Webhooks
+     * @name HandleClerkWebhook
+     * @summary Clerk authentication webhook
+     * @request POST:/webhooks/clerk
+     */
+    handleClerkWebhook: (
+      data: ClerkWebhookRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          received: boolean;
+        },
+        any
+      >({
+        path: `/webhooks/clerk`,
         method: "POST",
         body: data,
         type: ContentType.Json,

@@ -12,6 +12,7 @@ const EnvSchema = z.object({
   POSTGRES_HOST: z.string().default('localhost'),
   CLERK_PUBLISHABLE_KEY: z.string(),
   CLERK_SECRET_KEY: z.string(),
+  CLERK_WEBHOOK_SECRET: z.string(),
   // Fee configuration
   PLATFORM_COMMISSION_RATE: z.coerce.number().min(0).max(1).default(0.06), // 6%
   VAT_RATE: z.coerce.number().min(0).max(1).default(0.22), // 22%
@@ -79,6 +80,7 @@ export const {
   POSTGRES_HOST,
   CLERK_PUBLISHABLE_KEY,
   CLERK_SECRET_KEY,
+  CLERK_WEBHOOK_SECRET,
   PLATFORM_COMMISSION_RATE,
   VAT_RATE,
   DLOCAL_API_KEY,

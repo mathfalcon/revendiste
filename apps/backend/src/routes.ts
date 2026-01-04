@@ -456,6 +456,16 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"payment_id":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Record_string.unknown_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ClerkWebhookRouteBody": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"event_attributes":{"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"http_request":{"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"user_agent":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"client_ip":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]}}},{"dataType":"undefined"}]}}},{"dataType":"undefined"}]},"timestamp":{"dataType":"double","required":true},"instance_id":{"dataType":"string","required":true},"data":{"dataType":"nestedObjectLiteral","nestedProperties":{"reply_to_email_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]},{"dataType":"undefined"}]},"data":{"dataType":"nestedObjectLiteral","nestedProperties":{"user":{"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"public_metadata_fallback":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"public_metadata":{"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"undefined"}]}}},{"dataType":"undefined"}]},"theme":{"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"show_clerk_branding":{"dataType":"union","subSchemas":[{"dataType":"boolean"},{"dataType":"undefined"}]},"button_text_color":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"primary_color":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]}}},{"dataType":"undefined"}]},"app":{"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"logo_image_url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"domain_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]}}},{"dataType":"undefined"}]},"support_email":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"revoke_session_url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"session_created_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"ip_address":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"location":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"operating_system":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"browser_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"device_type":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"sign_in_method":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"new_email_address":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"primary_email_address":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"greeting_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"invitation":{"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"public_metadata_fallback":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"public_metadata":{"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"undefined"}]},"expires_in_days":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]}}},{"dataType":"undefined"}]},"action_url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"inviter_name":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"requested_by":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"requested_from":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"requested_at":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"otp_code":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]}},"required":true},"user_id":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"from_email_name":{"dataType":"string","required":true},"email_address_id":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"delivered_by_clerk":{"dataType":"boolean","required":true},"status":{"dataType":"string","required":true},"slug":{"dataType":"string","required":true},"body_plain":{"dataType":"string","required":true},"body":{"dataType":"string","required":true},"subject":{"dataType":"string","required":true},"to_email_address":{"dataType":"string","required":true},"object":{"dataType":"enum","enums":["email"],"required":true},"id":{"dataType":"string","required":true}},"required":true},"type":{"dataType":"enum","enums":["email.created"],"required":true},"object":{"dataType":"enum","enums":["event"],"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CreatePaymentLinkResponse": {
         "dataType": "refObject",
         "properties": {
@@ -477,7 +487,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NotificationType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["document_reminder"]},{"dataType":"enum","enums":["document_uploaded"]},{"dataType":"enum","enums":["order_confirmed"]},{"dataType":"enum","enums":["order_expired"]},{"dataType":"enum","enums":["payment_failed"]},{"dataType":"enum","enums":["payment_succeeded"]},{"dataType":"enum","enums":["payout_cancelled"]},{"dataType":"enum","enums":["payout_completed"]},{"dataType":"enum","enums":["payout_failed"]},{"dataType":"enum","enums":["payout_processing"]},{"dataType":"enum","enums":["ticket_sold_seller"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["auth_invitation"]},{"dataType":"enum","enums":["auth_new_device_sign_in"]},{"dataType":"enum","enums":["auth_password_changed"]},{"dataType":"enum","enums":["auth_password_removed"]},{"dataType":"enum","enums":["auth_primary_email_changed"]},{"dataType":"enum","enums":["auth_reset_password_code"]},{"dataType":"enum","enums":["auth_verification_code"]},{"dataType":"enum","enums":["document_reminder"]},{"dataType":"enum","enums":["document_uploaded"]},{"dataType":"enum","enums":["order_confirmed"]},{"dataType":"enum","enums":["order_expired"]},{"dataType":"enum","enums":["payment_failed"]},{"dataType":"enum","enums":["payment_succeeded"]},{"dataType":"enum","enums":["payout_cancelled"]},{"dataType":"enum","enums":["payout_completed"]},{"dataType":"enum","enums":["payout_failed"]},{"dataType":"enum","enums":["payout_processing"]},{"dataType":"enum","enums":["ticket_sold_seller"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TypedNotificationMetadata_NotificationMetadata_": {
@@ -498,11 +508,6 @@ const models: TsoaRoute.Models = {
     "TypedNotificationMetadata_NotificationType_": {
         "dataType": "refAlias",
         "type": {"ref":"Extract_NotificationMetadata._type-NotificationType__","validators":{}},
-    },
-    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Record_string.unknown_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "infer_typeofBaseActionSchema_": {
@@ -1792,6 +1797,37 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'handleDLocalWebhook',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsWebhooksController_handleClerkWebhook: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"ClerkWebhookRouteBody"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/webhooks/clerk',
+            ...(fetchMiddlewares<RequestHandler>(WebhooksController)),
+            ...(fetchMiddlewares<RequestHandler>(WebhooksController.prototype.handleClerkWebhook)),
+
+            async function WebhooksController_handleClerkWebhook(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsWebhooksController_handleClerkWebhook, request, response });
+
+                const controller = new WebhooksController();
+
+              await templateService.apiHandler({
+                methodName: 'handleClerkWebhook',
                 controller,
                 response,
                 next,
