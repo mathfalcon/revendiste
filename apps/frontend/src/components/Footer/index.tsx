@@ -28,26 +28,20 @@ export const Footer = () => {
             <ul className='space-y-3'>
               <li>
                 <Link
-                  to='/terminos'
+                  to='/terminos-y-condiciones'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+                  resetScroll
                 >
                   Términos de Servicio
                 </Link>
               </li>
               <li>
                 <Link
-                  to='/privacidad'
+                  to='/politica-de-privacidad'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+                  resetScroll
                 >
                   Política de Privacidad
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to='/cookies'
-                  className='text-sm text-muted-foreground hover:text-foreground transition-colors'
-                >
-                  Política de Cookies
                 </Link>
               </li>
             </ul>
@@ -56,18 +50,19 @@ export const Footer = () => {
           <div>
             <h3 className='text-sm font-semibold mb-4'>Ayuda</h3>
             <ul className='space-y-3'>
-              <li>
+              {/* <li>
                 <Link
                   to='/ayuda'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
                 >
                   Centro de Ayuda
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link
                   to='/contacto'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+                  resetScroll
                 >
                   Contacto
                 </Link>
@@ -76,6 +71,7 @@ export const Footer = () => {
                 <Link
                   to='/preguntas-frecuentes'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+                  resetScroll
                 >
                   Preguntas Frecuentes
                 </Link>
@@ -87,29 +83,29 @@ export const Footer = () => {
             <h3 className='text-sm font-semibold mb-4'>Recursos</h3>
             <ul className='space-y-3'>
               <li>
-                <Link
-                  to='/sitemap'
+                <a
+                  href='/sitemap'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
                 >
                   Mapa del Sitio
-                </Link>
+                </a>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   to='/acerca-de'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
                 >
                   Acerca de Nosotros
                 </Link>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <Link
                   to='/blog'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
                 >
                   Blog
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
         </div>

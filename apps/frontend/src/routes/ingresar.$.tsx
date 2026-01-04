@@ -2,6 +2,7 @@ import {SignIn} from '@clerk/tanstack-react-start';
 import {createFileRoute, useSearch} from '@tanstack/react-router';
 import z from 'zod';
 import {SignInAppearance} from '~/components';
+import {seo} from '~/utils/seo';
 
 const productSearchSchema = z.object({
   redirectUrl: z.string().optional(),
@@ -12,9 +13,10 @@ export const Route = createFileRoute('/ingresar/$')({
   validateSearch: search => productSearchSchema.parse(search),
   head: () => ({
     meta: [
-      {
+      ...seo({
         title: 'Ingresar | Revendiste',
-      },
+        noIndex: true,
+      }),
     ],
   }),
 });

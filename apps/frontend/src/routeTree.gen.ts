@@ -9,7 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TerminosYCondicionesRouteImport } from './routes/terminos-y-condiciones'
 import { Route as SitemapRouteImport } from './routes/sitemap'
+import { Route as PreguntasFrecuentesRouteImport } from './routes/preguntas-frecuentes'
+import { Route as PoliticaDePrivacidadRouteImport } from './routes/politica-de-privacidad'
+import { Route as ContactoRouteImport } from './routes/contacto'
 import { Route as CuentaRouteRouteImport } from './routes/cuenta/route'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -27,9 +31,29 @@ import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$ord
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
 
+const TerminosYCondicionesRoute = TerminosYCondicionesRouteImport.update({
+  id: '/terminos-y-condiciones',
+  path: '/terminos-y-condiciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapRoute = SitemapRouteImport.update({
   id: '/sitemap',
   path: '/sitemap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreguntasFrecuentesRoute = PreguntasFrecuentesRouteImport.update({
+  id: '/preguntas-frecuentes',
+  path: '/preguntas-frecuentes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticaDePrivacidadRoute = PoliticaDePrivacidadRouteImport.update({
+  id: '/politica-de-privacidad',
+  path: '/politica-de-privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactoRoute = ContactoRouteImport.update({
+  id: '/contacto',
+  path: '/contacto',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CuentaRouteRoute = CuentaRouteRouteImport.update({
@@ -117,7 +141,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/contacto': typeof ContactoRoute
+  '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
+  '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
+  '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/payouts': typeof AdminPayoutsRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
@@ -135,7 +163,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/contacto': typeof ContactoRoute
+  '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
+  '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
+  '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/payouts': typeof AdminPayoutsRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
@@ -155,7 +187,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/contacto': typeof ContactoRoute
+  '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
+  '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
+  '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/payouts': typeof AdminPayoutsRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
@@ -176,7 +212,11 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/cuenta'
+    | '/contacto'
+    | '/politica-de-privacidad'
+    | '/preguntas-frecuentes'
     | '/sitemap'
+    | '/terminos-y-condiciones'
     | '/admin/payouts'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
@@ -194,7 +234,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cuenta'
+    | '/contacto'
+    | '/politica-de-privacidad'
+    | '/preguntas-frecuentes'
     | '/sitemap'
+    | '/terminos-y-condiciones'
     | '/admin/payouts'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
@@ -213,7 +257,11 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/cuenta'
+    | '/contacto'
+    | '/politica-de-privacidad'
+    | '/preguntas-frecuentes'
     | '/sitemap'
+    | '/terminos-y-condiciones'
     | '/admin/payouts'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
@@ -233,7 +281,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
+  ContactoRoute: typeof ContactoRoute
+  PoliticaDePrivacidadRoute: typeof PoliticaDePrivacidadRoute
+  PreguntasFrecuentesRoute: typeof PreguntasFrecuentesRoute
   SitemapRoute: typeof SitemapRoute
+  TerminosYCondicionesRoute: typeof TerminosYCondicionesRoute
   EntradasPublicarRoute: typeof EntradasPublicarRoute
   EventosEventIdRoute: typeof EventosEventIdRoute
   IngresarSplatRoute: typeof IngresarSplatRoute
@@ -245,11 +297,39 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terminos-y-condiciones': {
+      id: '/terminos-y-condiciones'
+      path: '/terminos-y-condiciones'
+      fullPath: '/terminos-y-condiciones'
+      preLoaderRoute: typeof TerminosYCondicionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap': {
       id: '/sitemap'
       path: '/sitemap'
       fullPath: '/sitemap'
       preLoaderRoute: typeof SitemapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/preguntas-frecuentes': {
+      id: '/preguntas-frecuentes'
+      path: '/preguntas-frecuentes'
+      fullPath: '/preguntas-frecuentes'
+      preLoaderRoute: typeof PreguntasFrecuentesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politica-de-privacidad': {
+      id: '/politica-de-privacidad'
+      path: '/politica-de-privacidad'
+      fullPath: '/politica-de-privacidad'
+      preLoaderRoute: typeof PoliticaDePrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacto': {
+      id: '/contacto'
+      path: '/contacto'
+      fullPath: '/contacto'
+      preLoaderRoute: typeof ContactoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cuenta': {
@@ -403,7 +483,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   CuentaRouteRoute: CuentaRouteRouteWithChildren,
+  ContactoRoute: ContactoRoute,
+  PoliticaDePrivacidadRoute: PoliticaDePrivacidadRoute,
+  PreguntasFrecuentesRoute: PreguntasFrecuentesRoute,
   SitemapRoute: SitemapRoute,
+  TerminosYCondicionesRoute: TerminosYCondicionesRoute,
   EntradasPublicarRoute: EntradasPublicarRoute,
   EventosEventIdRoute: EventosEventIdRoute,
   IngresarSplatRoute: IngresarSplatRoute,

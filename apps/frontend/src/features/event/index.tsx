@@ -3,9 +3,9 @@ import {EventLeftSide} from './EventLeftSide';
 import {EventRightSide} from './EventRightSide';
 import {EventImageType, getEventByIdQuery} from '~/lib';
 import {useParams} from '@tanstack/react-router';
-import defaultHeroImage from '~/assets/backgrounds/homepage.png?url';
 import {useEffect, useRef, useState} from 'react';
 import {FullScreenLoading, TextEllipsis} from '~/components';
+import {CDN_ASSETS} from '~/assets';
 
 export const EventPage = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -17,7 +17,7 @@ export const EventPage = () => {
   const heroImage = event.eventImages.find(
     i => i.imageType === EventImageType.Hero,
   );
-  const src = heroImage?.url ?? defaultHeroImage;
+  const src = heroImage?.url ?? CDN_ASSETS.DEFAULT_OG_IMAGE;
 
   useEffect(() => {
     setImageLoaded(false);

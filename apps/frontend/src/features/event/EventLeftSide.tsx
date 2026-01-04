@@ -79,7 +79,7 @@ export const EventLeftSide = (props: EventLeftSideProps) => {
       >
         <AccordionItem value='description' className='border-none'>
           <AccordionTrigger className='py-2 hover:no-underline'>
-            <h3 className='font-medium text-base md:text-lg'>Descripción</h3>
+            <h2 className='font-medium text-base md:text-lg'>Descripción</h2>
           </AccordionTrigger>
           <AccordionContent className='pt-2'>
             <p

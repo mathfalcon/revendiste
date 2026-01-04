@@ -131,6 +131,13 @@ resource "aws_ecs_task_definition" "frontend" {
         {
           name  = "VITE_API_URL"
           value = "https://api.${var.domain_name}"
+        },
+        {
+          # Cloud Map DNS for direct backend access (SSR)
+          # Frontend calls backend.revendiste.local directly within VPC
+          # Bypasses ALB/Internet Gateway for lower latency
+          name  = "BACKEND_IP"
+          value = "backend.${aws_service_discovery_private_dns_namespace.main.name}:${var.backend_port}"
         }
       ]
 
@@ -349,6 +356,12 @@ resource "aws_ecs_service" "backend" {
     container_port   = var.backend_port
   }
 
+  # Service discovery registration (Cloud Map)
+  # Allows frontend to call backend directly via backend.revendiste.local
+  service_registries {
+    registry_arn = aws_service_discovery_service.backend.arn
+  }
+
   # Enable autoscaling
   enable_execute_command = true
 
@@ -369,7 +382,8 @@ resource "aws_ecs_service" "backend" {
     aws_lb_listener.https,
     aws_lb_listener_rule.backend,
     aws_iam_role.ecs_task_execution,
-    aws_iam_service_linked_role.ecs
+    aws_iam_service_linked_role.ecs,
+    aws_service_discovery_service.backend
   ]
 
   tags = {

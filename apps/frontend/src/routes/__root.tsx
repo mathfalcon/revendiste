@@ -69,14 +69,44 @@ export const Route = createRootRouteWithContext<{
       {
         rel: 'preconnect',
         href: 'https://fonts.googleapis.com',
+        crossOrigin: 'anonymous',
       },
       {
         rel: 'preconnect',
         href: 'https://fonts.gstatic.com',
+        crossOrigin: 'anonymous',
       },
+      // Preload font CSS asynchronously to avoid blocking render
+      {
+        rel: 'preload',
+        href: 'https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap',
+        as: 'style',
+      },
+      // Load stylesheet asynchronously using media="print" trick
       {
         rel: 'stylesheet',
         href: 'https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap',
+        media: 'print',
+      },
+    ],
+    scripts: [
+      // Convert print media stylesheet to all media after load (async font loading)
+      {
+        children: `
+          (function() {
+            const fontStylesheet = document.querySelector('link[href*="fonts.googleapis.com/css2"][media="print"]');
+            if (fontStylesheet) {
+              // If already loaded, apply immediately
+              if (fontStylesheet.sheet) {
+                fontStylesheet.media = 'all';
+              } else {
+                // Otherwise wait for load
+                fontStylesheet.onload = function() { this.media = 'all'; };
+                fontStylesheet.onerror = function() { this.media = 'all'; };
+              }
+            }
+          })();
+        `,
       },
     ],
   }),
@@ -129,7 +159,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
         variables: ClerkVariables,
       }}
     >
-      <html>
+      <html lang='es'>
         <head>
           <HeadContent />
         </head>

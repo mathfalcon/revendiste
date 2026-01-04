@@ -69,6 +69,16 @@ resource "aws_lb_target_group" "frontend" {
     matcher             = "200"
   }
 
+  # Sticky sessions to prevent asset mismatch during rolling deployments
+  # Ensures all requests from the same user go to the same task
+  # This prevents: old index.html → new task → 404 for assets
+  # 10 minutes is sufficient since deployments take < 5 minutes
+  stickiness {
+    enabled         = true
+    type            = "lb_cookie"
+    cookie_duration = 600 # 10 minutes (covers deployment window + buffer)
+  }
+
   # Deregistration delay for graceful shutdown
   deregistration_delay = 30
 
@@ -83,7 +93,7 @@ resource "aws_lb_listener" "https" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn = aws_acm_certificate_validation.main.certificate_arn
+  certificate_arn   = aws_acm_certificate_validation.main.certificate_arn
 
   depends_on = [aws_acm_certificate_validation.main]
 
@@ -97,7 +107,7 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# HTTP Listener (redirect to HTTPS)
+# HTTP Listener (redirect all HTTP to HTTPS)
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -113,7 +123,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# Backend Listener Rule
+# Backend Listener Rule on HTTPS (path-based: /api/*)
 resource "aws_lb_listener_rule" "backend" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 100
@@ -124,13 +134,13 @@ resource "aws_lb_listener_rule" "backend" {
   }
 
   condition {
-    host_header {
-      values = ["api.${var.domain_name}"]
+    path_pattern {
+      values = ["/api/*"]
     }
   }
 }
 
-# Frontend Listener Rule
+# Frontend Listener Rule (default - everything else)
 resource "aws_lb_listener_rule" "frontend" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 200
@@ -153,8 +163,7 @@ resource "aws_acm_certificate" "main" {
   validation_method = "DNS"
 
   subject_alternative_names = [
-    "www.${var.domain_name}",
-    "api.${var.domain_name}"
+    "www.${var.domain_name}"
   ]
 
   lifecycle {
@@ -169,6 +178,7 @@ resource "aws_acm_certificate" "main" {
 # Certificate validation
 # DNS validation records are automatically created in Cloudflare
 # Validation will complete once DNS records propagate (usually 5-10 minutes)
+# Note: Explicit depends_on removed to avoid cycles - Terraform auto-detects dependency
 resource "aws_acm_certificate_validation" "main" {
   certificate_arn = aws_acm_certificate.main.arn
 
@@ -179,7 +189,5 @@ resource "aws_acm_certificate_validation" "main" {
   lifecycle {
     create_before_destroy = true
   }
-
-  depends_on = [cloudflare_dns_record.acm_validation]
 }
 

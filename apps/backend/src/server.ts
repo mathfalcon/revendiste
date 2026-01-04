@@ -2,7 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import path from 'path';
-import {PORT, STORAGE_LOCAL_PATH, APP_BASE_URL, NODE_ENV} from './config/env';
+import {
+  PORT,
+  STORAGE_LOCAL_PATH,
+  APP_BASE_URL,
+  NODE_ENV,
+  CLERK_SECRET_KEY,
+  CLERK_PUBLISHABLE_KEY,
+} from './config/env';
 import {errorHandler, optionalAuthMiddleware} from './middleware';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
@@ -117,10 +124,11 @@ app.listen(PORT, () => {
   // In production, jobs run via EventBridge + ECS RunTask using scripts/run-job.ts
   if (NODE_ENV === 'local' || NODE_ENV === 'development') {
     logger.info('Starting cronjob schedulers (dev/local mode)...');
-  startSyncPaymentsAndExpireOrdersJob();
-  startNotifyUploadAvailabilityJob();
-  startCheckPayoutHoldPeriodsJob();
-  // startProcessPendingNotificationsJob();
+    startSyncPaymentsAndExpireOrdersJob();
+    startNotifyUploadAvailabilityJob();
+    startCheckPayoutHoldPeriodsJob();
+    startScrapeEventsJob();
+    // startProcessPendingNotificationsJob();
     // startScrapeEventsJob(); // Commented out - resource intensive, runs via EventBridge in production
   } else {
     logger.info(

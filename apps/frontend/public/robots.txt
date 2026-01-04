@@ -1,9 +1,22 @@
+# Robots.txt for Revendiste
+
 User-agent: *
 Allow: /
-Disallow: /ingresar/
-Disallow: /registrarse/
+
+# Private/Auth pages
+Disallow: /ingresar
+Disallow: /registrarse
+
+# User account pages
 Disallow: /cuenta/
+
+# Admin panel
+Disallow: /admin/
+
+# Transaction pages
 Disallow: /checkout/
+
+# Listing management
 Disallow: /entradas/publicar
 Disallow: /entradas/editar/
 
@@ -26,6 +39,8 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-# Sitemap (update with your actual domain)
-Sitemap: https://revendiste.com/sitemap
+User-agent: Google-Extended
+Allow: /
 
+# Sitemap
+Sitemap: https://revendiste.com/sitemap

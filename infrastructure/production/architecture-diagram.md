@@ -64,7 +64,7 @@ flowchart TB
 
     Users --> Cloudflare
     Cloudflare -->|HTTPS| ALB
-    ALB -->|api.revendiste.com| BackendService
+    ALB -->|/api/*| BackendService
     ALB -->|revendiste.com| FrontendService
     ALB -->|www.revendiste.com| FrontendService
     
@@ -112,9 +112,9 @@ flowchart TB
    - Database subnets for RDS (isolated)
 
 3. **Application Load Balancer**
-   - Routes traffic based on hostname:
-     - `api.revendiste.com` → Backend service
-     - `revendiste.com` and `www.revendiste.com` → Frontend service
+   - Routes traffic based on path:
+     - `/api/*` → Backend service
+     - All other paths → Frontend service (for `revendiste.com` and `www.revendiste.com`)
    - HTTPS enforced (HTTP redirects to HTTPS)
    - Security group restricts access to Cloudflare IPs only
 

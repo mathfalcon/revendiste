@@ -26,7 +26,7 @@ import {
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {getCurrencySymbol, formatPrice, calculateSellerAmount} from '~/utils';
-import {useNavigate} from '@tanstack/react-router';
+import {Link, useNavigate} from '@tanstack/react-router';
 import {Separator} from '~/components/ui/separator';
 import {Checkbox} from '~/components/ui/checkbox';
 
@@ -369,14 +369,15 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
             <div className='space-y-1 leading-none'>
               <FormLabel className='text-sm font-normal'>
                 Acepto los{' '}
-                <a
-                  href='/terminos'
+                <Link
+                  to='/terminos-y-condiciones'
                   className='text-primary underline hover:no-underline'
                   target='_blank'
                   rel='noopener noreferrer'
+                  resetScroll
                 >
                   términos de servicio
-                </a>
+                </Link>
               </FormLabel>
               <FormMessage />
             </div>
