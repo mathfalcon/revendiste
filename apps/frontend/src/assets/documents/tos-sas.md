@@ -8,8 +8,8 @@
 
 ## 1. Información General
 
-**Operador de la Plataforma:** Mathias Falcon, C.I. 5.104.254-0, persona física  
-**Cédula de Identidad:** 5.104.254-0  
+**Operador de la Plataforma:** Revendiste SAS  
+**RUT:** [COMPLETAR]  
 **Domicilio:** Avenida Ocho de Octubre 2487, Apartamento 801, Montevideo, Uruguay  
 **Contacto:** ayuda@revendiste.com
 
@@ -314,8 +314,8 @@ El Comprador se obliga a mantener indemne a Revendiste, sus socios, empleados, c
 
 ## 1. Información General
 
-**Operador de la Plataforma:** Mathias Falcon, C.I. 5.104.254-0, persona física  
-**Cédula de Identidad:** 5.104.254-0  
+**Operador de la Plataforma:** Revendiste SAS  
+**RUT:** [COMPLETAR]  
 **Domicilio:** Avenida Ocho de Octubre 2487, Apartamento 801, Montevideo, Uruguay  
 **Contacto:** ayuda@revendiste.com
 
@@ -690,7 +690,7 @@ El Vendedor se obliga a mantener indemne a Revendiste, sus socios, empleados, co
 
 ## 1. Sobre Revendiste
 
-Revendiste es una plataforma tecnológica de intermediación operada por Mathias Falcon, persona física, que facilita la **transferencia segura de entradas** entre personas. Nuestro servicio garantiza:
+Revendiste es una plataforma tecnológica de intermediación que facilita la **transferencia segura de entradas** entre personas. Nuestro servicio garantiza:
 
 - La **validez del Ticket** mediante procesos de verificación.
 - La **ejecución segura de la transferencia** entre Vendedor y Comprador.
@@ -714,3 +714,4 @@ Para cualquier consulta, reclamo o solicitud relacionada con estos Términos:
 ---
 
 _Estos Términos y Condiciones fueron redactados para cumplir con la normativa vigente en la República Oriental del Uruguay._
+
