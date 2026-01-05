@@ -32,6 +32,15 @@ export * from '../emails/payout-completed-email';
 export * from '../emails/payout-failed-email';
 export * from '../emails/payout-cancelled-email';
 
+// Auth email templates (Clerk webhooks)
+export * from '../emails/verification-code-email';
+export * from '../emails/reset-password-code-email';
+export * from '../emails/invitation-email';
+export * from '../emails/password-changed-email';
+export * from '../emails/password-removed-email';
+export * from '../emails/primary-email-changed-email';
+export * from '../emails/new-device-sign-in-email';
+
 export {render, pretty, toPlainText} from '@react-email/render';
 
 // Email template mapping utilities
@@ -47,6 +56,15 @@ export type {SellerTicketSoldEmailProps} from '../emails/seller-ticket-sold-emai
 export type {PayoutCompletedEmailProps} from '../emails/payout-completed-email';
 export type {PayoutFailedEmailProps} from '../emails/payout-failed-email';
 export type {PayoutCancelledEmailProps} from '../emails/payout-cancelled-email';
+
+// Auth email prop types (Clerk webhooks)
+export type {VerificationCodeEmailProps} from '../emails/verification-code-email';
+export type {ResetPasswordCodeEmailProps} from '../emails/reset-password-code-email';
+export type {InvitationEmailProps} from '../emails/invitation-email';
+export type {PasswordChangedEmailProps} from '../emails/password-changed-email';
+export type {PasswordRemovedEmailProps} from '../emails/password-removed-email';
+export type {PrimaryEmailChangedEmailProps} from '../emails/primary-email-changed-email';
+export type {NewDeviceSignInEmailProps} from '../emails/new-device-sign-in-email';
 
 /**
  * Render a React Email component to HTML string

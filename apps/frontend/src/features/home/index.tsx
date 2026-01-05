@@ -6,8 +6,8 @@ export const HomePage = () => {
   return (
     <div className='flex flex-col'>
       <HomeHero />
-      <HomeAbout />
       <HomeEvents />
+      <HomeAbout />
     </div>
   );
 };

@@ -14,6 +14,7 @@ import {DefaultCatchBoundary} from '~/components/DefaultCatchBoundary';
 import {NotFound} from '~/components/NotFound';
 import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
+import {getBaseUrl} from '~/config/env';
 import {ClerkVariables, Navbar, Footer} from '~/components';
 import {ThemeProvider} from '~/components/ThemeProvider';
 import {ClerkProvider} from '@clerk/tanstack-react-start';
@@ -43,6 +44,7 @@ export const Route = createRootRouteWithContext<{
       ...seo({
         title: 'Revendiste | Transferí tus entradas de forma fácil y segura',
         description: `Revendiste es una plataforma de venta de entradas de forma fácil y segura. `,
+        baseUrl: getBaseUrl(),
       }),
     ],
     links: [

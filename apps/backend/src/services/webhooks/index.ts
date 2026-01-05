@@ -1,8 +1,10 @@
 import {DLocalService} from '~/services/dlocal';
 import {PaymentWebhookAdapter} from '~/services/payments/adapters';
+import {ClerkWebhookService} from '~/services/clerk-webhook';
 import {logger} from '~/utils';
 import type {Kysely} from 'kysely';
 import type {DB} from '@revendiste/shared';
+import type {ClerkWebhookRouteBody} from '~/controllers/webhooks/validation';
 
 interface WebhookMetadata {
   ipAddress?: string;
@@ -11,6 +13,7 @@ interface WebhookMetadata {
 
 export class WebhooksService {
   private dlocalAdapter: PaymentWebhookAdapter;
+  private clerkWebhookService: ClerkWebhookService;
 
   constructor(db: Kysely<DB>) {
     // Create adapters for each payment provider
@@ -19,6 +22,9 @@ export class WebhooksService {
       new DLocalService(), // Provider handles only API calls
       db, // Adapter handles business logic with database
     );
+
+    // Clerk webhook service for auth emails
+    this.clerkWebhookService = new ClerkWebhookService();
 
     // Future providers:
     // this.stripeAdapter = new PaymentWebhookAdapter(new StripeService(), db);
@@ -42,6 +48,32 @@ export class WebhooksService {
         logger.error('Error processing dLocal webhook', {
           paymentId,
           error: error.message,
+        }),
+      );
+  }
+
+  /**
+   * Handle Clerk webhook events and send authentication-related emails
+   * Delegates to ClerkWebhookService which uses the notification system
+   */
+  async handleClerkWebhook(
+    webhookBody: ClerkWebhookRouteBody,
+    metadata: WebhookMetadata,
+  ): Promise<void> {
+    // Fire-and-forget: process asynchronously and don't wait
+    this.clerkWebhookService
+      .handleWebhook(webhookBody, metadata)
+      .then(() =>
+        logger.info('Clerk webhook processed successfully', {
+          eventType: webhookBody.type,
+          emailSlug: webhookBody.data.slug,
+        }),
+      )
+      .catch(error =>
+        logger.error('Error processing Clerk webhook', {
+          eventType: webhookBody.type,
+          emailSlug: webhookBody.data.slug,
+          error: error instanceof Error ? error.message : String(error),
         }),
       );
   }

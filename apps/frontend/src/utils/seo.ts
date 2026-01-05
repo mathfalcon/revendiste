@@ -17,15 +17,21 @@ export const seo = ({
   keywords,
   image,
   noIndex = false,
+  baseUrl,
 }: {
   title: string;
   description?: string;
   image?: string;
   keywords?: string;
   noIndex?: boolean;
+  baseUrl?: string;
 }) => {
   const ogImage = image || CDN_ASSETS.DEFAULT_OG_IMAGE;
   const imageType = getImageType(ogImage);
+  // Use a larger logo for og:logo (512x512 is a good size for logos)
+  const ogLogo = baseUrl
+    ? `${baseUrl}/android-chrome-512x512.png`
+    : '/android-chrome-512x512.png';
 
   const tags = [
     {title},
@@ -53,6 +59,8 @@ export const seo = ({
     {property: 'og:image:alt', content: title},
     {property: 'og:site_name', content: 'Revendiste'},
     {property: 'og:locale', content: 'es_UY'},
+    // og:logo (not standard OG, but some validators require it)
+    ...(baseUrl ? [{property: 'og:logo', content: ogLogo}] : []),
   ];
 
   return tags.filter(tag => tag.content !== undefined);

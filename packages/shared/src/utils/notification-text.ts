@@ -174,6 +174,75 @@ export function generateNotificationText<T extends NotificationType>(
       };
     }
 
+    // Auth notification types
+    case 'auth_verification_code': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_verification_code'>;
+      return {
+        title: 'Código de verificación',
+        description: `Tu código de verificación es: ${meta.otpCode}`,
+      };
+    }
+
+    case 'auth_reset_password_code': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_reset_password_code'>;
+      return {
+        title: 'Código para restablecer contraseña',
+        description: `Tu código para restablecer la contraseña es: ${meta.otpCode}`,
+      };
+    }
+
+    case 'auth_invitation': {
+      const meta = metadata as TypedNotificationMetadata<'auth_invitation'>;
+      const inviterText = meta.inviterName
+        ? `${meta.inviterName} te invitó a`
+        : 'Te invitaron a';
+      return {
+        title: 'Invitación a Revendiste',
+        description: `${inviterText} unirte a Revendiste. La invitación expira en ${meta.expiresInDays} días.`,
+      };
+    }
+
+    case 'auth_password_changed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_password_changed'>;
+      return {
+        title: 'Contraseña cambiada',
+        description: `La contraseña asociada a ${meta.primaryEmailAddress} fue cambiada correctamente.`,
+      };
+    }
+
+    case 'auth_password_removed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_password_removed'>;
+      return {
+        title: 'Contraseña eliminada',
+        description: `La contraseña asociada a ${meta.primaryEmailAddress} fue eliminada.`,
+      };
+    }
+
+    case 'auth_primary_email_changed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_primary_email_changed'>;
+      return {
+        title: 'Email actualizado',
+        description: `Tu email principal fue actualizado a ${meta.newEmailAddress}.`,
+      };
+    }
+
+    case 'auth_new_device_sign_in': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_new_device_sign_in'>;
+      const deviceInfo = [meta.deviceType, meta.browserName, meta.operatingSystem]
+        .filter(Boolean)
+        .join(' ');
+      return {
+        title: 'Nuevo inicio de sesión',
+        description: `Se detectó un nuevo inicio de sesión${deviceInfo ? ` desde ${deviceInfo}` : ''}${meta.location ? ` en ${meta.location}` : ''}.`,
+      };
+    }
+
     default: {
       // TypeScript exhaustiveness check
       const _exhaustive: never = type;

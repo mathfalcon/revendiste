@@ -49,6 +49,7 @@ export const Route = createFileRoute('/')({
             'Compra y vende entradas para eventos, conciertos y fiestas de forma segura en Uruguay. Revendiste es la plataforma más confiable para transferir tus entradas.',
           keywords:
             'entradas, eventos, conciertos, fiestas, comprar entradas, vender entradas, Uruguay, Montevideo, reventa segura',
+          baseUrl,
         }),
         {
           property: 'og:url',
