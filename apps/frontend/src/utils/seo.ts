@@ -1,3 +1,4 @@
+import {DetailedHTMLProps, MetaHTMLAttributes} from 'react';
 import {CDN_ASSETS} from '~/assets';
 
 // Detect image MIME type from URL
@@ -5,7 +6,8 @@ const getImageType = (url: string): string => {
   const lowerUrl = url.toLowerCase();
   if (lowerUrl.includes('.webp')) return 'image/webp';
   if (lowerUrl.includes('.png')) return 'image/png';
-  if (lowerUrl.includes('.jpg') || lowerUrl.includes('.jpeg')) return 'image/jpeg';
+  if (lowerUrl.includes('.jpg') || lowerUrl.includes('.jpeg'))
+    return 'image/jpeg';
   if (lowerUrl.includes('.gif')) return 'image/gif';
   // Default to JPEG for WhatsApp compatibility
   return 'image/jpeg';
@@ -25,7 +27,10 @@ export const seo = ({
   keywords?: string;
   noIndex?: boolean;
   baseUrl?: string;
-}) => {
+}): DetailedHTMLProps<
+  MetaHTMLAttributes<HTMLMetaElement>,
+  HTMLMetaElement
+>[] => {
   const ogImage = image || CDN_ASSETS.DEFAULT_OG_IMAGE;
   const imageType = getImageType(ogImage);
   // Use a larger logo for og:logo (512x512 is a good size for logos)
@@ -33,7 +38,10 @@ export const seo = ({
     ? `${baseUrl}/android-chrome-512x512.png`
     : '/android-chrome-512x512.png';
 
-  const tags = [
+  const tags: DetailedHTMLProps<
+    MetaHTMLAttributes<HTMLMetaElement>,
+    HTMLMetaElement
+  >[] = [
     {title},
     {name: 'description', content: description},
     {name: 'keywords', content: keywords},
@@ -63,5 +71,7 @@ export const seo = ({
     ...(baseUrl ? [{property: 'og:logo', content: ogLogo}] : []),
   ];
 
-  return tags.filter(tag => tag.content !== undefined);
+  return tags.filter(
+    tag => tag.content !== undefined || tag.title !== undefined,
+  );
 };
