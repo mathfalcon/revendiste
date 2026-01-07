@@ -2,6 +2,7 @@ import {ModeToggle} from '../ModeToggle';
 import {cn} from '~/lib/utils';
 import {Link} from '@tanstack/react-router';
 import {FullLogo} from '~/assets';
+import {VITE_APP_VERSION, VITE_APP_ENV} from '~/config/env';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -111,9 +112,20 @@ export const Footer = () => {
         </div>
 
         <div className='flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t'>
-          <p className='text-sm text-muted-foreground text-center md:text-left'>
-            © {currentYear} Revendiste. Todos los derechos reservados.
-          </p>
+          <div className='flex flex-col md:flex-row items-center gap-2 md:gap-4 text-center md:text-left'>
+            <p className='text-sm text-muted-foreground'>
+              © {currentYear} Revendiste. Todos los derechos reservados.
+            </p>
+            {(VITE_APP_VERSION || VITE_APP_ENV) && (
+              <p className='text-xs text-muted-foreground/70'>
+                {VITE_APP_ENV && (
+                  <span className='uppercase'>{VITE_APP_ENV}</span>
+                )}
+                {VITE_APP_ENV && VITE_APP_VERSION && <span> • </span>}
+                {VITE_APP_VERSION && <span>v{VITE_APP_VERSION}</span>}
+              </p>
+            )}
+          </div>
           <div className='flex items-center gap-4'>
             <ModeToggle />
           </div>
