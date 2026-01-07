@@ -12,11 +12,10 @@ Al utilizar nuestros servicios, el usuario acepta las prácticas descritas en es
 
 ## 2. Responsable del tratamiento de datos
 
-**Mathias Falcon, C.I. 5.104.254-0, persona física**  
-Cédula de Identidad: **5.104.254-0**  
-Domicilio: **Avenida Ocho de Octubre 2487, Apartamento 801, Montevideo, Uruguay**  
-Correo electrónico para temas de datos personales: **mathiasfalcon@gmail.com**  
-Correo electrónico para consultas generales: **ayuda@revendiste.com**
+**Revendiste SAS**  
+RUT: **[COMPLETAR]**  
+Domicilio fiscal: **Avenida Ocho de Octubre 2487, Apartamento 801, Montevideo, Uruguay**  
+Correo electrónico de contacto: **ayuda@revendiste.com**
 
 ---
 
@@ -159,7 +158,7 @@ De acuerdo con la Ley Nº 18.331 de Protección de Datos Personales y su normati
 - **Supresión:** solicitar la eliminación de sus datos cuando corresponda y no exista obligación legal de conservarlos.
 - **Revocación del consentimiento:** retirar el consentimiento otorgado para el tratamiento de datos en cualquier momento.
 
-Para ejercer estos derechos, el usuario puede enviar una solicitud al correo electrónico **mathiasfalcon@gmail.com**, indicando claramente el derecho que desea ejercer y adjuntando una copia de su documento de identidad para verificar su identidad.
+Para ejercer estos derechos, el usuario puede enviar una solicitud al correo electrónico **ayuda@revendiste.com**, indicando claramente el derecho que desea ejercer y adjuntando una copia de su documento de identidad para verificar su identidad.
 
 Revendiste responderá a las solicitudes dentro de los plazos establecidos por la normativa vigente (10 días hábiles).
 
@@ -192,7 +191,7 @@ Sin embargo, ningún sistema de transmisión o almacenamiento de datos es comple
 
 Revendiste no está dirigido a menores de 18 años. No recopilamos intencionalmente datos personales de menores de edad. Si tomamos conocimiento de que hemos recopilado datos de un menor sin el consentimiento verificable de su padre o tutor, tomaremos medidas para eliminar dicha información.
 
-Si usted es padre o tutor y cree que su hijo menor de edad nos ha proporcionado datos personales, por favor contáctenos a **mathiasfalcon@gmail.com**.
+Si usted es padre o tutor y cree que su hijo menor de edad nos ha proporcionado datos personales, por favor contáctenos a **ayuda@revendiste.com**.
 
 ---
 
@@ -232,9 +231,9 @@ Cualquier controversia relacionada con esta política será sometida a la jurisd
 
 Para cualquier consulta, solicitud o reclamo relacionado con esta Política de Privacidad o el tratamiento de sus datos personales, el usuario puede contactarse a:
 
-**Correo electrónico para temas de datos personales:** mathiasfalcon@gmail.com  
-**Correo electrónico para consultas generales:** ayuda@revendiste.com
+**Correo electrónico:** ayuda@revendiste.com
 
 ---
 
 _Esta Política de Privacidad fue redactada para cumplir con la normativa de protección de datos personales vigente en la República Oriental del Uruguay y los requisitos de privacidad de Google OAuth 2.0._
+

@@ -1295,6 +1295,7 @@ export interface ClerkWebhookRouteBody {
   timestamp: number;
   instance_id: string;
   data: {
+    reply_to_email_name?: string | null;
     data: {
       user?: {
         public_metadata_fallback?: string;
@@ -1325,6 +1326,9 @@ export interface ClerkWebhookRouteBody {
       primary_email_address?: string;
       greeting_name?: string;
       invitation?: {
+        public_metadata_fallback?: string;
+        /** Construct a type with a set of properties K of type T */
+        public_metadata?: RecordStringUnknown;
         /** @format double */
         expires_in_days?: number;
       };
@@ -1337,7 +1341,7 @@ export interface ClerkWebhookRouteBody {
     };
     user_id: string | null;
     from_email_name: string;
-    email_address_id: string;
+    email_address_id: string | null;
     delivered_by_clerk: boolean;
     status: string;
     slug: string;
