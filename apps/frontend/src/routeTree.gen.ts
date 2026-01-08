@@ -13,6 +13,7 @@ import { Route as TerminosYCondicionesRouteImport } from './routes/terminos-y-co
 import { Route as SitemapRouteImport } from './routes/sitemap'
 import { Route as PreguntasFrecuentesRouteImport } from './routes/preguntas-frecuentes'
 import { Route as PoliticaDePrivacidadRouteImport } from './routes/politica-de-privacidad'
+import { Route as GarantiaRouteImport } from './routes/garantia'
 import { Route as ContactoRouteImport } from './routes/contacto'
 import { Route as CuentaRouteRouteImport } from './routes/cuenta/route'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
@@ -49,6 +50,11 @@ const PreguntasFrecuentesRoute = PreguntasFrecuentesRouteImport.update({
 const PoliticaDePrivacidadRoute = PoliticaDePrivacidadRouteImport.update({
   id: '/politica-de-privacidad',
   path: '/politica-de-privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GarantiaRoute = GarantiaRouteImport.update({
+  id: '/garantia',
+  path: '/garantia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactoRoute = ContactoRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/cuenta': typeof CuentaRouteRouteWithChildren
   '/contacto': typeof ContactoRoute
+  '/garantia': typeof GarantiaRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
   '/contacto': typeof ContactoRoute
+  '/garantia': typeof GarantiaRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/cuenta': typeof CuentaRouteRouteWithChildren
   '/contacto': typeof ContactoRoute
+  '/garantia': typeof GarantiaRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cuenta'
     | '/contacto'
+    | '/garantia'
     | '/politica-de-privacidad'
     | '/preguntas-frecuentes'
     | '/sitemap'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cuenta'
     | '/contacto'
+    | '/garantia'
     | '/politica-de-privacidad'
     | '/preguntas-frecuentes'
     | '/sitemap'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cuenta'
     | '/contacto'
+    | '/garantia'
     | '/politica-de-privacidad'
     | '/preguntas-frecuentes'
     | '/sitemap'
@@ -282,6 +294,7 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
   ContactoRoute: typeof ContactoRoute
+  GarantiaRoute: typeof GarantiaRoute
   PoliticaDePrivacidadRoute: typeof PoliticaDePrivacidadRoute
   PreguntasFrecuentesRoute: typeof PreguntasFrecuentesRoute
   SitemapRoute: typeof SitemapRoute
@@ -323,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/politica-de-privacidad'
       fullPath: '/politica-de-privacidad'
       preLoaderRoute: typeof PoliticaDePrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/garantia': {
+      id: '/garantia'
+      path: '/garantia'
+      fullPath: '/garantia'
+      preLoaderRoute: typeof GarantiaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contacto': {
@@ -484,6 +504,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   CuentaRouteRoute: CuentaRouteRouteWithChildren,
   ContactoRoute: ContactoRoute,
+  GarantiaRoute: GarantiaRoute,
   PoliticaDePrivacidadRoute: PoliticaDePrivacidadRoute,
   PreguntasFrecuentesRoute: PreguntasFrecuentesRoute,
   SitemapRoute: SitemapRoute,

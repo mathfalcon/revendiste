@@ -51,14 +51,15 @@ export const Footer = () => {
           <div>
             <h3 className='text-sm font-semibold mb-4'>Ayuda</h3>
             <ul className='space-y-3'>
-              {/* <li>
+              <li>
                 <Link
-                  to='/ayuda'
+                  to='/garantia'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+                  resetScroll
                 >
-                  Centro de Ayuda
+                  Garantía Revendiste
                 </Link>
-              </li> */}
+              </li>
               <li>
                 <Link
                   to='/contacto'
