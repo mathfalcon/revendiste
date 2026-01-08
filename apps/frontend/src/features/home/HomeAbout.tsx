@@ -8,12 +8,11 @@ export const HomeAbout = () => {
             ¿Qué es Revendiste?
           </h2>
           <p className='text-sm md:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed'>
-            Revendiste es una plataforma tecnológica de intermediación que
-            facilita la transferencia segura de entradas entre personas para
-            eventos, conciertos y fiestas en Uruguay. Si no podés asistir a un
-            evento, podés transferir tu entrada de forma fácil y segura. Si te
-            pintó ir a último momento, encontrá entradas disponibles para
-            transferencia.
+            Revendiste es una plataforma de intermediación que facilita la
+            transferencia segura de entradas entre personas para eventos,
+            conciertos y fiestas en Uruguay. Si no podés asistir a un evento,
+            podés transferir tu entrada de forma fácil y segura. Si te pintó ir
+            a último momento, encontrá entradas disponibles para transferencia.
           </p>
           <p className='text-xs md:text-sm text-muted-foreground'>
             Al usar nuestros servicios, aceptás nuestros{' '}
@@ -38,12 +37,11 @@ export const HomeAbout = () => {
       <div className='sr-only'>
         <h2>¿Qué es Revendiste?</h2>
         <p>
-          Revendiste es una plataforma tecnológica de intermediación que
-          facilita la transferencia segura de entradas entre personas para
-          eventos, conciertos y fiestas en Uruguay. Si no podés asistir a un
-          evento, podés transferir tu entrada de forma fácil y segura. Si te
-          pintó ir a último momento, encontrá entradas disponibles para
-          transferencia.
+          Revendiste es una plataforma de intermediación que facilita la
+          transferencia segura de entradas entre personas para eventos,
+          conciertos y fiestas en Uruguay. Si no podés asistir a un evento,
+          podés transferir tu entrada de forma fácil y segura. Si te pintó ir a
+          último momento, encontrá entradas disponibles para transferencia.
         </p>
         <p>
           Al usar nuestros servicios, aceptás nuestros{' '}
