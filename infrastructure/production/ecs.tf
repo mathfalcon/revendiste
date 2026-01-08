@@ -367,9 +367,11 @@ resource "aws_ecs_service" "backend" {
 
   # Zero-downtime deployment configuration
   # Allow up to 200% capacity during deployment (2x tasks)
+  # With desired_count=1: temporarily runs 2 tasks during deployment
   deployment_maximum_percent = 200
-  # Keep at least 50% healthy (1 task minimum when desired_count=2)
-  deployment_minimum_healthy_percent = 50
+  # Keep at least 100% healthy (1 task minimum when desired_count=1)
+  # Ensures old task stays running until new task is healthy
+  deployment_minimum_healthy_percent = 100
 
   # Deployment circuit breaker
   # Stops deployment if tasks fail to reach steady state and rolls back automatically
@@ -416,9 +418,11 @@ resource "aws_ecs_service" "frontend" {
 
   # Zero-downtime deployment configuration
   # Allow up to 200% capacity during deployment (2x tasks)
+  # With desired_count=1: temporarily runs 2 tasks during deployment
   deployment_maximum_percent = 200
-  # Keep at least 50% healthy (1 task minimum when desired_count=2)
-  deployment_minimum_healthy_percent = 50
+  # Keep at least 100% healthy (1 task minimum when desired_count=1)
+  # Ensures old task stays running until new task is healthy
+  deployment_minimum_healthy_percent = 100
 
   # Deployment circuit breaker
   # Stops deployment if tasks fail to reach steady state and rolls back automatically

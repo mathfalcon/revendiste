@@ -38,16 +38,15 @@ output "ecs_cluster_name" {
   value       = aws_ecs_cluster.main.name
 }
 
-output "rds_cluster_endpoint" {
-  description = "RDS Aurora cluster endpoint"
-  value       = aws_rds_cluster.main.endpoint
+output "rds_instance_endpoint" {
+  description = "RDS PostgreSQL instance endpoint"
+  value       = aws_db_instance.main.address
   sensitive   = true
 }
 
-output "rds_cluster_reader_endpoint" {
-  description = "RDS Aurora cluster reader endpoint"
-  value       = aws_rds_cluster.main.reader_endpoint
-  sensitive   = true
+output "rds_instance_port" {
+  description = "RDS PostgreSQL instance port"
+  value       = aws_db_instance.main.port
 }
 
 output "db_secret_arn" {
@@ -111,4 +110,9 @@ output "r2_bucket_location" {
 output "cdn_domain" {
   description = "CDN domain for public assets"
   value       = cloudflare_r2_custom_domain.production_cdn.domain
+}
+
+output "rds_alarms_sns_topic_arn" {
+  description = "ARN of the SNS topic for RDS alarm notifications. Subscribe your email (FREE) to receive alerts."
+  value       = aws_sns_topic.rds_alarms.arn
 }

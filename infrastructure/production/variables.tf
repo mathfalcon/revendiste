@@ -74,33 +74,39 @@ variable "db_username" {
 }
 
 variable "db_engine_version" {
-  description = "PostgreSQL engine version for Aurora"
+  description = "PostgreSQL engine version"
   type        = string
-  default     = "15.8"
+  default     = "15.15" # Latest available in sa-east-1 (15.8 not available in this region)
 }
 
-variable "db_min_capacity" {
-  description = "Minimum Aurora Serverless v2 capacity (ACUs)"
-  type        = number
-  default     = 0.5 # Minimum for cost optimization
+variable "db_instance_class" {
+  description = "RDS instance class (e.g., db.t3.medium, db.t3.large). db.t3.medium (2 vCPU, 4GB RAM) handles hundreds of concurrent users easily."
+  type        = string
+  default     = "db.t3.medium" # 2 vCPU, 4GB RAM - sufficient for hundreds of concurrent users
 }
 
-variable "db_max_capacity" {
-  description = "Maximum Aurora Serverless v2 capacity (ACUs)"
+variable "db_allocated_storage" {
+  description = "Initial allocated storage in GB"
   type        = number
-  default     = 16 # Auto-scales up to 16 ACUs based on load
+  default     = 20 # Start small, auto-scales up to max_allocated_storage
 }
 
-variable "db_instance_count" {
-  description = "Number of Aurora instances"
+variable "db_max_allocated_storage" {
+  description = "Maximum storage to auto-scale to in GB"
   type        = number
-  default     = 1 # Start with 1, can scale to 2+ for high availability
+  default     = 100 # Auto-scales storage as needed
 }
 
 variable "db_backup_retention_days" {
   description = "Number of days to retain database backups"
   type        = number
   default     = 7
+}
+
+variable "db_performance_insights_enabled" {
+  description = "Enable Performance Insights for database monitoring (adds ~$3-5/month)"
+  type        = bool
+  default     = false # Disable to save costs, enable if you need detailed query performance monitoring
 }
 
 # ECS Configuration - Backend
@@ -131,7 +137,7 @@ variable "backend_image_tag" {
 variable "backend_desired_count" {
   description = "Desired number of backend tasks"
   type        = number
-  default     = 2 # Start with 2 for high availability
+  default     = 1 # Start with 1, autoscaling will add more if needed
 }
 
 variable "backend_max_capacity" {
@@ -180,7 +186,7 @@ variable "frontend_image_tag" {
 variable "frontend_desired_count" {
   description = "Desired number of frontend tasks"
   type        = number
-  default     = 2 # Start with 2 for high availability
+  default     = 1 # Start with 1, autoscaling will add more if needed
 }
 
 variable "frontend_max_capacity" {
