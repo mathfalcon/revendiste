@@ -52,7 +52,7 @@ export function BaseEmail({
             >
               <Heading className="text-2xl font-bold text-primary-foreground m-0">
                 <Img
-                  src={`https://imgur.com/TWj3jvU.png`}
+                  src={`https://cdn.revendiste.com/assets/horizontal-logo.png`}
                   alt="Revendiste Logo"
                   width={'150'}
                   height={'auto'}
@@ -82,27 +82,20 @@ export function BaseEmail({
                 >
                   Visita Revendiste
                 </Link>
-                {' • '}
-                <Link
-                  href={`${appBaseUrl}/cuenta`}
-                  className="text-primary no-underline hover:underline"
-                >
-                  Mi Cuenta
-                </Link>
               </Text>
               <Text className="text-xs text-muted-foreground text-center m-0">
-                <Link
-                  href={appBaseUrl}
-                  className="text-primary no-underline hover:underline"
-                >
-                  Web
-                </Link>
-                {' • '}
                 <Link
                   href="https://www.instagram.com/revendisteuy"
                   className="text-primary no-underline hover:underline"
                 >
                   Instagram
+                </Link>
+                {' • '}
+                <Link
+                  href="https://x.com/revendiste"
+                  className="text-primary no-underline hover:underline"
+                >
+                  Twitter
                 </Link>
               </Text>
             </Section>

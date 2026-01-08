@@ -105,6 +105,7 @@ export const Route = createFileRoute('/eventos/$eventId')({
       description,
       image: imageUrl,
       keywords,
+      baseUrl,
     });
 
     // Override og:type to 'event' for event pages (now using property attribute)

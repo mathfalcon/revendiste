@@ -40,6 +40,35 @@ import {
   PayoutCancelledEmail as PayoutCancelledEmailComponent,
   type PayoutCancelledEmailProps,
 } from '../emails/payout-cancelled-email';
+// Auth email templates
+import {
+  VerificationCodeEmail as VerificationCodeEmailComponent,
+  type VerificationCodeEmailProps,
+} from '../emails/verification-code-email';
+import {
+  ResetPasswordCodeEmail as ResetPasswordCodeEmailComponent,
+  type ResetPasswordCodeEmailProps,
+} from '../emails/reset-password-code-email';
+import {
+  InvitationEmail as InvitationEmailComponent,
+  type InvitationEmailProps,
+} from '../emails/invitation-email';
+import {
+  PasswordChangedEmail as PasswordChangedEmailComponent,
+  type PasswordChangedEmailProps,
+} from '../emails/password-changed-email';
+import {
+  PasswordRemovedEmail as PasswordRemovedEmailComponent,
+  type PasswordRemovedEmailProps,
+} from '../emails/password-removed-email';
+import {
+  PrimaryEmailChangedEmail as PrimaryEmailChangedEmailComponent,
+  type PrimaryEmailChangedEmailProps,
+} from '../emails/primary-email-changed-email';
+import {
+  NewDeviceSignInEmail as NewDeviceSignInEmailComponent,
+  type NewDeviceSignInEmailProps,
+} from '../emails/new-device-sign-in-email';
 import type {
   NotificationType,
   TypedNotificationMetadata,
@@ -247,6 +276,106 @@ export function getEmailTemplate<T extends NotificationType>(
             `${appBaseUrl}/cuenta/retiro?payoutId=${meta?.payoutId}`,
           appBaseUrl,
         },
+      };
+    }
+
+    // Auth notification types
+    case 'auth_verification_code': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_verification_code'>;
+      return {
+        Component: VerificationCodeEmailComponent,
+        props: {
+          otpCode: meta?.otpCode || '',
+          requestedFrom: meta?.requestedFrom,
+          requestedAt: meta?.requestedAt,
+          appBaseUrl,
+        } as VerificationCodeEmailProps,
+      };
+    }
+
+    case 'auth_reset_password_code': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_reset_password_code'>;
+      return {
+        Component: ResetPasswordCodeEmailComponent,
+        props: {
+          otpCode: meta?.otpCode || '',
+          requestedFrom: meta?.requestedFrom,
+          requestedAt: meta?.requestedAt,
+          appBaseUrl,
+        } as ResetPasswordCodeEmailProps,
+      };
+    }
+
+    case 'auth_invitation': {
+      const meta = metadata as TypedNotificationMetadata<'auth_invitation'>;
+      return {
+        Component: InvitationEmailComponent,
+        props: {
+          inviterName: meta?.inviterName,
+          expiresInDays: meta?.expiresInDays || 7,
+          actionUrl: meta?.actionUrl || appBaseUrl || '',
+          appBaseUrl,
+        } as InvitationEmailProps,
+      };
+    }
+
+    case 'auth_password_changed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_password_changed'>;
+      return {
+        Component: PasswordChangedEmailComponent,
+        props: {
+          greetingName: meta?.greetingName,
+          primaryEmailAddress: meta?.primaryEmailAddress || '',
+          appBaseUrl,
+        } as PasswordChangedEmailProps,
+      };
+    }
+
+    case 'auth_password_removed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_password_removed'>;
+      return {
+        Component: PasswordRemovedEmailComponent,
+        props: {
+          greetingName: meta?.greetingName,
+          primaryEmailAddress: meta?.primaryEmailAddress || '',
+          appBaseUrl,
+        } as PasswordRemovedEmailProps,
+      };
+    }
+
+    case 'auth_primary_email_changed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_primary_email_changed'>;
+      return {
+        Component: PrimaryEmailChangedEmailComponent,
+        props: {
+          newEmailAddress: meta?.newEmailAddress || '',
+          appBaseUrl,
+        } as PrimaryEmailChangedEmailProps,
+      };
+    }
+
+    case 'auth_new_device_sign_in': {
+      const meta =
+        metadata as TypedNotificationMetadata<'auth_new_device_sign_in'>;
+      return {
+        Component: NewDeviceSignInEmailComponent,
+        props: {
+          signInMethod: meta?.signInMethod,
+          deviceType: meta?.deviceType,
+          browserName: meta?.browserName,
+          operatingSystem: meta?.operatingSystem,
+          location: meta?.location,
+          ipAddress: meta?.ipAddress,
+          sessionCreatedAt: meta?.sessionCreatedAt || new Date().toISOString(),
+          revokeSessionUrl: meta?.revokeSessionUrl,
+          supportEmail: meta?.supportEmail || 'soporte@revendiste.com',
+          appBaseUrl,
+        } as NewDeviceSignInEmailProps,
       };
     }
 

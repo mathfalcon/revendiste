@@ -159,6 +159,68 @@ export const PayoutCancelledMetadataSchema = z.object({
 });
 
 /**
+ * Auth notification metadata schemas (Clerk webhook triggered)
+ */
+
+// auth_verification_code - OTP for email verification
+export const AuthVerificationCodeMetadataSchema = z.object({
+  type: z.literal('auth_verification_code'),
+  otpCode: z.string(),
+  requestedFrom: z.string().optional(),
+  requestedAt: z.string().optional(),
+});
+
+// auth_reset_password_code - OTP for password reset
+export const AuthResetPasswordCodeMetadataSchema = z.object({
+  type: z.literal('auth_reset_password_code'),
+  otpCode: z.string(),
+  requestedFrom: z.string().optional(),
+  requestedAt: z.string().optional(),
+});
+
+// auth_invitation - User invitation
+export const AuthInvitationMetadataSchema = z.object({
+  type: z.literal('auth_invitation'),
+  inviterName: z.string().optional(),
+  expiresInDays: z.number(),
+  actionUrl: z.string(),
+});
+
+// auth_password_changed - Password changed notification
+export const AuthPasswordChangedMetadataSchema = z.object({
+  type: z.literal('auth_password_changed'),
+  greetingName: z.string().optional(),
+  primaryEmailAddress: z.string(),
+});
+
+// auth_password_removed - Password removed notification
+export const AuthPasswordRemovedMetadataSchema = z.object({
+  type: z.literal('auth_password_removed'),
+  greetingName: z.string().optional(),
+  primaryEmailAddress: z.string(),
+});
+
+// auth_primary_email_changed - Primary email changed notification
+export const AuthPrimaryEmailChangedMetadataSchema = z.object({
+  type: z.literal('auth_primary_email_changed'),
+  newEmailAddress: z.string(),
+});
+
+// auth_new_device_sign_in - New device sign-in alert
+export const AuthNewDeviceSignInMetadataSchema = z.object({
+  type: z.literal('auth_new_device_sign_in'),
+  signInMethod: z.string().optional(),
+  deviceType: z.string().optional(),
+  browserName: z.string().optional(),
+  operatingSystem: z.string().optional(),
+  location: z.string().optional(),
+  ipAddress: z.string().optional(),
+  sessionCreatedAt: z.string(),
+  revokeSessionUrl: z.string().optional(),
+  supportEmail: z.string().optional(),
+});
+
+/**
  * Discriminated union of all notification metadata types
  * Uses 'type' as the discriminator field for type safety
  */
@@ -174,6 +236,14 @@ export const NotificationMetadataSchema = z.discriminatedUnion('type', [
   PayoutCompletedMetadataSchema,
   PayoutFailedMetadataSchema,
   PayoutCancelledMetadataSchema,
+  // Auth notification types
+  AuthVerificationCodeMetadataSchema,
+  AuthResetPasswordCodeMetadataSchema,
+  AuthInvitationMetadataSchema,
+  AuthPasswordChangedMetadataSchema,
+  AuthPasswordRemovedMetadataSchema,
+  AuthPrimaryEmailChangedMetadataSchema,
+  AuthNewDeviceSignInMetadataSchema,
 ]);
 
 /**
@@ -306,6 +376,18 @@ export const PayoutCancelledActionsSchema = z
   .nullable();
 
 /**
+ * Auth notification action schemas
+ * Auth emails are transactional and don't typically have actions stored
+ */
+export const AuthVerificationCodeActionsSchema = z.array(BaseActionSchema).nullable();
+export const AuthResetPasswordCodeActionsSchema = z.array(BaseActionSchema).nullable();
+export const AuthInvitationActionsSchema = z.array(BaseActionSchema).nullable();
+export const AuthPasswordChangedActionsSchema = z.array(BaseActionSchema).nullable();
+export const AuthPasswordRemovedActionsSchema = z.array(BaseActionSchema).nullable();
+export const AuthPrimaryEmailChangedActionsSchema = z.array(BaseActionSchema).nullable();
+export const AuthNewDeviceSignInActionsSchema = z.array(BaseActionSchema).nullable();
+
+/**
  * Individual notification schemas per type
  * Each extends the base schema and defines its own metadata and actions
  */
@@ -398,6 +480,65 @@ export const PayoutCancelledNotificationSchema = BaseNotificationSchema.extend({
 });
 
 /**
+ * Auth notification schemas
+ */
+
+// auth_verification_code
+export const AuthVerificationCodeNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('auth_verification_code'),
+    metadata: AuthVerificationCodeMetadataSchema,
+    actions: AuthVerificationCodeActionsSchema,
+  });
+
+// auth_reset_password_code
+export const AuthResetPasswordCodeNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('auth_reset_password_code'),
+    metadata: AuthResetPasswordCodeMetadataSchema,
+    actions: AuthResetPasswordCodeActionsSchema,
+  });
+
+// auth_invitation
+export const AuthInvitationNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('auth_invitation'),
+  metadata: AuthInvitationMetadataSchema,
+  actions: AuthInvitationActionsSchema,
+});
+
+// auth_password_changed
+export const AuthPasswordChangedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('auth_password_changed'),
+    metadata: AuthPasswordChangedMetadataSchema,
+    actions: AuthPasswordChangedActionsSchema,
+  });
+
+// auth_password_removed
+export const AuthPasswordRemovedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('auth_password_removed'),
+    metadata: AuthPasswordRemovedMetadataSchema,
+    actions: AuthPasswordRemovedActionsSchema,
+  });
+
+// auth_primary_email_changed
+export const AuthPrimaryEmailChangedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('auth_primary_email_changed'),
+    metadata: AuthPrimaryEmailChangedMetadataSchema,
+    actions: AuthPrimaryEmailChangedActionsSchema,
+  });
+
+// auth_new_device_sign_in
+export const AuthNewDeviceSignInNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('auth_new_device_sign_in'),
+    metadata: AuthNewDeviceSignInMetadataSchema,
+    actions: AuthNewDeviceSignInActionsSchema,
+  });
+
+/**
  * Discriminated union of all notification types
  * Uses 'type' as the discriminator field for type safety
  * Reference: https://zod.dev/api?id=discriminated-unions
@@ -414,6 +555,14 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   PayoutCompletedNotificationSchema,
   PayoutFailedNotificationSchema,
   PayoutCancelledNotificationSchema,
+  // Auth notification types
+  AuthVerificationCodeNotificationSchema,
+  AuthResetPasswordCodeNotificationSchema,
+  AuthInvitationNotificationSchema,
+  AuthPasswordChangedNotificationSchema,
+  AuthPasswordRemovedNotificationSchema,
+  AuthPrimaryEmailChangedNotificationSchema,
+  AuthNewDeviceSignInNotificationSchema,
 ]);
 
 /**

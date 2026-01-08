@@ -4752,6 +4752,242 @@
 				],
 				"type": "object"
 			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"ClerkWebhookRouteBody": {
+				"properties": {
+					"event_attributes": {
+						"properties": {
+							"http_request": {
+								"properties": {
+									"user_agent": {
+										"type": "string"
+									},
+									"client_ip": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							}
+						},
+						"type": "object"
+					},
+					"timestamp": {
+						"type": "number",
+						"format": "double"
+					},
+					"instance_id": {
+						"type": "string"
+					},
+					"data": {
+						"properties": {
+							"reply_to_email_name": {
+								"type": "string",
+								"nullable": true
+							},
+							"data": {
+								"properties": {
+									"user": {
+										"properties": {
+											"public_metadata_fallback": {
+												"type": "string"
+											},
+											"public_metadata": {
+												"$ref": "#/components/schemas/Record_string.unknown_"
+											}
+										},
+										"type": "object"
+									},
+									"theme": {
+										"properties": {
+											"show_clerk_branding": {
+												"type": "boolean"
+											},
+											"button_text_color": {
+												"type": "string"
+											},
+											"primary_color": {
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"app": {
+										"properties": {
+											"url": {
+												"type": "string"
+											},
+											"logo_image_url": {
+												"type": "string"
+											},
+											"domain_name": {
+												"type": "string"
+											},
+											"name": {
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"support_email": {
+										"type": "string"
+									},
+									"revoke_session_url": {
+										"type": "string"
+									},
+									"session_created_at": {
+										"type": "string"
+									},
+									"ip_address": {
+										"type": "string"
+									},
+									"location": {
+										"type": "string"
+									},
+									"operating_system": {
+										"type": "string"
+									},
+									"browser_name": {
+										"type": "string"
+									},
+									"device_type": {
+										"type": "string"
+									},
+									"sign_in_method": {
+										"type": "string"
+									},
+									"new_email_address": {
+										"type": "string"
+									},
+									"primary_email_address": {
+										"type": "string"
+									},
+									"greeting_name": {
+										"type": "string"
+									},
+									"invitation": {
+										"properties": {
+											"public_metadata_fallback": {
+												"type": "string"
+											},
+											"public_metadata": {
+												"$ref": "#/components/schemas/Record_string.unknown_"
+											},
+											"expires_in_days": {
+												"type": "number",
+												"format": "double"
+											}
+										},
+										"type": "object"
+									},
+									"action_url": {
+										"type": "string"
+									},
+									"inviter_name": {
+										"type": "string"
+									},
+									"requested_by": {
+										"type": "string"
+									},
+									"requested_from": {
+										"type": "string"
+									},
+									"requested_at": {
+										"type": "string"
+									},
+									"otp_code": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"user_id": {
+								"type": "string",
+								"nullable": true
+							},
+							"from_email_name": {
+								"type": "string"
+							},
+							"email_address_id": {
+								"type": "string",
+								"nullable": true
+							},
+							"delivered_by_clerk": {
+								"type": "boolean"
+							},
+							"status": {
+								"type": "string"
+							},
+							"slug": {
+								"type": "string"
+							},
+							"body_plain": {
+								"type": "string"
+							},
+							"body": {
+								"type": "string"
+							},
+							"subject": {
+								"type": "string"
+							},
+							"to_email_address": {
+								"type": "string"
+							},
+							"object": {
+								"type": "string",
+								"enum": [
+									"email"
+								],
+								"nullable": false
+							},
+							"id": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"data",
+							"user_id",
+							"from_email_name",
+							"email_address_id",
+							"delivered_by_clerk",
+							"status",
+							"slug",
+							"body_plain",
+							"body",
+							"subject",
+							"to_email_address",
+							"object",
+							"id"
+						],
+						"type": "object"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"email.created"
+						],
+						"nullable": false
+					},
+					"object": {
+						"type": "string",
+						"enum": [
+							"event"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"timestamp",
+					"instance_id",
+					"data",
+					"type",
+					"object"
+				],
+				"type": "object"
+			},
 			"CreatePaymentLinkResponse": {
 				"properties": {
 					"redirectUrl": {
@@ -4862,6 +5098,13 @@
 			"NotificationType": {
 				"type": "string",
 				"enum": [
+					"auth_invitation",
+					"auth_new_device_sign_in",
+					"auth_password_changed",
+					"auth_password_removed",
+					"auth_primary_email_changed",
+					"auth_reset_password_code",
+					"auth_verification_code",
 					"document_reminder",
 					"document_uploaded",
 					"order_confirmed",
@@ -4877,7 +5120,7 @@
 			},
 			"TypedNotificationMetadata_NotificationMetadata_": {
 				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationMetadata__",
-				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
+				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
 			},
 			"Extract_NotificationMetadata._type-NotificationMetadata__": {
 				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
@@ -4889,12 +5132,7 @@
 			},
 			"TypedNotificationMetadata_NotificationType_": {
 				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationType__",
-				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
-			},
-			"Record_string.unknown_": {
-				"properties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
+				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
 			},
 			"infer_typeofBaseActionSchema_": {
 				"properties": {
@@ -4968,7 +5206,7 @@
 						"type": "object"
 					}
 				],
-				"description": "Typed notification response with parsed metadata and actions\r\nThis ensures type safety when reading notifications from the database\r\nTitle and description are generated from type + metadata, not stored in DB\r\nFor backwards compatibility, uses the generic type"
+				"description": "Typed notification response with parsed metadata and actions\nThis ensures type safety when reading notifications from the database\nTitle and description are generated from type + metadata, not stored in DB\nFor backwards compatibility, uses the generic type"
 			},
 			"PaginatedResponse_TypedNotification_": {
 				"properties": {
@@ -5601,7 +5839,7 @@
 						}
 					}
 				},
-				"description": "Upload a ticket document\r\n\r\nSellers can upload PDF/image documents for their sold tickets.\r\nDocuments must be uploaded before the event ends.",
+				"description": "Upload a ticket document\n\nSellers can upload PDF/image documents for their sold tickets.\nDocuments must be uploaded before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -5692,7 +5930,7 @@
 						}
 					}
 				},
-				"description": "Update/replace a ticket document\r\n\r\nUploads a new version of the document. Previous versions are kept for audit trail.\r\nCan only update before the event ends.",
+				"description": "Update/replace a ticket document\n\nUploads a new version of the document. Previous versions are kept for audit trail.\nCan only update before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -5775,7 +6013,7 @@
 						}
 					}
 				},
-				"description": "Update ticket price\r\n\r\nOnly active tickets (not reserved, sold, or cancelled) can have their price updated.\r\nPrice cannot exceed the ticket wave face value.",
+				"description": "Update ticket price\n\nOnly active tickets (not reserved, sold, or cancelled) can have their price updated.\nPrice cannot exceed the ticket wave face value.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -5850,7 +6088,7 @@
 						}
 					}
 				},
-				"description": "Remove a ticket from listing\r\n\r\nOnly active tickets (not reserved, sold, or cancelled) can be removed.\r\nThis performs a soft delete (sets deletedAt timestamp).",
+				"description": "Remove a ticket from listing\n\nOnly active tickets (not reserved, sold, or cancelled) can be removed.\nThis performs a soft delete (sets deletedAt timestamp).",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -7303,6 +7541,48 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/DLocalWebhookrRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/webhooks/clerk": {
+			"post": {
+				"operationId": "HandleClerkWebhook",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"received": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"received"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"description": "Receives authentication events from Clerk",
+				"summary": "Clerk authentication webhook",
+				"tags": [
+					"Webhooks"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ClerkWebhookRouteBody"
 							}
 						}
 					}
