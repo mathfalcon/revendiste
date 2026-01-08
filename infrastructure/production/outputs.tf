@@ -113,6 +113,6 @@ output "cdn_domain" {
 }
 
 output "rds_alarms_sns_topic_arn" {
-  description = "ARN of the SNS topic for RDS alarm notifications. Subscribe your email to receive alerts."
+  description = "ARN of the SNS topic for RDS alarm notifications. Subscribe your email (FREE) to receive alerts."
   value       = aws_sns_topic.rds_alarms.arn
 }

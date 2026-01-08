@@ -1,8 +1,9 @@
 # CloudWatch Alarms for RDS Monitoring
 # Cost: First 10 alarms are FREE, then $0.10/month per alarm
 # These 6 alarms are all FREE
+# SNS email subscriptions are FREE (SMS/phone calls cost money)
 
-# SNS Topic for Alarm Notifications (optional - configure email later)
+# SNS Topic for Alarm Notifications
 resource "aws_sns_topic" "rds_alarms" {
   name = "${local.name_prefix}-rds-alarms"
 
@@ -10,9 +11,6 @@ resource "aws_sns_topic" "rds_alarms" {
     Name = "${local.name_prefix}-rds-alarms-topic"
   }
 }
-
-# Note: To receive email notifications, subscribe to this SNS topic:
-# aws sns subscribe --topic-arn <arn> --protocol email --notification-endpoint your-email@example.com
 
 # Alarm: Database Connections (Warning when approaching limit)
 # Alert when >250 connections (80% of ~300 limit for db.t3.medium)

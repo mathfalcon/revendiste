@@ -175,6 +175,18 @@
       "Effect": "Allow",
       "Action": ["servicediscovery:*"],
       "Resource": "*"
+    },
+    {
+      "Sid": "SNS",
+      "Effect": "Allow",
+      "Action": ["sns:*"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatch",
+      "Effect": "Allow",
+      "Action": ["cloudwatch:*"],
+      "Resource": "*"
     }
   ]
 }

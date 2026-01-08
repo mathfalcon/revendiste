@@ -76,7 +76,7 @@ variable "db_username" {
 variable "db_engine_version" {
   description = "PostgreSQL engine version"
   type        = string
-  default     = "15.8"
+  default     = "15.15" # Latest available in sa-east-1 (15.8 not available in this region)
 }
 
 variable "db_instance_class" {

@@ -6,7 +6,7 @@ This guide explains how to migrate between standard RDS PostgreSQL and Aurora Po
 
 - **Instance**: `db.t3.medium` (2 vCPU, 4GB RAM)
 - **Cost**: ~$30/month
-- **Engine**: PostgreSQL 15.8
+- **Engine**: PostgreSQL 15.15 (latest available in sa-east-1)
 - **Storage**: Auto-scaling 20GB → 100GB
 
 ## Why Standard RDS Instead of Aurora?
