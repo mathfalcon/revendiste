@@ -137,7 +137,7 @@ variable "backend_image_tag" {
 variable "backend_desired_count" {
   description = "Desired number of backend tasks"
   type        = number
-  default     = 2 # Start with 2 for high availability
+  default     = 1 # Start with 1, autoscaling will add more if needed
 }
 
 variable "backend_max_capacity" {
@@ -186,7 +186,7 @@ variable "frontend_image_tag" {
 variable "frontend_desired_count" {
   description = "Desired number of frontend tasks"
   type        = number
-  default     = 2 # Start with 2 for high availability
+  default     = 1 # Start with 1, autoscaling will add more if needed
 }
 
 variable "frontend_max_capacity" {

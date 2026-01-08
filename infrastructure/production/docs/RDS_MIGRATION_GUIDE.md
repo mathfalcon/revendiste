@@ -19,6 +19,7 @@ This guide explains how to migrate between standard RDS PostgreSQL and Aurora Po
 ## When to Migrate to Aurora?
 
 Consider migrating to Aurora when:
+
 - **High Availability Required**: Need multi-AZ failover
 - **Read Replicas Needed**: Heavy read workloads
 - **Auto-Scaling Critical**: Highly variable traffic patterns
@@ -29,6 +30,7 @@ Consider migrating to Aurora when:
 ### Option 1: AWS Database Migration Service (DMS) - Recommended
 
 **Pros:**
+
 - Zero downtime migration
 - Continuous replication during migration
 - Automatic schema migration
@@ -36,6 +38,7 @@ Consider migrating to Aurora when:
 **Steps:**
 
 1. **Create Aurora Cluster** (using Terraform or AWS Console):
+
    ```hcl
    # In rds.tf, replace aws_db_instance with:
    resource "aws_rds_cluster" "main" {
@@ -47,6 +50,7 @@ Consider migrating to Aurora when:
    ```
 
 2. **Set up DMS Replication Instance**:
+
    ```bash
    aws dms create-replication-instance \
      --replication-instance-identifier revendiste-dms \
@@ -55,14 +59,17 @@ Consider migrating to Aurora when:
    ```
 
 3. **Create Source and Target Endpoints**:
+
    - Source: Standard RDS PostgreSQL
    - Target: Aurora Cluster
 
 4. **Create and Start Migration Task**:
+
    - Full load + CDC (Change Data Capture) for zero downtime
    - Monitor replication lag
 
 5. **Switch Application**:
+
    - Update Secrets Manager with Aurora endpoint
    - Redeploy ECS tasks
 
@@ -74,10 +81,12 @@ Consider migrating to Aurora when:
 ### Option 2: pg_dump/pg_restore - Simpler but Requires Downtime
 
 **Pros:**
+
 - Simple, well-tested method
 - No additional AWS services needed
 
 **Cons:**
+
 - Requires maintenance window (downtime)
 - No continuous replication
 
@@ -86,18 +95,21 @@ Consider migrating to Aurora when:
 1. **Create Aurora Cluster** (same as Option 1)
 
 2. **Take Final Backup**:
+
    ```bash
    pg_dump -h <rds-endpoint> -U <username> -d <database> \
      --format=custom --file=backup.dump
    ```
 
 3. **Restore to Aurora**:
+
    ```bash
    pg_restore -h <aurora-endpoint> -U <username> -d <database> \
      --no-owner --no-acl backup.dump
    ```
 
 4. **Update Application**:
+
    - Update Secrets Manager
    - Redeploy ECS tasks
 
@@ -108,6 +120,7 @@ Consider migrating to Aurora when:
 ## Migration Path: Aurora → Standard RDS
 
 Same process in reverse:
+
 - Use DMS or pg_dump/pg_restore
 - Update Terraform to use `aws_db_instance` instead of `aws_rds_cluster`
 - Update Secrets Manager endpoints
@@ -116,6 +129,7 @@ Same process in reverse:
 ## Application Code Changes
 
 **No code changes needed!** Both use the same PostgreSQL protocol:
+
 - Same connection string format
 - Same SQL syntax
 - Same Kysely queries work identically
@@ -124,27 +138,30 @@ Only the endpoint URL changes (in Secrets Manager).
 
 ## Cost Comparison
 
-| Setup | Monthly Cost | Best For |
-|-------|-------------|----------|
-| Standard RDS (db.t3.medium) | ~$30 | Pre-launch, low-medium traffic |
-| Aurora Serverless v2 (0.5-16 ACU) | ~$65-150 | Variable traffic, auto-scaling |
-| Aurora Provisioned (db.t3.medium) | ~$60 | High availability, read replicas |
+| Setup                             | Monthly Cost | Best For                         |
+| --------------------------------- | ------------ | -------------------------------- |
+| Standard RDS (db.t3.medium)       | ~$30         | Pre-launch, low-medium traffic   |
+| Aurora Serverless v2 (0.5-16 ACU) | ~$65-150     | Variable traffic, auto-scaling   |
+| Aurora Provisioned (db.t3.medium) | ~$60         | High availability, read replicas |
 
 ## Terraform State Migration
 
 When switching between RDS types:
 
 1. **Backup Terraform State**:
+
    ```bash
    terraform state pull > state-backup.json
    ```
 
 2. **Remove Old Resource**:
+
    ```bash
    terraform state rm aws_db_instance.main  # or aws_rds_cluster.main
    ```
 
 3. **Import New Resource** (if created manually):
+
    ```bash
    terraform import aws_rds_cluster.main <cluster-id>
    ```
@@ -165,6 +182,7 @@ When switching between RDS types:
 ## Rollback Plan
 
 If migration fails:
+
 1. Keep old RDS instance running
 2. Revert Secrets Manager to old endpoint
 3. Redeploy ECS tasks
