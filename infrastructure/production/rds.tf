@@ -1,4 +1,6 @@
-# RDS Aurora Serverless v2 PostgreSQL Database
+# RDS PostgreSQL Database (Standard Instance)
+# Note: Easy to migrate to Aurora later - same PostgreSQL engine, just different infrastructure
+# Migration path: Use AWS DMS or pg_dump/pg_restore (both use same PostgreSQL protocol)
 
 # Random password for initial database password
 resource "random_password" "db_password" {
@@ -22,39 +24,41 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
     username = var.db_username
     password = random_password.db_password.result
     engine   = "postgres"
-    host     = aws_rds_cluster.main.endpoint
+    host     = aws_db_instance.main.address
     port     = 5432
     dbname   = var.db_name
     # Note: database_url should be constructed by the application using the individual fields
     # to properly URL-encode the password
-    database_url = "postgresql://${var.db_username}:${random_password.db_password.result}@${aws_rds_cluster.main.endpoint}:5432/${var.db_name}"
+    database_url = "postgresql://${var.db_username}:${random_password.db_password.result}@${aws_db_instance.main.address}:5432/${var.db_name}"
   })
 
-  depends_on = [aws_rds_cluster.main]
+  depends_on = [aws_db_instance.main]
 }
 
-# RDS Aurora Serverless v2 Cluster
-resource "aws_rds_cluster" "main" {
-  cluster_identifier     = "${local.name_prefix}-aurora-cluster"
-  engine                 = "aurora-postgresql"
-  engine_mode            = "provisioned"
-  engine_version         = var.db_engine_version
-  database_name          = var.db_name
-  master_username        = var.db_username
-  master_password        = random_password.db_password.result
+# Standard RDS PostgreSQL Instance
+# Cost: ~$30/month for db.t3.medium (vs ~$65/month for Aurora Serverless v2 at 0.5 ACU)
+# Can easily migrate to Aurora later using AWS DMS or pg_dump/pg_restore
+resource "aws_db_instance" "main" {
+  identifier     = "${local.name_prefix}-postgres"
+  engine         = "postgres"
+  engine_version = var.db_engine_version
+  instance_class = var.db_instance_class
+  allocated_storage = var.db_allocated_storage
+  max_allocated_storage = var.db_max_allocated_storage # Auto-scaling storage up to this limit
+
+  db_name  = var.db_name
+  username = var.db_username
+  password = random_password.db_password.result
+
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
-
-  # Serverless v2 configuration
-  serverlessv2_scaling_configuration {
-    max_capacity = var.db_max_capacity
-    min_capacity = var.db_min_capacity
-  }
+  publicly_accessible    = false # Keep database private
 
   # Backup configuration
   backup_retention_period      = var.db_backup_retention_days
-  preferred_backup_window      = "03:00-04:00"         # UTC
-  preferred_maintenance_window = "sun:04:00-sun:05:00" # UTC
+  backup_window                = "03:00-04:00"         # UTC
+  maintenance_window           = "sun:04:00-sun:05:00" # UTC
+  auto_minor_version_upgrade   = true
 
   # Enable encryption
   storage_encrypted = true
@@ -68,26 +72,12 @@ resource "aws_rds_cluster" "main" {
   # Enable CloudWatch Logs
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
-  tags = {
-    Name = "${local.name_prefix}-aurora-cluster"
-  }
-}
-
-# RDS Aurora Serverless v2 Instance
-resource "aws_rds_cluster_instance" "main" {
-  count              = var.db_instance_count
-  identifier         = "${local.name_prefix}-aurora-instance-${count.index + 1}"
-  cluster_identifier = aws_rds_cluster.main.id
-  instance_class     = "db.serverless"
-  engine             = aws_rds_cluster.main.engine
-  engine_version     = aws_rds_cluster.main.engine_version
-
-  # Enable performance insights for monitoring
-  performance_insights_enabled          = true
-  performance_insights_retention_period = 7
+  # Performance Insights (optional, adds ~$3-5/month)
+  performance_insights_enabled          = var.db_performance_insights_enabled
+  performance_insights_retention_period = var.db_performance_insights_enabled ? 7 : null
 
   tags = {
-    Name = "${local.name_prefix}-aurora-instance-${count.index + 1}"
+    Name = "${local.name_prefix}-postgres"
   }
 }
 
@@ -105,4 +95,3 @@ resource "aws_kms_alias" "rds" {
   name          = "alias/${local.name_prefix}-rds"
   target_key_id = aws_kms_key.rds.key_id
 }
-
