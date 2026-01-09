@@ -75,7 +75,9 @@ resource "aws_iam_role" "face_liveness_frontend" {
     ]
   })
 
-  tags = local.tags
+  tags = {
+    Name = "${local.name_prefix}-face-liveness-frontend"
+  }
 }
 
 # Policy allowing ONLY StartFaceLivenessSession
