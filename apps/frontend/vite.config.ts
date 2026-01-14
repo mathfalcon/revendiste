@@ -1,35 +1,21 @@
 import {tanstackStart} from '@tanstack/react-start/plugin/vite';
-import {defineConfig} from 'vite';
+import {defineConfig, PluginOption} from 'vite';
 import tsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import viteReact from '@vitejs/plugin-react';
 import {generateApiPlugin} from './vite-plugin-generate-api';
 import {nitro} from 'nitro/vite';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
   server: {
     port: 3000,
     allowedHosts: ['chaotically-suppling-elvira.ngrok-free.dev'],
     host: '0.0.0.0',
-    // Proxy API requests to HTTP backend when running HTTPS
-    // This avoids mixed content blocking
-    proxy: true
-      ? {
-          '/api': {
-            target: 'http://localhost:3001',
-            changeOrigin: true,
-            secure: false,
-          },
-        }
-      : undefined,
   },
   plugins: [
-    // HTTPS plugin (only when HTTPS_LOCAL=1)
-    ...(true ? [basicSsl()] : []),
     tsConfigPaths({
       projects: ['./tsconfig.json'],
-    }),
+    }) as PluginOption,
     // Run API generation on dev server start
     generateApiPlugin({
       command: 'pnpm generate:api',
@@ -41,11 +27,9 @@ export default defineConfig({
       runOnChange: true,
       watchFiles: ['../backend/src/swagger/swagger.json'],
     }),
-    // Nitro conflicts with HTTPS (HTTP/2 header issues), so disable it in HTTPS mode
-    // SSR won't work in HTTPS mode, but camera APIs will work for testing
-    ...(true ? [] : [nitro()]),
+    nitro(),
     tanstackStart(),
     viteReact(),
-    tailwindcss(),
+    tailwindcss() as PluginOption,
   ],
 });
