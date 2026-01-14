@@ -32,7 +32,7 @@ export const IdentityVerificationCompletedEmail = ({
     {/* CTA Button */}
     <Section className="text-center mb-6">
       <Button
-        href={`${appBaseUrl || 'https://revendiste.com'}/publicar`}
+        href={`${appBaseUrl || 'https://revendiste.com'}/entradas/publicar`}
         className="bg-primary text-primary-foreground px-6 py-3 rounded-md font-semibold text-base no-underline inline-block"
       >
         Publicar entradas

@@ -401,7 +401,7 @@ export async function notifyIdentityVerificationCompleted(
       {
         type: 'publish_tickets',
         label: 'Publicar entradas',
-        url: `${APP_BASE_URL}/publicar`,
+        url: `${APP_BASE_URL}/entradas/publicar`,
       },
     ],
     metadata: {

@@ -25,11 +25,38 @@ mkdir -p /etc/ssl/private
 chmod 755 /etc/ssl/certs
 chmod 750 /etc/ssl/private
 
-# Note: Cloudflare Origin CA certificate and private key should be uploaded manually
-# Certificate: /etc/ssl/certs/cloudflare-origin.pem
-# Private key: /etc/ssl/private/cloudflare-origin.key
-# chmod 644 /etc/ssl/certs/cloudflare-origin.pem
-# chmod 600 /etc/ssl/private/cloudflare-origin.key
+# Fetch Cloudflare Origin CA certificate from Secrets Manager (stored in backend-secrets)
+SECRETS_JSON=$(aws secretsmanager get-secret-value \
+  --secret-id revendiste/dev/backend-secrets \
+  --region sa-east-1 \
+  --query 'SecretString' \
+  --output text 2>/dev/null || echo "")
+
+if [ -n "$SECRETS_JSON" ] && [ "$SECRETS_JSON" != "null" ]; then
+  CERT=$(echo "$SECRETS_JSON" | jq -r '.CLOUDFLARE_ORIGIN_CERTIFICATE // empty')
+  KEY=$(echo "$SECRETS_JSON" | jq -r '.CLOUDFLARE_ORIGIN_PRIVATE_CERTIFICATE // empty')
+  
+  if [ -n "$CERT" ] && [ -n "$KEY" ]; then
+    # Fix PEM format - certificates are stored as single line, need newlines after header and before footer
+    echo "$CERT" | \
+      sed 's/-----BEGIN CERTIFICATE----- /-----BEGIN CERTIFICATE-----\n/' | \
+      sed 's/ -----END CERTIFICATE-----/\n-----END CERTIFICATE-----/' \
+      > /etc/ssl/certs/cloudflare-origin.pem
+    echo "$KEY" | \
+      sed 's/-----BEGIN PRIVATE KEY----- /-----BEGIN PRIVATE KEY-----\n/' | \
+      sed 's/ -----END PRIVATE KEY-----/\n-----END PRIVATE KEY-----/' \
+      > /etc/ssl/private/cloudflare-origin.key
+    chmod 644 /etc/ssl/certs/cloudflare-origin.pem
+    chmod 600 /etc/ssl/private/cloudflare-origin.key
+    echo "Cloudflare Origin certificate loaded from Secrets Manager"
+  else
+    echo "WARNING: CLOUDFLARE_ORIGIN_CERTIFICATE or CLOUDFLARE_ORIGIN_PRIVATE_CERTIFICATE not found in secret"
+    echo "Nginx will fail to start until certificate is configured"
+  fi
+else
+  echo "WARNING: Could not fetch secrets from revendiste/dev/backend-secrets"
+  echo "Nginx will fail to start until certificate is configured"
+fi
 
 # Create nginx config for Cloudflare proxied traffic
 # Origin serves HTTPS on port 443 (Full SSL mode)
@@ -44,7 +71,8 @@ server {
 
 # HTTPS server
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name dev.revendiste.com;
 
     # SSL certificate (Cloudflare Origin CA)
