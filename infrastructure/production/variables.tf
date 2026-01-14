@@ -74,30 +74,27 @@ variable "db_username" {
 }
 
 variable "db_engine_version" {
-  description = "PostgreSQL engine version for Aurora Serverless v2"
+  description = "PostgreSQL engine version"
   type        = string
   default     = "15.8"
 }
 
-# Note: Aurora Serverless v2 doesn't use instance_class or allocated_storage
-# Storage scales automatically and you pay per GB-month (~$0.12/GB)
-
-variable "db_min_capacity" {
-  description = "Minimum Aurora Serverless v2 capacity (ACUs). 0.5 is the minimum."
-  type        = number
-  default     = 0.5 # Minimum ACU for cost savings when idle (~$45/month)
+variable "db_instance_class" {
+  description = "RDS instance class. Upgrade path: db.t4g.micro → db.t4g.small → db.t3.medium → Aurora"
+  type        = string
+  default     = "db.t4g.micro" # Pre-launch: ~$10/month (2 vCPU, 1GB RAM, ARM Graviton)
 }
 
-variable "db_max_capacity" {
-  description = "Maximum Aurora Serverless v2 capacity (ACUs)"
+variable "db_allocated_storage" {
+  description = "Initial allocated storage in GB"
   type        = number
-  default     = 16 # Auto-scales up to 16 ACUs based on load
+  default     = 20 # Start with 20GB, auto-scales up to max
 }
 
-variable "db_instance_count" {
-  description = "Number of Aurora instances"
+variable "db_max_allocated_storage" {
+  description = "Maximum storage for auto-scaling in GB"
   type        = number
-  default     = 1 # Start with 1, can scale to 2+ for high availability
+  default     = 100 # Auto-scales storage as needed
 }
 
 variable "db_backup_retention_days" {
@@ -134,7 +131,7 @@ variable "backend_image_tag" {
 variable "backend_desired_count" {
   description = "Desired number of backend tasks"
   type        = number
-  default     = 2 # Start with 2 for high availability
+  default     = 1 # Pre-launch: 1 task to minimize public IP costs (~$3.60/month saved)
 }
 
 variable "backend_max_capacity" {
@@ -183,7 +180,7 @@ variable "frontend_image_tag" {
 variable "frontend_desired_count" {
   description = "Desired number of frontend tasks"
   type        = number
-  default     = 2 # Start with 2 for high availability
+  default     = 1 # Pre-launch: 1 task to minimize public IP costs (~$3.60/month saved)
 }
 
 variable "frontend_max_capacity" {

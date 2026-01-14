@@ -1,4 +1,6 @@
-# RDS Aurora Serverless v2 PostgreSQL Database
+# RDS PostgreSQL Database (Standard Instance)
+# Pre-launch: db.t4g.micro (~$10/month) - Graviton ARM, 2 vCPU, 1GB RAM
+# Upgrade path: db.t4g.small (~$20/mo) → db.t3.medium (~$47/mo) → Aurora Serverless v2
 
 # Random password for initial database password
 resource "random_password" "db_password" {
@@ -19,45 +21,41 @@ resource "aws_secretsmanager_secret" "db_credentials" {
 resource "aws_secretsmanager_secret_version" "db_credentials" {
   secret_id = aws_secretsmanager_secret.db_credentials.id
   secret_string = jsonencode({
-    username = var.db_username
-    password = random_password.db_password.result
-    engine   = "postgres"
-    host     = aws_rds_cluster.main.endpoint
-    port     = 5432
-    dbname   = var.db_name
-    # Note: database_url should be constructed by the application using the individual fields
-    # to properly URL-encode the password
-    database_url = "postgresql://${var.db_username}:${random_password.db_password.result}@${aws_rds_cluster.main.endpoint}:5432/${var.db_name}"
+    username     = var.db_username
+    password     = random_password.db_password.result
+    engine       = "postgres"
+    host         = aws_db_instance.main.address
+    port         = 5432
+    dbname       = var.db_name
+    database_url = "postgresql://${var.db_username}:${random_password.db_password.result}@${aws_db_instance.main.address}:5432/${var.db_name}"
   })
 
-  depends_on = [aws_rds_cluster.main]
+  depends_on = [aws_db_instance.main]
 }
 
-# Aurora Serverless v2 PostgreSQL Cluster
-# Cost: ~$0.12/ACU-hour, scales from 0.5 to 16 ACUs based on load
-# Pre-launch with 0.5 min ACU: ~$45/month idle, scales automatically under load
-resource "aws_rds_cluster" "main" {
-  cluster_identifier = "${local.name_prefix}-aurora-cluster"
-  engine             = "aurora-postgresql"
-  engine_mode        = "provisioned"
-  engine_version     = var.db_engine_version
-  database_name      = var.db_name
-  master_username    = var.db_username
-  master_password    = random_password.db_password.result
+# Standard RDS PostgreSQL Instance
+resource "aws_db_instance" "main" {
+  identifier     = "${local.name_prefix}-postgres"
+  engine         = "postgres"
+  engine_version = var.db_engine_version
+  instance_class = var.db_instance_class
+
+  allocated_storage     = var.db_allocated_storage
+  max_allocated_storage = var.db_max_allocated_storage
+
+  db_name  = var.db_name
+  username = var.db_username
+  password = random_password.db_password.result
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
-
-  # Serverless v2 scaling configuration
-  serverlessv2_scaling_configuration {
-    max_capacity = var.db_max_capacity
-    min_capacity = var.db_min_capacity
-  }
+  publicly_accessible    = false
 
   # Backup configuration
-  backup_retention_period      = var.db_backup_retention_days
-  preferred_backup_window      = "03:00-04:00"         # UTC
-  preferred_maintenance_window = "sun:04:00-sun:05:00" # UTC
+  backup_retention_period    = var.db_backup_retention_days
+  backup_window              = "03:00-04:00"         # UTC
+  maintenance_window         = "sun:04:00-sun:05:00" # UTC
+  auto_minor_version_upgrade = true
 
   # Enable encryption
   storage_encrypted = true
@@ -66,31 +64,17 @@ resource "aws_rds_cluster" "main" {
   # Enable deletion protection in production
   deletion_protection       = true
   skip_final_snapshot       = false
-  final_snapshot_identifier = "${local.name_prefix}-final-snapshot"
+  final_snapshot_identifier = "${local.name_prefix}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   # Enable CloudWatch Logs
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
   tags = {
-    Name = "${local.name_prefix}-aurora-cluster"
+    Name = "${local.name_prefix}-postgres"
   }
-}
 
-# RDS Aurora Serverless v2 Instance
-resource "aws_rds_cluster_instance" "main" {
-  count              = var.db_instance_count
-  identifier         = "${local.name_prefix}-aurora-instance-${count.index + 1}"
-  cluster_identifier = aws_rds_cluster.main.id
-  instance_class     = "db.serverless"
-  engine             = aws_rds_cluster.main.engine
-  engine_version     = aws_rds_cluster.main.engine_version
-
-  # Enable performance insights for monitoring
-  performance_insights_enabled          = true
-  performance_insights_retention_period = 7
-
-  tags = {
-    Name = "${local.name_prefix}-aurora-instance-${count.index + 1}"
+  lifecycle {
+    ignore_changes = [final_snapshot_identifier]
   }
 }
 
@@ -108,4 +92,3 @@ resource "aws_kms_alias" "rds" {
   name          = "alias/${local.name_prefix}-rds"
   target_key_id = aws_kms_key.rds.key_id
 }
-
