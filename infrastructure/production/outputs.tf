@@ -38,15 +38,15 @@ output "ecs_cluster_name" {
   value       = aws_ecs_cluster.main.name
 }
 
-output "rds_cluster_endpoint" {
-  description = "RDS Aurora cluster endpoint"
-  value       = aws_rds_cluster.main.endpoint
+output "rds_endpoint" {
+  description = "RDS instance endpoint"
+  value       = aws_db_instance.main.endpoint
   sensitive   = true
 }
 
-output "rds_cluster_reader_endpoint" {
-  description = "RDS Aurora cluster reader endpoint"
-  value       = aws_rds_cluster.main.reader_endpoint
+output "rds_address" {
+  description = "RDS instance address (hostname only)"
+  value       = aws_db_instance.main.address
   sensitive   = true
 }
 
