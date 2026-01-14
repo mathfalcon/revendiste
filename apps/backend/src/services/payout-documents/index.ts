@@ -187,6 +187,8 @@ export class PayoutDocumentsService {
       'image/jpeg',
       'image/jpg',
       'image/png',
+      'image/heic',
+      'image/heif',
     ];
 
     if (!allowedTypes.includes(mimeType.toLowerCase())) {

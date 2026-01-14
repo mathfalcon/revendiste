@@ -33,19 +33,22 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
   depends_on = [aws_rds_cluster.main]
 }
 
-# RDS Aurora Serverless v2 Cluster
+# Aurora Serverless v2 PostgreSQL Cluster
+# Cost: ~$0.12/ACU-hour, scales from 0.5 to 16 ACUs based on load
+# Pre-launch with 0.5 min ACU: ~$45/month idle, scales automatically under load
 resource "aws_rds_cluster" "main" {
-  cluster_identifier     = "${local.name_prefix}-aurora-cluster"
-  engine                 = "aurora-postgresql"
-  engine_mode            = "provisioned"
-  engine_version         = var.db_engine_version
-  database_name          = var.db_name
-  master_username        = var.db_username
-  master_password        = random_password.db_password.result
+  cluster_identifier = "${local.name_prefix}-aurora-cluster"
+  engine             = "aurora-postgresql"
+  engine_mode        = "provisioned"
+  engine_version     = var.db_engine_version
+  database_name      = var.db_name
+  master_username    = var.db_username
+  master_password    = random_password.db_password.result
+
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
 
-  # Serverless v2 configuration
+  # Serverless v2 scaling configuration
   serverlessv2_scaling_configuration {
     max_capacity = var.db_max_capacity
     min_capacity = var.db_min_capacity
@@ -63,7 +66,7 @@ resource "aws_rds_cluster" "main" {
   # Enable deletion protection in production
   deletion_protection       = true
   skip_final_snapshot       = false
-  final_snapshot_identifier = "${local.name_prefix}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+  final_snapshot_identifier = "${local.name_prefix}-final-snapshot"
 
   # Enable CloudWatch Logs
   enabled_cloudwatch_logs_exports = ["postgresql"]

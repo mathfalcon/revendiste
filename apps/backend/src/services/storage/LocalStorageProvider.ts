@@ -182,6 +182,8 @@ export class LocalStorageProvider implements IStorageProvider {
       'image/png': '.png',
       'image/gif': '.gif',
       'image/webp': '.webp',
+      'image/heic': '.heic',
+      'image/heif': '.heif',
       'application/zip': '.zip',
       'application/x-zip-compressed': '.zip',
     };

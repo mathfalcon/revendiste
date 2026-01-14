@@ -16,3 +16,9 @@ export {PayoutMethodsRepository} from './payout-methods';
 export {PayoutsRepository} from './payouts';
 export {PayoutEventsRepository} from './payout-events';
 export {PayoutDocumentsRepository} from './payout-documents';
+export {VerificationAuditRepository} from './verification-audit';
+export type {
+  VerificationAuditAction,
+  AuditMetadata,
+  AuditConfidenceScores,
+} from './verification-audit';

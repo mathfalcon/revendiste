@@ -90,7 +90,7 @@ export const PayoutCompletedEmail = ({
     <Text className="text-sm text-muted-foreground mb-0">
       El dinero debería estar disponible en tu cuenta bancaria en los próximos
       días hábiles. Si tenés alguna duda, podés contactarnos a
-      soporte@revendiste.com.
+      ayuda@revendiste.com.
     </Text>
   </BaseEmail>
 );

@@ -234,12 +234,62 @@ export function generateNotificationText<T extends NotificationType>(
     case 'auth_new_device_sign_in': {
       const meta =
         metadata as TypedNotificationMetadata<'auth_new_device_sign_in'>;
-      const deviceInfo = [meta.deviceType, meta.browserName, meta.operatingSystem]
+      const deviceInfo = [
+        meta.deviceType,
+        meta.browserName,
+        meta.operatingSystem,
+      ]
         .filter(Boolean)
         .join(' ');
       return {
         title: 'Nuevo inicio de sesión',
-        description: `Se detectó un nuevo inicio de sesión${deviceInfo ? ` desde ${deviceInfo}` : ''}${meta.location ? ` en ${meta.location}` : ''}.`,
+        description: `Se detectó un nuevo inicio de sesión${
+          deviceInfo ? ` desde ${deviceInfo}` : ''
+        }${meta.location ? ` en ${meta.location}` : ''}.`,
+      };
+    }
+
+    // Identity verification notification types
+    case 'identity_verification_completed': {
+      return {
+        title: '¡Ya podés publicar tus entradas!',
+        description:
+          'Tu verificación de identidad se completó exitosamente. Empezá a vender entradas en Revendiste.',
+      };
+    }
+
+    case 'identity_verification_rejected': {
+      const meta =
+        metadata as TypedNotificationMetadata<'identity_verification_rejected'>;
+      const retryText = meta.canRetry
+        ? ' Podés intentarlo nuevamente.'
+        : ' Por favor, contactá a soporte si tenés dudas.';
+      return {
+        title: 'Verificación de identidad rechazada',
+        description: `Tu verificación fue rechazada: ${meta.rejectionReason}.${retryText}`,
+      };
+    }
+
+    case 'identity_verification_failed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'identity_verification_failed'>;
+      const attemptsText =
+        meta.attemptsRemaining > 0
+          ? ` Te quedan ${meta.attemptsRemaining} ${
+              meta.attemptsRemaining === 1 ? 'intento' : 'intentos'
+            }.`
+          : '';
+      return {
+        title: 'Verificación de identidad fallida',
+        description: `No pudimos verificar tu identidad: ${meta.failureReason}.${attemptsText}`,
+      };
+    }
+
+    case 'identity_verification_manual_review': {
+      return {
+        title: 'Verificación en revisión',
+        description:
+          'Tu verificación de identidad está siendo revisada por nuestro equipo. Te avisaremos cuando esté lista.',
       };
     }
 

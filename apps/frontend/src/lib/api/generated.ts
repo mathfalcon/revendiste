@@ -10,6 +10,39 @@
  * ---------------------------------------------------------------
  */
 
+export enum DocumentTypeEnum {
+  CiUy = "ci_uy",
+  DniAr = "dni_ar",
+  Passport = "passport",
+}
+
+export enum VerificationStatus {
+  Pending = "pending",
+  RequiresManualReview = "requires_manual_review",
+  Completed = "completed",
+  Failed = "failed",
+}
+
+/**
+ * Union type of all error class names that can be returned by the API.
+ * Used for type-safe error handling on the frontend.
+ */
+export enum ErrorClassName {
+  AppError = "AppError",
+  BadRequestError = "BadRequestError",
+  UnauthorizedError = "UnauthorizedError",
+  ForbiddenError = "ForbiddenError",
+  NotFoundError = "NotFoundError",
+  ConflictError = "ConflictError",
+  ValidationError = "ValidationError",
+  TooManyRequestsError = "TooManyRequestsError",
+  MaxAttemptsExceededError = "MaxAttemptsExceededError",
+  InternalServerError = "InternalServerError",
+  ServiceUnavailableError = "ServiceUnavailableError",
+  DatabaseError = "DatabaseError",
+  ZodValidationError = "ZodValidationError",
+}
+
 export enum NotificationType {
   AuthInvitation = "auth_invitation",
   AuthNewDeviceSignIn = "auth_new_device_sign_in",
@@ -20,6 +53,10 @@ export enum NotificationType {
   AuthVerificationCode = "auth_verification_code",
   DocumentReminder = "document_reminder",
   DocumentUploaded = "document_uploaded",
+  IdentityVerificationCompleted = "identity_verification_completed",
+  IdentityVerificationFailed = "identity_verification_failed",
+  IdentityVerificationManualReview = "identity_verification_manual_review",
+  IdentityVerificationRejected = "identity_verification_rejected",
   OrderConfirmed = "order_confirmed",
   OrderExpired = "order_expired",
   PaymentFailed = "payment_failed",
@@ -224,15 +261,6 @@ export interface CreateTicketListingResponse {
     price: string;
     listingId: string;
     /** @format date-time */
-    documentUploadRequiredNotifiedAt: string | null;
-    /** @format date-time */
-    documentUploadedAt: string | null;
-    documentType: string | null;
-    /** @format double */
-    documentSizeBytes: number | null;
-    documentPath: string | null;
-    documentOriginalName: string | null;
-    /** @format date-time */
     cancelledAt: string | null;
     /** @format date-time */
     soldAt: string | null;
@@ -373,15 +401,6 @@ export interface UpdateTicketPriceResponse {
   price: string;
   listingId: string;
   /** @format date-time */
-  documentUploadRequiredNotifiedAt: string | null;
-  /** @format date-time */
-  documentUploadedAt: string | null;
-  documentType: string | null;
-  /** @format double */
-  documentSizeBytes: number | null;
-  documentPath: string | null;
-  documentOriginalName: string | null;
-  /** @format date-time */
   cancelledAt: string | null;
   /** @format date-time */
   soldAt: string | null;
@@ -404,15 +423,6 @@ export interface RemoveTicketResponse {
   ticketNumber: number;
   price: string;
   listingId: string;
-  /** @format date-time */
-  documentUploadRequiredNotifiedAt: string | null;
-  /** @format date-time */
-  documentUploadedAt: string | null;
-  documentType: string | null;
-  /** @format double */
-  documentSizeBytes: number | null;
-  documentPath: string | null;
-  documentOriginalName: string | null;
   /** @format date-time */
   cancelledAt: string | null;
   /** @format date-time */
@@ -1269,6 +1279,32 @@ export interface DeletePayoutDocumentResponse {
 }
 
 export interface GetCurrentUserResponse {
+  /** Reason for manual review rejection (if rejected by admin) */
+  rejectionReason: string | null;
+  /** Whether user can retry liveness (has attempts remaining and is in a retryable state) */
+  canRetryLiveness: boolean;
+  /**
+   * Number of verification attempts used (max 5)
+   * @format double
+   */
+  verificationAttempts: number;
+  /** Whether document verification step was completed successfully (text/face detected) */
+  documentVerificationCompleted: boolean;
+  /** Whether document has been uploaded (step 2 completed) */
+  hasDocumentImage: boolean;
+  /** Session ID for resuming liveness check on another device */
+  verificationSessionId: string | null;
+  documentCountry: string | null;
+  documentNumber: string | null;
+  documentType: "ci_uy" | "dni_ar" | "passport" | null;
+  verificationStatus:
+    | "pending"
+    | "completed"
+    | "requires_manual_review"
+    | "failed"
+    | "rejected"
+    | null;
+  documentVerified: boolean;
   role: "user" | "organizer" | "admin";
   imageUrl: string | null;
   lastName: string | null;
@@ -1411,7 +1447,12 @@ export interface InferTypeofBaseActionSchema {
   data?: RecordStringUnknown;
   url?: string;
   label: string;
-  type: "upload_documents" | "view_order" | "retry_payment" | "view_payout";
+  type:
+    | "upload_documents"
+    | "view_order"
+    | "retry_payment"
+    | "view_payout"
+    | "start_verification";
 }
 
 export type NotificationAction = InferTypeofBaseActionSchema;
@@ -1456,6 +1497,215 @@ export type MarkAsSeenResponse = TypedNotification | null;
 export type MarkAllAsSeenResponse = TypedNotification[];
 
 export type DeleteNotificationResponse = TypedNotification | null;
+
+export interface InitiateVerificationResponse {
+  message: string;
+  success: boolean;
+}
+
+/**
+ * API Error Response - This is the actual shape returned by the error handler middleware.
+ * Use this type in
+ */
+export interface ApiErrorResponse {
+  /** The error class name (e.g., 'ValidationError', 'UnauthorizedError') */
+  error: ErrorClassName;
+  /** Human-readable error message */
+  message: string;
+  /**
+   * HTTP status code
+   * @format double
+   */
+  statusCode: number;
+  /** ISO timestamp of when the error occurred */
+  timestamp: string;
+  /** Request path that caused the error */
+  path: string;
+  /** HTTP method of the request */
+  method: string;
+  /** Additional metadata (e.g., for validation errors) */
+  metadata?: RecordStringUnknown;
+}
+
+export interface InitiateVerificationRouteBody {
+  documentCountry?: string;
+  documentNumber: string;
+  documentType: "ci_uy" | "dni_ar" | "passport";
+}
+
+export interface ProcessDocumentResponse {
+  documentNumberMatch: boolean;
+  verificationStatus: "pending" | "requires_manual_review";
+  readyForLiveness: boolean;
+  extractedNumber: string;
+}
+
+export interface CreateLivenessCheckResponse {
+  /** @format double */
+  attemptsRemaining: number;
+  /** @format double */
+  expiresInSeconds: number;
+  region: string;
+  sessionId?: string;
+}
+
+export interface VerifyLivenessResultsResponse {
+  /** @format double */
+  retriesRemaining?: number;
+  canRetry?: boolean;
+  message?: string;
+  status: VerificationStatus;
+  verified: boolean;
+}
+
+export interface VerifyLivenessRouteBody {
+  sessionId: string;
+}
+
+export interface GetVerificationsResponse {
+  pagination: {
+    hasPrev: boolean;
+    hasNext: boolean;
+    /** @format double */
+    totalPages: number;
+    /** @format double */
+    total: number;
+    /** @format double */
+    limit: number;
+    /** @format double */
+    page: number;
+  };
+  data: {
+    /** @format date-time */
+    updatedAt: string;
+    /** @format date-time */
+    createdAt: string;
+    verificationConfidenceScores: JsonValue;
+    manualReviewReason: string | null;
+    /** @format double */
+    verificationAttempts: number | null;
+    verificationStatus:
+      | "pending"
+      | "completed"
+      | "failed"
+      | "requires_manual_review"
+      | "rejected"
+      | null;
+    documentCountry: string | null;
+    documentNumber: string | null;
+    documentType: DocumentTypeEnum | null;
+    lastName: string | null;
+    firstName: string | null;
+    email: string;
+    id: string;
+  }[];
+}
+
+export interface InferTypeofAdminVerificationsQuerySchema {
+  status?:
+    | "pending"
+    | "completed"
+    | "failed"
+    | "requires_manual_review"
+    | "rejected";
+  sortOrder?: "asc" | "desc";
+  sortBy: "createdAt" | "updatedAt" | "verificationAttempts";
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+}
+
+export type AdminVerificationsQuery = InferTypeofAdminVerificationsQuerySchema;
+
+export interface GetVerificationDetailsResponse {
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  createdAt: string;
+  metadata: {
+    failedAt: any;
+    failureReason: any;
+    processedAt: any;
+    livenessSessionId: any;
+  };
+  images: {
+    auditImagesCount: any;
+    hasReferenceImage: boolean;
+    hasDocumentImage: boolean;
+  };
+  confidenceScores: {
+    liveness: any;
+    faceMatch: any;
+    textDetection: any;
+  };
+  /** @format date-time */
+  documentVerifiedAt: string | null;
+  documentVerified: boolean | null;
+  manualReviewReason: string | null;
+  /** @format double */
+  verificationAttempts: number | null;
+  verificationStatus:
+    | "pending"
+    | "completed"
+    | "failed"
+    | "requires_manual_review"
+    | "rejected"
+    | null;
+  documentCountry: string | null;
+  documentNumber: string | null;
+  documentType: DocumentTypeEnum | null;
+  lastName: string | null;
+  firstName: string | null;
+  email: string;
+  id: string;
+}
+
+export interface GetVerificationImageUrlResponse {
+  /** @format double */
+  expiresIn: number;
+  url: string;
+}
+
+export interface ApproveVerificationResponse {
+  message: string;
+  success: boolean;
+}
+
+export interface ApproveVerificationRouteBody {
+  notes?: string;
+}
+
+export interface RejectVerificationResponse {
+  message: string;
+  success: boolean;
+}
+
+export interface RejectVerificationRouteBody {
+  reason: string;
+}
+
+export interface GetVerificationAuditHistoryResponse {
+  pagination: {
+    /** @format double */
+    total: number;
+    /** @format double */
+    offset: number;
+    /** @format double */
+    limit: number;
+  };
+  data: {
+    previousStatus: string | null;
+    newStatus: string | null;
+    confidenceScores: JsonValue;
+    action: string;
+    userId: string;
+    metadata: JsonValue;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+}
 
 import type {
   AxiosInstance,
@@ -2421,6 +2671,156 @@ export class Api<
         format: "json",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Identity Verification
+     * @name GetVerifications
+     * @request GET:/admin/identity-verification
+     */
+    getVerifications: (
+      query: {
+        status?:
+          | "pending"
+          | "completed"
+          | "failed"
+          | "requires_manual_review"
+          | "rejected";
+        sortOrder?: "asc" | "desc";
+        sortBy: "createdAt" | "updatedAt" | "verificationAttempts";
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetVerificationsResponse, UnauthorizedError>({
+        path: `/admin/identity-verification`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Identity Verification
+     * @name GetVerificationDetails
+     * @request GET:/admin/identity-verification/{userId}
+     */
+    getVerificationDetails: (userId: string, params: RequestParams = {}) =>
+      this.request<
+        GetVerificationDetailsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/identity-verification/${userId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Identity Verification
+     * @name GetVerificationImage
+     * @request GET:/admin/identity-verification/{userId}/images/{imageType}
+     */
+    getVerificationImage: (
+      userId: string,
+      imageType: "document" | "reference" | "audit",
+      query?: {
+        index?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetVerificationImageUrlResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/identity-verification/${userId}/images/${imageType}`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Identity Verification
+     * @name ApproveVerification
+     * @request POST:/admin/identity-verification/{userId}/approve
+     */
+    approveVerification: (
+      userId: string,
+      data: ApproveVerificationRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApproveVerificationResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/identity-verification/${userId}/approve`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Identity Verification
+     * @name RejectVerification
+     * @request POST:/admin/identity-verification/{userId}/reject
+     */
+    rejectVerification: (
+      userId: string,
+      data: RejectVerificationRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        RejectVerificationResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/identity-verification/${userId}/reject`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Identity Verification
+     * @name GetVerificationAuditHistory
+     * @request GET:/admin/identity-verification/{userId}/audit-history
+     */
+    getVerificationAuditHistory: (
+      userId: string,
+      query?: {
+        offset?: string;
+        limit?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetVerificationAuditHistoryResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/identity-verification/${userId}/audit-history`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
   };
   users = {
     /**
@@ -2597,6 +2997,110 @@ export class Api<
       >({
         path: `/notifications/${notificationId}`,
         method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+  };
+  identityVerification = {
+    /**
+     * @description Initiate identity verification process User provides document type, number, and country (for passports). System validates the document format and checks for duplicates.
+     *
+     * @tags Identity Verification
+     * @name InitiateVerification
+     * @request POST:/identity-verification/initiate
+     */
+    initiateVerification: (
+      data: InitiateVerificationRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<InitiateVerificationResponse, ApiErrorResponse>({
+        path: `/identity-verification/initiate`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Verify document (upload document photo only) Processes uploaded document image: - Extracts text from document - Detects face in document - Validates document number - Determines if manual review is needed Face comparison will happen during liveness check using the liveness reference image
+     *
+     * @tags Identity Verification
+     * @name VerifyDocument
+     * @request POST:/identity-verification/verify-document
+     */
+    verifyDocument: (
+      data: {
+        /** @format binary */
+        file: File;
+        documentType: "ci_uy" | "dni_ar" | "passport";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ProcessDocumentResponse, ApiErrorResponse>({
+        path: `/identity-verification/verify-document`,
+        method: "POST",
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Start liveness check session Creates an AWS Rekognition Face Liveness session for the user. Returns session ID and region for the frontend to complete the check.
+     *
+     * @tags Identity Verification
+     * @name StartLiveness
+     * @request POST:/identity-verification/start-liveness
+     */
+    startLiveness: (params: RequestParams = {}) =>
+      this.request<CreateLivenessCheckResponse, ApiErrorResponse>({
+        path: `/identity-verification/start-liveness`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Verify liveness results Processes the results of the liveness check: - Validates liveness confidence - Determines if verification is complete or requires manual review - Updates user verification status
+     *
+     * @tags Identity Verification
+     * @name VerifyLiveness
+     * @request POST:/identity-verification/verify-liveness
+     */
+    verifyLiveness: (
+      data: VerifyLivenessRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<VerifyLivenessResultsResponse, ApiErrorResponse>({
+        path: `/identity-verification/verify-liveness`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Get temporary AWS credentials for Face Liveness SDK The backend assumes a minimal IAM role that can ONLY call StartFaceLivenessSession. This is more secure than Cognito because credentials are only given to authenticated users. Credentials expire in 15 minutes.
+     *
+     * @tags Identity Verification
+     * @name GetLivenessCredentials
+     * @request GET:/identity-verification/liveness-credentials
+     */
+    getLivenessCredentials: (params: RequestParams = {}) =>
+      this.request<
+        {
+          expiration: string;
+          region: string;
+          sessionToken: string;
+          secretAccessKey: string;
+          accessKeyId: string;
+        },
+        ApiErrorResponse
+      >({
+        path: `/identity-verification/liveness-credentials`,
+        method: "GET",
         format: "json",
         ...params,
       }),

@@ -1,5 +1,5 @@
-import {type Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
+import {Insertable, type Kysely} from 'kysely';
+import type {DB, DocumentTypeEnum, Users} from '@revendiste/shared';
 import {logger} from '~/utils';
 import {User} from '~/types';
 import {BaseRepository} from '../base';
@@ -21,9 +21,18 @@ export class UsersRepository extends BaseRepository<UsersRepository> {
     return user;
   }
 
-  // Upsert user by Clerk ID with all properties
+  // Upsert user by Clerk ID with core properties from Clerk
   async upsertByClerkId(
-    userData: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
+    userData: Pick<
+      User,
+      | 'clerkId'
+      | 'email'
+      | 'firstName'
+      | 'lastName'
+      | 'imageUrl'
+      | 'lastActiveAt'
+      | 'metadata'
+    > & {role?: User['role']},
   ) {
     const now = new Date();
 
@@ -121,5 +130,101 @@ export class UsersRepository extends BaseRepository<UsersRepository> {
       .executeTakeFirst();
 
     return user;
+  }
+
+  // Find user by document
+  async findByDocument(
+    documentType: DocumentTypeEnum,
+    documentNumber: string,
+    documentCountry?: string,
+  ) {
+    let query = this.db
+      .selectFrom('users')
+      .selectAll()
+      .where('documentType', '=', documentType)
+      .where('documentNumber', '=', documentNumber)
+      .where('documentVerified', '=', true)
+      .where('deletedAt', 'is', null);
+
+    if (documentCountry) {
+      query = query.where('documentCountry', '=', documentCountry);
+    }
+
+    return await query.executeTakeFirst();
+  }
+
+  // Update user verification data
+  async updateVerification(userId: string, data: Partial<Insertable<Users>>) {
+    const now = new Date();
+
+    const [user] = await this.db
+      .updateTable('users')
+      .set({
+        ...data,
+        updatedAt: now,
+      })
+      .where('id', '=', userId)
+      .where('deletedAt', 'is', null)
+      .returningAll()
+      .execute();
+
+    return user;
+  }
+
+  // Get verifications for admin review with pagination and filtering
+  async getVerificationsForAdmin(params: {
+    limit: number;
+    offset: number;
+    status?:
+      | 'requires_manual_review'
+      | 'pending'
+      | 'failed'
+      | 'completed'
+      | 'rejected';
+    sortBy?: 'createdAt' | 'updatedAt' | 'verificationAttempts';
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    let query = this.db
+      .selectFrom('users')
+      .selectAll()
+      .where('deletedAt', 'is', null)
+      // Only include users who have started verification (have document info)
+      .where('documentType', 'is not', null);
+
+    if (params.status) {
+      query = query.where('verificationStatus', '=', params.status);
+    }
+
+    const sortColumn = params.sortBy || 'updatedAt';
+    const sortOrder = params.sortOrder || 'desc';
+
+    return await query
+      .orderBy(sortColumn, sortOrder)
+      .limit(params.limit)
+      .offset(params.offset)
+      .execute();
+  }
+
+  // Count verifications for admin review
+  async countVerificationsForAdmin(params: {
+    status?:
+      | 'requires_manual_review'
+      | 'pending'
+      | 'failed'
+      | 'completed'
+      | 'rejected';
+  }) {
+    let query = this.db
+      .selectFrom('users')
+      .select(eb => eb.fn.countAll<number>().as('count'))
+      .where('deletedAt', 'is', null)
+      .where('documentType', 'is not', null);
+
+    if (params.status) {
+      query = query.where('verificationStatus', '=', params.status);
+    }
+
+    const result = await query.executeTakeFirst();
+    return Number(result?.count || 0);
   }
 }

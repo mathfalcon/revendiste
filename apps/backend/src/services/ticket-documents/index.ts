@@ -439,6 +439,8 @@ export class TicketDocumentService {
       'image/jpg',
       'image/png',
       'image/webp',
+      'image/heic',
+      'image/heif',
     ];
 
     if (!allowedTypes.includes(mimeType.toLowerCase())) {

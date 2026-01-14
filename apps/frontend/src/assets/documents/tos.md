@@ -1,6 +1,6 @@
 # Términos y Condiciones de Uso – Revendiste
 
-**Última actualización:** 3 de Enero de 2026
+**Última actualización:** 8 de Enero de 2026
 
 ---
 
@@ -374,7 +374,7 @@ Para poder publicar Tickets en la Plataforma, el Vendedor **deberá completar un
 
 **Paso 1 - Documento de Identidad:**
 
-- Número de documento de identidad (cédula uruguaya, pasaporte, DNI).
+- Número de documento de identidad (cédula uruguaya, DNI argentino o pasaporte).
 - **Fotografía del documento de identidad** (frente y dorso, según corresponda) siguiendo las instrucciones de la Plataforma.
 
 **Paso 2 - Verificación de Vida (Liveness):**
@@ -385,6 +385,15 @@ Para poder publicar Tickets en la Plataforma, el Vendedor **deberá completar un
 **Requisitos adicionales:**
 
 - Verificación de correo electrónico.
+
+### 5.1.1. Seguridad de los Datos de Verificación
+
+Revendiste implementa las más altas medidas de seguridad para proteger los datos de verificación de identidad:
+
+- **Cifrado de datos:** Las imágenes de documentos y verificación facial se almacenan utilizando cifrado AES-256, el mismo estándar utilizado por instituciones financieras.
+- **Acceso restringido:** Solo personal autorizado de Revendiste puede acceder a las imágenes en casos excepcionales que requieran revisión manual de seguridad o investigación de fraude.
+- **Almacenamiento seguro de datos biométricos:** Las imágenes del proceso de verificación de vida (liveness) se almacenan de forma segura para fines de auditoría, revisión manual y cumplimiento legal.
+- **Procesamiento automatizado:** La verificación se realiza principalmente mediante sistemas automatizados de reconocimiento de texto y comparación facial. En casos borderline, puede requerirse revisión manual.
 
 ### 5.2. Rechazo o Limitación
 

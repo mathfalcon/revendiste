@@ -10,7 +10,10 @@ import {logger} from '~/utils';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
 import {canUploadDocumentForPlatform} from './platform-helpers';
-import {TICKET_LISTING_ERROR_MESSAGES} from '~/constants/error-messages';
+import {
+  TICKET_LISTING_ERROR_MESSAGES,
+  IDENTITY_VERIFICATION_ERROR_MESSAGES,
+} from '~/constants/error-messages';
 import {NotificationService} from '~/services/notifications';
 import {notifySellerTicketSold} from '~/services/notifications/helpers';
 import type {Kysely} from 'kysely';
@@ -18,6 +21,7 @@ import type {DB} from '@revendiste/shared';
 
 export class TicketListingsService {
   private notificationService: NotificationService;
+  private usersRepository: UsersRepository;
 
   constructor(
     private readonly ticketListingsRepository: TicketListingsRepository,
@@ -31,12 +35,37 @@ export class TicketListingsService {
       db,
       new UsersRepository(db),
     );
+    this.usersRepository = new UsersRepository(db);
   }
 
   async createTicketListing(
     data: CreateTicketListingRouteBody,
     publisherUserId: string,
   ) {
+    // Check if user is verified
+    const user = await this.usersRepository.getById(publisherUserId);
+
+    if (!user) {
+      throw new UnauthorizedError('User not found');
+    }
+
+    // Check verification status
+    if (!user.documentVerified) {
+      if (user.verificationStatus === 'requires_manual_review') {
+        throw new ValidationError(
+          IDENTITY_VERIFICATION_ERROR_MESSAGES.VERIFICATION_IN_MANUAL_REVIEW,
+        );
+      } else if (user.verificationStatus === 'failed') {
+        throw new ValidationError(
+          IDENTITY_VERIFICATION_ERROR_MESSAGES.VERIFICATION_FAILED,
+        );
+      } else {
+        throw new ValidationError(
+          IDENTITY_VERIFICATION_ERROR_MESSAGES.VERIFICATION_REQUIRED,
+        );
+      }
+    }
+
     // Validate that the event exists and hasn't finished
     const event = await this.eventsRepository.getById(data.eventId);
     if (!event) {

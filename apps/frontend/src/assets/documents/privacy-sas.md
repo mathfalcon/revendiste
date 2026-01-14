@@ -30,9 +30,9 @@ Podemos recopilar los siguientes datos personales:
 - **Datos de transacciones:** información relacionada con operaciones de intermediación de entradas realizadas dentro de la plataforma, incluyendo detalles de las entradas, precios y estados de las transacciones.
 - **Datos técnicos:** dirección IP, tipo de dispositivo, navegador, sistema operativo, registros de actividad y datos de conexión.
 - **Datos de verificación de identidad:** número de documento de identidad (cédula uruguaya) o pasaporte, e imagen/foto del documento provista por el usuario, cuando sea requerida para habilitar la funcionalidad de publicación de entradas y prevenir fraude.
-- **Datos biométricos de verificación de vida (liveness):** imagen facial capturada durante el proceso de verificación de identidad, utilizada exclusivamente para confirmar que la persona que realiza la verificación es quien dice ser y está presente en ese momento. Este proceso se realiza desde el dispositivo móvil del usuario.
+- **Datos biométricos de verificación de vida (liveness):** imagen facial capturada durante el proceso de verificación de identidad, utilizada exclusivamente para confirmar que la persona que realiza la verificación es quien dice ser y está presente en ese momento. Este proceso se realiza desde el dispositivo móvil del usuario. **Estos datos se almacenan de forma segura junto con las imágenes del documento para fines de auditoría y prevención de fraude.**
 
-**Nota sobre datos biométricos:** Los datos de verificación de vida (liveness) se procesan con el único fin de prevenir fraudes y suplantación de identidad. Estos datos son tratados de forma segura y no se utilizan para otros fines como reconocimiento facial en otros contextos, creación de perfiles biométricos o publicidad.
+**Nota sobre datos biométricos:** Los datos de verificación de vida (liveness) se procesan y almacenan con el único fin de prevenir fraudes, suplantación de identidad, permitir auditorías de seguridad y cumplir con obligaciones legales. Estos datos son tratados de forma segura con acceso restringido y no se utilizan para otros fines como reconocimiento facial en otros contextos, creación de perfiles biométricos o publicidad.
 
 Revendiste no recopila otros datos sensibles (tales como datos de salud, origen étnico, opiniones políticas, convicciones religiosas u orientación sexual), salvo aquellos estrictamente necesarios para la prestación del servicio y en cumplimiento de la normativa aplicable.
 
@@ -140,8 +140,8 @@ Los datos personales serán conservados durante los siguientes períodos:
 
 - **Datos de cuenta:** mientras la cuenta del usuario permanezca activa o hasta que el usuario solicite su eliminación.
 - **Datos de transacciones:** durante el tiempo necesario para cumplir con obligaciones fiscales y legales (mínimo 5 años según normativa tributaria uruguaya).
-- **Datos de verificación de identidad (documento):** durante el tiempo necesario para validar la identidad y gestionar posibles reclamos o contracargos, y posteriormente serán eliminados o anonimizados, salvo obligación legal o requerimiento de autoridad competente.
-- **Datos biométricos de verificación de vida (liveness):** únicamente durante el proceso de verificación. Una vez completada la verificación exitosamente, los datos biométricos son eliminados y solo se conserva el resultado de la verificación (verificado/no verificado).
+- **Datos de verificación de identidad (documento):** durante un máximo de 5 (cinco) años para cumplir con obligaciones legales, gestionar posibles reclamos, contracargos o requerimientos de autoridades competentes. Transcurrido este plazo, serán eliminados de forma segura.
+- **Datos biométricos de verificación de vida (liveness):** estas imágenes se conservan de forma segura durante el mismo período que las imágenes del documento (5 años) para fines de auditoría, investigación de fraude y cumplimiento de obligaciones legales.
 - **Datos técnicos y de registro:** durante un período razonable para fines de seguridad y detección de fraudes (generalmente hasta 2 años).
 
 Una vez cumplidos los plazos de conservación, los datos serán eliminados de forma segura o anonimizados.

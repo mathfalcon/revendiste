@@ -2,9 +2,9 @@ import {Suspense} from 'react';
 import z from 'zod';
 import {FullScreenLoading} from '~/components';
 import {TicketListingForm} from '~/features/ticket-listing';
-import {createFileRoute, useSearch} from '@tanstack/react-router';
+import {createFileRoute, redirect, useSearch} from '@tanstack/react-router';
 import {beforeLoadRedirectToSignInIfNotAuthenticated} from '~/utils/auth';
-import {getEventByIdQuery} from '~/lib';
+import {getEventByIdQuery, getCurrentUserQuery} from '~/lib';
 import {seo} from '~/utils/seo';
 
 const CreateTicketListingSearchSchema = z.object({
@@ -19,6 +19,18 @@ export const Route = createFileRoute('/entradas/publicar')({
   },
   loaderDeps: ({search: {eventoId}}) => ({eventoId}),
   loader: async ({context, deps: {eventoId}}) => {
+    // Check if user is verified before allowing access to create listing
+    const user = await context.queryClient.ensureQueryData(
+      getCurrentUserQuery(),
+    );
+
+    if (!user.documentVerified) {
+      throw redirect({
+        to: '/cuenta/verificar',
+        replace: true,
+      });
+    }
+
     // Prefetch event data for the form if eventId is provided in search params
     if (eventoId) {
       await context.queryClient.ensureQueryData(getEventByIdQuery(eventoId));

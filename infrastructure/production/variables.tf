@@ -74,15 +74,18 @@ variable "db_username" {
 }
 
 variable "db_engine_version" {
-  description = "PostgreSQL engine version for Aurora"
+  description = "PostgreSQL engine version for Aurora Serverless v2"
   type        = string
   default     = "15.8"
 }
 
+# Note: Aurora Serverless v2 doesn't use instance_class or allocated_storage
+# Storage scales automatically and you pay per GB-month (~$0.12/GB)
+
 variable "db_min_capacity" {
-  description = "Minimum Aurora Serverless v2 capacity (ACUs)"
+  description = "Minimum Aurora Serverless v2 capacity (ACUs). 0.5 is the minimum."
   type        = number
-  default     = 0.5 # Minimum for cost optimization
+  default     = 0.5 # Minimum ACU for cost savings when idle (~$45/month)
 }
 
 variable "db_max_capacity" {

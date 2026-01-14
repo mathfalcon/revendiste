@@ -51,6 +51,11 @@ const faqGeneral: FAQItem[] = [
     answer:
       'Mirá, entendemos la desconfianza. Por eso nuestro sistema funciona así: cuando comprás, tu plata queda en custodia con nosotros. No se la damos al vendedor hasta que el evento termine y verifiquemos que todo salió bien. Si la entrada no era válida, te devolvemos la plata. Simple.',
   },
+  {
+    question: '¿Qué tan seguros están mis datos personales?',
+    answer:
+      'La seguridad de tus datos es nuestra prioridad. Usamos cifrado AES-256 para proteger toda la información sensible, el mismo estándar que usan bancos y entidades financieras. Los datos de verificación de identidad se almacenan de forma segura con acceso restringido solo a personal autorizado. Todo cumple con la Ley de Protección de Datos Personales de Uruguay (Ley Nº 18.331).',
+  },
 ];
 
 const faqCompradores: FAQItem[] = [
@@ -90,7 +95,12 @@ const faqVendedores: FAQItem[] = [
   {
     question: '¿Por qué me piden verificar mi identidad?',
     answer:
-      'Para evitar fraudes. Si alguien vende una entrada trucha, necesitamos saber quién es. El proceso tiene dos pasos: primero subís una foto de tu documento, y después hacés una verificación de "vida" (liveness) desde tu celular para confirmar que sos vos. Esto protege a los compradores y también te protege a vos, porque genera confianza en la plataforma. Tus datos están seguros, solo los usamos para verificación y prevención de fraude.',
+      'Para prevenir fraudes. Si alguien vende una entrada inválida, necesitamos poder identificarlo. El proceso tiene dos pasos: primero subís una foto de tu documento, y después hacés una verificación de vida (liveness) desde tu celular para confirmar que sos vos. Esto protege a los compradores y también te protege a vos, generando confianza en la plataforma.',
+  },
+  {
+    question: '¿Mis datos de verificación están seguros?',
+    answer:
+      'Absolutamente. Las imágenes de tu documento y verificación facial se almacenan con cifrado AES-256, el mismo estándar que usan bancos y entidades financieras. Solo personal autorizado puede acceder a estas imágenes en casos excepcionales de revisión de seguridad. Conservamos las imágenes de forma segura para prevenir fraudes, cumplir con obligaciones legales y permitir auditorías de seguridad.',
   },
   {
     question: '¿Cuándo me pagan?',

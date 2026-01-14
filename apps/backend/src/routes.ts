@@ -24,6 +24,10 @@ import { WebhooksController } from './controllers/webhooks/index';
 import { PaymentsController } from './controllers/payments/index';
 // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { NotificationsController } from './controllers/notifications/index';
+// WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { IdentityVerificationController } from './controllers/identity-verification/index';
+// WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { AdminIdentityVerificationController } from './controllers/admin/identity-verification/index';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 const multer = require('multer');
 
@@ -120,7 +124,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CreateTicketListingResponse": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"ticketWaveId":{"dataType":"string","required":true},"soldAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"publisherUserId":{"dataType":"string","required":true},"updatedAt":{"dataType":"datetime","required":true},"id":{"dataType":"string","required":true},"deletedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"createdAt":{"dataType":"datetime","required":true},"listingTickets":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"ticketNumber":{"dataType":"double","required":true},"price":{"dataType":"string","required":true},"listingId":{"dataType":"string","required":true},"documentUploadRequiredNotifiedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"documentUploadedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"documentType":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentSizeBytes":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"documentPath":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentOriginalName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"cancelledAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"soldAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"updatedAt":{"dataType":"datetime","required":true},"id":{"dataType":"string","required":true},"deletedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"createdAt":{"dataType":"datetime","required":true}}},"required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"ticketWaveId":{"dataType":"string","required":true},"soldAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"publisherUserId":{"dataType":"string","required":true},"updatedAt":{"dataType":"datetime","required":true},"id":{"dataType":"string","required":true},"deletedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"createdAt":{"dataType":"datetime","required":true},"listingTickets":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"ticketNumber":{"dataType":"double","required":true},"price":{"dataType":"string","required":true},"listingId":{"dataType":"string","required":true},"cancelledAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"soldAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"updatedAt":{"dataType":"datetime","required":true},"id":{"dataType":"string","required":true},"deletedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"createdAt":{"dataType":"datetime","required":true}}},"required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "UnauthorizedError": {
@@ -194,7 +198,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "UpdateTicketPriceResponse": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"ticketNumber":{"dataType":"double","required":true},"price":{"dataType":"string","required":true},"listingId":{"dataType":"string","required":true},"documentUploadRequiredNotifiedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"documentUploadedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"documentType":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentSizeBytes":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"documentPath":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentOriginalName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"cancelledAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"soldAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"updatedAt":{"dataType":"datetime","required":true},"id":{"dataType":"string","required":true},"deletedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"createdAt":{"dataType":"datetime","required":true}}},{"dataType":"undefined"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"ticketNumber":{"dataType":"double","required":true},"price":{"dataType":"string","required":true},"listingId":{"dataType":"string","required":true},"cancelledAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"soldAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"updatedAt":{"dataType":"datetime","required":true},"id":{"dataType":"string","required":true},"deletedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"createdAt":{"dataType":"datetime","required":true}}},{"dataType":"undefined"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "UpdateTicketPriceRouteBody": {
@@ -204,7 +208,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "RemoveTicketResponse": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"ticketNumber":{"dataType":"double","required":true},"price":{"dataType":"string","required":true},"listingId":{"dataType":"string","required":true},"documentUploadRequiredNotifiedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"documentUploadedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"documentType":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentSizeBytes":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"documentPath":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentOriginalName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"cancelledAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"soldAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"updatedAt":{"dataType":"datetime","required":true},"id":{"dataType":"string","required":true},"deletedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"createdAt":{"dataType":"datetime","required":true}}},{"dataType":"undefined"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"ticketNumber":{"dataType":"double","required":true},"price":{"dataType":"string","required":true},"listingId":{"dataType":"string","required":true},"cancelledAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"soldAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"updatedAt":{"dataType":"datetime","required":true},"id":{"dataType":"string","required":true},"deletedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"createdAt":{"dataType":"datetime","required":true}}},{"dataType":"undefined"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CreateOrderResponse": {
@@ -448,7 +452,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "GetCurrentUserResponse": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"role":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["user"]},{"dataType":"enum","enums":["organizer"]},{"dataType":"enum","enums":["admin"]}],"required":true},"imageUrl":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"lastName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"firstName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"email":{"dataType":"string","required":true},"id":{"dataType":"string","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"rejectionReason":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"canRetryLiveness":{"dataType":"boolean","required":true},"verificationAttempts":{"dataType":"double","required":true},"documentVerificationCompleted":{"dataType":"boolean","required":true},"hasDocumentImage":{"dataType":"boolean","required":true},"verificationSessionId":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentCountry":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentNumber":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentType":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ci_uy"]},{"dataType":"enum","enums":["dni_ar"]},{"dataType":"enum","enums":["passport"]},{"dataType":"enum","enums":[null]}],"required":true},"verificationStatus":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["completed"]},{"dataType":"enum","enums":["requires_manual_review"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["rejected"]},{"dataType":"enum","enums":[null]}],"required":true},"documentVerified":{"dataType":"boolean","required":true},"role":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["user"]},{"dataType":"enum","enums":["organizer"]},{"dataType":"enum","enums":["admin"]}],"required":true},"imageUrl":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"lastName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"firstName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"email":{"dataType":"string","required":true},"id":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "DLocalWebhookrRouteBody": {
@@ -487,7 +491,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NotificationType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["auth_invitation"]},{"dataType":"enum","enums":["auth_new_device_sign_in"]},{"dataType":"enum","enums":["auth_password_changed"]},{"dataType":"enum","enums":["auth_password_removed"]},{"dataType":"enum","enums":["auth_primary_email_changed"]},{"dataType":"enum","enums":["auth_reset_password_code"]},{"dataType":"enum","enums":["auth_verification_code"]},{"dataType":"enum","enums":["document_reminder"]},{"dataType":"enum","enums":["document_uploaded"]},{"dataType":"enum","enums":["order_confirmed"]},{"dataType":"enum","enums":["order_expired"]},{"dataType":"enum","enums":["payment_failed"]},{"dataType":"enum","enums":["payment_succeeded"]},{"dataType":"enum","enums":["payout_cancelled"]},{"dataType":"enum","enums":["payout_completed"]},{"dataType":"enum","enums":["payout_failed"]},{"dataType":"enum","enums":["payout_processing"]},{"dataType":"enum","enums":["ticket_sold_seller"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["auth_invitation"]},{"dataType":"enum","enums":["auth_new_device_sign_in"]},{"dataType":"enum","enums":["auth_password_changed"]},{"dataType":"enum","enums":["auth_password_removed"]},{"dataType":"enum","enums":["auth_primary_email_changed"]},{"dataType":"enum","enums":["auth_reset_password_code"]},{"dataType":"enum","enums":["auth_verification_code"]},{"dataType":"enum","enums":["document_reminder"]},{"dataType":"enum","enums":["document_uploaded"]},{"dataType":"enum","enums":["identity_verification_completed"]},{"dataType":"enum","enums":["identity_verification_failed"]},{"dataType":"enum","enums":["identity_verification_manual_review"]},{"dataType":"enum","enums":["identity_verification_rejected"]},{"dataType":"enum","enums":["order_confirmed"]},{"dataType":"enum","enums":["order_expired"]},{"dataType":"enum","enums":["payment_failed"]},{"dataType":"enum","enums":["payment_succeeded"]},{"dataType":"enum","enums":["payout_cancelled"]},{"dataType":"enum","enums":["payout_completed"]},{"dataType":"enum","enums":["payout_failed"]},{"dataType":"enum","enums":["payout_processing"]},{"dataType":"enum","enums":["ticket_sold_seller"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TypedNotificationMetadata_NotificationMetadata_": {
@@ -512,7 +516,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "infer_typeofBaseActionSchema_": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"undefined"}]},"url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"label":{"dataType":"string","required":true},"type":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["upload_documents"]},{"dataType":"enum","enums":["view_order"]},{"dataType":"enum","enums":["retry_payment"]},{"dataType":"enum","enums":["view_payout"]}],"required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"undefined"}]},"url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"label":{"dataType":"string","required":true},"type":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["upload_documents"]},{"dataType":"enum","enums":["view_order"]},{"dataType":"enum","enums":["retry_payment"]},{"dataType":"enum","enums":["view_payout"]},{"dataType":"enum","enums":["start_verification"]},{"dataType":"enum","enums":["publish_tickets"]}],"required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NotificationAction": {
@@ -569,6 +573,115 @@ const models: TsoaRoute.Models = {
     "DeleteNotificationResponse": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"ref":"TypedNotification"},{"dataType":"enum","enums":[null]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "InitiateVerificationResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true},"success":{"dataType":"boolean","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ErrorClassName": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["AppError"]},{"dataType":"enum","enums":["BadRequestError"]},{"dataType":"enum","enums":["UnauthorizedError"]},{"dataType":"enum","enums":["ForbiddenError"]},{"dataType":"enum","enums":["NotFoundError"]},{"dataType":"enum","enums":["ConflictError"]},{"dataType":"enum","enums":["ValidationError"]},{"dataType":"enum","enums":["TooManyRequestsError"]},{"dataType":"enum","enums":["MaxAttemptsExceededError"]},{"dataType":"enum","enums":["InternalServerError"]},{"dataType":"enum","enums":["ServiceUnavailableError"]},{"dataType":"enum","enums":["DatabaseError"]},{"dataType":"enum","enums":["ZodValidationError"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiErrorResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "error": {"ref":"ErrorClassName","required":true},
+            "message": {"dataType":"string","required":true},
+            "statusCode": {"dataType":"double","required":true},
+            "timestamp": {"dataType":"string","required":true},
+            "path": {"dataType":"string","required":true},
+            "method": {"dataType":"string","required":true},
+            "metadata": {"ref":"Record_string.unknown_"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "InitiateVerificationRouteBody": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"documentCountry":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"documentNumber":{"dataType":"string","required":true},"documentType":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ci_uy"]},{"dataType":"enum","enums":["dni_ar"]},{"dataType":"enum","enums":["passport"]}],"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ProcessDocumentResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"documentNumberMatch":{"dataType":"boolean","required":true},"verificationStatus":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["requires_manual_review"]}],"required":true},"readyForLiveness":{"dataType":"boolean","required":true},"extractedNumber":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CreateLivenessCheckResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"attemptsRemaining":{"dataType":"double","required":true},"expiresInSeconds":{"dataType":"double","required":true},"region":{"dataType":"string","required":true},"sessionId":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "VerificationStatus": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["requires_manual_review"]},{"dataType":"enum","enums":["completed"]},{"dataType":"enum","enums":["failed"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "VerifyLivenessResultsResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"retriesRemaining":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},"canRetry":{"dataType":"union","subSchemas":[{"dataType":"boolean"},{"dataType":"undefined"}]},"message":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"status":{"ref":"VerificationStatus","required":true},"verified":{"dataType":"boolean","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "VerifyLivenessRouteBody": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"sessionId":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "DocumentTypeEnum": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ci_uy"]},{"dataType":"enum","enums":["dni_ar"]},{"dataType":"enum","enums":["passport"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GetVerificationsResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"pagination":{"dataType":"nestedObjectLiteral","nestedProperties":{"hasPrev":{"dataType":"boolean","required":true},"hasNext":{"dataType":"boolean","required":true},"totalPages":{"dataType":"double","required":true},"total":{"dataType":"double","required":true},"limit":{"dataType":"double","required":true},"page":{"dataType":"double","required":true}},"required":true},"data":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"updatedAt":{"dataType":"datetime","required":true},"createdAt":{"dataType":"datetime","required":true},"verificationConfidenceScores":{"ref":"JsonValue","required":true},"manualReviewReason":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"verificationAttempts":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"verificationStatus":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["completed"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["requires_manual_review"]},{"dataType":"enum","enums":["rejected"]},{"dataType":"enum","enums":[null]}],"required":true},"documentCountry":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentNumber":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentType":{"dataType":"union","subSchemas":[{"ref":"DocumentTypeEnum"},{"dataType":"enum","enums":[null]}],"required":true},"lastName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"firstName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"email":{"dataType":"string","required":true},"id":{"dataType":"string","required":true}}},"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "infer_typeofAdminVerificationsQuerySchema_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["completed"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["requires_manual_review"]},{"dataType":"enum","enums":["rejected"]},{"dataType":"undefined"}]},"sortOrder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["asc"]},{"dataType":"enum","enums":["desc"]},{"dataType":"undefined"}]},"sortBy":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["createdAt"]},{"dataType":"enum","enums":["updatedAt"]},{"dataType":"enum","enums":["verificationAttempts"]}],"required":true},"limit":{"dataType":"double","required":true},"page":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AdminVerificationsQuery": {
+        "dataType": "refAlias",
+        "type": {"ref":"infer_typeofAdminVerificationsQuerySchema_","validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GetVerificationDetailsResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"updatedAt":{"dataType":"datetime","required":true},"createdAt":{"dataType":"datetime","required":true},"metadata":{"dataType":"nestedObjectLiteral","nestedProperties":{"failedAt":{"dataType":"any","required":true},"failureReason":{"dataType":"any","required":true},"processedAt":{"dataType":"any","required":true},"livenessSessionId":{"dataType":"any","required":true}},"required":true},"images":{"dataType":"nestedObjectLiteral","nestedProperties":{"auditImagesCount":{"dataType":"any","required":true},"hasReferenceImage":{"dataType":"boolean","required":true},"hasDocumentImage":{"dataType":"boolean","required":true}},"required":true},"confidenceScores":{"dataType":"nestedObjectLiteral","nestedProperties":{"liveness":{"dataType":"any","required":true},"faceMatch":{"dataType":"any","required":true},"textDetection":{"dataType":"any","required":true}},"required":true},"documentVerifiedAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"documentVerified":{"dataType":"union","subSchemas":[{"dataType":"boolean"},{"dataType":"enum","enums":[null]}],"required":true},"manualReviewReason":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"verificationAttempts":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"verificationStatus":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["completed"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["requires_manual_review"]},{"dataType":"enum","enums":["rejected"]},{"dataType":"enum","enums":[null]}],"required":true},"documentCountry":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentNumber":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"documentType":{"dataType":"union","subSchemas":[{"ref":"DocumentTypeEnum"},{"dataType":"enum","enums":[null]}],"required":true},"lastName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"firstName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"email":{"dataType":"string","required":true},"id":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GetVerificationImageUrlResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"expiresIn":{"dataType":"double","required":true},"url":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApproveVerificationResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true},"success":{"dataType":"boolean","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApproveVerificationRouteBody": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"notes":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RejectVerificationResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true},"success":{"dataType":"boolean","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RejectVerificationRouteBody": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"reason":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GetVerificationAuditHistoryResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"pagination":{"dataType":"nestedObjectLiteral","nestedProperties":{"total":{"dataType":"double","required":true},"offset":{"dataType":"double","required":true},"limit":{"dataType":"double","required":true}},"required":true},"data":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"previousStatus":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"newStatus":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"confidenceScores":{"ref":"JsonValue","required":true},"action":{"dataType":"string","required":true},"userId":{"dataType":"string","required":true},"metadata":{"ref":"JsonValue","required":true},"id":{"dataType":"string","required":true},"createdAt":{"dataType":"datetime","required":true}}},"required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
@@ -2012,6 +2125,354 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'deleteNotification',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsIdentityVerificationController_initiateVerification: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"InitiateVerificationRouteBody"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/identity-verification/initiate',
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController.prototype.initiateVerification)),
+
+            async function IdentityVerificationController_initiateVerification(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsIdentityVerificationController_initiateVerification, request, response });
+
+                const controller = new IdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'initiateVerification',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsIdentityVerificationController_verifyDocument: Record<string, TsoaRoute.ParameterSchema> = {
+                file: {"in":"formData","name":"file","required":true,"dataType":"file"},
+                documentType: {"in":"formData","name":"documentType","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ci_uy"]},{"dataType":"enum","enums":["dni_ar"]},{"dataType":"enum","enums":["passport"]}]},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/identity-verification/verify-document',
+            upload.fields([
+                {
+                    name: "file",
+                    maxCount: 1
+                }
+            ]),
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController.prototype.verifyDocument)),
+
+            async function IdentityVerificationController_verifyDocument(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsIdentityVerificationController_verifyDocument, request, response });
+
+                const controller = new IdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'verifyDocument',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsIdentityVerificationController_startLiveness: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/identity-verification/start-liveness',
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController.prototype.startLiveness)),
+
+            async function IdentityVerificationController_startLiveness(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsIdentityVerificationController_startLiveness, request, response });
+
+                const controller = new IdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'startLiveness',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsIdentityVerificationController_verifyLiveness: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"VerifyLivenessRouteBody"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/identity-verification/verify-liveness',
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController.prototype.verifyLiveness)),
+
+            async function IdentityVerificationController_verifyLiveness(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsIdentityVerificationController_verifyLiveness, request, response });
+
+                const controller = new IdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'verifyLiveness',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsIdentityVerificationController_getLivenessCredentials: Record<string, TsoaRoute.ParameterSchema> = {
+                _request: {"in":"request","name":"_request","required":true,"dataType":"object"},
+        };
+        app.get('/identity-verification/liveness-credentials',
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(IdentityVerificationController.prototype.getLivenessCredentials)),
+
+            async function IdentityVerificationController_getLivenessCredentials(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsIdentityVerificationController_getLivenessCredentials, request, response });
+
+                const controller = new IdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'getLivenessCredentials',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminIdentityVerificationController_getVerifications: Record<string, TsoaRoute.ParameterSchema> = {
+                query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["completed"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["requires_manual_review"]},{"dataType":"enum","enums":["rejected"]},{"dataType":"undefined"}]},"sortOrder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["asc"]},{"dataType":"enum","enums":["desc"]},{"dataType":"undefined"}]},"sortBy":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["createdAt"]},{"dataType":"enum","enums":["updatedAt"]},{"dataType":"enum","enums":["verificationAttempts"]}],"required":true},"limit":{"dataType":"double","required":true},"page":{"dataType":"double","required":true}}},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/admin/identity-verification',
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController.prototype.getVerifications)),
+
+            async function AdminIdentityVerificationController_getVerifications(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminIdentityVerificationController_getVerifications, request, response });
+
+                const controller = new AdminIdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'getVerifications',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminIdentityVerificationController_getVerificationDetails: Record<string, TsoaRoute.ParameterSchema> = {
+                userId: {"in":"path","name":"userId","required":true,"dataType":"string"},
+        };
+        app.get('/admin/identity-verification/:userId',
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController.prototype.getVerificationDetails)),
+
+            async function AdminIdentityVerificationController_getVerificationDetails(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminIdentityVerificationController_getVerificationDetails, request, response });
+
+                const controller = new AdminIdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'getVerificationDetails',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminIdentityVerificationController_getVerificationImage: Record<string, TsoaRoute.ParameterSchema> = {
+                userId: {"in":"path","name":"userId","required":true,"dataType":"string"},
+                imageType: {"in":"path","name":"imageType","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["document"]},{"dataType":"enum","enums":["reference"]},{"dataType":"enum","enums":["audit"]}]},
+                query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"index":{"dataType":"string"}}},
+        };
+        app.get('/admin/identity-verification/:userId/images/:imageType',
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController.prototype.getVerificationImage)),
+
+            async function AdminIdentityVerificationController_getVerificationImage(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminIdentityVerificationController_getVerificationImage, request, response });
+
+                const controller = new AdminIdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'getVerificationImage',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminIdentityVerificationController_approveVerification: Record<string, TsoaRoute.ParameterSchema> = {
+                userId: {"in":"path","name":"userId","required":true,"dataType":"string"},
+                body: {"in":"body","name":"body","required":true,"ref":"ApproveVerificationRouteBody"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/admin/identity-verification/:userId/approve',
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController.prototype.approveVerification)),
+
+            async function AdminIdentityVerificationController_approveVerification(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminIdentityVerificationController_approveVerification, request, response });
+
+                const controller = new AdminIdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'approveVerification',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminIdentityVerificationController_rejectVerification: Record<string, TsoaRoute.ParameterSchema> = {
+                userId: {"in":"path","name":"userId","required":true,"dataType":"string"},
+                body: {"in":"body","name":"body","required":true,"ref":"RejectVerificationRouteBody"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/admin/identity-verification/:userId/reject',
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController.prototype.rejectVerification)),
+
+            async function AdminIdentityVerificationController_rejectVerification(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminIdentityVerificationController_rejectVerification, request, response });
+
+                const controller = new AdminIdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'rejectVerification',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminIdentityVerificationController_getVerificationAuditHistory: Record<string, TsoaRoute.ParameterSchema> = {
+                userId: {"in":"path","name":"userId","required":true,"dataType":"string"},
+                query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"offset":{"dataType":"string"},"limit":{"dataType":"string"}}},
+        };
+        app.get('/admin/identity-verification/:userId/audit-history',
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminIdentityVerificationController.prototype.getVerificationAuditHistory)),
+
+            async function AdminIdentityVerificationController_getVerificationAuditHistory(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminIdentityVerificationController_getVerificationAuditHistory, request, response });
+
+                const controller = new AdminIdentityVerificationController();
+
+              await templateService.apiHandler({
+                methodName: 'getVerificationAuditHistory',
                 controller,
                 response,
                 next,

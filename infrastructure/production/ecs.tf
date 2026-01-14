@@ -34,7 +34,7 @@ resource "aws_ecs_cluster" "main" {
 
   setting {
     name  = "containerInsights"
-    value = "enabled" # Enable CloudWatch Container Insights for monitoring
+    value = "disabled" # Disabled to save costs (~$15-19/month for custom metrics)
   }
 
   tags = {

@@ -54,8 +54,19 @@ export class UsersService {
   }
 
   // Get or create user (useful for auth middleware)
+  // Only requires the fields from Clerk auth - other fields have defaults in DB
   async getOrCreateUser(
-    userData: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
+    userData: Pick<
+      User,
+      | 'clerkId'
+      | 'email'
+      | 'firstName'
+      | 'lastName'
+      | 'imageUrl'
+      | 'lastActiveAt'
+      | 'metadata'
+      | 'role'
+    >,
   ) {
     try {
       // Try to find existing user

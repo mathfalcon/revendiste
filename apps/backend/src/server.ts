@@ -21,6 +21,11 @@ app.use(
     origin: [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
+      'http://192.168.2.1:3000',
+      'https://192.168.2.1:3000',
+      'http://192.168.0.127:3000',
+      'https://192.168.0.127:3000',
+      'https://192.168.68.115:3000',
       APP_BASE_URL,
       'https://revendiste.com',
     ].filter(Boolean), // Remove any undefined values
@@ -110,7 +115,7 @@ if (NODE_ENV === 'local') {
 // Global error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   logger.info(`🚀 API listening on http://localhost:${PORT}/api`);
 
   // Start scheduled jobs only in development/local environments

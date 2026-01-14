@@ -534,33 +534,6 @@
 								"listingId": {
 									"type": "string"
 								},
-								"documentUploadRequiredNotifiedAt": {
-									"type": "string",
-									"format": "date-time",
-									"nullable": true
-								},
-								"documentUploadedAt": {
-									"type": "string",
-									"format": "date-time",
-									"nullable": true
-								},
-								"documentType": {
-									"type": "string",
-									"nullable": true
-								},
-								"documentSizeBytes": {
-									"type": "number",
-									"format": "double",
-									"nullable": true
-								},
-								"documentPath": {
-									"type": "string",
-									"nullable": true
-								},
-								"documentOriginalName": {
-									"type": "string",
-									"nullable": true
-								},
 								"cancelledAt": {
 									"type": "string",
 									"format": "date-time",
@@ -592,12 +565,6 @@
 								"ticketNumber",
 								"price",
 								"listingId",
-								"documentUploadRequiredNotifiedAt",
-								"documentUploadedAt",
-								"documentType",
-								"documentSizeBytes",
-								"documentPath",
-								"documentOriginalName",
 								"cancelledAt",
 								"soldAt",
 								"updatedAt",
@@ -1048,33 +1015,6 @@
 					"listingId": {
 						"type": "string"
 					},
-					"documentUploadRequiredNotifiedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"documentUploadedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"documentType": {
-						"type": "string",
-						"nullable": true
-					},
-					"documentSizeBytes": {
-						"type": "number",
-						"format": "double",
-						"nullable": true
-					},
-					"documentPath": {
-						"type": "string",
-						"nullable": true
-					},
-					"documentOriginalName": {
-						"type": "string",
-						"nullable": true
-					},
 					"cancelledAt": {
 						"type": "string",
 						"format": "date-time",
@@ -1106,12 +1046,6 @@
 					"ticketNumber",
 					"price",
 					"listingId",
-					"documentUploadRequiredNotifiedAt",
-					"documentUploadedAt",
-					"documentType",
-					"documentSizeBytes",
-					"documentPath",
-					"documentOriginalName",
 					"cancelledAt",
 					"soldAt",
 					"updatedAt",
@@ -1145,33 +1079,6 @@
 					"listingId": {
 						"type": "string"
 					},
-					"documentUploadRequiredNotifiedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"documentUploadedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"documentType": {
-						"type": "string",
-						"nullable": true
-					},
-					"documentSizeBytes": {
-						"type": "number",
-						"format": "double",
-						"nullable": true
-					},
-					"documentPath": {
-						"type": "string",
-						"nullable": true
-					},
-					"documentOriginalName": {
-						"type": "string",
-						"nullable": true
-					},
 					"cancelledAt": {
 						"type": "string",
 						"format": "date-time",
@@ -1203,12 +1110,6 @@
 					"ticketNumber",
 					"price",
 					"listingId",
-					"documentUploadRequiredNotifiedAt",
-					"documentUploadedAt",
-					"documentType",
-					"documentSizeBytes",
-					"documentPath",
-					"documentOriginalName",
 					"cancelledAt",
 					"soldAt",
 					"updatedAt",
@@ -4704,6 +4605,66 @@
 			},
 			"GetCurrentUserResponse": {
 				"properties": {
+					"rejectionReason": {
+						"type": "string",
+						"nullable": true,
+						"description": "Reason for manual review rejection (if rejected by admin)"
+					},
+					"canRetryLiveness": {
+						"type": "boolean",
+						"description": "Whether user can retry liveness (has attempts remaining and is in a retryable state)"
+					},
+					"verificationAttempts": {
+						"type": "number",
+						"format": "double",
+						"description": "Number of verification attempts used (max 5)"
+					},
+					"documentVerificationCompleted": {
+						"type": "boolean",
+						"description": "Whether document verification step was completed successfully (text/face detected)"
+					},
+					"hasDocumentImage": {
+						"type": "boolean",
+						"description": "Whether document has been uploaded (step 2 completed)"
+					},
+					"verificationSessionId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Session ID for resuming liveness check on another device"
+					},
+					"documentCountry": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentNumber": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentType": {
+						"type": "string",
+						"enum": [
+							"ci_uy",
+							"dni_ar",
+							"passport",
+							null
+						],
+						"nullable": true
+					},
+					"verificationStatus": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"completed",
+							"requires_manual_review",
+							"failed",
+							"rejected",
+							null
+						],
+						"nullable": true
+					},
+					"documentVerified": {
+						"type": "boolean"
+					},
 					"role": {
 						"type": "string",
 						"enum": [
@@ -4732,6 +4693,17 @@
 					}
 				},
 				"required": [
+					"rejectionReason",
+					"canRetryLiveness",
+					"verificationAttempts",
+					"documentVerificationCompleted",
+					"hasDocumentImage",
+					"verificationSessionId",
+					"documentCountry",
+					"documentNumber",
+					"documentType",
+					"verificationStatus",
+					"documentVerified",
 					"role",
 					"imageUrl",
 					"lastName",
@@ -5107,6 +5079,10 @@
 					"auth_verification_code",
 					"document_reminder",
 					"document_uploaded",
+					"identity_verification_completed",
+					"identity_verification_failed",
+					"identity_verification_manual_review",
+					"identity_verification_rejected",
 					"order_confirmed",
 					"order_expired",
 					"payment_failed",
@@ -5151,7 +5127,9 @@
 							"upload_documents",
 							"view_order",
 							"retry_payment",
-							"view_payout"
+							"view_payout",
+							"start_verification",
+							"publish_tickets"
 						]
 					}
 				},
@@ -5286,6 +5264,664 @@
 					}
 				],
 				"nullable": true
+			},
+			"InitiateVerificationResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"message",
+					"success"
+				],
+				"type": "object"
+			},
+			"ErrorClassName": {
+				"type": "string",
+				"enum": [
+					"AppError",
+					"BadRequestError",
+					"UnauthorizedError",
+					"ForbiddenError",
+					"NotFoundError",
+					"ConflictError",
+					"ValidationError",
+					"TooManyRequestsError",
+					"MaxAttemptsExceededError",
+					"InternalServerError",
+					"ServiceUnavailableError",
+					"DatabaseError",
+					"ZodValidationError"
+				],
+				"description": "Union type of all error class names that can be returned by the API.\nUsed for type-safe error handling on the frontend."
+			},
+			"ApiErrorResponse": {
+				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\nUse this type in",
+				"properties": {
+					"error": {
+						"$ref": "#/components/schemas/ErrorClassName",
+						"description": "The error class name (e.g., 'ValidationError', 'UnauthorizedError')"
+					},
+					"message": {
+						"type": "string",
+						"description": "Human-readable error message"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double",
+						"description": "HTTP status code"
+					},
+					"timestamp": {
+						"type": "string",
+						"description": "ISO timestamp of when the error occurred"
+					},
+					"path": {
+						"type": "string",
+						"description": "Request path that caused the error"
+					},
+					"method": {
+						"type": "string",
+						"description": "HTTP method of the request"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "Additional metadata (e.g., for validation errors)"
+					}
+				},
+				"required": [
+					"error",
+					"message",
+					"statusCode",
+					"timestamp",
+					"path",
+					"method"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"InitiateVerificationRouteBody": {
+				"properties": {
+					"documentCountry": {
+						"type": "string"
+					},
+					"documentNumber": {
+						"type": "string"
+					},
+					"documentType": {
+						"type": "string",
+						"enum": [
+							"ci_uy",
+							"dni_ar",
+							"passport"
+						]
+					}
+				},
+				"required": [
+					"documentNumber",
+					"documentType"
+				],
+				"type": "object"
+			},
+			"ProcessDocumentResponse": {
+				"properties": {
+					"documentNumberMatch": {
+						"type": "boolean"
+					},
+					"verificationStatus": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"requires_manual_review"
+						]
+					},
+					"readyForLiveness": {
+						"type": "boolean"
+					},
+					"extractedNumber": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"documentNumberMatch",
+					"verificationStatus",
+					"readyForLiveness",
+					"extractedNumber"
+				],
+				"type": "object"
+			},
+			"CreateLivenessCheckResponse": {
+				"properties": {
+					"attemptsRemaining": {
+						"type": "number",
+						"format": "double"
+					},
+					"expiresInSeconds": {
+						"type": "number",
+						"format": "double"
+					},
+					"region": {
+						"type": "string"
+					},
+					"sessionId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"attemptsRemaining",
+					"expiresInSeconds",
+					"region"
+				],
+				"type": "object"
+			},
+			"VerificationStatus": {
+				"type": "string",
+				"enum": [
+					"pending",
+					"requires_manual_review",
+					"completed",
+					"failed"
+				]
+			},
+			"VerifyLivenessResultsResponse": {
+				"properties": {
+					"retriesRemaining": {
+						"type": "number",
+						"format": "double"
+					},
+					"canRetry": {
+						"type": "boolean"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"$ref": "#/components/schemas/VerificationStatus"
+					},
+					"verified": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"status",
+					"verified"
+				],
+				"type": "object"
+			},
+			"VerifyLivenessRouteBody": {
+				"properties": {
+					"sessionId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"sessionId"
+				],
+				"type": "object"
+			},
+			"DocumentTypeEnum": {
+				"type": "string",
+				"enum": [
+					"ci_uy",
+					"dni_ar",
+					"passport"
+				]
+			},
+			"GetVerificationsResponse": {
+				"properties": {
+					"pagination": {
+						"properties": {
+							"hasPrev": {
+								"type": "boolean"
+							},
+							"hasNext": {
+								"type": "boolean"
+							},
+							"totalPages": {
+								"type": "number",
+								"format": "double"
+							},
+							"total": {
+								"type": "number",
+								"format": "double"
+							},
+							"limit": {
+								"type": "number",
+								"format": "double"
+							},
+							"page": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"hasPrev",
+							"hasNext",
+							"totalPages",
+							"total",
+							"limit",
+							"page"
+						],
+						"type": "object"
+					},
+					"data": {
+						"items": {
+							"properties": {
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"verificationConfidenceScores": {
+									"$ref": "#/components/schemas/JsonValue"
+								},
+								"manualReviewReason": {
+									"type": "string",
+									"nullable": true
+								},
+								"verificationAttempts": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
+								},
+								"verificationStatus": {
+									"type": "string",
+									"enum": [
+										"pending",
+										"completed",
+										"failed",
+										"requires_manual_review",
+										"rejected",
+										null
+									],
+									"nullable": true
+								},
+								"documentCountry": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentNumber": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentType": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/DocumentTypeEnum"
+										}
+									],
+									"nullable": true
+								},
+								"lastName": {
+									"type": "string",
+									"nullable": true
+								},
+								"firstName": {
+									"type": "string",
+									"nullable": true
+								},
+								"email": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"updatedAt",
+								"createdAt",
+								"verificationConfidenceScores",
+								"manualReviewReason",
+								"verificationAttempts",
+								"verificationStatus",
+								"documentCountry",
+								"documentNumber",
+								"documentType",
+								"lastName",
+								"firstName",
+								"email",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"pagination",
+					"data"
+				],
+				"type": "object"
+			},
+			"infer_typeofAdminVerificationsQuerySchema_": {
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"completed",
+							"failed",
+							"requires_manual_review",
+							"rejected"
+						]
+					},
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
+					},
+					"sortBy": {
+						"type": "string",
+						"enum": [
+							"createdAt",
+							"updatedAt",
+							"verificationAttempts"
+						]
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"sortBy",
+					"limit",
+					"page"
+				],
+				"type": "object"
+			},
+			"AdminVerificationsQuery": {
+				"$ref": "#/components/schemas/infer_typeofAdminVerificationsQuerySchema_"
+			},
+			"GetVerificationDetailsResponse": {
+				"properties": {
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"metadata": {
+						"properties": {
+							"failedAt": {},
+							"failureReason": {},
+							"processedAt": {},
+							"livenessSessionId": {}
+						},
+						"required": [
+							"failedAt",
+							"failureReason",
+							"processedAt",
+							"livenessSessionId"
+						],
+						"type": "object"
+					},
+					"images": {
+						"properties": {
+							"auditImagesCount": {},
+							"hasReferenceImage": {
+								"type": "boolean"
+							},
+							"hasDocumentImage": {
+								"type": "boolean"
+							}
+						},
+						"required": [
+							"auditImagesCount",
+							"hasReferenceImage",
+							"hasDocumentImage"
+						],
+						"type": "object"
+					},
+					"confidenceScores": {
+						"properties": {
+							"liveness": {},
+							"faceMatch": {},
+							"textDetection": {}
+						},
+						"required": [
+							"liveness",
+							"faceMatch",
+							"textDetection"
+						],
+						"type": "object"
+					},
+					"documentVerifiedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"documentVerified": {
+						"type": "boolean",
+						"nullable": true
+					},
+					"manualReviewReason": {
+						"type": "string",
+						"nullable": true
+					},
+					"verificationAttempts": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"verificationStatus": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"completed",
+							"failed",
+							"requires_manual_review",
+							"rejected",
+							null
+						],
+						"nullable": true
+					},
+					"documentCountry": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentNumber": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/DocumentTypeEnum"
+							}
+						],
+						"nullable": true
+					},
+					"lastName": {
+						"type": "string",
+						"nullable": true
+					},
+					"firstName": {
+						"type": "string",
+						"nullable": true
+					},
+					"email": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"updatedAt",
+					"createdAt",
+					"metadata",
+					"images",
+					"confidenceScores",
+					"documentVerifiedAt",
+					"documentVerified",
+					"manualReviewReason",
+					"verificationAttempts",
+					"verificationStatus",
+					"documentCountry",
+					"documentNumber",
+					"documentType",
+					"lastName",
+					"firstName",
+					"email",
+					"id"
+				],
+				"type": "object"
+			},
+			"GetVerificationImageUrlResponse": {
+				"properties": {
+					"expiresIn": {
+						"type": "number",
+						"format": "double"
+					},
+					"url": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"expiresIn",
+					"url"
+				],
+				"type": "object"
+			},
+			"ApproveVerificationResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"message",
+					"success"
+				],
+				"type": "object"
+			},
+			"ApproveVerificationRouteBody": {
+				"properties": {
+					"notes": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"RejectVerificationResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"message",
+					"success"
+				],
+				"type": "object"
+			},
+			"RejectVerificationRouteBody": {
+				"properties": {
+					"reason": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"reason"
+				],
+				"type": "object"
+			},
+			"GetVerificationAuditHistoryResponse": {
+				"properties": {
+					"pagination": {
+						"properties": {
+							"total": {
+								"type": "number",
+								"format": "double"
+							},
+							"offset": {
+								"type": "number",
+								"format": "double"
+							},
+							"limit": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"total",
+							"offset",
+							"limit"
+						],
+						"type": "object"
+					},
+					"data": {
+						"items": {
+							"properties": {
+								"previousStatus": {
+									"type": "string",
+									"nullable": true
+								},
+								"newStatus": {
+									"type": "string",
+									"nullable": true
+								},
+								"confidenceScores": {
+									"$ref": "#/components/schemas/JsonValue"
+								},
+								"action": {
+									"type": "string"
+								},
+								"userId": {
+									"type": "string"
+								},
+								"metadata": {
+									"$ref": "#/components/schemas/JsonValue"
+								},
+								"id": {
+									"type": "string"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								}
+							},
+							"required": [
+								"previousStatus",
+								"newStatus",
+								"confidenceScores",
+								"action",
+								"userId",
+								"metadata",
+								"id",
+								"createdAt"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"pagination",
+					"data"
+				],
+				"type": "object"
 			}
 		},
 		"securitySchemes": {}
@@ -7888,6 +8524,796 @@
 						"in": "path",
 						"name": "notificationId",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/identity-verification/initiate": {
+			"post": {
+				"operationId": "InitiateVerification",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InitiateVerificationResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: Invalid document number, document already verified, or country required for passports",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Initiate identity verification process\n\nUser provides document type, number, and country (for passports).\nSystem validates the document format and checks for duplicates.",
+				"tags": [
+					"Identity Verification"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/InitiateVerificationRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/identity-verification/verify-document": {
+			"post": {
+				"operationId": "VerifyDocument",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProcessDocumentResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Document is required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: Invalid face detection or document number not detected",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Verify document (upload document photo only)\n\nProcesses uploaded document image:\n- Extracts text from document\n- Detects face in document\n- Validates document number\n- Determines if manual review is needed\n\nFace comparison will happen during liveness check using the liveness reference image",
+				"tags": [
+					"Identity Verification"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									},
+									"documentType": {
+										"type": "string",
+										"enum": [
+											"ci_uy",
+											"dni_ar",
+											"passport"
+										]
+									}
+								},
+								"required": [
+									"file",
+									"documentType"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		"/identity-verification/start-liveness": {
+			"post": {
+				"operationId": "StartLiveness",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateLivenessCheckResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Document verification required or user not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"429": {
+						"description": "Maximum verification attempts exceeded",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Start liveness check session\n\nCreates an AWS Rekognition Face Liveness session for the user.\nReturns session ID and region for the frontend to complete the check.",
+				"tags": [
+					"Identity Verification"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/identity-verification/verify-liveness": {
+			"post": {
+				"operationId": "VerifyLiveness",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifyLivenessResultsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed: Liveness check failed or low confidence",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Verify liveness results\n\nProcesses the results of the liveness check:\n- Validates liveness confidence\n- Determines if verification is complete or requires manual review\n- Updates user verification status",
+				"tags": [
+					"Identity Verification"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifyLivenessRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/identity-verification/liveness-credentials": {
+			"get": {
+				"operationId": "GetLivenessCredentials",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"expiration": {
+											"type": "string"
+										},
+										"region": {
+											"type": "string"
+										},
+										"sessionToken": {
+											"type": "string"
+										},
+										"secretAccessKey": {
+											"type": "string"
+										},
+										"accessKeyId": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"expiration",
+										"region",
+										"sessionToken",
+										"secretAccessKey",
+										"accessKeyId"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Face Liveness not configured",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get temporary AWS credentials for Face Liveness SDK\n\nThe backend assumes a minimal IAM role that can ONLY call StartFaceLivenessSession.\nThis is more secure than Cognito because credentials are only given to authenticated users.\nCredentials expire in 15 minutes.",
+				"tags": [
+					"Identity Verification"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/admin/identity-verification": {
+			"get": {
+				"operationId": "GetVerifications",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetVerificationsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"pending",
+								"completed",
+								"failed",
+								"requires_manual_review",
+								"rejected"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"createdAt",
+								"updatedAt",
+								"verificationAttempts"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/admin/identity-verification/{userId}": {
+			"get": {
+				"operationId": "GetVerificationDetails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetVerificationDetailsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/identity-verification/{userId}/images/{imageType}": {
+			"get": {
+				"operationId": "GetVerificationImage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetVerificationImageUrlResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Image not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "imageType",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"document",
+								"reference",
+								"audit"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "index",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/identity-verification/{userId}/approve": {
+			"post": {
+				"operationId": "ApproveVerification",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApproveVerificationResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "User is not pending manual review",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ApproveVerificationRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/identity-verification/{userId}/reject": {
+			"post": {
+				"operationId": "RejectVerification",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RejectVerificationResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "User is not pending manual review",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RejectVerificationRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/identity-verification/{userId}/audit-history": {
+			"get": {
+				"operationId": "GetVerificationAuditHistory",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetVerificationAuditHistoryResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}

@@ -148,3 +148,79 @@ export const deletePayoutDocumentMutation = () => {
     },
   };
 };
+
+// ============================================================================
+// Identity Verification Admin
+// ============================================================================
+
+export interface AdminVerificationsQueryParams extends PaginationQuery {
+  status?: 'requires_manual_review' | 'pending' | 'failed' | 'completed';
+}
+
+export const adminVerificationsQueryOptions = (
+  params: AdminVerificationsQueryParams,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'verifications', params],
+    queryFn: async () => {
+      const response = await api.admin.getVerifications({
+        page: params.page,
+        limit: params.limit,
+        sortBy: params.sortBy as
+          | 'createdAt'
+          | 'updatedAt'
+          | 'verificationAttempts'
+          | undefined,
+        sortOrder: params.sortOrder,
+        status: params.status,
+      });
+      return response.data;
+    },
+  });
+};
+
+export const adminVerificationDetailsQueryOptions = (userId: string) => {
+  return queryOptions({
+    queryKey: ['admin', 'verifications', userId],
+    queryFn: async () => {
+      const response = await api.admin.getVerificationDetails(userId);
+      return response.data;
+    },
+  });
+};
+
+export const adminVerificationImageQueryOptions = (
+  userId: string,
+  imageType: 'document' | 'reference' | 'audit',
+  index?: number,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'verifications', userId, 'images', imageType, index],
+    queryFn: async () => {
+      const response = await api.admin.getVerificationImage(userId, imageType, {
+        index: index?.toString(),
+      });
+      return response.data;
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes (images don't change)
+    gcTime: 15 * 60 * 1000, // 15 minutes (match signed URL expiry)
+  });
+};
+
+export const approveVerificationMutation = () => {
+  return {
+    mutationFn: async ({userId, notes}: {userId: string; notes?: string}) => {
+      const response = await api.admin.approveVerification(userId, {notes});
+      return response.data;
+    },
+  };
+};
+
+export const rejectVerificationMutation = () => {
+  return {
+    mutationFn: async ({userId, reason}: {userId: string; reason: string}) => {
+      const response = await api.admin.rejectVerification(userId, {reason});
+      return response.data;
+    },
+  };
+};

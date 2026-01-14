@@ -1,6 +1,6 @@
 # Política de Privacidad – Revendiste
 
-**Última actualización:** 3 de Enero de 2026
+**Última actualización:** 8 de Enero de 2026
 
 ## 1. Introducción
 
@@ -30,10 +30,16 @@ Podemos recopilar los siguientes datos personales:
 - **Datos de autenticación de terceros:** información básica proporcionada por proveedores de identidad como Google, únicamente cuando el usuario opta por iniciar sesión mediante dichos servicios.
 - **Datos de transacciones:** información relacionada con operaciones de intermediación de entradas realizadas dentro de la plataforma, incluyendo detalles de las entradas, precios y estados de las transacciones.
 - **Datos técnicos:** dirección IP, tipo de dispositivo, navegador, sistema operativo, registros de actividad y datos de conexión.
-- **Datos de verificación de identidad:** número de documento de identidad (cédula uruguaya) o pasaporte, e imagen/foto del documento provista por el usuario, cuando sea requerida para habilitar la funcionalidad de publicación de entradas y prevenir fraude.
-- **Datos biométricos de verificación de vida (liveness):** imagen facial capturada durante el proceso de verificación de identidad, utilizada exclusivamente para confirmar que la persona que realiza la verificación es quien dice ser y está presente en ese momento. Este proceso se realiza desde el dispositivo móvil del usuario.
+- **Datos de verificación de identidad:** número de documento de identidad (cédula uruguaya, DNI argentino o pasaporte), e imagen/foto del documento provista por el usuario, cuando sea requerida para habilitar la funcionalidad de publicación de entradas y prevenir fraude. **Estas imágenes se almacenan de forma cifrada** (ver Sección 11 para más detalles).
+- **Datos biométricos de verificación de vida (liveness):** imagen facial capturada durante el proceso de verificación de identidad, utilizada exclusivamente para confirmar que la persona que realiza la verificación es quien dice ser y está presente en ese momento. Este proceso se realiza desde el dispositivo móvil del usuario. **Estos datos se almacenan de forma segura junto con las imágenes del documento para fines de auditoría y prevención de fraude.**
 
-**Nota sobre datos biométricos:** Los datos de verificación de vida (liveness) se procesan con el único fin de prevenir fraudes y suplantación de identidad. Estos datos son tratados de forma segura y no se utilizan para otros fines como reconocimiento facial en otros contextos, creación de perfiles biométricos o publicidad.
+**Nota importante sobre datos de verificación:**
+
+- **Cifrado en reposo:** Las imágenes de documentos de identidad y verificación facial se almacenan utilizando cifrado AES-256, el mismo estándar utilizado por instituciones financieras. Los datos están protegidos tanto en tránsito (TLS 1.3) como en reposo.
+- **Acceso restringido:** Solo personal autorizado de Revendiste puede acceder a las imágenes en casos excepcionales que requieran revisión manual de seguridad, investigación de fraude o cumplimiento de requerimientos legales.
+- **Procesamiento automatizado:** La verificación de identidad se realiza principalmente mediante sistemas automatizados de reconocimiento de texto y comparación facial. En casos de resultados borderline, puede requerirse revisión manual por personal autorizado.
+- **Almacenamiento seguro de datos biométricos:** Las imágenes de verificación de vida (liveness) se almacenan de forma segura junto con las imágenes del documento. Esto permite la revisión manual en casos excepcionales, investigación de fraude y cumplimiento de obligaciones legales.
+- **Sin uso secundario:** Los datos de verificación no se utilizan para reconocimiento facial en otros contextos, creación de perfiles biométricos, publicidad ni ningún otro fin distinto a la verificación de identidad, prevención de fraude y cumplimiento legal.
 
 Revendiste no recopila otros datos sensibles (tales como datos de salud, origen étnico, opiniones políticas, convicciones religiosas u orientación sexual), salvo aquellos estrictamente necesarios para la prestación del servicio y en cumplimiento de la normativa aplicable.
 
@@ -141,8 +147,8 @@ Los datos personales serán conservados durante los siguientes períodos:
 
 - **Datos de cuenta:** mientras la cuenta del usuario permanezca activa o hasta que el usuario solicite su eliminación.
 - **Datos de transacciones:** durante el tiempo necesario para cumplir con obligaciones fiscales y legales (mínimo 5 años según normativa tributaria uruguaya).
-- **Datos de verificación de identidad (documento):** durante el tiempo necesario para validar la identidad y gestionar posibles reclamos o contracargos, y posteriormente serán eliminados o anonimizados, salvo obligación legal o requerimiento de autoridad competente.
-- **Datos biométricos de verificación de vida (liveness):** únicamente durante el proceso de verificación. Una vez completada la verificación exitosamente, los datos biométricos son eliminados y solo se conserva el resultado de la verificación (verificado/no verificado).
+- **Datos de verificación de identidad (documento):** las imágenes de documentos se conservan en formato cifrado durante un máximo de 5 (cinco) años para cumplir con obligaciones legales, gestionar posibles reclamos, contracargos o requerimientos de autoridades competentes. Transcurrido este plazo, serán eliminados de forma segura. Durante todo el período de conservación, los datos permanecen cifrados y no son accesibles para visualización humana.
+- **Datos biométricos de verificación de vida (liveness):** estas imágenes se conservan de forma segura durante el mismo período que las imágenes del documento (5 años) para fines de auditoría, investigación de fraude y cumplimiento de obligaciones legales. Las imágenes incluyen la foto de referencia y hasta 4 imágenes de auditoría del proceso de verificación.
 - **Datos técnicos y de registro:** durante un período razonable para fines de seguridad y detección de fraudes (generalmente hasta 2 años).
 
 Una vez cumplidos los plazos de conservación, los datos serán eliminados de forma segura o anonimizados.
@@ -169,22 +175,37 @@ En caso de no obtener una respuesta satisfactoria, el usuario puede presentar un
 
 ## 11. Seguridad de la información
 
-Revendiste implementa medidas técnicas y organizativas razonables para proteger los datos personales contra:
+Revendiste implementa medidas técnicas y organizativas avanzadas para proteger los datos personales contra:
 
 - Accesos no autorizados
 - Pérdida accidental o destrucción
 - Alteración indebida
 - Divulgación no autorizada
 
+### 11.1 Medidas de seguridad generales
+
 Estas medidas incluyen, entre otras:
 
-- Cifrado de datos en tránsito (HTTPS/TLS)
+- Cifrado de datos en tránsito (HTTPS/TLS 1.3)
 - Almacenamiento seguro de datos sensibles
 - Controles de acceso basados en roles
 - Monitoreo y registro de actividades
 - Capacitación del personal en materia de seguridad
 
-Sin embargo, ningún sistema de transmisión o almacenamiento de datos es completamente seguro. Revendiste no puede garantizar la seguridad absoluta de la información.
+### 11.2 Seguridad de datos de verificación de identidad
+
+Para los datos de verificación de identidad, implementamos medidas de seguridad adicionales y reforzadas:
+
+- **Cifrado AES-256:** Las imágenes de documentos de identidad y verificación facial se almacenan utilizando cifrado AES-256, el mismo estándar utilizado por instituciones financieras para proteger información sensible.
+- **Almacenamiento aislado:** Los documentos de verificación se almacenan en infraestructura separada y dedicada (bucket privado), con acceso restringido mediante URLs firmadas con tiempo de expiración.
+- **Acceso controlado:** Solo personal autorizado de Revendiste puede acceder a las imágenes en casos que requieran revisión manual de seguridad, investigación de fraude o cumplimiento de requerimientos legales.
+- **Claves de cifrado seguras:** Las claves de cifrado se gestionan mediante servicios especializados de gestión de claves (KMS) que cumplen con estándares internacionales de seguridad.
+- **Almacenamiento de datos biométricos:** Las imágenes de verificación de vida (liveness) se almacenan de forma segura para fines de auditoría, revisión manual en casos excepcionales y cumplimiento de obligaciones legales.
+- **Auditoría de accesos:** Todos los intentos de acceso a datos de verificación quedan registrados para fines de auditoría y detección de actividades sospechosas.
+
+### 11.3 Limitación de responsabilidad
+
+Sin embargo, ningún sistema de transmisión o almacenamiento de datos es completamente seguro. Revendiste no puede garantizar la seguridad absoluta de la información, pero se compromete a implementar las mejores prácticas de la industria y a notificar a los usuarios afectados en caso de cualquier incidente de seguridad que pueda comprometer sus datos personales, conforme a la normativa vigente.
 
 ---
 

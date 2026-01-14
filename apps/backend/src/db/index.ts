@@ -18,7 +18,10 @@ import {DB} from '@revendiste/shared';
  */
 function getSslConfig(): boolean | {rejectUnauthorized: boolean} {
   if (NODE_ENV === 'local') {
-    return false;
+    if (POSTGRES_HOST.includes('localhost')) {
+      return false;
+    }
+    return true;
   }
 
   if (NODE_ENV === 'production') {

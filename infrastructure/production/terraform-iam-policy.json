@@ -61,6 +61,7 @@
         "iam:GetRole",
         "iam:ListRoles",
         "iam:UpdateRole",
+        "iam:UpdateAssumeRolePolicy",
         "iam:AttachRolePolicy",
         "iam:DetachRolePolicy",
         "iam:ListAttachedRolePolicies",

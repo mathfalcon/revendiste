@@ -75,7 +75,7 @@ export const PayoutCancelledEmail = ({
     <Text className="text-sm text-muted-foreground mb-0">
       Tu dinero sigue disponible en tu balance y podés solicitar un nuevo retiro
       cuando quieras. Si tenés alguna duda, podés contactarnos a
-      soporte@revendiste.com.
+      ayuda@revendiste.com.
     </Text>
   </BaseEmail>
 );

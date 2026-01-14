@@ -20,13 +20,13 @@ export const SignInAppearance = {
     socialButtonsBlockButton: cn(
       buttonVariants({
         variant: 'ghost',
-        className: 'bg-background-secondary',
+        className: 'bg-foreground',
       }),
     ),
     modalCloseButton: 'text-foreground',
     dividerLine: 'bg-foreground opacity-25',
     dividerText: 'text-foreground opacity-25',
-    socialButtonsBlockButtonText: 'text-foreground',
+    socialButtonsBlockButtonText: 'text-background',
     formFieldLabel: 'text-foreground',
     modalContent: 'm-auto',
   },
