@@ -32,6 +32,7 @@ const getApiBaseURL = () => {
     // Benefits: Lower latency, no ALB hop, no Internet Gateway roundtrip
     return `http://${process.env.BACKEND_IP}/api`;
   }
+
   // Client-side: use normal API URL (through Cloudflare)
   return VITE_APP_API_URL;
 };
@@ -105,4 +106,5 @@ export * from './order';
 export * from './payments';
 export * from './payouts';
 export * from './users';
+export * from './identity-verification';
 export * from './generated';

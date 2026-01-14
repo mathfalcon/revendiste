@@ -23,10 +23,13 @@ import { Route as RegistrarseSplatRouteImport } from './routes/registrarse.$'
 import { Route as IngresarSplatRouteImport } from './routes/ingresar.$'
 import { Route as EventosEventIdRouteImport } from './routes/eventos/$eventId'
 import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar'
+import { Route as CuentaVerificarRouteImport } from './routes/cuenta/verificar'
 import { Route as CuentaTicketsRouteImport } from './routes/cuenta/tickets'
 import { Route as CuentaSubirTicketsRouteImport } from './routes/cuenta/subir-tickets'
 import { Route as CuentaRetiroRouteImport } from './routes/cuenta/retiro'
 import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
+import { Route as CuentaEstadoVerificacionRouteImport } from './routes/cuenta/estado-verificacion'
+import { Route as AdminVerificacionesRouteImport } from './routes/admin/verificaciones'
 import { Route as AdminPayoutsRouteImport } from './routes/admin/payouts'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
@@ -102,6 +105,11 @@ const EntradasPublicarRoute = EntradasPublicarRouteImport.update({
   path: '/entradas/publicar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CuentaVerificarRoute = CuentaVerificarRouteImport.update({
+  id: '/verificar',
+  path: '/verificar',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
 const CuentaTicketsRoute = CuentaTicketsRouteImport.update({
   id: '/tickets',
   path: '/tickets',
@@ -121,6 +129,17 @@ const CuentaPublicacionesRoute = CuentaPublicacionesRouteImport.update({
   id: '/publicaciones',
   path: '/publicaciones',
   getParentRoute: () => CuentaRouteRoute,
+} as any)
+const CuentaEstadoVerificacionRoute =
+  CuentaEstadoVerificacionRouteImport.update({
+    id: '/estado-verificacion',
+    path: '/estado-verificacion',
+    getParentRoute: () => CuentaRouteRoute,
+  } as any)
+const AdminVerificacionesRoute = AdminVerificacionesRouteImport.update({
+  id: '/verificaciones',
+  path: '/verificaciones',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminPayoutsRoute = AdminPayoutsRouteImport.update({
   id: '/payouts',
@@ -154,10 +173,13 @@ export interface FileRoutesByFullPath {
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/verificaciones': typeof AdminVerificacionesRoute
+  '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
+  '/cuenta/verificar': typeof CuentaVerificarRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
@@ -177,10 +199,13 @@ export interface FileRoutesByTo {
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/verificaciones': typeof AdminVerificacionesRoute
+  '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
+  '/cuenta/verificar': typeof CuentaVerificarRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
@@ -202,10 +227,13 @@ export interface FileRoutesById {
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/verificaciones': typeof AdminVerificacionesRoute
+  '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
   '/cuenta/subir-tickets': typeof CuentaSubirTicketsRoute
   '/cuenta/tickets': typeof CuentaTicketsRoute
+  '/cuenta/verificar': typeof CuentaVerificarRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$eventId': typeof EventosEventIdRoute
   '/ingresar/$': typeof IngresarSplatRoute
@@ -228,10 +256,13 @@ export interface FileRouteTypes {
     | '/sitemap'
     | '/terminos-y-condiciones'
     | '/admin/payouts'
+    | '/admin/verificaciones'
+    | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
+    | '/cuenta/verificar'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
@@ -251,10 +282,13 @@ export interface FileRouteTypes {
     | '/sitemap'
     | '/terminos-y-condiciones'
     | '/admin/payouts'
+    | '/admin/verificaciones'
+    | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
+    | '/cuenta/verificar'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
@@ -275,10 +309,13 @@ export interface FileRouteTypes {
     | '/sitemap'
     | '/terminos-y-condiciones'
     | '/admin/payouts'
+    | '/admin/verificaciones'
+    | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
     | '/cuenta/subir-tickets'
     | '/cuenta/tickets'
+    | '/cuenta/verificar'
     | '/entradas/publicar'
     | '/eventos/$eventId'
     | '/ingresar/$'
@@ -408,6 +445,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntradasPublicarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cuenta/verificar': {
+      id: '/cuenta/verificar'
+      path: '/verificar'
+      fullPath: '/cuenta/verificar'
+      preLoaderRoute: typeof CuentaVerificarRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
     '/cuenta/tickets': {
       id: '/cuenta/tickets'
       path: '/tickets'
@@ -435,6 +479,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/cuenta/publicaciones'
       preLoaderRoute: typeof CuentaPublicacionesRouteImport
       parentRoute: typeof CuentaRouteRoute
+    }
+    '/cuenta/estado-verificacion': {
+      id: '/cuenta/estado-verificacion'
+      path: '/estado-verificacion'
+      fullPath: '/cuenta/estado-verificacion'
+      preLoaderRoute: typeof CuentaEstadoVerificacionRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
+    '/admin/verificaciones': {
+      id: '/admin/verificaciones'
+      path: '/verificaciones'
+      fullPath: '/admin/verificaciones'
+      preLoaderRoute: typeof AdminVerificacionesRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/payouts': {
       id: '/admin/payouts'
@@ -469,11 +527,13 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminPayoutsRoute: typeof AdminPayoutsRoute
+  AdminVerificacionesRoute: typeof AdminVerificacionesRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminPayoutsRoute: AdminPayoutsRoute,
+  AdminVerificacionesRoute: AdminVerificacionesRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -482,17 +542,21 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 )
 
 interface CuentaRouteRouteChildren {
+  CuentaEstadoVerificacionRoute: typeof CuentaEstadoVerificacionRoute
   CuentaPublicacionesRoute: typeof CuentaPublicacionesRoute
   CuentaRetiroRoute: typeof CuentaRetiroRoute
   CuentaSubirTicketsRoute: typeof CuentaSubirTicketsRoute
   CuentaTicketsRoute: typeof CuentaTicketsRoute
+  CuentaVerificarRoute: typeof CuentaVerificarRoute
 }
 
 const CuentaRouteRouteChildren: CuentaRouteRouteChildren = {
+  CuentaEstadoVerificacionRoute: CuentaEstadoVerificacionRoute,
   CuentaPublicacionesRoute: CuentaPublicacionesRoute,
   CuentaRetiroRoute: CuentaRetiroRoute,
   CuentaSubirTicketsRoute: CuentaSubirTicketsRoute,
   CuentaTicketsRoute: CuentaTicketsRoute,
+  CuentaVerificarRoute: CuentaVerificarRoute,
 }
 
 const CuentaRouteRouteWithChildren = CuentaRouteRoute._addFileChildren(

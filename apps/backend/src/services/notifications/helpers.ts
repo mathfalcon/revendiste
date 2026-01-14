@@ -378,3 +378,134 @@ export async function notifyPayoutCancelled(
     },
   });
 }
+
+// ============================================================================
+// Identity Verification Notifications
+// ============================================================================
+
+/**
+ * Notify user when identity verification is completed successfully
+ * Sent via email + in_app (high value - user can now sell)
+ */
+export async function notifyIdentityVerificationCompleted(
+  service: NotificationService,
+  params: {
+    userId: string;
+  },
+) {
+  return await service.createNotification({
+    userId: params.userId,
+    type: 'identity_verification_completed',
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'publish_tickets',
+        label: 'Publicar entradas',
+        url: `${APP_BASE_URL}/publicar`,
+      },
+    ],
+    metadata: {
+      type: 'identity_verification_completed',
+    },
+  });
+}
+
+/**
+ * Notify user when identity verification is rejected by an admin
+ * Sent via email + in_app (high value - user needs to retry)
+ */
+export async function notifyIdentityVerificationRejected(
+  service: NotificationService,
+  params: {
+    userId: string;
+    rejectionReason: string;
+    canRetry: boolean;
+  },
+) {
+  const actions: Array<{
+    type: 'start_verification';
+    label: string;
+    url: string;
+  }> = [];
+
+  if (params.canRetry) {
+    actions.push({
+      type: 'start_verification',
+      label: 'Reintentar verificación',
+      url: `${APP_BASE_URL}/cuenta/verificar`,
+    });
+  }
+
+  return await service.createNotification({
+    userId: params.userId,
+    type: 'identity_verification_rejected',
+    channels: ['in_app', 'email'],
+    actions: actions.length > 0 ? actions : null,
+    metadata: {
+      type: 'identity_verification_rejected',
+      rejectionReason: params.rejectionReason,
+      canRetry: params.canRetry,
+    },
+  });
+}
+
+/**
+ * Notify user when identity verification fails due to system issues
+ * (face mismatch, liveness failure, etc.)
+ * Sent via in_app only (user can retry immediately in UI)
+ */
+export async function notifyIdentityVerificationFailed(
+  service: NotificationService,
+  params: {
+    userId: string;
+    failureReason: string;
+    attemptsRemaining: number;
+  },
+) {
+  const actions: Array<{
+    type: 'start_verification';
+    label: string;
+    url: string;
+  }> = [];
+
+  if (params.attemptsRemaining > 0) {
+    actions.push({
+      type: 'start_verification',
+      label: 'Reintentar verificación',
+      url: `${APP_BASE_URL}/cuenta/verificar`,
+    });
+  }
+
+  return await service.createNotification({
+    userId: params.userId,
+    type: 'identity_verification_failed',
+    channels: ['in_app'], // in_app only - no email cost
+    actions: actions.length > 0 ? actions : null,
+    metadata: {
+      type: 'identity_verification_failed',
+      failureReason: params.failureReason,
+      attemptsRemaining: params.attemptsRemaining,
+    },
+  });
+}
+
+/**
+ * Notify user when identity verification requires manual review
+ * Sent via in_app only (just informational, no action required from user)
+ */
+export async function notifyIdentityVerificationManualReview(
+  service: NotificationService,
+  params: {
+    userId: string;
+  },
+) {
+  return await service.createNotification({
+    userId: params.userId,
+    type: 'identity_verification_manual_review',
+    channels: ['in_app'], // in_app only - no email cost
+    actions: null,
+    metadata: {
+      type: 'identity_verification_manual_review',
+    },
+  });
+}

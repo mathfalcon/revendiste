@@ -1,5 +1,5 @@
 import {createFileRoute, Outlet, redirect} from '@tanstack/react-router';
-import {LayoutDashboard, Wallet, FileText} from 'lucide-react';
+import {LayoutDashboard, Wallet, UserCheck} from 'lucide-react';
 import {Link, useLocation} from '@tanstack/react-router';
 import {cn} from '~/lib/utils';
 import {getCurrentUserQuery} from '~/lib';
@@ -41,8 +41,8 @@ function AdminDashboardLayout() {
   const location = useLocation();
   const navigation = [
     {name: 'Panel', href: '/admin', icon: LayoutDashboard},
+    {name: 'Verificaciones', href: '/admin/verifications', icon: UserCheck},
     {name: 'Pagos', href: '/admin/payouts', icon: Wallet},
-    // Future: Reports, Analytics, etc.
   ];
 
   return (

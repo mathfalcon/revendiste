@@ -29,6 +29,8 @@ export const NotificationActionType = z.enum([
   'view_order',
   'retry_payment',
   'view_payout',
+  'start_verification',
+  'publish_tickets',
 ]);
 
 export type NotificationActionType = z.infer<typeof NotificationActionType>;
@@ -221,6 +223,34 @@ export const AuthNewDeviceSignInMetadataSchema = z.object({
 });
 
 /**
+ * Identity verification notification metadata schemas
+ */
+
+// identity_verification_completed - User verified successfully (auto or admin approved)
+export const IdentityVerificationCompletedMetadataSchema = z.object({
+  type: z.literal('identity_verification_completed'),
+});
+
+// identity_verification_rejected - Admin rejected verification
+export const IdentityVerificationRejectedMetadataSchema = z.object({
+  type: z.literal('identity_verification_rejected'),
+  rejectionReason: z.string(),
+  canRetry: z.boolean(),
+});
+
+// identity_verification_failed - System failure (face mismatch, liveness fail)
+export const IdentityVerificationFailedMetadataSchema = z.object({
+  type: z.literal('identity_verification_failed'),
+  failureReason: z.string(),
+  attemptsRemaining: z.number().int().nonnegative(),
+});
+
+// identity_verification_manual_review - Borderline scores, needs admin review
+export const IdentityVerificationManualReviewMetadataSchema = z.object({
+  type: z.literal('identity_verification_manual_review'),
+});
+
+/**
  * Discriminated union of all notification metadata types
  * Uses 'type' as the discriminator field for type safety
  */
@@ -244,6 +274,11 @@ export const NotificationMetadataSchema = z.discriminatedUnion('type', [
   AuthPasswordRemovedMetadataSchema,
   AuthPrimaryEmailChangedMetadataSchema,
   AuthNewDeviceSignInMetadataSchema,
+  // Identity verification notification types
+  IdentityVerificationCompletedMetadataSchema,
+  IdentityVerificationRejectedMetadataSchema,
+  IdentityVerificationFailedMetadataSchema,
+  IdentityVerificationManualReviewMetadataSchema,
 ]);
 
 /**
@@ -271,7 +306,7 @@ export const TicketSoldSellerActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('upload_documents'),
       label: z.string(),
-      url: z.string().url().optional(),
+      url: z.url().optional(),
     }),
   )
   .nullable();
@@ -282,7 +317,7 @@ export const DocumentReminderActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('upload_documents'),
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(),
     }),
   )
   .nullable();
@@ -293,7 +328,7 @@ export const OrderConfirmedActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('view_order'),
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(),
     }),
   )
   .nullable();
@@ -307,7 +342,7 @@ export const PaymentFailedActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('retry_payment'),
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(),
     }),
   )
   .nullable();
@@ -318,7 +353,7 @@ export const PaymentSucceededActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('view_order'),
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(),
     }),
   )
   .nullable();
@@ -329,7 +364,7 @@ export const DocumentUploadedActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('view_order'),
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(),
     }),
   )
   .nullable();
@@ -340,7 +375,7 @@ export const PayoutProcessingActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('view_payout'),
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(),
     }),
   )
   .nullable();
@@ -350,7 +385,7 @@ export const PayoutCompletedActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('view_payout'),
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(),
     }),
   )
   .nullable();
@@ -360,7 +395,7 @@ export const PayoutFailedActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('view_payout'),
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(),
     }),
   )
   .nullable();
@@ -370,7 +405,7 @@ export const PayoutCancelledActionsSchema = z
     BaseActionSchema.extend({
       type: z.literal('view_payout'),
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(),
     }),
   )
   .nullable();
@@ -379,13 +414,66 @@ export const PayoutCancelledActionsSchema = z
  * Auth notification action schemas
  * Auth emails are transactional and don't typically have actions stored
  */
-export const AuthVerificationCodeActionsSchema = z.array(BaseActionSchema).nullable();
-export const AuthResetPasswordCodeActionsSchema = z.array(BaseActionSchema).nullable();
+export const AuthVerificationCodeActionsSchema = z
+  .array(BaseActionSchema)
+  .nullable();
+export const AuthResetPasswordCodeActionsSchema = z
+  .array(BaseActionSchema)
+  .nullable();
 export const AuthInvitationActionsSchema = z.array(BaseActionSchema).nullable();
-export const AuthPasswordChangedActionsSchema = z.array(BaseActionSchema).nullable();
-export const AuthPasswordRemovedActionsSchema = z.array(BaseActionSchema).nullable();
-export const AuthPrimaryEmailChangedActionsSchema = z.array(BaseActionSchema).nullable();
-export const AuthNewDeviceSignInActionsSchema = z.array(BaseActionSchema).nullable();
+export const AuthPasswordChangedActionsSchema = z
+  .array(BaseActionSchema)
+  .nullable();
+export const AuthPasswordRemovedActionsSchema = z
+  .array(BaseActionSchema)
+  .nullable();
+export const AuthPrimaryEmailChangedActionsSchema = z
+  .array(BaseActionSchema)
+  .nullable();
+export const AuthNewDeviceSignInActionsSchema = z
+  .array(BaseActionSchema)
+  .nullable();
+
+/**
+ * Identity verification notification action schemas
+ */
+// Completed - action to publish tickets
+export const IdentityVerificationCompletedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('publish_tickets'),
+      label: z.string(),
+      url: z.url(),
+    }),
+  )
+  .nullable();
+
+// Rejected - action to retry verification
+export const IdentityVerificationRejectedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('start_verification'),
+      label: z.string(),
+      url: z.url(),
+    }),
+  )
+  .nullable();
+
+// Failed - action to retry verification
+export const IdentityVerificationFailedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('start_verification'),
+      label: z.string(),
+      url: z.url(),
+    }),
+  )
+  .nullable();
+
+// Manual review - no actions (just informational)
+export const IdentityVerificationManualReviewActionsSchema = z
+  .array(BaseActionSchema)
+  .nullable();
 
 /**
  * Individual notification schemas per type
@@ -539,6 +627,42 @@ export const AuthNewDeviceSignInNotificationSchema =
   });
 
 /**
+ * Identity verification notification schemas
+ */
+
+// identity_verification_completed
+export const IdentityVerificationCompletedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('identity_verification_completed'),
+    metadata: IdentityVerificationCompletedMetadataSchema,
+    actions: IdentityVerificationCompletedActionsSchema,
+  });
+
+// identity_verification_rejected
+export const IdentityVerificationRejectedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('identity_verification_rejected'),
+    metadata: IdentityVerificationRejectedMetadataSchema,
+    actions: IdentityVerificationRejectedActionsSchema,
+  });
+
+// identity_verification_failed
+export const IdentityVerificationFailedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('identity_verification_failed'),
+    metadata: IdentityVerificationFailedMetadataSchema,
+    actions: IdentityVerificationFailedActionsSchema,
+  });
+
+// identity_verification_manual_review
+export const IdentityVerificationManualReviewNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('identity_verification_manual_review'),
+    metadata: IdentityVerificationManualReviewMetadataSchema,
+    actions: IdentityVerificationManualReviewActionsSchema,
+  });
+
+/**
  * Discriminated union of all notification types
  * Uses 'type' as the discriminator field for type safety
  * Reference: https://zod.dev/api?id=discriminated-unions
@@ -563,6 +687,11 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   AuthPasswordRemovedNotificationSchema,
   AuthPrimaryEmailChangedNotificationSchema,
   AuthNewDeviceSignInNotificationSchema,
+  // Identity verification notification types
+  IdentityVerificationCompletedNotificationSchema,
+  IdentityVerificationRejectedNotificationSchema,
+  IdentityVerificationFailedNotificationSchema,
+  IdentityVerificationManualReviewNotificationSchema,
 ]);
 
 /**

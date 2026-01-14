@@ -128,7 +128,8 @@ export const PAYOUT_ERROR_MESSAGES = {
     `El monto mínimo para retirar es ${minimum} ${currency}`,
   NO_EARNINGS_SELECTED: 'Debes seleccionar al menos una ganancia para retirar',
   EARNINGS_NOT_AVAILABLE: 'Las ganancias seleccionadas no están disponibles',
-  MIXED_CURRENCIES: 'No se pueden mezclar diferentes monedas en un mismo retiro',
+  MIXED_CURRENCIES:
+    'No se pueden mezclar diferentes monedas en un mismo retiro',
   INVALID_PAYOUT_METHOD: 'Método de retiro inválido',
   PAYOUT_ALREADY_PROCESSED: 'Este retiro ya ha sido procesado',
   PAYOUT_NOT_PENDING: (status: string) =>
@@ -141,7 +142,78 @@ export const ADMIN_ERROR_MESSAGES = {
   INVALID_ROLE: 'Rol de usuario inválido',
 } as const;
 
+// Error messages for identity verification
+export const IDENTITY_VERIFICATION_ERROR_MESSAGES = {
+  // General verification errors
+  VERIFICATION_REQUIRED:
+    'Debes verificar tu identidad antes de publicar entradas',
+  VERIFICATION_IN_REVIEW:
+    'Tu verificación está siendo revisada. Te notificaremos cuando esté completa.',
+  VERIFICATION_FAILED:
+    'Tu verificación falló. Por favor, intenta nuevamente o contacta soporte.',
+  VERIFICATION_IN_MANUAL_REVIEW:
+    'Tu verificación está siendo revisada manualmente. Te notificaremos en 24-48 horas',
+  VERIFICATION_SUCCESS: 'Verificación completada exitosamente',
+
+  // Document validation errors
+  DOCUMENT_ALREADY_VERIFIED:
+    'Este documento ya está verificado con otra cuenta',
+  DOCUMENT_COUNTRY_REQUIRED: 'El país es requerido para pasaportes',
+  DOCUMENT_REQUIRED: 'Se requiere una foto del documento',
+  DOCUMENT_TYPE_NOT_SUPPORTED: 'Tipo de documento no soportado',
+  DOCUMENT_NUMBER_MISMATCH:
+    'El documento subido no coincide con los detalles ingresados anteriormente',
+  MUST_INITIATE_FIRST:
+    'Debes ingresar los datos del documento antes de subir la foto',
+  DOCUMENT_VERIFICATION_REQUIRED:
+    'Tenés que completar la verificación del documento antes de continuar',
+
+  // CI Uruguay validation errors
+  CI_INVALID: 'El número de CI no es válido',
+  CI_INVALID_DETECTED: 'El número de CI detectado no es válido',
+  CI_NOT_DETECTED: 'No se pudo detectar un número de CI válido en el documento',
+
+  // DNI Argentina validation errors
+  DNI_INVALID_FORMAT: 'El número de DNI debe tener 7 u 8 dígitos',
+  DNI_NOT_DETECTED:
+    'No se pudo detectar un número de DNI válido en el documento',
+
+  // Passport validation errors
+  PASSPORT_NOT_DETECTED: 'No se pudo detectar un número de pasaporte válido',
+
+  // Face detection and comparison errors
+  FACE_NOT_DETECTED_IN_DOCUMENT:
+    'No se detectó una cara válida en el documento',
+  FACE_NOT_DETECTED_IN_LIVENESS:
+    'No pudimos detectar tu cara durante la verificación. Por favor, intentá de nuevo.',
+  FACE_MISMATCH:
+    'No pudimos confirmar que la persona en el documento sos vos. Por favor, intentá de nuevo.',
+
+  // Identity verification errors
+  LIVENESS_CHECK_FAILED: 'La verificación no fue exitosa',
+  LIVENESS_LOW_CONFIDENCE:
+    'No pudimos completar la verificación. Por favor, intentá de nuevo.',
+  LIVENESS_MOBILE_REQUIRED:
+    'Por favor, usá un dispositivo móvil para completar la verificación',
+
+  // Retry and attempt errors
+  MAX_ATTEMPTS_EXCEEDED:
+    'Llegaste al límite de intentos. Por favor, contactá a soporte',
+  RETRY_AFTER_FAILURE:
+    'La verificación no fue exitosa. Por favor, intentá de nuevo.',
+
+  // Manual review reasons (for internal use)
+  MANUAL_REVIEW_FACE_SIMILARITY: (similarity: number) =>
+    `Face similarity score: ${similarity}% (threshold: 90%)`,
+  MANUAL_REVIEW_LOW_CONFIDENCE: (confidenceType: string, confidence: number) =>
+    `Low ${confidenceType} confidence: ${confidence}%`,
+  MANUAL_REVIEW_POOR_IMAGE_QUALITY: 'Poor document image quality',
+  MANUAL_REVIEW_MULTIPLE_ATTEMPTS: 'Multiple failed verification attempts',
+} as const;
+
 // Type for error message keys (useful for type safety)
 export type OrderErrorKey = keyof typeof ORDER_ERROR_MESSAGES;
 export type NotificationErrorKey = keyof typeof NOTIFICATION_ERROR_MESSAGES;
 export type PayoutErrorKey = keyof typeof PAYOUT_ERROR_MESSAGES;
+export type IdentityVerificationErrorKey =
+  keyof typeof IDENTITY_VERIFICATION_ERROR_MESSAGES;

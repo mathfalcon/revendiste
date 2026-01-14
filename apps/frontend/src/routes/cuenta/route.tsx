@@ -4,7 +4,14 @@ import {
   Link,
   useLocation,
 } from '@tanstack/react-router';
-import {Ticket, ScanQrCode, Upload, Menu, Wallet} from 'lucide-react';
+import {
+  Ticket,
+  ScanQrCode,
+  Upload,
+  Menu,
+  Wallet,
+  ShieldCheck,
+} from 'lucide-react';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
 import {useQuery} from '@tanstack/react-query';
 import {getMyListingsQuery} from '~/lib';
@@ -19,6 +26,7 @@ import {
 } from '~/components/ui/sheet';
 import {useState} from 'react';
 import {seo} from '~/utils/seo';
+import {beforeLoadRedirectToSignInIfNotAuthenticated} from '~/utils';
 
 const TAB_CONFIG = [
   {
@@ -54,6 +62,12 @@ const TAB_CONFIG = [
     icon: Wallet,
     to: '/cuenta/retiro',
   },
+  {
+    value: 'estado-verificacion',
+    label: 'Verificación',
+    icon: ShieldCheck,
+    to: '/cuenta/estado-verificacion',
+  },
 ] as const;
 
 export const Route = createFileRoute('/cuenta')({
@@ -66,13 +80,23 @@ export const Route = createFileRoute('/cuenta')({
       }),
     ],
   }),
+  beforeLoad: ({context, location}) => {
+    beforeLoadRedirectToSignInIfNotAuthenticated(context.userId, location);
+  },
 });
+
+// List of tab values for checking if current route is a tabbed route
+const TAB_VALUES = TAB_CONFIG.map(tab => tab.value);
 
 function RouteComponent() {
   const {pathname} = useLocation();
   const path = pathname.split('/').pop();
   const {data: listings} = useQuery(getMyListingsQuery());
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Check if the current route is part of the tabs
+  const isTabRoute =
+    path && TAB_VALUES.includes(path as (typeof TAB_VALUES)[number]);
 
   // Calculate count of tickets needing uploads
   // Backend already checks event end date via canUploadDocument
@@ -85,6 +109,11 @@ function RouteComponent() {
         ),
       )
       .filter(Boolean).length || 0;
+
+  // If the route is not a tab route (e.g., /cuenta/verificar), render just the Outlet
+  if (!isTabRoute) {
+    return <Outlet />;
+  }
 
   return (
     <div className='container mx-auto max-w-4xl mt-4 md:mt-20 mb-6 md:mb-8 px-4 md:px-0'>

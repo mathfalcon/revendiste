@@ -28,7 +28,7 @@ const verificationsSearchSchema = z.object({
     .optional(),
 });
 
-export const Route = createFileRoute('/admin/verifications')({
+export const Route = createFileRoute('/admin/verificaciones')({
   component: VerificationsPage,
   validateSearch: verificationsSearchSchema,
   loaderDeps: ({search}) => ({
@@ -46,8 +46,8 @@ export const Route = createFileRoute('/admin/verifications')({
 });
 
 function VerificationsPage() {
-  const search = useSearch({from: '/admin/verifications'});
-  const navigate = useNavigate({from: '/admin/verifications'});
+  const search = useSearch({from: '/admin/verificaciones'});
+  const navigate = useNavigate({from: '/admin/verificaciones'});
   const [reviewingUserId, setReviewingUserId] = useState<string | null>(null);
 
   const {data} = useSuspenseQuery(

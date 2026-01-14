@@ -61,6 +61,7 @@
         "iam:GetRole",
         "iam:ListRoles",
         "iam:UpdateRole",
+        "iam:UpdateAssumeRolePolicy",
         "iam:AttachRolePolicy",
         "iam:DetachRolePolicy",
         "iam:ListAttachedRolePolicies",
@@ -174,18 +175,6 @@
       "Sid": "ServiceDiscovery",
       "Effect": "Allow",
       "Action": ["servicediscovery:*"],
-      "Resource": "*"
-    },
-    {
-      "Sid": "SNS",
-      "Effect": "Allow",
-      "Action": ["sns:*"],
-      "Resource": "*"
-    },
-    {
-      "Sid": "CloudWatch",
-      "Effect": "Allow",
-      "Action": ["cloudwatch:*"],
       "Resource": "*"
     }
   ]

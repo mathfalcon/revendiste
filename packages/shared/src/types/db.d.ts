@@ -13,6 +13,8 @@ export type ArrayTypeImpl<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S[], I[], U[]>
   : T[];
 
+export type DocumentTypeEnum = "ci_uy" | "dni_ar" | "passport";
+
 export type EventImageType = "flyer" | "hero";
 
 export type EventTicketCurrency = "USD" | "UYU";
@@ -37,7 +39,7 @@ export type NotificationChannel = "email" | "in_app" | "sms";
 
 export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
-export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "document_reminder" | "document_uploaded" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "ticket_sold_seller";
+export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "document_reminder" | "document_uploaded" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
@@ -64,6 +66,8 @@ export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export type UserRole = "admin" | "organizer" | "user";
+
+export type VerificationStatusEnum = "completed" | "failed" | "pending" | "rejected" | "requires_manual_review";
 
 export interface EventImages {
   createdAt: Generated<Timestamp>;
@@ -127,12 +131,6 @@ export interface ListingTickets {
   cancelledAt: Timestamp | null;
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
-  documentOriginalName: string | null;
-  documentPath: string | null;
-  documentSizeBytes: number | null;
-  documentType: string | null;
-  documentUploadedAt: Timestamp | null;
-  documentUploadRequiredNotifiedAt: Timestamp | null;
   id: Generated<string>;
   listingId: string;
   price: Numeric;
@@ -347,15 +345,40 @@ export interface Users {
   clerkId: string;
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
+  documentCountry: string | null;
+  documentImagePath: string | null;
+  documentNumber: string | null;
+  documentType: DocumentTypeEnum | null;
+  documentVerified: Generated<boolean | null>;
+  documentVerifiedAt: Timestamp | null;
   email: string;
   firstName: string | null;
   id: Generated<string>;
   imageUrl: string | null;
   lastActiveAt: Timestamp | null;
   lastName: string | null;
+  manualReviewReason: string | null;
   metadata: Json | null;
   role: Generated<UserRole>;
+  selfieImagePath: string | null;
   updatedAt: Generated<Timestamp>;
+  verificationAttempts: Generated<number | null>;
+  verificationConfidenceScores: Json | null;
+  verificationMetadata: Json | null;
+  verificationSessionCreatedAt: Timestamp | null;
+  verificationSessionId: string | null;
+  verificationStatus: Generated<VerificationStatusEnum | null>;
+}
+
+export interface VerificationAuditLogs {
+  action: string;
+  confidenceScores: Json | null;
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  metadata: Json | null;
+  newStatus: string | null;
+  previousStatus: string | null;
+  userId: string;
 }
 
 export interface DB {
@@ -377,4 +400,5 @@ export interface DB {
   sellerEarnings: SellerEarnings;
   ticketDocuments: TicketDocuments;
   users: Users;
+  verificationAuditLogs: VerificationAuditLogs;
 }

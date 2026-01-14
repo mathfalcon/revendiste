@@ -13,7 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
-    "generate:api": "swagger-typescript-api generate -p http://localhost:3001/api/swagger/swagger.json -o src/lib/api -n generated.ts --http-client redaxios"
+    "generate:api": "swagger-typescript-api generate -p ../backend/src/swagger/swagger.json -o src/lib/api -n generated.ts --http-client redaxios"
   },
   "dependencies": {
     "@clerk/localizations": "^3.28.5",

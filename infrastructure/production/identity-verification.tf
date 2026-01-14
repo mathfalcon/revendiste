@@ -11,9 +11,9 @@
 # ========================================
 # Backend IAM Policy for Rekognition
 # ========================================
-resource "aws_iam_role_policy" "ec2_rekognition" {
-  name = "${local.name_prefix}-ec2-rekognition"
-  role = aws_iam_role.ec2_instances.id
+resource "aws_iam_role_policy" "ecs_task_rekognition" {
+  name = "${local.name_prefix}-ecs-task-rekognition"
+  role = aws_iam_role.ecs_task.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -39,9 +39,9 @@ resource "aws_iam_role_policy" "ec2_rekognition" {
         Resource = "*"
       },
       {
-        Sid      = "AssumeRoleFaceLiveness"
-        Effect   = "Allow"
-        Action   = "sts:AssumeRole"
+        Sid    = "AssumeRoleFaceLiveness"
+        Effect = "Allow"
+        Action = "sts:AssumeRole"
         Resource = aws_iam_role.face_liveness_frontend.arn
       }
     ]
@@ -61,26 +61,21 @@ resource "aws_iam_role_policy" "ec2_rekognition" {
 resource "aws_iam_role" "face_liveness_frontend" {
   name = "${local.name_prefix}-face-liveness-frontend"
 
-  # Allow the EC2 instance role AND local dev user to assume this role
+  # Allow the ECS task role to assume this role
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
         Principal = {
-          AWS = [
-            aws_iam_role.ec2_instances.arn,
-            "arn:aws:iam::521402383324:user/revendiste-local-dev"
-          ]
+          AWS = aws_iam_role.ecs_task.arn
         }
         Action = "sts:AssumeRole"
       }
     ]
   })
 
-  tags = {
-    Name = "${local.name_prefix}-face-liveness-frontend"
-  }
+  tags = local.common_tags
 }
 
 # Policy allowing ONLY StartFaceLivenessSession

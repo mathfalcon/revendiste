@@ -14,6 +14,8 @@ import {NotificationService} from '~/services/notifications';
 import {
   notifySellerTicketSold,
   notifyOrderConfirmed,
+  notifyIdentityVerificationCompleted,
+  notifyIdentityVerificationRejected,
 } from '~/services/notifications/helpers';
 
 // Simple usage with helper function
@@ -26,6 +28,18 @@ await notifySellerTicketSold(notificationService, {
   platform: 'ticketmaster',
   qrAvailabilityTiming: '12h',
   ticketCount: 2,
+});
+
+// Identity verification completed (user can now sell)
+await notifyIdentityVerificationCompleted(notificationService, {
+  userId: user.id,
+});
+
+// Identity verification rejected by admin
+await notifyIdentityVerificationRejected(notificationService, {
+  userId: user.id,
+  rejectionReason: 'El documento no es legible',
+  canRetry: true,
 });
 
 // Or create directly (title and description are auto-generated from metadata)
@@ -55,6 +69,32 @@ await notificationService.createNotification({
 ```
 
 **Note:** Title and description are automatically generated from the notification type and metadata - you don't need to provide them when creating notifications.
+
+## Available Helper Functions
+
+Helper functions simplify notification creation with pre-configured channels, actions, and metadata structure:
+
+**Order & Ticket Helpers:**
+
+- `notifySellerTicketSold()` - Notify seller when tickets sold
+- `notifyDocumentReminder()` - Remind seller to upload documents
+- `notifyDocumentUploaded()` - Notify buyer when documents uploaded
+- `notifyOrderConfirmed()` - Order confirmation
+- `notifyOrderExpired()` - Order expiration
+- `notifyPaymentFailed()` - Payment failure
+
+**Payout Helpers:**
+
+- `notifyPayoutCompleted()` - Payout completed
+- `notifyPayoutFailed()` - Payout failed
+- `notifyPayoutCancelled()` - Payout cancelled
+
+**Identity Verification Helpers:**
+
+- `notifyIdentityVerificationCompleted()` - Verification successful
+- `notifyIdentityVerificationRejected()` - Admin rejected verification
+- `notifyIdentityVerificationFailed()` - System failure (in_app only)
+- `notifyIdentityVerificationManualReview()` - Needs admin review (in_app only)
 
 ## System Architecture
 
@@ -92,19 +132,97 @@ The notification system uses **discriminated unions** and **function overloading
 
 ### Current Types
 
+**Order & Ticket Notifications:**
+
 - `ticket_sold_seller` - Seller notification when tickets are sold
 - `document_reminder` - Seller reminder to upload documents
 - `document_uploaded` - Buyer notification when seller uploads ticket documents
-- `order_confirmed` - Order confirmation (replaces `ticket_sold_buyer`)
+- `order_confirmed` - Order confirmation
 - `order_expired` - Order expiration
+
+**Payment Notifications:**
+
 - `payment_failed` - Payment failure
 - `payment_succeeded` - Payment success
+
+**Payout Notifications:**
+
+- `payout_processing` - Payout started processing (legacy, maps to completed)
+- `payout_completed` - Payout completed successfully
+- `payout_failed` - Payout failed
+- `payout_cancelled` - Payout cancelled
+
+**Identity Verification Notifications:**
+
+- `identity_verification_completed` - Verification successful (auto or admin approved)
+- `identity_verification_rejected` - Admin rejected verification
+- `identity_verification_failed` - System failure (face mismatch, liveness fail)
+- `identity_verification_manual_review` - Borderline scores, needs admin review
+
+**Auth Notifications (Clerk webhook triggered):**
+
+- `auth_verification_code` - OTP for email verification
+- `auth_reset_password_code` - OTP for password reset
+- `auth_invitation` - User invitation
+- `auth_password_changed` - Password changed notification
+- `auth_password_removed` - Password removed notification
+- `auth_primary_email_changed` - Primary email changed notification
+- `auth_new_device_sign_in` - New device sign-in alert
+
+### Notification Action Types
+
+Actions allow in-app notifications to be clickable and redirect users:
+
+- `upload_documents` - Redirect to upload ticket documents
+- `view_order` - Redirect to view order details
+- `retry_payment` - Redirect to retry payment
+- `view_payout` - Redirect to view payout details
+- `start_verification` - Redirect to start/retry identity verification
+- `publish_tickets` - Redirect to publish tickets page
 
 ### Notification Channels
 
 - `in_app` - In-app notifications (bell icon)
 - `email` - Email notifications
 - `sms` - SMS notifications (future)
+
+### Channel Selection Strategy
+
+**Use `['in_app', 'email']` for high-value notifications:**
+
+- Order confirmations (`order_confirmed`)
+- Payment failures (`payment_failed`)
+- Payout completions (`payout_completed`)
+- Identity verification completed (`identity_verification_completed`)
+- Identity verification rejected (`identity_verification_rejected`)
+- Document uploads (`document_uploaded`)
+
+**Use `['in_app']` only to save email costs:**
+
+- Informational updates that don't require immediate action
+- Manual review status (`identity_verification_manual_review`)
+- System failures where user can retry in UI (`identity_verification_failed`)
+- Transient states
+
+```typescript
+// Example: in_app only (no email cost)
+await service.createNotification({
+  userId,
+  type: 'identity_verification_manual_review',
+  channels: ['in_app'], // No email - just informational
+  actions: null,
+  metadata: {type: 'identity_verification_manual_review'},
+});
+
+// Example: high-value notification (email + in_app)
+await service.createNotification({
+  userId,
+  type: 'identity_verification_completed',
+  channels: ['in_app', 'email'], // Email is valuable here
+  actions: [{type: 'publish_tickets', label: 'Publicar entradas', url: '...'}],
+  metadata: {type: 'identity_verification_completed'},
+});
+```
 
 ### Notification Status
 
@@ -153,12 +271,23 @@ export const MyNewNotificationMetadataSchema = z.object({
 });
 
 // 2. Add action schema (if needed)
+// First, add your new action type to NotificationActionType enum if needed:
+export const NotificationActionType = z.enum([
+  'upload_documents',
+  'view_order',
+  'retry_payment',
+  'view_payout',
+  'start_verification',
+  'publish_tickets',
+  'my_new_action', // Add your new action type here
+]);
+
 export const MyNewNotificationActionsSchema = z
   .array(
     BaseActionSchema.extend({
-      type: z.literal('button'),
+      type: z.literal('my_new_action'), // Use your specific action type
       label: z.string(),
-      url: z.string().url(),
+      url: z.url(), // Use z.url() not z.string().url()
     }),
   )
   .nullable();
@@ -270,41 +399,40 @@ case 'my_new_notification': {
 
 ### Step 6: Update Database Enum (Migration)
 
-Create a migration to add the new enum value. **Important:** PostgreSQL doesn't allow using newly added enum values in the same transaction, so use the text conversion pattern:
+Create a migration to add the new enum value using PostgreSQL's `ALTER TYPE ... ADD VALUE`:
 
 ```typescript
 // In migration file
 export async function up(db: Kysely<any>): Promise<void> {
-  // Step 1: Convert column to text temporarily
+  // Add new value to the enum (appends to the end by default)
   await sql`
-    ALTER TABLE notifications
-    ALTER COLUMN type TYPE text
-  `.execute(db);
-
-  // Step 2: Drop the old enum
-  await sql`DROP TYPE notification_type`.execute(db);
-
-  // Step 3: Create new enum with all values (including the new one)
-  await sql`
-    CREATE TYPE notification_type AS ENUM (
-      'ticket_sold_seller',
-      'document_reminder',
-      'document_uploaded',
-      'order_confirmed',
-      'order_expired',
-      'payment_failed',
-      'payment_succeeded',
-      'my_new_notification'  // Add here
-    )
-  `.execute(db);
-
-  // Step 4: Convert column back to use the new enum
-  await sql`
-    ALTER TABLE notifications
-    ALTER COLUMN type TYPE notification_type USING type::notification_type
+    ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'my_new_notification'
   `.execute(db);
 }
 ```
+
+**Options for enum value positioning:**
+
+```sql
+-- Add at the end (default)
+ALTER TYPE notification_type ADD VALUE 'my_new_notification';
+
+-- Add before an existing value
+ALTER TYPE notification_type ADD VALUE 'my_new_notification' BEFORE 'order_confirmed';
+
+-- Add after an existing value
+ALTER TYPE notification_type ADD VALUE 'my_new_notification' AFTER 'payment_succeeded';
+
+-- Use IF NOT EXISTS to avoid errors if value already exists
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'my_new_notification';
+```
+
+**Important notes:**
+
+- `ALTER TYPE ... ADD VALUE` cannot be executed inside a transaction block in PostgreSQL < 12
+- In PostgreSQL 12+, it can run inside a transaction but the new value cannot be used until after the transaction commits
+- For Kysely migrations, this is usually fine since each migration runs in its own transaction
+- See [PostgreSQL ALTER TYPE documentation](https://www.postgresql.org/docs/current/sql-altertype.html) for more details
 
 **After running the migration, regenerate database types:**
 
@@ -669,23 +797,49 @@ Templates are mapped via `getEmailTemplate()` in `packages/transactional/src/ema
 1. **Use helper functions** for common notification types - they handle metadata structure correctly
 2. **Keep notifications outside transactions** - send after database operations complete
 3. **Don't await notification creation** - let it process in background (fire-and-forget)
-4. **Use appropriate channels** - email for important actions, in-app for updates
+4. **Use appropriate channels** - email for important actions, in-app for updates (see Channel Selection Strategy)
 5. **Include actions conditionally** - some notifications may not need actions (e.g., `notifySellerTicketSold` only adds upload action if within time window)
 6. **Add metadata** - store relevant IDs/context for future reference (required for title/description generation)
 7. **Never provide title/description** - they're auto-generated from metadata
 8. **Export prop types** - enables type safety in template mapping
 9. **Follow discriminated union pattern** - ensures metadata matches notification type
 10. **Handle errors gracefully** - notification failures are logged but don't break business logic
+11. **Be conservative with emails** - emails cost money; use `['in_app']` only for informational updates
+12. **Add action types to enum** - when creating notifications with actions, ensure action type is in `NotificationActionType`
+
+### Notifications Without Email Templates
+
+Some notifications only use `in_app` channel and don't need email templates:
+
+```typescript
+// identity_verification_manual_review - in_app only
+await notifyIdentityVerificationManualReview(service, {userId});
+
+// identity_verification_failed - in_app only (user can retry in UI)
+await notifyIdentityVerificationFailed(service, {
+  userId,
+  failureReason: 'No pudimos verificar tu identidad',
+  attemptsRemaining: 3,
+});
+```
+
+For these notifications:
+
+- Skip Step 2 (email template creation)
+- Skip Step 3 (template export)
+- Skip Step 4 (email template mapping)
+- Still need: metadata schema, action schema, notification schema, text generation, database enum, helper function
 
 ## Maintenance Checklist
 
 When adding a new notification type, ensure:
 
 - [ ] Metadata schema defined in `packages/shared/src/schemas/notifications.ts`
+- [ ] Action type added to `NotificationActionType` enum (if using new action type)
 - [ ] Action schema added (if needed) in `packages/shared/src/schemas/notifications.ts`
 - [ ] Notification schema added to discriminated union in `packages/shared/src/schemas/notifications.ts`
 - [ ] Text generation function added in `packages/shared/src/utils/notification-text.ts` (for title/description)
-- [ ] Email template component created with exported props in `packages/transactional/emails/`
+- [ ] Email template component created with exported props in `packages/transactional/emails/` (if using email channel)
 - [ ] Template exported from `packages/transactional/src/index.ts`
 - [ ] Switch case added in `packages/transactional/src/email-templates.ts` implementation
 - [ ] Database enum updated (migration created and run)
@@ -693,6 +847,19 @@ When adding a new notification type, ensure:
 - [ ] Repository interface updated (if using union type instead of `NotificationType` from shared)
 - [ ] Helper function created in `apps/backend/src/services/notifications/helpers.ts` (optional but recommended)
 - [ ] API docs regenerated: `pnpm tsoa:both`
+
+### Quick Commands
+
+```bash
+# After creating migration for new notification type
+cd apps/backend && pnpm kysely:migrate && pnpm generate:db
+
+# Regenerate TSOA routes and OpenAPI spec
+cd apps/backend && pnpm tsoa:both
+
+# Regenerate frontend API types
+cd apps/frontend && pnpm generate:api
+```
 
 ## Type Safety Benefits
 

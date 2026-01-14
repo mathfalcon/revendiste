@@ -41,6 +41,10 @@ export * from '../emails/password-removed-email';
 export * from '../emails/primary-email-changed-email';
 export * from '../emails/new-device-sign-in-email';
 
+// Identity verification email templates
+export * from '../emails/identity-verification-completed-email';
+export * from '../emails/identity-verification-rejected-email';
+
 export {render, pretty, toPlainText} from '@react-email/render';
 
 // Email template mapping utilities
@@ -65,6 +69,10 @@ export type {PasswordChangedEmailProps} from '../emails/password-changed-email';
 export type {PasswordRemovedEmailProps} from '../emails/password-removed-email';
 export type {PrimaryEmailChangedEmailProps} from '../emails/primary-email-changed-email';
 export type {NewDeviceSignInEmailProps} from '../emails/new-device-sign-in-email';
+
+// Identity verification email prop types
+export type {IdentityVerificationCompletedEmailProps} from '../emails/identity-verification-completed-email';
+export type {IdentityVerificationRejectedEmailProps} from '../emails/identity-verification-rejected-email';
 
 /**
  * Render a React Email component to HTML string

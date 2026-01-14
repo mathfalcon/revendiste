@@ -69,6 +69,15 @@ import {
   NewDeviceSignInEmail as NewDeviceSignInEmailComponent,
   type NewDeviceSignInEmailProps,
 } from '../emails/new-device-sign-in-email';
+// Identity verification email templates
+import {
+  IdentityVerificationCompletedEmail as IdentityVerificationCompletedEmailComponent,
+  type IdentityVerificationCompletedEmailProps,
+} from '../emails/identity-verification-completed-email';
+import {
+  IdentityVerificationRejectedEmail as IdentityVerificationRejectedEmailComponent,
+  type IdentityVerificationRejectedEmailProps,
+} from '../emails/identity-verification-rejected-email';
 import type {
   NotificationType,
   TypedNotificationMetadata,
@@ -373,11 +382,44 @@ export function getEmailTemplate<T extends NotificationType>(
           ipAddress: meta?.ipAddress,
           sessionCreatedAt: meta?.sessionCreatedAt || new Date().toISOString(),
           revokeSessionUrl: meta?.revokeSessionUrl,
-          supportEmail: meta?.supportEmail || 'soporte@revendiste.com',
+          supportEmail: meta?.supportEmail || 'ayuda@revendiste.com',
           appBaseUrl,
         } as NewDeviceSignInEmailProps,
       };
     }
+
+    // Identity verification notification types
+    case 'identity_verification_completed': {
+      return {
+        Component: IdentityVerificationCompletedEmailComponent,
+        props: {
+          appBaseUrl,
+        } as IdentityVerificationCompletedEmailProps,
+      };
+    }
+
+    case 'identity_verification_rejected': {
+      const meta =
+        metadata as TypedNotificationMetadata<'identity_verification_rejected'>;
+      const verifyUrl = actions?.find(a => a.type === 'start_verification')?.url;
+      return {
+        Component: IdentityVerificationRejectedEmailComponent,
+        props: {
+          rejectionReason:
+            meta?.rejectionReason || 'Motivo no especificado',
+          canRetry: meta?.canRetry ?? true,
+          retryUrl: verifyUrl || `${appBaseUrl}/cuenta/verificar`,
+          appBaseUrl,
+        } as IdentityVerificationRejectedEmailProps,
+      };
+    }
+
+    // In-app only notification types (no email template needed)
+    case 'identity_verification_failed':
+    case 'identity_verification_manual_review':
+      throw new Error(
+        `Notification type ${notificationType} is in_app only and does not have an email template`,
+      );
 
     default:
       throw new Error(`Unknown notification type: ${notificationType}`);
