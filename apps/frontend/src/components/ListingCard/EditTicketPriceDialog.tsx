@@ -1,5 +1,5 @@
 import {useForm} from 'react-hook-form';
-import {zodResolver} from '@hookform/resolvers/zod';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import z from 'zod';
 import {useEffect} from 'react';
 import {
@@ -67,7 +67,7 @@ export function EditTicketPriceDialog({
   const updatePriceMutation = useMutation(updateTicketPriceMutation(ticketId));
 
   const form = useForm<EditTicketPriceFormValues>({
-    resolver: zodResolver(editTicketPriceSchema),
+    resolver: standardSchemaResolver(editTicketPriceSchema),
     defaultValues: {
       price: currentPrice,
       maxPrice,

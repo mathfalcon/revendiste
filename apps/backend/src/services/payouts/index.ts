@@ -118,8 +118,29 @@ export class PayoutsService {
     let finalCurrency = earnings[0].currency;
     let conversionInfo = null;
 
+    // Validate currency compatibility between earnings and payout method
+    // - PayPal (USD) can receive both USD and UYU (UYU will be converted)
+    // - UYU bank account can only receive UYU earnings
+    // - USD bank account can only receive USD earnings
+    const isPayPal = payoutMethod.payoutType === 'paypal';
+    const payoutMethodCurrency = payoutMethod.currency;
+
+    if (!isPayPal) {
+      // For non-PayPal methods, currency must match
+      if (payoutMethodCurrency === 'UYU' && finalCurrency === 'USD') {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS,
+        );
+      }
+      if (payoutMethodCurrency === 'USD' && finalCurrency === 'UYU') {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS,
+        );
+      }
+    }
+
     // If PayPal method and earnings are in UYU, convert to USD
-    if (payoutMethod.payoutType === 'paypal' && finalCurrency === 'UYU') {
+    if (isPayPal && finalCurrency === 'UYU') {
       const exchangeRateService = new ExchangeRateService();
       const conversion = await exchangeRateService.convertAmount(
         totalAmount,

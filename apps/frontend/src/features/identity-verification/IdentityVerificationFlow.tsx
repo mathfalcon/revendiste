@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {useMutation} from '@tanstack/react-query';
 import {useForm, FormProvider} from 'react-hook-form';
-import {zodResolver} from '@hookform/resolvers/zod';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {z} from 'zod';
 import {toast} from 'sonner';
 import {api, verifyIdentityDocument} from '~/lib/api';
@@ -212,7 +212,7 @@ export function IdentityVerificationFlow({
 
   // Shared form state for all steps
   const form = useForm<VerificationFormValues>({
-    resolver: zodResolver(verificationFormSchema),
+    resolver: standardSchemaResolver(verificationFormSchema),
     defaultValues: {
       documentType: existingDocumentInfo?.documentType ?? undefined,
       documentNumber: existingDocumentInfo?.documentNumber ?? '',

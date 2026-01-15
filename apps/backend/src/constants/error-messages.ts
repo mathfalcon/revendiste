@@ -134,6 +134,10 @@ export const PAYOUT_ERROR_MESSAGES = {
   PAYOUT_ALREADY_PROCESSED: 'Este retiro ya ha sido procesado',
   PAYOUT_NOT_PENDING: (status: string) =>
     `El retiro ya está ${status}. No se puede procesar.`,
+  CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS:
+    'No puedes solicitar un retiro de ganancias en USD a una cuenta bancaria en UYU. Selecciona un método de pago en USD o PayPal.',
+  CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS:
+    'No puedes solicitar un retiro de ganancias en UYU a una cuenta bancaria en USD. Selecciona un método de pago en UYU o PayPal.',
 } as const;
 
 // Error messages for admin operations

@@ -1,6 +1,6 @@
 import {useForm} from 'react-hook-form';
 import z from 'zod';
-import {zodResolver} from '@hookform/resolvers/zod';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {Form} from '~/components/ui/form';
 import {TicketListingFormLeft} from './TicketListingFormLeft';
 import {TicketListingFormRight} from './TicketListingFormRight';
@@ -50,7 +50,7 @@ export const TicketListingForm = ({
   initialEventId,
 }: TicketListingFormProps) => {
   const form = useForm({
-    resolver: zodResolver(TicketListingFormSchema),
+    resolver: standardSchemaResolver(TicketListingFormSchema),
     defaultValues: {
       eventId: initialEventId ?? '',
       quantity: 1,

@@ -1,6 +1,6 @@
 import {useForm} from 'react-hook-form';
-import {zodResolver} from '@hookform/resolvers/zod';
 import {z} from 'zod';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {
   Form,
   FormControl,
@@ -75,7 +75,7 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   });
 
   const form = useForm<PayoutMethodFormValues>({
-    resolver: zodResolver(payoutMethodSchema),
+    resolver: standardSchemaResolver(payoutMethodSchema),
     defaultValues: existingMethod
       ? existingMethod.payoutType === ('paypal' as string)
         ? {

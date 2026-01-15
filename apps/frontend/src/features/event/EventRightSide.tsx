@@ -11,7 +11,7 @@ import {
 } from '~/components/ui/accordion';
 import {Card, CardContent} from '~/components/ui/card';
 import {useForm, useFormContext, SubmitHandler} from 'react-hook-form';
-import {zodResolver} from '@hookform/resolvers/zod';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {z} from 'zod';
 import {Form} from '~/components/ui/form';
 import {toast} from 'sonner';
@@ -47,7 +47,7 @@ export const EventRightSide = (props: EventRightSideProps) => {
   const queryClient = useQueryClient();
 
   const form = useForm<TicketSelectionFormValues>({
-    resolver: zodResolver(TicketSelectionSchema),
+    resolver: standardSchemaResolver(TicketSelectionSchema),
     defaultValues: {},
   });
 
