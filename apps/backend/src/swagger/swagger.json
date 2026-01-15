@@ -3661,6 +3661,83 @@
 						"type": "object",
 						"nullable": true
 					},
+					"settlementInfo": {
+						"properties": {
+							"providers": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"hasExchangeRateData": {
+								"type": "boolean"
+							},
+							"settlements": {
+								"items": {
+									"properties": {
+										"providers": {
+											"items": {
+												"type": "string"
+											},
+											"type": "array"
+										},
+										"paymentCount": {
+											"type": "number",
+											"format": "double"
+										},
+										"balanceCurrency": {
+											"type": "string",
+											"nullable": true
+										},
+										"averageExchangeRate": {
+											"type": "number",
+											"format": "double",
+											"nullable": true
+										},
+										"totalSellerAmount": {
+											"type": "number",
+											"format": "double"
+										},
+										"totalBalanceFee": {
+											"type": "number",
+											"format": "double"
+										},
+										"totalBalanceAmount": {
+											"type": "number",
+											"format": "double"
+										},
+										"totalPaymentAmount": {
+											"type": "number",
+											"format": "double"
+										},
+										"currency": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"providers",
+										"paymentCount",
+										"balanceCurrency",
+										"averageExchangeRate",
+										"totalSellerAmount",
+										"totalBalanceFee",
+										"totalBalanceAmount",
+										"totalPaymentAmount",
+										"currency"
+									],
+									"type": "object"
+								},
+								"type": "array"
+							}
+						},
+						"required": [
+							"providers",
+							"hasExchangeRateData",
+							"settlements"
+						],
+						"type": "object",
+						"nullable": true
+					},
 					"documents": {
 						"items": {
 							"properties": {
@@ -3804,6 +3881,7 @@
 					"id",
 					"createdAt",
 					"payoutMethod",
+					"settlementInfo",
 					"documents",
 					"metadata"
 				],
@@ -4736,16 +4814,20 @@
 							"http_request": {
 								"properties": {
 									"user_agent": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"client_ip": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									}
 								},
-								"type": "object"
+								"type": "object",
+								"nullable": true
 							}
 						},
-						"type": "object"
+						"type": "object",
+						"nullable": true
 					},
 					"timestamp": {
 						"type": "number",
@@ -4756,7 +4838,15 @@
 					},
 					"data": {
 						"properties": {
+							"user_id": {
+								"type": "string",
+								"nullable": true
+							},
 							"reply_to_email_name": {
+								"type": "string",
+								"nullable": true
+							},
+							"email_address_id": {
 								"type": "string",
 								"nullable": true
 							},
@@ -4765,127 +4855,169 @@
 									"user": {
 										"properties": {
 											"public_metadata_fallback": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"public_metadata": {
-												"$ref": "#/components/schemas/Record_string.unknown_"
+												"allOf": [
+													{
+														"$ref": "#/components/schemas/Record_string.unknown_"
+													}
+												],
+												"nullable": true
+											},
+											"email_address": {
+												"type": "string",
+												"nullable": true
 											}
 										},
-										"type": "object"
+										"type": "object",
+										"nullable": true
 									},
 									"theme": {
 										"properties": {
 											"show_clerk_branding": {
-												"type": "boolean"
+												"type": "boolean",
+												"nullable": true
 											},
 											"button_text_color": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"primary_color": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											}
 										},
-										"type": "object"
+										"type": "object",
+										"nullable": true
 									},
 									"app": {
 										"properties": {
 											"url": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
+											},
+											"logo_url": {
+												"type": "string",
+												"nullable": true
 											},
 											"logo_image_url": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"domain_name": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"name": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											}
 										},
-										"type": "object"
+										"type": "object",
+										"nullable": true
 									},
 									"support_email": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"revoke_session_url": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"session_created_at": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"ip_address": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"location": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"operating_system": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"browser_name": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"device_type": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"sign_in_method": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"new_email_address": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"primary_email_address": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"greeting_name": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"invitation": {
 										"properties": {
 											"public_metadata_fallback": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"public_metadata": {
-												"$ref": "#/components/schemas/Record_string.unknown_"
+												"allOf": [
+													{
+														"$ref": "#/components/schemas/Record_string.unknown_"
+													}
+												],
+												"nullable": true
 											},
 											"expires_in_days": {
 												"type": "number",
-												"format": "double"
+												"format": "double",
+												"nullable": true
 											}
 										},
-										"type": "object"
+										"type": "object",
+										"nullable": true
 									},
 									"action_url": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"inviter_name": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"requested_by": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"requested_from": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"requested_at": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"otp_code": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									}
 								},
 								"type": "object"
 							},
-							"user_id": {
-								"type": "string",
-								"nullable": true
-							},
 							"from_email_name": {
 								"type": "string"
-							},
-							"email_address_id": {
-								"type": "string",
-								"nullable": true
 							},
 							"delivered_by_clerk": {
 								"type": "boolean"
@@ -4921,9 +5053,7 @@
 						},
 						"required": [
 							"data",
-							"user_id",
 							"from_email_name",
-							"email_address_id",
 							"delivered_by_clerk",
 							"status",
 							"slug",

@@ -7,7 +7,7 @@ export const UserProfile = () => {
     <UserButton appearance={UserButtonAppearance}>
       <UserButton.MenuItems>
         <UserButton.Link
-          label='Vende tus entradas'
+          label='Publicá tus entradas'
           labelIcon={<Ticket className='h-4 w-4' />}
           href='/entradas/publicar'
         />

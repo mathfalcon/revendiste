@@ -219,6 +219,7 @@ export interface Payments {
   createdAt: Generated<Timestamp>;
   currency: string;
   deletedAt: Timestamp | null;
+  exchangeRate: Numeric | null;
   expiredAt: Timestamp | null;
   failedAt: Timestamp | null;
   failureReason: string | null;

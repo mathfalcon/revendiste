@@ -1038,6 +1038,27 @@ export interface GetPayoutDetailsResponse {
     payoutType: PayoutType;
     id: string;
   };
+  settlementInfo: {
+    providers: string[];
+    hasExchangeRateData: boolean;
+    settlements: {
+      providers: string[];
+      /** @format double */
+      paymentCount: number;
+      balanceCurrency: string | null;
+      /** @format double */
+      averageExchangeRate: number | null;
+      /** @format double */
+      totalSellerAmount: number;
+      /** @format double */
+      totalBalanceFee: number;
+      /** @format double */
+      totalBalanceAmount: number;
+      /** @format double */
+      totalPaymentAmount: number;
+      currency: string;
+    }[];
+  };
   documents: {
     uploadedBy: string;
     /** @format date-time */
@@ -1323,61 +1344,61 @@ export type RecordStringUnknown = object;
 export interface ClerkWebhookRouteBody {
   event_attributes?: {
     http_request?: {
-      user_agent?: string;
-      client_ip?: string;
+      user_agent?: string | null;
+      client_ip?: string | null;
     };
   };
   /** @format double */
   timestamp: number;
   instance_id: string;
   data: {
+    user_id?: string | null;
     reply_to_email_name?: string | null;
+    email_address_id?: string | null;
     data: {
       user?: {
-        public_metadata_fallback?: string;
-        /** Construct a type with a set of properties K of type T */
-        public_metadata?: RecordStringUnknown;
+        public_metadata_fallback?: string | null;
+        public_metadata?: RecordStringUnknown | null;
+        email_address?: string | null;
       };
       theme?: {
-        show_clerk_branding?: boolean;
-        button_text_color?: string;
-        primary_color?: string;
+        show_clerk_branding?: boolean | null;
+        button_text_color?: string | null;
+        primary_color?: string | null;
       };
       app?: {
-        url?: string;
-        logo_image_url?: string;
-        domain_name?: string;
-        name?: string;
+        url?: string | null;
+        logo_url?: string | null;
+        logo_image_url?: string | null;
+        domain_name?: string | null;
+        name?: string | null;
       };
-      support_email?: string;
-      revoke_session_url?: string;
-      session_created_at?: string;
-      ip_address?: string;
-      location?: string;
-      operating_system?: string;
-      browser_name?: string;
-      device_type?: string;
-      sign_in_method?: string;
-      new_email_address?: string;
-      primary_email_address?: string;
-      greeting_name?: string;
+      support_email?: string | null;
+      revoke_session_url?: string | null;
+      session_created_at?: string | null;
+      ip_address?: string | null;
+      location?: string | null;
+      operating_system?: string | null;
+      browser_name?: string | null;
+      device_type?: string | null;
+      sign_in_method?: string | null;
+      new_email_address?: string | null;
+      primary_email_address?: string | null;
+      greeting_name?: string | null;
       invitation?: {
-        public_metadata_fallback?: string;
-        /** Construct a type with a set of properties K of type T */
-        public_metadata?: RecordStringUnknown;
+        public_metadata_fallback?: string | null;
+        public_metadata?: RecordStringUnknown | null;
         /** @format double */
-        expires_in_days?: number;
+        expires_in_days?: number | null;
       };
-      action_url?: string;
-      inviter_name?: string;
-      requested_by?: string;
-      requested_from?: string;
-      requested_at?: string;
-      otp_code?: string;
+      action_url?: string | null;
+      inviter_name?: string | null;
+      requested_by?: string | null;
+      requested_from?: string | null;
+      requested_at?: string | null;
+      otp_code?: string | null;
     };
-    user_id: string | null;
     from_email_name: string;
-    email_address_id: string | null;
     delivered_by_clerk: boolean;
     status: string;
     slug: string;

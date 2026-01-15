@@ -8,6 +8,7 @@ import {useEffect, useState, useRef} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {EventImageType, getEventByIdQuery} from '~/lib';
 import {CDN_ASSETS} from '~/assets';
+import {formatAmount} from '~/utils';
 
 interface TicketListingFormProps {
   mode: 'create' | 'edit';
@@ -35,7 +36,7 @@ const TicketListingFormSchema = z
     if (ctx.value.price > ctx.value.maxPrice) {
       ctx.issues.push({
         code: 'custom',
-        message: `El precio no puede superar al precio original de la tanda ($${ctx.value.maxPrice.toLocaleString('es-ES')})`,
+        message: `El precio no puede superar al precio original de la tanda ($${formatAmount(ctx.value.maxPrice)})`,
         input: ctx.value,
         path: ['price'],
       });

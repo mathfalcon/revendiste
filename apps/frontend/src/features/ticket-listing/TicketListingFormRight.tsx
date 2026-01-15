@@ -12,23 +12,25 @@ import {
 import {Input} from '~/components/ui/input';
 import {PriceInput} from '~/components/ui/price-input';
 import {Button} from '~/components/ui/button';
-import {Check} from 'lucide-react';
+import {Check, InfoIcon} from 'lucide-react';
 import {cn} from '~/lib/utils';
 import {TicketListingFormValues} from './TicketListingForm';
 import {useDebounceCallback} from 'usehooks-ts';
-import {useMutation, useQuery} from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {
   EventTicketCurrency,
   getEventByIdQuery,
   getEventBySearchQuery,
+  getMyListingsQuery,
   postTicketListingMutation,
 } from '~/lib';
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
-import {getCurrencySymbol, formatPrice, calculateSellerAmount} from '~/utils';
+import {formatPrice, calculateSellerAmount} from '~/utils';
 import {Link, useNavigate} from '@tanstack/react-router';
 import {Separator} from '~/components/ui/separator';
 import {Checkbox} from '~/components/ui/checkbox';
+import {Alert, AlertDescription} from '~/components/ui/alert';
 
 interface TicketListingFormProps {
   mode: 'create' | 'edit';
@@ -37,6 +39,7 @@ interface TicketListingFormProps {
 export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
   const form = useFormContext<TicketListingFormValues>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [eventSearchValue, setEventSearchValue] = useState('');
   const debouncedSetEventSearchValue = useDebounceCallback(
     setEventSearchValue,
@@ -48,6 +51,9 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
   const createTicketListingMutation = useMutation({
     ...postTicketListingMutation(),
     onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: getMyListingsQuery().queryKey,
+      });
       navigate({to: '/cuenta/publicaciones'});
     },
   });
@@ -208,8 +214,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
                   <span>{option.label}</span>
                   {option.price && (
                     <span className='text-muted-foreground'>
-                      {getCurrencySymbol(option.currency)}
-                      {option.price.toLocaleString()}
+                      {formatPrice(option.price, option.currency)}
                     </span>
                   )}
                 </span>
@@ -221,8 +226,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
                   <div className='font-medium'>{option.label}</div>
                   {option.price && (
                     <div className='text-sm text-muted-foreground'>
-                      {getCurrencySymbol(option.currency)}
-                      {option.price.toLocaleString()}
+                      {formatPrice(option.price, option.currency)}
                     </div>
                   )}
                 </div>
@@ -263,6 +267,19 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
           </FormItem>
         )}
       />
+
+      {/* USD Settlement Disclaimer */}
+      {selectedEventTicketWave?.currency === EventTicketCurrency.USD && (
+        <Alert className='border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800'>
+          <InfoIcon className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+          <AlertDescription className='text-blue-800 dark:text-blue-200 text-sm'>
+            Los pagos en USD serán procesados por nuestro procesador de pagos y
+            liquidados en pesos uruguayos. Al momento del retiro, recibirás el
+            equivalente en USD según el tipo de cambio vigente. Estamos
+            trabajando para ofrecer liquidación directa en USD próximamente.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <FormField
         control={form.control}

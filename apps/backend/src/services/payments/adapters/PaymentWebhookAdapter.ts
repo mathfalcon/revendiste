@@ -320,6 +320,31 @@ export class PaymentWebhookAdapter {
     const oldStatus = paymentRecord.status;
     const newStatus = paymentData.status;
 
+    // Calculate exchange rate when currencies differ and we have settlement data
+    // Formula: (balance_amount + balance_fee) / amount
+    // Example: (2019.94 UYU + 50.26 UYU) / 53.66 USD = 38.58 UYU/USD
+    let exchangeRate: string | undefined;
+    if (
+      paymentData.balanceAmount &&
+      paymentData.balanceFee !== undefined &&
+      paymentData.balanceCurrency &&
+      paymentData.currency !== paymentData.balanceCurrency
+    ) {
+      const totalSettlement = paymentData.balanceAmount + paymentData.balanceFee;
+      const calculatedRate = totalSettlement / paymentData.amount;
+      exchangeRate = String(calculatedRate);
+
+      logger.info('Calculated exchange rate for payment', {
+        paymentId: paymentData.providerPaymentId,
+        originalAmount: paymentData.amount,
+        originalCurrency: paymentData.currency,
+        settlementAmount: paymentData.balanceAmount,
+        settlementFee: paymentData.balanceFee,
+        settlementCurrency: paymentData.balanceCurrency,
+        exchangeRate: calculatedRate,
+      });
+    }
+
     paymentRecord = await this.paymentsRepository.update(
       String(paymentRecord.id),
       {
@@ -331,6 +356,8 @@ export class PaymentWebhookAdapter {
           ? String(paymentData.balanceFee)
           : undefined,
         balanceCurrency: paymentData.balanceCurrency,
+        // Store exchange rate if currencies differ (dLocal settles in UYU even for USD orders)
+        exchangeRate,
         paymentMethod: paymentData.paymentMethod as any,
         payerEmail: paymentData.payer?.email,
         payerFirstName: paymentData.payer?.firstName,

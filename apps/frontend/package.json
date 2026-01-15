@@ -5,7 +5,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "HTTPS_LOCAL=1 vite dev",
     "build": "vite build",
     "start": "node .output/server/index.mjs",
     "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
@@ -55,7 +55,7 @@
     "heic-to": "^1.3.0",
     "lucide-react": "^0.555.0",
     "next-themes": "^0.4.6",
-    "nitro": "3.0.1-alpha.1",
+    "nitro": "npm:nitro-nightly@latest",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-easy-crop": "^5.5.6",

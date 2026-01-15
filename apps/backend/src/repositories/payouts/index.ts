@@ -224,6 +224,125 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
       .execute();
   }
 
+  /**
+   * Gets settlement information for a payout by tracing back to the payments
+   * that funded the seller earnings linked to this payout.
+   *
+   * Path: payout → sellerEarnings → listingTickets → orderTicketReservations → orders → payments
+   *
+   * Returns aggregated settlement data showing what we actually received from dLocal
+   * for the tickets included in this payout.
+   */
+  async getPayoutSettlementInfo(payoutId: string) {
+    // Get all payments related to this payout through the earnings chain
+    const settlementData = await this.db
+      .selectFrom('sellerEarnings')
+      .innerJoin(
+        'orderTicketReservations',
+        'sellerEarnings.listingTicketId',
+        'orderTicketReservations.listingTicketId',
+      )
+      .innerJoin('orders', 'orderTicketReservations.orderId', 'orders.id')
+      .innerJoin('payments', 'orders.id', 'payments.orderId')
+      .select([
+        'payments.id as paymentId',
+        'payments.amount as paymentAmount',
+        'payments.currency as paymentCurrency',
+        'payments.balanceAmount',
+        'payments.balanceCurrency',
+        'payments.balanceFee',
+        'payments.exchangeRate',
+        'payments.provider',
+        'sellerEarnings.sellerAmount',
+        'sellerEarnings.currency as earningsCurrency',
+      ])
+      .where('sellerEarnings.payoutId', '=', payoutId)
+      .where('sellerEarnings.deletedAt', 'is', null)
+      .where('payments.status', '=', 'paid')
+      .execute();
+
+    if (settlementData.length === 0) {
+      return null;
+    }
+
+    // Aggregate the settlement data
+    // Group by currency to handle multi-currency scenarios
+    const settlementByCurrency = new Map<
+      string,
+      {
+        totalPaymentAmount: number;
+        totalBalanceAmount: number;
+        totalBalanceFee: number;
+        totalSellerAmount: number;
+        exchangeRates: number[];
+        paymentCount: number;
+        providers: Set<string>;
+      }
+    >();
+
+    for (const row of settlementData) {
+      const currency = row.earningsCurrency;
+      const existing = settlementByCurrency.get(currency) || {
+        totalPaymentAmount: 0,
+        totalBalanceAmount: 0,
+        totalBalanceFee: 0,
+        totalSellerAmount: 0,
+        exchangeRates: [],
+        paymentCount: 0,
+        providers: new Set<string>(),
+      };
+
+      existing.totalPaymentAmount += Number(row.paymentAmount || 0);
+      existing.totalBalanceAmount += Number(row.balanceAmount || 0);
+      existing.totalBalanceFee += Number(row.balanceFee || 0);
+      existing.totalSellerAmount += Number(row.sellerAmount || 0);
+      if (row.exchangeRate) {
+        existing.exchangeRates.push(Number(row.exchangeRate));
+      }
+      if (row.provider) {
+        existing.providers.add(row.provider);
+      }
+      existing.paymentCount += 1;
+
+      settlementByCurrency.set(currency, existing);
+    }
+
+    // Convert to array and calculate average exchange rates
+    const settlements = Array.from(settlementByCurrency.entries()).map(
+      ([currency, data]) => ({
+        currency,
+        totalPaymentAmount: data.totalPaymentAmount,
+        totalBalanceAmount: data.totalBalanceAmount,
+        totalBalanceFee: data.totalBalanceFee,
+        totalSellerAmount: data.totalSellerAmount,
+        averageExchangeRate:
+          data.exchangeRates.length > 0
+            ? data.exchangeRates.reduce((a, b) => a + b, 0) /
+              data.exchangeRates.length
+            : null,
+        balanceCurrency: settlementData[0]?.balanceCurrency || null,
+        paymentCount: data.paymentCount,
+        providers: Array.from(data.providers),
+      }),
+    );
+
+    // Get unique providers across all settlements
+    const allProviders = new Set<string>();
+    for (const settlement of settlements) {
+      for (const provider of settlement.providers) {
+        allProviders.add(provider);
+      }
+    }
+
+    return {
+      settlements,
+      hasExchangeRateData: settlements.some(
+        s => s.averageExchangeRate !== null,
+      ),
+      providers: Array.from(allProviders),
+    };
+  }
+
   async getPayoutsForAdminPaginated(
     pagination: PaginationOptions,
     options?: {status?: string},

@@ -636,6 +636,7 @@ export class PayoutsService {
 
   /**
    * Get payout details for admin (with full information)
+   * Includes settlement information with exchange rates for currency conversion visibility
    */
   async getPayoutDetailsForAdmin(payoutId: string, adminUserId: string) {
     const payout = await this.payoutsRepository.getWithLinkedEarnings(payoutId);
@@ -660,10 +661,17 @@ export class PayoutsService {
       true, // isAdmin
     );
 
+    // Get settlement information (exchange rates, balance amounts from dLocal)
+    // This helps admin understand what we actually received vs what seller is owed
+    const settlementInfo = await this.payoutsRepository.getPayoutSettlementInfo(
+      payoutId,
+    );
+
     return {
       ...payout,
       metadata,
       documents,
+      settlementInfo,
       payoutMethod: payoutMethod
         ? {
             id: payoutMethod.id,

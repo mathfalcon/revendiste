@@ -26,7 +26,7 @@ import {
   updateTicketPriceMutation,
   getMyListingsQuery,
 } from '~/lib/api/ticket-listings';
-import {formatPrice, getCurrencySymbol} from '~/utils';
+import {formatPrice, formatAmount, getCurrencySymbol} from '~/utils';
 import type {EventTicketCurrency} from '~/lib/api/generated';
 
 const editTicketPriceSchema = z
@@ -38,7 +38,7 @@ const editTicketPriceSchema = z
     if (data.price > data.maxPrice) {
       ctx.addIssue({
         code: 'custom',
-        message: `El precio no puede superar al precio original de la tanda ($${data.maxPrice.toLocaleString('es-ES')})`,
+        message: `El precio no puede superar al precio original de la tanda ($${formatAmount(data.maxPrice)})`,
         path: ['price'],
       });
     }
@@ -103,8 +103,7 @@ export function EditTicketPriceDialog({
           <DialogTitle>Editar precio</DialogTitle>
           <DialogDescription>
             Actualiza el precio de tu ticket. El precio no puede superar el
-            valor nominal de {getCurrencySymbol(currency)}
-            {maxPrice.toLocaleString('es-ES')}.
+            valor nominal de {formatPrice(maxPrice, currency)}.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

@@ -78,7 +78,7 @@ export class SellerEarningsService {
       throw new Error('Listing not found');
     }
 
-    // Calculate seller amount and round to nearest integer (same logic as payments)
+    // Calculate seller amount and round to 2 decimal places (same logic as payments)
     const sellerAmountCalc = calculateSellerAmount(Number(ticketData.price));
     const sellerAmount = roundOrderAmount(sellerAmountCalc.totalAmount);
 

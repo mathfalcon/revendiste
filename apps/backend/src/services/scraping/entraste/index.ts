@@ -220,7 +220,7 @@ export class EntrasteScraper extends BaseScraper {
   } {
     logger.debug('Parsing single-day event date string:', dateString);
     const normalizedString = dateString.replace(/\s+/g, ' ').trim();
-    
+
     let dateTimeMatch = normalizedString.match(
       /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s*(?:desde\s+)?las\s+(\d+):(\d+)\s+hasta\s+las\s+(\d+):(\d+)/,
     );
@@ -229,16 +229,10 @@ export class EntrasteScraper extends BaseScraper {
       dateTimeMatch = normalizedString.match(
         /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+a\s+las\s+(\d+):(\d+)/,
       );
-      
+
       if (dateTimeMatch) {
-        const [
-          _fullMatch,
-          _dayOfWeek,
-          day,
-          month,
-          startHour,
-          startMinute,
-        ] = dateTimeMatch;
+        const [_fullMatch, _dayOfWeek, day, month, startHour, startMinute] =
+          dateTimeMatch;
 
         try {
           logger.debug(
@@ -255,11 +249,15 @@ export class EntrasteScraper extends BaseScraper {
 
           const startHourNum = parseInt(startHour);
           let endDate: Date;
-          
+
           if (startHourNum >= 20) {
-            const minutesUntilMidnight = (24 * 60) - (startHourNum * 60 + parseInt(startMinute));
+            const minutesUntilMidnight =
+              24 * 60 - (startHourNum * 60 + parseInt(startMinute));
             const minutesUntil6AM = 6 * 60;
-            endDate = addMinutes(startDate, minutesUntilMidnight + minutesUntil6AM);
+            endDate = addMinutes(
+              startDate,
+              minutesUntilMidnight + minutesUntil6AM,
+            );
             logger.debug('Late night event - assuming end time 06:00 next day');
           } else {
             endDate = addMinutes(startDate, 6 * 60);
@@ -268,7 +266,10 @@ export class EntrasteScraper extends BaseScraper {
 
           return DateUtils.fixNextYearEdgeCase(startDate, endDate);
         } catch (error) {
-          logger.warn('Error parsing single-day event date (start time only):', error);
+          logger.warn(
+            'Error parsing single-day event date (start time only):',
+            error,
+          );
           return {startDate: undefined, endDate: undefined};
         }
       }
@@ -446,22 +447,30 @@ export class EntrasteScraper extends BaseScraper {
           // Get the price from the ticket-price element
           let faceValue = 0;
           let currency: ScrapedTicketWave['currency'] = 'UYU'; // Default to UYU
-          const priceContainer = ticket.querySelector('.ticket-price .price');
-          if (priceContainer) {
-            // Extract the price as a number, removing any non-digit characters
-            const priceText =
-              priceContainer.textContent
-                ?.replace(/[^\d.,]/g, '')
-                .replace(',', '.') ?? '';
-            faceValue = parseFloat(priceText) || 0;
+          const ticketPriceDiv = ticket.querySelector('.ticket-price');
+          if (ticketPriceDiv) {
+            // The structure is: <div class="ticket-price"><div><small>USD</small> <span class="price">90</span></div></div>
+            // So <small> is a sibling of .price, not a child
 
-            // Determine currency from <small> element inside priceContainer
-            const smallEl = priceContainer.querySelector('small');
+            // Extract the price from .price span
+            const priceSpan = ticketPriceDiv.querySelector('.price');
+            if (priceSpan) {
+              const priceText =
+                priceSpan.textContent
+                  ?.replace(/[^\d.,]/g, '')
+                  .replace(',', '.') ?? '';
+              faceValue = parseFloat(priceText) || 0;
+            }
+
+            // Determine currency from <small> element (sibling of .price)
+            const smallEl = ticketPriceDiv.querySelector('small');
             if (smallEl) {
-              const currencyText = smallEl.textContent?.trim() || '';
-              if (currencyText === '$') {
+              const currencyText =
+                smallEl.textContent?.trim().toUpperCase() || '';
+
+              if (currencyText === '$' || currencyText === 'UYU') {
                 currency = 'UYU';
-              } else if (currencyText.length > 0) {
+              } else if (currencyText === 'USD' || currencyText === 'US$') {
                 currency = 'USD';
               }
             }

@@ -20,7 +20,7 @@ export const SignInAppearance = {
     socialButtonsBlockButton: cn(
       buttonVariants({
         variant: 'ghost',
-        className: 'bg-foreground',
+        className: 'bg-foreground hover:bg-foreground/80',
       }),
     ),
     modalCloseButton: 'text-foreground',

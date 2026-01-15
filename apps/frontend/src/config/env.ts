@@ -13,6 +13,7 @@ const EnvSchema = z.object({
   // Backend IP for direct access during SSR (bypasses Cloudflare)
   // Optional - if not set, will use VITE_APP_API_URL even during SSR
   BACKEND_IP: z.string().optional(),
+  NODE_ENV: z.enum(['local', 'development', 'production']).default('local'),
 });
 export const env = EnvSchema.safeParse(import.meta.env);
 
@@ -30,6 +31,7 @@ export const {
   BACKEND_IP,
   VITE_PLATFORM_COMMISSION_RATE,
   VITE_VAT_RATE,
+  NODE_ENV,
 } = env.data;
 
 // Helper function to get base URL

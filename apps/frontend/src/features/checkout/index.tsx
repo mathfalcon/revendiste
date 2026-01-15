@@ -32,7 +32,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
     onSuccess: data => {
       // Set redirecting state before navigation
       setIsRedirecting(true);
-      // Redirect to dLocal payment page
+      // Redirect to payment page
       navigate({href: data.redirectUrl});
     },
     onError: err => {
@@ -245,9 +245,16 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
           <Alert>
             <InfoIcon className='h-4 w-4' />
             <AlertTitle>Información de pago</AlertTitle>
-            <AlertDescription>
-              Serás redirigido a dLocal Go para completar el pago de forma
-              segura. No necesitas proporcionar información adicional aquí.
+            <AlertDescription className='space-y-2'>
+              <p>
+                Serás redirigido a nuestro procesador de pagos para completar la
+                transacción de forma segura. No necesitas proporcionar
+                información adicional aquí.
+              </p>
+              <p className='text-xs text-muted-foreground'>
+                El pago será procesado en tu moneda local. El tipo de cambio
+                será determinado al momento del pago.
+              </p>
             </AlertDescription>
           </Alert>
 

@@ -13,6 +13,7 @@ import {Input} from '~/components/ui/input';
 import {Label} from '~/components/ui/label';
 import {Textarea} from '~/components/ui/textarea';
 import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
+import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
 import {PriceInput} from '~/components/ui/price-input';
 import {EventTicketCurrency} from '~/lib';
 import {
@@ -22,7 +23,15 @@ import {
   deletePayoutDocumentMutation,
 } from '~/lib/api/admin';
 import {toast} from 'sonner';
-import {Loader2, Upload, Trash2, Download, AlertTriangle} from 'lucide-react';
+import {
+  Loader2,
+  Upload,
+  Trash2,
+  Download,
+  AlertTriangle,
+  ArrowRightLeft,
+  Info,
+} from 'lucide-react';
 import {
   getBankName,
   getAccountNumber,
@@ -34,6 +43,7 @@ import {
   UruguayanBankMetadataSchema,
   PayPalMetadataSchema,
 } from '@revendiste/shared/schemas/payout-methods';
+import {formatProvidersList} from '@revendiste/shared';
 
 interface ProcessPayoutDialogProps {
   payoutId: string;
@@ -286,6 +296,134 @@ export function ProcessPayoutDialog({
               </CardContent>
             </Card>
           )}
+
+          {/* Settlement/Exchange Rate Information - Show when payout is in USD and we have settlement data */}
+          {(currentStep === 1 || payout.status !== 'pending') &&
+            payout.settlementInfo?.hasExchangeRateData &&
+            payout.currency === 'USD' && (
+              <Alert className='border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'>
+                <ArrowRightLeft className='h-4 w-4 text-amber-600' />
+                <AlertTitle className='text-amber-800 dark:text-amber-200'>
+                  Información de Liquidación
+                  {payout.settlementInfo.providers &&
+                    payout.settlementInfo.providers.length > 0 &&
+                    ` (${formatProvidersList(payout.settlementInfo.providers)})`}
+                </AlertTitle>
+                <AlertDescription className='text-amber-700 dark:text-amber-300'>
+                  <div className='mt-2 space-y-2'>
+                    <p className='text-sm'>
+                      Este retiro es en <strong>USD</strong>, pero el procesador
+                      de pagos nos liquidó en <strong>UYU</strong>. A
+                      continuación se muestra la información del tipo de cambio
+                      aplicado:
+                    </p>
+                    {payout.settlementInfo.settlements.map(
+                      (settlement, idx) => (
+                        <div
+                          key={idx}
+                          className='mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-700'
+                        >
+                          <div className='grid grid-cols-2 gap-2 text-sm'>
+                            <div>
+                              <span className='text-muted-foreground'>
+                                Monto al vendedor ({settlement.currency}):
+                              </span>
+                            </div>
+                            <div className='text-right font-medium'>
+                              {formatCurrency(
+                                String(settlement.totalSellerAmount),
+                                settlement.currency,
+                              )}
+                            </div>
+
+                            {settlement.averageExchangeRate && (
+                              <>
+                                <div>
+                                  <span className='text-muted-foreground'>
+                                    Tipo de cambio promedio:
+                                  </span>
+                                </div>
+                                <div className='text-right font-medium'>
+                                  1 USD ={' '}
+                                  {settlement.averageExchangeRate.toFixed(4)}{' '}
+                                  UYU
+                                </div>
+                              </>
+                            )}
+
+                            {settlement.totalBalanceAmount > 0 && (
+                              <>
+                                <div>
+                                  <span className='text-muted-foreground'>
+                                    Recibido del procesador (UYU):
+                                  </span>
+                                </div>
+                                <div className='text-right font-medium'>
+                                  {formatCurrency(
+                                    String(settlement.totalBalanceAmount),
+                                    'UYU',
+                                  )}
+                                </div>
+
+                                <div>
+                                  <span className='text-muted-foreground'>
+                                    Comisión del procesador (UYU):
+                                  </span>
+                                </div>
+                                <div className='text-right font-medium text-red-600'>
+                                  -{' '}
+                                  {formatCurrency(
+                                    String(settlement.totalBalanceFee),
+                                    'UYU',
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {settlement.averageExchangeRate && (
+                            <div className='mt-3 pt-3 border-t border-amber-200 dark:border-amber-700'>
+                              <div className='flex justify-between items-center'>
+                                <span className='text-sm font-medium'>
+                                  Equivalente en UYU a pagar:
+                                </span>
+                                <span className='text-lg font-bold text-amber-800 dark:text-amber-200'>
+                                  {formatCurrency(
+                                    String(
+                                      settlement.totalSellerAmount *
+                                        settlement.averageExchangeRate,
+                                    ),
+                                    'UYU',
+                                  )}
+                                </span>
+                              </div>
+                              <p className='text-xs text-muted-foreground mt-1'>
+                                Calculado usando el tipo de cambio promedio de
+                                las transacciones
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+          {/* Info note for UYU payouts */}
+          {(currentStep === 1 || payout.status !== 'pending') &&
+            payout.currency === 'UYU' && (
+              <Alert>
+                <Info className='h-4 w-4' />
+                <AlertTitle>Pago en UYU</AlertTitle>
+                <AlertDescription>
+                  Este retiro está en UYU, que es la misma moneda en la que el
+                  procesador de pagos nos liquida. No hay conversión de moneda
+                  necesaria.
+                </AlertDescription>
+              </Alert>
+            )}
 
           {/* Payout Method Details - Prominent Display - Always visible in Step 1, hidden in Step 2 */}
           {(currentStep === 1 || payout.status !== 'pending') &&

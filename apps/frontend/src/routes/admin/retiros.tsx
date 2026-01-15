@@ -23,6 +23,7 @@ import {ProcessPayoutDialog} from '~/features/admin/payouts/ProcessPayoutDialog'
 import {CancelPayoutDialog} from '~/features/admin/payouts/CancelPayoutDialog';
 import {useState} from 'react';
 import {MoreVertical} from 'lucide-react';
+import {formatCurrency} from '~/utils';
 
 const payoutsSearchSchema = z.object({
   page: z.number().optional().default(1),
@@ -106,12 +107,6 @@ function PayoutsPage() {
     }
   };
 
-  const formatCurrency = (amount: string, currency: string) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: currency === 'UYU' ? 'UYU' : 'USD',
-    }).format(Number(amount));
-  };
 
   const getStatusLabel = (status: string) => {
     switch (status) {

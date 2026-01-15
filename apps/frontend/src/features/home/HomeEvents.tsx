@@ -28,7 +28,7 @@ export const HomeEvents = () => {
         Encontrá tu próximo evento
       </h2>
       <Separator />
-      <main className='grid gap-3 sm:gap-6 m-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl px-4 sm:px-0'>
+      <main className='grid w-full min-w-[100vw] sm:min-w-[unset] gap-3 sm:gap-6 mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl px-4 sm:px-0'>
         {isLoading
           ? Array.from({length: 6}).map((_, index) => (
               <SkeletonEventCard key={`event-card-skeleton-${index}`} />
