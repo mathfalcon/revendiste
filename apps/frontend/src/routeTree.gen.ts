@@ -30,7 +30,7 @@ import { Route as CuentaRetiroRouteImport } from './routes/cuenta/retiro'
 import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
 import { Route as CuentaEstadoVerificacionRouteImport } from './routes/cuenta/estado-verificacion'
 import { Route as AdminVerificacionesRouteImport } from './routes/admin/verificaciones'
-import { Route as AdminPayoutsRouteImport } from './routes/admin/payouts'
+import { Route as AdminRetirosRouteImport } from './routes/admin/retiros'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
@@ -141,9 +141,9 @@ const AdminVerificacionesRoute = AdminVerificacionesRouteImport.update({
   path: '/verificaciones',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminPayoutsRoute = AdminPayoutsRouteImport.update({
-  id: '/payouts',
-  path: '/payouts',
+const AdminRetirosRoute = AdminRetirosRouteImport.update({
+  id: '/retiros',
+  path: '/retiros',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const CheckoutOrderIdIndexRoute = CheckoutOrderIdIndexRouteImport.update({
@@ -172,7 +172,7 @@ export interface FileRoutesByFullPath {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
-  '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
@@ -198,7 +198,7 @@ export interface FileRoutesByTo {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
-  '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
@@ -226,7 +226,7 @@ export interface FileRoutesById {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
-  '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
@@ -255,7 +255,7 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
-    | '/admin/payouts'
+    | '/admin/retiros'
     | '/admin/verificaciones'
     | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
@@ -281,7 +281,7 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
-    | '/admin/payouts'
+    | '/admin/retiros'
     | '/admin/verificaciones'
     | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
@@ -308,7 +308,7 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
-    | '/admin/payouts'
+    | '/admin/retiros'
     | '/admin/verificaciones'
     | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
@@ -494,11 +494,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVerificacionesRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/payouts': {
-      id: '/admin/payouts'
-      path: '/payouts'
-      fullPath: '/admin/payouts'
-      preLoaderRoute: typeof AdminPayoutsRouteImport
+    '/admin/retiros': {
+      id: '/admin/retiros'
+      path: '/retiros'
+      fullPath: '/admin/retiros'
+      preLoaderRoute: typeof AdminRetirosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/checkout/$orderId/': {
@@ -526,13 +526,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteRouteChildren {
-  AdminPayoutsRoute: typeof AdminPayoutsRoute
+  AdminRetirosRoute: typeof AdminRetirosRoute
   AdminVerificacionesRoute: typeof AdminVerificacionesRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
-  AdminPayoutsRoute: AdminPayoutsRoute,
+  AdminRetirosRoute: AdminRetirosRoute,
   AdminVerificacionesRoute: AdminVerificacionesRoute,
   AdminIndexRoute: AdminIndexRoute,
 }

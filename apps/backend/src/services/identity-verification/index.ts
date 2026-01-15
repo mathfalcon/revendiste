@@ -116,6 +116,14 @@ interface UserVerificationData {
   manualReviewReason: string | null;
 }
 
+/** Result of document identifier extraction with confidence score */
+interface DocumentExtractionResult {
+  /** The extracted/matched document identifier (can be alphanumeric for passports) */
+  documentId: string;
+  /** Confidence score of the text detection that matched (0-100) */
+  confidence: number;
+}
+
 // ============================================================================
 // Service
 // ============================================================================
@@ -227,15 +235,16 @@ export class IdentityVerificationService {
     const {documentUpload, textDetection, documentFaces} =
       await this.runDocumentAnalysis(userId, processedImage);
 
-    const extractedNumber = this.extractDocumentNumber(
+    // Extract document ID and get the confidence of the matching text detection
+    const extractionResult = this.extractDocumentId(
       textDetection.TextDetections ?? [],
       documentType,
-      user.documentNumber ?? undefined, // Pass user-provided number for passport matching
+      user.documentNumber ?? undefined, // Pass user-provided ID for passport matching
     );
-    this.validateDocumentNumberMatch(
+    this.validateDocumentIdMatch(
       userId,
       user.documentNumber,
-      extractedNumber,
+      extractionResult.documentId,
       documentType,
     );
     this.validateFaceCountInDocument(
@@ -247,22 +256,27 @@ export class IdentityVerificationService {
     // Get the best quality face (for passports with watermarks, pick the highest quality)
     const bestFace = this.getBestQualityFace(documentFaces.FaceDetails ?? []);
 
+    // Use the confidence from the actual matching text detection (not index 0)
+    const textDetectionConfidence = extractionResult.confidence;
+
     const {verificationStatus, manualReviewReason} =
       this.evaluateDocumentQuality(
         userId,
-        textDetection.TextDetections?.[0]?.Confidence || 0,
+        textDetectionConfidence,
         bestFace?.Quality?.Brightness || 0,
         bestFace?.Quality?.Sharpness || 0,
       );
+
+    // Use the best face quality (not index 0 which may be the watermark)
+    const bestFaceQuality = bestFace?.Quality?.Brightness || 0;
 
     await this.usersRepository.updateVerification(userId, {
       verificationStatus,
       manualReviewReason,
       documentImagePath: documentUpload.path,
       verificationConfidenceScores: {
-        textDetection: textDetection.TextDetections?.[0]?.Confidence || 0,
-        documentFaceQuality:
-          documentFaces.FaceDetails?.[0]?.Quality?.Brightness || 0,
+        textDetection: textDetectionConfidence,
+        documentFaceQuality: bestFaceQuality,
       },
     });
 
@@ -273,13 +287,12 @@ export class IdentityVerificationService {
       'pending',
       verificationStatus,
       {
-        textDetection: textDetection.TextDetections?.[0]?.Confidence || 0,
-        documentQuality:
-          documentFaces.FaceDetails?.[0]?.Quality?.Brightness || 0,
+        textDetection: textDetectionConfidence,
+        documentQuality: bestFaceQuality,
       },
       {
         documentImagePath: documentUpload.path,
-        extractedNumber,
+        extractedDocumentId: extractionResult.documentId,
         documentType,
       },
     );
@@ -288,14 +301,15 @@ export class IdentityVerificationService {
       userId,
       verificationStatus,
       documentImagePath: documentUpload.path,
+      textDetectionConfidence,
       readyForLiveness: true,
     });
 
     return {
-      extractedNumber,
+      extractedDocumentId: extractionResult.documentId,
       readyForLiveness: true,
       verificationStatus,
-      documentNumberMatch: true,
+      documentIdMatch: true,
     };
   }
 
@@ -418,7 +432,7 @@ export class IdentityVerificationService {
     }
 
     if (documentType === 'ci_uy') {
-      const normalizedCI = this.normalizeDocumentNumber(documentNumber);
+      const normalizedCI = this.normalizeDocumentId(documentNumber);
       if (!this.validateCIUruguay(normalizedCI)) {
         throw new ValidationError(
           IDENTITY_VERIFICATION_ERROR_MESSAGES.CI_INVALID,
@@ -509,26 +523,26 @@ export class IdentityVerificationService {
     }
   }
 
-  private validateDocumentNumberMatch(
+  private validateDocumentIdMatch(
     userId: string,
-    userDocNumber: string,
-    extractedNumber: string,
+    userDocId: string,
+    extractedId: string,
     documentType: DocumentType,
   ): void {
-    const normalizedUser = this.normalizeDocumentNumber(userDocNumber);
-    const normalizedExtracted = this.normalizeDocumentNumber(extractedNumber);
+    const normalizedUser = this.normalizeDocumentId(userDocId);
+    const normalizedExtracted = this.normalizeDocumentId(extractedId);
     const isMatch =
       normalizedUser.toLowerCase() === normalizedExtracted.toLowerCase();
 
-    logger.info('[STEP 2/3] Document number comparison', {
+    logger.info('[STEP 2/3] Document ID comparison', {
       userId,
-      userProvidedNumber: normalizedUser,
+      userProvidedId: normalizedUser,
       extractedFromImage: normalizedExtracted,
       match: isMatch,
     });
 
     if (!isMatch) {
-      logger.warn('[STEP 2/3] ❌ Document number mismatch', {
+      logger.warn('[STEP 2/3] ❌ Document ID mismatch', {
         userId,
         userProvided: normalizedUser,
         extractedFromImage: normalizedExtracted,
@@ -1545,20 +1559,18 @@ export class IdentityVerificationService {
   // Private: Document Number Extraction & Validation
   // ==========================================================================
 
-  private extractDocumentNumber(
+  private extractDocumentId(
     textDetections: TextDetection[],
     documentType: DocumentType,
-    userProvidedNumber?: string,
-  ): string {
-    const detectedText = textDetections.map(t => t.DetectedText).join(' ');
-
+    userProvidedId?: string,
+  ): DocumentExtractionResult {
     switch (documentType) {
       case 'ci_uy':
-        return this.extractCIUruguay(detectedText);
+        return this.extractCIUruguay(textDetections);
       case 'dni_ar':
-        return this.extractDNIArgentina(detectedText);
+        return this.extractDNIArgentina(textDetections);
       case 'passport':
-        return this.extractPassport(textDetections, userProvidedNumber);
+        return this.extractPassport(textDetections, userProvidedId);
       default:
         throw new ValidationError(
           IDENTITY_VERIFICATION_ERROR_MESSAGES.DOCUMENT_TYPE_NOT_SUPPORTED,
@@ -1566,8 +1578,36 @@ export class IdentityVerificationService {
     }
   }
 
-  private extractCIUruguay(text: string): string {
-    const match = text.match(/\b(\d{1}\.\d{3}\.\d{3}-\d{1}|\d{7,8})\b/);
+  private extractCIUruguay(
+    textDetections: TextDetection[],
+  ): DocumentExtractionResult {
+    const ciPattern = /\b(\d{1}\.\d{3}\.\d{3}-\d{1}|\d{7,8})\b/;
+
+    // Search through each detection to find the CI and get its confidence
+    for (const detection of textDetections) {
+      const detectedText = detection.DetectedText ?? '';
+      const match = detectedText.match(ciPattern);
+
+      if (match) {
+        const fullNumber = match[1].replace(/[.-]/g, '');
+        if (this.validateCIUruguay(fullNumber)) {
+          logger.info('[STEP 2/3] CI Uruguay found in detected text', {
+            foundIn: detection.DetectedText,
+            confidence: detection.Confidence,
+            extractedId: fullNumber,
+          });
+          return {
+            documentId: fullNumber,
+            confidence: detection.Confidence ?? 0,
+          };
+        }
+      }
+    }
+
+    // Fallback: search in concatenated text (in case number spans multiple detections)
+    const allText = textDetections.map(t => t.DetectedText).join(' ');
+    const match = allText.match(ciPattern);
+
     if (!match) {
       throw new ValidationError(
         IDENTITY_VERIFICATION_ERROR_MESSAGES.CI_NOT_DETECTED,
@@ -1581,62 +1621,123 @@ export class IdentityVerificationService {
       );
     }
 
-    return fullNumber;
+    // When found via concatenation, use average confidence of all detections
+    const avgConfidence =
+      textDetections.reduce((sum, d) => sum + (d.Confidence ?? 0), 0) /
+      (textDetections.length || 1);
+
+    logger.info(
+      '[STEP 2/3] CI Uruguay found via concatenated text (spanning multiple detections)',
+      {
+        extractedId: fullNumber,
+        avgConfidence,
+      },
+    );
+
+    return {
+      documentId: fullNumber,
+      confidence: avgConfidence,
+    };
   }
 
-  private extractDNIArgentina(text: string): string {
-    const match = text.match(
-      /\b(\d{2}\.\d{3}\.\d{3}|\d{1,2}\.\d{3}\.\d{3}|\d{7,8})\b/,
-    );
+  private extractDNIArgentina(
+    textDetections: TextDetection[],
+  ): DocumentExtractionResult {
+    const dniPattern =
+      /\b(\d{2}\.\d{3}\.\d{3}|\d{1,2}\.\d{3}\.\d{3}|\d{7,8})\b/;
+
+    // Search through each detection to find the DNI and get its confidence
+    for (const detection of textDetections) {
+      const detectedText = detection.DetectedText ?? '';
+      const match = detectedText.match(dniPattern);
+
+      if (match) {
+        const dniNumber = match[1].replace(/\./g, '');
+        logger.info('[STEP 2/3] DNI Argentina found in detected text', {
+          foundIn: detection.DetectedText,
+          confidence: detection.Confidence,
+          extractedId: dniNumber,
+        });
+        return {
+          documentId: dniNumber,
+          confidence: detection.Confidence ?? 0,
+        };
+      }
+    }
+
+    // Fallback: search in concatenated text (in case number spans multiple detections)
+    const allText = textDetections.map(t => t.DetectedText).join(' ');
+    const match = allText.match(dniPattern);
+
     if (!match) {
       throw new ValidationError(
         IDENTITY_VERIFICATION_ERROR_MESSAGES.DNI_NOT_DETECTED,
       );
     }
-    return match[1].replace(/\./g, '');
+
+    // When found via concatenation, use average confidence of all detections
+    const avgConfidence =
+      textDetections.reduce((sum, d) => sum + (d.Confidence ?? 0), 0) /
+      (textDetections.length || 1);
+
+    logger.info(
+      '[STEP 2/3] DNI Argentina found via concatenated text (spanning multiple detections)',
+      {
+        extractedId: match[1].replace(/\./g, ''),
+        avgConfidence,
+      },
+    );
+
+    return {
+      documentId: match[1].replace(/\./g, ''),
+      confidence: avgConfidence,
+    };
   }
 
   /**
    * Extract passport number by searching through all detected text.
    * Strategy:
    * 1. If user provided a number, search for it in all detected text items
-   * 2. If found (case-insensitive), return the matched text
+   * 2. If found (case-insensitive), return the matched text with its confidence
    * 3. If not found, fall back to regex pattern matching
    */
   private extractPassport(
     textDetections: TextDetection[],
-    userProvidedNumber?: string,
-  ): string {
-    // Strategy 1: If user provided a number, search for it in detected text
-    if (userProvidedNumber) {
-      const normalizedUserNumber =
-        this.normalizeDocumentNumber(userProvidedNumber).toUpperCase();
+    userProvidedId?: string,
+  ): DocumentExtractionResult {
+    // Strategy 1: If user provided an ID, search for it in detected text
+    if (userProvidedId) {
+      const normalizedUserId =
+        this.normalizeDocumentId(userProvidedId).toUpperCase();
 
-      // Search through all detected text items for the user-provided number
+      // Search through all detected text items for the user-provided ID
       for (const detection of textDetections) {
         const detectedText = detection.DetectedText?.toUpperCase() ?? '';
-        const normalizedDetected = this.normalizeDocumentNumber(detectedText);
+        const normalizedDetected = this.normalizeDocumentId(detectedText);
 
-        // Check if the detected text contains the user-provided number
-        if (normalizedDetected.includes(normalizedUserNumber)) {
-          logger.info('[STEP 2/3] Passport number found in detected text', {
-            userProvided: userProvidedNumber,
+        // Check if the detected text contains the user-provided ID
+        if (normalizedDetected.includes(normalizedUserId)) {
+          logger.info('[STEP 2/3] Passport ID found in detected text', {
+            userProvided: userProvidedId,
             foundIn: detection.DetectedText,
             confidence: detection.Confidence,
           });
-          return normalizedUserNumber;
+          return {
+            documentId: normalizedUserId,
+            confidence: detection.Confidence ?? 0,
+          };
         }
 
-        // Also check if user-provided number contains the detected text
-        // (in case OCR splits the number)
+        // Also check if user-provided ID contains the detected text
+        // (in case OCR splits the ID)
         if (
-          normalizedUserNumber.includes(normalizedDetected) &&
+          normalizedUserId.includes(normalizedDetected) &&
           normalizedDetected.length >= 3
         ) {
           logger.info(
-            '[STEP 2/3] Partial passport number match found in detected text',
+            '[STEP 2/3] Partial passport ID match found in detected text',
             {
-              userProvided: userProvidedNumber,
+              userProvided: userProvidedId,
               partialMatch: detection.DetectedText,
               confidence: detection.Confidence,
             },
@@ -1644,11 +1745,11 @@ export class IdentityVerificationService {
         }
       }
 
-      // If user-provided number not found, log all detected text for debugging
+      // If user-provided ID not found, log all detected text for debugging
       logger.warn(
-        '[STEP 2/3] User-provided passport number not found in detected text',
+        '[STEP 2/3] User-provided passport ID not found in detected text',
         {
-          userProvided: userProvidedNumber,
+          userProvided: userProvidedId,
           allDetectedText: textDetections
             .map(t => t.DetectedText)
             .filter(Boolean)
@@ -1658,14 +1759,53 @@ export class IdentityVerificationService {
     }
 
     // Strategy 2: Fall back to regex pattern matching
+    const passportPattern = /\b([A-Z][A-Z0-9]{5,8})\b/;
+
+    // First try to find in individual detections for accurate confidence
+    for (const detection of textDetections) {
+      const detectedText = detection.DetectedText?.toUpperCase() ?? '';
+      const match = detectedText.match(passportPattern);
+
+      if (match) {
+        logger.info('[STEP 2/3] Passport ID found via regex in detected text', {
+          foundIn: detection.DetectedText,
+          confidence: detection.Confidence,
+          extractedId: match[1],
+        });
+        return {
+          documentId: match[1],
+          confidence: detection.Confidence ?? 0,
+        };
+      }
+    }
+
+    // Fallback: search in concatenated text
     const allText = textDetections.map(t => t.DetectedText).join(' ');
-    const match = allText.match(/\b([A-Z][A-Z0-9]{5,8})\b/);
+    const match = allText.match(passportPattern);
+
     if (!match) {
       throw new ValidationError(
         IDENTITY_VERIFICATION_ERROR_MESSAGES.PASSPORT_NOT_DETECTED,
       );
     }
-    return match[1];
+
+    // When found via concatenation, use average confidence
+    const avgConfidence =
+      textDetections.reduce((sum, d) => sum + (d.Confidence ?? 0), 0) /
+      (textDetections.length || 1);
+
+    logger.info(
+      '[STEP 2/3] Passport ID found via concatenated text (spanning multiple detections)',
+      {
+        extractedId: match[1],
+        avgConfidence,
+      },
+    );
+
+    return {
+      documentId: match[1],
+      confidence: avgConfidence,
+    };
   }
 
   private validateCIUruguay(ciNumber: string): boolean {
@@ -1701,8 +1841,8 @@ export class IdentityVerificationService {
     }
   }
 
-  private normalizeDocumentNumber(number: string): string {
-    return number.replace(/[.-]/g, '');
+  private normalizeDocumentId(id: string): string {
+    return id.replace(/[.-]/g, '');
   }
 
   private getSessionAge(sessionCreatedAt: Date | null): number {

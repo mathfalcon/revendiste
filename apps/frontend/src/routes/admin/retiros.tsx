@@ -35,7 +35,7 @@ const payoutsSearchSchema = z.object({
   status: z.enum(['pending', 'completed', 'failed', 'cancelled']).optional(),
 });
 
-export const Route = createFileRoute('/admin/payouts')({
+export const Route = createFileRoute('/admin/retiros')({
   component: PayoutsPage,
   validateSearch: payoutsSearchSchema,
   loaderDeps: ({search}) => ({
@@ -51,8 +51,8 @@ export const Route = createFileRoute('/admin/payouts')({
 });
 
 function PayoutsPage() {
-  const search = useSearch({from: '/admin/payouts'});
-  const navigate = useNavigate({from: '/admin/payouts'});
+  const search = useSearch({from: '/admin/retiros'});
+  const navigate = useNavigate({from: '/admin/retiros'});
   const [editingPayoutId, setEditingPayoutId] = useState<string | null>(null);
   const [processingPayoutId, setProcessingPayoutId] = useState<string | null>(
     null,

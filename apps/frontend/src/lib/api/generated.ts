@@ -10,6 +10,12 @@
  * ---------------------------------------------------------------
  */
 
+export enum DocumentTypeEnum {
+  CiUy = "ci_uy",
+  DniAr = "dni_ar",
+  Passport = "passport",
+}
+
 export enum VerificationStatus {
   Pending = "pending",
   RequiresManualReview = "requires_manual_review",
@@ -47,6 +53,10 @@ export enum NotificationType {
   AuthVerificationCode = "auth_verification_code",
   DocumentReminder = "document_reminder",
   DocumentUploaded = "document_uploaded",
+  IdentityVerificationCompleted = "identity_verification_completed",
+  IdentityVerificationFailed = "identity_verification_failed",
+  IdentityVerificationManualReview = "identity_verification_manual_review",
+  IdentityVerificationRejected = "identity_verification_rejected",
   OrderConfirmed = "order_confirmed",
   OrderExpired = "order_expired",
   PaymentFailed = "payment_failed",
@@ -251,15 +261,6 @@ export interface CreateTicketListingResponse {
     price: string;
     listingId: string;
     /** @format date-time */
-    documentUploadRequiredNotifiedAt: string | null;
-    /** @format date-time */
-    documentUploadedAt: string | null;
-    documentType: string | null;
-    /** @format double */
-    documentSizeBytes: number | null;
-    documentPath: string | null;
-    documentOriginalName: string | null;
-    /** @format date-time */
     cancelledAt: string | null;
     /** @format date-time */
     soldAt: string | null;
@@ -400,15 +401,6 @@ export interface UpdateTicketPriceResponse {
   price: string;
   listingId: string;
   /** @format date-time */
-  documentUploadRequiredNotifiedAt: string | null;
-  /** @format date-time */
-  documentUploadedAt: string | null;
-  documentType: string | null;
-  /** @format double */
-  documentSizeBytes: number | null;
-  documentPath: string | null;
-  documentOriginalName: string | null;
-  /** @format date-time */
   cancelledAt: string | null;
   /** @format date-time */
   soldAt: string | null;
@@ -431,15 +423,6 @@ export interface RemoveTicketResponse {
   ticketNumber: number;
   price: string;
   listingId: string;
-  /** @format date-time */
-  documentUploadRequiredNotifiedAt: string | null;
-  /** @format date-time */
-  documentUploadedAt: string | null;
-  documentType: string | null;
-  /** @format double */
-  documentSizeBytes: number | null;
-  documentPath: string | null;
-  documentOriginalName: string | null;
   /** @format date-time */
   cancelledAt: string | null;
   /** @format date-time */
@@ -1552,10 +1535,10 @@ export interface InitiateVerificationRouteBody {
 }
 
 export interface ProcessDocumentResponse {
-  documentNumberMatch: boolean;
+  documentIdMatch: boolean;
   verificationStatus: "pending" | "requires_manual_review";
   readyForLiveness: boolean;
-  extractedNumber: string;
+  extractedDocumentId: string;
 }
 
 export interface CreateLivenessCheckResponse {
@@ -1598,13 +1581,20 @@ export interface GetVerificationsResponse {
     updatedAt: string;
     /** @format date-time */
     createdAt: string;
-    verificationConfidenceScores: any;
-    manualReviewReason: any;
-    verificationAttempts: any;
-    verificationStatus: any;
-    documentCountry: any;
-    documentNumber: any;
-    documentType: any;
+    verificationConfidenceScores: JsonValue;
+    manualReviewReason: string | null;
+    /** @format double */
+    verificationAttempts: number | null;
+    verificationStatus:
+      | "pending"
+      | "completed"
+      | "failed"
+      | "requires_manual_review"
+      | "rejected"
+      | null;
+    documentCountry: string | null;
+    documentNumber: string | null;
+    documentType: DocumentTypeEnum | null;
     lastName: string | null;
     firstName: string | null;
     email: string;
@@ -1650,14 +1640,22 @@ export interface GetVerificationDetailsResponse {
     faceMatch: any;
     textDetection: any;
   };
-  documentVerifiedAt: any;
-  documentVerified: any;
-  manualReviewReason: any;
-  verificationAttempts: any;
-  verificationStatus: any;
-  documentCountry: any;
-  documentNumber: any;
-  documentType: any;
+  /** @format date-time */
+  documentVerifiedAt: string | null;
+  documentVerified: boolean | null;
+  manualReviewReason: string | null;
+  /** @format double */
+  verificationAttempts: number | null;
+  verificationStatus:
+    | "pending"
+    | "completed"
+    | "failed"
+    | "requires_manual_review"
+    | "rejected"
+    | null;
+  documentCountry: string | null;
+  documentNumber: string | null;
+  documentType: DocumentTypeEnum | null;
   lastName: string | null;
   firstName: string | null;
   email: string;
@@ -1697,7 +1695,17 @@ export interface GetVerificationAuditHistoryResponse {
     /** @format double */
     limit: number;
   };
-  data: any;
+  data: {
+    previousStatus: string | null;
+    newStatus: string | null;
+    confidenceScores: JsonValue;
+    action: string;
+    userId: string;
+    metadata: JsonValue;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  }[];
 }
 
 import type {

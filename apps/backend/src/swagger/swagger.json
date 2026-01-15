@@ -5368,7 +5368,7 @@
 			},
 			"ProcessDocumentResponse": {
 				"properties": {
-					"documentNumberMatch": {
+					"documentIdMatch": {
 						"type": "boolean"
 					},
 					"verificationStatus": {
@@ -5381,15 +5381,15 @@
 					"readyForLiveness": {
 						"type": "boolean"
 					},
-					"extractedNumber": {
+					"extractedDocumentId": {
 						"type": "string"
 					}
 				},
 				"required": [
-					"documentNumberMatch",
+					"documentIdMatch",
 					"verificationStatus",
 					"readyForLiveness",
-					"extractedNumber"
+					"extractedDocumentId"
 				],
 				"type": "object"
 			},

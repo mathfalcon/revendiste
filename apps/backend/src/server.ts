@@ -21,6 +21,7 @@ app.use(
     origin: [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
+      'https://192.168.64.1:3000',
       APP_BASE_URL,
       'https://revendiste.com',
     ].filter(Boolean), // Remove any undefined values

@@ -606,7 +606,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ProcessDocumentResponse": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"documentNumberMatch":{"dataType":"boolean","required":true},"verificationStatus":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["requires_manual_review"]}],"required":true},"readyForLiveness":{"dataType":"boolean","required":true},"extractedNumber":{"dataType":"string","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"documentIdMatch":{"dataType":"boolean","required":true},"verificationStatus":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["requires_manual_review"]}],"required":true},"readyForLiveness":{"dataType":"boolean","required":true},"extractedDocumentId":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CreateLivenessCheckResponse": {
