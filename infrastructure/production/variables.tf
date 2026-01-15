@@ -80,9 +80,10 @@ variable "db_engine_version" {
 }
 
 variable "db_instance_class" {
-  description = "RDS instance class (e.g., db.t3.medium, db.t3.large). db.t3.medium (2 vCPU, 4GB RAM) handles hundreds of concurrent users easily."
+  description = "RDS instance class. Pre-launch: db.t4g.micro (~$10/month). Post-launch: db.t3.medium for production traffic."
   type        = string
-  default     = "db.t3.medium" # 2 vCPU, 4GB RAM - sufficient for hundreds of concurrent users
+  default     = "db.t4g.micro" # Pre-launch: 2 vCPU, 1GB RAM - sufficient until you have real users
+  # Upgrade path: db.t4g.small (~$20/mo) → db.t3.medium (~$47/mo) → db.t3.large as needed
 }
 
 variable "db_allocated_storage" {

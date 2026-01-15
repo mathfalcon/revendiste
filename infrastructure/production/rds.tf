@@ -36,14 +36,15 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 }
 
 # Standard RDS PostgreSQL Instance
-# Cost: ~$30/month for db.t3.medium (vs ~$65/month for Aurora Serverless v2 at 0.5 ACU)
+# Pre-launch: db.t4g.micro ~$10/month (Graviton ARM, 2 vCPU, 1GB RAM)
+# Post-launch upgrade path: db.t4g.small (~$20/mo) → db.t3.medium (~$47/mo)
 # Can easily migrate to Aurora later using AWS DMS or pg_dump/pg_restore
 resource "aws_db_instance" "main" {
-  identifier     = "${local.name_prefix}-postgres"
-  engine         = "postgres"
-  engine_version = var.db_engine_version
-  instance_class = var.db_instance_class
-  allocated_storage = var.db_allocated_storage
+  identifier            = "${local.name_prefix}-postgres"
+  engine                = "postgres"
+  engine_version        = var.db_engine_version
+  instance_class        = var.db_instance_class
+  allocated_storage     = var.db_allocated_storage
   max_allocated_storage = var.db_max_allocated_storage # Auto-scaling storage up to this limit
 
   db_name  = var.db_name
@@ -55,10 +56,10 @@ resource "aws_db_instance" "main" {
   publicly_accessible    = false # Keep database private
 
   # Backup configuration
-  backup_retention_period      = var.db_backup_retention_days
-  backup_window                = "03:00-04:00"         # UTC
-  maintenance_window           = "sun:04:00-sun:05:00" # UTC
-  auto_minor_version_upgrade   = true
+  backup_retention_period    = var.db_backup_retention_days
+  backup_window              = "03:00-04:00"         # UTC
+  maintenance_window         = "sun:04:00-sun:05:00" # UTC
+  auto_minor_version_upgrade = true
 
   # Enable encryption
   storage_encrypted = true

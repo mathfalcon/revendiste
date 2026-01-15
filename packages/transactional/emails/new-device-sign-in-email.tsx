@@ -43,8 +43,8 @@ export const NewDeviceSignInEmail = ({
     </Text>
 
     <Text className="text-foreground mb-4">
-      Si no reconocés este acceso, revisá tu cuenta por actividad no autorizada y
-      asegurate de que el método de inicio de sesión sea seguro.
+      Si no reconocés este acceso, revisá tu cuenta por actividad no autorizada
+      y asegurate de que el método de inicio de sesión sea seguro.
     </Text>
 
     {/* Device Details */}
@@ -62,8 +62,7 @@ export const NewDeviceSignInEmail = ({
       )}
       {(location || ipAddress) && (
         <Text className="text-sm text-foreground m-0 mb-2">
-          <strong>Ubicación:</strong>{' '}
-          {location}
+          <strong>Ubicación:</strong> {location}
           {ipAddress && ` (${ipAddress})`}
         </Text>
       )}
@@ -119,8 +118,7 @@ NewDeviceSignInEmail.PreviewProps = {
   ipAddress: '190.64.xxx.xxx',
   sessionCreatedAt: '3 de enero de 2026, 14:30',
   revokeSessionUrl: 'https://revendiste.com/revoke-session/abc123',
-  supportEmail: 'soporte@revendiste.com',
+  supportEmail: 'ayuda@revendiste.com',
 } as NewDeviceSignInEmailProps;
 
 export default NewDeviceSignInEmail;
-

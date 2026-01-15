@@ -45,7 +45,12 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
 
   const eventsQuery = useQuery(getEventBySearchQuery(eventSearchValue));
   const eventDetailsQuery = useQuery(getEventByIdQuery(form.watch('eventId')));
-  const createTicketListingMutation = useMutation(postTicketListingMutation());
+  const createTicketListingMutation = useMutation({
+    ...postTicketListingMutation(),
+    onSuccess: () => {
+      navigate({to: '/cuenta/publicaciones'});
+    },
+  });
 
   const onSubmit: SubmitHandler<TicketListingFormValues> = async data => {
     await createTicketListingMutation.mutateAsync({
@@ -54,8 +59,6 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
       price: data.price,
       quantity: data.quantity,
     });
-
-    await navigate({to: '/cuenta/publicaciones'});
   };
 
   const watchEventId = form.watch('eventId');

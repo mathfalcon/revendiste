@@ -6,7 +6,7 @@ const EnvSchema = z.object({
   // Optional - defaults to window.location.origin in browser, or https://revendiste.com in SSR
   VITE_APP_BASE_URL: z.string().optional(),
   VITE_APP_VERSION: z.string(),
-  VITE_APP_ENV: z.string().optional(),
+  VITE_APP_ENV: z.enum(['local', 'development', 'production']).default('local'),
   // Fee configuration
   VITE_PLATFORM_COMMISSION_RATE: z.coerce.number().min(0).max(1).default(0.06), // 6%
   VITE_VAT_RATE: z.coerce.number().min(0).max(1).default(0.22), // 22%
@@ -14,7 +14,6 @@ const EnvSchema = z.object({
   // Optional - if not set, will use VITE_APP_API_URL even during SSR
   BACKEND_IP: z.string().optional(),
 });
-
 export const env = EnvSchema.safeParse(import.meta.env);
 
 if (!env.success) {

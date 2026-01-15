@@ -1,5 +1,9 @@
 import {mutationOptions, queryOptions} from '@tanstack/react-query';
-import {api, CreateTicketListingRouteBody, UpdateTicketPriceRouteBody} from '..';
+import {
+  api,
+  CreateTicketListingRouteBody,
+  UpdateTicketPriceRouteBody,
+} from '..';
 import {toast} from 'sonner';
 
 export const postTicketListingMutation = () =>

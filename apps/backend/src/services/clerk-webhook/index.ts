@@ -181,7 +181,7 @@ export class ClerkWebhookService {
           ipAddress: data.ip_address,
           sessionCreatedAt: data.session_created_at || new Date().toISOString(),
           revokeSessionUrl: data.revoke_session_url,
-          supportEmail: data.support_email || 'soporte@revendiste.com',
+          supportEmail: data.support_email || 'ayuda@revendiste.com',
         };
 
       default:
@@ -196,10 +196,14 @@ export class ClerkWebhookService {
   ): string {
     switch (notificationType) {
       case 'auth_verification_code':
-        return `${metadata.otpCode as string} es tu código de verificación - Revendiste`;
+        return `${
+          metadata.otpCode as string
+        } es tu código de verificación - Revendiste`;
 
       case 'auth_reset_password_code':
-        return `${metadata.otpCode as string} es tu código para restablecer la contraseña - Revendiste`;
+        return `${
+          metadata.otpCode as string
+        } es tu código para restablecer la contraseña - Revendiste`;
 
       case 'auth_invitation':
         return 'Tenés una invitación a Revendiste';

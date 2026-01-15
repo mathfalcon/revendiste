@@ -13,7 +13,8 @@ resource "aws_sns_topic" "rds_alarms" {
 }
 
 # Alarm: Database Connections (Warning when approaching limit)
-# Alert when >250 connections (80% of ~300 limit for db.t3.medium)
+# Alert when >60 connections (80% of ~75 limit for db.t4g.micro)
+# Adjust threshold when upgrading: db.t4g.small=120, db.t3.medium=250
 resource "aws_cloudwatch_metric_alarm" "rds_database_connections" {
   alarm_name          = "${local.name_prefix}-rds-database-connections-high"
   comparison_operator = "GreaterThanThreshold"
@@ -22,8 +23,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_database_connections" {
   namespace           = "AWS/RDS"
   period              = 300 # 5 minutes
   statistic           = "Average"
-  threshold           = 250
-  alarm_description   = "Alert when database connections exceed 250 (80% of limit)"
+  threshold           = 60
+  alarm_description   = "Alert when database connections exceed 60 (80% of limit for db.t4g.micro)"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
@@ -63,7 +64,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu_utilization" {
 }
 
 # Alarm: Freeable Memory (Critical when low)
-# Alert when free memory <1GB (db.t3.medium has 4GB total)
+# Alert when free memory <200MB (db.t4g.micro has 1GB total)
+# Adjust threshold when upgrading: db.t4g.small=500MB, db.t3.medium=1GB
 resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory" {
   alarm_name          = "${local.name_prefix}-rds-freeable-memory-low"
   comparison_operator = "LessThanThreshold"
@@ -72,8 +74,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory" {
   namespace           = "AWS/RDS"
   period              = 300 # 5 minutes
   statistic           = "Average"
-  threshold           = 1073741824 # 1GB in bytes
-  alarm_description   = "Alert when freeable memory drops below 1GB - database may be under memory pressure"
+  threshold           = 209715200 # 200MB in bytes (db.t4g.micro has 1GB total)
+  alarm_description   = "Alert when freeable memory drops below 200MB - consider upgrading instance"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
