@@ -600,6 +600,7 @@ export interface SellerBalance {
   available: BalanceByCurrency[];
   retained: BalanceByCurrency[];
   pending: BalanceByCurrency[];
+  payoutPending: BalanceByCurrency[];
   total: BalanceByCurrency[];
 }
 

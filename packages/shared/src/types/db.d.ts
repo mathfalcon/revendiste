@@ -61,7 +61,7 @@ export type PayoutType = "paypal" | "uruguayan_bank";
 
 export type QrAvailabilityTiming = "12h" | "24h" | "48h" | "6h" | "72h";
 
-export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | "pending" | "retained";
+export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | "payout_requested" | "pending" | "retained";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 

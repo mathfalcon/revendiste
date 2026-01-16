@@ -268,19 +268,6 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
         )}
       />
 
-      {/* USD Settlement Disclaimer */}
-      {selectedEventTicketWave?.currency === EventTicketCurrency.USD && (
-        <Alert className='border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800'>
-          <InfoIcon className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-          <AlertDescription className='text-blue-800 dark:text-blue-200 text-sm'>
-            Los pagos en USD serán procesados por nuestro procesador de pagos y
-            liquidados en pesos uruguayos. Al momento del retiro, recibirás el
-            equivalente en USD según el tipo de cambio vigente. Estamos
-            trabajando para ofrecer liquidación directa en USD próximamente.
-          </AlertDescription>
-        </Alert>
-      )}
-
       <FormField
         control={form.control}
         name='quantity'

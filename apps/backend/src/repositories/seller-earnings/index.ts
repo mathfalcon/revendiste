@@ -172,7 +172,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .updateTable('sellerEarnings')
       .set({
         payoutId,
-        status: 'paid_out',
+        status: 'payout_requested', // Status indicates payout is pending, not yet completed
         updatedAt: new Date(),
       })
       .where('payoutId', 'is', null)
@@ -328,7 +328,13 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
 
   async updateStatus(
     earningsIds: string[],
-    status: 'pending' | 'available' | 'retained' | 'paid_out' | 'failed_payout',
+    status:
+      | 'pending'
+      | 'available'
+      | 'retained'
+      | 'paid_out'
+      | 'failed_payout'
+      | 'payout_requested',
   ) {
     return await this.db
       .updateTable('sellerEarnings')
@@ -337,6 +343,59 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         updatedAt: new Date(),
       })
       .where('id', 'in', earningsIds)
+      .execute();
+  }
+
+  /**
+   * Mark all earnings linked to a payout as paid_out
+   * Called when admin completes a payout
+   */
+  async markEarningsAsPaidOut(payoutId: string) {
+    return await this.db
+      .updateTable('sellerEarnings')
+      .set({
+        status: 'paid_out',
+        updatedAt: new Date(),
+      })
+      .where('payoutId', '=', payoutId)
+      .where('status', '=', 'payout_requested')
+      .where('deletedAt', 'is', null)
+      .execute();
+  }
+
+  /**
+   * Release earnings from a payout (set back to available)
+   * Called when admin cancels or fails a payout
+   */
+  async releaseEarningsFromPayout(payoutId: string) {
+    return await this.db
+      .updateTable('sellerEarnings')
+      .set({
+        status: 'available',
+        payoutId: null,
+        updatedAt: new Date(),
+      })
+      .where('payoutId', '=', payoutId)
+      .where('status', '=', 'payout_requested')
+      .where('deletedAt', 'is', null)
+      .execute();
+  }
+
+  /**
+   * Get balance of earnings with payout_requested status (pending payout)
+   */
+  async getPayoutPendingBalance(sellerUserId: string): Promise<BalanceResult[]> {
+    return await this.db
+      .selectFrom('sellerEarnings')
+      .select(eb => [
+        'sellerEarnings.currency',
+        sql<string>`SUM(seller_earnings.seller_amount)`.as('amount'),
+        sql<number>`COUNT(*)`.as('count'),
+      ])
+      .where('sellerUserId', '=', sellerUserId)
+      .where('status', '=', 'payout_requested')
+      .where('deletedAt', 'is', null)
+      .groupBy('sellerEarnings.currency')
       .execute();
   }
 
@@ -410,13 +469,14 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
    */
   async cloneEarningsForFailedPayout(payoutId: string): Promise<number> {
     // Get all earnings linked to this payout that need to be cloned
-    // Include both 'paid_out' (normal case) and 'failed_payout' (edge case: already marked but clones missing)
+    // Include 'payout_requested' (normal case), 'paid_out' (edge case), and 'failed_payout' (idempotency)
     const earningsToClone = await this.db
       .selectFrom('sellerEarnings')
       .selectAll()
       .where('payoutId', '=', payoutId)
       .where(eb =>
         eb.or([
+          eb('status', '=', 'payout_requested'),
           eb('status', '=', 'paid_out'),
           eb('status', '=', 'failed_payout'),
         ]),

@@ -325,6 +325,9 @@ export class PayoutsService {
       );
     }
 
+    // Mark linked earnings as paid_out (they were 'payout_requested' while pending)
+    await this.sellerEarningsRepository.markEarningsAsPaidOut(payoutId);
+
     // Log transfer completed event
     await this.payoutEventsRepository.create({
       payoutId,
@@ -410,6 +413,9 @@ export class PayoutsService {
       },
     );
 
+    // Mark linked earnings as paid_out (they were 'payout_requested' while pending)
+    await this.sellerEarningsRepository.markEarningsAsPaidOut(payoutId);
+
     // Log transfer completed event
     await this.payoutEventsRepository.create({
       payoutId,
@@ -489,12 +495,12 @@ export class PayoutsService {
           createdBy: adminUserId,
         });
 
-        // Clone earnings to make them available again
-        const clonedCount = await earningsRepo.cloneEarningsForFailedPayout(
-          payoutId,
-        );
+        // Clone earnings for audit trail: original earnings keep 'failed_payout' status
+        // and stay linked to this payout, new clones are created with 'available' status
+        const clonedCount =
+          await earningsRepo.cloneEarningsForFailedPayout(payoutId);
 
-        logger.info('Payout failed and earnings cloned', {
+        logger.info('Payout failed and earnings cloned for audit', {
           payoutId,
           adminUserId,
           failureReason,
@@ -591,12 +597,12 @@ export class PayoutsService {
           createdBy: adminUserId,
         });
 
-        // Clone earnings to make them available again
-        const clonedCount = await earningsRepo.cloneEarningsForFailedPayout(
-          payoutId,
-        );
+        // Clone earnings for audit trail: original earnings keep 'failed_payout' status
+        // and stay linked to this payout, new clones are created with 'available' status
+        const clonedCount =
+          await earningsRepo.cloneEarningsForFailedPayout(payoutId);
 
-        logger.info('Payout cancelled and earnings cloned', {
+        logger.info('Payout cancelled and earnings cloned for audit', {
           payoutId,
           adminUserId,
           reasonType,

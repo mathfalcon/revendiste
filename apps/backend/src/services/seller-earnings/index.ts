@@ -19,6 +19,7 @@ interface SellerBalance {
   available: BalanceByCurrency[];
   retained: BalanceByCurrency[];
   pending: BalanceByCurrency[];
+  payoutPending: BalanceByCurrency[]; // Earnings linked to pending payouts (payout_requested status)
   total: BalanceByCurrency[];
 }
 
@@ -134,20 +135,23 @@ export class SellerEarningsService {
 
   /**
    * Gets seller balance grouped by currency and status
-   * Returns available, retained, pending, and total with ticket counts
+   * Returns available, retained, pending, payoutPending, and total with ticket counts
    */
   async getSellerBalance(sellerUserId: string): Promise<SellerBalance> {
-    const [available, retained, pending, total] = await Promise.all([
-      this.sellerEarningsRepository.getAvailableBalance(sellerUserId),
-      this.sellerEarningsRepository.getRetainedBalance(sellerUserId),
-      this.sellerEarningsRepository.getPendingBalance(sellerUserId),
-      this.sellerEarningsRepository.getTotalBalance(sellerUserId),
-    ]);
+    const [available, retained, pending, payoutPending, total] =
+      await Promise.all([
+        this.sellerEarningsRepository.getAvailableBalance(sellerUserId),
+        this.sellerEarningsRepository.getRetainedBalance(sellerUserId),
+        this.sellerEarningsRepository.getPendingBalance(sellerUserId),
+        this.sellerEarningsRepository.getPayoutPendingBalance(sellerUserId),
+        this.sellerEarningsRepository.getTotalBalance(sellerUserId),
+      ]);
 
     return {
       available,
       retained,
       pending,
+      payoutPending,
       total,
     };
   }

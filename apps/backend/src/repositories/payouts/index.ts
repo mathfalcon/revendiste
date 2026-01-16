@@ -265,8 +265,37 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
       return null;
     }
 
+    // First, deduplicate payments - multiple seller_earnings may reference the same payment
+    // (e.g., when a buyer purchases 2 tickets in one order)
+    // Payment-level data (balanceAmount, balanceFee, exchangeRate) should only be counted once per payment
+    const uniquePayments = new Map<
+      string,
+      {
+        paymentAmount: number;
+        balanceAmount: number;
+        balanceFee: number;
+        exchangeRate: number | null;
+        provider: string | null;
+        paymentCurrency: string;
+      }
+    >();
+
+    for (const row of settlementData) {
+      if (!uniquePayments.has(row.paymentId)) {
+        uniquePayments.set(row.paymentId, {
+          paymentAmount: Number(row.paymentAmount || 0),
+          balanceAmount: Number(row.balanceAmount || 0),
+          balanceFee: Number(row.balanceFee || 0),
+          exchangeRate: row.exchangeRate ? Number(row.exchangeRate) : null,
+          provider: row.provider,
+          paymentCurrency: row.paymentCurrency,
+        });
+      }
+    }
+
     // Aggregate the settlement data
-    // Group by currency to handle multi-currency scenarios
+    // Group by earnings currency to handle multi-currency scenarios
+    // sellerAmount is summed per earnings row, payment data is summed per unique payment
     const settlementByCurrency = new Map<
       string,
       {
@@ -277,6 +306,7 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         exchangeRates: number[];
         paymentCount: number;
         providers: Set<string>;
+        processedPaymentIds: Set<string>;
       }
     >();
 
@@ -290,19 +320,27 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         exchangeRates: [],
         paymentCount: 0,
         providers: new Set<string>(),
+        processedPaymentIds: new Set<string>(),
       };
 
-      existing.totalPaymentAmount += Number(row.paymentAmount || 0);
-      existing.totalBalanceAmount += Number(row.balanceAmount || 0);
-      existing.totalBalanceFee += Number(row.balanceFee || 0);
+      // Always sum seller amounts (each earnings row is unique)
       existing.totalSellerAmount += Number(row.sellerAmount || 0);
-      if (row.exchangeRate) {
-        existing.exchangeRates.push(Number(row.exchangeRate));
+
+      // Only sum payment-level data once per unique payment
+      if (!existing.processedPaymentIds.has(row.paymentId)) {
+        const payment = uniquePayments.get(row.paymentId)!;
+        existing.totalPaymentAmount += payment.paymentAmount;
+        existing.totalBalanceAmount += payment.balanceAmount;
+        existing.totalBalanceFee += payment.balanceFee;
+        if (payment.exchangeRate !== null) {
+          existing.exchangeRates.push(payment.exchangeRate);
+        }
+        if (payment.provider) {
+          existing.providers.add(payment.provider);
+        }
+        existing.paymentCount += 1;
+        existing.processedPaymentIds.add(row.paymentId);
       }
-      if (row.provider) {
-        existing.providers.add(row.provider);
-      }
-      existing.paymentCount += 1;
 
       settlementByCurrency.set(currency, existing);
     }

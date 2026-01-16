@@ -1765,6 +1765,12 @@
 						},
 						"type": "array"
 					},
+					"payoutPending": {
+						"items": {
+							"$ref": "#/components/schemas/BalanceByCurrency"
+						},
+						"type": "array"
+					},
 					"total": {
 						"items": {
 							"$ref": "#/components/schemas/BalanceByCurrency"
@@ -1776,6 +1782,7 @@
 					"available",
 					"retained",
 					"pending",
+					"payoutPending",
 					"total"
 				],
 				"type": "object",
