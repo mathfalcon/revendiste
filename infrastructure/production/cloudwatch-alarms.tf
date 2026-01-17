@@ -28,7 +28,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_database_connections" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DBInstanceIdentifier = aws_db_instance.main.id
+    DBInstanceIdentifier = aws_db_instance.main.identifier
   }
 
   alarm_actions = [aws_sns_topic.rds_alarms.arn]
@@ -53,7 +53,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu_utilization" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DBInstanceIdentifier = aws_db_instance.main.id
+    DBInstanceIdentifier = aws_db_instance.main.identifier
   }
 
   alarm_actions = [aws_sns_topic.rds_alarms.arn]
@@ -79,7 +79,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DBInstanceIdentifier = aws_db_instance.main.id
+    DBInstanceIdentifier = aws_db_instance.main.identifier
   }
 
   alarm_actions = [aws_sns_topic.rds_alarms.arn]
@@ -104,7 +104,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_read_latency" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DBInstanceIdentifier = aws_db_instance.main.id
+    DBInstanceIdentifier = aws_db_instance.main.identifier
   }
 
   alarm_actions = [aws_sns_topic.rds_alarms.arn]
@@ -129,7 +129,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_write_latency" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DBInstanceIdentifier = aws_db_instance.main.id
+    DBInstanceIdentifier = aws_db_instance.main.identifier
   }
 
   alarm_actions = [aws_sns_topic.rds_alarms.arn]
@@ -154,7 +154,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_free_storage_space" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DBInstanceIdentifier = aws_db_instance.main.id
+    DBInstanceIdentifier = aws_db_instance.main.identifier
   }
 
   alarm_actions = [aws_sns_topic.rds_alarms.arn]

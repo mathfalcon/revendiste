@@ -277,7 +277,14 @@ export const updateEventMutation = () => {
         venueName?: string | null;
         venueAddress?: string;
         externalUrl?: string;
-        qrAvailabilityTiming?: '3h' | '6h' | '12h' | '24h' | '48h' | '72h' | null;
+        qrAvailabilityTiming?:
+          | '3h'
+          | '6h'
+          | '12h'
+          | '24h'
+          | '48h'
+          | '72h'
+          | null;
         status?: 'active' | 'inactive';
       };
     }) => {
@@ -347,7 +354,13 @@ export const updateTicketWaveMutation = () => {
 
 export const deleteTicketWaveMutation = () => {
   return {
-    mutationFn: async ({eventId, waveId}: {eventId: string; waveId: string}) => {
+    mutationFn: async ({
+      eventId,
+      waveId,
+    }: {
+      eventId: string;
+      waveId: string;
+    }) => {
       const response = await api.admin.deleteTicketWave(eventId, waveId);
       return response.data;
     },
@@ -383,7 +396,13 @@ export const uploadEventImageMutation = () => {
 
 export const deleteEventImageMutation = () => {
   return {
-    mutationFn: async ({eventId, imageId}: {eventId: string; imageId: string}) => {
+    mutationFn: async ({
+      eventId,
+      imageId,
+    }: {
+      eventId: string;
+      imageId: string;
+    }) => {
       const response = await api.admin.deleteEventImage(eventId, imageId);
       return response.data;
     },

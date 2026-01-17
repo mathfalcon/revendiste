@@ -1,6 +1,6 @@
 # RDS PostgreSQL Database (Standard Instance)
-# Note: Easy to migrate to Aurora later - same PostgreSQL engine, just different infrastructure
-# Migration path: Use AWS DMS or pg_dump/pg_restore (both use same PostgreSQL protocol)
+# Pre-launch: db.t4g.micro (~$10/month) - Graviton ARM, 2 vCPU, 1GB RAM
+# Upgrade path: db.t4g.small (~$20/mo) → db.t3.medium (~$47/mo) → Aurora Serverless v2
 
 # Random password for initial database password
 resource "random_password" "db_password" {
@@ -21,14 +21,12 @@ resource "aws_secretsmanager_secret" "db_credentials" {
 resource "aws_secretsmanager_secret_version" "db_credentials" {
   secret_id = aws_secretsmanager_secret.db_credentials.id
   secret_string = jsonencode({
-    username = var.db_username
-    password = random_password.db_password.result
-    engine   = "postgres"
-    host     = aws_db_instance.main.address
-    port     = 5432
-    dbname   = var.db_name
-    # Note: database_url should be constructed by the application using the individual fields
-    # to properly URL-encode the password
+    username     = var.db_username
+    password     = random_password.db_password.result
+    engine       = "postgres"
+    host         = aws_db_instance.main.address
+    port         = 5432
+    dbname       = var.db_name
     database_url = "postgresql://${var.db_username}:${random_password.db_password.result}@${aws_db_instance.main.address}:5432/${var.db_name}"
   })
 
@@ -36,16 +34,14 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 }
 
 # Standard RDS PostgreSQL Instance
-# Pre-launch: db.t4g.micro ~$10/month (Graviton ARM, 2 vCPU, 1GB RAM)
-# Post-launch upgrade path: db.t4g.small (~$20/mo) → db.t3.medium (~$47/mo)
-# Can easily migrate to Aurora later using AWS DMS or pg_dump/pg_restore
 resource "aws_db_instance" "main" {
-  identifier            = "${local.name_prefix}-postgres"
-  engine                = "postgres"
-  engine_version        = var.db_engine_version
-  instance_class        = var.db_instance_class
+  identifier     = "${local.name_prefix}-postgres"
+  engine         = "postgres"
+  engine_version = var.db_engine_version
+  instance_class = var.db_instance_class
+
   allocated_storage     = var.db_allocated_storage
-  max_allocated_storage = var.db_max_allocated_storage # Auto-scaling storage up to this limit
+  max_allocated_storage = var.db_max_allocated_storage
 
   db_name  = var.db_name
   username = var.db_username
@@ -53,7 +49,7 @@ resource "aws_db_instance" "main" {
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
-  publicly_accessible    = false # Keep database private
+  publicly_accessible    = false
 
   # Backup configuration
   backup_retention_period    = var.db_backup_retention_days
@@ -73,12 +69,12 @@ resource "aws_db_instance" "main" {
   # Enable CloudWatch Logs
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
-  # Performance Insights (optional, adds ~$3-5/month)
-  performance_insights_enabled          = var.db_performance_insights_enabled
-  performance_insights_retention_period = var.db_performance_insights_enabled ? 7 : null
-
   tags = {
     Name = "${local.name_prefix}-postgres"
+  }
+
+  lifecycle {
+    ignore_changes = [final_snapshot_identifier]
   }
 }
 

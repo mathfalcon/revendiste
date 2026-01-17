@@ -80,20 +80,19 @@ variable "db_engine_version" {
 }
 
 variable "db_instance_class" {
-  description = "RDS instance class. Pre-launch: db.t4g.micro (~$10/month). Post-launch: db.t3.medium for production traffic."
+  description = "RDS instance class. Upgrade path: db.t4g.micro → db.t4g.small → db.t3.medium → Aurora"
   type        = string
-  default     = "db.t4g.micro" # Pre-launch: 2 vCPU, 1GB RAM - sufficient until you have real users
-  # Upgrade path: db.t4g.small (~$20/mo) → db.t3.medium (~$47/mo) → db.t3.large as needed
+  default     = "db.t4g.micro" # Pre-launch: ~$10/month (2 vCPU, 1GB RAM, ARM Graviton)
 }
 
 variable "db_allocated_storage" {
   description = "Initial allocated storage in GB"
   type        = number
-  default     = 20 # Start small, auto-scales up to max_allocated_storage
+  default     = 20 # Start with 20GB, auto-scales up to max
 }
 
 variable "db_max_allocated_storage" {
-  description = "Maximum storage to auto-scale to in GB"
+  description = "Maximum storage for auto-scaling in GB"
   type        = number
   default     = 100 # Auto-scales storage as needed
 }
@@ -138,7 +137,7 @@ variable "backend_image_tag" {
 variable "backend_desired_count" {
   description = "Desired number of backend tasks"
   type        = number
-  default     = 1 # Start with 1, autoscaling will add more if needed
+  default     = 1 # Pre-launch: 1 task to minimize public IP costs (~$3.60/month saved)
 }
 
 variable "backend_max_capacity" {
@@ -187,7 +186,7 @@ variable "frontend_image_tag" {
 variable "frontend_desired_count" {
   description = "Desired number of frontend tasks"
   type        = number
-  default     = 1 # Start with 1, autoscaling will add more if needed
+  default     = 1 # Pre-launch: 1 task to minimize public IP costs (~$3.60/month saved)
 }
 
 variable "frontend_max_capacity" {
