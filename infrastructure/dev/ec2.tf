@@ -86,6 +86,12 @@ resource "aws_instance" "app" {
   tags = {
     Name = "${local.name_prefix}-app"
   }
+
+  # Prevent replacement when AWS releases new AMIs
+  # To update the AMI, run: terraform apply -replace="aws_instance.app"
+  lifecycle {
+    ignore_changes = [ami]
+  }
 }
 
 # Elastic IP for app instance
