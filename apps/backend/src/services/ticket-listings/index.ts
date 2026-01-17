@@ -129,11 +129,12 @@ export class TicketListingsService {
 
     logger.info(`Retrieved ${listings.length} listings for user ${userId}`);
 
-    // Enrich each ticket with upload availability based on platform rules
+    // Enrich each ticket with upload availability based on QR availability timing
     const enrichedListings = listings.map(listing => {
       const eventStartDate = new Date(listing.event.eventStartDate);
       const eventEndDate = new Date(listing.event.eventEndDate);
       const platform = listing.event.platform;
+      const qrAvailabilityTiming = listing.event.qrAvailabilityTiming || null;
 
       const enrichedTickets = listing.tickets.map(ticket => {
         const hasDocument = !!ticket.document;
@@ -142,6 +143,7 @@ export class TicketListingsService {
           eventStartDate,
           eventEndDate,
           hasDocument,
+          qrAvailabilityTiming,
         );
 
         return {
@@ -149,6 +151,7 @@ export class TicketListingsService {
           hasDocument,
           canUploadDocument: uploadAvailability.canUpload,
           uploadUnavailableReason: uploadAvailability.reason,
+          uploadAvailableAt: uploadAvailability.uploadAvailableAt?.toISOString(),
         };
       });
 
@@ -208,12 +211,7 @@ export class TicketListingsService {
       );
     }
 
-    if (ticketWithReservation.cancelledAt !== null) {
-      throw new ValidationError(
-        TICKET_LISTING_ERROR_MESSAGES.TICKET_CANCELLED,
-      );
-    }
-
+    // Check if ticket is deleted (cancelled)
     if (ticketWithReservation.deletedAt !== null) {
       throw new ValidationError(
         TICKET_LISTING_ERROR_MESSAGES.TICKET_DELETED,
@@ -303,12 +301,7 @@ export class TicketListingsService {
       );
     }
 
-    if (ticketWithReservation.cancelledAt !== null) {
-      throw new ValidationError(
-        TICKET_LISTING_ERROR_MESSAGES.TICKET_CANCELLED,
-      );
-    }
-
+    // Check if ticket is already deleted (cancelled)
     if (ticketWithReservation.deletedAt !== null) {
       throw new ValidationError(
         TICKET_LISTING_ERROR_MESSAGES.TICKET_DELETED,
@@ -321,7 +314,7 @@ export class TicketListingsService {
       );
     }
 
-    // Soft delete ticket
+    // Soft delete ticket (marks as cancelled)
     const deletedTicket =
       await this.listingTicketsRepository.softDeleteTicket(ticketId);
 
@@ -375,15 +368,6 @@ export class TicketListingsService {
       );
     }
 
-    // Get event ticket waves to get qrAvailabilityTiming
-    const ticketWaves = await Promise.all(
-      order.items
-        .filter(item => item.ticketWaveId)
-        .map(item =>
-          this.eventTicketWavesRepository.getById(item.ticketWaveId!),
-        ),
-    );
-
     // Send notification to each seller (grouped by listing)
     const sellerNotifications = new Map<string, number>(); // sellerId -> total tickets sold
 
@@ -399,12 +383,8 @@ export class TicketListingsService {
       );
     }
 
-    // Send one notification per seller with total ticket count
-    // Use the first ticket wave's qrAvailabilityTiming (they should all be from same event)
-    const qrAvailabilityTiming =
-      ticketWaves.length > 0 && ticketWaves[0]
-        ? ticketWaves[0].qrAvailabilityTiming
-        : null;
+    // Get qrAvailabilityTiming from the event (now stored at event level)
+    const qrAvailabilityTiming = order.event.qrAvailabilityTiming || null;
 
     for (const [sellerUserId, totalTicketCount] of sellerNotifications) {
       // Use the first listing ID for the upload link (they're all from the same seller)
@@ -424,8 +404,7 @@ export class TicketListingsService {
           eventName: order.event.name,
           eventStartDate: new Date(order.event.eventStartDate),
           eventEndDate: new Date(order.event.eventEndDate),
-          platform:
-            (order.event as {platform?: string | null}).platform || 'unknown',
+          platform: order.event.platform || 'unknown',
           qrAvailabilityTiming,
           ticketCount: totalTicketCount,
         }).catch((error: unknown) => {

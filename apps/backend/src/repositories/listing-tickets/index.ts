@@ -34,7 +34,6 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('listings.ticketWaveId', '=', ticketWaveId)
       .where('listingTickets.price', '=', price.toString())
       .where('listingTickets.soldAt', 'is', null)
-      .where('listingTickets.cancelledAt', 'is', null)
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
       .where('orderTicketReservations.id', 'is', null) // Not reserved
@@ -101,7 +100,7 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'listingTickets.ticketNumber',
         'listingTickets.price',
         'listingTickets.soldAt',
-        'listingTickets.cancelledAt',
+        'listingTickets.deletedAt',
         'listings.publisherUserId',
         'eventTicketWaves.name as ticketWaveName',
         'eventTicketWaves.faceValue',
@@ -110,9 +109,9 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'events.name as eventName',
         'events.eventStartDate',
         'events.eventEndDate',
+        'events.qrAvailabilityTiming',
       ])
       .where('listingTickets.id', '=', ticketId)
-      .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
       .executeTakeFirst();
   }
@@ -137,7 +136,6 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .select([
         'listingTickets.id',
         'listingTickets.soldAt',
-        'listingTickets.cancelledAt',
         'listingTickets.deletedAt',
         'orderTicketReservations.id as reservationId',
       ])
@@ -234,14 +232,13 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'listings.publisherUserId as sellerUserId',
         'events.name as eventName',
         'events.eventStartDate',
-        'eventTicketWaves.qrAvailabilityTiming',
+        'events.qrAvailabilityTiming',
       ])
       .where('listingTickets.soldAt', 'is not', null) // Sold tickets only
       .where('listingTickets.deletedAt', 'is', null)
-      .where('listingTickets.cancelledAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
       .where('ticketDocuments.id', 'is', null) // No documents yet
-      .where('eventTicketWaves.qrAvailabilityTiming', 'is not', null) // Has timing restriction
+      .where('events.qrAvailabilityTiming', 'is not', null) // Has timing restriction
       .where('events.eventStartDate', 'is not', null)
       .where('events.eventStartDate', '>', now) // Event hasn't started yet
       .execute()

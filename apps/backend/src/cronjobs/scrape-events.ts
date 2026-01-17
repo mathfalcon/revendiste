@@ -37,8 +37,8 @@ export async function runScrapeEvents() {
  * In production, use runScrapeEvents() via EventBridge
  */
 export function startScrapeEventsJob() {
-  // Run every 30 minutes
-  const job = cron.schedule('*/30 * * * *', async () => {
+  // Run once a day at midnight
+  const job = cron.schedule('0 0 * * *', async () => {
     try {
       await runScrapeEvents();
     } catch (error) {
@@ -46,7 +46,9 @@ export function startScrapeEventsJob() {
     }
   });
 
-  logger.info('Scheduled job: scrape-events started (runs every 30 minutes)');
+  logger.info(
+    'Scheduled job: scrape-events started (runs once a day at midnight)',
+  );
 
   return job;
 }

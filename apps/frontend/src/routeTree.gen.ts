@@ -13,6 +13,7 @@ import { Route as TerminosYCondicionesRouteImport } from './routes/terminos-y-co
 import { Route as SitemapRouteImport } from './routes/sitemap'
 import { Route as PreguntasFrecuentesRouteImport } from './routes/preguntas-frecuentes'
 import { Route as PoliticaDePrivacidadRouteImport } from './routes/politica-de-privacidad'
+import { Route as GarantiaRouteImport } from './routes/garantia'
 import { Route as ContactoRouteImport } from './routes/contacto'
 import { Route as CuentaRouteRouteImport } from './routes/cuenta/route'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
@@ -28,8 +29,9 @@ import { Route as CuentaSubirTicketsRouteImport } from './routes/cuenta/subir-ti
 import { Route as CuentaRetiroRouteImport } from './routes/cuenta/retiro'
 import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
 import { Route as CuentaEstadoVerificacionRouteImport } from './routes/cuenta/estado-verificacion'
-import { Route as AdminVerificationsRouteImport } from './routes/admin/verifications'
-import { Route as AdminPayoutsRouteImport } from './routes/admin/payouts'
+import { Route as AdminVerificacionesRouteImport } from './routes/admin/verificaciones'
+import { Route as AdminRetirosRouteImport } from './routes/admin/retiros'
+import { Route as AdminEventosRouteImport } from './routes/admin/eventos'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
@@ -52,6 +54,11 @@ const PreguntasFrecuentesRoute = PreguntasFrecuentesRouteImport.update({
 const PoliticaDePrivacidadRoute = PoliticaDePrivacidadRouteImport.update({
   id: '/politica-de-privacidad',
   path: '/politica-de-privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GarantiaRoute = GarantiaRouteImport.update({
+  id: '/garantia',
+  path: '/garantia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactoRoute = ContactoRouteImport.update({
@@ -130,14 +137,19 @@ const CuentaEstadoVerificacionRoute =
     path: '/estado-verificacion',
     getParentRoute: () => CuentaRouteRoute,
   } as any)
-const AdminVerificationsRoute = AdminVerificationsRouteImport.update({
-  id: '/verifications',
-  path: '/verifications',
+const AdminVerificacionesRoute = AdminVerificacionesRouteImport.update({
+  id: '/verificaciones',
+  path: '/verificaciones',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminPayoutsRoute = AdminPayoutsRouteImport.update({
-  id: '/payouts',
-  path: '/payouts',
+const AdminRetirosRoute = AdminRetirosRouteImport.update({
+  id: '/retiros',
+  path: '/retiros',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEventosRoute = AdminEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const CheckoutOrderIdIndexRoute = CheckoutOrderIdIndexRouteImport.update({
@@ -161,12 +173,14 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/cuenta': typeof CuentaRouteRouteWithChildren
   '/contacto': typeof ContactoRoute
+  '/garantia': typeof GarantiaRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
-  '/admin/payouts': typeof AdminPayoutsRoute
-  '/admin/verifications': typeof AdminVerificationsRoute
+  '/admin/eventos': typeof AdminEventosRoute
+  '/admin/retiros': typeof AdminRetirosRoute
+  '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
@@ -186,12 +200,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
   '/contacto': typeof ContactoRoute
+  '/garantia': typeof GarantiaRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
-  '/admin/payouts': typeof AdminPayoutsRoute
-  '/admin/verifications': typeof AdminVerificationsRoute
+  '/admin/eventos': typeof AdminEventosRoute
+  '/admin/retiros': typeof AdminRetirosRoute
+  '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
@@ -213,12 +229,14 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/cuenta': typeof CuentaRouteRouteWithChildren
   '/contacto': typeof ContactoRoute
+  '/garantia': typeof GarantiaRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
-  '/admin/payouts': typeof AdminPayoutsRoute
-  '/admin/verifications': typeof AdminVerificationsRoute
+  '/admin/eventos': typeof AdminEventosRoute
+  '/admin/retiros': typeof AdminRetirosRoute
+  '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
@@ -241,12 +259,14 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cuenta'
     | '/contacto'
+    | '/garantia'
     | '/politica-de-privacidad'
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
-    | '/admin/payouts'
-    | '/admin/verifications'
+    | '/admin/eventos'
+    | '/admin/retiros'
+    | '/admin/verificaciones'
     | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
@@ -266,12 +286,14 @@ export interface FileRouteTypes {
     | '/'
     | '/cuenta'
     | '/contacto'
+    | '/garantia'
     | '/politica-de-privacidad'
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
-    | '/admin/payouts'
-    | '/admin/verifications'
+    | '/admin/eventos'
+    | '/admin/retiros'
+    | '/admin/verificaciones'
     | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
@@ -292,12 +314,14 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cuenta'
     | '/contacto'
+    | '/garantia'
     | '/politica-de-privacidad'
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
-    | '/admin/payouts'
-    | '/admin/verifications'
+    | '/admin/eventos'
+    | '/admin/retiros'
+    | '/admin/verificaciones'
     | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
@@ -319,6 +343,7 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
   ContactoRoute: typeof ContactoRoute
+  GarantiaRoute: typeof GarantiaRoute
   PoliticaDePrivacidadRoute: typeof PoliticaDePrivacidadRoute
   PreguntasFrecuentesRoute: typeof PreguntasFrecuentesRoute
   SitemapRoute: typeof SitemapRoute
@@ -360,6 +385,13 @@ declare module '@tanstack/react-router' {
       path: '/politica-de-privacidad'
       fullPath: '/politica-de-privacidad'
       preLoaderRoute: typeof PoliticaDePrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/garantia': {
+      id: '/garantia'
+      path: '/garantia'
+      fullPath: '/garantia'
+      preLoaderRoute: typeof GarantiaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contacto': {
@@ -467,18 +499,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CuentaEstadoVerificacionRouteImport
       parentRoute: typeof CuentaRouteRoute
     }
-    '/admin/verifications': {
-      id: '/admin/verifications'
-      path: '/verifications'
-      fullPath: '/admin/verifications'
-      preLoaderRoute: typeof AdminVerificationsRouteImport
+    '/admin/verificaciones': {
+      id: '/admin/verificaciones'
+      path: '/verificaciones'
+      fullPath: '/admin/verificaciones'
+      preLoaderRoute: typeof AdminVerificacionesRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/payouts': {
-      id: '/admin/payouts'
-      path: '/payouts'
-      fullPath: '/admin/payouts'
-      preLoaderRoute: typeof AdminPayoutsRouteImport
+    '/admin/retiros': {
+      id: '/admin/retiros'
+      path: '/retiros'
+      fullPath: '/admin/retiros'
+      preLoaderRoute: typeof AdminRetirosRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/eventos': {
+      id: '/admin/eventos'
+      path: '/eventos'
+      fullPath: '/admin/eventos'
+      preLoaderRoute: typeof AdminEventosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/checkout/$orderId/': {
@@ -506,14 +545,16 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteRouteChildren {
-  AdminPayoutsRoute: typeof AdminPayoutsRoute
-  AdminVerificationsRoute: typeof AdminVerificationsRoute
+  AdminEventosRoute: typeof AdminEventosRoute
+  AdminRetirosRoute: typeof AdminRetirosRoute
+  AdminVerificacionesRoute: typeof AdminVerificacionesRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
-  AdminPayoutsRoute: AdminPayoutsRoute,
-  AdminVerificationsRoute: AdminVerificationsRoute,
+  AdminEventosRoute: AdminEventosRoute,
+  AdminRetirosRoute: AdminRetirosRoute,
+  AdminVerificacionesRoute: AdminVerificacionesRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -548,6 +589,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   CuentaRouteRoute: CuentaRouteRouteWithChildren,
   ContactoRoute: ContactoRoute,
+  GarantiaRoute: GarantiaRoute,
   PoliticaDePrivacidadRoute: PoliticaDePrivacidadRoute,
   PreguntasFrecuentesRoute: PreguntasFrecuentesRoute,
   SitemapRoute: SitemapRoute,

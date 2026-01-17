@@ -136,14 +136,12 @@ export function UploadTicketsView() {
       {ticketsNeedingUpload.length > 0 && (
         <div className='space-y-4'>
           <div className='flex items-center justify-between gap-4'>
-            <div className='flex-1'>
-              <SectionHeader
-                icon={Upload}
-                title='Tickets pendientes'
-                count={ticketsNeedingUpload.length}
-                className='text-orange-200'
-              />
-            </div>
+            <SectionHeader
+              icon={Upload}
+              title='Tickets pendientes'
+              count={ticketsNeedingUpload.length}
+              variant='pending'
+            />
             {ticketsNeedingUpload.length > 1 && (
               <Button onClick={() => setCarouselOpen(true)}>
                 <Upload className='mr-2 h-4 w-4' />
@@ -170,7 +168,7 @@ export function UploadTicketsView() {
             icon={Timer}
             title='Próximamente'
             count={ticketsWaiting.length}
-            className='text-muted-foreground'
+            variant='waiting'
           />
           <div className='space-y-3'>
             {ticketsWaiting.map(ticket => (
@@ -185,9 +183,9 @@ export function UploadTicketsView() {
         <div className='space-y-4'>
           <SectionHeader
             icon={XCircle}
-            title='Expirado'
+            title='Expirados'
             count={ticketsExpired.length}
-            className='text-red-600'
+            variant='expired'
           />
           <div className='space-y-3'>
             {ticketsExpired.map(ticket => (

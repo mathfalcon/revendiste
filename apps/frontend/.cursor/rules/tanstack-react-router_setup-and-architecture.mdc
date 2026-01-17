@@ -1,8 +1,9 @@
 ---
 description: TanStack Router: Setup and Architecture
-globs: package.json,vite.config.ts,tsconfig.json,src/**/*.ts,src/**/*.tsx
+globs: package.json,vite.config.ts,tsconfig.json
 alwaysApply: false
 ---
+
 # Overview
 
 **TanStack Router is a router for building React and Solid applications**. Some of its features include:
@@ -328,12 +329,12 @@ Using JSX for defining your routes is **out of the question**, as TypeScript wil
 function App() {
   return (
     <Router>
-      <Route path="/posts" component={PostsPage} />
-      <Route path="/posts/$postId" component={PostIdPage} />
+      <Route path='/posts' component={PostsPage} />
+      <Route path='/posts/$postId' component={PostIdPage} />
       {/* ... */}
     </Router>
     // ^? TypeScript cannot infer the routes in this configuration
-  )
+  );
 }
 ```
 
@@ -355,7 +356,7 @@ const router = createRouter({
     },
     // ...
   },
-})
+});
 ```
 
 At first glance, this seems like a good idea. It's easy to visualize the entire route hierarchy in one go. But this approach has a couple of big downsides that make it not ideal for large applications:
@@ -387,14 +388,14 @@ There were two approaches we considered for this:
 1. **Imports**: You could import the `Router` instance from the file where you created it and use it directly in your components.
 
 ```tsx
-import { router } from '@/src/app'
+import {router} from '@/src/app';
 export const PostsIdLink = () => {
   return (
-    <Link<typeof router> to="/posts/$postId" params={{ postId: '123' }}>
+    <Link<typeof router> to='/posts/$postId' params={{postId: '123'}}>
       Go to post 123
     </Link>
-  )
-}
+  );
+};
 ```
 
 A downside to this approach is that you'd have to import the entire `Router` instance into every file where you want to use it. This can lead to increased bundle sizes and can be cumbersome to manage, and only get worse as your application grows and you use more features of the router.
@@ -407,7 +408,7 @@ You'll do this once in your application.
 // src/app.tsx
 declare module '@tanstack/react-router' {
   interface Register {
-    router: typeof router
+    router: typeof router;
   }
 }
 ```
@@ -418,14 +419,14 @@ And then you can benefit from its auto-complete anywhere in your app without hav
 export const PostsIdLink = () => {
   return (
     <Link
-      to="/posts/$postId"
+      to='/posts/$postId'
       // ^? TypeScript will auto-complete this for you
-      params={{ postId: '123' }} // and this too!
+      params={{postId: '123'}} // and this too!
     >
       Go to post 123
     </Link>
-  )
-}
+  );
+};
 ```
 
 We went with **module declaration**, as it is what we found to be the most scalable and maintainable approach with the least amount of overhead and boilerplate.
@@ -446,13 +447,13 @@ As mentioned in the beginning, TanStack Router was designed for complex applicat
 A key difference in the set-up of a _basic_ application with TanStack Router, is that your route configurations require a function to be provided to `getParentRoute`, that returns the parent route of the current route.
 
 ```tsx
-import { createRoute } from '@tanstack/react-router'
-import { postsRoute } from './postsRoute'
+import {createRoute} from '@tanstack/react-router';
+import {postsRoute} from './postsRoute';
 
 export const postsIndexRoute = createRoute({
   getParentRoute: () => postsRoute,
   path: '/',
-})
+});
 ```
 
 At this stage, this is done so the definition of `postsIndexRoute` can be aware of its location in the route tree and so that it can correctly infer the types of the `context`, `path params`, `search params` returned by the parent route. Incorrectly defining the `getParentRoute` function means that the properties of the parent route will not be correctly inferred by the child route.
@@ -466,7 +467,7 @@ But this is only one part of setting up a basic application. TanStack Router req
 ```tsx
 const routeTree = rootRoute.addChildren([
   postsRoute.addChildren([postsIndexRoute, postsIdRoute]),
-])
+]);
 ```
 
 This complexity only increases as you begin to use more features of the router, such as nested context, loaders, search param validation, etc. As such, it no longer becomes feasible to define your routes in a single file. And so, users end up building their own _semi consistent_ way of defining their routes across multiple files. This can lead to inconsistencies and errors in the route configuration.
@@ -474,14 +475,14 @@ This complexity only increases as you begin to use more features of the router, 
 Finally, comes the issue of code-splitting. As your application grows, you'll want to code-split your components to reduce the initial bundle size of your application. This can be a bit of a headache to manage when you're defining your routes in a single file or even across multiple files.
 
 ```tsx
-import { createRoute, lazyRouteComponent } from '@tanstack/react-router'
-import { postsRoute } from './postsRoute'
+import {createRoute, lazyRouteComponent} from '@tanstack/react-router';
+import {postsRoute} from './postsRoute';
 
 export const postsIndexRoute = createRoute({
   getParentRoute: () => postsRoute,
   path: '/',
   component: lazyRouteComponent(() => import('../page-components/posts/index')),
-})
+});
 ```
 
 All of this boilerplate, no matter how essential for providing a best-in-class type-inference experience, can be a bit overwhelming and can lead to inconsistencies and errors in the route configuration.
@@ -502,11 +503,11 @@ Let's take a look at how the route configuration for the previous example would 
 
 ```tsx
 // src/routes/posts/index.ts
-import { createFileRoute } from '@tanstack/react-router'
+import {createFileRoute} from '@tanstack/react-router';
 
 export const Route = createFileRoute('/posts/')({
   component: () => 'Posts index component goes here!!!',
-})
+});
 ```
 
 That's it! No need to worry about defining the `getParentRoute` function, stitching together the route-tree, or code-splitting your components. The TanStack Router Bundler Plugin handles all of this for you.
@@ -552,7 +553,7 @@ bun add @tanstack/react-router-devtools
 ## Import the Devtools
 
 ```js
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import {TanStackRouterDevtools} from '@tanstack/react-router-devtools';
 ```
 
 ## Using Devtools in production
@@ -560,7 +561,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 The Devtools, if imported as `TanStackRouterDevtools` will not be shown in production. If you want to have devtools in an environment with `process.env.NODE_ENV === 'production'`, use instead `TanStackRouterDevtoolsInProd`, which has all the same options:
 
 ```tsx
-import { TanStackRouterDevtoolsInProd } from '@tanstack/react-router-devtools'
+import {TanStackRouterDevtoolsInProd} from '@tanstack/react-router-devtools';
 ```
 
 ## Using inside of the `RouterProvider`
@@ -575,18 +576,18 @@ const rootRoute = createRootRoute({
       <TanStackRouterDevtools />
     </>
   ),
-})
+});
 
 const routeTree = rootRoute.addChildren([
   // ... other routes
-])
+]);
 
 const router = createRouter({
   routeTree,
-})
+});
 
 function App() {
-  return <RouterProvider router={router} />
+  return <RouterProvider router={router} />;
 }
 ```
 
@@ -601,7 +602,7 @@ function App() {
       <RouterProvider router={router} />
       <TanStackRouterDevtools router={router} />
     </>
-  )
+  );
 }
 ```
 
@@ -612,7 +613,7 @@ Floating Mode will mount the devtools as a fixed, floating element in your app a
 Place the following code as high in your React app as you can. The closer it is to the root of the page, the better it will work!
 
 ```js
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import {TanStackRouterDevtools} from '@tanstack/react-router-devtools';
 
 function App() {
   return (
@@ -620,7 +621,7 @@ function App() {
       <Router />
       <TanStackRouterDevtools initialIsOpen={false} />
     </>
-  )
+  );
 }
 ```
 
@@ -652,7 +653,7 @@ function App() {
 To control the position of the devtools, import the `TanStackRouterDevtoolsPanel`:
 
 ```js
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools';
 ```
 
 It can then be attached to provided shadow DOM target:
@@ -671,7 +672,7 @@ Click [here](https://tanstack.com/router/latest/docs/framework/react/examples/ba
 Embedded Mode will embed the devtools as a regular component in your application. You can style it however you'd like after that!
 
 ```js
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools';
 
 function App() {
   return (
@@ -683,7 +684,7 @@ function App() {
         className={className}
       />
     </>
-  )
+  );
 }
 ```
 
@@ -742,21 +743,21 @@ You can restrict access to these routes using a conditional check in the `before
 
 ```tsx
 // src/routes/_pathless-layout.tsx
-import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { isAuthenticated } from '../utils/auth'
+import {createFileRoute, Outlet} from '@tanstack/react-router';
+import {isAuthenticated} from '../utils/auth';
 
 export const Route = createFileRoute('/_pathless-layout', {
   beforeLoad: async () => {
     // Check if the user is authenticated
-    const authed = await isAuthenticated()
+    const authed = await isAuthenticated();
     if (!authed) {
       // Redirect the user to the login page
-      return '/login'
+      return '/login';
     }
   },
   component: PathlessLayoutRouteComponent,
   // ...
-})
+});
 
 function PathlessLayoutRouteComponent() {
   return (
@@ -764,9 +765,8 @@ function PathlessLayoutRouteComponent() {
       <h1>You are authed</h1>
       <Outlet />
     </div>
-  )
+  );
 }
 ```
 
 </details>
-

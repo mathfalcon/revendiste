@@ -5,9 +5,11 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['local', 'development', 'production']).default('local'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   PORT: z.coerce.number().default(3001),
-  POSTGRES_USER: z.string(),
-  POSTGRES_PASSWORD: z.string(),
-  POSTGRES_DB: z.string(),
+  // Database connection - either use DATABASE_URL or individual POSTGRES_* variables
+  DATABASE_URL: z.string().optional(), // Takes precedence if set (e.g., Supabase pooler URL)
+  POSTGRES_USER: z.string().optional().default('postgres'),
+  POSTGRES_PASSWORD: z.string().optional().default(''),
+  POSTGRES_DB: z.string().optional().default('postgres'),
   POSTGRES_PORT: z.coerce.number().default(5432),
   POSTGRES_HOST: z.string().default('localhost'),
   CLERK_PUBLISHABLE_KEY: z.string(),
@@ -76,6 +78,7 @@ export const {
   NODE_ENV,
   LOG_LEVEL,
   PORT,
+  DATABASE_URL,
   POSTGRES_USER,
   POSTGRES_PASSWORD,
   POSTGRES_DB,

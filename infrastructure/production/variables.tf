@@ -76,7 +76,7 @@ variable "db_username" {
 variable "db_engine_version" {
   description = "PostgreSQL engine version"
   type        = string
-  default     = "15.8"
+  default     = "15.15" # Latest available in sa-east-1 (15.8 not available in this region)
 }
 
 variable "db_instance_class" {
@@ -101,6 +101,12 @@ variable "db_backup_retention_days" {
   description = "Number of days to retain database backups"
   type        = number
   default     = 7
+}
+
+variable "db_performance_insights_enabled" {
+  description = "Enable Performance Insights for database monitoring (adds ~$3-5/month)"
+  type        = bool
+  default     = false # Disable to save costs, enable if you need detailed query performance monitoring
 }
 
 # ECS Configuration - Backend

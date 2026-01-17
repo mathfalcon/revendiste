@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - development
+  pull_request:
+    branches:
+      - development
 
 env:
   AWS_REGION: sa-east-1
@@ -49,7 +52,8 @@ jobs:
         with:
           context: .
           file: ./deploy/backend.Dockerfile
-          push: true
+          # Only push on push events (not PRs) - PRs just validate the build
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.backend-meta.outputs.tags }}
           labels: ${{ steps.backend-meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache
@@ -91,7 +95,8 @@ jobs:
         with:
           context: .
           file: ./deploy/frontend.Dockerfile
-          push: true
+          # Only push on push events (not PRs) - PRs just validate the build
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.frontend-meta.outputs.tags }}
           labels: ${{ steps.frontend-meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:buildcache
@@ -100,6 +105,8 @@ jobs:
   deploy-backend:
     runs-on: ubuntu-latest
     needs: build-backend
+    # Only deploy on push events (merges or direct pushes), not on PRs
+    if: github.event_name == 'push'
     environment: development
 
     steps:
@@ -221,6 +228,8 @@ jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
     needs: build-frontend
+    # Only deploy on push events (merges or direct pushes), not on PRs
+    if: github.event_name == 'push'
     environment: development
 
     steps:

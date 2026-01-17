@@ -140,7 +140,7 @@ export const OrderConfirmedEmail = ({
       )}
     </Section>
 
-    {/* Tickets */}
+    {/* Tickets - grouped by ticket wave */}
     <Section className="mb-4">
       <Text className="text-lg font-semibold text-foreground m-0 mb-3">
         Tus entradas
@@ -149,26 +149,101 @@ export const OrderConfirmedEmail = ({
         <div
           key={item.id}
           style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.05)',
-            padding: '12px',
             borderRadius: '8px',
-            marginBottom: '8px',
+            marginBottom: '12px',
             border: '1px solid rgba(0, 0, 0, 0.1)',
+            overflow: 'hidden',
           }}
         >
-          <Text className="text-base font-medium text-foreground m-0 mb-1">
-            {item.ticketWaveName}
-          </Text>
-          <Text className="text-sm text-muted-foreground m-0 mb-1">
-            Cantidad: {item.quantity}
-          </Text>
-          <Text className="text-xs text-muted-foreground m-0 mb-1">
-            {formatPrice(item.pricePerTicket, item.currency || currency)} por
-            entrada
-          </Text>
-          <Text className="text-sm font-semibold text-foreground m-0">
-            {formatPrice(item.subtotal, item.currency || currency)}
-          </Text>
+          {/* Ticket Wave Header */}
+          <div
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              padding: '10px 14px',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <Text className="text-sm font-semibold text-foreground m-0">
+              {item.ticketWaveName}
+            </Text>
+          </div>
+
+          {/* Ticket Item */}
+          <div
+            style={{
+              padding: '14px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <table
+              width="100%"
+              cellPadding="0"
+              cellSpacing="0"
+              role="presentation"
+            >
+              <tr>
+                <td style={{verticalAlign: 'middle'}}>
+                  {/* Ticket Icon + Info */}
+                  <table cellPadding="0" cellSpacing="0" role="presentation">
+                    <tr>
+                      <td
+                        style={{verticalAlign: 'middle', paddingRight: '12px'}}
+                      >
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            backgroundColor: 'rgba(222, 36, 134, 0.1)',
+                            display: 'table-cell',
+                            verticalAlign: 'middle',
+                            textAlign: 'center',
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#de2486"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{verticalAlign: 'middle'}}
+                          >
+                            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                            <path d="M13 5v2" />
+                            <path d="M13 17v2" />
+                            <path d="M13 11v2" />
+                          </svg>
+                        </div>
+                      </td>
+                      <td style={{verticalAlign: 'middle'}}>
+                        <Text className="text-sm font-medium text-foreground m-0">
+                          {item.quantity}{' '}
+                          {item.quantity === 1 ? 'entrada' : 'entradas'}
+                        </Text>
+                        <Text className="text-xs text-muted-foreground m-0">
+                          {formatPrice(
+                            item.pricePerTicket,
+                            item.currency || currency,
+                          )}{' '}
+                          c/u
+                        </Text>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td style={{verticalAlign: 'middle', textAlign: 'right'}}>
+                  <Text className="text-base font-semibold text-foreground m-0">
+                    {formatPrice(item.subtotal, item.currency || currency)}
+                  </Text>
+                </td>
+              </tr>
+            </table>
+          </div>
         </div>
       ))}
     </Section>
@@ -222,10 +297,10 @@ OrderConfirmedEmail.PreviewProps = {
   venueAddress: 'Buenos Aires 678, Montevideo',
   orderId: '123e4567-e89b-12d3-a456-426614174000',
   confirmedAt: new Date().toISOString(),
-  totalAmount: '150.00',
-  subtotalAmount: '141.51',
-  platformCommission: '8.49',
-  vatOnCommission: '1.87',
+  totalAmount: '250.00',
+  subtotalAmount: '235.85',
+  platformCommission: '14.15',
+  vatOnCommission: '3.11',
   currency: 'EUR',
   items: [
     {
@@ -234,6 +309,14 @@ OrderConfirmedEmail.PreviewProps = {
       quantity: 2,
       pricePerTicket: '70.75',
       subtotal: '141.50',
+      currency: 'EUR',
+    },
+    {
+      id: '2',
+      ticketWaveName: 'VIP',
+      quantity: 1,
+      pricePerTicket: '94.35',
+      subtotal: '94.35',
       currency: 'EUR',
     },
   ],

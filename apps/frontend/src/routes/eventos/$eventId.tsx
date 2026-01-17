@@ -3,7 +3,7 @@ import {Suspense} from 'react';
 import {FullScreenLoading} from '~/components';
 import {EventPage} from '~/features/event';
 import {getEventByIdQuery, EventImageType} from '~/lib';
-import {AxiosError, isAxiosError} from 'axios';
+import {isAxiosError} from 'axios';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {EventEnded} from '~/components/EventEnded';
@@ -34,7 +34,7 @@ export const Route = createFileRoute('/eventos/$eventId')({
         getEventByIdQuery(params.eventId),
       );
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 401) {
+      if (isAxiosError(error) && error.response?.status === 401) {
         throw redirect({
           to: '/ingresar/$',
         });

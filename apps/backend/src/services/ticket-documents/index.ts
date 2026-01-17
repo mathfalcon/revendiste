@@ -1,6 +1,6 @@
 import path from 'path';
 import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
+import type {DB, QrAvailabilityTiming} from '@revendiste/shared';
 import {
   ListingTicketsRepository,
   TicketDocumentsRepository,
@@ -82,6 +82,20 @@ export class TicketDocumentService {
     // Validate event hasn't ended
     if (ticket.eventEndDate && new Date(ticket.eventEndDate) < new Date()) {
       throw new ValidationError(TICKET_DOCUMENT_ERROR_MESSAGES.EVENT_ENDED);
+    }
+
+    // Validate upload window based on qrAvailabilityTiming
+    if (ticket.qrAvailabilityTiming && ticket.eventStartDate) {
+      const uploadAvailableAt = this.calculateUploadAvailableAt(
+        new Date(ticket.eventStartDate),
+        ticket.qrAvailabilityTiming as QrAvailabilityTiming,
+      );
+
+      if (new Date() < uploadAvailableAt) {
+        throw new ValidationError(
+          TICKET_DOCUMENT_ERROR_MESSAGES.UPLOAD_TOO_EARLY(uploadAvailableAt),
+        );
+      }
     }
 
     // Validate file type
@@ -356,7 +370,6 @@ export class TicketDocumentService {
       )
       .where('tl.publisherUserId', '=', userId)
       .where('lt.deletedAt', 'is', null)
-      .where('lt.cancelledAt', 'is', null)
       .where('tl.deletedAt', 'is', null)
       .execute();
 
@@ -451,5 +464,21 @@ export class TicketDocumentService {
         ),
       );
     }
+  }
+
+  /**
+   * Calculate when upload becomes available based on qrAvailabilityTiming
+   */
+  private calculateUploadAvailableAt(
+    eventStartDate: Date,
+    qrAvailabilityTiming: QrAvailabilityTiming,
+  ): Date {
+    const hoursBeforeEvent = parseInt(
+      qrAvailabilityTiming.replace('h', ''),
+      10,
+    );
+    const uploadAvailableAt = new Date(eventStartDate);
+    uploadAvailableAt.setHours(uploadAvailableAt.getHours() - hoursBeforeEvent);
+    return uploadAvailableAt;
   }
 }

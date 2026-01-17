@@ -33,6 +33,7 @@ type CreateOrderResponse = ReturnType<OrdersService['createOrder']>;
 type GetOrderByIdResponse = ReturnType<OrdersService['getOrderById']>;
 type GetUserOrdersResponse = ReturnType<OrdersService['getUserOrders']>;
 type GetOrderTicketsResponse = ReturnType<OrdersService['getOrderTickets']>;
+type CancelOrderResponse = ReturnType<OrdersService['cancelOrder']>;
 
 @Route('orders')
 @Middlewares(requireAuthMiddleware)
@@ -101,5 +102,19 @@ export class OrdersController {
     @Request() request: express.Request,
   ): Promise<GetOrderTicketsResponse> {
     return this.service.getOrderTickets(orderId, request.user.id);
+  }
+
+  @Post('/{orderId}/cancel')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<NotFoundError>(404, 'Order not found')
+  @Response<ValidationError>(
+    422,
+    'Order cannot be cancelled (not pending)',
+  )
+  public async cancelOrder(
+    @Path() orderId: string,
+    @Request() request: express.Request,
+  ): Promise<CancelOrderResponse> {
+    return this.service.cancelOrder(orderId, request.user.id);
   }
 }

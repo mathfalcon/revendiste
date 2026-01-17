@@ -1,5 +1,5 @@
 import {useForm} from 'react-hook-form';
-import {zodResolver} from '@hookform/resolvers/zod';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {z} from 'zod';
 import {useEffect} from 'react';
 import {toast} from 'sonner';
@@ -81,9 +81,8 @@ export function RequestPayoutForm({
   });
 
   const form = useForm<RequestPayoutFormValues>({
-    resolver: zodResolver(requestPayoutSchema),
+    resolver: standardSchemaResolver(requestPayoutSchema),
     defaultValues: {
-      payoutMethodId: '',
       listingTicketIds: selectedTicketIds,
       listingIds: selectedListingIds,
     },
@@ -99,20 +98,51 @@ export function RequestPayoutForm({
   const selectedPayoutMethod = payoutMethods?.find(
     m => m.id === selectedPayoutMethodId,
   );
+  const defaultPayoutMethodId = payoutMethods?.find(m => m.isDefault)?.id;
 
-  // Check if selected earnings include UYU
-  const hasUyuEarnings =
-    availableEarnings &&
-    (availableEarnings.byListing.some(
-      l => selectedListingIds.includes(l.listingId) && l.currency === 'UYU',
-    ) ||
-      availableEarnings.byTicket.some(
-        t => selectedTicketIds.includes(t.id) && t.currency === 'UYU',
-      ));
+  useEffect(() => {
+    if (defaultPayoutMethodId) {
+      form.setValue('payoutMethodId', defaultPayoutMethodId);
+    }
+  }, [defaultPayoutMethodId]);
+
+  // Determine which currencies are in the selected earnings
+  const selectedEarningsCurrencies = new Set<string>();
+  if (availableEarnings) {
+    availableEarnings.byListing
+      .filter(l => selectedListingIds.includes(l.listingId))
+      .forEach(l => selectedEarningsCurrencies.add(l.currency));
+    availableEarnings.byTicket
+      .filter(t => selectedTicketIds.includes(t.id))
+      .forEach(t => selectedEarningsCurrencies.add(t.currency));
+  }
+
+  const hasUyuEarnings = selectedEarningsCurrencies.has('UYU');
+  const hasUsdEarnings = selectedEarningsCurrencies.has('USD');
+
+  // Check currency compatibility between earnings and payout method
+  // - PayPal (USD) can receive both USD and UYU (UYU will be converted)
+  // - UYU bank account can only receive UYU earnings
+  // - USD bank account can only receive USD earnings
+  const payoutMethodCurrency = selectedPayoutMethod?.currency;
+  const isPayPal = selectedPayoutMethod?.payoutType === PayoutType.Paypal;
+
+  // Currency mismatch: UYU method selected but has USD earnings
+  const hasCurrencyMismatch =
+    selectedPayoutMethod &&
+    !isPayPal &&
+    payoutMethodCurrency === 'UYU' &&
+    hasUsdEarnings;
+
+  // Currency mismatch: USD method selected but has UYU earnings (and not PayPal)
+  const hasCurrencyMismatchUsdMethod =
+    selectedPayoutMethod &&
+    !isPayPal &&
+    payoutMethodCurrency === 'USD' &&
+    hasUyuEarnings;
 
   // Show conversion alert if PayPal is selected and UYU earnings are present
-  const showConversionAlert =
-    selectedPayoutMethod?.payoutType === PayoutType.Paypal && hasUyuEarnings;
+  const showConversionAlert = isPayPal && hasUyuEarnings;
 
   const onSubmit = async (data: RequestPayoutFormValues) => {
     await requestPayout.mutateAsync({
@@ -156,6 +186,31 @@ export function RequestPayoutForm({
         onSubmit={form.handleSubmit(onSubmit, onError)}
         className='space-y-4'
       >
+        {/* Currency mismatch: UYU method with USD earnings */}
+        {hasCurrencyMismatch && (
+          <Alert variant='destructive'>
+            <Info className='h-4 w-4' />
+            <AlertDescription>
+              No puedes solicitar un retiro de ganancias en USD a una cuenta
+              bancaria en UYU. Por favor selecciona un método de pago en USD o
+              PayPal, o selecciona solo ganancias en UYU.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Currency mismatch: USD method with UYU earnings */}
+        {hasCurrencyMismatchUsdMethod && (
+          <Alert variant='destructive'>
+            <Info className='h-4 w-4' />
+            <AlertDescription>
+              No puedes solicitar un retiro de ganancias en UYU a una cuenta
+              bancaria en USD. Por favor selecciona un método de pago en UYU o
+              PayPal, o selecciona solo ganancias en USD.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Conversion alert for PayPal with UYU earnings */}
         {showConversionAlert && (
           <Alert>
             <Info className='h-4 w-4' />
@@ -170,30 +225,37 @@ export function RequestPayoutForm({
         <FormField
           control={form.control}
           name='payoutMethodId'
-          render={({field}) => (
-            <FormItem>
-              <FormLabel>Método de Pago</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Selecciona un método de pago' />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {payoutMethods.map(method => (
-                    <SelectItem key={method.id} value={method.id}>
-                      {getPayoutMethodDropdownText(method)}
-                      {method.isDefault && ' (Por defecto)'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                Selecciona el método de pago donde recibirás el dinero
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({field}) => {
+            console.log(field);
+            return (
+              <FormItem>
+                <FormLabel>Método de Pago</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  defaultValue={payoutMethods.find(m => m.isDefault)?.id ?? ''}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecciona un método de pago' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {payoutMethods.map(method => (
+                      <SelectItem key={method.id} value={method.id}>
+                        {getPayoutMethodDropdownText(method)}
+                        {method.isDefault && ' (Por defecto)'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Selecciona el método de pago donde recibirás el dinero
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {(selectedListingIds.length > 0 || selectedTicketIds.length > 0) && (
@@ -222,7 +284,10 @@ export function RequestPayoutForm({
           type='submit'
           disabled={
             requestPayout.isPending ||
-            (selectedListingIds.length === 0 && selectedTicketIds.length === 0)
+            (selectedListingIds.length === 0 &&
+              selectedTicketIds.length === 0) ||
+            hasCurrencyMismatch ||
+            hasCurrencyMismatchUsdMethod
           }
           className='w-full'
         >

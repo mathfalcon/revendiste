@@ -9,11 +9,11 @@ import {Button} from '~/components/ui/button';
 import {Badge} from '~/components/ui/badge';
 import {Calendar, FileCheck} from 'lucide-react';
 import {formatEventDate} from '~/utils/string';
-import type {ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets} from '~/lib';
+import type {GetUserListingsResponse} from '~/lib/api/generated';
 
 interface TicketWithDocumentCardProps {
-  ticket: ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number]['tickets'][number] & {
-    listing: ReturnTypeTicketListingsServiceAtGetUserListingsWithTickets[number];
+  ticket: GetUserListingsResponse[number]['tickets'][number] & {
+    listing: GetUserListingsResponse[number];
   };
   onEditClick: (ticketId: string) => void;
 }

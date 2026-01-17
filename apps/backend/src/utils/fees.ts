@@ -1,51 +1,57 @@
+/**
+ * Fee Calculation Utilities - Backend Wrapper
+ *
+ * This module re-exports fee calculations from @revendiste/shared
+ * and binds them to the backend's environment variables.
+ */
+
+import {
+  calculateOrderFees as sharedCalculateOrderFees,
+  calculateSellerAmount as sharedCalculateSellerAmount,
+  getFeeRatesDisplay,
+  type FeeCalculationResult,
+  type SellerAmountResult,
+} from '@revendiste/shared';
 import {PLATFORM_COMMISSION_RATE, VAT_RATE} from '~/config/env';
 
-export interface FeeCalculationResult {
-  subtotalAmount: number;
-  platformCommission: number;
-  vatOnCommission: number;
-  totalAmount: number;
-}
+// Re-export types
+export type {FeeCalculationResult, SellerAmountResult};
+
+// Get the fee rates from environment
+const feeRates = {
+  platformCommissionRate: PLATFORM_COMMISSION_RATE,
+  vatRate: VAT_RATE,
+};
 
 /**
  * Calculates platform commission and VAT for ticket orders
+ * All amounts are rounded to 2 decimal places for currency precision
  * @param subtotalAmount - The subtotal amount before fees
  * @returns Fee calculation breakdown
  */
 export function calculateOrderFees(
   subtotalAmount: number,
 ): FeeCalculationResult {
-  const platformCommission = subtotalAmount * PLATFORM_COMMISSION_RATE;
-  const vatOnCommission = platformCommission * VAT_RATE;
-  const totalAmount = subtotalAmount + platformCommission + vatOnCommission;
-
-  return {
-    subtotalAmount,
-    platformCommission,
-    vatOnCommission,
-    totalAmount,
-  };
+  return sharedCalculateOrderFees(subtotalAmount, feeRates);
 }
 
 /**
  * Calculates seller amount after platform commission and VAT deductions
  * This is used for seller payouts (opposite of buyer fees)
+ * All amounts are rounded to 2 decimal places for currency precision
  * @param sellingPrice - The price the seller is asking for
  * @returns Seller payout breakdown
  */
 export function calculateSellerAmount(
   sellingPrice: number,
 ): FeeCalculationResult {
-  const platformCommission = sellingPrice * PLATFORM_COMMISSION_RATE;
-  const vatOnCommission = platformCommission * VAT_RATE;
-  const totalDeductions = platformCommission + vatOnCommission;
-  const amountSellerReceives = sellingPrice - totalDeductions;
-
+  const result = sharedCalculateSellerAmount(sellingPrice, feeRates);
+  // Return in the format expected by existing backend code
   return {
-    subtotalAmount: sellingPrice,
-    platformCommission,
-    vatOnCommission,
-    totalAmount: amountSellerReceives,
+    subtotalAmount: result.sellingPrice,
+    platformCommission: result.platformCommission,
+    vatOnCommission: result.vatOnCommission,
+    totalAmount: result.sellerAmount,
   };
 }
 
@@ -53,10 +59,5 @@ export function calculateSellerAmount(
  * Gets the current fee rates for display purposes
  */
 export function getFeeRates() {
-  return {
-    platformCommissionRate: PLATFORM_COMMISSION_RATE,
-    vatRate: VAT_RATE,
-    platformCommissionPercentage: Math.round(PLATFORM_COMMISSION_RATE * 100),
-    vatPercentage: Math.round(VAT_RATE * 100),
-  };
+  return getFeeRatesDisplay(feeRates);
 }

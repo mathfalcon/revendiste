@@ -112,6 +112,7 @@ export class OrdersService {
               price,
               ticketWave.name,
               quantity,
+              ticketWave.currency,
             ),
           );
         }
@@ -266,6 +267,50 @@ export class OrdersService {
   async getUserOrders(userId: string) {
     const orders = await this.ordersRepository.getByUserId(userId);
     return orders;
+  }
+
+  async cancelOrder(orderId: string, userId: string) {
+    // Verify order exists and belongs to user
+    const order = await this.ordersRepository.getByIdWithItems(orderId);
+    if (!order) {
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+    }
+
+    if (order.userId !== userId) {
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+    }
+
+    // Only pending orders can be cancelled
+    if (order.status !== 'pending') {
+      throw new ValidationError(ORDER_ERROR_MESSAGES.ORDER_NOT_CANCELLABLE);
+    }
+
+    // Cancel the order and release reservations in a transaction
+    return await this.ordersRepository.executeTransaction(async trx => {
+      const ordersRepo = this.ordersRepository.withTransaction(trx);
+      const reservationsRepo =
+        this.orderTicketReservationsRepository.withTransaction(trx);
+
+      // Release reservations to free up tickets
+      await reservationsRepo.releaseByOrderId(orderId);
+
+      // Update order status to cancelled
+      const cancelledOrder = await ordersRepo.updateStatus(
+        orderId,
+        'cancelled',
+        {
+          cancelledAt: new Date(),
+        },
+      );
+
+      logger.info(`Order ${orderId} cancelled by user ${userId}`);
+
+      return {
+        id: cancelledOrder.id,
+        status: cancelledOrder.status,
+        cancelledAt: cancelledOrder.cancelledAt,
+      };
+    });
   }
 
   async getOrderTickets(orderId: string, userId: string) {

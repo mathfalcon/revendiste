@@ -265,6 +265,17 @@
 				},
 				"type": "array"
 			},
+			"QrAvailabilityTiming": {
+				"type": "string",
+				"enum": [
+					"12h",
+					"24h",
+					"3h",
+					"48h",
+					"6h",
+					"72h"
+				]
+			},
 			"EventTicketCurrency": {
 				"type": "string",
 				"enum": [
@@ -364,6 +375,14 @@
 					"status": {
 						"type": "string"
 					},
+					"qrAvailabilityTiming": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/QrAvailabilityTiming"
+							}
+						],
+						"nullable": true
+					},
 					"name": {
 						"type": "string"
 					},
@@ -397,6 +416,7 @@
 					"venueAddress",
 					"updatedAt",
 					"status",
+					"qrAvailabilityTiming",
 					"name",
 					"id",
 					"externalUrl",
@@ -534,11 +554,6 @@
 								"listingId": {
 									"type": "string"
 								},
-								"cancelledAt": {
-									"type": "string",
-									"format": "date-time",
-									"nullable": true
-								},
 								"soldAt": {
 									"type": "string",
 									"format": "date-time",
@@ -565,7 +580,6 @@
 								"ticketNumber",
 								"price",
 								"listingId",
-								"cancelledAt",
 								"soldAt",
 								"updatedAt",
 								"id",
@@ -742,12 +756,38 @@
 					"properties": {
 						"event": {
 							"properties": {
+								"eventImages": {
+									"items": {
+										"properties": {
+											"imageType": {
+												"$ref": "#/components/schemas/EventImageType"
+											},
+											"url": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"imageType",
+											"url"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
 								"venueName": {
 									"type": "string",
 									"nullable": true
 								},
 								"venueAddress": {
 									"type": "string"
+								},
+								"qrAvailabilityTiming": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/QrAvailabilityTiming"
+										}
+									],
+									"nullable": true
 								},
 								"platform": {
 									"type": "string"
@@ -770,8 +810,10 @@
 								}
 							},
 							"required": [
+								"eventImages",
 								"venueName",
 								"venueAddress",
+								"qrAvailabilityTiming",
 								"platform",
 								"name",
 								"id",
@@ -850,10 +892,6 @@
 									"price": {
 										"type": "string"
 									},
-									"cancelledAt": {
-										"type": "string",
-										"nullable": true
-									},
 									"soldAt": {
 										"type": "string",
 										"nullable": true
@@ -864,7 +902,14 @@
 									"id": {
 										"type": "string"
 									},
+									"deletedAt": {
+										"type": "string",
+										"nullable": true
+									},
 									"createdAt": {
+										"type": "string"
+									},
+									"uploadAvailableAt": {
 										"type": "string"
 									},
 									"uploadUnavailableReason": {
@@ -881,10 +926,10 @@
 									"document",
 									"ticketNumber",
 									"price",
-									"cancelledAt",
 									"soldAt",
 									"updatedAt",
 									"id",
+									"deletedAt",
 									"createdAt",
 									"canUploadDocument",
 									"hasDocument"
@@ -1015,11 +1060,6 @@
 					"listingId": {
 						"type": "string"
 					},
-					"cancelledAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"soldAt": {
 						"type": "string",
 						"format": "date-time",
@@ -1046,7 +1086,6 @@
 					"ticketNumber",
 					"price",
 					"listingId",
-					"cancelledAt",
 					"soldAt",
 					"updatedAt",
 					"id",
@@ -1079,11 +1118,6 @@
 					"listingId": {
 						"type": "string"
 					},
-					"cancelledAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"soldAt": {
 						"type": "string",
 						"format": "date-time",
@@ -1110,12 +1144,155 @@
 					"ticketNumber",
 					"price",
 					"listingId",
-					"cancelledAt",
 					"soldAt",
 					"updatedAt",
 					"id",
 					"deletedAt",
 					"createdAt"
+				],
+				"type": "object"
+			},
+			"GetTicketInfoResponse": {
+				"properties": {
+					"ticketWave": {
+						"properties": {
+							"name": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"name"
+						],
+						"type": "object"
+					},
+					"event": {
+						"properties": {
+							"startDate": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"name": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"startDate",
+							"name",
+							"id"
+						],
+						"type": "object"
+					},
+					"documentHistory": {
+						"items": {
+							"properties": {
+								"status": {
+									"type": "string"
+								},
+								"isPrimary": {
+									"type": "boolean"
+								},
+								"uploadedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"version": {
+									"type": "number",
+									"format": "double"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"status",
+								"isPrimary",
+								"uploadedAt",
+								"version",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"document": {
+						"properties": {
+							"url": {
+								"type": "string"
+							},
+							"status": {
+								"type": "string"
+							},
+							"version": {
+								"type": "number",
+								"format": "double"
+							},
+							"sizeBytes": {
+								"type": "number",
+								"format": "double"
+							},
+							"originalName": {
+								"type": "string"
+							},
+							"mimeType": {
+								"type": "string"
+							},
+							"uploadedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"id": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"url",
+							"status",
+							"version",
+							"sizeBytes",
+							"originalName",
+							"mimeType",
+							"uploadedAt",
+							"id"
+						],
+						"type": "object",
+						"nullable": true
+					},
+					"hasDocument": {
+						"type": "boolean"
+					},
+					"soldAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"price": {
+						"type": "string"
+					},
+					"ticketNumber": {
+						"type": "number",
+						"format": "double"
+					},
+					"listingId": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"ticketWave",
+					"event",
+					"documentHistory",
+					"document",
+					"hasDocument",
+					"soldAt",
+					"price",
+					"ticketNumber",
+					"listingId",
+					"id"
 				],
 				"type": "object"
 			},
@@ -1142,13 +1319,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"userId": {
-						"type": "string"
-					},
 					"cancelledAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
+					},
+					"userId": {
+						"type": "string"
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
@@ -1189,8 +1366,8 @@
 					"reservationExpiresAt",
 					"platformCommission",
 					"confirmedAt",
-					"userId",
 					"cancelledAt",
+					"userId",
 					"currency",
 					"eventId",
 					"updatedAt",
@@ -1301,6 +1478,14 @@
 								"type": "string",
 								"nullable": true
 							},
+							"qrAvailabilityTiming": {
+								"allOf": [
+									{
+										"$ref": "#/components/schemas/QrAvailabilityTiming"
+									}
+								],
+								"nullable": true
+							},
 							"platform": {
 								"type": "string",
 								"nullable": true
@@ -1326,6 +1511,7 @@
 							"images",
 							"venueName",
 							"venueAddress",
+							"qrAvailabilityTiming",
 							"platform",
 							"name",
 							"id",
@@ -1356,13 +1542,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"userId": {
-						"type": "string"
-					},
 					"cancelledAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
+					},
+					"userId": {
+						"type": "string"
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
@@ -1400,8 +1586,8 @@
 					"reservationExpiresAt",
 					"platformCommission",
 					"confirmedAt",
-					"userId",
 					"cancelledAt",
+					"userId",
 					"currency",
 					"eventId",
 					"updatedAt",
@@ -1542,13 +1728,13 @@
 							"format": "date-time",
 							"nullable": true
 						},
-						"userId": {
-							"type": "string"
-						},
 						"cancelledAt": {
 							"type": "string",
 							"format": "date-time",
 							"nullable": true
+						},
+						"userId": {
+							"type": "string"
 						},
 						"currency": {
 							"$ref": "#/components/schemas/EventTicketCurrency"
@@ -1586,8 +1772,8 @@
 						"reservationExpiresAt",
 						"platformCommission",
 						"confirmedAt",
-						"userId",
 						"cancelledAt",
+						"userId",
 						"currency",
 						"eventId",
 						"updatedAt",
@@ -1724,6 +1910,33 @@
 				],
 				"type": "object"
 			},
+			"CancelOrderResponse": {
+				"properties": {
+					"cancelledAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"cancelled",
+							"confirmed",
+							"expired",
+							"pending"
+						]
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"cancelledAt",
+					"status",
+					"id"
+				],
+				"type": "object"
+			},
 			"BalanceByCurrency": {
 				"properties": {
 					"currency": {
@@ -1765,6 +1978,12 @@
 						},
 						"type": "array"
 					},
+					"payoutPending": {
+						"items": {
+							"$ref": "#/components/schemas/BalanceByCurrency"
+						},
+						"type": "array"
+					},
 					"total": {
 						"items": {
 							"$ref": "#/components/schemas/BalanceByCurrency"
@@ -1776,6 +1995,7 @@
 					"available",
 					"retained",
 					"pending",
+					"payoutPending",
 					"total"
 				],
 				"type": "object",
@@ -3661,6 +3881,83 @@
 						"type": "object",
 						"nullable": true
 					},
+					"settlementInfo": {
+						"properties": {
+							"providers": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"hasExchangeRateData": {
+								"type": "boolean"
+							},
+							"settlements": {
+								"items": {
+									"properties": {
+										"providers": {
+											"items": {
+												"type": "string"
+											},
+											"type": "array"
+										},
+										"paymentCount": {
+											"type": "number",
+											"format": "double"
+										},
+										"balanceCurrency": {
+											"type": "string",
+											"nullable": true
+										},
+										"averageExchangeRate": {
+											"type": "number",
+											"format": "double",
+											"nullable": true
+										},
+										"totalSellerAmount": {
+											"type": "number",
+											"format": "double"
+										},
+										"totalBalanceFee": {
+											"type": "number",
+											"format": "double"
+										},
+										"totalBalanceAmount": {
+											"type": "number",
+											"format": "double"
+										},
+										"totalPaymentAmount": {
+											"type": "number",
+											"format": "double"
+										},
+										"currency": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"providers",
+										"paymentCount",
+										"balanceCurrency",
+										"averageExchangeRate",
+										"totalSellerAmount",
+										"totalBalanceFee",
+										"totalBalanceAmount",
+										"totalPaymentAmount",
+										"currency"
+									],
+									"type": "object"
+								},
+								"type": "array"
+							}
+						},
+						"required": [
+							"providers",
+							"hasExchangeRateData",
+							"settlements"
+						],
+						"type": "object",
+						"nullable": true
+					},
 					"documents": {
 						"items": {
 							"properties": {
@@ -3804,6 +4101,7 @@
 					"id",
 					"createdAt",
 					"payoutMethod",
+					"settlementInfo",
 					"documents",
 					"metadata"
 				],
@@ -4603,6 +4901,1398 @@
 				],
 				"type": "object"
 			},
+			"DocumentTypeEnum": {
+				"type": "string",
+				"enum": [
+					"ci_uy",
+					"dni_ar",
+					"passport"
+				]
+			},
+			"GetVerificationsResponse": {
+				"properties": {
+					"pagination": {
+						"properties": {
+							"hasPrev": {
+								"type": "boolean"
+							},
+							"hasNext": {
+								"type": "boolean"
+							},
+							"totalPages": {
+								"type": "number",
+								"format": "double"
+							},
+							"total": {
+								"type": "number",
+								"format": "double"
+							},
+							"limit": {
+								"type": "number",
+								"format": "double"
+							},
+							"page": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"hasPrev",
+							"hasNext",
+							"totalPages",
+							"total",
+							"limit",
+							"page"
+						],
+						"type": "object"
+					},
+					"data": {
+						"items": {
+							"properties": {
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"verificationConfidenceScores": {
+									"$ref": "#/components/schemas/JsonValue"
+								},
+								"manualReviewReason": {
+									"type": "string",
+									"nullable": true
+								},
+								"verificationAttempts": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
+								},
+								"verificationStatus": {
+									"type": "string",
+									"enum": [
+										"pending",
+										"completed",
+										"failed",
+										"rejected",
+										"requires_manual_review",
+										null
+									],
+									"nullable": true
+								},
+								"documentCountry": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentNumber": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentType": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/DocumentTypeEnum"
+										}
+									],
+									"nullable": true
+								},
+								"lastName": {
+									"type": "string",
+									"nullable": true
+								},
+								"firstName": {
+									"type": "string",
+									"nullable": true
+								},
+								"email": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"updatedAt",
+								"createdAt",
+								"verificationConfidenceScores",
+								"manualReviewReason",
+								"verificationAttempts",
+								"verificationStatus",
+								"documentCountry",
+								"documentNumber",
+								"documentType",
+								"lastName",
+								"firstName",
+								"email",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"pagination",
+					"data"
+				],
+				"type": "object"
+			},
+			"infer_typeofAdminVerificationsQuerySchema_": {
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"completed",
+							"failed",
+							"rejected",
+							"requires_manual_review"
+						]
+					},
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
+					},
+					"sortBy": {
+						"type": "string",
+						"enum": [
+							"createdAt",
+							"updatedAt",
+							"verificationAttempts"
+						]
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"sortBy",
+					"limit",
+					"page"
+				],
+				"type": "object"
+			},
+			"AdminVerificationsQuery": {
+				"$ref": "#/components/schemas/infer_typeofAdminVerificationsQuerySchema_"
+			},
+			"GetVerificationDetailsResponse": {
+				"properties": {
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"metadata": {
+						"properties": {
+							"failedAt": {},
+							"failureReason": {},
+							"processedAt": {},
+							"livenessSessionId": {}
+						},
+						"required": [
+							"failedAt",
+							"failureReason",
+							"processedAt",
+							"livenessSessionId"
+						],
+						"type": "object"
+					},
+					"images": {
+						"properties": {
+							"auditImagesCount": {},
+							"hasReferenceImage": {
+								"type": "boolean"
+							},
+							"hasDocumentImage": {
+								"type": "boolean"
+							}
+						},
+						"required": [
+							"auditImagesCount",
+							"hasReferenceImage",
+							"hasDocumentImage"
+						],
+						"type": "object"
+					},
+					"confidenceScores": {
+						"properties": {
+							"liveness": {},
+							"faceMatch": {},
+							"textDetection": {}
+						},
+						"required": [
+							"liveness",
+							"faceMatch",
+							"textDetection"
+						],
+						"type": "object"
+					},
+					"documentVerifiedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"documentVerified": {
+						"type": "boolean",
+						"nullable": true
+					},
+					"manualReviewReason": {
+						"type": "string",
+						"nullable": true
+					},
+					"verificationAttempts": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"verificationStatus": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"completed",
+							"failed",
+							"rejected",
+							"requires_manual_review",
+							null
+						],
+						"nullable": true
+					},
+					"documentCountry": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentNumber": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/DocumentTypeEnum"
+							}
+						],
+						"nullable": true
+					},
+					"lastName": {
+						"type": "string",
+						"nullable": true
+					},
+					"firstName": {
+						"type": "string",
+						"nullable": true
+					},
+					"email": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"updatedAt",
+					"createdAt",
+					"metadata",
+					"images",
+					"confidenceScores",
+					"documentVerifiedAt",
+					"documentVerified",
+					"manualReviewReason",
+					"verificationAttempts",
+					"verificationStatus",
+					"documentCountry",
+					"documentNumber",
+					"documentType",
+					"lastName",
+					"firstName",
+					"email",
+					"id"
+				],
+				"type": "object"
+			},
+			"GetVerificationImageUrlResponse": {
+				"properties": {
+					"expiresIn": {
+						"type": "number",
+						"format": "double"
+					},
+					"url": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"expiresIn",
+					"url"
+				],
+				"type": "object"
+			},
+			"ApproveVerificationResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"message",
+					"success"
+				],
+				"type": "object"
+			},
+			"ApproveVerificationRouteBody": {
+				"properties": {
+					"notes": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"RejectVerificationResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"message",
+					"success"
+				],
+				"type": "object"
+			},
+			"RejectVerificationRouteBody": {
+				"properties": {
+					"reason": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"reason"
+				],
+				"type": "object"
+			},
+			"GetVerificationAuditHistoryResponse": {
+				"properties": {
+					"pagination": {
+						"properties": {
+							"total": {
+								"type": "number",
+								"format": "double"
+							},
+							"offset": {
+								"type": "number",
+								"format": "double"
+							},
+							"limit": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"total",
+							"offset",
+							"limit"
+						],
+						"type": "object"
+					},
+					"data": {
+						"items": {
+							"properties": {
+								"previousStatus": {
+									"type": "string",
+									"nullable": true
+								},
+								"newStatus": {
+									"type": "string",
+									"nullable": true
+								},
+								"confidenceScores": {
+									"$ref": "#/components/schemas/JsonValue"
+								},
+								"action": {
+									"type": "string"
+								},
+								"userId": {
+									"type": "string"
+								},
+								"metadata": {
+									"$ref": "#/components/schemas/JsonValue"
+								},
+								"id": {
+									"type": "string"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								}
+							},
+							"required": [
+								"previousStatus",
+								"newStatus",
+								"confidenceScores",
+								"action",
+								"userId",
+								"metadata",
+								"id",
+								"createdAt"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"pagination",
+					"data"
+				],
+				"type": "object"
+			},
+			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalId-string--externalUrl-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--images_58__url-string--id-string--displayOrder-number--imageType-EventImageType_-Array--ticketWaves_58__description-string-or-null--externalId-string--id-string--name-string--status-string--currency-EventTicketCurrency--faceValue-string--isAvailable-boolean--isSoldOut-boolean_-Array__": {
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"ticketWaves": {
+									"items": {
+										"properties": {
+											"isSoldOut": {
+												"type": "boolean"
+											},
+											"isAvailable": {
+												"type": "boolean"
+											},
+											"faceValue": {
+												"type": "string"
+											},
+											"currency": {
+												"$ref": "#/components/schemas/EventTicketCurrency"
+											},
+											"status": {
+												"type": "string"
+											},
+											"name": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											},
+											"externalId": {
+												"type": "string"
+											},
+											"description": {
+												"type": "string",
+												"nullable": true
+											}
+										},
+										"required": [
+											"isSoldOut",
+											"isAvailable",
+											"faceValue",
+											"currency",
+											"status",
+											"name",
+											"id",
+											"externalId",
+											"description"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"images": {
+									"items": {
+										"properties": {
+											"imageType": {
+												"$ref": "#/components/schemas/EventImageType"
+											},
+											"displayOrder": {
+												"type": "number",
+												"format": "double"
+											},
+											"id": {
+												"type": "string"
+											},
+											"url": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"imageType",
+											"displayOrder",
+											"id",
+											"url"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"venueName": {
+									"type": "string",
+									"nullable": true
+								},
+								"venueAddress": {
+									"type": "string"
+								},
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"status": {
+									"type": "string"
+								},
+								"qrAvailabilityTiming": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/QrAvailabilityTiming"
+										}
+									],
+									"nullable": true
+								},
+								"platform": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								},
+								"externalUrl": {
+									"type": "string"
+								},
+								"externalId": {
+									"type": "string"
+								},
+								"eventStartDate": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"eventEndDate": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"description": {
+									"type": "string",
+									"nullable": true
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								}
+							},
+							"required": [
+								"ticketWaves",
+								"images",
+								"venueName",
+								"venueAddress",
+								"updatedAt",
+								"status",
+								"qrAvailabilityTiming",
+								"platform",
+								"name",
+								"id",
+								"externalUrl",
+								"externalId",
+								"eventStartDate",
+								"eventEndDate",
+								"description",
+								"createdAt"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetEventsResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalId-string--externalUrl-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--images_58__url-string--id-string--displayOrder-number--imageType-EventImageType_-Array--ticketWaves_58__description-string-or-null--externalId-string--id-string--name-string--status-string--currency-EventTicketCurrency--faceValue-string--isAvailable-boolean--isSoldOut-boolean_-Array__"
+			},
+			"infer_typeofAdminEventsQuerySchema_": {
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"active",
+							"inactive"
+						]
+					},
+					"search": {
+						"type": "string"
+					},
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
+					},
+					"sortBy": {
+						"type": "string"
+					},
+					"includePast": {
+						"type": "boolean"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"includePast",
+					"limit",
+					"page"
+				],
+				"type": "object"
+			},
+			"AdminEventsQuery": {
+				"$ref": "#/components/schemas/infer_typeofAdminEventsQuerySchema_"
+			},
+			"GetEventDetailsResponse": {
+				"properties": {
+					"ticketWaves": {
+						"items": {
+							"properties": {
+								"isSoldOut": {
+									"type": "boolean"
+								},
+								"isAvailable": {
+									"type": "boolean"
+								},
+								"faceValue": {
+									"type": "string"
+								},
+								"currency": {
+									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"updatedAt": {
+									"type": "string"
+								},
+								"status": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								},
+								"externalId": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string",
+									"nullable": true
+								},
+								"createdAt": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"isSoldOut",
+								"isAvailable",
+								"faceValue",
+								"currency",
+								"updatedAt",
+								"status",
+								"name",
+								"id",
+								"externalId",
+								"description",
+								"createdAt"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"images": {
+						"items": {
+							"properties": {
+								"imageType": {
+									"$ref": "#/components/schemas/EventImageType"
+								},
+								"displayOrder": {
+									"type": "number",
+									"format": "double"
+								},
+								"id": {
+									"type": "string"
+								},
+								"createdAt": {
+									"type": "string"
+								},
+								"url": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"imageType",
+								"displayOrder",
+								"id",
+								"createdAt",
+								"url"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"venueName": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueAddress": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/QrAvailabilityTiming"
+							}
+						],
+						"nullable": true
+					},
+					"platform": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/JsonValue"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string"
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"eventStartDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"ticketWaves",
+					"images",
+					"venueName",
+					"venueAddress",
+					"updatedAt",
+					"status",
+					"qrAvailabilityTiming",
+					"platform",
+					"name",
+					"metadata",
+					"lastScrapedAt",
+					"id",
+					"externalUrl",
+					"externalId",
+					"eventStartDate",
+					"eventEndDate",
+					"description",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"UpdateEventResponse": {
+				"properties": {
+					"venueName": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueAddress": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/QrAvailabilityTiming"
+							}
+						],
+						"nullable": true
+					},
+					"platform": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/JsonValue"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string"
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"eventStartDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"venueName",
+					"venueAddress",
+					"updatedAt",
+					"status",
+					"qrAvailabilityTiming",
+					"platform",
+					"name",
+					"metadata",
+					"lastScrapedAt",
+					"id",
+					"externalUrl",
+					"externalId",
+					"eventStartDate",
+					"eventEndDate",
+					"description",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"UpdateEventRouteBody": {
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"active",
+							"inactive"
+						]
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"enum": [
+							"12h",
+							"24h",
+							"3h",
+							"48h",
+							"6h",
+							"72h",
+							null
+						],
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"venueAddress": {
+						"type": "string"
+					},
+					"venueName": {
+						"type": "string",
+						"nullable": true
+					},
+					"eventEndDate": {
+						"type": "string"
+					},
+					"eventStartDate": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"DeleteEventResponse": {
+				"properties": {
+					"venueName": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueAddress": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/QrAvailabilityTiming"
+							}
+						],
+						"nullable": true
+					},
+					"platform": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/JsonValue"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string"
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"eventStartDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"venueName",
+					"venueAddress",
+					"updatedAt",
+					"status",
+					"qrAvailabilityTiming",
+					"platform",
+					"name",
+					"metadata",
+					"lastScrapedAt",
+					"id",
+					"externalUrl",
+					"externalId",
+					"eventStartDate",
+					"eventEndDate",
+					"description",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"CreateTicketWaveResponse": {
+				"properties": {
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/JsonValue"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"isSoldOut",
+					"isAvailable",
+					"faceValue",
+					"currency",
+					"eventId",
+					"updatedAt",
+					"status",
+					"name",
+					"metadata",
+					"lastScrapedAt",
+					"id",
+					"externalId",
+					"description",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"CreateTicketWaveRouteBody": {
+				"properties": {
+					"externalId": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"currency": {
+						"type": "string",
+						"enum": [
+							"USD",
+							"UYU"
+						]
+					},
+					"faceValue": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"isAvailable",
+					"isSoldOut",
+					"currency",
+					"faceValue",
+					"name"
+				],
+				"type": "object"
+			},
+			"UpdateTicketWaveResponse": {
+				"properties": {
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/JsonValue"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"isSoldOut",
+					"isAvailable",
+					"faceValue",
+					"currency",
+					"eventId",
+					"updatedAt",
+					"status",
+					"name",
+					"metadata",
+					"lastScrapedAt",
+					"id",
+					"externalId",
+					"description",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"UpdateTicketWaveRouteBody": {
+				"properties": {
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"currency": {
+						"type": "string",
+						"enum": [
+							"USD",
+							"UYU"
+						]
+					},
+					"faceValue": {
+						"type": "number",
+						"format": "double"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"DeleteTicketWaveResponse": {
+				"properties": {
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/JsonValue"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"isSoldOut",
+					"isAvailable",
+					"faceValue",
+					"currency",
+					"eventId",
+					"updatedAt",
+					"status",
+					"name",
+					"metadata",
+					"lastScrapedAt",
+					"id",
+					"externalId",
+					"description",
+					"deletedAt",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"UploadEventImageResponse": {
+				"properties": {
+					"imageType": {
+						"type": "string",
+						"enum": [
+							"flyer",
+							"hero"
+						]
+					},
+					"url": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"imageType",
+					"url",
+					"id"
+				],
+				"type": "object"
+			},
+			"DeleteEventImageResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
 			"GetCurrentUserResponse": {
 				"properties": {
 					"rejectionReason": {
@@ -4736,16 +6426,20 @@
 							"http_request": {
 								"properties": {
 									"user_agent": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"client_ip": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									}
 								},
-								"type": "object"
+								"type": "object",
+								"nullable": true
 							}
 						},
-						"type": "object"
+						"type": "object",
+						"nullable": true
 					},
 					"timestamp": {
 						"type": "number",
@@ -4756,7 +6450,15 @@
 					},
 					"data": {
 						"properties": {
+							"user_id": {
+								"type": "string",
+								"nullable": true
+							},
 							"reply_to_email_name": {
+								"type": "string",
+								"nullable": true
+							},
+							"email_address_id": {
 								"type": "string",
 								"nullable": true
 							},
@@ -4765,127 +6467,169 @@
 									"user": {
 										"properties": {
 											"public_metadata_fallback": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"public_metadata": {
-												"$ref": "#/components/schemas/Record_string.unknown_"
+												"allOf": [
+													{
+														"$ref": "#/components/schemas/Record_string.unknown_"
+													}
+												],
+												"nullable": true
+											},
+											"email_address": {
+												"type": "string",
+												"nullable": true
 											}
 										},
-										"type": "object"
+										"type": "object",
+										"nullable": true
 									},
 									"theme": {
 										"properties": {
 											"show_clerk_branding": {
-												"type": "boolean"
+												"type": "boolean",
+												"nullable": true
 											},
 											"button_text_color": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"primary_color": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											}
 										},
-										"type": "object"
+										"type": "object",
+										"nullable": true
 									},
 									"app": {
 										"properties": {
 											"url": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
+											},
+											"logo_url": {
+												"type": "string",
+												"nullable": true
 											},
 											"logo_image_url": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"domain_name": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"name": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											}
 										},
-										"type": "object"
+										"type": "object",
+										"nullable": true
 									},
 									"support_email": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"revoke_session_url": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"session_created_at": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"ip_address": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"location": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"operating_system": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"browser_name": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"device_type": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"sign_in_method": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"new_email_address": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"primary_email_address": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"greeting_name": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"invitation": {
 										"properties": {
 											"public_metadata_fallback": {
-												"type": "string"
+												"type": "string",
+												"nullable": true
 											},
 											"public_metadata": {
-												"$ref": "#/components/schemas/Record_string.unknown_"
+												"allOf": [
+													{
+														"$ref": "#/components/schemas/Record_string.unknown_"
+													}
+												],
+												"nullable": true
 											},
 											"expires_in_days": {
 												"type": "number",
-												"format": "double"
+												"format": "double",
+												"nullable": true
 											}
 										},
-										"type": "object"
+										"type": "object",
+										"nullable": true
 									},
 									"action_url": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"inviter_name": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"requested_by": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"requested_from": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"requested_at": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									},
 									"otp_code": {
-										"type": "string"
+										"type": "string",
+										"nullable": true
 									}
 								},
 								"type": "object"
 							},
-							"user_id": {
-								"type": "string",
-								"nullable": true
-							},
 							"from_email_name": {
 								"type": "string"
-							},
-							"email_address_id": {
-								"type": "string",
-								"nullable": true
 							},
 							"delivered_by_clerk": {
 								"type": "boolean"
@@ -4921,9 +6665,7 @@
 						},
 						"required": [
 							"data",
-							"user_id",
 							"from_email_name",
-							"email_address_id",
 							"delivered_by_clerk",
 							"status",
 							"slug",
@@ -5368,7 +7110,7 @@
 			},
 			"ProcessDocumentResponse": {
 				"properties": {
-					"documentNumberMatch": {
+					"documentIdMatch": {
 						"type": "boolean"
 					},
 					"verificationStatus": {
@@ -5381,15 +7123,15 @@
 					"readyForLiveness": {
 						"type": "boolean"
 					},
-					"extractedNumber": {
+					"extractedDocumentId": {
 						"type": "string"
 					}
 				},
 				"required": [
-					"documentNumberMatch",
+					"documentIdMatch",
 					"verificationStatus",
 					"readyForLiveness",
-					"extractedNumber"
+					"extractedDocumentId"
 				],
 				"type": "object"
 			},
@@ -5459,467 +7201,6 @@
 				},
 				"required": [
 					"sessionId"
-				],
-				"type": "object"
-			},
-			"DocumentTypeEnum": {
-				"type": "string",
-				"enum": [
-					"ci_uy",
-					"dni_ar",
-					"passport"
-				]
-			},
-			"GetVerificationsResponse": {
-				"properties": {
-					"pagination": {
-						"properties": {
-							"hasPrev": {
-								"type": "boolean"
-							},
-							"hasNext": {
-								"type": "boolean"
-							},
-							"totalPages": {
-								"type": "number",
-								"format": "double"
-							},
-							"total": {
-								"type": "number",
-								"format": "double"
-							},
-							"limit": {
-								"type": "number",
-								"format": "double"
-							},
-							"page": {
-								"type": "number",
-								"format": "double"
-							}
-						},
-						"required": [
-							"hasPrev",
-							"hasNext",
-							"totalPages",
-							"total",
-							"limit",
-							"page"
-						],
-						"type": "object"
-					},
-					"data": {
-						"items": {
-							"properties": {
-								"updatedAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"createdAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"verificationConfidenceScores": {
-									"$ref": "#/components/schemas/JsonValue"
-								},
-								"manualReviewReason": {
-									"type": "string",
-									"nullable": true
-								},
-								"verificationAttempts": {
-									"type": "number",
-									"format": "double",
-									"nullable": true
-								},
-								"verificationStatus": {
-									"type": "string",
-									"enum": [
-										"pending",
-										"completed",
-										"failed",
-										"requires_manual_review",
-										"rejected",
-										null
-									],
-									"nullable": true
-								},
-								"documentCountry": {
-									"type": "string",
-									"nullable": true
-								},
-								"documentNumber": {
-									"type": "string",
-									"nullable": true
-								},
-								"documentType": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/DocumentTypeEnum"
-										}
-									],
-									"nullable": true
-								},
-								"lastName": {
-									"type": "string",
-									"nullable": true
-								},
-								"firstName": {
-									"type": "string",
-									"nullable": true
-								},
-								"email": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								}
-							},
-							"required": [
-								"updatedAt",
-								"createdAt",
-								"verificationConfidenceScores",
-								"manualReviewReason",
-								"verificationAttempts",
-								"verificationStatus",
-								"documentCountry",
-								"documentNumber",
-								"documentType",
-								"lastName",
-								"firstName",
-								"email",
-								"id"
-							],
-							"type": "object"
-						},
-						"type": "array"
-					}
-				},
-				"required": [
-					"pagination",
-					"data"
-				],
-				"type": "object"
-			},
-			"infer_typeofAdminVerificationsQuerySchema_": {
-				"properties": {
-					"status": {
-						"type": "string",
-						"enum": [
-							"pending",
-							"completed",
-							"failed",
-							"requires_manual_review",
-							"rejected"
-						]
-					},
-					"sortOrder": {
-						"type": "string",
-						"enum": [
-							"asc",
-							"desc"
-						]
-					},
-					"sortBy": {
-						"type": "string",
-						"enum": [
-							"createdAt",
-							"updatedAt",
-							"verificationAttempts"
-						]
-					},
-					"limit": {
-						"type": "number",
-						"format": "double"
-					},
-					"page": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"sortBy",
-					"limit",
-					"page"
-				],
-				"type": "object"
-			},
-			"AdminVerificationsQuery": {
-				"$ref": "#/components/schemas/infer_typeofAdminVerificationsQuerySchema_"
-			},
-			"GetVerificationDetailsResponse": {
-				"properties": {
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"metadata": {
-						"properties": {
-							"failedAt": {},
-							"failureReason": {},
-							"processedAt": {},
-							"livenessSessionId": {}
-						},
-						"required": [
-							"failedAt",
-							"failureReason",
-							"processedAt",
-							"livenessSessionId"
-						],
-						"type": "object"
-					},
-					"images": {
-						"properties": {
-							"auditImagesCount": {},
-							"hasReferenceImage": {
-								"type": "boolean"
-							},
-							"hasDocumentImage": {
-								"type": "boolean"
-							}
-						},
-						"required": [
-							"auditImagesCount",
-							"hasReferenceImage",
-							"hasDocumentImage"
-						],
-						"type": "object"
-					},
-					"confidenceScores": {
-						"properties": {
-							"liveness": {},
-							"faceMatch": {},
-							"textDetection": {}
-						},
-						"required": [
-							"liveness",
-							"faceMatch",
-							"textDetection"
-						],
-						"type": "object"
-					},
-					"documentVerifiedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"documentVerified": {
-						"type": "boolean",
-						"nullable": true
-					},
-					"manualReviewReason": {
-						"type": "string",
-						"nullable": true
-					},
-					"verificationAttempts": {
-						"type": "number",
-						"format": "double",
-						"nullable": true
-					},
-					"verificationStatus": {
-						"type": "string",
-						"enum": [
-							"pending",
-							"completed",
-							"failed",
-							"requires_manual_review",
-							"rejected",
-							null
-						],
-						"nullable": true
-					},
-					"documentCountry": {
-						"type": "string",
-						"nullable": true
-					},
-					"documentNumber": {
-						"type": "string",
-						"nullable": true
-					},
-					"documentType": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/DocumentTypeEnum"
-							}
-						],
-						"nullable": true
-					},
-					"lastName": {
-						"type": "string",
-						"nullable": true
-					},
-					"firstName": {
-						"type": "string",
-						"nullable": true
-					},
-					"email": {
-						"type": "string"
-					},
-					"id": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"updatedAt",
-					"createdAt",
-					"metadata",
-					"images",
-					"confidenceScores",
-					"documentVerifiedAt",
-					"documentVerified",
-					"manualReviewReason",
-					"verificationAttempts",
-					"verificationStatus",
-					"documentCountry",
-					"documentNumber",
-					"documentType",
-					"lastName",
-					"firstName",
-					"email",
-					"id"
-				],
-				"type": "object"
-			},
-			"GetVerificationImageUrlResponse": {
-				"properties": {
-					"expiresIn": {
-						"type": "number",
-						"format": "double"
-					},
-					"url": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"expiresIn",
-					"url"
-				],
-				"type": "object"
-			},
-			"ApproveVerificationResponse": {
-				"properties": {
-					"message": {
-						"type": "string"
-					},
-					"success": {
-						"type": "boolean"
-					}
-				},
-				"required": [
-					"message",
-					"success"
-				],
-				"type": "object"
-			},
-			"ApproveVerificationRouteBody": {
-				"properties": {
-					"notes": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"RejectVerificationResponse": {
-				"properties": {
-					"message": {
-						"type": "string"
-					},
-					"success": {
-						"type": "boolean"
-					}
-				},
-				"required": [
-					"message",
-					"success"
-				],
-				"type": "object"
-			},
-			"RejectVerificationRouteBody": {
-				"properties": {
-					"reason": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"reason"
-				],
-				"type": "object"
-			},
-			"GetVerificationAuditHistoryResponse": {
-				"properties": {
-					"pagination": {
-						"properties": {
-							"total": {
-								"type": "number",
-								"format": "double"
-							},
-							"offset": {
-								"type": "number",
-								"format": "double"
-							},
-							"limit": {
-								"type": "number",
-								"format": "double"
-							}
-						},
-						"required": [
-							"total",
-							"offset",
-							"limit"
-						],
-						"type": "object"
-					},
-					"data": {
-						"items": {
-							"properties": {
-								"previousStatus": {
-									"type": "string",
-									"nullable": true
-								},
-								"newStatus": {
-									"type": "string",
-									"nullable": true
-								},
-								"confidenceScores": {
-									"$ref": "#/components/schemas/JsonValue"
-								},
-								"action": {
-									"type": "string"
-								},
-								"userId": {
-									"type": "string"
-								},
-								"metadata": {
-									"$ref": "#/components/schemas/JsonValue"
-								},
-								"id": {
-									"type": "string"
-								},
-								"createdAt": {
-									"type": "string",
-									"format": "date-time"
-								}
-							},
-							"required": [
-								"previousStatus",
-								"newStatus",
-								"confidenceScores",
-								"action",
-								"userId",
-								"metadata",
-								"id",
-								"createdAt"
-							],
-							"type": "object"
-						},
-						"type": "array"
-					}
-				},
-				"required": [
-					"pagination",
-					"data"
 				],
 				"type": "object"
 			}
@@ -6742,6 +8023,59 @@
 				]
 			}
 		},
+		"/ticket-listings/tickets/{ticketId}/info": {
+			"get": {
+				"operationId": "GetTicketInfo",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetTicketInfoResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required or not authorized to view this ticket",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Ticket not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get ticket information with document details\n\nReturns ticket info including document URL for viewing.\nOnly the seller (ticket publisher) can access this endpoint.",
+				"tags": [
+					"Ticket Listings"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "- ID of the ticket",
+						"in": "path",
+						"name": "ticketId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/orders": {
 			"post": {
 				"operationId": "Create",
@@ -6935,6 +8269,67 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Orders"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "orderId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/orders/{orderId}/cancel": {
+			"post": {
+				"operationId": "CancelOrder",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CancelOrderResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Order not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Order cannot be cancelled (not pending)",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
 								}
 							}
 						}
@@ -8109,6 +9504,1211 @@
 				]
 			}
 		},
+		"/admin/identity-verification": {
+			"get": {
+				"operationId": "GetVerifications",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetVerificationsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"pending",
+								"completed",
+								"failed",
+								"rejected",
+								"requires_manual_review"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"createdAt",
+								"updatedAt",
+								"verificationAttempts"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/admin/identity-verification/{userId}": {
+			"get": {
+				"operationId": "GetVerificationDetails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetVerificationDetailsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/identity-verification/{userId}/images/{imageType}": {
+			"get": {
+				"operationId": "GetVerificationImage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetVerificationImageUrlResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Image not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "imageType",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"document",
+								"reference",
+								"audit"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "index",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/identity-verification/{userId}/approve": {
+			"post": {
+				"operationId": "ApproveVerification",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApproveVerificationResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "User is not pending manual review",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ApproveVerificationRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/identity-verification/{userId}/reject": {
+			"post": {
+				"operationId": "RejectVerification",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RejectVerificationResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "User is not pending manual review",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RejectVerificationRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/identity-verification/{userId}/audit-history": {
+			"get": {
+				"operationId": "GetVerificationAuditHistory",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetVerificationAuditHistoryResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Identity Verification"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/events": {
+			"get": {
+				"operationId": "GetEvents",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetEventsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"active",
+								"inactive"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "includePast",
+						"required": true,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/admin/events/{eventId}": {
+			"get": {
+				"operationId": "GetEventDetails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetEventDetailsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Event not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "UpdateEvent",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UpdateEventResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Event not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateEventRouteBody"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteEvent",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteEventResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Event not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/events/{eventId}/ticket-waves": {
+			"post": {
+				"operationId": "CreateTicketWave",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateTicketWaveResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Event not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTicketWaveRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/events/{eventId}/ticket-waves/{waveId}": {
+			"put": {
+				"operationId": "UpdateTicketWave",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UpdateTicketWaveResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Ticket wave not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "waveId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateTicketWaveRouteBody"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteTicketWave",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteTicketWaveResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Ticket wave not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "waveId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/events/{eventId}/images": {
+			"post": {
+				"operationId": "UploadEventImage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UploadEventImageResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "No file uploaded or invalid file",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BadRequestError"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Event not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Invalid file type",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									},
+									"imageType": {
+										"type": "string",
+										"enum": [
+											"flyer",
+											"hero"
+										]
+									}
+								},
+								"required": [
+									"file",
+									"imageType"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/events/{eventId}/images/{imageId}": {
+			"delete": {
+				"operationId": "DeleteEventImage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteEventImageResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Image not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "imageId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/users/me": {
 			"get": {
 				"operationId": "GetCurrentUser",
@@ -8836,489 +11436,6 @@
 				],
 				"security": [],
 				"parameters": []
-			}
-		},
-		"/admin/identity-verification": {
-			"get": {
-				"operationId": "GetVerifications",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/GetVerificationsResponse"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Authentication required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Admin access required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Admin - Identity Verification"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "query",
-						"name": "status",
-						"required": false,
-						"schema": {
-							"type": "string",
-							"enum": [
-								"pending",
-								"completed",
-								"failed",
-								"requires_manual_review",
-								"rejected"
-							]
-						}
-					},
-					{
-						"in": "query",
-						"name": "sortOrder",
-						"required": false,
-						"schema": {
-							"type": "string",
-							"enum": [
-								"asc",
-								"desc"
-							]
-						}
-					},
-					{
-						"in": "query",
-						"name": "sortBy",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"enum": [
-								"createdAt",
-								"updatedAt",
-								"verificationAttempts"
-							]
-						}
-					},
-					{
-						"in": "query",
-						"name": "limit",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					},
-					{
-						"in": "query",
-						"name": "page",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
-		"/admin/identity-verification/{userId}": {
-			"get": {
-				"operationId": "GetVerificationDetails",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/GetVerificationDetailsResponse"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Authentication required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Admin access required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "User not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/NotFoundError"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Admin - Identity Verification"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/admin/identity-verification/{userId}/images/{imageType}": {
-			"get": {
-				"operationId": "GetVerificationImage",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/GetVerificationImageUrlResponse"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Authentication required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Admin access required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Image not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/NotFoundError"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Admin - Identity Verification"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "imageType",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"enum": [
-								"document",
-								"reference",
-								"audit"
-							]
-						}
-					},
-					{
-						"in": "query",
-						"name": "index",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/admin/identity-verification/{userId}/approve": {
-			"post": {
-				"operationId": "ApproveVerification",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApproveVerificationResponse"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Authentication required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Admin access required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "User not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/NotFoundError"
-								}
-							}
-						}
-					},
-					"422": {
-						"description": "User is not pending manual review",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ValidationError"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Admin - Identity Verification"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/ApproveVerificationRouteBody"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/admin/identity-verification/{userId}/reject": {
-			"post": {
-				"operationId": "RejectVerification",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/RejectVerificationResponse"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Authentication required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Admin access required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "User not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/NotFoundError"
-								}
-							}
-						}
-					},
-					"422": {
-						"description": "User is not pending manual review",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ValidationError"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Admin - Identity Verification"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/RejectVerificationRouteBody"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/admin/identity-verification/{userId}/audit-history": {
-			"get": {
-				"operationId": "GetVerificationAuditHistory",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/GetVerificationAuditHistoryResponse"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Authentication required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Admin access required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "User not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/NotFoundError"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Admin - Identity Verification"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "offset",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "limit",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
 			}
 		}
 	},

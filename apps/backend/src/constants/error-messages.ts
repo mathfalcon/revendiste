@@ -1,4 +1,7 @@
 // Error messages for the orders system
+
+import {EventTicketCurrency, formatPrice} from '@revendiste/shared';
+
 // This will make internationalization easier in the future
 export const ORDER_ERROR_MESSAGES = {
   // Event related errors
@@ -18,8 +21,12 @@ export const ORDER_ERROR_MESSAGES = {
     price: number,
     ticketWaveName: string,
     requestedQuantity: number,
+    currency: EventTicketCurrency,
   ) =>
-    `Solo hay ${availableCount} entradas disponibles para ${price} en ${ticketWaveName}. ` +
+    `Solo hay ${availableCount} entradas disponibles a ${formatPrice(
+      price,
+      currency,
+    )} en ${ticketWaveName}. ` +
     `Solicitaste ${requestedQuantity}. Por favor ajusta tu selección o prueba con otro precio.`,
 
   // Order validation errors
@@ -47,6 +54,10 @@ export const ORDER_ERROR_MESSAGES = {
   // Order tickets errors
   UNAUTHORIZED_TICKET_ACCESS:
     'No estás autorizado para ver los tickets de esta orden',
+
+  // Order cancellation errors
+  ORDER_NOT_CANCELLABLE:
+    'Solo se pueden cancelar órdenes pendientes. Esta orden ya fue confirmada, cancelada o expiró.',
 } as const;
 
 // Error messages for ticket listings
@@ -83,6 +94,11 @@ export const TICKET_DOCUMENT_ERROR_MESSAGES = {
   UNSOLD_TICKET: 'No se puede subir un documento para un ticket no vendido',
   EVENT_ENDED:
     'No se puede subir un documento después de que el evento haya terminado',
+  UPLOAD_TOO_EARLY: (availableAt: Date) =>
+    `Aún no puedes subir el documento. Podrás hacerlo a partir del ${availableAt.toLocaleDateString(
+      'es-ES',
+      {day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'},
+    )}`,
   DOCUMENT_NOT_FOUND: 'No se ha subido ningún documento para este ticket aún',
   DOCUMENT_NOT_FOUND_FOR_DELETE:
     'No se ha subido ningún documento para este ticket',
@@ -134,6 +150,10 @@ export const PAYOUT_ERROR_MESSAGES = {
   PAYOUT_ALREADY_PROCESSED: 'Este retiro ya ha sido procesado',
   PAYOUT_NOT_PENDING: (status: string) =>
     `El retiro ya está ${status}. No se puede procesar.`,
+  CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS:
+    'No puedes solicitar un retiro de ganancias en USD a una cuenta bancaria en UYU. Selecciona un método de pago en USD o PayPal.',
+  CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS:
+    'No puedes solicitar un retiro de ganancias en UYU a una cuenta bancaria en USD. Selecciona un método de pago en UYU o PayPal.',
 } as const;
 
 // Error messages for admin operations

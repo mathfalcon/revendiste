@@ -59,9 +59,9 @@ export type PayoutStatus = "cancelled" | "completed" | "failed" | "pending" | "p
 
 export type PayoutType = "paypal" | "uruguayan_bank";
 
-export type QrAvailabilityTiming = "12h" | "24h" | "48h" | "6h" | "72h";
+export type QrAvailabilityTiming = "12h" | "24h" | "3h" | "48h" | "6h" | "72h";
 
-export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | "pending" | "retained";
+export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | "payout_requested" | "pending" | "retained";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
@@ -92,6 +92,7 @@ export interface Events {
   metadata: Json | null;
   name: string;
   platform: string;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
   status: Generated<string>;
   updatedAt: Generated<Timestamp>;
   venueAddress: string;
@@ -112,7 +113,6 @@ export interface EventTicketWaves {
   lastScrapedAt: Generated<Timestamp>;
   metadata: Json | null;
   name: string;
-  qrAvailabilityTiming: QrAvailabilityTiming | null;
   status: Generated<string>;
   updatedAt: Generated<Timestamp>;
 }
@@ -128,7 +128,6 @@ export interface Listings {
 }
 
 export interface ListingTickets {
-  cancelledAt: Timestamp | null;
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
   id: Generated<string>;
@@ -219,6 +218,7 @@ export interface Payments {
   createdAt: Generated<Timestamp>;
   currency: string;
   deletedAt: Timestamp | null;
+  exchangeRate: Numeric | null;
   expiredAt: Timestamp | null;
   failedAt: Timestamp | null;
   failureReason: string | null;

@@ -1,5 +1,8 @@
 import {useState} from 'react';
 import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
+import {useForm} from 'react-hook-form';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
+import {z} from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +16,17 @@ import {Input} from '~/components/ui/input';
 import {Label} from '~/components/ui/label';
 import {Textarea} from '~/components/ui/textarea';
 import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
+import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
 import {PriceInput} from '~/components/ui/price-input';
 import {EventTicketCurrency} from '~/lib';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '~/components/ui/form';
 import {
   adminPayoutDetailsQueryOptions,
   processPayoutMutation,
@@ -22,7 +34,15 @@ import {
   deletePayoutDocumentMutation,
 } from '~/lib/api/admin';
 import {toast} from 'sonner';
-import {Loader2, Upload, Trash2, Download, AlertTriangle} from 'lucide-react';
+import {
+  Loader2,
+  Upload,
+  Trash2,
+  Download,
+  AlertTriangle,
+  ArrowRightLeft,
+  Info,
+} from 'lucide-react';
 import {
   getBankName,
   getAccountNumber,
@@ -34,6 +54,16 @@ import {
   UruguayanBankMetadataSchema,
   PayPalMetadataSchema,
 } from '@revendiste/shared/schemas/payout-methods';
+import {formatProvidersList} from '@revendiste/shared';
+
+// Form schema for processing
+const processPayoutFormSchema = z.object({
+  processingFee: z.coerce.number().min(0).optional(),
+  transactionReference: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+type ProcessPayoutFormValues = z.infer<typeof processPayoutFormSchema>;
 
 interface ProcessPayoutDialogProps {
   payoutId: string;
@@ -51,17 +81,26 @@ export function ProcessPayoutDialog({
     adminPayoutDetailsQueryOptions(payoutId),
   );
 
-  const [processingFee, setProcessingFee] = useState<number>(0);
-  const [transactionReference, setTransactionReference] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
+  // UI state (not form data)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 
-  // Reset step when dialog closes
+  // Form setup
+  const form = useForm<ProcessPayoutFormValues>({
+    resolver: standardSchemaResolver(processPayoutFormSchema),
+    defaultValues: {
+      processingFee: 0,
+      transactionReference: '',
+      notes: '',
+    },
+  });
+
+  // Reset step and form when dialog closes
   const handleDialogOpenChange = (open: boolean) => {
     if (!open) {
       setCurrentStep(1);
+      form.reset();
     }
     onOpenChange(open);
   };
@@ -73,9 +112,7 @@ export function ProcessPayoutDialog({
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts', payoutId]});
       toast.success('Pago procesado exitosamente');
       // Reset form
-      setProcessingFee(0);
-      setTransactionReference('');
-      setNotes('');
+      form.reset();
       setSelectedFile(null);
       onOpenChange(false);
     },
@@ -119,13 +156,14 @@ export function ProcessPayoutDialog({
     deleteDocumentMutation.mutate({documentId});
   };
 
-  const handleProcess = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Show confirmation dialog instead of processing immediately
+  const handleProcess = (data: ProcessPayoutFormValues) => {
+    // Store form data and show confirmation dialog
     setShowConfirmDialog(true);
   };
 
   const confirmProcess = () => {
+    const data = form.getValues();
+
     // Build updates object, always send at least an empty object
     const updates: {
       processingFee?: number;
@@ -133,14 +171,14 @@ export function ProcessPayoutDialog({
       notes?: string;
     } = {};
 
-    if (processingFee && processingFee > 0) {
-      updates.processingFee = processingFee;
+    if (data.processingFee && data.processingFee > 0) {
+      updates.processingFee = data.processingFee;
     }
-    if (transactionReference && transactionReference.trim() !== '') {
-      updates.transactionReference = transactionReference.trim();
+    if (data.transactionReference && data.transactionReference.trim() !== '') {
+      updates.transactionReference = data.transactionReference.trim();
     }
-    if (notes && notes.trim() !== '') {
-      updates.notes = notes.trim();
+    if (data.notes && data.notes.trim() !== '') {
+      updates.notes = data.notes.trim();
     }
 
     // Always send at least an empty object to satisfy validation
@@ -287,315 +325,460 @@ export function ProcessPayoutDialog({
             </Card>
           )}
 
-          {/* Payout Method Details - Prominent Display - Always visible in Step 1, hidden in Step 2 */}
+          {/* Settlement/Exchange Rate Information - Show when payout is in USD and we have settlement data */}
           {(currentStep === 1 || payout.status !== 'pending') &&
-            payoutMethod && (
-              <Card className='border-2 border-primary/20 bg-primary/5'>
-                <CardHeader>
-                  <CardTitle className='text-lg'>
-                    Información de Transferencia
-                  </CardTitle>
-                  <DialogDescription className='text-sm'>
-                    Usa esta información para realizar la transferencia bancaria
-                    o el envío de PayPal
-                  </DialogDescription>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  {/* Account Holder */}
-                  <div className='p-3 bg-background rounded-lg border'>
-                    <div className='flex justify-between items-start'>
-                      <div className='flex-1'>
-                        <Label className='text-xs text-muted-foreground mb-1 block'>
-                          Titular de la Cuenta
-                        </Label>
-                        <p className='text-sm font-semibold'>
-                          {payoutMethod.accountHolderName}{' '}
-                          {payoutMethod.accountHolderSurname}
-                        </p>
+            payout.settlementInfo?.hasExchangeRateData &&
+            payout.currency === 'USD' && (
+              <Alert className='border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'>
+                <ArrowRightLeft className='h-4 w-4 text-amber-600' />
+                <AlertTitle className='text-amber-800 dark:text-amber-200'>
+                  Información de Liquidación
+                  {payout.settlementInfo.providers &&
+                    payout.settlementInfo.providers.length > 0 &&
+                    ` (${formatProvidersList(payout.settlementInfo.providers)})`}
+                </AlertTitle>
+                <AlertDescription className='text-amber-700 dark:text-amber-300'>
+                  <div className='mt-2 space-y-2'>
+                    <p className='text-sm'>
+                      Este retiro es en <strong>USD</strong>, pero el procesador
+                      de pagos nos liquidó en <strong>UYU</strong>. A
+                      continuación se muestra la información del tipo de cambio
+                      aplicado:
+                    </p>
+                    {payout.settlementInfo.settlements.map((settlement, idx) => (
+                      <div
+                        key={idx}
+                        className='mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-700'
+                      >
+                        <div className='grid grid-cols-2 gap-2 text-sm'>
+                          <div>
+                            <span className='text-muted-foreground'>
+                              Monto al vendedor ({settlement.currency}):
+                            </span>
+                          </div>
+                          <div className='text-right font-medium'>
+                            {formatCurrency(
+                              String(settlement.totalSellerAmount),
+                              settlement.currency,
+                            )}
+                          </div>
+
+                          {settlement.averageExchangeRate && (
+                            <>
+                              <div>
+                                <span className='text-muted-foreground'>
+                                  Tipo de cambio promedio:
+                                </span>
+                              </div>
+                              <div className='text-right font-medium'>
+                                1 USD = {settlement.averageExchangeRate.toFixed(4)}{' '}
+                                UYU
+                              </div>
+                            </>
+                          )}
+
+                          {settlement.totalBalanceAmount > 0 && (
+                            <>
+                              <div>
+                                <span className='text-muted-foreground'>
+                                  Recibido del procesador (UYU):
+                                </span>
+                              </div>
+                              <div className='text-right font-medium'>
+                                {formatCurrency(
+                                  String(settlement.totalBalanceAmount),
+                                  'UYU',
+                                )}
+                              </div>
+
+                              <div>
+                                <span className='text-muted-foreground'>
+                                  Comisión del procesador (UYU):
+                                </span>
+                              </div>
+                              <div className='text-right font-medium text-red-600'>
+                                -{' '}
+                                {formatCurrency(
+                                  String(settlement.totalBalanceFee),
+                                  'UYU',
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {settlement.averageExchangeRate && (
+                          <div className='mt-3 pt-3 border-t border-amber-200 dark:border-amber-700'>
+                            <div className='flex justify-between items-center'>
+                              <span className='text-sm font-medium'>
+                                Equivalente en UYU a pagar:
+                              </span>
+                              <span className='text-lg font-bold text-amber-800 dark:text-amber-200'>
+                                {formatCurrency(
+                                  String(
+                                    settlement.totalSellerAmount *
+                                      settlement.averageExchangeRate,
+                                  ),
+                                  'UYU',
+                                )}
+                              </span>
+                            </div>
+                            <p className='text-xs text-muted-foreground mt-1'>
+                              Calculado usando el tipo de cambio promedio de las
+                              transacciones
+                            </p>
+                          </div>
+                        )}
                       </div>
+                    ))}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+          {/* Info note for UYU payouts */}
+          {(currentStep === 1 || payout.status !== 'pending') &&
+            payout.currency === 'UYU' && (
+              <Alert>
+                <Info className='h-4 w-4' />
+                <AlertTitle>Pago en UYU</AlertTitle>
+                <AlertDescription>
+                  Este retiro está en UYU, que es la misma moneda en la que el
+                  procesador de pagos nos liquida. No hay conversión de moneda
+                  necesaria.
+                </AlertDescription>
+              </Alert>
+            )}
+
+          {/* Payout Method Details - Prominent Display - Always visible in Step 1, hidden in Step 2 */}
+          {(currentStep === 1 || payout.status !== 'pending') && payoutMethod && (
+            <Card className='border-2 border-primary/20 bg-primary/5'>
+              <CardHeader>
+                <CardTitle className='text-lg'>
+                  Información de Transferencia
+                </CardTitle>
+                <DialogDescription className='text-sm'>
+                  Usa esta información para realizar la transferencia bancaria o
+                  el envío de PayPal
+                </DialogDescription>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                {/* Account Holder */}
+                <div className='p-3 bg-background rounded-lg border'>
+                  <div className='flex justify-between items-start'>
+                    <div className='flex-1'>
+                      <Label className='text-xs text-muted-foreground mb-1 block'>
+                        Titular de la Cuenta
+                      </Label>
+                      <p className='text-sm font-semibold'>
+                        {payoutMethod.accountHolderName}{' '}
+                        {payoutMethod.accountHolderSurname}
+                      </p>
                     </div>
                   </div>
+                </div>
 
-                  {/* Uruguayan Bank Details */}
-                  {payoutMethod.payoutType === 'uruguayan_bank' &&
-                    uruguayanBankMetadata?.success && (
-                      <>
-                        {/* Bank Name */}
-                        {bankName && (
-                          <div className='p-3 bg-background rounded-lg border'>
-                            <div className='flex justify-between items-start'>
-                              <div className='flex-1'>
-                                <Label className='text-xs text-muted-foreground mb-1 block'>
-                                  Banco
-                                </Label>
-                                <p className='text-sm font-semibold'>
-                                  {bankName}
+                {/* Uruguayan Bank Details */}
+                {payoutMethod.payoutType === 'uruguayan_bank' &&
+                  uruguayanBankMetadata?.success && (
+                    <>
+                      {/* Bank Name */}
+                      {bankName && (
+                        <div className='p-3 bg-background rounded-lg border'>
+                          <div className='flex justify-between items-start'>
+                            <div className='flex-1'>
+                              <Label className='text-xs text-muted-foreground mb-1 block'>
+                                Banco
+                              </Label>
+                              <p className='text-sm font-semibold'>{bankName}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Account Number with Copy Button */}
+                      {accountNumber && (
+                        <div className='p-3 bg-background rounded-lg border'>
+                          <div className='flex justify-between items-start gap-2'>
+                            <div className='flex-1 min-w-0'>
+                              <Label className='text-xs text-muted-foreground mb-1 block'>
+                                Número de Cuenta
+                              </Label>
+                              <div className='flex items-center gap-2'>
+                                <p className='text-sm font-mono font-semibold break-all'>
+                                  {accountNumber}
                                 </p>
                               </div>
                             </div>
-                          </div>
-                        )}
-
-                        {/* Account Number with Copy Button */}
-                        {accountNumber && (
-                          <div className='p-3 bg-background rounded-lg border'>
-                            <div className='flex justify-between items-start gap-2'>
-                              <div className='flex-1 min-w-0'>
-                                <Label className='text-xs text-muted-foreground mb-1 block'>
-                                  Número de Cuenta
-                                </Label>
-                                <div className='flex items-center gap-2'>
-                                  <p className='text-sm font-mono font-semibold break-all'>
-                                    {accountNumber}
-                                  </p>
-                                </div>
-                              </div>
-                              <CopyButton
-                                text={accountNumber}
-                                variant='outline'
-                                size='sm'
-                                className='flex-shrink-0'
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Currency */}
-                        <div className='p-3 bg-background rounded-lg border'>
-                          <div className='flex justify-between items-start'>
-                            <div className='flex-1'>
-                              <Label className='text-xs text-muted-foreground mb-1 block'>
-                                Moneda
-                              </Label>
-                              <p className='text-sm font-semibold'>
-                                {payoutMethod.currency}
-                              </p>
-                            </div>
+                            <CopyButton
+                              text={accountNumber}
+                              variant='outline'
+                              size='sm'
+                              className='flex-shrink-0'
+                            />
                           </div>
                         </div>
-                      </>
-                    )}
+                      )}
 
-                  {/* PayPal Details */}
-                  {payoutMethod.payoutType === 'paypal' &&
-                    paypalMetadata?.success && (
-                      <>
-                        {/* PayPal Email with Copy Button */}
-                        {email && (
-                          <div className='p-3 bg-background rounded-lg border'>
-                            <div className='flex justify-between items-start gap-2'>
-                              <div className='flex-1 min-w-0'>
-                                <Label className='text-xs text-muted-foreground mb-1 block'>
-                                  Email de PayPal
-                                </Label>
-                                <div className='flex items-center gap-2'>
-                                  <p className='text-sm font-semibold break-all'>
-                                    {email}
-                                  </p>
-                                </div>
-                              </div>
-                              <CopyButton
-                                text={email}
-                                variant='outline'
-                                size='sm'
-                                className='flex-shrink-0'
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Currency */}
-                        <div className='p-3 bg-background rounded-lg border'>
-                          <div className='flex justify-between items-start'>
-                            <div className='flex-1'>
-                              <Label className='text-xs text-muted-foreground mb-1 block'>
-                                Moneda
-                              </Label>
-                              <p className='text-sm font-semibold'>
-                                {payoutMethod.currency}
-                              </p>
-                            </div>
+                      {/* Currency */}
+                      <div className='p-3 bg-background rounded-lg border'>
+                        <div className='flex justify-between items-start'>
+                          <div className='flex-1'>
+                            <Label className='text-xs text-muted-foreground mb-1 block'>
+                              Moneda
+                            </Label>
+                            <p className='text-sm font-semibold'>
+                              {payoutMethod.currency}
+                            </p>
                           </div>
                         </div>
-                      </>
-                    )}
-
-                  {/* Fallback if metadata parsing fails */}
-                  {!uruguayanBankMetadata?.success &&
-                    !paypalMetadata?.success &&
-                    payoutMethod.metadata && (
-                      <div className='p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800'>
-                        <p className='text-xs text-yellow-800 dark:text-yellow-200'>
-                          ⚠️ No se pudo parsear la información del método de
-                          pago. Por favor, revisa los detalles manualmente.
-                        </p>
                       </div>
-                    )}
-                </CardContent>
-              </Card>
-            )}
+                    </>
+                  )}
+
+                {/* PayPal Details */}
+                {payoutMethod.payoutType === 'paypal' &&
+                  paypalMetadata?.success && (
+                    <>
+                      {/* PayPal Email with Copy Button */}
+                      {email && (
+                        <div className='p-3 bg-background rounded-lg border'>
+                          <div className='flex justify-between items-start gap-2'>
+                            <div className='flex-1 min-w-0'>
+                              <Label className='text-xs text-muted-foreground mb-1 block'>
+                                Email de PayPal
+                              </Label>
+                              <div className='flex items-center gap-2'>
+                                <p className='text-sm font-semibold break-all'>
+                                  {email}
+                                </p>
+                              </div>
+                            </div>
+                            <CopyButton
+                              text={email}
+                              variant='outline'
+                              size='sm'
+                              className='flex-shrink-0'
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Currency */}
+                      <div className='p-3 bg-background rounded-lg border'>
+                        <div className='flex justify-between items-start'>
+                          <div className='flex-1'>
+                            <Label className='text-xs text-muted-foreground mb-1 block'>
+                              Moneda
+                            </Label>
+                            <p className='text-sm font-semibold'>
+                              {payoutMethod.currency}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                {/* Fallback if metadata parsing fails */}
+                {!uruguayanBankMetadata?.success &&
+                  !paypalMetadata?.success &&
+                  payoutMethod.metadata && (
+                    <div className='p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800'>
+                      <p className='text-xs text-yellow-800 dark:text-yellow-200'>
+                        ⚠️ No se pudo parsear la información del método de pago.
+                        Por favor, revisa los detalles manualmente.
+                      </p>
+                    </div>
+                  )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Step 2: Processing Form */}
           {currentStep === 2 && payout.status === 'pending' && (
-            <form onSubmit={handleProcess} className='space-y-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='processingFee'>
-                  Comisión de Procesamiento (opcional)
-                </Label>
-                <PriceInput
-                  id='processingFee'
-                  placeholder='Ingresa la comisión'
-                  value={processingFee}
-                  onChange={setProcessingFee}
-                  locale='es-ES'
-                  currency={
-                    (payout.currency as EventTicketCurrency) ??
-                    EventTicketCurrency.UYU
-                  }
-                />
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='transactionReference'>
-                  Referencia de Transacción (opcional)
-                </Label>
-                <Input
-                  id='transactionReference'
-                  value={transactionReference}
-                  onChange={e => setTransactionReference(e.target.value)}
-                  placeholder='Referencia de transferencia bancaria'
-                />
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='notes'>Notas (opcional)</Label>
-                <Textarea
-                  id='notes'
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  placeholder='Notas adicionales...'
-                  rows={3}
-                />
-              </div>
-
-              {/* Voucher Upload Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className='text-base'>Comprobante</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='voucherFile'>
-                      Subir Comprobante (opcional)
-                    </Label>
-                    <div className='flex gap-2'>
-                      <Input
-                        id='voucherFile'
-                        type='file'
-                        accept='.pdf,.png,.jpg,.jpeg'
-                        onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setSelectedFile(file);
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleProcess)}
+                className='space-y-4'
+              >
+                <FormField
+                  control={form.control}
+                  name='processingFee'
+                  render={({field}) => (
+                    <FormItem>
+                      <FormLabel>Comisión de Procesamiento (opcional)</FormLabel>
+                      <FormControl>
+                        <PriceInput
+                          placeholder='Ingresa la comisión'
+                          value={field.value || 0}
+                          onChange={field.onChange}
+                          locale='es-ES'
+                          currency={
+                            (payout.currency as EventTicketCurrency) ??
+                            EventTicketCurrency.UYU
                           }
-                        }}
-                        className='flex-1'
-                      />
-                      <Button
-                        type='button'
-                        onClick={handleUploadVoucher}
-                        disabled={
-                          !selectedFile || uploadDocumentMutation.isPending
-                        }
-                        variant='outline'
-                      >
-                        {uploadDocumentMutation.isPending ? (
-                          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                        ) : (
-                          <Upload className='mr-2 h-4 w-4' />
-                        )}
-                        Subir
-                      </Button>
-                    </div>
-                    <p className='text-xs text-muted-foreground'>
-                      Formatos permitidos: PDF, PNG, JPG, JPEG (máx. 10MB)
-                    </p>
-                  </div>
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  {/* Existing Documents */}
-                  {payout.documents && payout.documents.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name='transactionReference'
+                  render={({field}) => (
+                    <FormItem>
+                      <FormLabel>Referencia de Transacción (opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='Referencia de transferencia bancaria'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='notes'
+                  render={({field}) => (
+                    <FormItem>
+                      <FormLabel>Notas (opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder='Notas adicionales...'
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Voucher Upload Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='text-base'>Comprobante</CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
                     <div className='space-y-2'>
-                      <Label>
-                        Comprobantes Subidos ({payout.documents.length})
+                      <Label htmlFor='voucherFile'>
+                        Subir Comprobante (opcional)
                       </Label>
+                      <div className='flex gap-2'>
+                        <Input
+                          id='voucherFile'
+                          type='file'
+                          accept='.pdf,.png,.jpg,.jpeg'
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setSelectedFile(file);
+                            }
+                          }}
+                          className='flex-1'
+                        />
+                        <Button
+                          type='button'
+                          onClick={handleUploadVoucher}
+                          disabled={
+                            !selectedFile || uploadDocumentMutation.isPending
+                          }
+                          variant='outline'
+                        >
+                          {uploadDocumentMutation.isPending ? (
+                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                          ) : (
+                            <Upload className='mr-2 h-4 w-4' />
+                          )}
+                          Subir
+                        </Button>
+                      </div>
+                      <p className='text-xs text-muted-foreground'>
+                        Formatos permitidos: PDF, PNG, JPG, JPEG (máx. 10MB)
+                      </p>
+                    </div>
+
+                    {/* Existing Documents */}
+                    {payout.documents && payout.documents.length > 0 && (
                       <div className='space-y-2'>
-                        {payout.documents.map(doc => {
-                          const FileIcon = getFileIcon(doc.mimeType);
-                          return (
-                            <div
-                              key={doc.id}
-                              className='flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors'
-                            >
-                              <div className='flex items-center gap-3 flex-1 min-w-0'>
-                                <FileIcon className='h-5 w-5 text-muted-foreground flex-shrink-0' />
-                                <div className='flex-1 min-w-0'>
-                                  <p className='text-sm font-medium truncate'>
-                                    {doc.originalName}
-                                  </p>
-                                  <p className='text-xs text-muted-foreground'>
-                                    {formatFileSize(doc.sizeBytes)}
-                                  </p>
+                        <Label>
+                          Comprobantes Subidos ({payout.documents.length})
+                        </Label>
+                        <div className='space-y-2'>
+                          {payout.documents.map(doc => {
+                            const FileIcon = getFileIcon(doc.mimeType);
+                            return (
+                              <div
+                                key={doc.id}
+                                className='flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors'
+                              >
+                                <div className='flex items-center gap-3 flex-1 min-w-0'>
+                                  <FileIcon className='h-5 w-5 text-muted-foreground flex-shrink-0' />
+                                  <div className='flex-1 min-w-0'>
+                                    <p className='text-sm font-medium truncate'>
+                                      {doc.originalName}
+                                    </p>
+                                    <p className='text-xs text-muted-foreground'>
+                                      {formatFileSize(doc.sizeBytes)}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                  <Button
+                                    type='button'
+                                    variant='ghost'
+                                    size='sm'
+                                    onClick={() => {
+                                      window.open(doc.url, '_blank');
+                                    }}
+                                  >
+                                    <Download className='h-4 w-4 mr-1' />
+                                    Descargar
+                                  </Button>
+                                  <Button
+                                    type='button'
+                                    variant='ghost'
+                                    size='sm'
+                                    onClick={() => handleDeleteDocument(doc.id)}
+                                    disabled={deleteDocumentMutation.isPending}
+                                    className='text-red-600 hover:text-red-700 hover:bg-red-50'
+                                  >
+                                    <Trash2 className='h-4 w-4' />
+                                  </Button>
                                 </div>
                               </div>
-                              <div className='flex items-center gap-2'>
-                                <Button
-                                  type='button'
-                                  variant='ghost'
-                                  size='sm'
-                                  onClick={() => {
-                                    window.open(doc.url, '_blank');
-                                  }}
-                                >
-                                  <Download className='h-4 w-4 mr-1' />
-                                  Descargar
-                                </Button>
-                                <Button
-                                  type='button'
-                                  variant='ghost'
-                                  size='sm'
-                                  onClick={() => handleDeleteDocument(doc.id)}
-                                  disabled={deleteDocumentMutation.isPending}
-                                  className='text-red-600 hover:text-red-700 hover:bg-red-50'
-                                >
-                                  <Trash2 className='h-4 w-4' />
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    )}
+                  </CardContent>
+                </Card>
 
-              <div className='flex justify-end gap-2'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => setCurrentStep(1)}
-                  disabled={processMutation.isPending}
-                >
-                  Atrás
-                </Button>
-                <Button type='submit' disabled={processMutation.isPending}>
-                  {processMutation.isPending && (
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  )}
-                  Procesar Pago
-                </Button>
-              </div>
-            </form>
+                <div className='flex justify-end gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => setCurrentStep(1)}
+                    disabled={processMutation.isPending}
+                  >
+                    Atrás
+                  </Button>
+                  <Button type='submit' disabled={processMutation.isPending}>
+                    {processMutation.isPending && (
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    )}
+                    Procesar Pago
+                  </Button>
+                </div>
+              </form>
+            </Form>
           )}
 
           {/* Navigation buttons for Step 1 */}
@@ -614,7 +797,7 @@ export function ProcessPayoutDialog({
             </div>
           )}
 
-          {/* Voucher Upload Section */}
+          {/* Voucher Upload Section for completed payouts */}
           {payout.status === 'completed' && (
             <Card>
               <CardHeader>

@@ -138,7 +138,6 @@ export class TicketDocumentsRepository extends BaseRepository<TicketDocumentsRep
       .select(['lt.id as ticketId', 'lt.soldAt as soldAt', 'lt.listingId'])
       .where('lt.soldAt', 'is not', null)
       .where('lt.deletedAt', 'is', null)
-      .where('lt.cancelledAt', 'is', null)
       .where('td.id', 'is', null) // No document exists
       .execute()) as Array<{ticketId: string; soldAt: Date; listingId: string}>;
   }

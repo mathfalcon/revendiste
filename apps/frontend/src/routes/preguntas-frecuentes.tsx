@@ -56,6 +56,11 @@ const faqGeneral: FAQItem[] = [
     answer:
       'La seguridad de tus datos es nuestra prioridad. Usamos cifrado AES-256 para proteger toda la información sensible, el mismo estándar que usan bancos y entidades financieras. Los datos de verificación de identidad se almacenan de forma segura con acceso restringido solo a personal autorizado. Todo cumple con la Ley de Protección de Datos Personales de Uruguay (Ley Nº 18.331).',
   },
+  {
+    question: '¿Qué tan seguros están mis datos personales?',
+    answer:
+      'La seguridad de tus datos es nuestra prioridad. Usamos cifrado AES-256 para proteger toda la información sensible, el mismo estándar que usan bancos y entidades financieras. Los datos de verificación de identidad se almacenan de forma segura con acceso restringido solo a personal autorizado. Todo cumple con la Ley de Protección de Datos Personales de Uruguay (Ley Nº 18.331).',
+  },
 ];
 
 const faqCompradores: FAQItem[] = [

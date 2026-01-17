@@ -1,4 +1,4 @@
-import {Insertable, type Kysely} from 'kysely';
+import {type Kysely, type Updateable} from 'kysely';
 import type {DB, DocumentTypeEnum, Users} from '@revendiste/shared';
 import {logger} from '~/utils';
 import {User} from '~/types';
@@ -154,7 +154,7 @@ export class UsersRepository extends BaseRepository<UsersRepository> {
   }
 
   // Update user verification data
-  async updateVerification(userId: string, data: Partial<Insertable<Users>>) {
+  async updateVerification(userId: string, data: Updateable<Users>) {
     const now = new Date();
 
     const [user] = await this.db

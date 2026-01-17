@@ -1,6 +1,6 @@
 import {useForm} from 'react-hook-form';
 import z from 'zod';
-import {zodResolver} from '@hookform/resolvers/zod';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {Form} from '~/components/ui/form';
 import {TicketListingFormLeft} from './TicketListingFormLeft';
 import {TicketListingFormRight} from './TicketListingFormRight';
@@ -8,6 +8,7 @@ import {useEffect, useState, useRef} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {EventImageType, getEventByIdQuery} from '~/lib';
 import {CDN_ASSETS} from '~/assets';
+import {formatAmount} from '~/utils';
 
 interface TicketListingFormProps {
   mode: 'create' | 'edit';
@@ -35,7 +36,7 @@ const TicketListingFormSchema = z
     if (ctx.value.price > ctx.value.maxPrice) {
       ctx.issues.push({
         code: 'custom',
-        message: `El precio no puede superar al precio original de la tanda ($${ctx.value.maxPrice.toLocaleString('es-ES')})`,
+        message: `El precio no puede superar al precio original de la tanda ($${formatAmount(ctx.value.maxPrice)})`,
         input: ctx.value,
         path: ['price'],
       });
@@ -49,7 +50,7 @@ export const TicketListingForm = ({
   initialEventId,
 }: TicketListingFormProps) => {
   const form = useForm({
-    resolver: zodResolver(TicketListingFormSchema),
+    resolver: standardSchemaResolver(TicketListingFormSchema),
     defaultValues: {
       eventId: initialEventId ?? '',
       quantity: 1,

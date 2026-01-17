@@ -23,6 +23,7 @@ import {ProcessPayoutDialog} from '~/features/admin/payouts/ProcessPayoutDialog'
 import {CancelPayoutDialog} from '~/features/admin/payouts/CancelPayoutDialog';
 import {useState} from 'react';
 import {MoreVertical} from 'lucide-react';
+import {formatCurrency} from '~/utils';
 
 const payoutsSearchSchema = z.object({
   page: z.number().optional().default(1),
@@ -35,7 +36,7 @@ const payoutsSearchSchema = z.object({
   status: z.enum(['pending', 'completed', 'failed', 'cancelled']).optional(),
 });
 
-export const Route = createFileRoute('/admin/payouts')({
+export const Route = createFileRoute('/admin/retiros')({
   component: PayoutsPage,
   validateSearch: payoutsSearchSchema,
   loaderDeps: ({search}) => ({
@@ -51,8 +52,8 @@ export const Route = createFileRoute('/admin/payouts')({
 });
 
 function PayoutsPage() {
-  const search = useSearch({from: '/admin/payouts'});
-  const navigate = useNavigate({from: '/admin/payouts'});
+  const search = useSearch({from: '/admin/retiros'});
+  const navigate = useNavigate({from: '/admin/retiros'});
   const [editingPayoutId, setEditingPayoutId] = useState<string | null>(null);
   const [processingPayoutId, setProcessingPayoutId] = useState<string | null>(
     null,
@@ -106,12 +107,6 @@ function PayoutsPage() {
     }
   };
 
-  const formatCurrency = (amount: string, currency: string) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: currency === 'UYU' ? 'UYU' : 'USD',
-    }).format(Number(amount));
-  };
 
   const getStatusLabel = (status: string) => {
     switch (status) {

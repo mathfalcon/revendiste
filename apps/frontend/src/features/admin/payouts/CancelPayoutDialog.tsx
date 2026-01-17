@@ -1,5 +1,7 @@
-import {useState} from 'react';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {useForm} from 'react-hook-form';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
+import {z} from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -8,7 +10,6 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog';
 import {Button} from '~/components/ui/button';
-import {Label} from '~/components/ui/label';
 import {Textarea} from '~/components/ui/textarea';
 import {
   Select,
@@ -17,9 +18,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '~/components/ui/form';
 import {cancelPayoutMutation} from '~/lib/api/admin';
 import {toast} from 'sonner';
 import {Loader2} from 'lucide-react';
+
+// Form schema
+const cancelPayoutFormSchema = z.object({
+  reasonType: z.enum(['error', 'other'], {
+    message: 'Por favor selecciona un tipo de razón',
+  }),
+  failureReason: z.string().min(1, 'Por favor proporciona una razón para la cancelación'),
+});
+
+type CancelPayoutFormValues = z.infer<typeof cancelPayoutFormSchema>;
 
 interface CancelPayoutDialogProps {
   payoutId: string;
@@ -33,17 +53,24 @@ export function CancelPayoutDialog({
   onOpenChange,
 }: CancelPayoutDialogProps) {
   const queryClient = useQueryClient();
-  const [reasonType, setReasonType] = useState<'error' | 'other' | ''>('');
-  const [failureReason, setFailureReason] = useState<string>('');
+
+  // Form setup
+  const form = useForm<CancelPayoutFormValues>({
+    resolver: standardSchemaResolver(cancelPayoutFormSchema),
+    defaultValues: {
+      reasonType: undefined,
+      failureReason: '',
+    },
+  });
+
+  const reasonType = form.watch('reasonType');
 
   const cancelMutation = useMutation({
     ...cancelPayoutMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
       toast.success('Pago cancelado exitosamente');
-      // Reset form
-      setReasonType('');
-      setFailureReason('');
+      form.reset();
       onOpenChange(false);
     },
     onError: (error: any) => {
@@ -53,23 +80,11 @@ export function CancelPayoutDialog({
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!reasonType) {
-      toast.error('Por favor selecciona un tipo de razón');
-      return;
-    }
-
-    if (!failureReason.trim()) {
-      toast.error('Por favor proporciona una razón para la cancelación');
-      return;
-    }
-
+  const onSubmit = (data: CancelPayoutFormValues) => {
     cancelMutation.mutate({
       payoutId,
-      reasonType: reasonType as 'error' | 'other',
-      failureReason: failureReason.trim(),
+      reasonType: data.reasonType,
+      failureReason: data.failureReason.trim(),
     });
   };
 
@@ -84,68 +99,81 @@ export function CancelPayoutDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='reasonType'>Tipo de Razón *</Label>
-            <Select
-              value={reasonType}
-              onValueChange={value => setReasonType(value as 'error' | 'other')}
-            >
-              <SelectTrigger id='reasonType'>
-                <SelectValue placeholder='Selecciona un tipo de razón' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='error'>Error</SelectItem>
-                <SelectItem value='other'>Otro motivo</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className='text-xs text-muted-foreground'>
-              {reasonType === 'error'
-                ? 'El pago se marcará como "Fallido" debido a un error (por ejemplo, datos incorrectos del usuario).'
-                : reasonType === 'other'
-                  ? 'El pago se marcará como "Cancelado" por otro motivo.'
-                  : 'Selecciona si la cancelación es por un error o por otro motivo.'}
-            </p>
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='failureReason'>Razón de Cancelación *</Label>
-            <Textarea
-              id='failureReason'
-              value={failureReason}
-              onChange={e => setFailureReason(e.target.value)}
-              placeholder='Describe la razón de la cancelación...'
-              rows={5}
-              required
-            />
-            <p className='text-xs text-muted-foreground'>
-              Proporciona una descripción detallada de por qué se está
-              cancelando este pago.
-            </p>
-          </div>
-
-          <div className='flex justify-end gap-2'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type='submit'
-              variant='destructive'
-              disabled={cancelMutation.isPending || !reasonType || !failureReason.trim()}
-            >
-              {cancelMutation.isPending && (
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+            <FormField
+              control={form.control}
+              name='reasonType'
+              render={({field}) => (
+                <FormItem>
+                  <FormLabel>Tipo de Razón *</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecciona un tipo de razón' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value='error'>Error</SelectItem>
+                      <SelectItem value='other'>Otro motivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    {reasonType === 'error'
+                      ? 'El pago se marcará como "Fallido" debido a un error (por ejemplo, datos incorrectos del usuario).'
+                      : reasonType === 'other'
+                        ? 'El pago se marcará como "Cancelado" por otro motivo.'
+                        : 'Selecciona si la cancelación es por un error o por otro motivo.'}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
               )}
-              Confirmar Cancelación
-            </Button>
-          </div>
-        </form>
+            />
+
+            <FormField
+              control={form.control}
+              name='failureReason'
+              render={({field}) => (
+                <FormItem>
+                  <FormLabel>Razón de Cancelación *</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder='Describe la razón de la cancelación...'
+                      rows={5}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Proporciona una descripción detallada de por qué se está
+                    cancelando este pago.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className='flex justify-end gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => onOpenChange(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type='submit'
+                variant='destructive'
+                disabled={cancelMutation.isPending}
+              >
+                {cancelMutation.isPending && (
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                )}
+                Confirmar Cancelación
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
 }
-

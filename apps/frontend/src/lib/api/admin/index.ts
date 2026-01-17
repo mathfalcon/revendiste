@@ -169,8 +169,7 @@ export const adminVerificationsQueryOptions = (
         sortBy: params.sortBy as
           | 'createdAt'
           | 'updatedAt'
-          | 'verificationAttempts'
-          | undefined,
+          | 'verificationAttempts',
         sortOrder: params.sortOrder,
         status: params.status,
       });
@@ -220,6 +219,191 @@ export const rejectVerificationMutation = () => {
   return {
     mutationFn: async ({userId, reason}: {userId: string; reason: string}) => {
       const response = await api.admin.rejectVerification(userId, {reason});
+      return response.data;
+    },
+  };
+};
+
+// ============================================================================
+// Events Admin
+// ============================================================================
+
+export interface AdminEventsQueryParams extends PaginationQuery {
+  includePast?: boolean;
+  search?: string;
+  status?: 'active' | 'inactive';
+}
+
+export const adminEventsQueryOptions = (params: AdminEventsQueryParams) => {
+  return queryOptions({
+    queryKey: ['admin', 'events', params],
+    queryFn: async () => {
+      const response = await api.admin.getEvents({
+        page: params.page ?? 1,
+        limit: params.limit ?? 20,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+        includePast: params.includePast ?? false,
+        search: params.search,
+        status: params.status,
+      });
+      return response.data;
+    },
+  });
+};
+
+export const adminEventDetailsQueryOptions = (eventId: string) => {
+  return queryOptions({
+    queryKey: ['admin', 'events', eventId],
+    queryFn: async () => {
+      const response = await api.admin.getEventDetails(eventId);
+      return response.data;
+    },
+  });
+};
+
+export const updateEventMutation = () => {
+  return {
+    mutationFn: async ({
+      eventId,
+      updates,
+    }: {
+      eventId: string;
+      updates: {
+        name?: string;
+        description?: string | null;
+        eventStartDate?: string;
+        eventEndDate?: string;
+        venueName?: string | null;
+        venueAddress?: string;
+        externalUrl?: string;
+        qrAvailabilityTiming?:
+          | '3h'
+          | '6h'
+          | '12h'
+          | '24h'
+          | '48h'
+          | '72h'
+          | null;
+        status?: 'active' | 'inactive';
+      };
+    }) => {
+      const response = await api.admin.updateEvent(eventId, updates);
+      return response.data;
+    },
+  };
+};
+
+export const deleteEventMutation = () => {
+  return {
+    mutationFn: async ({eventId}: {eventId: string}) => {
+      const response = await api.admin.deleteEvent(eventId);
+      return response.data;
+    },
+  };
+};
+
+// Ticket Waves
+
+export const createTicketWaveMutation = () => {
+  return {
+    mutationFn: async ({
+      eventId,
+      data,
+    }: {
+      eventId: string;
+      data: {
+        name: string;
+        description?: string | null;
+        faceValue: number;
+        currency: 'UYU' | 'USD';
+        isSoldOut: boolean;
+        isAvailable: boolean;
+        externalId?: string;
+      };
+    }) => {
+      const response = await api.admin.createTicketWave(eventId, data);
+      return response.data;
+    },
+  };
+};
+
+export const updateTicketWaveMutation = () => {
+  return {
+    mutationFn: async ({
+      eventId,
+      waveId,
+      data,
+    }: {
+      eventId: string;
+      waveId: string;
+      data: {
+        name?: string;
+        description?: string | null;
+        faceValue?: number;
+        currency?: 'UYU' | 'USD';
+        isSoldOut?: boolean;
+        isAvailable?: boolean;
+      };
+    }) => {
+      const response = await api.admin.updateTicketWave(eventId, waveId, data);
+      return response.data;
+    },
+  };
+};
+
+export const deleteTicketWaveMutation = () => {
+  return {
+    mutationFn: async ({
+      eventId,
+      waveId,
+    }: {
+      eventId: string;
+      waveId: string;
+    }) => {
+      const response = await api.admin.deleteTicketWave(eventId, waveId);
+      return response.data;
+    },
+  };
+};
+
+// Event Images
+
+export const uploadEventImageMutation = () => {
+  return {
+    mutationFn: async ({
+      eventId,
+      file,
+      imageType,
+    }: {
+      eventId: string;
+      file: File;
+      imageType: 'flyer' | 'hero';
+    }) => {
+      const response = await api.admin.uploadEventImage(
+        eventId,
+        {file, imageType},
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+      return response.data;
+    },
+  };
+};
+
+export const deleteEventImageMutation = () => {
+  return {
+    mutationFn: async ({
+      eventId,
+      imageId,
+    }: {
+      eventId: string;
+      imageId: string;
+    }) => {
+      const response = await api.admin.deleteEventImage(eventId, imageId);
       return response.data;
     },
   };
