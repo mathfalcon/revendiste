@@ -6,7 +6,7 @@ import {NotFoundError, ValidationError, BadRequestError} from '~/errors';
 import {EventImageService} from '~/services/scraping/image-service';
 import {getStorageProvider} from '~/services';
 import {logger} from '~/utils';
-import type {PaginationParams} from '~/middleware';
+import type {PaginationOptions} from '~/types/pagination';
 
 interface GetEventsFilters {
   includePast?: boolean;
@@ -66,7 +66,7 @@ export class AdminEventsService {
   // Events
   // ============================================================================
 
-  async getEvents(pagination: PaginationParams, filters: GetEventsFilters) {
+  async getEvents(pagination: PaginationOptions, filters: GetEventsFilters) {
     return this.eventsRepository.findAllForAdmin(pagination, {
       includePast: filters.includePast,
       search: filters.search,
@@ -90,8 +90,9 @@ export class AdminEventsService {
       updateData.eventEndDate = new Date(data.eventEndDate);
     if (data.venueName !== undefined) updateData.venueName = data.venueName;
     if (data.venueAddress !== undefined)
-      updateData.venueAddress = data.venueAddress;
-    if (data.externalUrl !== undefined) updateData.externalUrl = data.externalUrl;
+      updateData.venueAddress = data.venueAddress ?? undefined;
+    if (data.externalUrl !== undefined)
+      updateData.externalUrl = data.externalUrl ?? undefined;
     if (data.qrAvailabilityTiming !== undefined)
       updateData.qrAvailabilityTiming = data.qrAvailabilityTiming;
     if (data.status !== undefined) updateData.status = data.status;
@@ -118,7 +119,7 @@ export class AdminEventsService {
       currency: data.currency,
       isSoldOut: data.isSoldOut,
       isAvailable: data.isAvailable,
-      externalId: data.externalId,
+      externalId: data.externalId ?? undefined,
     });
   }
 

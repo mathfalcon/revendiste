@@ -169,7 +169,6 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
         .select(['id', 'soldAt'])
         .where('listingId', '=', listingId)
         .where('deletedAt', 'is', null)
-        .where('cancelledAt', 'is', null)
         .execute();
 
       // Check if all tickets are sold
