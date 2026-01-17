@@ -28,6 +28,7 @@ import {SellerEarningsService} from '~/services/seller-earnings';
 import {NotificationService} from '~/services/notifications';
 import {
   notifyOrderConfirmed,
+  notifyOrderExpired,
   notifyPaymentFailed,
 } from '~/services/notifications/helpers';
 
@@ -408,8 +409,11 @@ export class PaymentWebhookAdapter {
 
       case 'failed':
       case 'cancelled':
-      case 'expired':
         await this.handleFailedPayment(orderId, status, paymentData);
+        break;
+
+      case 'expired':
+        await this.handleExpiredPayment(orderId, paymentData);
         break;
 
       case 'pending':
@@ -573,6 +577,54 @@ export class PaymentWebhookAdapter {
         errorMessage: paymentData.rejectedReason,
       }).catch(error => {
         logger.error('Failed to send payment failed notification', {
+          orderId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }
+  }
+
+  /**
+   * Handles expired payment - cancels order and releases reservations
+   * Sends order expired notification (different from payment failed)
+   */
+  private async handleExpiredPayment(
+    orderId: string,
+    paymentData: NormalizedPaymentData,
+  ): Promise<void> {
+    await this.ordersRepository.executeTransaction(async trx => {
+      const ordersRepo = this.ordersRepository.withTransaction(trx);
+      const reservationsRepo =
+        this.orderTicketReservationsRepository.withTransaction(trx);
+
+      await ordersRepo.updateStatus(orderId, 'cancelled', {
+        cancelledAt: new Date(),
+      });
+
+      await reservationsRepo.releaseByOrderId(orderId);
+
+      logger.info('Order cancelled due to payment expiration', {
+        orderId,
+        status: 'expired',
+        paymentId: paymentData.providerPaymentId,
+        provider: this.provider.name,
+      });
+    });
+
+    // Send notification to buyer (outside transaction - fire-and-forget)
+    // Get order data with event name for notification
+    const orderWithItems = await this.ordersRepository.getByIdWithItems(
+      orderId,
+    );
+
+    if (orderWithItems && orderWithItems.event) {
+      // Fire-and-forget notification (don't await to avoid blocking)
+      notifyOrderExpired(this.notificationService, {
+        buyerUserId: orderWithItems.userId,
+        orderId: orderWithItems.id,
+        eventName: orderWithItems.event.name || 'el evento',
+      }).catch(error => {
+        logger.error('Failed to send order expired notification', {
           orderId,
           error: error instanceof Error ? error.message : String(error),
         });

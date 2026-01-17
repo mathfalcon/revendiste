@@ -1,5 +1,5 @@
-import {Kysely} from 'kysely';
-import {DB, EventTicketCurrency, JsonValue} from '@revendiste/shared';
+import {Kysely, Updateable} from 'kysely';
+import {DB, EventTicketCurrency, JsonValue, PayoutMethods} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 
 export class PayoutMethodsRepository extends BaseRepository<PayoutMethodsRepository> {
@@ -79,16 +79,7 @@ export class PayoutMethodsRepository extends BaseRepository<PayoutMethodsReposit
       .executeTakeFirst();
   }
 
-  async update(
-    id: string,
-    updates: {
-      accountHolderName?: string;
-      accountHolderSurname?: string;
-      currency?: EventTicketCurrency;
-      isDefault?: boolean;
-      metadata?: JsonValue;
-    },
-  ) {
+  async update(id: string, updates: Updateable<PayoutMethods>) {
     return await this.db
       .updateTable('payoutMethods')
       .set({

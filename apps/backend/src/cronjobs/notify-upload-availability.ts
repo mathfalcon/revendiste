@@ -84,25 +84,32 @@ export async function runNotifyUploadAvailability() {
     }
 
     // Group tickets by seller and listing to send one notification per seller per listing
+    // Use a composite key with a delimiter that won't appear in UUIDs or user IDs
     const ticketsBySellerAndListing = new Map<
       string,
-      Array<{
-        ticketId: string;
+      {
+        sellerUserId: string;
         listingId: string;
-        eventName: string;
-        eventStartDate: Date;
-        qrAvailabilityTiming: string | null;
-      }>
+        tickets: Array<{
+          ticketId: string;
+          eventName: string;
+          eventStartDate: Date;
+          qrAvailabilityTiming: string | null;
+        }>;
+      }
     >();
 
     for (const ticket of tickets) {
-      const key = `${ticket.sellerUserId}-${ticket.listingId}`;
+      const key = `${ticket.sellerUserId}::${ticket.listingId}`;
       if (!ticketsBySellerAndListing.has(key)) {
-        ticketsBySellerAndListing.set(key, []);
+        ticketsBySellerAndListing.set(key, {
+          sellerUserId: ticket.sellerUserId,
+          listingId: ticket.listingId,
+          tickets: [],
+        });
       }
-      ticketsBySellerAndListing.get(key)!.push({
+      ticketsBySellerAndListing.get(key)!.tickets.push({
         ticketId: ticket.ticketId,
-        listingId: ticket.listingId,
         eventName: ticket.eventName || 'el evento',
         eventStartDate: new Date(ticket.eventStartDate!),
         qrAvailabilityTiming: ticket.qrAvailabilityTiming,
@@ -113,8 +120,8 @@ export async function runNotifyUploadAvailability() {
     let notificationCount = 0;
     const now = new Date();
 
-    for (const [key, ticketGroup] of ticketsBySellerAndListing.entries()) {
-      const [sellerUserId, listingId] = key.split('-');
+    for (const [, group] of ticketsBySellerAndListing.entries()) {
+      const {sellerUserId, listingId, tickets: ticketGroup} = group;
       const firstTicket = ticketGroup[0]!;
 
       // Parse QR availability timing (e.g., "48h" -> 48)
@@ -147,13 +154,18 @@ export async function runNotifyUploadAvailability() {
         qrAvailabilityHours,
       );
 
+      // Determine which notification to send:
+      // - If at QR availability time: send initial notification (priority)
+      // - If at a milestone (and NOT at QR availability time): send milestone notification
+      // This prevents duplicate notifications when QR availability coincides with a milestone
+
       if (atQrAvailability) {
         // Check if initial notification was already sent
         const alreadySent =
           await notificationsRepository.hasDocumentReminderForListing(
             sellerUserId,
             listingId,
-            hoursUntilEvent,
+            qrAvailabilityHours, // Use the QR availability hours for consistency
           );
 
         if (!alreadySent) {
@@ -164,7 +176,7 @@ export async function runNotifyUploadAvailability() {
             eventName: firstTicket.eventName,
             eventStartDate: firstTicket.eventStartDate,
             ticketCount: ticketGroup.length,
-            hoursUntilEvent: Math.max(1, hoursUntilEvent),
+            hoursUntilEvent: qrAvailabilityHours,
           }).catch(error => {
             logger.error(
               'Failed to send initial upload availability notification',
@@ -178,42 +190,42 @@ export async function runNotifyUploadAvailability() {
 
           notificationCount++;
         }
-      }
+      } else {
+        // Only check milestones if we're NOT at QR availability time
+        const milestone = getNotificationMilestone(hoursUntilEvent);
 
-      // Check if we're at a milestone
-      const milestone = getNotificationMilestone(hoursUntilEvent);
-
-      if (
-        milestone !== null &&
-        shouldSendMilestone(milestone, qrAvailabilityHours)
-      ) {
-        // Check if milestone notification was already sent
-        const alreadySent =
-          await notificationsRepository.hasDocumentReminderForListing(
-            sellerUserId,
-            listingId,
-            milestone,
-          );
-
-        if (!alreadySent) {
-          // Fire-and-forget notification (don't await to avoid blocking)
-          notifyDocumentReminder(notificationService, {
-            sellerUserId,
-            listingId,
-            eventName: firstTicket.eventName,
-            eventStartDate: firstTicket.eventStartDate,
-            ticketCount: ticketGroup.length,
-            hoursUntilEvent: milestone,
-          }).catch(error => {
-            logger.error('Failed to send milestone notification', {
+        if (
+          milestone !== null &&
+          shouldSendMilestone(milestone, qrAvailabilityHours)
+        ) {
+          // Check if milestone notification was already sent
+          const alreadySent =
+            await notificationsRepository.hasDocumentReminderForListing(
               sellerUserId,
               listingId,
               milestone,
-              error: error instanceof Error ? error.message : String(error),
-            });
-          });
+            );
 
-          notificationCount++;
+          if (!alreadySent) {
+            // Fire-and-forget notification (don't await to avoid blocking)
+            notifyDocumentReminder(notificationService, {
+              sellerUserId,
+              listingId,
+              eventName: firstTicket.eventName,
+              eventStartDate: firstTicket.eventStartDate,
+              ticketCount: ticketGroup.length,
+              hoursUntilEvent: milestone,
+            }).catch(error => {
+              logger.error('Failed to send milestone notification', {
+                sellerUserId,
+                listingId,
+                milestone,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            });
+
+            notificationCount++;
+          }
         }
       }
     }

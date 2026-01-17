@@ -63,6 +63,7 @@ export const Navbar = () => {
           <Link
             className='flex items-center gap-2 shrink-0 w-[120px] md:w-[150px]'
             to='/'
+            resetScroll
           >
             <FullLogo className='w-full' />
           </Link>

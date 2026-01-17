@@ -76,7 +76,7 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
         jsonObjectFrom(
           eb
             .selectFrom('events')
-            .select([
+            .select(eb2 => [
               'events.id',
               'events.name',
               'events.platform',
@@ -85,6 +85,16 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
               'events.venueName',
               'events.venueAddress',
               'events.description',
+              'events.qrAvailabilityTiming',
+              jsonArrayFrom(
+                eb2
+                  .selectFrom('eventImages')
+                  .select(['eventImages.url', 'eventImages.imageType'])
+                  .whereRef('eventImages.eventId', '=', 'events.id')
+                  .orderBy('eventImages.displayOrder'),
+              )
+                .$notNull()
+                .as('eventImages'),
             ])
             .whereRef('events.id', '=', 'eventTicketWaves.eventId'),
         )
@@ -98,7 +108,7 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
               'listingTickets.ticketNumber',
               'listingTickets.price',
               'listingTickets.soldAt',
-              'listingTickets.cancelledAt',
+              'listingTickets.deletedAt',
               'listingTickets.createdAt',
               'listingTickets.updatedAt',
               jsonObjectFrom(
@@ -125,7 +135,8 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
                 .on('ticketDocuments.deletedAt', 'is', null),
             )
             .whereRef('listingTickets.listingId', '=', 'listings.id')
-            .where('listingTickets.deletedAt', 'is', null)
+            // Include all tickets (active, sold, and deleted/cancelled)
+            // Deleted tickets are shown as "cancelled" in the UI
             .orderBy('listingTickets.ticketNumber', 'asc'),
         )
           .$notNull()

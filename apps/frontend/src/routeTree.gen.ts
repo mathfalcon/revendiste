@@ -31,6 +31,7 @@ import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publica
 import { Route as CuentaEstadoVerificacionRouteImport } from './routes/cuenta/estado-verificacion'
 import { Route as AdminVerificacionesRouteImport } from './routes/admin/verificaciones'
 import { Route as AdminRetirosRouteImport } from './routes/admin/retiros'
+import { Route as AdminEventosRouteImport } from './routes/admin/eventos'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
@@ -146,6 +147,11 @@ const AdminRetirosRoute = AdminRetirosRouteImport.update({
   path: '/retiros',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminEventosRoute = AdminEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const CheckoutOrderIdIndexRoute = CheckoutOrderIdIndexRouteImport.update({
   id: '/checkout/$orderId/',
   path: '/checkout/$orderId/',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
+  '/admin/eventos': typeof AdminEventosRoute
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
+  '/admin/eventos': typeof AdminEventosRoute
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
+  '/admin/eventos': typeof AdminEventosRoute
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
+    | '/admin/eventos'
     | '/admin/retiros'
     | '/admin/verificaciones'
     | '/cuenta/estado-verificacion'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
+    | '/admin/eventos'
     | '/admin/retiros'
     | '/admin/verificaciones'
     | '/cuenta/estado-verificacion'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
+    | '/admin/eventos'
     | '/admin/retiros'
     | '/admin/verificaciones'
     | '/cuenta/estado-verificacion'
@@ -501,6 +513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRetirosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/eventos': {
+      id: '/admin/eventos'
+      path: '/eventos'
+      fullPath: '/admin/eventos'
+      preLoaderRoute: typeof AdminEventosRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/checkout/$orderId/': {
       id: '/checkout/$orderId/'
       path: '/checkout/$orderId'
@@ -526,12 +545,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteRouteChildren {
+  AdminEventosRoute: typeof AdminEventosRoute
   AdminRetirosRoute: typeof AdminRetirosRoute
   AdminVerificacionesRoute: typeof AdminVerificacionesRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminEventosRoute: AdminEventosRoute,
   AdminRetirosRoute: AdminRetirosRoute,
   AdminVerificacionesRoute: AdminVerificacionesRoute,
   AdminIndexRoute: AdminIndexRoute,

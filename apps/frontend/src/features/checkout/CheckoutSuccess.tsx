@@ -5,8 +5,9 @@ import {getOrderByIdQuery} from '~/lib';
 import {formatPrice, formatEventDate} from '~/utils';
 import {Button} from '~/components/ui/button';
 import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
-import {CheckCircle2, CalendarIcon, MapPinIcon, TicketIcon} from 'lucide-react';
+import {CheckCircle2, CalendarIcon, MapPinIcon, Ticket} from 'lucide-react';
 import {FullScreenLoading} from '~/components';
+import {TicketWaveCard} from '~/features/event/tickets';
 
 interface CheckoutSuccessPageProps {
   orderId: string;
@@ -135,32 +136,37 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
 
             {/* Tickets */}
             <div className='border-t pt-6'>
-              <h2 className='text-xl font-semibold mb-4'>Tus entradas</h2>
-              <div className='space-y-4'>
-                {order.items?.map((item: any) => (
-                  <div
-                    key={item.id}
-                    className='flex justify-between items-start p-4 border rounded-lg bg-muted/30'
-                  >
-                    <div className='flex-1 flex items-start gap-3'>
-                      <TicketIcon className='h-5 w-5 text-muted-foreground mt-0.5' />
-                      <div>
-                        <p className='font-medium'>{item.ticketWaveName}</p>
-                        <p className='text-sm text-muted-foreground'>
-                          Cantidad: {item.quantity}
-                        </p>
-                        <p className='text-xs text-muted-foreground mt-1'>
-                          {formatPrice(item.pricePerTicket, currency)} por
-                          entrada
-                        </p>
-                      </div>
-                    </div>
-                    <div className='text-right'>
-                      <p className='font-semibold'>
-                        {formatPrice(item.subtotal, currency)}
-                      </p>
-                    </div>
-                  </div>
+              <div className='flex items-center gap-2 mb-4'>
+                <Ticket className='w-5 h-5 text-primary' />
+                <h2 className='text-xl font-semibold'>Tus entradas</h2>
+              </div>
+              <div className='space-y-3'>
+                {/* Group items by ticket wave name */}
+                {Object.entries(
+                  (order.items || []).reduce(
+                    (acc: Record<string, typeof order.items>, item: any) => {
+                      const waveName = item.ticketWaveName;
+                      if (!acc[waveName]) {
+                        acc[waveName] = [];
+                      }
+                      acc[waveName].push(item);
+                      return acc;
+                    },
+                    {},
+                  ),
+                ).map(([ticketWaveName, items]: [string, any[]]) => (
+                  <TicketWaveCard
+                    key={ticketWaveName}
+                    mode='readonly'
+                    ticketWaveName={ticketWaveName}
+                    currency={currency}
+                    items={items.map((item: any) => ({
+                      id: item.id,
+                      quantity: item.quantity,
+                      pricePerTicket: item.pricePerTicket,
+                      subtotal: item.subtotal,
+                    }))}
+                  />
                 ))}
               </div>
             </div>

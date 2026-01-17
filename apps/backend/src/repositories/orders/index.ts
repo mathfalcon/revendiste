@@ -62,6 +62,7 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
               'events.eventEndDate',
               'events.venueName',
               'events.venueAddress',
+              'events.qrAvailabilityTiming',
               jsonArrayFrom(
                 eb
                   .selectFrom('eventImages')

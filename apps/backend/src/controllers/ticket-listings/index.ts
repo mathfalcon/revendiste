@@ -55,6 +55,8 @@ type UpdateTicketPriceResponse = ReturnType<
 
 type RemoveTicketResponse = ReturnType<TicketListingsService['removeTicket']>;
 
+type GetTicketInfoResponse = ReturnType<TicketDocumentService['getTicketInfo']>;
+
 @Route('ticket-listings')
 @Tags('Ticket Listings')
 export class TicketListingsController {
@@ -244,5 +246,27 @@ export class TicketListingsController {
     @Request() request: express.Request,
   ): Promise<RemoveTicketResponse> {
     return this.service.removeTicket(ticketId, request.user.id);
+  }
+
+  /**
+   * Get ticket information with document details
+   *
+   * Returns ticket info including document URL for viewing.
+   * Only the seller (ticket publisher) can access this endpoint.
+   *
+   * @param ticketId - ID of the ticket
+   */
+  @Get('/tickets/{ticketId}/info')
+  @Response<UnauthorizedError>(
+    401,
+    'Authentication required or not authorized to view this ticket',
+  )
+  @Response<NotFoundError>(404, 'Ticket not found')
+  @Middlewares(requireAuthMiddleware)
+  public async getTicketInfo(
+    @Path() ticketId: string,
+    @Request() request: express.Request,
+  ): Promise<GetTicketInfoResponse> {
+    return this.documentService.getTicketInfo(ticketId, request.user.id);
   }
 }

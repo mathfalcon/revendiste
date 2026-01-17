@@ -1,5 +1,5 @@
-import {type Kysely} from 'kysely';
-import type {DB, EventImageType} from '@revendiste/shared';
+import {type Kysely, type Updateable} from 'kysely';
+import type {DB, EventImageType, Events} from '@revendiste/shared';
 import type {ScrapedEventData} from '../../services/scraping';
 import {logger} from '~/utils';
 import {jsonArrayFrom} from 'kysely/helpers/postgres';
@@ -33,6 +33,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
           venueName: event.venueName || null,
           venueAddress: event.venueAddress,
           externalUrl: event.externalUrl,
+          qrAvailabilityTiming: event.qrAvailabilityTiming || null,
           status: 'active',
           createdAt: now,
           updatedAt: now,
@@ -47,6 +48,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             venueName: event.venueName || null,
             venueAddress: event.venueAddress,
             externalUrl: event.externalUrl,
+            qrAvailabilityTiming: event.qrAvailabilityTiming || null,
             status: 'active',
             updatedAt: now,
             lastScrapedAt: now,
@@ -220,7 +222,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                   AND order_ticket_reservations.deleted_at IS NULL
                   AND order_ticket_reservations.reserved_until > NOW()
                 WHERE event_ticket_waves.event_id = events.id
-                  AND listing_tickets.cancelled_at IS NULL
                   AND listing_tickets.sold_at IS NULL
                   AND listing_tickets.deleted_at IS NULL
                   AND listings.deleted_at IS NULL
@@ -241,7 +242,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                   AND order_ticket_reservations.deleted_at IS NULL
                   AND order_ticket_reservations.reserved_until > NOW()
                 WHERE event_ticket_waves.event_id = events.id
-                  AND listing_tickets.cancelled_at IS NULL
                   AND listing_tickets.sold_at IS NULL
                   AND listing_tickets.deleted_at IS NULL
                   AND listings.deleted_at IS NULL
@@ -263,7 +263,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                   AND order_ticket_reservations.deleted_at IS NULL
                   AND order_ticket_reservations.reserved_until > NOW()
                 WHERE event_ticket_waves.event_id = events.id
-                  AND listing_tickets.cancelled_at IS NULL
                   AND listing_tickets.sold_at IS NULL
                   AND listing_tickets.deleted_at IS NULL
                   AND listings.deleted_at IS NULL
@@ -284,7 +283,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                   AND order_ticket_reservations.deleted_at IS NULL
                   AND order_ticket_reservations.reserved_until > NOW()
                 WHERE event_ticket_waves.event_id = events.id
-                  AND listing_tickets.cancelled_at IS NULL
                   AND listing_tickets.sold_at IS NULL
                   AND listing_tickets.deleted_at IS NULL
                   AND listings.deleted_at IS NULL
@@ -435,6 +433,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'venueName',
         'venueAddress',
         'externalUrl',
+        'qrAvailabilityTiming',
         'status',
         'createdAt',
         'updatedAt',
@@ -480,7 +479,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                     'listingTickets.price',
                     eb.fn.count('listingTickets.id').as('availableTickets'),
                   ])
-                  .where('listingTickets.cancelledAt', 'is', null)
                   .where('listingTickets.soldAt', 'is', null)
                   .where('listingTickets.deletedAt', 'is', null)
                   .where('listings.deletedAt', 'is', null)
@@ -600,5 +598,260 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .execute();
 
     return events;
+  }
+
+  // ============================================================================
+  // Admin Methods
+  // ============================================================================
+
+  /**
+   * Get all events for admin with pagination, sorting, and filtering
+   * By default excludes past events (eventEndDate < now)
+   */
+  async findAllForAdmin(
+    pagination: PaginationOptions,
+    filters: {
+      includePast?: boolean;
+      search?: string;
+      status?: 'active' | 'inactive';
+    } = {},
+  ) {
+    const {page, limit, offset} = pagination;
+    const now = new Date();
+
+    // Build count query
+    let countQuery = this.db
+      .selectFrom('events')
+      .select(this.db.fn.count('id').as('total'))
+      .where('deletedAt', 'is', null);
+
+    // Apply filters to count
+    if (!filters.includePast) {
+      countQuery = countQuery.where('eventEndDate', '>', now);
+    }
+    if (filters.status) {
+      countQuery = countQuery.where('status', '=', filters.status);
+    }
+    if (filters.search) {
+      const searchPattern = `%${filters.search}%`;
+      countQuery = countQuery.where('name', 'ilike', searchPattern);
+    }
+
+    const totalResult = await countQuery.executeTakeFirst();
+    const total = Number(totalResult?.total || 0);
+
+    // Build main query
+    let query = this.db
+      .selectFrom('events')
+      .select(eb => [
+        'events.id',
+        'events.name',
+        'events.description',
+        'events.eventStartDate',
+        'events.eventEndDate',
+        'events.venueName',
+        'events.venueAddress',
+        'events.externalUrl',
+        'events.externalId',
+        'events.platform',
+        'events.qrAvailabilityTiming',
+        'events.status',
+        'events.createdAt',
+        'events.updatedAt',
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventImages')
+            .select([
+              'eventImages.id',
+              'eventImages.url',
+              'eventImages.imageType',
+              'eventImages.displayOrder',
+            ])
+            .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.deletedAt', 'is', null)
+            .orderBy('eventImages.displayOrder'),
+        ).as('images'),
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventTicketWaves')
+            .select([
+              'eventTicketWaves.id',
+              'eventTicketWaves.name',
+              'eventTicketWaves.description',
+              'eventTicketWaves.faceValue',
+              'eventTicketWaves.currency',
+              'eventTicketWaves.isSoldOut',
+              'eventTicketWaves.isAvailable',
+              'eventTicketWaves.externalId',
+              'eventTicketWaves.status',
+            ])
+            .whereRef('eventTicketWaves.eventId', '=', 'events.id')
+            .where('eventTicketWaves.deletedAt', 'is', null)
+            .orderBy('eventTicketWaves.faceValue', 'asc'),
+        ).as('ticketWaves'),
+      ])
+      .where('events.deletedAt', 'is', null);
+
+    // Apply filters
+    if (!filters.includePast) {
+      query = query.where('events.eventEndDate', '>', now);
+    }
+    if (filters.status) {
+      query = query.where('events.status', '=', filters.status);
+    }
+    if (filters.search) {
+      const searchPattern = `%${filters.search}%`;
+      query = query.where('events.name', 'ilike', searchPattern);
+    }
+
+    // Sort by eventStartDate ascending (closest events first)
+    const events = await query
+      .orderBy('events.eventStartDate', 'asc')
+      .limit(limit)
+      .offset(offset)
+      .execute();
+
+    const totalPages = Math.ceil(total / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    return mapToPaginatedResponse(events, {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext,
+      hasPrev,
+    });
+  }
+
+  /**
+   * Get event by ID for admin (includes all details, even inactive)
+   */
+  async getByIdForAdmin(eventId: string) {
+    const event = await this.db
+      .selectFrom('events')
+      .select(eb => [
+        'events.id',
+        'events.name',
+        'events.description',
+        'events.eventStartDate',
+        'events.eventEndDate',
+        'events.venueName',
+        'events.venueAddress',
+        'events.externalUrl',
+        'events.externalId',
+        'events.platform',
+        'events.qrAvailabilityTiming',
+        'events.status',
+        'events.metadata',
+        'events.createdAt',
+        'events.updatedAt',
+        'events.lastScrapedAt',
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventImages')
+            .select([
+              'eventImages.id',
+              'eventImages.url',
+              'eventImages.imageType',
+              'eventImages.displayOrder',
+              'eventImages.createdAt',
+            ])
+            .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.deletedAt', 'is', null)
+            .orderBy('eventImages.displayOrder'),
+        ).as('images'),
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventTicketWaves')
+            .select([
+              'eventTicketWaves.id',
+              'eventTicketWaves.name',
+              'eventTicketWaves.description',
+              'eventTicketWaves.faceValue',
+              'eventTicketWaves.currency',
+              'eventTicketWaves.isSoldOut',
+              'eventTicketWaves.isAvailable',
+              'eventTicketWaves.externalId',
+              'eventTicketWaves.status',
+              'eventTicketWaves.createdAt',
+              'eventTicketWaves.updatedAt',
+            ])
+            .whereRef('eventTicketWaves.eventId', '=', 'events.id')
+            .where('eventTicketWaves.deletedAt', 'is', null)
+            .orderBy('eventTicketWaves.faceValue', 'asc'),
+        ).as('ticketWaves'),
+      ])
+      .where('events.id', '=', eventId)
+      .where('events.deletedAt', 'is', null)
+      .executeTakeFirst();
+
+    if (!event) {
+      throw new NotFoundError('Evento no encontrado');
+    }
+
+    return event;
+  }
+
+  /**
+   * Update event fields
+   */
+  async updateEvent(eventId: string, data: Updateable<Events>) {
+    const updateData: Updateable<Events> = {
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    const [updated] = await this.db
+      .updateTable('events')
+      .set(updateData)
+      .where('id', '=', eventId)
+      .where('deletedAt', 'is', null)
+      .returningAll()
+      .execute();
+
+    if (!updated) {
+      throw new NotFoundError('Evento no encontrado');
+    }
+
+    return updated;
+  }
+
+  /**
+   * Soft delete event
+   */
+  async softDeleteEvent(eventId: string) {
+    const now = new Date();
+
+    const [deleted] = await this.db
+      .updateTable('events')
+      .set({
+        deletedAt: now,
+        status: 'inactive',
+        updatedAt: now,
+      })
+      .where('id', '=', eventId)
+      .where('deletedAt', 'is', null)
+      .returningAll()
+      .execute();
+
+    if (!deleted) {
+      throw new NotFoundError('Evento no encontrado');
+    }
+
+    // Also soft delete related ticket waves
+    await this.db
+      .updateTable('eventTicketWaves')
+      .set({
+        deletedAt: now,
+        status: 'inactive',
+        updatedAt: now,
+      })
+      .where('eventId', '=', eventId)
+      .where('deletedAt', 'is', null)
+      .execute();
+
+    return deleted;
   }
 }

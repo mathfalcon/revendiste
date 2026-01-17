@@ -1,7 +1,7 @@
 import {createFileRoute, redirect} from '@tanstack/react-router';
 import {getOrderByIdQuery} from '~/lib';
 import {CheckoutPage} from '~/features/checkout';
-import {AxiosError} from 'axios';
+import {AxiosError, isAxiosError} from 'axios';
 import {seo} from '~/utils/seo';
 
 export const Route = createFileRoute('/checkout/$orderId/')({
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/checkout/$orderId/')({
         });
       }
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 401) {
+      if (isAxiosError(error) && error.response?.status === 401) {
         throw redirect({
           to: '/ingresar/$',
         });

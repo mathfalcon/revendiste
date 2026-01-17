@@ -1,18 +1,30 @@
+import type {QrAvailabilityTiming} from '@revendiste/shared';
 import {UploadAvailability} from './types';
 
 /**
- * Determine if a document can be uploaded for a ticket based on platform rules
- * and event timing.
+ * Parse QR availability timing string to hours
+ * e.g., '12h' -> 12, '24h' -> 24
+ */
+function parseQrAvailabilityTimingToHours(
+  timing: QrAvailabilityTiming,
+): number {
+  return parseInt(timing.replace('h', ''), 10);
+}
+
+/**
+ * Determine if a document can be uploaded for a ticket based on QR availability timing.
  *
- * Platform-specific rules:
- * - "entraste": Tickets are only available 12 hours before event start
- * - Future platforms can be added here
+ * Rules:
+ * - If qrAvailabilityTiming is null, upload is allowed anytime before event ends
+ * - If qrAvailabilityTiming is set (e.g., '6h'), upload is only allowed within that window before event start
+ * - Upload is never allowed after event has ended
  */
 export function canUploadDocumentForPlatform(
-  platform: string,
+  _platform: string, // Kept for backwards compatibility, no longer used
   eventStartDate: Date,
   eventEndDate: Date,
-  hasDocument: boolean,
+  _hasDocument: boolean, // Kept for backwards compatibility, no longer used
+  qrAvailabilityTiming: QrAvailabilityTiming | null = null,
 ): UploadAvailability {
   const now = new Date();
 
@@ -24,34 +36,28 @@ export function canUploadDocumentForPlatform(
     };
   }
 
-  // Platform-specific logic
-  switch (platform.toLowerCase()) {
-    // case 'entraste': { TODO: Add back in when Entraste is live
-    //   // For Entraste, QR codes are available 12 hours before event start
-    //   const hoursBeforeEvent = 12;
-    //   const uploadAvailableAt = new Date(eventStartDate);
-    //   uploadAvailableAt.setHours(uploadAvailableAt.getHours() - hoursBeforeEvent);
-
-    //   if (now < uploadAvailableAt) {
-    //     return {
-    //       canUpload: false,
-    //       reason: 'too_early',
-    //     };
-    //   }
-
-    //   return {
-    //     canUpload: true,
-    //   };
-    // }
-
-    // Add more platforms here as needed
-    // case 'other_platform':
-    //   return { canUpload: true };
-
-    default:
-      // Default behavior: allow upload anytime before event ends
-      return {
-        canUpload: true,
-      };
+  // If no QR availability timing is set, allow upload anytime before event ends
+  if (!qrAvailabilityTiming) {
+    return {
+      canUpload: true,
+    };
   }
+
+  // Calculate the upload window based on qrAvailabilityTiming
+  const hoursBeforeEvent = parseQrAvailabilityTimingToHours(qrAvailabilityTiming);
+  const uploadAvailableAt = new Date(eventStartDate);
+  uploadAvailableAt.setHours(uploadAvailableAt.getHours() - hoursBeforeEvent);
+
+  // If we're before the upload window, it's too early
+  if (now < uploadAvailableAt) {
+    return {
+      canUpload: false,
+      reason: 'too_early',
+      uploadAvailableAt,
+    };
+  }
+
+  return {
+    canUpload: true,
+  };
 }

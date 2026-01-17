@@ -1,5 +1,5 @@
 import {createFileRoute, Outlet, redirect} from '@tanstack/react-router';
-import {LayoutDashboard, Wallet, UserCheck, Menu} from 'lucide-react';
+import {LayoutDashboard, Wallet, UserCheck, Menu, Calendar} from 'lucide-react';
 import {Link, useLocation} from '@tanstack/react-router';
 import {useState, useEffect} from 'react';
 import {cn} from '~/lib/utils';
@@ -46,7 +46,7 @@ export const Route = createFileRoute('/admin')({
 });
 
 const navigation = [
-  {name: 'Panel', href: '/admin', icon: LayoutDashboard},
+  {name: 'Eventos', href: '/admin/eventos', icon: Calendar},
   {name: 'Verificaciones', href: '/admin/verificaciones', icon: UserCheck},
   {name: 'Pagos', href: '/admin/retiros', icon: Wallet},
 ];

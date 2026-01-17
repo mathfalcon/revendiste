@@ -4,4 +4,6 @@ export {TicketListingsController} from './ticket-listings';
 export {OrdersController} from './orders';
 export {PayoutsController} from './payouts';
 export {AdminPayoutsController} from './admin/payouts';
+export {AdminIdentityVerificationController} from './admin/identity-verification';
+export {AdminEventsController} from './admin/events';
 export {UsersController} from './users';

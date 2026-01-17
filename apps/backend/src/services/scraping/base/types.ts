@@ -32,6 +32,17 @@ export const ScrapedTicketWaveSchema = z.object({
 
 export type ScrapedTicketWave = z.infer<typeof ScrapedTicketWaveSchema>;
 
+export const QrAvailabilityTimingSchema = z.enum([
+  '3h',
+  '6h',
+  '12h',
+  '24h',
+  '48h',
+  '72h',
+]);
+
+export type QrAvailabilityTiming = z.infer<typeof QrAvailabilityTimingSchema>;
+
 export const ScrapedEventDataSchema = z.object({
   externalId: z.string(),
   platform: z.enum(Platform),
@@ -49,6 +60,7 @@ export const ScrapedEventDataSchema = z.object({
     }),
   ),
   ticketWaves: z.array(ScrapedTicketWaveSchema),
+  qrAvailabilityTiming: QrAvailabilityTimingSchema.optional(),
 });
 
 export type ScrapedEventData = z.infer<typeof ScrapedEventDataSchema>;

@@ -399,6 +399,7 @@ export class EntrasteScraper extends BaseScraper {
           },
         ],
         ticketWaves: ticketWaves,
+        qrAvailabilityTiming: '6h', // Entraste tickets are only available 6 hours before the event
       };
 
       this.validateAndAddEvent(eventData);

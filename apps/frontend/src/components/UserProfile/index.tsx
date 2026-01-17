@@ -1,5 +1,5 @@
 import {UserButton} from '@clerk/tanstack-react-start';
-import {Ticket, ScanQrCode, Wallet} from 'lucide-react';
+import {Ticket, Wallet, QrCode} from 'lucide-react';
 import {UserButtonAppearance} from '../SignInModal';
 
 export const UserProfile = () => {
@@ -18,7 +18,7 @@ export const UserProfile = () => {
         />
         <UserButton.Link
           label='Mis tickets'
-          labelIcon={<ScanQrCode className='h-4 w-4' />}
+          labelIcon={<QrCode className='h-4 w-4' />}
           href='/cuenta/tickets'
         />
         <UserButton.Link

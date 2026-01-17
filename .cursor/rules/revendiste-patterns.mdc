@@ -84,6 +84,77 @@ await this.executeTransaction(async (trx: Kysely<DB>) => {
 });
 ```
 
+## Controller Layer Patterns
+
+### Thin Controllers
+
+**Controllers MUST be thin - delegate all business logic to services:**
+
+```typescript
+// ✅ CORRECT - Controller delegates to service
+@Route('admin/events')
+export class AdminEventsController {
+  private service = new AdminEventsService(
+    new EventsRepository(db),
+    new EventTicketWavesRepository(db),
+    db,
+  );
+
+  @Get('/{eventId}')
+  public async getEventDetails(
+    @Path() eventId: string,
+  ): Promise<GetEventDetailsResponse> {
+    return this.service.getEventDetails(eventId);
+  }
+
+  @Put('/{eventId}')
+  @ValidateBody(UpdateEventRouteSchema)
+  public async updateEvent(
+    @Path() eventId: string,
+    @Body() body: UpdateEventRouteBody,
+  ): Promise<UpdateEventResponse> {
+    return this.service.updateEvent(eventId, body);
+  }
+}
+
+// ❌ WRONG - Controller contains business logic
+@Route('admin/events')
+export class AdminEventsController {
+  private eventsRepository = new EventsRepository(db);
+
+  @Put('/{eventId}')
+  public async updateEvent(
+    @Path() eventId: string,
+    @Body() body: UpdateEventRouteBody,
+  ): Promise<UpdateEventResponse> {
+    // Business logic in controller - BAD!
+    const updateData: any = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.eventStartDate !== undefined)
+      updateData.eventStartDate = new Date(body.eventStartDate);
+    // ... more logic
+    return this.eventsRepository.updateEvent(eventId, updateData);
+  }
+}
+```
+
+**Controller Responsibilities (ONLY):**
+
+- ✅ Route definitions and HTTP method declarations
+- ✅ Request/response type annotations for OpenAPI generation
+- ✅ Validation decorators (`@ValidateBody`, `@ValidateQuery`)
+- ✅ Middleware declarations (`@Middlewares`)
+- ✅ Extracting request data (path params, body, query, files)
+- ✅ Delegating to service methods
+- ✅ Returning service results
+
+**Controller MUST NOT:**
+
+- ❌ Contain business logic (data transformation, validation rules)
+- ❌ Directly use repositories (always go through services)
+- ❌ Handle complex error scenarios (services throw, error middleware catches)
+- ❌ Perform data enrichment or computed field calculations
+
 ## Service Layer Patterns
 
 ### Service Responsibilities
@@ -274,7 +345,40 @@ For critical operations (payments, financial transactions), use immutable audit 
 - **Reusable components**: `apps/frontend/src/components/`
 - **Feature-specific logic**: `apps/frontend/src/features/`
 - Route files should be thin, importing from features
-- Use `shadcn/ui` components for UI elements
+
+### UI Component Library (shadcn/ui)
+
+**This project uses [shadcn/ui](https://ui.shadcn.com/) as the primary UI component library.**
+
+**Adding new components:**
+
+```bash
+# Use the shadcn CLI to add components
+cd apps/frontend
+pnpm dlx shadcn@latest add [component-name]
+
+# Examples:
+pnpm dlx shadcn@latest add button
+pnpm dlx shadcn@latest add tooltip
+pnpm dlx shadcn@latest add dialog
+```
+
+**Key Points:**
+
+- Components are installed to `apps/frontend/src/components/ui/`
+- shadcn components are customizable - they're copied into your project, not installed as dependencies
+- Import from `~/components/ui/[component]`
+- Always check if a shadcn component exists before creating custom UI components
+- Use the shadcn MCP tool `get_add_command_for_items` to get the correct install command
+
+**Common components used:**
+
+- `Button`, `Card`, `Dialog`, `Sheet` - Layout and containers
+- `Form`, `Input`, `Select`, `Checkbox` - Form elements
+- `Tooltip`, `Popover` - Overlays
+- `Accordion`, `Tabs` - Navigation
+- `Badge`, `Alert` - Status indicators
+- `Table`, `Skeleton` - Data display
 
 ### Data Fetching
 
@@ -638,12 +742,81 @@ export function computePlatformRule(
 - Services can perform additional business rule validation
 - Always return descriptive validation error messages
 
-### Frontend Validation
+### Frontend Validation & Forms
 
-- Use Zod schemas for form validation and search params
+**Always use `react-hook-form` for form state management** instead of individual `useState` hooks:
+
+```typescript
+import {useForm, FormProvider} from 'react-hook-form';
+import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
+import {z} from 'zod';
+import {Form} from '~/components/ui/form';
+
+// 1. Define Zod schema
+const formSchema = z.object({
+  name: z.string().min(1, 'El nombre es requerido'),
+  email: z.string().email('Email inválido'),
+  description: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+// 2. Initialize form with schema resolver
+const form = useForm<FormValues>({
+  resolver: standardSchemaResolver(formSchema),
+  defaultValues: {
+    name: '',
+    email: '',
+    description: '',
+  },
+});
+
+// 3. Use Form component wrapper (from shadcn/ui)
+<Form {...form}>
+  <form onSubmit={form.handleSubmit(onSubmit)}>
+    {/* Form fields */}
+  </form>
+</Form>
+```
+
+**For nested components that need form access, use `FormProvider` and `useFormContext`:**
+
+```typescript
+// Parent component
+import {FormProvider} from 'react-hook-form';
+
+<FormProvider {...form}>
+  <NestedFormComponent />
+</FormProvider>
+
+// Child component
+import {useFormContext} from 'react-hook-form';
+
+function NestedFormComponent() {
+  const form = useFormContext<FormValues>();
+  const value = form.watch('fieldName');
+  // ...
+}
+```
+
+**Key Points:**
+
+- Use `standardSchemaResolver` from `@hookform/resolvers/standard-schema` with Zod schemas
+- Use `Form` component from `~/components/ui/form` (shadcn/ui) for proper form context
+- Use `form.handleSubmit(onSubmit)` for form submission
+- Use `form.watch('field')` to reactively read field values
+- Use `form.setValue('field', value)` to programmatically set values
+- Use `form.reset()` to reset form to default values
 - Validate search params in route files with `validateSearch`
-- Use `react-hook-form` with Zod resolver for form validation
 - Display validation errors inline with form fields
+
+**Why react-hook-form over useState?**
+
+- ✅ Built-in validation with Zod integration
+- ✅ Automatic dirty/touched state tracking
+- ✅ Better performance (minimizes re-renders)
+- ✅ Consistent patterns across the codebase
+- ✅ Easy form reset and default value handling
 
 ## Error Handling
 
@@ -757,6 +930,56 @@ jsonArrayFrom(
 - This removes `null` from the type, making the result non-nullable
 - For `jsonArrayFrom`, `.$notNull()` ensures the result is always an array (never null), though it may be empty
 - Only use when you're certain the relationship will always exist (e.g., required foreign keys, inner joins)
+
+### Using Insertable and Updateable Type Helpers
+
+**Use Kysely's `Insertable<T>` and `Updateable<T>` generics** instead of manually defining insert/update types:
+
+```typescript
+import {type Kysely, type Insertable, type Updateable} from 'kysely';
+import type {DB, Events} from '@revendiste/shared';
+
+// ✅ CORRECT - Use Insertable<T> for type-safe inserts
+async createEvent(data: Insertable<Events>) {
+  return await this.db
+    .insertInto('events')
+    .values(data)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+}
+
+// ✅ CORRECT - Use Updateable<T> for type-safe updates
+async updateEvent(eventId: string, data: Updateable<Events>) {
+  return await this.db
+    .updateTable('events')
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where('id', '=', eventId)
+    .returningAll()
+    .execute();
+}
+
+// ❌ WRONG - Manually defining types is verbose and error-prone
+async updateEvent(
+  eventId: string,
+  data: {
+    name?: string;
+    description?: string | null;
+    eventStartDate?: Date;
+    // ... manually listing every field
+  },
+) { ... }
+```
+
+**Key Points:**
+
+- `Insertable<T>` - Makes fields with defaults (like `id`, `createdAt`) optional, required fields stay required
+- `Updateable<T>` - Makes all properties optional and correctly typed for partial updates
+- Both automatically stay in sync with the database schema (via generated types)
+- No need to manually maintain type definitions
+- Import from `kysely` and use with your table interface from `@revendiste/shared`
 
 ## Common Patterns
 

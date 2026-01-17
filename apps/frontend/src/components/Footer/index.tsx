@@ -11,6 +11,8 @@ export const Footer = () => {
     <footer
       className={cn(
         'border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80',
+        // Add bottom padding on mobile to account for sticky bottom bars
+        'pb-24 md:pb-0',
       )}
     >
       <div className='mx-auto w-full max-w-screen-2xl px-4 md:px-6 py-8 md:py-12'>

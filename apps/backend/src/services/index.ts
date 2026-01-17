@@ -1,3 +1,4 @@
+export * from './admin-events';
 export * from './events';
 export * from './health';
 export * from './users';
