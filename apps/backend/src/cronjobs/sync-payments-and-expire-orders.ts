@@ -5,13 +5,78 @@ import {
   OrdersRepository,
   OrderTicketReservationsRepository,
   UsersRepository,
+  NotificationsRepository,
+  PaymentEventsRepository,
+  ListingTicketsRepository,
+  TicketListingsRepository,
+  EventsRepository,
+  EventTicketWavesRepository,
+  SellerEarningsRepository,
 } from '~/repositories';
 import {PaymentWebhookAdapter} from '~/services/payments/adapters';
 import {getPaymentProvider} from '~/services/payments/providers/PaymentProviderFactory';
 import {NotificationService} from '~/services/notifications';
+import {TicketListingsService} from '~/services/ticket-listings';
+import {SellerEarningsService} from '~/services/seller-earnings';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
 import {logger} from '~/utils';
 import {Payment} from '~/types';
+
+// Create shared repositories
+const ordersRepository = new OrdersRepository(db);
+const orderTicketReservationsRepository = new OrderTicketReservationsRepository(
+  db,
+);
+const paymentsRepository = new PaymentsRepository(db);
+const paymentEventsRepository = new PaymentEventsRepository(db);
+const listingTicketsRepository = new ListingTicketsRepository(db);
+const ticketListingsRepository = new TicketListingsRepository(db);
+const eventsRepository = new EventsRepository(db);
+const eventTicketWavesRepository = new EventTicketWavesRepository(db);
+const usersRepository = new UsersRepository(db);
+const notificationsRepository = new NotificationsRepository(db);
+const sellerEarningsRepository = new SellerEarningsRepository(db);
+
+// Create shared services
+const notificationService = new NotificationService(
+  notificationsRepository,
+  usersRepository,
+);
+
+const ticketListingsService = new TicketListingsService(
+  ticketListingsRepository,
+  eventsRepository,
+  eventTicketWavesRepository,
+  listingTicketsRepository,
+  ordersRepository,
+  usersRepository,
+  notificationService,
+);
+
+const sellerEarningsService = new SellerEarningsService(
+  sellerEarningsRepository,
+  orderTicketReservationsRepository,
+  listingTicketsRepository,
+);
+
+// Create adapter factory function for payment sync
+const createPaymentWebhookAdapter = (
+  provider: Parameters<typeof getPaymentProvider>[0],
+) => {
+  const paymentProvider = getPaymentProvider(provider);
+  return new PaymentWebhookAdapter(
+    paymentProvider,
+    ordersRepository,
+    orderTicketReservationsRepository,
+    paymentsRepository,
+    paymentEventsRepository,
+    listingTicketsRepository,
+    ticketListingsRepository,
+    ticketListingsService,
+    sellerEarningsService,
+    notificationService,
+  );
+};
 
 /**
  * Processes a single payment status sync
@@ -20,8 +85,7 @@ async function processPaymentSync(
   payment: Pick<Payment, 'id' | 'provider' | 'providerPaymentId'>,
 ): Promise<{success: boolean; paymentId: string}> {
   try {
-    const provider = getPaymentProvider(payment.provider);
-    const adapter = new PaymentWebhookAdapter(provider, db);
+    const adapter = createPaymentWebhookAdapter(payment.provider);
     await adapter.syncPaymentStatus(payment.providerPaymentId);
 
     logger.debug('Payment status synced successfully', {
@@ -51,14 +115,6 @@ async function expireOrder(
   orderId: string,
   reason: 'all_payments_failed' | 'no_payment_created',
 ): Promise<void> {
-  const ordersRepository = new OrdersRepository(db);
-  const orderTicketReservationsRepository =
-    new OrderTicketReservationsRepository(db);
-  const notificationService = new NotificationService(
-    db,
-    new UsersRepository(db),
-  );
-
   await ordersRepository.executeTransaction(async trx => {
     const ordersRepo = ordersRepository.withTransaction(trx);
     const reservationsRepo =
@@ -93,15 +149,6 @@ async function expireOrder(
  * Uses a transaction with row locking to prevent race conditions
  */
 async function expireOrderWithoutPayment(orderId: string): Promise<boolean> {
-  const paymentsRepository = new PaymentsRepository(db);
-  const ordersRepository = new OrdersRepository(db);
-  const orderTicketReservationsRepository =
-    new OrderTicketReservationsRepository(db);
-  const notificationService = new NotificationService(
-    db,
-    new UsersRepository(db),
-  );
-
   let expired = false;
 
   await ordersRepository.executeTransaction(async trx => {
@@ -173,8 +220,6 @@ async function expireOrderWithoutPayment(orderId: string): Promise<boolean> {
  * Used by production EventBridge + ECS RunTask
  */
 export async function runSyncPaymentsAndExpireOrders() {
-  const paymentsRepository = new PaymentsRepository(db);
-
   try {
     logger.info('Starting payment status sync and order expiration...');
 

@@ -2,11 +2,7 @@ import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
-import {
-  ListingCard,
-  TicketDocumentUploadModal,
-  TicketUploadCarousel,
-} from '~/components';
+import {ListingCard, TicketUploadModal} from '~/components';
 import {
   Accordion,
   AccordionContent,
@@ -236,33 +232,29 @@ export function PublicationsView() {
         </AccordionItem>
       </Accordion>
 
-      {/* Single Upload Modal */}
-      {/* Render modal when subirTicket param is present, even if ticket data isn't loaded yet */}
-      {/* This allows the modal to open when coming from email links */}
-      {search.subirTicket && (
-        <TicketDocumentUploadModal
-          ticketId={search.subirTicket}
-          hasExistingDocument={ticketToUpload?.hasDocument || false}
+      {/* Single Ticket Upload Modal (from URL param) */}
+      {search.subirTicket && ticketToUpload && (
+        <TicketUploadModal
+          tickets={{
+            ...ticketToUpload,
+            listing: listings?.find(l =>
+              l.tickets.some(t => t.id === ticketToUpload.id),
+            )!,
+          }}
           open={!!search.subirTicket}
           onOpenChange={open => {
-            if (!open) {
-              handleCloseModal();
-            }
+            if (!open) handleCloseModal();
           }}
         />
       )}
 
-      {/* Carousel Upload Modal */}
+      {/* Batch Upload Modal */}
       {ticketsForCarousel.length > 0 && (
-        <TicketUploadCarousel
+        <TicketUploadModal
           tickets={ticketsForCarousel}
           open={carouselOpen}
           onOpenChange={handleCarouselClose}
-          initialIndex={
-            search.subirTicket
-              ? ticketsForCarousel.findIndex(t => t.id === search.subirTicket)
-              : undefined
-          }
+          initialTicketId={search.subirTicket}
         />
       )}
     </div>

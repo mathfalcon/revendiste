@@ -1,12 +1,9 @@
-import path from 'path';
-import type {Kysely} from 'kysely';
-import type {DB, QrAvailabilityTiming} from '@revendiste/shared';
+import type {QrAvailabilityTiming} from '@revendiste/shared';
 import {
   ListingTicketsRepository,
   TicketDocumentsRepository,
   OrderTicketReservationsRepository,
   OrdersRepository,
-  UsersRepository,
 } from '~/repositories';
 import {getStorageProvider} from '~/services/storage';
 import {NotFoundError, UnauthorizedError, ValidationError} from '~/errors';
@@ -23,24 +20,15 @@ import {notifyDocumentUploaded} from '~/services/notifications/helpers';
  * Supports document versioning and multiple documents per ticket.
  */
 export class TicketDocumentService {
-  private listingTicketsRepository: ListingTicketsRepository;
-  private ticketDocumentsRepository: TicketDocumentsRepository;
-  private orderTicketReservationsRepository: OrderTicketReservationsRepository;
-  private ordersRepository: OrdersRepository;
-  private notificationService: NotificationService;
   private storageProvider = getStorageProvider();
 
-  constructor(private db: Kysely<DB>) {
-    this.listingTicketsRepository = new ListingTicketsRepository(db);
-    this.ticketDocumentsRepository = new TicketDocumentsRepository(db);
-    this.orderTicketReservationsRepository =
-      new OrderTicketReservationsRepository(db);
-    this.ordersRepository = new OrdersRepository(db);
-    this.notificationService = new NotificationService(
-      db,
-      new UsersRepository(db),
-    );
-  }
+  constructor(
+    private readonly listingTicketsRepository: ListingTicketsRepository,
+    private readonly ticketDocumentsRepository: TicketDocumentsRepository,
+    private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
+    private readonly ordersRepository: OrdersRepository,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   /**
    * Upload a ticket document (seller only)
@@ -125,10 +113,13 @@ export class TicketDocumentService {
     });
 
     // Create new document record
+    // Extract just the filename from the storage path (not the full URL)
+    const fileName = uploadResult.path.split('/').pop() || uploadResult.path;
+
     const newDocument = await this.ticketDocumentsRepository.create({
       ticketId: ticketId,
       storagePath: uploadResult.path,
-      fileName: uploadResult.url,
+      fileName: fileName,
       originalName: file.originalName,
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
@@ -349,31 +340,11 @@ export class TicketDocumentService {
       await this.ticketDocumentsRepository.getTicketsWithoutDocuments();
 
     // Filter by user and return only their tickets
-    const userTickets = await this.db
-      .selectFrom('listingTickets as lt')
-      .leftJoin('listings as tl', 'tl.id', 'lt.listingId')
-      .leftJoin('eventTicketWaves as etw', 'etw.id', 'tl.ticketWaveId')
-      .leftJoin('events as e', 'e.id', 'etw.eventId')
-      .select([
-        'lt.id',
-        'lt.listingId',
-        'lt.ticketNumber',
-        'lt.soldAt',
-        'e.name as eventName',
-        'e.eventStartDate',
-        'etw.name as ticketWaveName',
-      ])
-      .where(
-        'lt.id',
-        'in',
-        ticketsWithoutDocs.map(t => t.ticketId),
-      )
-      .where('tl.publisherUserId', '=', userId)
-      .where('lt.deletedAt', 'is', null)
-      .where('tl.deletedAt', 'is', null)
-      .execute();
-
-    return userTickets;
+    const ticketIds = ticketsWithoutDocs.map(t => t.ticketId);
+    return await this.listingTicketsRepository.getUserTicketsRequiringUpload(
+      userId,
+      ticketIds,
+    );
   }
 
   /**

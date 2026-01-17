@@ -3,7 +3,6 @@ import {
   PayoutMethodsRepository,
   SellerEarningsRepository,
   PayoutEventsRepository,
-  UsersRepository,
 } from '~/repositories';
 import {PayoutDocumentsService} from '~/services/payout-documents';
 import {NotFoundError, ValidationError} from '~/errors';
@@ -20,8 +19,6 @@ import {
   notifyPayoutFailed,
   notifyPayoutCancelled,
 } from '~/services/notifications/helpers';
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
 
 interface RequestPayoutParams {
   sellerUserId: string;
@@ -48,22 +45,14 @@ interface PayoutHistoryItem {
 }
 
 export class PayoutsService {
-  private notificationService: NotificationService;
-  private payoutDocumentsService: PayoutDocumentsService;
-
   constructor(
     private readonly payoutsRepository: PayoutsRepository,
     private readonly payoutMethodsRepository: PayoutMethodsRepository,
     private readonly sellerEarningsRepository: SellerEarningsRepository,
     private readonly payoutEventsRepository: PayoutEventsRepository,
-    db: Kysely<DB>,
-  ) {
-    this.notificationService = new NotificationService(
-      db,
-      new UsersRepository(db),
-    );
-    this.payoutDocumentsService = new PayoutDocumentsService(db);
-  }
+    private readonly notificationService: NotificationService,
+    private readonly payoutDocumentsService: PayoutDocumentsService,
+  ) {}
 
   /**
    * Request a payout with selected tickets/listings

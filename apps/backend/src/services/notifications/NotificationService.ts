@@ -1,5 +1,3 @@
-import {Kysely} from 'kysely';
-import {DB} from '@revendiste/shared';
 import {PaginatedResponse} from '~/types';
 import {logger} from '~/utils';
 import {NotificationsRepository, UsersRepository} from '~/repositories';
@@ -31,17 +29,13 @@ export interface CreateNotificationParams extends CreateNotificationData {
 }
 
 export class NotificationService {
-  private notificationsRepository: NotificationsRepository;
-  private usersRepository: UsersRepository;
   private emailProvider: IEmailProvider;
 
   constructor(
-    db: Kysely<DB>,
-    usersRepository: UsersRepository,
+    private readonly notificationsRepository: NotificationsRepository,
+    private readonly usersRepository: UsersRepository,
     emailProvider?: IEmailProvider,
   ) {
-    this.notificationsRepository = new NotificationsRepository(db);
-    this.usersRepository = usersRepository;
     // Use provided provider or get from factory based on configuration
     this.emailProvider = emailProvider || getEmailProvider();
   }

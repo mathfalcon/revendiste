@@ -1,5 +1,5 @@
-import {useState, useRef, useId} from 'react';
-import {Upload, FileText, AlertCircle, X} from 'lucide-react';
+import {useState, useRef, useId, useMemo, useEffect} from 'react';
+import {Upload, FileText, AlertCircle, X, Eye, FileImage} from 'lucide-react';
 import {Button} from '~/components/ui/button';
 import {Alert, AlertDescription} from '~/components/ui/alert';
 import {cn} from '~/lib/utils';
@@ -142,6 +142,30 @@ export function FileDropzone({
 
   const displayError = error || validationError;
 
+  // Create blob URL for preview
+  const previewUrl = useMemo(() => {
+    if (!selectedFile) return null;
+    return URL.createObjectURL(selectedFile);
+  }, [selectedFile]);
+
+  // Clean up blob URL when component unmounts or file changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const isImage = selectedFile?.type.startsWith('image/');
+  const isPdf = selectedFile?.type === 'application/pdf';
+
+  const handlePreviewClick = () => {
+    if (previewUrl && isPdf) {
+      window.open(previewUrl, '_blank');
+    }
+  };
+
   // Generate default subtitle based on accept and maxFileSize
   const defaultSubtitle = `${accept.replace(/\./g, '').toUpperCase().split(',').join(', ')} hasta ${formatMaxSize()}`;
   const finalSubtitle = subtitle ?? defaultSubtitle;
@@ -220,51 +244,88 @@ export function FileDropzone({
             </Button>
           </div>
         ) : (
-          <div
-            className={cn(
-              'flex items-center justify-between',
-              compact ? 'p-3' : 'p-4',
-            )}
-          >
-            <div className='flex items-center gap-3 min-w-0'>
-              <div className='rounded-lg bg-primary/10 p-2 shrink-0'>
-                <FileText
-                  className={cn(
-                    'text-primary',
-                    compact ? 'h-4 w-4' : 'h-5 w-5',
-                  )}
-                />
+          <div className={cn('p-4', compact && 'p-3')}>
+            {/* Image preview */}
+            {isImage && previewUrl && (
+              <div className='mb-3 flex justify-center'>
+                <div className='relative rounded-lg overflow-hidden border bg-muted/50 max-w-[200px]'>
+                  <img
+                    src={previewUrl}
+                    alt='Vista previa'
+                    className='max-h-[150px] w-auto object-contain'
+                  />
+                </div>
               </div>
-              <div className='min-w-0'>
-                <p
-                  className={cn(
-                    'font-medium truncate',
-                    compact ? 'text-xs' : 'text-sm',
+            )}
+
+            {/* File info row */}
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center gap-3 min-w-0'>
+                <div className='rounded-lg bg-primary/10 p-2 shrink-0'>
+                  {isImage ? (
+                    <FileImage
+                      className={cn(
+                        'text-primary',
+                        compact ? 'h-4 w-4' : 'h-5 w-5',
+                      )}
+                    />
+                  ) : (
+                    <FileText
+                      className={cn(
+                        'text-primary',
+                        compact ? 'h-4 w-4' : 'h-5 w-5',
+                      )}
+                    />
                   )}
-                >
-                  {displayFileName ?? selectedFile.name}
-                </p>
-                <p
-                  className={cn(
-                    'text-muted-foreground',
-                    compact ? 'text-xs' : 'text-xs',
-                  )}
-                >
-                  {formatFileSize(selectedFile.size)}
-                </p>
+                </div>
+                <div className='min-w-0'>
+                  <p
+                    className={cn(
+                      'font-medium truncate',
+                      compact ? 'text-xs' : 'text-sm',
+                    )}
+                  >
+                    {displayFileName ?? selectedFile.name}
+                  </p>
+                  <p
+                    className={cn(
+                      'text-muted-foreground',
+                      compact ? 'text-xs' : 'text-xs',
+                    )}
+                  >
+                    {formatFileSize(selectedFile.size)}
+                  </p>
+                </div>
+              </div>
+
+              <div className='flex items-center gap-1 shrink-0'>
+                {/* Preview button for PDFs */}
+                {isPdf && previewUrl && (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={handlePreviewClick}
+                    disabled={disabled}
+                    title='Ver PDF'
+                  >
+                    <Eye className='h-4 w-4' />
+                    {!compact && <span className='ml-1'>Ver</span>}
+                  </Button>
+                )}
+                {onClear && (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={handleClear}
+                    disabled={disabled}
+                  >
+                    {compact ? <X className='h-4 w-4' /> : 'Cambiar'}
+                  </Button>
+                )}
               </div>
             </div>
-            {onClear && (
-              <Button
-                type='button'
-                variant='ghost'
-                size='sm'
-                onClick={handleClear}
-                disabled={disabled}
-              >
-                {compact ? <X className='h-4 w-4' /> : 'Cambiar'}
-              </Button>
-            )}
           </div>
         )}
       </div>

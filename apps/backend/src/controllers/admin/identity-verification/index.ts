@@ -16,13 +16,13 @@ import {
   ensurePagination,
   paginationMiddleware,
 } from '~/middleware';
-import {UsersRepository} from '~/repositories';
-import {db} from '~/db';
 import {
-  NotFoundError,
-  ValidationError,
-  UnauthorizedError,
-} from '~/errors';
+  UsersRepository,
+  VerificationAuditRepository,
+  NotificationsRepository,
+} from '~/repositories';
+import {db} from '~/db';
+import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {ValidateBody, ValidateQuery, Body} from '~/decorators';
 import {
   AdminVerificationsRouteSchema,
@@ -33,6 +33,7 @@ import {
   RejectVerificationRouteSchema,
 } from './validation';
 import {AdminIdentityVerificationService} from '~/services/admin-identity-verification';
+import {NotificationService} from '~/services/notifications';
 
 type GetVerificationsResponse = ReturnType<
   AdminIdentityVerificationService['getVerificationsForReview']
@@ -53,13 +54,25 @@ type GetVerificationAuditHistoryResponse = ReturnType<
   AdminIdentityVerificationService['getVerificationAuditHistory']
 >;
 
+// Create shared repositories
+const usersRepository = new UsersRepository(db);
+const notificationsRepository = new NotificationsRepository(db);
+const verificationAuditRepository = new VerificationAuditRepository(db);
+
+// Create notification service
+const notificationService = new NotificationService(
+  notificationsRepository,
+  usersRepository,
+);
+
 @Route('admin/identity-verification')
 @Middlewares(requireAuthMiddleware, requireAdminMiddleware)
 @Tags('Admin - Identity Verification')
 export class AdminIdentityVerificationController {
   private service = new AdminIdentityVerificationService(
-    new UsersRepository(db),
-    db,
+    usersRepository,
+    verificationAuditRepository,
+    notificationService,
   );
 
   @Get('/')

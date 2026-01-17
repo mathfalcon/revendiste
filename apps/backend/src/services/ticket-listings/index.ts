@@ -16,27 +16,17 @@ import {
 } from '~/constants/error-messages';
 import {NotificationService} from '~/services/notifications';
 import {notifySellerTicketSold} from '~/services/notifications/helpers';
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
 
 export class TicketListingsService {
-  private notificationService: NotificationService;
-  private usersRepository: UsersRepository;
-
   constructor(
     private readonly ticketListingsRepository: TicketListingsRepository,
     private readonly eventsRepository: EventsRepository,
     private readonly eventTicketWavesRepository: EventTicketWavesRepository,
     private readonly listingTicketsRepository: ListingTicketsRepository,
     private readonly ordersRepository: OrdersRepository,
-    db: Kysely<DB>,
-  ) {
-    this.notificationService = new NotificationService(
-      db,
-      new UsersRepository(db),
-    );
-    this.usersRepository = new UsersRepository(db);
-  }
+    private readonly usersRepository: UsersRepository,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   async createTicketListing(
     data: CreateTicketListingRouteBody,

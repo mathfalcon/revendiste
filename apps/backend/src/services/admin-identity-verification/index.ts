@@ -1,5 +1,4 @@
-import type {Kysely} from 'kysely';
-import type {DB, VerificationStatusEnum} from '@revendiste/shared';
+import type {VerificationStatusEnum} from '@revendiste/shared';
 import {UsersRepository} from '~/repositories/users';
 import {VerificationAuditRepository} from '~/repositories/verification-audit';
 import type {IStorageProvider} from '~/services/storage/IStorageProvider';
@@ -25,16 +24,13 @@ interface VerificationFilters {
 
 export class AdminIdentityVerificationService {
   private storageProvider: IStorageProvider;
-  private auditRepository: VerificationAuditRepository;
-  private notificationService: NotificationService;
 
   constructor(
-    private usersRepository: UsersRepository,
-    private db: Kysely<DB>,
+    private readonly usersRepository: UsersRepository,
+    private readonly auditRepository: VerificationAuditRepository,
+    private readonly notificationService: NotificationService,
   ) {
     this.storageProvider = getStorageProvider();
-    this.auditRepository = new VerificationAuditRepository(db);
-    this.notificationService = new NotificationService(db, usersRepository);
   }
 
   /**

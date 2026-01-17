@@ -7,8 +7,6 @@ import {
 import {NotFoundError, ValidationError} from '~/errors';
 import {API_BASE_URL, APP_BASE_URL} from '~/config/env';
 import {logger} from '~/utils';
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
 import {DLocalService} from '~/services/dlocal';
 import type {PaymentProvider} from './providers';
 import {
@@ -30,19 +28,15 @@ interface CreatePaymentLinkResult {
 }
 
 export class PaymentsService {
-  private ordersRepository: OrdersRepository;
-  private orderTicketReservationsRepository: OrderTicketReservationsRepository;
-  private paymentsRepository: PaymentsRepository;
-  private paymentEventsRepository: PaymentEventsRepository;
   private paymentProvider: PaymentProvider;
 
-  constructor(db: Kysely<DB>, paymentProvider?: PaymentProvider) {
-    this.ordersRepository = new OrdersRepository(db);
-    this.orderTicketReservationsRepository =
-      new OrderTicketReservationsRepository(db);
-    this.paymentsRepository = new PaymentsRepository(db);
-    this.paymentEventsRepository = new PaymentEventsRepository(db);
-
+  constructor(
+    private readonly ordersRepository: OrdersRepository,
+    private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
+    private readonly paymentsRepository: PaymentsRepository,
+    private readonly paymentEventsRepository: PaymentEventsRepository,
+    paymentProvider?: PaymentProvider,
+  ) {
     // Default to dLocal for now, but can be injected
     this.paymentProvider = paymentProvider || new DLocalService();
   }

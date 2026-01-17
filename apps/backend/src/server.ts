@@ -125,9 +125,6 @@ app.listen(PORT, '0.0.0.0', () => {
     startSyncPaymentsAndExpireOrdersJob();
     startNotifyUploadAvailabilityJob();
     startCheckPayoutHoldPeriodsJob();
-    if (NODE_ENV === 'development') {
-      startScrapeEventsJob();
-    }
   } else {
     logger.info(
       'Cronjobs disabled in production (using EventBridge + ECS RunTask)',

@@ -14,6 +14,7 @@ import {
 } from '@mathfalcon/tsoa-runtime';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {TicketDocumentService} from '~/services/ticket-documents';
+import {NotificationService} from '~/services/notifications';
 import {requireAuthMiddleware} from '~/middleware';
 import {
   TicketListingsRepository,
@@ -21,6 +22,10 @@ import {
   EventTicketWavesRepository,
   ListingTicketsRepository,
   OrdersRepository,
+  UsersRepository,
+  NotificationsRepository,
+  TicketDocumentsRepository,
+  OrderTicketReservationsRepository,
 } from '~/repositories';
 import {db} from '~/db';
 import {
@@ -57,18 +62,44 @@ type RemoveTicketResponse = ReturnType<TicketListingsService['removeTicket']>;
 
 type GetTicketInfoResponse = ReturnType<TicketDocumentService['getTicketInfo']>;
 
+// Create shared repositories
+const ticketListingsRepository = new TicketListingsRepository(db);
+const eventsRepository = new EventsRepository(db);
+const eventTicketWavesRepository = new EventTicketWavesRepository(db);
+const listingTicketsRepository = new ListingTicketsRepository(db);
+const ordersRepository = new OrdersRepository(db);
+const usersRepository = new UsersRepository(db);
+const notificationsRepository = new NotificationsRepository(db);
+const ticketDocumentsRepository = new TicketDocumentsRepository(db);
+const orderTicketReservationsRepository = new OrderTicketReservationsRepository(
+  db,
+);
+
+// Create shared services
+const notificationService = new NotificationService(
+  notificationsRepository,
+  usersRepository,
+);
+
 @Route('ticket-listings')
 @Tags('Ticket Listings')
 export class TicketListingsController {
   private service = new TicketListingsService(
-    new TicketListingsRepository(db),
-    new EventsRepository(db),
-    new EventTicketWavesRepository(db),
-    new ListingTicketsRepository(db),
-    new OrdersRepository(db),
-    db,
+    ticketListingsRepository,
+    eventsRepository,
+    eventTicketWavesRepository,
+    listingTicketsRepository,
+    ordersRepository,
+    usersRepository,
+    notificationService,
   );
-  private documentService = new TicketDocumentService(db);
+  private documentService = new TicketDocumentService(
+    listingTicketsRepository,
+    ticketDocumentsRepository,
+    orderTicketReservationsRepository,
+    ordersRepository,
+    notificationService,
+  );
 
   @Post('/')
   @Response<UnauthorizedError>(401, 'Authentication required')

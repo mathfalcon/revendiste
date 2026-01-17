@@ -2,17 +2,21 @@ import cron from 'node-cron';
 import {db} from '~/db';
 import {NotificationService} from '~/services/notifications';
 import {logger} from '~/utils';
-import {UsersRepository} from '~/repositories';
+import {UsersRepository, NotificationsRepository} from '~/repositories';
+
+// Create shared repositories and services
+const usersRepository = new UsersRepository(db);
+const notificationsRepository = new NotificationsRepository(db);
+const notificationService = new NotificationService(
+  notificationsRepository,
+  usersRepository,
+);
 
 /**
  * Runs the process pending notifications job logic once
  * Used by production EventBridge + ECS RunTask
  */
 export async function runProcessPendingNotifications() {
-  const notificationService = new NotificationService(
-    db,
-    new UsersRepository(db),
-  );
 
   try {
     logger.info('Starting scheduled processing of pending notifications...');

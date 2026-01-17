@@ -1,5 +1,3 @@
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
 import {compareAmounts} from '@revendiste/shared';
 import {
   OrdersRepository,
@@ -8,10 +6,6 @@ import {
   PaymentEventsRepository,
   ListingTicketsRepository,
   TicketListingsRepository,
-  EventsRepository,
-  EventTicketWavesRepository,
-  SellerEarningsRepository,
-  UsersRepository,
 } from '~/repositories';
 import {NotFoundError, ValidationError} from '~/errors';
 import {logger} from '~/utils';
@@ -83,42 +77,18 @@ interface PaymentUpdateResult {
  * - Provide consistent webhook processing across all providers
  */
 export class PaymentWebhookAdapter {
-  private ordersRepository: OrdersRepository;
-  private orderTicketReservationsRepository: OrderTicketReservationsRepository;
-  private paymentsRepository: PaymentsRepository;
-  private paymentEventsRepository: PaymentEventsRepository;
-  private listingTicketsRepository: ListingTicketsRepository;
-  private ticketListingsRepository: TicketListingsRepository;
-  private ticketListingsService: TicketListingsService;
-  private sellerEarningsService: SellerEarningsService;
-  private notificationService: NotificationService;
-
-  constructor(private provider: PaymentProvider, private db: Kysely<DB>) {
-    this.ordersRepository = new OrdersRepository(db);
-    this.orderTicketReservationsRepository =
-      new OrderTicketReservationsRepository(db);
-    this.paymentsRepository = new PaymentsRepository(db);
-    this.paymentEventsRepository = new PaymentEventsRepository(db);
-    this.listingTicketsRepository = new ListingTicketsRepository(db);
-    this.ticketListingsRepository = new TicketListingsRepository(db);
-    this.ticketListingsService = new TicketListingsService(
-      this.ticketListingsRepository,
-      new EventsRepository(db),
-      new EventTicketWavesRepository(db),
-      this.listingTicketsRepository,
-      this.ordersRepository,
-      db,
-    );
-    this.sellerEarningsService = new SellerEarningsService(
-      new SellerEarningsRepository(db),
-      this.orderTicketReservationsRepository,
-      this.listingTicketsRepository,
-    );
-    this.notificationService = new NotificationService(
-      db,
-      new UsersRepository(db),
-    );
-  }
+  constructor(
+    private readonly provider: PaymentProvider,
+    private readonly ordersRepository: OrdersRepository,
+    private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
+    private readonly paymentsRepository: PaymentsRepository,
+    private readonly paymentEventsRepository: PaymentEventsRepository,
+    private readonly listingTicketsRepository: ListingTicketsRepository,
+    private readonly ticketListingsRepository: TicketListingsRepository,
+    private readonly ticketListingsService: TicketListingsService,
+    private readonly sellerEarningsService: SellerEarningsService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   /**
    * Process a webhook callback from the payment provider

@@ -1,6 +1,11 @@
 import {Kysely} from 'kysely';
 import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
+import {
+  shouldSendDocumentReminder,
+  parseQrAvailabilityTiming,
+  calculateHoursUntilEvent,
+} from '~/utils/document-reminder';
 
 export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepository> {
   withTransaction(trx: Kysely<DB>): ListingTicketsRepository {
@@ -201,15 +206,21 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
   }
 
   /**
-   * Get sold tickets that are entering the upload availability window or at milestone times
-   * Based on qrAvailabilityTiming (e.g., 12h before event start)
-   * Returns tickets that don't have documents yet and are:
-   * - At QR availability time (±30min window)
-   * - OR at milestone times (24h, 12h, 6h, 3h, 2h, 1h ±30min window) that are after QR availability
+   * Get sold tickets that need document upload reminders.
+   *
+   * Returns tickets that:
+   * - Are sold and don't have documents yet
+   * - Event hasn't started yet
+   * - Are at a milestone time (72h, 48h, 24h, 12h, 6h, 3h, 2h, 1h ±30min before event)
+   *
+   * For events WITH qrAvailabilityTiming:
+   * - Only include if we're within the QR availability window (milestone <= qrAvailabilityHours)
+   *
+   * For events WITHOUT qrAvailabilityTiming:
+   * - Include at any milestone time
    */
   async getTicketsEnteringUploadWindow() {
     const now = new Date();
-    const MILESTONE_THRESHOLDS = [24, 12, 6, 3, 2, 1];
 
     return await this.db
       .selectFrom('listingTickets')
@@ -238,69 +249,57 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
       .where('ticketDocuments.id', 'is', null) // No documents yet
-      .where('events.qrAvailabilityTiming', 'is not', null) // Has timing restriction
       .where('events.eventStartDate', 'is not', null)
       .where('events.eventStartDate', '>', now) // Event hasn't started yet
       .execute()
       .then(tickets => {
-        // Filter tickets that are at QR availability time OR at milestone times
+        // Filter tickets that are at milestone times using utility functions
         return tickets.filter(ticket => {
-          if (!ticket.qrAvailabilityTiming || !ticket.eventStartDate) {
-            return false;
-          }
-
-          // Parse hours from timing (e.g., "12h" -> 12)
-          const qrAvailabilityHours = parseInt(
-            ticket.qrAvailabilityTiming.replace('h', ''),
-            10,
-          );
-
-          if (isNaN(qrAvailabilityHours)) {
+          if (!ticket.eventStartDate) {
             return false;
           }
 
           const eventStartDate = new Date(ticket.eventStartDate);
-          const hoursUntilEvent = Math.ceil(
-            (eventStartDate.getTime() - now.getTime()) / (1000 * 60 * 60),
+          const hoursUntilEvent = calculateHoursUntilEvent(eventStartDate, now);
+          const qrAvailabilityHours = parseQrAvailabilityTiming(
+            ticket.qrAvailabilityTiming,
           );
 
-          // Check if we're at QR availability time (±30 minutes)
-          const qrAvailableAt = new Date(eventStartDate);
-          qrAvailableAt.setHours(qrAvailableAt.getHours() - qrAvailabilityHours);
-
-          const qrWindowStart = new Date(qrAvailableAt);
-          qrWindowStart.setMinutes(qrWindowStart.getMinutes() - 30);
-
-          const qrWindowEnd = new Date(qrAvailableAt);
-          qrWindowEnd.setMinutes(qrWindowEnd.getMinutes() + 30);
-
-          const atQrAvailability =
-            now >= qrWindowStart && now <= qrWindowEnd;
-
-          if (atQrAvailability) {
-            return true;
-          }
-
-          // Check if we're at any milestone time (±30 minutes)
-          // Only consider milestones that are after QR availability time
-          for (const milestone of MILESTONE_THRESHOLDS) {
-            if (milestone > qrAvailabilityHours) {
-              continue; // Skip milestones before QR availability
-            }
-
-            const milestoneWindowStart = milestone - 0.5;
-            const milestoneWindowEnd = milestone + 0.5;
-
-            if (
-              hoursUntilEvent >= milestoneWindowStart &&
-              hoursUntilEvent <= milestoneWindowEnd
-            ) {
-              return true;
-            }
-          }
-
-          return false;
+          return shouldSendDocumentReminder(
+            hoursUntilEvent,
+            qrAvailabilityHours,
+          );
         });
       });
+  }
+
+  /**
+   * Get sold tickets without documents for a specific user
+   * Used by TicketDocumentService.getTicketsRequiringUpload
+   */
+  async getUserTicketsRequiringUpload(userId: string, ticketIds: string[]) {
+    if (ticketIds.length === 0) {
+      return [];
+    }
+
+    return await this.db
+      .selectFrom('listingTickets as lt')
+      .leftJoin('listings as tl', 'tl.id', 'lt.listingId')
+      .leftJoin('eventTicketWaves as etw', 'etw.id', 'tl.ticketWaveId')
+      .leftJoin('events as e', 'e.id', 'etw.eventId')
+      .select([
+        'lt.id',
+        'lt.listingId',
+        'lt.ticketNumber',
+        'lt.soldAt',
+        'e.name as eventName',
+        'e.eventStartDate',
+        'etw.name as ticketWaveName',
+      ])
+      .where('lt.id', 'in', ticketIds)
+      .where('tl.publisherUserId', '=', userId)
+      .where('lt.deletedAt', 'is', null)
+      .where('tl.deletedAt', 'is', null)
+      .execute();
   }
 }

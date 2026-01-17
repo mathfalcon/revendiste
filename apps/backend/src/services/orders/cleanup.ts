@@ -1,16 +1,21 @@
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
+import type {PaymentProvider as PaymentProviderEnum} from '@revendiste/shared';
 import {
   OrdersRepository,
   OrderTicketReservationsRepository,
   PaymentsRepository,
-  UsersRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
 import {NotificationService} from '~/services/notifications';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
-import {PaymentWebhookAdapter} from '~/services/payments/adapters';
-import {getPaymentProvider} from '~/services/payments/providers/PaymentProviderFactory';
+
+/**
+ * Function signature for syncing payment status with a provider.
+ * This is injected to keep the service decoupled from the adapter/db.
+ */
+export type SyncPaymentFunction = (
+  providerPaymentId: string,
+  provider: PaymentProviderEnum,
+) => Promise<void>;
 
 /**
  * Order Cleanup Service
@@ -20,21 +25,13 @@ import {getPaymentProvider} from '~/services/payments/providers/PaymentProviderF
  * order state and ticket reservations stay in sync.
  */
 export class OrderCleanupService {
-  private ordersRepository: OrdersRepository;
-  private orderTicketReservationsRepository: OrderTicketReservationsRepository;
-  private paymentsRepository: PaymentsRepository;
-  private notificationService: NotificationService;
-
-  constructor(private db: Kysely<DB>) {
-    this.ordersRepository = new OrdersRepository(db);
-    this.orderTicketReservationsRepository =
-      new OrderTicketReservationsRepository(db);
-    this.paymentsRepository = new PaymentsRepository(db);
-    this.notificationService = new NotificationService(
-      db,
-      new UsersRepository(db),
-    );
-  }
+  constructor(
+    private readonly ordersRepository: OrdersRepository,
+    private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
+    private readonly paymentsRepository: PaymentsRepository,
+    private readonly notificationService: NotificationService,
+    private readonly syncPaymentWithProvider: SyncPaymentFunction,
+  ) {}
 
   /**
    * Processes expired orders
@@ -118,13 +115,10 @@ export class OrderCleanupService {
       // Sync each pending payment
       for (const payment of pendingPayments) {
         try {
-          // Get provider instance
-          const provider = getPaymentProvider(payment.provider);
-
-          // Create adapter with provider
-          const adapter = new PaymentWebhookAdapter(provider, this.db);
-
-          await adapter.syncPaymentStatus(payment.providerPaymentId);
+          await this.syncPaymentWithProvider(
+            payment.providerPaymentId,
+            payment.provider,
+          );
 
           logger.debug('Payment status synced before order expiration', {
             orderId,

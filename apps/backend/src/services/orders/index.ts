@@ -12,6 +12,7 @@ import {CreateOrderRouteBody} from '~/controllers/orders/validation';
 import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
 import {calculateOrderFees} from '~/utils/fees';
 import {getStorageProvider} from '~/services/storage';
+import type {PaymentSyncService} from '~/services/payments/sync';
 
 export class OrdersService {
   private readonly storageProvider = getStorageProvider();
@@ -23,7 +24,29 @@ export class OrdersService {
     private readonly eventTicketWavesRepository: EventTicketWavesRepository,
     private readonly listingTicketsRepository: ListingTicketsRepository,
     private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
+    private readonly paymentSyncService: PaymentSyncService,
   ) {}
+
+  /**
+   * Syncs payment status with the provider if the order is pending.
+   * This is called when fetching an order to ensure the user sees the latest status
+   * (e.g., after returning from payment provider redirect).
+   *
+   * This is the "sync on return" pattern - industry standard for handling
+   * webhook delays from payment providers.
+   */
+  private async syncPaymentStatusIfPending(orderId: string): Promise<void> {
+    // Get the order first to check status
+    const order = await this.ordersRepository.getByIdWithItems(orderId);
+
+    // Only sync if order exists and is pending
+    if (!order || order.status !== 'pending') {
+      return;
+    }
+
+    // Use the injected sync service
+    await this.paymentSyncService.syncPendingOrderPayment(orderId);
+  }
 
   async createOrder(data: CreateOrderRouteBody, userId: string) {
     // Check if user already has a pending order for this event
@@ -250,6 +273,11 @@ export class OrdersService {
   }
 
   async getOrderById(orderId: string, userId: string) {
+    // Sync payment status with provider if order is pending
+    // This ensures user sees latest status after returning from payment provider
+    await this.syncPaymentStatusIfPending(orderId);
+
+    // Fetch fresh order data after potential sync
     const order = await this.ordersRepository.getByIdWithItems(orderId);
 
     if (!order) {

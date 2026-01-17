@@ -2,7 +2,7 @@ import {useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
-import {TicketDocumentUploadModal, TicketUploadCarousel} from '~/components';
+import {TicketUploadModal} from '~/components';
 import {Card, CardContent} from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
 import {LoadingSpinner} from '~/components/LoadingScreen';
@@ -198,31 +198,24 @@ export function UploadTicketsView() {
       {/* Empty State */}
       {hasNoTickets && <EmptyState />}
 
-      {/* Single Upload Modal */}
+      {/* Single Ticket Upload Modal (from URL param) */}
       {ticketToUpload && (
-        <TicketDocumentUploadModal
-          ticketId={ticketToUpload.id}
-          hasExistingDocument={ticketToUpload.hasDocument || false}
+        <TicketUploadModal
+          tickets={ticketToUpload}
           open={!!search.subirTicket}
           onOpenChange={open => {
-            if (!open) {
-              handleCloseModal();
-            }
+            if (!open) handleCloseModal();
           }}
         />
       )}
 
-      {/* Carousel Upload Modal */}
+      {/* Batch Upload Modal */}
       {ticketsNeedingUpload.length > 0 && (
-        <TicketUploadCarousel
+        <TicketUploadModal
           tickets={ticketsNeedingUpload}
           open={carouselOpen}
           onOpenChange={setCarouselOpen}
-          initialIndex={
-            search.subirTicket
-              ? ticketsNeedingUpload.findIndex(t => t.id === search.subirTicket)
-              : 0
-          }
+          initialTicketId={search.subirTicket}
         />
       )}
     </div>

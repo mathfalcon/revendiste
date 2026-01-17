@@ -10,8 +10,6 @@ import {
   type GetFaceLivenessSessionResultsCommandOutput,
 } from '@aws-sdk/client-rekognition';
 import sharp from 'sharp';
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
 import {AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY} from '~/config/env';
 import {UsersRepository} from '~/repositories/users';
 import {
@@ -131,17 +129,14 @@ interface DocumentExtractionResult {
 export class IdentityVerificationService {
   private rekognitionClient: RekognitionClient;
   private storageProvider: IStorageProvider;
-  private auditRepository: VerificationAuditRepository;
-  private notificationService: NotificationService;
 
   constructor(
-    private usersRepository: UsersRepository,
-    private db: Kysely<DB>,
+    private readonly usersRepository: UsersRepository,
+    private readonly auditRepository: VerificationAuditRepository,
+    private readonly notificationService: NotificationService,
   ) {
     this.rekognitionClient = this.createRekognitionClient();
     this.storageProvider = getStorageProvider();
-    this.auditRepository = new VerificationAuditRepository(db);
-    this.notificationService = new NotificationService(db, usersRepository);
   }
 
   // ==========================================================================

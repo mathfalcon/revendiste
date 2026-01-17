@@ -13,7 +13,12 @@ import {
 import multer from 'multer';
 import {STSClient, AssumeRoleCommand} from '@aws-sdk/client-sts';
 import {IdentityVerificationService} from '~/services/identity-verification';
-import {UsersRepository} from '~/repositories/users';
+import {NotificationService} from '~/services/notifications';
+import {
+  UsersRepository,
+  VerificationAuditRepository,
+  NotificationsRepository,
+} from '~/repositories';
 import {db} from '~/db';
 import {requireAuthMiddleware} from '~/middleware';
 import {BadRequestError, ApiErrorResponse} from '~/errors';
@@ -58,12 +63,24 @@ type VerifyLivenessResultsResponse = ReturnType<
   IdentityVerificationService['verifyLivenessResults']
 >;
 
+// Create shared repositories
+const usersRepository = new UsersRepository(db);
+const notificationsRepository = new NotificationsRepository(db);
+const verificationAuditRepository = new VerificationAuditRepository(db);
+
+// Create notification service
+const notificationService = new NotificationService(
+  notificationsRepository,
+  usersRepository,
+);
+
 @Route('identity-verification')
 @Tags('Identity Verification')
 export class IdentityVerificationController {
   private service = new IdentityVerificationService(
-    new UsersRepository(db),
-    db,
+    usersRepository,
+    verificationAuditRepository,
+    notificationService,
   );
 
   /**
