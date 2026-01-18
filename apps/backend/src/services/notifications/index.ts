@@ -1,5 +1,9 @@
 export {NotificationService} from './NotificationService';
-export type {CreateNotificationParams} from './NotificationService';
+export type {
+  CreateNotificationParams,
+  CreateDebouncedNotificationParams,
+  DebounceConfig,
+} from './NotificationService';
 export {ConsoleEmailProvider} from './providers/ConsoleEmailProvider';
 export {ResendEmailProvider} from './providers/ResendEmailProvider';
 export type {IEmailProvider} from './providers/IEmailProvider';

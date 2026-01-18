@@ -72,7 +72,6 @@ const ticketListingsService = new TicketListingsService(
 const sellerEarningsService = new SellerEarningsService(
   sellerEarningsRepository,
   orderTicketReservationsRepository,
-  listingTicketsRepository,
 );
 
 // Create dLocal adapter with all dependencies

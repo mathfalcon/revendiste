@@ -365,6 +365,7 @@ export class OrdersService {
         price: ticket.price,
         soldAt: ticket.soldAt,
         hasDocument: !!ticket.document,
+        reservationStatus: ticket.reservationStatus,
         ticketWave: ticket.ticketWaveName
           ? {
               name: ticket.ticketWaveName,

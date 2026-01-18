@@ -302,4 +302,5 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('tl.deletedAt', 'is', null)
       .execute();
   }
+
 }

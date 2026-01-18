@@ -512,6 +512,14 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ListingTicketRefundStatus": {
+				"type": "string",
+				"enum": [
+					"refund_failed",
+					"refund_pending",
+					"refunded"
+				]
+			},
 			"CreateTicketListingResponse": {
 				"properties": {
 					"ticketWaveId": {
@@ -548,6 +556,14 @@
 									"type": "number",
 									"format": "double"
 								},
+								"refundStatus": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/ListingTicketRefundStatus"
+										}
+									],
+									"nullable": true
+								},
 								"price": {
 									"type": "string"
 								},
@@ -578,6 +594,7 @@
 							},
 							"required": [
 								"ticketNumber",
+								"refundStatus",
 								"price",
 								"listingId",
 								"soldAt",
@@ -1054,6 +1071,14 @@
 						"type": "number",
 						"format": "double"
 					},
+					"refundStatus": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ListingTicketRefundStatus"
+							}
+						],
+						"nullable": true
+					},
 					"price": {
 						"type": "string"
 					},
@@ -1084,6 +1109,7 @@
 				},
 				"required": [
 					"ticketNumber",
+					"refundStatus",
 					"price",
 					"listingId",
 					"soldAt",
@@ -1112,6 +1138,14 @@
 						"type": "number",
 						"format": "double"
 					},
+					"refundStatus": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ListingTicketRefundStatus"
+							}
+						],
+						"nullable": true
+					},
 					"price": {
 						"type": "string"
 					},
@@ -1142,6 +1176,7 @@
 				},
 				"required": [
 					"ticketNumber",
+					"refundStatus",
 					"price",
 					"listingId",
 					"soldAt",
@@ -1834,6 +1869,15 @@
 									"type": "object",
 									"nullable": true
 								},
+								"reservationStatus": {
+									"type": "string",
+									"enum": [
+										"active",
+										"refund_pending",
+										"refunded",
+										"cancelled"
+									]
+								},
 								"hasDocument": {
 									"type": "boolean"
 								},
@@ -1852,6 +1896,7 @@
 							"required": [
 								"document",
 								"ticketWave",
+								"reservationStatus",
 								"hasDocument",
 								"soldAt",
 								"price",
@@ -1984,6 +2029,12 @@
 						},
 						"type": "array"
 					},
+					"paidOut": {
+						"items": {
+							"$ref": "#/components/schemas/BalanceByCurrency"
+						},
+						"type": "array"
+					},
 					"total": {
 						"items": {
 							"$ref": "#/components/schemas/BalanceByCurrency"
@@ -1996,6 +2047,7 @@
 					"retained",
 					"pending",
 					"payoutPending",
+					"paidOut",
 					"total"
 				],
 				"type": "object",
@@ -6756,6 +6808,9 @@
 						},
 						"type": "array"
 					},
+					"userId": {
+						"type": "string"
+					},
 					"channelStatus": {
 						"anyOf": [
 							{
@@ -6785,9 +6840,6 @@
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"userId": {
-						"type": "string"
 					}
 				},
 				"required": [
@@ -6797,10 +6849,10 @@
 					"status",
 					"updatedAt",
 					"channels",
+					"userId",
 					"channelStatus",
 					"retryCount",
-					"seenAt",
-					"userId"
+					"seenAt"
 				],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
@@ -6819,8 +6871,10 @@
 					"auth_primary_email_changed",
 					"auth_reset_password_code",
 					"auth_verification_code",
+					"buyer_ticket_cancelled",
 					"document_reminder",
 					"document_uploaded",
+					"document_uploaded_batch",
 					"identity_verification_completed",
 					"identity_verification_failed",
 					"identity_verification_manual_review",
@@ -6833,6 +6887,7 @@
 					"payout_completed",
 					"payout_failed",
 					"payout_processing",
+					"seller_earnings_retained",
 					"ticket_sold_seller"
 				]
 			},
@@ -6871,7 +6926,8 @@
 							"retry_payment",
 							"view_payout",
 							"start_verification",
-							"publish_tickets"
+							"publish_tickets",
+							"view_earnings"
 						]
 					}
 				},

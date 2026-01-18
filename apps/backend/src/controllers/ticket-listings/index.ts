@@ -24,6 +24,7 @@ import {
   OrdersRepository,
   UsersRepository,
   NotificationsRepository,
+  NotificationBatchesRepository,
   TicketDocumentsRepository,
   OrderTicketReservationsRepository,
 } from '~/repositories';
@@ -74,11 +75,13 @@ const ticketDocumentsRepository = new TicketDocumentsRepository(db);
 const orderTicketReservationsRepository = new OrderTicketReservationsRepository(
   db,
 );
+const notificationBatchesRepository = new NotificationBatchesRepository(db);
 
 // Create shared services
 const notificationService = new NotificationService(
   notificationsRepository,
   usersRepository,
+  notificationBatchesRepository,
 );
 
 @Route('ticket-listings')

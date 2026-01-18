@@ -134,6 +134,19 @@ export function generateNotificationText<T extends NotificationType>(
       };
     }
 
+    case 'document_uploaded_batch': {
+      const meta =
+        metadata as TypedNotificationMetadata<'document_uploaded_batch'>;
+      const countText =
+        meta.uploadedCount === 1
+          ? '1 entrada está lista'
+          : `${meta.uploadedCount} entradas están listas`;
+      return {
+        title: '¡Tus entradas están listas!',
+        description: `${countText} para ${meta.eventName}. Ya puedes acceder a ellas.`,
+      };
+    }
+
     case 'payout_processing': {
       // Legacy notification type - no longer used, but kept for backward compatibility
       // Map to completed text since processing now goes directly to completed
@@ -290,6 +303,39 @@ export function generateNotificationText<T extends NotificationType>(
         title: 'Verificación en revisión',
         description:
           'Tu verificación de identidad está siendo revisada por nuestro equipo. Te avisaremos cuando esté lista.',
+      };
+    }
+
+    // Missing document refund notification types
+    case 'seller_earnings_retained': {
+      const meta =
+        metadata as TypedNotificationMetadata<'seller_earnings_retained'>;
+      const ticketText =
+        meta.ticketCount === 1 ? '1 ticket' : `${meta.ticketCount} tickets`;
+      const reasonText =
+        meta.reason === 'missing_document'
+          ? 'no subiste los documentos a tiempo'
+          : 'incumplimiento de las políticas';
+      return {
+        title: 'Ganancias retenidas',
+        description: `Tus ganancias por ${ticketText} de ${meta.eventName} fueron retenidas porque ${reasonText}. Nuestro equipo de soporte revisará tu caso.`,
+      };
+    }
+
+    case 'buyer_ticket_cancelled': {
+      const meta =
+        metadata as TypedNotificationMetadata<'buyer_ticket_cancelled'>;
+      const ticketText =
+        meta.ticketCount === 1
+          ? 'Tu entrada ha sido cancelada'
+          : `Tus ${meta.ticketCount} entradas han sido canceladas`;
+      const reasonText =
+        meta.reason === 'seller_failed_to_upload'
+          ? 'El vendedor no subió los documentos a tiempo'
+          : 'Hubo un problema con el vendedor';
+      return {
+        title: 'Entrada cancelada - Reembolso en proceso',
+        description: `${ticketText} para ${meta.eventName}. ${reasonText}. Tu reembolso está en proceso.`,
       };
     }
 

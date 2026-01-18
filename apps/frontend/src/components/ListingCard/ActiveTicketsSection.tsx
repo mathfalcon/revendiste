@@ -57,7 +57,9 @@ export function ActiveTicketsSection({
 
   // Different styling for expired vs active tickets
   const sectionLabel = isEventPast ? 'Tickets expirados' : 'Tickets activos';
-  const iconColorClass = isEventPast ? 'text-muted-foreground' : 'text-blue-600';
+  const iconColorClass = isEventPast
+    ? 'text-muted-foreground'
+    : 'text-blue-600';
   const iconBgClass = isEventPast ? 'bg-muted' : 'bg-blue-500/10';
   const badgeClass = isEventPast
     ? 'text-muted-foreground bg-muted'
@@ -85,7 +87,9 @@ export function ActiveTicketsSection({
                 )}
               </div>
               <span>{sectionLabel}</span>
-              <span className={cn('text-xs px-2 py-0.5 rounded-full', badgeClass)}>
+              <span
+                className={cn('text-xs px-2 py-0.5 rounded-full', badgeClass)}
+              >
                 {tickets.length}
               </span>
             </div>
@@ -102,7 +106,10 @@ export function ActiveTicketsSection({
             {tickets.map(ticket => (
               <div
                 key={ticket.id}
-                className={cn('rounded-xl border p-3 transition-all', cardBorderClass)}
+                className={cn(
+                  'rounded-xl border p-3 transition-all',
+                  cardBorderClass,
+                )}
               >
                 <div className='flex items-center justify-between gap-3'>
                   {/* Left side: Ticket info */}
@@ -125,7 +132,9 @@ export function ActiveTicketsSection({
                         <p
                           className={cn(
                             'font-semibold',
-                            isEventPast ? 'text-muted-foreground' : 'text-foreground',
+                            isEventPast
+                              ? 'text-muted-foreground'
+                              : 'text-foreground',
                           )}
                         >
                           Ticket #{ticket.ticketNumber} - {ticketWaveName}

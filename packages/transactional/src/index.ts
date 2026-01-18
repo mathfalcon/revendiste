@@ -24,6 +24,8 @@ export * from '../emails/base-template';
 
 // Notification email templates
 export * from '../emails/document-reminder-email';
+export * from '../emails/document-uploaded-email';
+export * from '../emails/document-uploaded-batch-email';
 export * from '../emails/order-confirmed-email';
 export * from '../emails/order-expired-email';
 export * from '../emails/payment-failed-email';
@@ -45,6 +47,10 @@ export * from '../emails/new-device-sign-in-email';
 export * from '../emails/identity-verification-completed-email';
 export * from '../emails/identity-verification-rejected-email';
 
+// Missing document refund email templates
+export * from '../emails/seller-earnings-retained-email';
+export * from '../emails/buyer-ticket-cancelled-email';
+
 export {render, pretty, toPlainText} from '@react-email/render';
 
 // Email template mapping utilities
@@ -53,6 +59,8 @@ export type {NotificationType, EmailTemplateProps} from './email-templates';
 
 // Export prop types for type safety (so backend knows what props each template needs)
 export type {DocumentReminderEmailProps} from '../emails/document-reminder-email';
+export type {DocumentUploadedEmailProps} from '../emails/document-uploaded-email';
+export type {DocumentUploadedBatchEmailProps} from '../emails/document-uploaded-batch-email';
 export type {OrderConfirmedEmailProps} from '../emails/order-confirmed-email';
 export type {OrderExpiredEmailProps} from '../emails/order-expired-email';
 export type {PaymentFailedEmailProps} from '../emails/payment-failed-email';
@@ -73,6 +81,10 @@ export type {NewDeviceSignInEmailProps} from '../emails/new-device-sign-in-email
 // Identity verification email prop types
 export type {IdentityVerificationCompletedEmailProps} from '../emails/identity-verification-completed-email';
 export type {IdentityVerificationRejectedEmailProps} from '../emails/identity-verification-rejected-email';
+
+// Missing document refund email prop types
+export type {SellerEarningsRetainedEmailProps} from '../emails/seller-earnings-retained-email';
+export type {BuyerTicketCancelledEmailProps} from '../emails/buyer-ticket-cancelled-email';
 
 /**
  * Render a React Email component to HTML string

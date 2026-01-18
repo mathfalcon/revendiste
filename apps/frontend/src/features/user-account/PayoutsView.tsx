@@ -135,6 +135,7 @@ export function PayoutsView() {
                     retained={balance.retained}
                     pending={balance.pending}
                     payoutPending={balance.payoutPending}
+                    paidOut={balance.paidOut}
                     total={balance.total}
                   />
                 </div>

@@ -29,7 +29,6 @@ import {
   PayoutMethodsRepository,
   PayoutEventsRepository,
   OrderTicketReservationsRepository,
-  ListingTicketsRepository,
   PayoutDocumentsRepository,
   UsersRepository,
   NotificationsRepository,
@@ -89,7 +88,6 @@ export class PayoutsController {
   private sellerEarningsService = new SellerEarningsService(
     new SellerEarningsRepository(db),
     new OrderTicketReservationsRepository(db),
-    new ListingTicketsRepository(db),
   );
 
   private payoutsService = new PayoutsService(

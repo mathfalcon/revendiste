@@ -14,6 +14,8 @@ import {
   Ticket,
   FileCheck,
   Clock,
+  XCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import {getOrderTicketsQuery} from '~/lib/api/order';
 import {useState} from 'react';
@@ -128,7 +130,32 @@ export function TicketViewModal({
             />
 
             {/* Document section */}
-            {currentTicket.hasDocument && currentTicket.document?.url ? (
+            {currentTicket.reservationStatus === 'cancelled' ? (
+              <Alert className='bg-destructive/10 border-destructive/30'>
+                <AlertTriangle className='h-4 w-4 text-destructive' />
+                <AlertDescription className='text-destructive'>
+                  <span className='font-semibold'>Ticket cancelado</span> - El
+                  vendedor no subió el documento a tiempo. Tu reembolso está en
+                  proceso.
+                </AlertDescription>
+              </Alert>
+            ) : currentTicket.reservationStatus === 'refunded' ? (
+              <Alert className='bg-muted/50 border-muted'>
+                <XCircle className='h-4 w-4 text-muted-foreground' />
+                <AlertDescription className='text-muted-foreground'>
+                  <span className='font-semibold'>Ticket reembolsado</span> -
+                  Este ticket fue reembolsado.
+                </AlertDescription>
+              </Alert>
+            ) : currentTicket.reservationStatus === 'refund_pending' ? (
+              <Alert className='bg-yellow-500/10 border-yellow-500/30'>
+                <Clock className='h-4 w-4 text-yellow-600' />
+                <AlertDescription className='text-yellow-700'>
+                  <span className='font-semibold'>Reembolso en proceso</span> -
+                  Tu reembolso está siendo procesado.
+                </AlertDescription>
+              </Alert>
+            ) : currentTicket.hasDocument && currentTicket.document?.url ? (
               <div className='space-y-3'>
                 {/* Document status */}
                 <div className='flex items-center gap-2 text-sm'>

@@ -81,7 +81,6 @@ const ticketListingsService = new TicketListingsService(
 const sellerEarningsService = new SellerEarningsService(
   sellerEarningsRepository,
   orderTicketReservationsRepository,
-  listingTicketsRepository,
 );
 
 // Create adapter factory function for payment sync

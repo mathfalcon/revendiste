@@ -188,11 +188,17 @@ export function FileDropzone({
             : 'border-muted-foreground/25',
           selectedFile && 'bg-muted/50',
           disabled && 'opacity-50 cursor-not-allowed',
+          !selectedFile && !disabled && 'cursor-pointer hover:border-primary/50 hover:bg-muted/30',
         )}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
+        onClick={() => {
+          if (!selectedFile && !disabled) {
+            fileInputRef.current?.click();
+          }
+        }}
       >
         <input
           id={inputId}
@@ -237,7 +243,10 @@ export function FileDropzone({
               type='button'
               variant='outline'
               size='sm'
-              onClick={() => fileInputRef.current?.click()}
+              onClick={e => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
               disabled={disabled}
             >
               Seleccionar archivo

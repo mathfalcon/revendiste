@@ -159,8 +159,57 @@ export async function notifyPaymentFailed(
 
 /**
  * Notify buyer when seller uploads ticket documents
+ *
+ * Uses debouncing to batch multiple uploads for the same order into a single notification.
+ * If multiple tickets are uploaded within 5 minutes, only one email is sent.
+ *
+ * IMPORTANT: Requires NotificationBatchesRepository to be configured in the NotificationService
+ * for debouncing to work. If not configured, falls back to immediate notifications.
  */
 export async function notifyDocumentUploaded(
+  service: NotificationService,
+  params: {
+    buyerUserId: string;
+    orderId: string;
+    eventName: string;
+    ticketCount: number;
+  },
+) {
+  // Default debounce window: 5 minutes
+  // This allows multiple uploads for the same order to be batched into one notification
+  const DEBOUNCE_WINDOW_MS = 5 * 60 * 1000;
+
+  return await service.createDebouncedNotification({
+    userId: params.buyerUserId,
+    type: 'document_uploaded',
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'view_order',
+        label: 'Ver y descargar entradas',
+        url: `${APP_BASE_URL}/cuenta/tickets?orden=${params.orderId}`,
+      },
+    ],
+    metadata: {
+      type: 'document_uploaded',
+      orderId: params.orderId,
+      eventName: params.eventName,
+      ticketCount: params.ticketCount,
+    },
+    debounce: {
+      key: `document_uploaded:${params.orderId}`,
+      windowMs: DEBOUNCE_WINDOW_MS,
+    },
+  });
+}
+
+/**
+ * Notify buyer when seller uploads ticket documents (immediate, non-debounced)
+ *
+ * Use this for testing or when you explicitly want immediate notifications.
+ * For production, prefer notifyDocumentUploaded() which uses debouncing.
+ */
+export async function notifyDocumentUploadedImmediate(
   service: NotificationService,
   params: {
     buyerUserId: string;
@@ -506,6 +555,80 @@ export async function notifyIdentityVerificationManualReview(
     actions: null,
     metadata: {
       type: 'identity_verification_manual_review',
+    },
+  });
+}
+
+// ============================================================================
+// Missing Document Refund System Notifications
+// ============================================================================
+
+/**
+ * Notify seller when their earnings are retained due to missing documents
+ * Sent via email + in_app (high value - seller needs to know)
+ */
+export async function notifySellerEarningsRetained(
+  service: NotificationService,
+  params: {
+    sellerUserId: string;
+    eventName: string;
+    ticketCount: number;
+    reason: 'missing_document' | 'dispute' | 'fraud' | 'other';
+    totalAmount?: string;
+    currency?: 'UYU' | 'USD';
+  },
+) {
+  return await service.createNotification({
+    userId: params.sellerUserId,
+    type: 'seller_earnings_retained',
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'view_earnings',
+        label: 'Ver ganancias',
+        url: `${APP_BASE_URL}/cuenta/ganancias`,
+      },
+    ],
+    metadata: {
+      type: 'seller_earnings_retained',
+      eventName: params.eventName,
+      ticketCount: params.ticketCount,
+      reason: params.reason,
+      totalAmount: params.totalAmount,
+      currency: params.currency,
+    },
+  });
+}
+
+/**
+ * Notify buyer when their tickets are cancelled due to seller failure
+ * Sent via email + in_app (high value - buyer needs to know about refund)
+ */
+export async function notifyBuyerTicketCancelled(
+  service: NotificationService,
+  params: {
+    buyerUserId: string;
+    eventName: string;
+    ticketCount: number;
+    reason: 'seller_failed_to_upload' | 'seller_fraud' | 'other';
+  },
+) {
+  return await service.createNotification({
+    userId: params.buyerUserId,
+    type: 'buyer_ticket_cancelled',
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'view_order',
+        label: 'Ver mis tickets',
+        url: `${APP_BASE_URL}/cuenta/tickets`,
+      },
+    ],
+    metadata: {
+      type: 'buyer_ticket_cancelled',
+      eventName: params.eventName,
+      ticketCount: params.ticketCount,
+      reason: params.reason,
     },
   });
 }

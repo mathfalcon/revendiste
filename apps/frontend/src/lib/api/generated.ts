@@ -45,8 +45,10 @@ export enum NotificationType {
   AuthPrimaryEmailChanged = "auth_primary_email_changed",
   AuthResetPasswordCode = "auth_reset_password_code",
   AuthVerificationCode = "auth_verification_code",
+  BuyerTicketCancelled = "buyer_ticket_cancelled",
   DocumentReminder = "document_reminder",
   DocumentUploaded = "document_uploaded",
+  DocumentUploadedBatch = "document_uploaded_batch",
   IdentityVerificationCompleted = "identity_verification_completed",
   IdentityVerificationFailed = "identity_verification_failed",
   IdentityVerificationManualReview = "identity_verification_manual_review",
@@ -59,6 +61,7 @@ export enum NotificationType {
   PayoutCompleted = "payout_completed",
   PayoutFailed = "payout_failed",
   PayoutProcessing = "payout_processing",
+  SellerEarningsRetained = "seller_earnings_retained",
   TicketSoldSeller = "ticket_sold_seller",
 }
 
@@ -95,6 +98,12 @@ export enum UploadAvailabilityReason {
   EventEnded = "event_ended",
   TooEarly = "too_early",
   Unknown = "unknown",
+}
+
+export enum ListingTicketRefundStatus {
+  RefundFailed = "refund_failed",
+  RefundPending = "refund_pending",
+  Refunded = "refunded",
 }
 
 export enum EventTicketCurrency {
@@ -268,6 +277,7 @@ export interface CreateTicketListingResponse {
   listingTickets: {
     /** @format double */
     ticketNumber: number;
+    refundStatus: ListingTicketRefundStatus | null;
     price: string;
     listingId: string;
     /** @format date-time */
@@ -412,6 +422,7 @@ export interface UploadDocumentResponse {
 export interface UpdateTicketPriceResponse {
   /** @format double */
   ticketNumber: number;
+  refundStatus: ListingTicketRefundStatus | null;
   price: string;
   listingId: string;
   /** @format date-time */
@@ -433,6 +444,7 @@ export interface UpdateTicketPriceRouteBody {
 export interface RemoveTicketResponse {
   /** @format double */
   ticketNumber: number;
+  refundStatus: ListingTicketRefundStatus | null;
   price: string;
   listingId: string;
   /** @format date-time */
@@ -624,6 +636,7 @@ export interface GetOrderTicketsResponse {
     ticketWave: {
       name: string;
     } | null;
+    reservationStatus: "active" | "refund_pending" | "refunded" | "cancelled";
     hasDocument: boolean;
     /** @format date-time */
     soldAt: string | null;
@@ -661,6 +674,7 @@ export interface SellerBalance {
   retained: BalanceByCurrency[];
   pending: BalanceByCurrency[];
   payoutPending: BalanceByCurrency[];
+  paidOut: BalanceByCurrency[];
   total: BalanceByCurrency[];
 }
 
@@ -1900,12 +1914,12 @@ export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDesc
   /** @format date-time */
   updatedAt: string;
   channels: ("email" | "in_app" | "sms")[];
+  userId: string;
   channelStatus: string | number | boolean | JsonArray | JsonObject | null;
   /** @format double */
   retryCount: number;
   /** @format date-time */
   seenAt: string | null;
-  userId: string;
 }
 
 /** Construct a type with the properties of T except for those in type K. */
@@ -1945,7 +1959,8 @@ export interface InferTypeofBaseActionSchema {
     | "retry_payment"
     | "view_payout"
     | "start_verification"
-    | "publish_tickets";
+    | "publish_tickets"
+    | "view_earnings";
 }
 
 export type NotificationAction = InferTypeofBaseActionSchema;

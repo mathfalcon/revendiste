@@ -23,7 +23,11 @@ import {NotFoundError, UnauthorizedError} from '~/errors';
 import {NOTIFICATION_ERROR_MESSAGES} from '~/constants/error-messages';
 import type {TypedNotification} from '~/services/notifications/types';
 import type {PaginatedResponse} from '~/types';
-import {UsersRepository, NotificationsRepository} from '~/repositories';
+import {
+  UsersRepository,
+  NotificationsRepository,
+  NotificationBatchesRepository,
+} from '~/repositories';
 
 interface GetNotificationsQuery extends PaginationQuery {
   includeSeen?: boolean;
@@ -42,6 +46,7 @@ export class NotificationsController {
   private service = new NotificationService(
     new NotificationsRepository(db),
     new UsersRepository(db),
+    new NotificationBatchesRepository(db),
   );
 
   @Get('/')

@@ -5,6 +5,7 @@ import {
   Clock,
   XCircle,
   Eye,
+  AlertTriangle,
 } from 'lucide-react';
 import {UploadAvailabilityReason} from '~/lib';
 import {getUploadUnavailableMessage} from '~/utils';
@@ -14,7 +15,8 @@ export type TicketStatus =
   | 'attention'
   | 'pending'
   | 'expired'
-  | 'waiting';
+  | 'waiting'
+  | 'will_be_refunded';
 
 export interface TicketStatusConfig {
   status: TicketStatus;
@@ -38,6 +40,7 @@ interface GetStatusConfigParams {
   canUpload: boolean;
   documentNeedsAttention: boolean;
   isEventPast: boolean;
+  isSold: boolean;
   uploadUnavailableReason?: UploadAvailabilityReason | null;
   uploadAvailableAt?: string | null;
 }
@@ -45,15 +48,40 @@ interface GetStatusConfigParams {
 /**
  * Get the status configuration for a sold ticket based on its current state.
  * This determines the visual styling, badge text, and available actions.
+ *
+ * Refund status is derived: if event has ended + no document + ticket was sold = will be refunded
  */
 export function getTicketStatusConfig({
   hasDocument,
   canUpload,
   documentNeedsAttention,
   isEventPast,
+  isSold,
   uploadUnavailableReason,
   uploadAvailableAt,
 }: GetStatusConfigParams): TicketStatusConfig {
+  // Priority 0: Derived refund status - seller failed to deliver
+  // If event has ended, ticket was sold, and no document uploaded = will be refunded
+  if (isEventPast && isSold && !hasDocument) {
+    return {
+      status: 'will_be_refunded',
+      statusText: 'Será reembolsado',
+      statusIcon: <AlertTriangle className='h-4 w-4' />,
+      cardClass: 'border-yellow-500/50 bg-yellow-500/10',
+      badgeClass: 'bg-yellow-500/20 text-yellow-600',
+      iconBgClass: 'bg-yellow-500/20',
+      iconClass: 'text-yellow-600',
+      buttonClass: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30',
+      buttonIcon: <AlertTriangle className='h-4 w-4' />,
+      buttonText: 'Ver detalles',
+      disabled: true,
+      tooltipMessage:
+        'No subiste el ticket antes del evento. El comprador será reembolsado.',
+      hideButton: true,
+      isViewOnly: true,
+    };
+  }
+
   // Priority 1: Document exists
   if (hasDocument) {
     if (documentNeedsAttention) {

@@ -37,6 +37,7 @@ export function SoldTicketCard({
     canUpload,
     documentNeedsAttention,
     isEventPast,
+    isSold: !!ticket.soldAt,
     uploadUnavailableReason: ticket.uploadUnavailableReason,
     uploadAvailableAt: ticket.uploadAvailableAt,
   });
@@ -77,6 +78,7 @@ export function SoldTicketCard({
                   text={config.statusText}
                   icon={config.statusIcon}
                   className={config.badgeClass}
+                  tooltipMessage={config.hideButton ? config.tooltipMessage : null}
                 />
               )}
             </div>
@@ -116,13 +118,15 @@ interface StatusBadgeProps {
   text: string;
   icon: React.ReactNode;
   className: string;
+  tooltipMessage?: string | null;
 }
 
-function StatusBadge({text, icon, className}: StatusBadgeProps) {
-  return (
+function StatusBadge({text, icon, className, tooltipMessage}: StatusBadgeProps) {
+  const badge = (
     <span
       className={cn(
         'inline-flex items-center text-xs px-2 py-0.5 rounded-full',
+        tooltipMessage && 'cursor-help',
         className,
       )}
     >
@@ -130,6 +134,22 @@ function StatusBadge({text, icon, className}: StatusBadgeProps) {
       <span className='ml-1'>{text}</span>
     </span>
   );
+
+  if (tooltipMessage) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{badge}</TooltipTrigger>
+        <TooltipContent side='top' className='max-w-[280px]'>
+          <div className='flex items-start gap-2'>
+            <Info className='h-4 w-4 shrink-0 mt-0.5' />
+            <p>{tooltipMessage}</p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return badge;
 }
 
 interface ActionButtonProps {

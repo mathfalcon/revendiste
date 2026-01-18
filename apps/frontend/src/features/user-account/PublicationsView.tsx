@@ -144,27 +144,25 @@ export function PublicationsView() {
 
       {/* Pending Tickets Alert */}
       {allTicketsNeedingUpload.length > 0 && !search.subirPublicacion && (
-        <Alert variant='destructive' className='bg-background'>
+        <Alert variant='destructive' className='bg-background flex'>
           <AlertCircle className='h-4 w-4' />
-          <div className='flex items-center justify-between w-full'>
-            <AlertDescription className='flex-1'>
-              Tenés {allTicketsNeedingUpload.length}{' '}
-              {allTicketsNeedingUpload.length === 1
-                ? 'ticket pendiente por subir'
-                : 'tickets pendientes por subir'}
-            </AlertDescription>
-            {allTicketsNeedingUpload.length > 0 && (
-              <Button
-                onClick={() => setCarouselOpen(true)}
-                variant='default'
-                size='sm'
-                className='ml-4'
-              >
-                <Upload className='mr-2 h-4 w-4' />
-                Subir todos ({allTicketsNeedingUpload.length})
-              </Button>
-            )}
-          </div>
+          <AlertDescription className='flex-1 flex items-center'>
+            Tenés {allTicketsNeedingUpload.length}{' '}
+            {allTicketsNeedingUpload.length === 1
+              ? 'ticket pendiente por subir'
+              : 'tickets pendientes por subir'}
+          </AlertDescription>
+          {allTicketsNeedingUpload.length > 0 && (
+            <Button
+              onClick={() => setCarouselOpen(true)}
+              variant='default'
+              size='sm'
+              className='ml-4'
+            >
+              <Upload className='mr-2 h-4 w-4' />
+              Subir todos ({allTicketsNeedingUpload.length})
+            </Button>
+          )}
         </Alert>
       )}
 
@@ -248,8 +246,8 @@ export function PublicationsView() {
         />
       )}
 
-      {/* Batch Upload Modal */}
-      {ticketsForCarousel.length > 0 && (
+      {/* Batch Upload Modal - keep mounted while open to prevent unmount during completion screen */}
+      {(carouselOpen || ticketsForCarousel.length > 0) && (
         <TicketUploadModal
           tickets={ticketsForCarousel}
           open={carouselOpen}

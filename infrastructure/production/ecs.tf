@@ -336,6 +336,48 @@ resource "aws_ecs_task_definition" "cronjob_scrape_events" {
   }
 }
 
+# Task definition for process-pending-notifications (processes batched/debounced notifications)
+resource "aws_ecs_task_definition" "cronjob_process_notifications" {
+  family                   = "${local.name_prefix}-cronjob-process-notifications"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.cronjob_cpu
+  memory                   = var.cronjob_memory
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([
+    {
+      name  = "cronjob"
+      image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
+
+      command = ["node", "dist/src/scripts/run-job.js", "process-pending-notifications"]
+
+      environment = [
+        {
+          name  = "NODE_ENV"
+          value = "production"
+        }
+      ]
+
+      secrets = local.backend_secrets
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.cronjob.name
+          "awslogs-region"        = data.aws_region.current.name
+          "awslogs-stream-prefix" = "process-notifications"
+        }
+      }
+    }
+  ])
+
+  tags = {
+    Name = "${local.name_prefix}-cronjob-process-notifications"
+  }
+}
+
 # Backend ECS Service
 resource "aws_ecs_service" "backend" {
   name            = "${local.name_prefix}-backend"

@@ -70,6 +70,58 @@ await notificationService.createNotification({
 
 **Note:** Title and description are automatically generated from the notification type and metadata - you don't need to provide them when creating notifications.
 
+## Debounced/Batched Notifications
+
+Some notifications benefit from batching to avoid spam. For example, when a seller uploads multiple ticket documents for the same order, we don't want to send separate emails for each upload. Instead, we batch them into a single notification.
+
+### How It Works
+
+1. **Debounce Key**: Notifications are grouped by a unique key (e.g., `document_uploaded:{orderId}`)
+2. **Time Window**: When the first notification is added to a batch, a time window starts (default: 5 minutes)
+3. **Batching**: Additional notifications with the same key are added to the batch
+4. **Processing**: When the window ends, a cronjob merges all items into a single notification
+5. **Final Notification**: The merged notification is sent (e.g., "3 de tus 4 entradas están listas")
+
+### Using Debounced Notifications
+
+```typescript
+// notifyDocumentUploaded automatically uses debouncing
+await notifyDocumentUploaded(notificationService, {
+  buyerUserId: buyer.id,
+  orderId: order.id,
+  eventName: 'Concert',
+  ticketCount: 1,
+});
+
+// Or create a debounced notification directly
+await notificationService.createDebouncedNotification({
+  userId: buyer.id,
+  type: 'document_uploaded',
+  channels: ['in_app', 'email'],
+  metadata: { ... },
+  actions: [ ... ],
+  debounce: {
+    key: `document_uploaded:${orderId}`,  // Unique grouping key
+    windowMs: 5 * 60 * 1000,              // 5 minute window
+  },
+});
+```
+
+### Database Tables
+
+- **notification_batches**: Groups related notifications by debounce key
+- **notification_batch_items**: Individual items within a batch (metadata, actions)
+
+### Cronjob Processing
+
+The `process-pending-notifications` cronjob handles both:
+1. **Pending batches**: Merges items when window ends, creates final notification
+2. **Pending notifications**: Retries failed sends with exponential backoff
+
+### Notification Types with Debouncing
+
+- `document_uploaded` → merged into `document_uploaded_batch`
+
 ## Available Helper Functions
 
 Helper functions simplify notification creation with pre-configured channels, actions, and metadata structure:
@@ -78,7 +130,8 @@ Helper functions simplify notification creation with pre-configured channels, ac
 
 - `notifySellerTicketSold()` - Notify seller when tickets sold
 - `notifyDocumentReminder()` - Remind seller to upload documents
-- `notifyDocumentUploaded()` - Notify buyer when documents uploaded
+- `notifyDocumentUploaded()` - Notify buyer when documents uploaded (**uses debouncing**)
+- `notifyDocumentUploadedImmediate()` - Same as above but immediate (no debouncing)
 - `notifyOrderConfirmed()` - Order confirmation
 - `notifyOrderExpired()` - Order expiration
 - `notifyPaymentFailed()` - Payment failure

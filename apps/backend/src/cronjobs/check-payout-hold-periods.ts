@@ -1,42 +1,66 @@
 import cron from 'node-cron';
 import {db} from '~/db';
 import {SellerEarningsService} from '~/services/seller-earnings';
+import {NotificationService} from '~/services/notifications';
 import {
   SellerEarningsRepository,
   OrderTicketReservationsRepository,
-  ListingTicketsRepository,
+  NotificationsRepository,
+  NotificationBatchesRepository,
+  UsersRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
 
 /**
  * Runs the check payout hold periods job logic once
  * Used by production EventBridge + ECS RunTask
+ *
+ * This job performs two checks:
+ * 1. Check for missing documents after event end (marks earnings as retained, notifies users)
+ * 2. Release hold periods for pending earnings (marks as available)
  */
 export async function runCheckPayoutHoldPeriods() {
   const sellerEarningsRepository = new SellerEarningsRepository(db);
   const orderTicketReservationsRepository =
     new OrderTicketReservationsRepository(db);
-  const listingTicketsRepository = new ListingTicketsRepository(db);
+  const notificationsRepository = new NotificationsRepository(db);
+  const usersRepository = new UsersRepository(db);
+  const notificationBatchesRepository = new NotificationBatchesRepository(db);
+
+  const notificationService = new NotificationService(
+    notificationsRepository,
+    usersRepository,
+    notificationBatchesRepository,
+  );
 
   const sellerEarningsService = new SellerEarningsService(
     sellerEarningsRepository,
     orderTicketReservationsRepository,
-    listingTicketsRepository,
+    notificationService,
   );
 
-    try {
-      logger.info('Starting scheduled check of payout hold periods...');
+  try {
+    logger.info('Starting scheduled check of payout hold periods...');
 
-      const result = await sellerEarningsService.checkHoldPeriods(100);
+    // Check 1: Handle missing documents immediately at event end
+    // This MUST run before checkHoldPeriods() so retained earnings are skipped
+    const missingDocsResult =
+      await sellerEarningsService.checkMissingDocumentsAfterEventEnd(100);
 
-      if (result.released > 0 || result.retained > 0) {
-        logger.info('Payout hold periods check completed', {
-          released: result.released,
-          retained: result.retained,
-        });
-      } else {
-        logger.debug('No earnings ready for release');
-      }
+    if (missingDocsResult.processed > 0) {
+      logger.info('Processed missing documents after event end', {
+        processed: missingDocsResult.processed,
+      });
+    }
+
+    // Check 2: Release hold periods (existing logic)
+    const holdPeriodsResult = await sellerEarningsService.checkHoldPeriods(100);
+
+    logger.info('Payout hold periods check completed', {
+      missingDocsCancelled: missingDocsResult.processed,
+      earningsReleased: holdPeriodsResult.released,
+      earningsRetained: holdPeriodsResult.retained,
+    });
   } catch (error) {
     logger.error('Error in scheduled payout hold periods check:', error);
     throw error;

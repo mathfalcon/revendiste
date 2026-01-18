@@ -1,6 +1,10 @@
 import {PaginatedResponse} from '~/types';
 import {logger} from '~/utils';
-import {NotificationsRepository, UsersRepository} from '~/repositories';
+import {
+  NotificationsRepository,
+  UsersRepository,
+  NotificationBatchesRepository,
+} from '~/repositories';
 import type {IEmailProvider} from './providers/IEmailProvider';
 import {getEmailProvider} from './providers/EmailProviderFactory';
 import {EMAIL_FROM} from '~/config/env';
@@ -10,7 +14,7 @@ import {
   type TypedNotification,
   validateNotification,
 } from './types';
-import type {NotificationType} from '@revendiste/shared';
+import type {NotificationType, NotificationMetadata} from '@revendiste/shared';
 import {
   NotificationMetadataSchema,
   NotificationActionsSchema,
@@ -28,12 +32,35 @@ export interface CreateNotificationParams extends CreateNotificationData {
   // Additional params can be added here
 }
 
+export interface DebounceConfig {
+  /** Unique key to group related notifications (e.g., `document_uploaded:${orderId}`) */
+  key: string;
+  /** Time window in milliseconds to wait before processing the batch */
+  windowMs: number;
+}
+
+export interface CreateDebouncedNotificationParams
+  extends CreateNotificationParams {
+  /** Debounce configuration for batching notifications */
+  debounce: DebounceConfig;
+}
+
+/** Merger function type for combining batch items into final notification metadata */
+export type MetadataMerger = (
+  items: Array<{metadata: NotificationMetadata; actions?: unknown}>,
+  batchInfo: {notificationType: NotificationType},
+) => {
+  metadata: NotificationMetadata;
+  actions: NotificationAction[] | null;
+};
+
 export class NotificationService {
   private emailProvider: IEmailProvider;
 
   constructor(
     private readonly notificationsRepository: NotificationsRepository,
     private readonly usersRepository: UsersRepository,
+    private readonly notificationBatchesRepository?: NotificationBatchesRepository,
     emailProvider?: IEmailProvider,
   ) {
     // Use provided provider or get from factory based on configuration
@@ -527,5 +554,294 @@ export class NotificationService {
     }
 
     return pending.length;
+  }
+
+  // ==========================================================================
+  // Debounced Notification Methods
+  // ==========================================================================
+
+  /**
+   * Create a debounced notification that will be batched with similar notifications
+   * within the specified time window.
+   *
+   * Instead of sending immediately, the notification is added to a batch.
+   * When the batch window expires, all items are merged into a single notification.
+   *
+   * @param params - Notification params with debounce configuration
+   * @returns The batch info (not the final notification, which is created later)
+   */
+  async createDebouncedNotification(params: CreateDebouncedNotificationParams) {
+    if (!this.notificationBatchesRepository) {
+      throw new Error(
+        'NotificationBatchesRepository is required for debounced notifications',
+      );
+    }
+
+    const {debounce, ...notificationParams} = params;
+
+    // Validate metadata
+    let validatedMetadata = notificationParams.metadata;
+    if (notificationParams.metadata) {
+      try {
+        validatedMetadata = NotificationMetadataSchema.parse(
+          notificationParams.metadata,
+        );
+      } catch (error) {
+        throw new ValidationError(
+          `Invalid notification metadata: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    }
+
+    if (!validatedMetadata) {
+      throw new ValidationError(
+        'Notification metadata is required for debounced notifications',
+      );
+    }
+
+    // Check if there's an existing pending batch for this key
+    const existingBatch =
+      await this.notificationBatchesRepository.findPendingBatchByKey(
+        debounce.key,
+        notificationParams.userId,
+      );
+
+    if (existingBatch) {
+      // Add item to existing batch
+      const item = await this.notificationBatchesRepository.addItemToBatch({
+        batchId: existingBatch.id,
+        metadata: validatedMetadata,
+        actions: notificationParams.actions,
+      });
+
+      logger.info('Added item to existing notification batch', {
+        batchId: existingBatch.id,
+        itemId: item.id,
+        debounceKey: debounce.key,
+      });
+
+      return {
+        batchId: existingBatch.id,
+        itemId: item.id,
+        isNewBatch: false,
+      };
+    }
+
+    // Create new batch
+    const windowEndsAt = new Date(Date.now() + debounce.windowMs);
+    const batch = await this.notificationBatchesRepository.createBatch({
+      debounceKey: debounce.key,
+      userId: notificationParams.userId,
+      notificationType: notificationParams.type,
+      channels: notificationParams.channels,
+      windowEndsAt,
+    });
+
+    // Add first item to the batch
+    const item = await this.notificationBatchesRepository.addItemToBatch({
+      batchId: batch.id,
+      metadata: validatedMetadata,
+      actions: notificationParams.actions,
+    });
+
+    logger.info('Created new notification batch', {
+      batchId: batch.id,
+      itemId: item.id,
+      debounceKey: debounce.key,
+      windowEndsAt: windowEndsAt.toISOString(),
+    });
+
+    return {
+      batchId: batch.id,
+      itemId: item.id,
+      isNewBatch: true,
+    };
+  }
+
+  /**
+   * Process pending notification batches (for background job)
+   * Finds batches where the window has ended and merges them into final notifications
+   *
+   * @param limit - Maximum number of batches to process
+   * @returns Number of batches processed
+   */
+  async processPendingBatches(limit: number = 100): Promise<number> {
+    if (!this.notificationBatchesRepository) {
+      logger.warn(
+        'NotificationBatchesRepository not configured, skipping batch processing',
+      );
+      return 0;
+    }
+
+    const pendingBatches =
+      await this.notificationBatchesRepository.getBatchesReadyToProcess(limit);
+
+    if (pendingBatches.length === 0) {
+      return 0;
+    }
+
+    logger.info('Processing pending notification batches', {
+      count: pendingBatches.length,
+    });
+
+    // Process batches in parallel (with limit)
+    const BATCH_SIZE = 10;
+    let processedCount = 0;
+
+    for (let i = 0; i < pendingBatches.length; i += BATCH_SIZE) {
+      const batchSlice = pendingBatches.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batchSlice.map(async batch => {
+          try {
+            await this.processSingleBatch(batch.id);
+            processedCount++;
+          } catch (error) {
+            logger.error('Failed to process notification batch', {
+              batchId: batch.id,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }),
+      );
+
+      // Log any failures
+      results.forEach((result, idx) => {
+        if (result.status === 'rejected') {
+          logger.error('Batch processing promise rejected', {
+            batchId: batchSlice[idx].id,
+            reason: result.reason,
+          });
+        }
+      });
+    }
+
+    return processedCount;
+  }
+
+  /**
+   * Process a single notification batch
+   * Merges all items and creates the final notification
+   */
+  private async processSingleBatch(batchId: string): Promise<void> {
+    if (!this.notificationBatchesRepository) {
+      throw new Error('NotificationBatchesRepository is required');
+    }
+
+    const batchWithItems =
+      await this.notificationBatchesRepository.getBatchWithItems(batchId);
+
+    if (!batchWithItems) {
+      logger.error('Batch not found', {batchId});
+      return;
+    }
+
+    if (batchWithItems.items.length === 0) {
+      logger.warn('Batch has no items, cancelling', {batchId});
+      await this.notificationBatchesRepository.cancelBatch(batchId);
+      return;
+    }
+
+    // Get the merger for this notification type
+    const merger = this.getMetadataMerger(batchWithItems.notificationType);
+
+    // Merge items into final notification data
+    const items = batchWithItems.items.map(item => ({
+      metadata: item.metadata as NotificationMetadata,
+      actions: item.actions,
+    }));
+
+    const {metadata: mergedMetadata, actions: mergedActions} = merger(items, {
+      notificationType: batchWithItems.notificationType,
+    });
+
+    // Create the final notification
+    const notification = await this.createNotification({
+      userId: batchWithItems.userId,
+      type: mergedMetadata.type as NotificationType,
+      channels: batchWithItems.channels,
+      metadata: mergedMetadata,
+      actions: mergedActions,
+    });
+
+    // Mark batch as processed
+    await this.notificationBatchesRepository.markBatchProcessed(
+      batchId,
+      notification.id,
+    );
+
+    logger.info('Notification batch processed successfully', {
+      batchId,
+      finalNotificationId: notification.id,
+      itemCount: batchWithItems.items.length,
+    });
+  }
+
+  /**
+   * Get the metadata merger function for a notification type
+   * Each notification type can have its own merge strategy
+   */
+  private getMetadataMerger(notificationType: NotificationType): MetadataMerger {
+    switch (notificationType) {
+      case 'document_uploaded':
+        return this.mergeDocumentUploadedItems.bind(this);
+      default:
+        // Default merger: use the last item's metadata (simple replace strategy)
+        return items => {
+          const lastItem = items[items.length - 1];
+          return {
+            metadata: lastItem.metadata,
+            actions: lastItem.actions as NotificationAction[] | null,
+          };
+        };
+    }
+  }
+
+  /**
+   * Merge document_uploaded items into a document_uploaded_batch notification
+   */
+  private mergeDocumentUploadedItems(
+    items: Array<{metadata: NotificationMetadata; actions?: unknown}>,
+  ): {
+    metadata: NotificationMetadata;
+    actions: NotificationAction[] | null;
+  } {
+    // Extract data from items (assuming document_uploaded metadata structure)
+    const firstItem = items[0].metadata as {
+      type: 'document_uploaded';
+      orderId: string;
+      eventName: string;
+      ticketCount: number;
+    };
+
+    // For document_uploaded_batch, we aggregate the ticket info
+    const mergedMetadata = {
+      type: 'document_uploaded_batch' as const,
+      orderId: firstItem.orderId,
+      eventName: firstItem.eventName,
+      uploadedCount: items.length,
+      // Each item represents one ticket upload
+      tickets: items.map((item, index) => {
+        const meta = item.metadata as {
+          type: 'document_uploaded';
+          orderId: string;
+          eventName: string;
+          ticketCount: number;
+        };
+        return {
+          ticketNumber: String(index + 1), // We don't have individual ticket numbers, use index
+          eventName: meta.eventName,
+        };
+      }),
+    };
+
+    // Use actions from the first item (they should all point to the same order)
+    const actions = items[0].actions as NotificationAction[] | null;
+
+    return {
+      metadata: mergedMetadata as unknown as NotificationMetadata,
+      actions,
+    };
   }
 }
