@@ -214,6 +214,8 @@ export interface GetEventByIdResponse {
     id: string;
     description: string | null;
   }[];
+  /** @format double */
+  userListingsCount: number;
   eventImages: {
     imageType: EventImageType;
     url: string;

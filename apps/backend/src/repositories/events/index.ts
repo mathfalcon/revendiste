@@ -437,6 +437,19 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'status',
         'createdAt',
         'updatedAt',
+        // Count of current user's listings for this event (to show contextual messaging)
+        userId
+          ? sql<number>`
+              (
+                SELECT COUNT(DISTINCT listings.id)::int
+                FROM listings
+                INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+                WHERE event_ticket_waves.event_id = events.id
+                  AND listings.publisher_user_id = ${userId}
+                  AND listings.deleted_at IS NULL
+              )
+            `.as('userListingsCount')
+          : sql<number>`0`.as('userListingsCount'),
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')

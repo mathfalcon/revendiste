@@ -343,6 +343,10 @@
 						},
 						"type": "array"
 					},
+					"userListingsCount": {
+						"type": "number",
+						"format": "double"
+					},
 					"eventImages": {
 						"items": {
 							"properties": {
@@ -411,6 +415,7 @@
 				},
 				"required": [
 					"ticketWaves",
+					"userListingsCount",
 					"eventImages",
 					"venueName",
 					"venueAddress",

@@ -109,6 +109,7 @@ export const EventPage = () => {
             <TicketSelection
               ticketWaves={event.ticketWaves}
               eventId={params.eventId}
+              userListingsCount={event.userListingsCount}
             />
           </div>
 

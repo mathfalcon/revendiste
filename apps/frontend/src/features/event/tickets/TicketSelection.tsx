@@ -10,9 +10,14 @@ import {NoTicketsAvailable} from './NoTicketsAvailable';
 interface TicketSelectionProps {
   ticketWaves: GetEventByIdResponse['ticketWaves'];
   eventId: string;
+  userListingsCount?: number;
 }
 
-export function TicketSelection({ticketWaves, eventId}: TicketSelectionProps) {
+export function TicketSelection({
+  ticketWaves,
+  eventId,
+  userListingsCount,
+}: TicketSelectionProps) {
   const {
     form,
     ticketSelection,
@@ -29,7 +34,9 @@ export function TicketSelection({ticketWaves, eventId}: TicketSelectionProps) {
   );
 
   if (availableTicketWaves.length === 0) {
-    return <NoTicketsAvailable eventId={eventId} />;
+    return (
+      <NoTicketsAvailable eventId={eventId} userListingsCount={userListingsCount} />
+    );
   }
 
   return (
