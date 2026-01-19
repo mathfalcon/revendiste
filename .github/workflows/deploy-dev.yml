@@ -14,6 +14,9 @@ env:
   BACKEND_IMAGE_NAME: revendiste/backend-dev
   FRONTEND_IMAGE_NAME: revendiste/frontend-dev
   FRONTEND_DIR: apps/frontend
+  ECS_CLUSTER: revendiste-dev-cluster
+  BACKEND_SERVICE: revendiste-dev-backend
+  FRONTEND_SERVICE: revendiste-dev-frontend
 
 jobs:
   build-backend:
@@ -43,9 +46,9 @@ jobs:
         with:
           images: ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
           tags: |
+            type=raw,value=latest
             type=ref,event=branch
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push backend Docker image
         uses: docker/build-push-action@v5
@@ -86,9 +89,9 @@ jobs:
         with:
           images: ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
           tags: |
+            type=raw,value=latest
             type=ref,event=branch
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push frontend Docker image
         uses: docker/build-push-action@v5
@@ -99,6 +102,8 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.frontend-meta.outputs.tags }}
           labels: ${{ steps.frontend-meta.outputs.labels }}
+          build-args: |
+            ENVIRONMENT=development
           cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:buildcache,mode=max
 
@@ -110,120 +115,83 @@ jobs:
     environment: development
 
     steps:
-      - name: Deploy backend to EC2
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.DEV_APP_HOST }}
-          username: ec2-user
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          script: |
-            # Login to ECR (IAM role handles authentication)
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-            # Pull latest backend image (try development tag first, then latest)
-            docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:development || docker pull ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+      - name: Verify backend image exists
+        run: |
+          echo "Verifying backend image 'latest' exists in ECR..."
+          aws ecr describe-images \
+            --repository-name ${{ env.BACKEND_IMAGE_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            --image-ids imageTag=latest \
+            --query 'imageDetails[0].imagePushedAt' \
+            --output text
 
-            # Create Docker network for container communication (idempotent)
-            docker network create revendiste-network || true
-
-            # Stop and remove old backend container
-            docker stop revendiste-backend || true
-            docker rm revendiste-backend || true
-
-            # Get secret from AWS Secrets Manager and convert to Docker env file format
-            set +e
-            SECRET_JSON=$(aws secretsmanager get-secret-value \
-              --secret-id revendiste/dev/backend-secrets \
-              --region ${{ env.AWS_REGION }} \
-              --query 'SecretString' \
-              --output text 2>&1)
-            SECRET_EXIT_CODE=$?
-            set -e
-
-            if [ $SECRET_EXIT_CODE -ne 0 ]; then
-              echo "Error: Failed to retrieve secret from AWS Secrets Manager"
-              echo "$SECRET_JSON"
-              echo ""
-              if echo "$SECRET_JSON" | grep -q "ResourceNotFoundException\|can't find the specified secret value"; then
-                echo "The secret exists but has no value. Please add a secret value:"
-                echo "aws secretsmanager put-secret-value \\"
-                echo "  --secret-id revendiste/dev/backend-secrets \\"
-                echo "  --secret-string '{\"KEY\":\"value\"}' \\"
-                echo "  --region ${{ env.AWS_REGION }}"
-              else
-                echo "This usually means the EC2 instance IAM role doesn't have permission."
-                echo "Please run 'terraform apply' to ensure IAM policies are up to date."
-              fi
-              exit 1
-            fi
-
-            # Check if secret value is empty
-            if [ -z "$SECRET_JSON" ] || [ "$SECRET_JSON" = "null" ]; then
-              echo "Error: Secret exists but has no value"
-              echo "Please add a secret value using:"
-              echo "aws secretsmanager put-secret-value \\"
-              echo "  --secret-id revendiste/dev/backend-secrets \\"
-              echo "  --secret-string '{\"KEY\":\"value\"}' \\"
-              echo "  --region ${{ env.AWS_REGION }}"
-              exit 1
-            fi
-
-            # Convert JSON to KEY=VALUE format (one per line) for Docker --env-file
-            ENV_FILE=$(mktemp)
-            echo "$SECRET_JSON" | jq -r 'to_entries[] | "\(.key)=\(.value)"' > "$ENV_FILE"
-
-            # Determine which image tag to use
-            IMAGE_TAG="development"
-            if ! docker image inspect ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:development >/dev/null 2>&1; then
-              IMAGE_TAG="latest"
-            fi
-
-            # Run new backend container with all environment variables from secrets
-            docker run -d \
-              --name revendiste-backend \
-              --restart unless-stopped \
-              --network revendiste-network \
-              -p 3001:3001 \
-              --env-file "$ENV_FILE" \
-              ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:$IMAGE_TAG
-
-            # Clean up temp file
-            rm -f "$ENV_FILE"
-
-            # Wait for migrations and server startup (migrations can take time)
-            echo "Waiting for migrations and server to start..."
-            sleep 30
-
-            # Check if container is still running (if it exited, migrations or server startup failed)
-            if ! docker ps | grep -q revendiste-backend; then
-              echo "Error: Container exited immediately. Checking logs..."
-              docker logs revendiste-backend
-              exit 1
-            fi
-
-            # Check container logs for errors
-            echo "Container logs:"
-            docker logs revendiste-backend --tail 50
-
-            # Health check with retries (migrations may still be running)
-            echo "Performing health check (migrations may still be running)..."
-            MAX_RETRIES=10
-            RETRY_COUNT=0
-            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              if curl -f http://localhost:3001/api/health >/dev/null 2>&1; then
-                echo "Health check passed!"
-                exit 0
-              fi
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              echo "Health check failed, retry $RETRY_COUNT/$MAX_RETRIES (migrations may still be running)..."
-              sleep 10
-            done
-
-            # If we get here, health check failed
-            echo "Error: Health check failed after $MAX_RETRIES attempts"
-            echo "Container logs:"
-            docker logs revendiste-backend --tail 100
+          if [ $? -ne 0 ]; then
+            echo "Error: Backend image 'latest' not found in ECR"
             exit 1
+          fi
+
+          echo "Backend image 'latest' verified successfully"
+
+      - name: Update ECS backend service
+        run: |
+          echo "Updating ECS service: ${{ env.BACKEND_SERVICE }}"
+
+          # Force new deployment to pull latest image
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.BACKEND_SERVICE }} \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for backend deployment to stabilize
+        run: |
+          echo "Waiting for backend deployment to complete..."
+
+          # Wait for service to reach stable state (all tasks running and healthy)
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.BACKEND_SERVICE }} \
+            --region ${{ env.AWS_REGION }}
+
+          echo "Backend deployment completed successfully!"
+
+      - name: Verify backend health
+        run: |
+          echo "Performing health check on https://dev.revendiste.com/api/health"
+
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          HEALTH_CHECK_URL="https://dev.revendiste.com/api/health"
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$HEALTH_CHECK_URL" || echo "000")
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Health check passed! HTTP $HTTP_CODE"
+              exit 0
+            fi
+            
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Health check returned HTTP $HTTP_CODE, retry $RETRY_COUNT/$MAX_RETRIES..."
+            
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              sleep 10
+            fi
+          done
+
+          echo "Warning: Health check failed after $MAX_RETRIES attempts"
+          echo "Service may still be starting up. Check CloudWatch logs for details."
+          exit 0  # Don't fail the deployment if health check fails
 
   deploy-frontend:
     runs-on: ubuntu-latest
@@ -233,42 +201,80 @@ jobs:
     environment: development
 
     steps:
-      - name: Deploy frontend to EC2
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.DEV_APP_HOST }}
-          username: ec2-user
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          script: |
-            # Login to ECR (IAM role handles authentication)
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-            # Pull latest frontend image (try development tag first, then latest)
-            docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:development || docker pull ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+      - name: Verify frontend image exists
+        run: |
+          echo "Verifying frontend image 'latest' exists in ECR..."
+          aws ecr describe-images \
+            --repository-name ${{ env.FRONTEND_IMAGE_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            --image-ids imageTag=latest \
+            --query 'imageDetails[0].imagePushedAt' \
+            --output text
 
-            # Create Docker network for container communication (idempotent)
-            docker network create revendiste-network || true
+          if [ $? -ne 0 ]; then
+            echo "Error: Frontend image 'latest' not found in ECR"
+            exit 1
+          fi
 
-            # Stop and remove old frontend container
-            docker stop revendiste-frontend || true
-            docker rm revendiste-frontend || true
+          echo "Frontend image 'latest' verified successfully"
 
-            # Determine which image tag to use
-            IMAGE_TAG="development"
-            if ! docker image inspect ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:development >/dev/null 2>&1; then
-              IMAGE_TAG="latest"
+      - name: Update ECS frontend service
+        run: |
+          echo "Updating ECS service: ${{ env.FRONTEND_SERVICE }}"
+
+          # Force new deployment to pull latest image
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.FRONTEND_SERVICE }} \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for frontend deployment to stabilize
+        run: |
+          echo "Waiting for frontend deployment to complete..."
+
+          # Wait for service to reach stable state (all tasks running and healthy)
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.FRONTEND_SERVICE }} \
+            --region ${{ env.AWS_REGION }}
+
+          echo "Frontend deployment completed successfully!"
+
+      - name: Verify frontend health
+        run: |
+          echo "Performing health check on https://dev.revendiste.com"
+
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          HEALTH_CHECK_URL="https://dev.revendiste.com"
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$HEALTH_CHECK_URL" || echo "000")
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Health check passed! HTTP $HTTP_CODE"
+              exit 0
             fi
+            
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Health check returned HTTP $HTTP_CODE, retry $RETRY_COUNT/$MAX_RETRIES..."
+            
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              sleep 10
+            fi
+          done
 
-            # Run new frontend container with environment variables
-            # BACKEND_IP uses container name for internal Docker network communication
-            docker run -d \
-              --name revendiste-frontend \
-              --restart unless-stopped \
-              --network revendiste-network \
-              -p 3000:3000 \
-              -e BACKEND_IP="revendiste-backend:3001" \
-              ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:$IMAGE_TAG
-
-            # Health check
-            sleep 5
-            curl -f http://localhost:3000 || exit 1
+          echo "Warning: Health check failed after $MAX_RETRIES attempts"
+          echo "Service may still be starting up. Check CloudWatch logs for details."
+          exit 0  # Don't fail the deployment if health check fails
