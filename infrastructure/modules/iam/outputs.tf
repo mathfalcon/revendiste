@@ -24,13 +24,3 @@ output "eventbridge_ecs_role_name" {
   description = "Name of the EventBridge ECS role"
   value       = aws_iam_role.eventbridge_ecs.name
 }
-
-output "ecs_service_linked_role_arn" {
-  description = "ARN of the ECS service linked role"
-  value       = aws_iam_service_linked_role.ecs.arn
-}
-
-output "autoscaling_service_linked_role_arn" {
-  description = "ARN of the autoscaling service linked role"
-  value       = aws_iam_service_linked_role.autoscaling.arn
-}

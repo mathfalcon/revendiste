@@ -1,23 +1,11 @@
 # IAM Module
 # Creates IAM roles and policies for ECS tasks and EventBridge
 
-# ECS Service Linked Role (required for ECS services)
-resource "aws_iam_service_linked_role" "ecs" {
-  aws_service_name = "ecs.amazonaws.com"
-
-  lifecycle {
-    ignore_changes = [description]
-  }
-}
-
-# Application Auto Scaling Service Linked Role
-resource "aws_iam_service_linked_role" "autoscaling" {
-  aws_service_name = "autoscaling.amazonaws.com"
-
-  lifecycle {
-    ignore_changes = [description]
-  }
-}
+# Note: Service Linked Roles (ECS, AutoScaling) are automatically created by AWS
+# when you first use the service. We don't manage them here to avoid permission issues.
+# If you need to create them manually, use the AWS Console or CLI:
+#   aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
+#   aws iam create-service-linked-role --aws-service-name autoscaling.amazonaws.com
 
 # ECS Task Execution Role (for pulling images, CloudWatch logs, etc.)
 resource "aws_iam_role" "ecs_task_execution" {
