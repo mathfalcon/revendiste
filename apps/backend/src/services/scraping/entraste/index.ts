@@ -29,14 +29,50 @@ export class EntrasteScraper extends BaseScraper {
     super(Platform.Entraste);
   }
 
+  // Realistic User-Agents to rotate (modern browsers, updated 2025)
+  private userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  ];
+
+  private getRandomUserAgent(): string {
+    return this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
+  }
+
   async scrapeEvents(): Promise<ScrapedEventData[]> {
-    const userAgent =
-      this.config.headers?.['User-Agent'] ||
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+    const userAgent = this.getRandomUserAgent();
+    logger.debug('Using User-Agent:', {userAgent});
+
     const crawler = this.createCrawler({
       launchContext: {
         userAgent,
       },
+      // Pre-navigation hook: set up page to look more human
+      preNavigationHooks: [
+        async ({page}) => {
+          // Randomize viewport size (common desktop resolutions)
+          const viewports = [
+            {width: 1920, height: 1080},
+            {width: 1366, height: 768},
+            {width: 1536, height: 864},
+            {width: 1440, height: 900},
+            {width: 1280, height: 720},
+          ];
+          const viewport =
+            viewports[Math.floor(Math.random() * viewports.length)];
+          await page.setViewportSize(viewport);
+
+          // Override navigator.webdriver to false (anti-detection)
+          await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => false,
+            });
+          });
+        },
+      ],
       requestHandler: this.handleRequest,
       failedRequestHandler({request, log, error}) {
         log.info(`Request ${request.url} failed too many times.`);
@@ -51,6 +87,9 @@ export class EntrasteScraper extends BaseScraper {
       },
     });
 
+    // Hard timeout to prevent runaway tasks (5 minutes max)
+    const CRAWLER_TIMEOUT_MS = 5 * 60 * 1000;
+
     try {
       await crawler.addRequests([
         {
@@ -62,12 +101,26 @@ export class EntrasteScraper extends BaseScraper {
       ]);
 
       this.logMemory('before crawler.run()');
-      await crawler.run();
+
+      // Race between crawler and timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Crawler timeout: exceeded ${CRAWLER_TIMEOUT_MS / 1000}s limit`));
+        }, CRAWLER_TIMEOUT_MS);
+      });
+
+      await Promise.race([crawler.run(), timeoutPromise]);
+
       this.logMemory('after crawler.run()');
 
       logger.info(`Scraped ${this.events.length} events from Entraste`);
       return this.events;
     } catch (error) {
+      // If timeout or other error, still return whatever events we managed to scrape
+      if (this.events.length > 0) {
+        logger.warn(`Crawler error but returning ${this.events.length} partial results:`, error);
+        return this.events;
+      }
       logger.error('Error scraping Entraste events:', error);
       throw error;
     }

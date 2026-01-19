@@ -56,19 +56,24 @@ export abstract class BaseScraper {
             '--disable-background-timer-throttling',
             '--disable-backgrounding-occluded-windows',
             '--disable-renderer-backgrounding',
+            // Anti-detection: disable automation flags
+            '--disable-blink-features=AutomationControlled',
           ],
         },
       },
-      maxRequestRetries: 2,
-      requestHandlerTimeoutSecs: 60,
-      navigationTimeoutSecs: 30,
+      maxRequestRetries: 3, // More retries for flaky connections
+      requestHandlerTimeoutSecs: 90,
+      navigationTimeoutSecs: 45, // Longer timeout for slow responses
       maxRequestsPerCrawl: 50, // Can be overridden by subclasses
-      // Limit concurrency to balance speed vs memory in containerized environments
-      // With 1GB RAM: 5 concurrent requests uses ~300-400MB, leaving headroom
-      maxConcurrency: 5,
+      // Lower concurrency to avoid rate limiting from AWS IPs
+      // Cloudflare/bot protection often blocks rapid concurrent requests
+      maxConcurrency: 2,
+      // Add delay between requests to same domain (anti-bot measure)
+      // Random delay between 3-8 seconds reduces detection
+      sameDomainDelaySecs: 5,
       browserPoolOptions: {
-        useFingerprints: false,
-        maxOpenPagesPerBrowser: 3, // Allow more pages per browser instance
+        useFingerprints: true, // Enable fingerprint randomization
+        maxOpenPagesPerBrowser: 2,
       },
     };
   }

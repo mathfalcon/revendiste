@@ -210,8 +210,8 @@ module "ecs" {
   # Cronjob Configuration
   cronjob_cpu             = 256
   cronjob_memory          = 512
-  cronjob_scraping_cpu    = 512  # Reduced from 1024 for dev
-  cronjob_scraping_memory = 1024 # Reduced from 2048 for dev
+  cronjob_scraping_cpu    = 1024 # Need more CPU for Playwright/Chromium
+  cronjob_scraping_memory = 2048 # Need more memory for multiple browser instances
 
   log_retention_days = 3 # Short retention in dev
   common_tags        = local.common_tags
