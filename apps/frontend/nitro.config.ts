@@ -1,6 +1,9 @@
 import {defineNitroConfig} from 'nitro/config';
 
 export default defineNitroConfig({
+  // Use node-server preset for ECS/Docker deployment
+  preset: 'node-server',
+
   // Set headers for HTML responses to prevent caching
   // More specific rules should be defined first
   routeRules: {

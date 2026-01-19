@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "HTTPS_LOCAL=1 vite dev",
     "build": "vite build",
-    "start": "node .output/server/index.mjs",
+    "start": "node --env-file=.env .output/server/index.mjs",
     "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write .",

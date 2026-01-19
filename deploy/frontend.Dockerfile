@@ -22,6 +22,11 @@ COPY tsconfig.json tsconfig.gts.json ./
 # Build frontend
 ARG ENVIRONMENT=development
 WORKDIR /app/apps/frontend
+# Increase Node.js memory limit for Vite/Nitro build (default ~2GB isn't enough)
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+# NODE_ENV=production ensures React uses production JSX runtime (not jsxDEV)
+# --mode controls which .env file is loaded and VITE_* vars are baked in
+ENV NODE_ENV=production
 RUN pnpm build --mode ${ENVIRONMENT}
 
 # Runtime stage
@@ -54,7 +59,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Start server (run node directly, no need for pnpm)
-CMD ["node", ".output/server/index.mjs"]
+# Start server with env file loaded
+CMD ["node", "--env-file=.env", ".output/server/index.mjs"]
 
 
