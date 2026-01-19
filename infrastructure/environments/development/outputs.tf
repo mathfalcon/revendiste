@@ -103,3 +103,14 @@ output "face_liveness_role_arn" {
   description = "IAM Role ARN for Face Liveness SDK"
   value       = module.identity_verification.face_liveness_role_arn
 }
+
+# EC2 Instance Connect Endpoint outputs for database access
+output "ec2_instance_connect_endpoint_id" {
+  description = "EC2 Instance Connect Endpoint ID for database tunneling"
+  value       = module.ec2_instance_connect_endpoint.endpoint_id
+}
+
+output "db_tunnel_command" {
+  description = "Command to create a tunnel to the RDS database"
+  value       = "aws ec2-instance-connect open-tunnel --instance-connect-endpoint-id ${module.ec2_instance_connect_endpoint.endpoint_id} --private-ip-address <RDS_IP> --local-port 5432 --remote-port 5432"
+}

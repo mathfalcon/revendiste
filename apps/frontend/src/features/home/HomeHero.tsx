@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {EventSearchInput} from '~/components/SearchInput';
 import {EventSearchModal} from '~/components/EventSearchModal';
+import { CDN_ASSETS } from '~/assets';
 
 const homePageTaglines = [
   'Si no vas, que tu entrada no quede tirada. Vendela fácil y seguro',
@@ -74,7 +75,7 @@ export const HomeHero = () => {
     <>
       <section className='hero min-h-[25vh] md:min-h-[50dvh] h-[25vh] md:h-[50dvh] relative flex flex-col items-center justify-center gap-4 md:gap-0'>
         <img
-          src={'https://cdn.revendiste.com/assets/homepage-bg-1.webp'}
+          src={CDN_ASSETS.HOMEPAGE_BG_1}
           alt='People partying'
           className='w-full h-full object-cover absolute top-0 left-0'
           fetchPriority='high'
