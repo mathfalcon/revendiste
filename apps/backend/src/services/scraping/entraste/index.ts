@@ -41,10 +41,11 @@ export class EntrasteScraper extends BaseScraper {
       failedRequestHandler({request, log, error}) {
         log.info(`Request ${request.url} failed too many times.`);
         // Log detailed error info for debugging bot protection issues
+        const err = error as Error | undefined;
         log.error(`Failed request details:`, {
           url: request.url,
-          errorMessage: error?.message,
-          errorName: error?.name,
+          errorMessage: err?.message,
+          errorName: err?.name,
           retryCount: request.retryCount,
         });
       },

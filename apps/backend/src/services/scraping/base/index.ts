@@ -7,10 +7,9 @@ import {
   Platform,
   PlatformConfig,
   ScrapedEventData,
-  ScrapedTicketWave,
 } from './types';
 import {PLATFORM_CONFIGS} from './config';
-import {logger} from '~/utils/logger';
+import {logger} from '~/utils';
 
 /**
  * Log memory usage for debugging container resource issues
