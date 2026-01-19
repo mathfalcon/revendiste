@@ -1,7 +1,12 @@
 # Cloudflare DNS Module Variables
 
+variable "zone_name" {
+  description = "Cloudflare zone name (e.g., revendiste.com)"
+  type        = string
+}
+
 variable "domain_name" {
-  description = "Main domain name"
+  description = "Domain name for this environment (e.g., dev.revendiste.com or revendiste.com)"
   type        = string
 }
 

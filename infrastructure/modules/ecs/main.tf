@@ -144,7 +144,7 @@ resource "aws_ecs_task_definition" "frontend" {
         },
         {
           name  = "VITE_API_URL"
-          value = "https://api.${var.domain_name}"
+          value = "https://${var.domain_name}/api"
         },
         {
           name  = "BACKEND_IP"
