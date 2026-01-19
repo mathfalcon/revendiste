@@ -7,9 +7,9 @@ variable "aws_region" {
 }
 
 variable "domain_name" {
-  description = "Main domain name"
+  description = "Main domain name for this environment"
   type        = string
-  default     = "revendiste.com"
+  default     = "dev.revendiste.com"
 }
 
 # VPC Configuration
