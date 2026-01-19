@@ -26,7 +26,7 @@ winston.addColors(colors);
 const config = getLoggingConfig();
 
 // Define different log formats
-const shouldColorize = process.env.NODE_ENV !== 'production';
+const shouldColorize = process.env.NODE_ENV === 'local';
 
 const format = winston.format.combine(
   // Add timestamp

@@ -10,6 +10,23 @@ import {
   ScrapedTicketWave,
 } from './types';
 import {PLATFORM_CONFIGS} from './config';
+import {logger} from '~/utils/logger';
+
+/**
+ * Log memory usage for debugging container resource issues
+ * Only logs in debug level (dev environment)
+ */
+function logMemoryUsage(context: string): void {
+  const memUsage = process.memoryUsage();
+  const formatMB = (bytes: number) => (bytes / 1024 / 1024).toFixed(2);
+
+  logger.debug(`Memory usage [${context}]`, {
+    heapUsed: `${formatMB(memUsage.heapUsed)} MB`,
+    heapTotal: `${formatMB(memUsage.heapTotal)} MB`,
+    rss: `${formatMB(memUsage.rss)} MB`,
+    external: `${formatMB(memUsage.external)} MB`,
+  });
+}
 
 export abstract class BaseScraper {
   protected platform: Platform;
@@ -47,8 +64,11 @@ export abstract class BaseScraper {
       requestHandlerTimeoutSecs: 60,
       navigationTimeoutSecs: 30,
       maxRequestsPerCrawl: 50, // Can be overridden by subclasses
+      // Limit concurrency to reduce memory pressure in containerized environments
+      maxConcurrency: 3,
       browserPoolOptions: {
         useFingerprints: false,
+        maxOpenPagesPerBrowser: 2, // Limit pages per browser instance
       },
     };
   }
@@ -56,6 +76,8 @@ export abstract class BaseScraper {
   protected createCrawler(
     options?: Partial<PlaywrightCrawlerOptions>,
   ): PlaywrightCrawler {
+    logMemoryUsage('before crawler creation');
+
     const baseOptions = this.getCrawlerOptions();
 
     // Deep merge launchContext to preserve executablePath and other base options
@@ -74,7 +96,18 @@ export abstract class BaseScraper {
 
     Configuration.set('systemInfoV2', true);
 
-    return new PlaywrightCrawler(mergedOptions);
+    const crawler = new PlaywrightCrawler(mergedOptions);
+
+    logMemoryUsage('after crawler creation');
+
+    return crawler;
+  }
+
+  /**
+   * Log memory usage - call this from request handlers to track memory during scraping
+   */
+  protected logMemory(context: string): void {
+    logMemoryUsage(context);
   }
 
   protected extractPrice(priceText: string): number {

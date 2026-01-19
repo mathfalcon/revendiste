@@ -38,8 +38,15 @@ export class EntrasteScraper extends BaseScraper {
         userAgent,
       },
       requestHandler: this.handleRequest,
-      failedRequestHandler({request, log}) {
+      failedRequestHandler({request, log, error}) {
         log.info(`Request ${request.url} failed too many times.`);
+        // Log detailed error info for debugging bot protection issues
+        log.error(`Failed request details:`, {
+          url: request.url,
+          errorMessage: error?.message,
+          errorName: error?.name,
+          retryCount: request.retryCount,
+        });
       },
     });
 
@@ -52,7 +59,10 @@ export class EntrasteScraper extends BaseScraper {
           },
         },
       ]);
+
+      this.logMemory('before crawler.run()');
       await crawler.run();
+      this.logMemory('after crawler.run()');
 
       logger.info(`Scraped ${this.events.length} events from Entraste`);
       return this.events;
@@ -66,6 +76,9 @@ export class EntrasteScraper extends BaseScraper {
     const {request, log} = args;
     log.info(`▶️  ${request.userData.label}  ${request.url}`);
 
+    // Log memory before processing each request
+    this.logMemory(`before ${request.userData.label} ${request.url}`);
+
     switch (request.userData.label) {
       case RequestLabel.LIST:
         await this.handleListRequest(args);
@@ -76,6 +89,9 @@ export class EntrasteScraper extends BaseScraper {
       default:
         break;
     }
+
+    // Log memory after processing
+    this.logMemory(`after ${request.userData.label} ${request.url}`);
   };
 
   /**
