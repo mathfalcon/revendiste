@@ -31,6 +31,7 @@ export const NotificationActionType = z.enum([
   'view_payout',
   'start_verification',
   'publish_tickets',
+  'view_earnings',
 ]);
 
 export type NotificationActionType = z.infer<typeof NotificationActionType>;
@@ -120,6 +121,20 @@ export const DocumentUploadedMetadataSchema = z.object({
   orderId: z.uuid(),
   eventName: z.string(),
   ticketCount: z.number().int().positive(),
+});
+
+// document_uploaded_batch - Batched/consolidated document upload notification
+export const DocumentUploadedBatchMetadataSchema = z.object({
+  type: z.literal('document_uploaded_batch'),
+  orderId: z.uuid(),
+  eventName: z.string(),
+  uploadedCount: z.number().int().positive(), // Number of tickets uploaded in this batch
+  tickets: z.array(
+    z.object({
+      ticketNumber: z.string(),
+      eventName: z.string(),
+    }),
+  ),
 });
 
 // payout_processing
@@ -251,6 +266,28 @@ export const IdentityVerificationManualReviewMetadataSchema = z.object({
 });
 
 /**
+ * Missing document refund system notification metadata schemas
+ */
+
+// seller_earnings_retained - Seller earnings retained due to missing document
+export const SellerEarningsRetainedMetadataSchema = z.object({
+  type: z.literal('seller_earnings_retained'),
+  eventName: z.string(),
+  ticketCount: z.number().int().positive(),
+  reason: z.enum(['missing_document', 'dispute', 'fraud', 'other']),
+  totalAmount: z.string().optional(),
+  currency: z.enum(['UYU', 'USD']).optional(),
+});
+
+// buyer_ticket_cancelled - Buyer's ticket cancelled due to seller failure
+export const BuyerTicketCancelledMetadataSchema = z.object({
+  type: z.literal('buyer_ticket_cancelled'),
+  eventName: z.string(),
+  ticketCount: z.number().int().positive(),
+  reason: z.enum(['seller_failed_to_upload', 'seller_fraud', 'other']),
+});
+
+/**
  * Discriminated union of all notification metadata types
  * Uses 'type' as the discriminator field for type safety
  */
@@ -262,6 +299,7 @@ export const NotificationMetadataSchema = z.discriminatedUnion('type', [
   PaymentFailedMetadataSchema,
   PaymentSucceededMetadataSchema,
   DocumentUploadedMetadataSchema,
+  DocumentUploadedBatchMetadataSchema,
   PayoutProcessingMetadataSchema,
   PayoutCompletedMetadataSchema,
   PayoutFailedMetadataSchema,
@@ -279,6 +317,9 @@ export const NotificationMetadataSchema = z.discriminatedUnion('type', [
   IdentityVerificationRejectedMetadataSchema,
   IdentityVerificationFailedMetadataSchema,
   IdentityVerificationManualReviewMetadataSchema,
+  // Missing document refund notification types
+  SellerEarningsRetainedMetadataSchema,
+  BuyerTicketCancelledMetadataSchema,
 ]);
 
 /**
@@ -360,6 +401,17 @@ export const PaymentSucceededActionsSchema = z
 
 // Actions for document_uploaded - view order action
 export const DocumentUploadedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_order'),
+      label: z.string(),
+      url: z.url(),
+    }),
+  )
+  .nullable();
+
+// Actions for document_uploaded_batch - view order action
+export const DocumentUploadedBatchActionsSchema = z
   .array(
     BaseActionSchema.extend({
       type: z.literal('view_order'),
@@ -476,6 +528,32 @@ export const IdentityVerificationManualReviewActionsSchema = z
   .nullable();
 
 /**
+ * Missing document refund notification action schemas
+ */
+
+// seller_earnings_retained - view earnings action
+export const SellerEarningsRetainedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_earnings'),
+      label: z.string(),
+      url: z.url().optional(),
+    }),
+  )
+  .nullable();
+
+// buyer_ticket_cancelled - view order action
+export const BuyerTicketCancelledActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_order'),
+      label: z.string(),
+      url: z.url().optional(),
+    }),
+  )
+  .nullable();
+
+/**
  * Individual notification schemas per type
  * Each extends the base schema and defines its own metadata and actions
  */
@@ -536,6 +614,14 @@ export const DocumentUploadedNotificationSchema = BaseNotificationSchema.extend(
     actions: DocumentUploadedActionsSchema,
   },
 );
+
+// document_uploaded_batch
+export const DocumentUploadedBatchNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('document_uploaded_batch'),
+    metadata: DocumentUploadedBatchMetadataSchema,
+    actions: DocumentUploadedBatchActionsSchema,
+  });
 
 // payout_processing
 export const PayoutProcessingNotificationSchema = BaseNotificationSchema.extend(
@@ -663,6 +749,26 @@ export const IdentityVerificationManualReviewNotificationSchema =
   });
 
 /**
+ * Missing document refund notification schemas
+ */
+
+// seller_earnings_retained
+export const SellerEarningsRetainedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('seller_earnings_retained'),
+    metadata: SellerEarningsRetainedMetadataSchema,
+    actions: SellerEarningsRetainedActionsSchema,
+  });
+
+// buyer_ticket_cancelled
+export const BuyerTicketCancelledNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('buyer_ticket_cancelled'),
+    metadata: BuyerTicketCancelledMetadataSchema,
+    actions: BuyerTicketCancelledActionsSchema,
+  });
+
+/**
  * Discriminated union of all notification types
  * Uses 'type' as the discriminator field for type safety
  * Reference: https://zod.dev/api?id=discriminated-unions
@@ -675,6 +781,7 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   PaymentFailedNotificationSchema,
   PaymentSucceededNotificationSchema,
   DocumentUploadedNotificationSchema,
+  DocumentUploadedBatchNotificationSchema,
   PayoutProcessingNotificationSchema,
   PayoutCompletedNotificationSchema,
   PayoutFailedNotificationSchema,
@@ -692,6 +799,9 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   IdentityVerificationRejectedNotificationSchema,
   IdentityVerificationFailedNotificationSchema,
   IdentityVerificationManualReviewNotificationSchema,
+  // Missing document refund notification types
+  SellerEarningsRetainedNotificationSchema,
+  BuyerTicketCancelledNotificationSchema,
 ]);
 
 /**

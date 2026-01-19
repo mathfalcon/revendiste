@@ -1,17 +1,17 @@
 /**
- * Rounds an order/payment amount to the nearest integer
- * Used for payment providers that require integer amounts (e.g., dLocal)
+ * Rounds an order/payment amount to 2 decimal places
+ * Used for payment providers and ensuring consistent currency precision
  *
  * @param amount - The amount to round (can be string or number)
- * @returns The rounded amount as an integer
+ * @returns The rounded amount with 2 decimal places
  *
  * @example
- * roundOrderAmount(1277.108) // 1277
- * roundOrderAmount("1277.108") // 1277
- * roundOrderAmount(1277.5) // 1278
+ * roundOrderAmount(1277.108) // 1277.11
+ * roundOrderAmount("32.196") // 32.20
+ * roundOrderAmount(1073.205) // 1073.21
  */
 export function roundOrderAmount(amount: string | number): number {
-  return Math.round(Number(amount));
+  return Math.round(Number(amount) * 100) / 100;
 }
 
 /**
@@ -38,14 +38,16 @@ export function roundToDecimals(
 /**
  * Compares two amounts with rounding to handle floating point precision issues
  * Used for validating payment amounts match order amounts
+ * Compares with 2 decimal place precision
  *
  * @param amount1 - First amount to compare
  * @param amount2 - Second amount to compare
- * @returns true if amounts match after rounding, false otherwise
+ * @returns true if amounts match after rounding to 2 decimals, false otherwise
  *
  * @example
- * compareAmounts(1277, "1277.108") // true (both round to 1277)
- * compareAmounts(1277.5, 1277.4) // false
+ * compareAmounts(1277.11, "1277.108") // true (both round to 1277.11)
+ * compareAmounts(32.20, 32.196) // true (both round to 32.20)
+ * compareAmounts(1277.50, 1277.40) // false
  */
 export function compareAmounts(
   amount1: string | number,

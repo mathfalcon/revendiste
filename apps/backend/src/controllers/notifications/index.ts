@@ -23,7 +23,11 @@ import {NotFoundError, UnauthorizedError} from '~/errors';
 import {NOTIFICATION_ERROR_MESSAGES} from '~/constants/error-messages';
 import type {TypedNotification} from '~/services/notifications/types';
 import type {PaginatedResponse} from '~/types';
-import {UsersRepository} from '~/repositories';
+import {
+  UsersRepository,
+  NotificationsRepository,
+  NotificationBatchesRepository,
+} from '~/repositories';
 
 interface GetNotificationsQuery extends PaginationQuery {
   includeSeen?: boolean;
@@ -39,7 +43,11 @@ type DeleteNotificationResponse = TypedNotification | null;
 @Middlewares(requireAuthMiddleware)
 @Tags('Notifications')
 export class NotificationsController {
-  private service = new NotificationService(db, new UsersRepository(db));
+  private service = new NotificationService(
+    new NotificationsRepository(db),
+    new UsersRepository(db),
+    new NotificationBatchesRepository(db),
+  );
 
   @Get('/')
   @Middlewares(paginationMiddleware(10, 100), ensurePagination)

@@ -12,6 +12,7 @@ import {CreateOrderRouteBody} from '~/controllers/orders/validation';
 import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
 import {calculateOrderFees} from '~/utils/fees';
 import {getStorageProvider} from '~/services/storage';
+import type {PaymentSyncService} from '~/services/payments/sync';
 
 export class OrdersService {
   private readonly storageProvider = getStorageProvider();
@@ -23,7 +24,29 @@ export class OrdersService {
     private readonly eventTicketWavesRepository: EventTicketWavesRepository,
     private readonly listingTicketsRepository: ListingTicketsRepository,
     private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
+    private readonly paymentSyncService: PaymentSyncService,
   ) {}
+
+  /**
+   * Syncs payment status with the provider if the order is pending.
+   * This is called when fetching an order to ensure the user sees the latest status
+   * (e.g., after returning from payment provider redirect).
+   *
+   * This is the "sync on return" pattern - industry standard for handling
+   * webhook delays from payment providers.
+   */
+  private async syncPaymentStatusIfPending(orderId: string): Promise<void> {
+    // Get the order first to check status
+    const order = await this.ordersRepository.getByIdWithItems(orderId);
+
+    // Only sync if order exists and is pending
+    if (!order || order.status !== 'pending') {
+      return;
+    }
+
+    // Use the injected sync service
+    await this.paymentSyncService.syncPendingOrderPayment(orderId);
+  }
 
   async createOrder(data: CreateOrderRouteBody, userId: string) {
     // Check if user already has a pending order for this event
@@ -112,6 +135,7 @@ export class OrdersService {
               price,
               ticketWave.name,
               quantity,
+              ticketWave.currency,
             ),
           );
         }
@@ -249,6 +273,11 @@ export class OrdersService {
   }
 
   async getOrderById(orderId: string, userId: string) {
+    // Sync payment status with provider if order is pending
+    // This ensures user sees latest status after returning from payment provider
+    await this.syncPaymentStatusIfPending(orderId);
+
+    // Fetch fresh order data after potential sync
     const order = await this.ordersRepository.getByIdWithItems(orderId);
 
     if (!order) {
@@ -266,6 +295,50 @@ export class OrdersService {
   async getUserOrders(userId: string) {
     const orders = await this.ordersRepository.getByUserId(userId);
     return orders;
+  }
+
+  async cancelOrder(orderId: string, userId: string) {
+    // Verify order exists and belongs to user
+    const order = await this.ordersRepository.getByIdWithItems(orderId);
+    if (!order) {
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+    }
+
+    if (order.userId !== userId) {
+      throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+    }
+
+    // Only pending orders can be cancelled
+    if (order.status !== 'pending') {
+      throw new ValidationError(ORDER_ERROR_MESSAGES.ORDER_NOT_CANCELLABLE);
+    }
+
+    // Cancel the order and release reservations in a transaction
+    return await this.ordersRepository.executeTransaction(async trx => {
+      const ordersRepo = this.ordersRepository.withTransaction(trx);
+      const reservationsRepo =
+        this.orderTicketReservationsRepository.withTransaction(trx);
+
+      // Release reservations to free up tickets
+      await reservationsRepo.releaseByOrderId(orderId);
+
+      // Update order status to cancelled
+      const cancelledOrder = await ordersRepo.updateStatus(
+        orderId,
+        'cancelled',
+        {
+          cancelledAt: new Date(),
+        },
+      );
+
+      logger.info(`Order ${orderId} cancelled by user ${userId}`);
+
+      return {
+        id: cancelledOrder.id,
+        status: cancelledOrder.status,
+        cancelledAt: cancelledOrder.cancelledAt,
+      };
+    });
   }
 
   async getOrderTickets(orderId: string, userId: string) {
@@ -292,6 +365,7 @@ export class OrdersService {
         price: ticket.price,
         soldAt: ticket.soldAt,
         hasDocument: !!ticket.document,
+        reservationStatus: ticket.reservationStatus,
         ticketWave: ticket.ticketWaveName
           ? {
               name: ticket.ticketWaveName,

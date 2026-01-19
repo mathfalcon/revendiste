@@ -1,5 +1,3 @@
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
 import {compareAmounts} from '@revendiste/shared';
 import {
   OrdersRepository,
@@ -8,10 +6,6 @@ import {
   PaymentEventsRepository,
   ListingTicketsRepository,
   TicketListingsRepository,
-  EventsRepository,
-  EventTicketWavesRepository,
-  SellerEarningsRepository,
-  UsersRepository,
 } from '~/repositories';
 import {NotFoundError, ValidationError} from '~/errors';
 import {logger} from '~/utils';
@@ -28,6 +22,7 @@ import {SellerEarningsService} from '~/services/seller-earnings';
 import {NotificationService} from '~/services/notifications';
 import {
   notifyOrderConfirmed,
+  notifyOrderExpired,
   notifyPaymentFailed,
 } from '~/services/notifications/helpers';
 
@@ -82,42 +77,18 @@ interface PaymentUpdateResult {
  * - Provide consistent webhook processing across all providers
  */
 export class PaymentWebhookAdapter {
-  private ordersRepository: OrdersRepository;
-  private orderTicketReservationsRepository: OrderTicketReservationsRepository;
-  private paymentsRepository: PaymentsRepository;
-  private paymentEventsRepository: PaymentEventsRepository;
-  private listingTicketsRepository: ListingTicketsRepository;
-  private ticketListingsRepository: TicketListingsRepository;
-  private ticketListingsService: TicketListingsService;
-  private sellerEarningsService: SellerEarningsService;
-  private notificationService: NotificationService;
-
-  constructor(private provider: PaymentProvider, private db: Kysely<DB>) {
-    this.ordersRepository = new OrdersRepository(db);
-    this.orderTicketReservationsRepository =
-      new OrderTicketReservationsRepository(db);
-    this.paymentsRepository = new PaymentsRepository(db);
-    this.paymentEventsRepository = new PaymentEventsRepository(db);
-    this.listingTicketsRepository = new ListingTicketsRepository(db);
-    this.ticketListingsRepository = new TicketListingsRepository(db);
-    this.ticketListingsService = new TicketListingsService(
-      this.ticketListingsRepository,
-      new EventsRepository(db),
-      new EventTicketWavesRepository(db),
-      this.listingTicketsRepository,
-      this.ordersRepository,
-      db,
-    );
-    this.sellerEarningsService = new SellerEarningsService(
-      new SellerEarningsRepository(db),
-      this.orderTicketReservationsRepository,
-      this.listingTicketsRepository,
-    );
-    this.notificationService = new NotificationService(
-      db,
-      new UsersRepository(db),
-    );
-  }
+  constructor(
+    private readonly provider: PaymentProvider,
+    private readonly ordersRepository: OrdersRepository,
+    private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
+    private readonly paymentsRepository: PaymentsRepository,
+    private readonly paymentEventsRepository: PaymentEventsRepository,
+    private readonly listingTicketsRepository: ListingTicketsRepository,
+    private readonly ticketListingsRepository: TicketListingsRepository,
+    private readonly ticketListingsService: TicketListingsService,
+    private readonly sellerEarningsService: SellerEarningsService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   /**
    * Process a webhook callback from the payment provider
@@ -320,6 +291,31 @@ export class PaymentWebhookAdapter {
     const oldStatus = paymentRecord.status;
     const newStatus = paymentData.status;
 
+    // Calculate exchange rate when currencies differ and we have settlement data
+    // Formula: (balance_amount + balance_fee) / amount
+    // Example: (2019.94 UYU + 50.26 UYU) / 53.66 USD = 38.58 UYU/USD
+    let exchangeRate: string | undefined;
+    if (
+      paymentData.balanceAmount &&
+      paymentData.balanceFee !== undefined &&
+      paymentData.balanceCurrency &&
+      paymentData.currency !== paymentData.balanceCurrency
+    ) {
+      const totalSettlement = paymentData.balanceAmount + paymentData.balanceFee;
+      const calculatedRate = totalSettlement / paymentData.amount;
+      exchangeRate = String(calculatedRate);
+
+      logger.info('Calculated exchange rate for payment', {
+        paymentId: paymentData.providerPaymentId,
+        originalAmount: paymentData.amount,
+        originalCurrency: paymentData.currency,
+        settlementAmount: paymentData.balanceAmount,
+        settlementFee: paymentData.balanceFee,
+        settlementCurrency: paymentData.balanceCurrency,
+        exchangeRate: calculatedRate,
+      });
+    }
+
     paymentRecord = await this.paymentsRepository.update(
       String(paymentRecord.id),
       {
@@ -331,6 +327,8 @@ export class PaymentWebhookAdapter {
           ? String(paymentData.balanceFee)
           : undefined,
         balanceCurrency: paymentData.balanceCurrency,
+        // Store exchange rate if currencies differ (dLocal settles in UYU even for USD orders)
+        exchangeRate,
         paymentMethod: paymentData.paymentMethod as any,
         payerEmail: paymentData.payer?.email,
         payerFirstName: paymentData.payer?.firstName,
@@ -381,8 +379,11 @@ export class PaymentWebhookAdapter {
 
       case 'failed':
       case 'cancelled':
-      case 'expired':
         await this.handleFailedPayment(orderId, status, paymentData);
+        break;
+
+      case 'expired':
+        await this.handleExpiredPayment(orderId, paymentData);
         break;
 
       case 'pending':
@@ -546,6 +547,54 @@ export class PaymentWebhookAdapter {
         errorMessage: paymentData.rejectedReason,
       }).catch(error => {
         logger.error('Failed to send payment failed notification', {
+          orderId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }
+  }
+
+  /**
+   * Handles expired payment - cancels order and releases reservations
+   * Sends order expired notification (different from payment failed)
+   */
+  private async handleExpiredPayment(
+    orderId: string,
+    paymentData: NormalizedPaymentData,
+  ): Promise<void> {
+    await this.ordersRepository.executeTransaction(async trx => {
+      const ordersRepo = this.ordersRepository.withTransaction(trx);
+      const reservationsRepo =
+        this.orderTicketReservationsRepository.withTransaction(trx);
+
+      await ordersRepo.updateStatus(orderId, 'cancelled', {
+        cancelledAt: new Date(),
+      });
+
+      await reservationsRepo.releaseByOrderId(orderId);
+
+      logger.info('Order cancelled due to payment expiration', {
+        orderId,
+        status: 'expired',
+        paymentId: paymentData.providerPaymentId,
+        provider: this.provider.name,
+      });
+    });
+
+    // Send notification to buyer (outside transaction - fire-and-forget)
+    // Get order data with event name for notification
+    const orderWithItems = await this.ordersRepository.getByIdWithItems(
+      orderId,
+    );
+
+    if (orderWithItems && orderWithItems.event) {
+      // Fire-and-forget notification (don't await to avoid blocking)
+      notifyOrderExpired(this.notificationService, {
+        buyerUserId: orderWithItems.userId,
+        orderId: orderWithItems.id,
+        eventName: orderWithItems.event.name || 'el evento',
+      }).catch(error => {
+        logger.error('Failed to send order expired notification', {
           orderId,
           error: error instanceof Error ? error.message : String(error),
         });

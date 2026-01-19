@@ -18,8 +18,20 @@ import {
   EventTicketWavesRepository,
   ListingTicketsRepository,
   OrderTicketReservationsRepository,
+  PaymentsRepository,
+  PaymentEventsRepository,
+  TicketListingsRepository,
+  SellerEarningsRepository,
+  UsersRepository,
+  NotificationsRepository,
 } from '~/repositories';
 import {db} from '~/db';
+import {PaymentSyncService} from '~/services/payments/sync';
+import {PaymentWebhookAdapter} from '~/services/payments/adapters';
+import {getPaymentProvider} from '~/services/payments/providers/PaymentProviderFactory';
+import {TicketListingsService} from '~/services/ticket-listings';
+import {SellerEarningsService} from '~/services/seller-earnings';
+import {NotificationService} from '~/services/notifications';
 import {
   NotFoundError,
   ValidationError,
@@ -33,18 +45,85 @@ type CreateOrderResponse = ReturnType<OrdersService['createOrder']>;
 type GetOrderByIdResponse = ReturnType<OrdersService['getOrderById']>;
 type GetUserOrdersResponse = ReturnType<OrdersService['getUserOrders']>;
 type GetOrderTicketsResponse = ReturnType<OrdersService['getOrderTickets']>;
+type CancelOrderResponse = ReturnType<OrdersService['cancelOrder']>;
+
+// Create shared repositories
+const ordersRepository = new OrdersRepository(db);
+const orderTicketReservationsRepository = new OrderTicketReservationsRepository(
+  db,
+);
+const paymentsRepository = new PaymentsRepository(db);
+const paymentEventsRepository = new PaymentEventsRepository(db);
+const listingTicketsRepository = new ListingTicketsRepository(db);
+const ticketListingsRepository = new TicketListingsRepository(db);
+const eventsRepository = new EventsRepository(db);
+const eventTicketWavesRepository = new EventTicketWavesRepository(db);
+const usersRepository = new UsersRepository(db);
+const notificationsRepository = new NotificationsRepository(db);
+const sellerEarningsRepository = new SellerEarningsRepository(db);
+
+// Create shared services
+const notificationService = new NotificationService(
+  notificationsRepository,
+  usersRepository,
+);
+
+const ticketListingsService = new TicketListingsService(
+  ticketListingsRepository,
+  eventsRepository,
+  eventTicketWavesRepository,
+  listingTicketsRepository,
+  ordersRepository,
+  usersRepository,
+  notificationService,
+);
+
+const sellerEarningsService = new SellerEarningsService(
+  sellerEarningsRepository,
+  orderTicketReservationsRepository,
+);
+
+// Create adapter factory function for payment sync
+// This creates an adapter with all dependencies for the given provider
+const createPaymentWebhookAdapter = (
+  provider: Parameters<typeof getPaymentProvider>[0],
+) => {
+  const paymentProvider = getPaymentProvider(provider);
+  return new PaymentWebhookAdapter(
+    paymentProvider,
+    ordersRepository,
+    orderTicketReservationsRepository,
+    paymentsRepository,
+    paymentEventsRepository,
+    listingTicketsRepository,
+    ticketListingsRepository,
+    ticketListingsService,
+    sellerEarningsService,
+    notificationService,
+  );
+};
+
+// Sync function that creates the adapter and calls the provider
+const syncWithProvider = async (
+  providerPaymentId: string,
+  provider: Parameters<typeof getPaymentProvider>[0],
+) => {
+  const adapter = createPaymentWebhookAdapter(provider);
+  await adapter.syncPaymentStatus(providerPaymentId);
+};
 
 @Route('orders')
 @Middlewares(requireAuthMiddleware)
 @Tags('Orders')
 export class OrdersController {
   private service = new OrdersService(
-    new OrdersRepository(db),
+    ordersRepository,
     new OrderItemsRepository(db),
-    new EventsRepository(db),
-    new EventTicketWavesRepository(db),
-    new ListingTicketsRepository(db),
-    new OrderTicketReservationsRepository(db),
+    eventsRepository,
+    eventTicketWavesRepository,
+    listingTicketsRepository,
+    orderTicketReservationsRepository,
+    new PaymentSyncService(paymentsRepository, syncWithProvider),
   );
 
   @Post('/')
@@ -101,5 +180,16 @@ export class OrdersController {
     @Request() request: express.Request,
   ): Promise<GetOrderTicketsResponse> {
     return this.service.getOrderTickets(orderId, request.user.id);
+  }
+
+  @Post('/{orderId}/cancel')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<NotFoundError>(404, 'Order not found')
+  @Response<ValidationError>(422, 'Order cannot be cancelled (not pending)')
+  public async cancelOrder(
+    @Path() orderId: string,
+    @Request() request: express.Request,
+  ): Promise<CancelOrderResponse> {
+    return this.service.cancelOrder(orderId, request.user.id);
   }
 }

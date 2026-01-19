@@ -1,16 +1,24 @@
 import {useState} from 'react';
 import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '~/components/ui/accordion';
-import {Ticket, MoreVertical, Edit, Minus} from 'lucide-react';
+  Ticket,
+  MoreVertical,
+  Edit,
+  Minus,
+  Clock,
+  ChevronDown,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
+import {Button} from '~/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '~/components/ui/collapsible';
 import {formatPrice} from '~/utils/string';
 import type {
   GetUserListingsResponse,
@@ -18,12 +26,15 @@ import type {
 } from '~/lib/api/generated';
 import {EditTicketPriceDialog} from './EditTicketPriceDialog';
 import {RemoveTicketDialog} from './RemoveTicketDialog';
+import {CopyableText} from '~/components/ui/copyable-text';
+import {cn} from '~/lib/utils';
 
 interface ActiveTicketsSectionProps {
   tickets: GetUserListingsResponse[number]['tickets'];
   ticketWaveName: string;
   ticketWaveCurrency: EventTicketCurrency;
   ticketWaveFaceValue: number;
+  isEventPast?: boolean;
 }
 
 export function ActiveTicketsSection({
@@ -31,74 +42,167 @@ export function ActiveTicketsSection({
   ticketWaveName,
   ticketWaveCurrency,
   ticketWaveFaceValue,
+  isEventPast = false,
 }: ActiveTicketsSectionProps) {
   const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
   const [removingTicketId, setRemovingTicketId] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   const editingTicket = tickets.find(t => t.id === editingTicketId);
   const removingTicket = tickets.find(t => t.id === removingTicketId);
+
   if (tickets.length === 0) {
     return null;
   }
 
+  // Different styling for expired vs active tickets
+  const sectionLabel = isEventPast ? 'Tickets expirados' : 'Tickets activos';
+  const iconColorClass = isEventPast
+    ? 'text-muted-foreground'
+    : 'text-blue-600';
+  const iconBgClass = isEventPast ? 'bg-muted' : 'bg-blue-500/10';
+  const badgeClass = isEventPast
+    ? 'text-muted-foreground bg-muted'
+    : 'text-blue-600 bg-blue-500/10';
+  const cardBorderClass = isEventPast
+    ? 'border-muted bg-muted/30'
+    : 'border-blue-500/20 bg-blue-500/5';
+
   return (
-    <AccordionItem value='active-tickets' className='border-none'>
-      <AccordionTrigger className='py-2 text-sm font-medium hover:no-underline'>
-        <div className='flex items-center gap-2'>
-          <Ticket className='h-4 w-4 text-blue-600' />
-          Tickets activos ({tickets.length})
-        </div>
-      </AccordionTrigger>
-      <AccordionContent className='pl-6'>
-        <div className='space-y-2'>
-          {tickets.map(ticket => (
-            <div
-              key={ticket.id}
-              className='rounded-lg border bg-muted/50 p-3 text-sm'
-            >
-              <div className='flex items-center justify-between'>
-                <div className='space-y-1 flex-1'>
-                  <div className='flex items-center gap-2'>
-                    <p className='font-medium'>Ticket #{ticket.ticketNumber}</p>
-                    <p className='text-xs text-muted-foreground font-mono'>
-                      (ID: {ticket.id})
-                    </p>
-                  </div>
-                  <p className='text-xs text-muted-foreground'>
-                    {ticketWaveName}
-                  </p>
-                  <p className='text-muted-foreground'>
-                    Precio:{' '}
-                    {formatPrice(parseFloat(ticket.price), ticketWaveCurrency)}
-                  </p>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className='rounded-sm p-1 hover:bg-accent focus:outline-none'>
-                      <MoreVertical className='h-4 w-4' />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem
-                      onClick={() => setEditingTicketId(ticket.id)}
-                    >
-                      <Edit className='mr-2 h-4 w-4' />
-                      Editar precio
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className='text-red-600'
-                      onClick={() => setRemovingTicketId(ticket.id)}
-                    >
-                      <Minus className='mr-2 h-4 w-4' />
-                      Retirar
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+    <>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <button className='flex items-center justify-between w-full py-2 text-sm font-medium hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors'>
+            <div className='flex items-center gap-2'>
+              <div
+                className={cn(
+                  'flex h-6 w-6 items-center justify-center rounded-full',
+                  iconBgClass,
+                )}
+              >
+                {isEventPast ? (
+                  <Clock className={cn('h-3.5 w-3.5', iconColorClass)} />
+                ) : (
+                  <Ticket className={cn('h-3.5 w-3.5', iconColorClass)} />
+                )}
               </div>
+              <span>{sectionLabel}</span>
+              <span
+                className={cn('text-xs px-2 py-0.5 rounded-full', badgeClass)}
+              >
+                {tickets.length}
+              </span>
             </div>
-          ))}
-        </div>
-      </AccordionContent>
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 text-muted-foreground transition-transform',
+                isOpen && 'rotate-180',
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className='pt-2'>
+          <div className='space-y-2'>
+            {tickets.map(ticket => (
+              <div
+                key={ticket.id}
+                className={cn(
+                  'rounded-xl border p-3 transition-all',
+                  cardBorderClass,
+                )}
+              >
+                <div className='flex items-center justify-between gap-3'>
+                  {/* Left side: Ticket info */}
+                  <div className='flex items-center gap-3 min-w-0 flex-1'>
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                        iconBgClass,
+                      )}
+                    >
+                      {isEventPast ? (
+                        <Clock className={cn('h-5 w-5', iconColorClass)} />
+                      ) : (
+                        <Ticket className={cn('h-5 w-5', iconColorClass)} />
+                      )}
+                    </div>
+
+                    <div className='min-w-0'>
+                      <div className='flex items-center gap-2'>
+                        <p
+                          className={cn(
+                            'font-semibold',
+                            isEventPast
+                              ? 'text-muted-foreground'
+                              : 'text-foreground',
+                          )}
+                        >
+                          Ticket #{ticket.ticketNumber} - {ticketWaveName}
+                        </p>
+                      </div>
+                      <div className='flex items-center gap-1.5 mt-0.5'>
+                        <span
+                          className={cn(
+                            'text-sm font-medium',
+                            isEventPast && 'text-muted-foreground',
+                          )}
+                        >
+                          {formatPrice(
+                            parseFloat(ticket.price),
+                            ticketWaveCurrency,
+                          )}
+                        </span>
+                        {isEventPast && (
+                          <span className='text-xs text-muted-foreground'>
+                            · No vendido
+                          </span>
+                        )}
+                      </div>
+                      <CopyableText
+                        text={ticket.id}
+                        label='ID:'
+                        truncateOnMobile
+                        className='mt-1'
+                        textClassName='text-xs text-muted-foreground'
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right side: Actions - only show for active events */}
+                  {!isEventPast && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          className='h-8 w-8 shrink-0'
+                        >
+                          <MoreVertical className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem
+                          onClick={() => setEditingTicketId(ticket.id)}
+                        >
+                          <Edit className='mr-2 h-4 w-4' />
+                          Editar precio
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className='text-destructive focus:text-destructive'
+                          onClick={() => setRemovingTicketId(ticket.id)}
+                        >
+                          <Minus className='mr-2 h-4 w-4' />
+                          Retirar de venta
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Edit Price Dialog */}
       {editingTicket && (
@@ -125,6 +229,6 @@ export function ActiveTicketsSection({
           ticketNumber={removingTicket.ticketNumber}
         />
       )}
-    </AccordionItem>
+    </>
   );
 }

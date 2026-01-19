@@ -1,6 +1,6 @@
 import {Kysely} from 'kysely';
 import {jsonObjectFrom} from 'kysely/helpers/postgres';
-import {DB} from '@revendiste/shared';
+import {DB, OrderTicketReservationStatus} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 
 export class OrderTicketReservationsRepository extends BaseRepository<OrderTicketReservationsRepository> {
@@ -162,6 +162,7 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
         'listingTickets.price',
         'listingTickets.soldAt',
         'eventTicketWaves.name as ticketWaveName',
+        'orderTicketReservations.status as reservationStatus',
         jsonObjectFrom(
           eb
             .selectFrom('ticketDocuments')
@@ -207,6 +208,25 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
       // Include both active and soft-deleted reservations (for confirmed orders)
       // This allows us to find orders even after confirmation
       .distinct()
+      .execute();
+  }
+
+  /**
+   * Update reservation status
+   * Used when seller fails to upload document (status = 'cancelled')
+   * or when refund is processed (status = 'refunded')
+   */
+  async updateStatus(
+    reservationId: string,
+    status: OrderTicketReservationStatus,
+  ) {
+    return await this.db
+      .updateTable('orderTicketReservations')
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
+      .where('id', '=', reservationId)
       .execute();
   }
 }

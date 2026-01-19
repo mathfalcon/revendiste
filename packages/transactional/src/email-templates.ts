@@ -25,6 +25,10 @@ import {
   type DocumentUploadedEmailProps,
 } from '../emails/document-uploaded-email';
 import {
+  DocumentUploadedBatchEmail as DocumentUploadedBatchEmailComponent,
+  type DocumentUploadedBatchEmailProps,
+} from '../emails/document-uploaded-batch-email';
+import {
   SellerTicketSoldEmail as SellerTicketSoldEmailComponent,
   type SellerTicketSoldEmailProps,
 } from '../emails/seller-ticket-sold-email';
@@ -78,6 +82,15 @@ import {
   IdentityVerificationRejectedEmail as IdentityVerificationRejectedEmailComponent,
   type IdentityVerificationRejectedEmailProps,
 } from '../emails/identity-verification-rejected-email';
+// Missing document refund email templates
+import {
+  SellerEarningsRetainedEmail as SellerEarningsRetainedEmailComponent,
+  type SellerEarningsRetainedEmailProps,
+} from '../emails/seller-earnings-retained-email';
+import {
+  BuyerTicketCancelledEmail as BuyerTicketCancelledEmailComponent,
+  type BuyerTicketCancelledEmailProps,
+} from '../emails/buyer-ticket-cancelled-email';
 import type {
   NotificationType,
   TypedNotificationMetadata,
@@ -212,6 +225,22 @@ export function getEmailTemplate<T extends NotificationType>(
             orderUrl || `${appBaseUrl}/cuenta/tickets?orderId=${meta?.orderId}`,
           appBaseUrl,
         },
+      };
+    }
+
+    case 'document_uploaded_batch': {
+      const meta =
+        metadata as TypedNotificationMetadata<'document_uploaded_batch'>;
+      return {
+        Component: DocumentUploadedBatchEmailComponent,
+        props: {
+          eventName: meta?.eventName || 'el evento',
+          uploadedCount: meta?.uploadedCount || 1,
+          tickets: meta?.tickets || [],
+          orderUrl:
+            orderUrl || `${appBaseUrl}/cuenta/tickets?orderId=${meta?.orderId}`,
+          appBaseUrl,
+        } as DocumentUploadedBatchEmailProps,
       };
     }
 
@@ -420,6 +449,39 @@ export function getEmailTemplate<T extends NotificationType>(
       throw new Error(
         `Notification type ${notificationType} is in_app only and does not have an email template`,
       );
+
+    // Missing document refund notification types
+    case 'seller_earnings_retained': {
+      const meta =
+        metadata as TypedNotificationMetadata<'seller_earnings_retained'>;
+      return {
+        Component: SellerEarningsRetainedEmailComponent,
+        props: {
+          eventName: meta?.eventName || 'el evento',
+          ticketCount: meta?.ticketCount || 1,
+          reason: meta?.reason || 'other',
+          totalAmount: meta?.totalAmount,
+          currency: meta?.currency,
+          appBaseUrl,
+        } as SellerEarningsRetainedEmailProps,
+      };
+    }
+
+    case 'buyer_ticket_cancelled': {
+      const meta =
+        metadata as TypedNotificationMetadata<'buyer_ticket_cancelled'>;
+      return {
+        Component: BuyerTicketCancelledEmailComponent,
+        props: {
+          eventName: meta?.eventName || 'el evento',
+          ticketCount: meta?.ticketCount || 1,
+          reason: meta?.reason || 'other',
+          orderId: '', // Not stored in metadata, but not critical for email
+          orderUrl: orderUrl || `${appBaseUrl}/cuenta/tickets`,
+          appBaseUrl,
+        } as BuyerTicketCancelledEmailProps,
+      };
+    }
 
     default:
       throw new Error(`Unknown notification type: ${notificationType}`);

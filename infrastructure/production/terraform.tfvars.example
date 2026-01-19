@@ -16,10 +16,13 @@ db_name     = "revendiste"
 db_username = "revendiste_admin" # Will be stored in Secrets Manager
 # db_password is auto-generated and stored in Secrets Manager
 
-# Database Autoscaling (Aurora Serverless v2)
-db_min_capacity = 0.5  # Minimum ACUs (0.5 = 1 GB RAM, 0.25 vCPU)
-db_max_capacity = 16   # Maximum ACUs (16 = 32 GB RAM, 8 vCPU)
-db_instance_count = 1  # Number of Aurora instances (1 for cost, 2+ for HA)
+# Standard RDS PostgreSQL (much cheaper than Aurora Serverless v2)
+# Cost: ~$30/month for db.t3.medium (vs ~$65/month for Aurora Serverless v2)
+# Easy to migrate to Aurora later using AWS DMS or pg_dump/pg_restore
+db_instance_class = "db.t3.medium"  # 2 vCPU, 4GB RAM - handles hundreds of concurrent users
+db_allocated_storage = 20           # Initial storage (GB), auto-scales up to max_allocated_storage
+db_max_allocated_storage = 100      # Maximum storage to auto-scale to (GB)
+db_performance_insights_enabled = false  # Set to true if you need detailed query monitoring (+$3-5/month)
 
 # Backend ECS Configuration
 # Note: Backend API handles HTTP requests, database queries, and file uploads.
@@ -28,8 +31,8 @@ backend_cpu    = 512   # 0.5 vCPU (sufficient for API-only workloads)
 backend_memory = 1536  # 1.5 GB (sufficient for API + database pools + request handling)
 backend_port   = 3001
 backend_image_tag = "latest"
-backend_desired_count = 2
-backend_max_capacity = 10
+backend_desired_count = 1  # Start with 1, autoscaling will add more if needed
+backend_max_capacity = 10   # Can scale up to 10 tasks under load
 backend_cpu_target    = 70  # Scale when CPU > 70%
 backend_memory_target = 80  # Scale when Memory > 80%
 
@@ -38,8 +41,8 @@ frontend_cpu    = 256   # 0.25 vCPU
 frontend_memory = 512   # 0.5 GB
 frontend_port   = 3000
 frontend_image_tag = "latest"
-frontend_desired_count = 2
-frontend_max_capacity = 10
+frontend_desired_count = 1  # Start with 1, autoscaling will add more if needed
+frontend_max_capacity = 10  # Can scale up to 10 tasks under load
 frontend_cpu_target    = 70  # Scale when CPU > 70%
 frontend_memory_target = 80  # Scale when Memory > 80%
 

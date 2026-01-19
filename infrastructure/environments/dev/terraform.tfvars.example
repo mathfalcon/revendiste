@@ -1,0 +1,25 @@
+# Dev Environment - terraform.tfvars.example
+# Copy this to terraform.tfvars and fill in the values
+
+# AWS Region
+aws_region = "sa-east-1"
+
+# Domain
+domain_name = "revendiste.com"
+
+# Cloudflare (required)
+cloudflare_api_token  = "your-cloudflare-api-token"
+cloudflare_account_id = "your-cloudflare-account-id"
+
+# RDS - Dev uses minimum resources
+db_instance_class        = "db.t4g.micro" # ~$10/month
+db_allocated_storage     = 20
+db_max_allocated_storage = 50
+db_backup_retention_days = 3
+
+# Docker image tags
+backend_image_tag  = "latest"
+frontend_image_tag = "latest"
+
+# R2 bucket location
+r2_bucket_location = "WEUR"

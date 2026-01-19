@@ -13,6 +13,8 @@ interface BalanceSectionProps {
   available: BalanceByCurrency[];
   retained: BalanceByCurrency[];
   pending: BalanceByCurrency[];
+  payoutPending: BalanceByCurrency[];
+  paidOut: BalanceByCurrency[];
   total: BalanceByCurrency[];
 }
 
@@ -20,6 +22,8 @@ export function BalanceSection({
   available,
   retained,
   pending,
+  payoutPending,
+  paidOut,
   total,
 }: BalanceSectionProps) {
   const currencies = ['UYU', 'USD'] as const;
@@ -50,6 +54,18 @@ export function BalanceSection({
             count: 0,
           };
           const pendingBalance = pending.find(b => b.currency === currency) || {
+            currency,
+            amount: '0',
+            count: 0,
+          };
+          const payoutPendingBalance = payoutPending.find(
+            b => b.currency === currency,
+          ) || {
+            currency,
+            amount: '0',
+            count: 0,
+          };
+          const paidOutBalance = paidOut.find(b => b.currency === currency) || {
             currency,
             amount: '0',
             count: 0,
@@ -91,6 +107,22 @@ export function BalanceSection({
                   </span>
                   <span className='font-semibold text-blue-600'>
                     {formatCurrency(pendingBalance.amount, currency)}
+                  </span>
+                </div>
+                <div className='flex justify-between items-center'>
+                  <span className='text-sm text-muted-foreground'>
+                    En proceso de retiro:
+                  </span>
+                  <span className='font-semibold text-purple-600'>
+                    {formatCurrency(payoutPendingBalance.amount, currency)}
+                  </span>
+                </div>
+                <div className='flex justify-between items-center'>
+                  <span className='text-sm text-muted-foreground'>
+                    Retirado:
+                  </span>
+                  <span className='font-semibold text-emerald-600'>
+                    {formatCurrency(paidOutBalance.amount, currency)}
                   </span>
                 </div>
                 <div className='border-t pt-3 flex justify-between items-center'>

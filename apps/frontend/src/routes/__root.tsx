@@ -20,6 +20,7 @@ import {ThemeProvider} from '~/components/ThemeProvider';
 import {ClerkProvider} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
 import {Toaster} from '~/components/ui/sonner';
+import {StickyBarProvider} from '~/contexts';
 import {createServerFn} from '@tanstack/react-start';
 import {auth} from '@clerk/tanstack-react-start/server';
 
@@ -167,15 +168,17 @@ function RootDocument({children}: {children: React.ReactNode}) {
         </head>
         <body>
           <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
-            <div className='flex flex-col h-screen bg-background-secondary'>
-              {!shouldHideNavbar && <Navbar />}
-              <main className='flex-1'>{children}</main>
-              {!shouldHideNavbar && <Footer />}
-              <TanStackRouterDevtools position='bottom-right' />
-              <ReactQueryDevtools buttonPosition='bottom-left' />
-              <Scripts />
-              <Toaster position='top-center' />
-            </div>
+            <StickyBarProvider>
+              <div className='flex flex-col h-screen bg-background-secondary'>
+                {!shouldHideNavbar && <Navbar />}
+                <main className='flex-1'>{children}</main>
+                {!shouldHideNavbar && <Footer />}
+                {/* <TanStackRouterDevtools position='bottom-right' />
+                <ReactQueryDevtools buttonPosition='bottom-left' /> */}
+                <Scripts />
+                <Toaster position='top-center' />
+              </div>
+            </StickyBarProvider>
           </ThemeProvider>
         </body>
       </html>

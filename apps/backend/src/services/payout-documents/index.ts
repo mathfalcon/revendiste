@@ -1,6 +1,4 @@
 import path from 'path';
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
 import {PayoutsRepository, PayoutDocumentsRepository} from '~/repositories';
 import {getStorageProvider} from '~/services/storage';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
@@ -15,14 +13,12 @@ import {PAYOUT_ERROR_MESSAGES} from '~/constants/error-messages';
  * Supports multiple documents per payout.
  */
 export class PayoutDocumentsService {
-  private payoutsRepository: PayoutsRepository;
-  private payoutDocumentsRepository: PayoutDocumentsRepository;
   private storageProvider = getStorageProvider();
 
-  constructor(private db: Kysely<DB>) {
-    this.payoutsRepository = new PayoutsRepository(db);
-    this.payoutDocumentsRepository = new PayoutDocumentsRepository(db);
-  }
+  constructor(
+    private readonly payoutsRepository: PayoutsRepository,
+    private readonly payoutDocumentsRepository: PayoutDocumentsRepository,
+  ) {}
 
   /**
    * Upload a payout document (admin only)

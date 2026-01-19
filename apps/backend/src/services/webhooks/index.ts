@@ -1,9 +1,6 @@
-import {DLocalService} from '~/services/dlocal';
 import {PaymentWebhookAdapter} from '~/services/payments/adapters';
 import {ClerkWebhookService} from '~/services/clerk-webhook';
 import {logger} from '~/utils';
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
 import type {ClerkWebhookRouteBody} from '~/controllers/webhooks/validation';
 
 interface WebhookMetadata {
@@ -12,23 +9,13 @@ interface WebhookMetadata {
 }
 
 export class WebhooksService {
-  private dlocalAdapter: PaymentWebhookAdapter;
-  private clerkWebhookService: ClerkWebhookService;
-
-  constructor(db: Kysely<DB>) {
-    // Create adapters for each payment provider
-    // Each adapter wraps a provider with our business logic
-    this.dlocalAdapter = new PaymentWebhookAdapter(
-      new DLocalService(), // Provider handles only API calls
-      db, // Adapter handles business logic with database
-    );
-
-    // Clerk webhook service for auth emails
-    this.clerkWebhookService = new ClerkWebhookService();
-
-    // Future providers:
-    // this.stripeAdapter = new PaymentWebhookAdapter(new StripeService(), db);
-    // this.paypalAdapter = new PaymentWebhookAdapter(new PayPalService(), db);
+  constructor(
+    private readonly dlocalAdapter: PaymentWebhookAdapter,
+    private readonly clerkWebhookService: ClerkWebhookService,
+  ) {
+    // Future providers can be added as constructor parameters:
+    // private readonly stripeAdapter: PaymentWebhookAdapter,
+    // private readonly paypalAdapter: PaymentWebhookAdapter,
   }
 
   async handleDLocalPaymentWebhook(

@@ -12,6 +12,7 @@ import {startSyncPaymentsAndExpireOrdersJob} from './cronjobs/sync-payments-and-
 import {startNotifyUploadAvailabilityJob} from './cronjobs/notify-upload-availability';
 import {startCheckPayoutHoldPeriodsJob} from './cronjobs/check-payout-hold-periods';
 import {startScrapeEventsJob} from './cronjobs/scrape-events';
+import {startProcessPendingNotificationsJob} from './cronjobs/process-pending-notifications';
 
 const app: express.Application = express();
 
@@ -125,9 +126,7 @@ app.listen(PORT, '0.0.0.0', () => {
     startSyncPaymentsAndExpireOrdersJob();
     startNotifyUploadAvailabilityJob();
     startCheckPayoutHoldPeriodsJob();
-    if (NODE_ENV === 'development') {
-      startScrapeEventsJob();
-    }
+    startProcessPendingNotificationsJob();
   } else {
     logger.info(
       'Cronjobs disabled in production (using EventBridge + ECS RunTask)',

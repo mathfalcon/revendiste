@@ -2,22 +2,29 @@ import {useQuery} from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog';
 import {Button} from '~/components/ui/button';
-import {ChevronLeft, ChevronRight, Download, AlertCircle} from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  Ticket,
+  FileCheck,
+  Clock,
+  XCircle,
+  AlertTriangle,
+} from 'lucide-react';
 import {getOrderTicketsQuery} from '~/lib/api/order';
-import {LoadingSpinner} from '~/components/LoadingScreen';
 import {useState} from 'react';
-import {Card, CardContent} from '~/components/ui/card';
 import {Alert, AlertDescription} from '~/components/ui/alert';
 import {TextEllipsis} from '~/components/ui/text-ellipsis';
 import {TicketDetails} from './TicketDetails';
-import {TicketImagePreview} from './TicketImagePreview';
 import {OrderDetailsAccordion} from './OrderDetailsAccordion';
 import {TicketIds} from './TicketIds';
-import {TicketDocumentStatus} from './TicketDocumentStatus';
+import {DocumentPreview} from './DocumentPreview';
 import {getFullFileUrl} from './utils';
 
 interface TicketViewModalProps {
@@ -62,7 +69,6 @@ export function TicketViewModal({
   const handleDownload = () => {
     if (currentTicket?.document?.url) {
       const fullUrl = getFullFileUrl(currentTicket.document.url);
-      // Create a temporary anchor element to trigger download
       const link = document.createElement('a');
       link.href = fullUrl;
       link.download = `ticket-${currentTicket.id}`;
@@ -75,9 +81,10 @@ export function TicketViewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='sm:max-w-[600px] max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className='flex items-center gap-2'>
+            <Ticket className='h-5 w-5' />
             {event?.name ? (
               <TextEllipsis maxLines={1} className='text-lg font-semibold'>
                 {event.name}
@@ -86,11 +93,17 @@ export function TicketViewModal({
               'Mis tickets'
             )}
           </DialogTitle>
+          {currentTicket && (
+            <DialogDescription>
+              {currentTicket.ticketWave?.name}
+              {hasMultipleTickets && ` • Ticket ${currentIndex + 1} de ${tickets?.length}`}
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         {isPending ? (
-          <div className='flex h-64 items-center justify-center'>
-            <LoadingSpinner size={64} />
+          <div className='flex items-center justify-center py-12'>
+            <div className='h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent' />
           </div>
         ) : !tickets || tickets.length === 0 ? (
           <Alert>
@@ -108,74 +121,90 @@ export function TicketViewModal({
           </Alert>
         ) : (
           <div className='space-y-4'>
-            {/* Ticket counter */}
-            {hasMultipleTickets && (
-              <div className='text-center text-sm text-muted-foreground'>
-                Ticket {currentIndex + 1} de {tickets.length}
+            {/* Ticket details */}
+            <TicketDetails
+              ticketWaveName={currentTicket.ticketWave?.name}
+              eventStartDate={event?.eventStartDate || null}
+              price={currentTicket.price}
+              currency={currency || null}
+            />
+
+            {/* Document section */}
+            {currentTicket.reservationStatus === 'cancelled' ? (
+              <Alert className='bg-destructive/10 border-destructive/30'>
+                <AlertTriangle className='h-4 w-4 text-destructive' />
+                <AlertDescription className='text-destructive'>
+                  <span className='font-semibold'>Ticket cancelado</span> - El
+                  vendedor no subió el documento a tiempo. Tu reembolso está en
+                  proceso.
+                </AlertDescription>
+              </Alert>
+            ) : currentTicket.reservationStatus === 'refunded' ? (
+              <Alert className='bg-muted/50 border-muted'>
+                <XCircle className='h-4 w-4 text-muted-foreground' />
+                <AlertDescription className='text-muted-foreground'>
+                  <span className='font-semibold'>Ticket reembolsado</span> -
+                  Este ticket fue reembolsado.
+                </AlertDescription>
+              </Alert>
+            ) : currentTicket.reservationStatus === 'refund_pending' ? (
+              <Alert className='bg-yellow-500/10 border-yellow-500/30'>
+                <Clock className='h-4 w-4 text-yellow-600' />
+                <AlertDescription className='text-yellow-700'>
+                  <span className='font-semibold'>Reembolso en proceso</span> -
+                  Tu reembolso está siendo procesado.
+                </AlertDescription>
+              </Alert>
+            ) : currentTicket.hasDocument && currentTicket.document?.url ? (
+              <div className='space-y-3'>
+                {/* Document status */}
+                <div className='flex items-center gap-2 text-sm'>
+                  <FileCheck className='h-4 w-4 text-green-500' />
+                  <span className='text-green-600 font-medium'>
+                    Ticket disponible
+                  </span>
+                </div>
+
+                {/* Document preview */}
+                <DocumentPreview
+                  url={currentTicket.document.url}
+                  ticketId={currentTicket.id}
+                  mimeType={currentTicket.document.mimeType}
+                  onDownload={handleDownload}
+                />
               </div>
+            ) : (
+              <Alert className='bg-muted/50'>
+                <Clock className='h-4 w-4' />
+                <AlertDescription>
+                  El vendedor aún no ha subido el ticket. Te notificaremos cuando
+                  esté disponible.
+                </AlertDescription>
+              </Alert>
             )}
 
-            {/* Ticket content */}
-            <Card>
-              <CardContent className='p-6'>
-                <div className='space-y-4'>
-                  <TicketDetails
-                    ticketWaveName={currentTicket.ticketWave?.name}
-                    eventStartDate={event?.eventStartDate || null}
-                    price={currentTicket.price}
-                    currency={currency || null}
-                  />
-                  <TicketDocumentStatus
-                    hasDocument={currentTicket.hasDocument}
-                  />
+            {/* Order details accordion */}
+            <OrderDetailsAccordion
+              subtotalAmount={subtotalAmount || null}
+              totalAmount={totalAmount || null}
+              platformCommission={platformCommission || null}
+              vatOnCommission={vatOnCommission || null}
+              currency={currency || null}
+            />
 
-                  {currentTicket.hasDocument && (
-                    <>
-                      {currentTicket.document?.url && (
-                        <TicketImagePreview
-                          url={currentTicket.document.url}
-                          ticketId={currentTicket.id}
-                          mimeType={currentTicket.document.mimeType}
-                        />
-                      )}
-
-                      <Button
-                        onClick={handleDownload}
-                        className='w-full'
-                        variant='default'
-                      >
-                        <Download className='mr-2 h-4 w-4' />
-                        Descargar ticket
-                      </Button>
-                    </>
-                  )}
-
-                  <OrderDetailsAccordion
-                    subtotalAmount={subtotalAmount || null}
-                    totalAmount={totalAmount || null}
-                    platformCommission={platformCommission || null}
-                    vatOnCommission={vatOnCommission || null}
-                    currency={currency || null}
-                  />
-
-                  <TicketIds
-                    orderId={orderIdFromData || null}
-                    ticketId={currentTicket.id}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            {/* Ticket IDs */}
+            <TicketIds orderId={orderIdFromData || null} ticketId={currentTicket.id} />
 
             {/* Navigation buttons */}
             {hasMultipleTickets && (
-              <div className='flex justify-between gap-2'>
+              <div className='flex justify-between gap-2 pt-2'>
                 <Button
                   onClick={handlePrevious}
                   disabled={currentIndex === 0}
                   variant='outline'
                   className='flex-1'
                 >
-                  <ChevronLeft className='mr-2 h-4 w-4' />
+                  <ChevronLeft className='h-4 w-4' />
                   Anterior
                 </Button>
                 <Button
@@ -185,7 +214,7 @@ export function TicketViewModal({
                   className='flex-1'
                 >
                   Siguiente
-                  <ChevronRight className='ml-2 h-4 w-4' />
+                  <ChevronRight className='h-4 w-4' />
                 </Button>
               </div>
             )}

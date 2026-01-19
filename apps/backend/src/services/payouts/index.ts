@@ -3,7 +3,6 @@ import {
   PayoutMethodsRepository,
   SellerEarningsRepository,
   PayoutEventsRepository,
-  UsersRepository,
 } from '~/repositories';
 import {PayoutDocumentsService} from '~/services/payout-documents';
 import {NotFoundError, ValidationError} from '~/errors';
@@ -20,8 +19,6 @@ import {
   notifyPayoutFailed,
   notifyPayoutCancelled,
 } from '~/services/notifications/helpers';
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
 
 interface RequestPayoutParams {
   sellerUserId: string;
@@ -48,22 +45,14 @@ interface PayoutHistoryItem {
 }
 
 export class PayoutsService {
-  private notificationService: NotificationService;
-  private payoutDocumentsService: PayoutDocumentsService;
-
   constructor(
     private readonly payoutsRepository: PayoutsRepository,
     private readonly payoutMethodsRepository: PayoutMethodsRepository,
     private readonly sellerEarningsRepository: SellerEarningsRepository,
     private readonly payoutEventsRepository: PayoutEventsRepository,
-    db: Kysely<DB>,
-  ) {
-    this.notificationService = new NotificationService(
-      db,
-      new UsersRepository(db),
-    );
-    this.payoutDocumentsService = new PayoutDocumentsService(db);
-  }
+    private readonly notificationService: NotificationService,
+    private readonly payoutDocumentsService: PayoutDocumentsService,
+  ) {}
 
   /**
    * Request a payout with selected tickets/listings
@@ -118,8 +107,29 @@ export class PayoutsService {
     let finalCurrency = earnings[0].currency;
     let conversionInfo = null;
 
+    // Validate currency compatibility between earnings and payout method
+    // - PayPal (USD) can receive both USD and UYU (UYU will be converted)
+    // - UYU bank account can only receive UYU earnings
+    // - USD bank account can only receive USD earnings
+    const isPayPal = payoutMethod.payoutType === 'paypal';
+    const payoutMethodCurrency = payoutMethod.currency;
+
+    if (!isPayPal) {
+      // For non-PayPal methods, currency must match
+      if (payoutMethodCurrency === 'UYU' && finalCurrency === 'USD') {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS,
+        );
+      }
+      if (payoutMethodCurrency === 'USD' && finalCurrency === 'UYU') {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS,
+        );
+      }
+    }
+
     // If PayPal method and earnings are in UYU, convert to USD
-    if (payoutMethod.payoutType === 'paypal' && finalCurrency === 'UYU') {
+    if (isPayPal && finalCurrency === 'UYU') {
       const exchangeRateService = new ExchangeRateService();
       const conversion = await exchangeRateService.convertAmount(
         totalAmount,
@@ -304,6 +314,9 @@ export class PayoutsService {
       );
     }
 
+    // Mark linked earnings as paid_out (they were 'payout_requested' while pending)
+    await this.sellerEarningsRepository.markEarningsAsPaidOut(payoutId);
+
     // Log transfer completed event
     await this.payoutEventsRepository.create({
       payoutId,
@@ -389,6 +402,9 @@ export class PayoutsService {
       },
     );
 
+    // Mark linked earnings as paid_out (they were 'payout_requested' while pending)
+    await this.sellerEarningsRepository.markEarningsAsPaidOut(payoutId);
+
     // Log transfer completed event
     await this.payoutEventsRepository.create({
       payoutId,
@@ -468,12 +484,12 @@ export class PayoutsService {
           createdBy: adminUserId,
         });
 
-        // Clone earnings to make them available again
-        const clonedCount = await earningsRepo.cloneEarningsForFailedPayout(
-          payoutId,
-        );
+        // Clone earnings for audit trail: original earnings keep 'failed_payout' status
+        // and stay linked to this payout, new clones are created with 'available' status
+        const clonedCount =
+          await earningsRepo.cloneEarningsForFailedPayout(payoutId);
 
-        logger.info('Payout failed and earnings cloned', {
+        logger.info('Payout failed and earnings cloned for audit', {
           payoutId,
           adminUserId,
           failureReason,
@@ -570,12 +586,12 @@ export class PayoutsService {
           createdBy: adminUserId,
         });
 
-        // Clone earnings to make them available again
-        const clonedCount = await earningsRepo.cloneEarningsForFailedPayout(
-          payoutId,
-        );
+        // Clone earnings for audit trail: original earnings keep 'failed_payout' status
+        // and stay linked to this payout, new clones are created with 'available' status
+        const clonedCount =
+          await earningsRepo.cloneEarningsForFailedPayout(payoutId);
 
-        logger.info('Payout cancelled and earnings cloned', {
+        logger.info('Payout cancelled and earnings cloned for audit', {
           payoutId,
           adminUserId,
           reasonType,
@@ -636,6 +652,7 @@ export class PayoutsService {
 
   /**
    * Get payout details for admin (with full information)
+   * Includes settlement information with exchange rates for currency conversion visibility
    */
   async getPayoutDetailsForAdmin(payoutId: string, adminUserId: string) {
     const payout = await this.payoutsRepository.getWithLinkedEarnings(payoutId);
@@ -660,10 +677,17 @@ export class PayoutsService {
       true, // isAdmin
     );
 
+    // Get settlement information (exchange rates, balance amounts from dLocal)
+    // This helps admin understand what we actually received vs what seller is owed
+    const settlementInfo = await this.payoutsRepository.getPayoutSettlementInfo(
+      payoutId,
+    );
+
     return {
       ...payout,
       metadata,
       documents,
+      settlementInfo,
       payoutMethod: payoutMethod
         ? {
             id: payoutMethod.id,

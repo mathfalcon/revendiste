@@ -1,6 +1,8 @@
 import {useSuspenseQuery} from '@tanstack/react-query';
-import {EventLeftSide} from './EventLeftSide';
-import {EventRightSide} from './EventRightSide';
+import {EventDetails} from './EventDetails';
+import {EventDescription} from './EventDescription';
+import {TicketSelection} from './tickets';
+import {EventInfoCards} from './EventInfoCards';
 import {EventImageType, getEventByIdQuery} from '~/lib';
 import {useParams} from '@tanstack/react-router';
 import {useEffect, useRef, useState} from 'react';
@@ -30,6 +32,8 @@ export const EventPage = () => {
   return (
     <>
       {!imageLoaded && <FullScreenLoading />}
+
+      {/* Mobile Image - No badges overlay */}
       <div className='md:hidden relative w-full min-h-[15vh] bg-muted'>
         <img
           key={src}
@@ -43,6 +47,8 @@ export const EventPage = () => {
           className='w-full h-full min-h-[15vh] max-h-[15vh] object-cover transition-opacity duration-300'
         />
         <div className='absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none' />
+
+        {/* Title - Mobile */}
         <div className='absolute bottom-0 left-0 right-0 p-4'>
           <TextEllipsis
             as='h1'
@@ -54,6 +60,7 @@ export const EventPage = () => {
         </div>
       </div>
 
+      {/* Desktop Image */}
       <div className='hidden md:block container mx-auto py-6'>
         <img
           key={`${src}-desktop`}
@@ -66,21 +73,51 @@ export const EventPage = () => {
       </div>
 
       <div className='container mx-auto px-4 md:px-0 py-4 md:py-6 flex flex-col gap-6'>
+        {/* 
+          Mobile order: Details (1) → Info Cards (2) → Tickets (3) → Description (4)
+          Desktop: Two columns - Left (Details + Description), Right (Info Cards + Tickets)
+        */}
         <div className='flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-10'>
-          <div className='order-1'>
-            <EventLeftSide
+          {/* Event Details - Always first */}
+          <div className='order-1 md:row-span-2 flex flex-col gap-6'>
+            <EventDetails
               name={event.name}
-              description={event.description}
               eventStartDate={event.eventStartDate}
               eventEndDate={event.eventEndDate}
               venueName={event.venueName}
               venueAddress={event.venueAddress}
             />
+            {/* Info Cards + Description - Desktop: shows here in left column */}
+            <div className='hidden md:flex md:flex-col md:gap-4'>
+              <EventInfoCards
+                qrAvailabilityTiming={event.qrAvailabilityTiming}
+              />
+              <EventDescription
+                description={event.description}
+                externalUrl={event.externalUrl}
+              />
+            </div>
           </div>
-          <div className='order-2'>
-            <EventRightSide
+
+          {/* Info Cards - Mobile only: shows after details */}
+          <div className='order-2 md:hidden'>
+            <EventInfoCards qrAvailabilityTiming={event.qrAvailabilityTiming} />
+          </div>
+
+          {/* Tickets Section */}
+          <div className='order-3 md:order-2 flex flex-col gap-4'>
+            <TicketSelection
               ticketWaves={event.ticketWaves}
               eventId={params.eventId}
+              userListingsCount={event.userListingsCount}
+            />
+          </div>
+
+          {/* Description - Mobile only: shows after tickets */}
+          <div className='order-4 md:hidden'>
+            <EventDescription
+              description={event.description}
+              externalUrl={event.externalUrl}
             />
           </div>
         </div>

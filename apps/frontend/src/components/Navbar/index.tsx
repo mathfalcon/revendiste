@@ -7,7 +7,7 @@ import {cn} from '~/lib/utils';
 import {UserProfile} from '../UserProfile';
 import {SignInAppearance} from '../SignInModal';
 import {NotificationBell} from '../NotificationBell';
-import {Search} from 'lucide-react';
+import {Search, TicketPlus} from 'lucide-react';
 import {useState, useEffect, useRef} from 'react';
 import {EventSearchModal} from '../EventSearchModal';
 
@@ -63,6 +63,7 @@ export const Navbar = () => {
           <Link
             className='flex items-center gap-2 shrink-0 w-[120px] md:w-[150px]'
             to='/'
+            resetScroll
           >
             <FullLogo className='w-full' />
           </Link>
@@ -85,6 +86,18 @@ export const Navbar = () => {
               <span className='sr-only'>Buscar eventos</span>
             </Button>
 
+            <Button
+              variant='ghost'
+              size='sm'
+              className='md:hidden p-2 h-9 w-9'
+              asChild
+            >
+              <Link to='/entradas/publicar'>
+                <TicketPlus className='h-5 w-5' />
+                <span className='sr-only'>Publicá tus entradas</span>
+              </Link>
+            </Button>
+
             <SignedOut>
               <SignInButton mode='modal' appearance={SignInAppearance}>
                 <Button
@@ -104,7 +117,7 @@ export const Navbar = () => {
                 e.preventDefault();
               }}
             >
-              <Link to='/entradas/publicar'>Vende tus entradas</Link>
+              <Link to='/entradas/publicar'>Publicá tus entradas</Link>
             </Button>
             <SignedIn>
               <NotificationBell />

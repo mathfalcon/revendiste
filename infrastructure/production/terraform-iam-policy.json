@@ -107,7 +107,8 @@
         "iam:ListAttachedRolePolicies",
         "iam:ListRoles",
         "iam:GetInstanceProfile",
-        "iam:ListInstanceProfiles"
+        "iam:ListInstanceProfiles",
+        "iam:ListInstanceProfilesForRole"
       ],
       "Resource": "*"
     },
@@ -148,6 +149,12 @@
       "Resource": "*"
     },
     {
+      "Sid": "CloudWatch",
+      "Effect": "Allow",
+      "Action": ["cloudwatch:*"],
+      "Resource": "*"
+    },
+    {
       "Sid": "AutoScaling",
       "Effect": "Allow",
       "Action": ["application-autoscaling:*"],
@@ -176,6 +183,12 @@
       "Effect": "Allow",
       "Action": ["servicediscovery:*"],
       "Resource": "*"
+    },
+    {
+      "Sid": "SNS",
+      "Effect": "Allow",
+      "Action": ["sns:*"],
+      "Resource": "arn:aws:sns:*:*:revendiste-*"
     }
   ]
 }

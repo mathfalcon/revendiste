@@ -4,26 +4,13 @@ import {
   Link,
   useLocation,
 } from '@tanstack/react-router';
-import {
-  Ticket,
-  ScanQrCode,
-  Upload,
-  Menu,
-  Wallet,
-  ShieldCheck,
-} from 'lucide-react';
+import {Ticket, Upload, Menu, Wallet, ShieldCheck, QrCode} from 'lucide-react';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
 import {useQuery} from '@tanstack/react-query';
 import {getMyListingsQuery} from '~/lib';
 import {Badge} from '~/components/ui/badge';
 import {Button} from '~/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '~/components/ui/sheet';
+import {Sheet, SheetContent, SheetTrigger} from '~/components/ui/sheet';
 import {useState} from 'react';
 import {seo} from '~/utils/seo';
 import {beforeLoadRedirectToSignInIfNotAuthenticated} from '~/utils';
@@ -32,7 +19,7 @@ const TAB_CONFIG = [
   {
     value: 'tickets',
     label: 'Mis tickets',
-    icon: ScanQrCode,
+    icon: QrCode,
     to: '/cuenta/tickets',
   },
   {
@@ -98,6 +85,10 @@ function RouteComponent() {
   const isTabRoute =
     path && TAB_VALUES.includes(path as (typeof TAB_VALUES)[number]);
 
+  // Check if we're still within the /cuenta route tree
+  // This prevents layout flash when navigating away from /cuenta
+  const isWithinCuentaRoute = pathname.startsWith('/cuenta');
+
   // Calculate count of tickets needing uploads
   // Backend already checks event end date via canUploadDocument
   const ticketsNeedingUploadCount =
@@ -109,6 +100,11 @@ function RouteComponent() {
         ),
       )
       .filter(Boolean).length || 0;
+
+  // If navigating away from /cuenta entirely, render nothing to prevent flash
+  if (!isWithinCuentaRoute) {
+    return null;
+  }
 
   // If the route is not a tab route (e.g., /cuenta/verificar), render just the Outlet
   if (!isTabRoute) {

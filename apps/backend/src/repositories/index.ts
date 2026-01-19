@@ -22,3 +22,8 @@ export type {
   AuditMetadata,
   AuditConfidenceScores,
 } from './verification-audit';
+export {NotificationBatchesRepository} from './notification-batches';
+export type {
+  CreateBatchData,
+  CreateBatchItemData,
+} from './notification-batches';

@@ -2,11 +2,7 @@ import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
-import {
-  ListingCard,
-  TicketDocumentUploadModal,
-  TicketUploadCarousel,
-} from '~/components';
+import {ListingCard, TicketUploadModal} from '~/components';
 import {
   Accordion,
   AccordionContent,
@@ -148,27 +144,25 @@ export function PublicationsView() {
 
       {/* Pending Tickets Alert */}
       {allTicketsNeedingUpload.length > 0 && !search.subirPublicacion && (
-        <Alert variant='destructive' className='bg-background'>
+        <Alert variant='destructive' className='bg-background flex'>
           <AlertCircle className='h-4 w-4' />
-          <div className='flex items-center justify-between w-full'>
-            <AlertDescription className='flex-1'>
-              Tenés {allTicketsNeedingUpload.length}{' '}
-              {allTicketsNeedingUpload.length === 1
-                ? 'ticket pendiente por subir'
-                : 'tickets pendientes por subir'}
-            </AlertDescription>
-            {allTicketsNeedingUpload.length > 0 && (
-              <Button
-                onClick={() => setCarouselOpen(true)}
-                variant='default'
-                size='sm'
-                className='ml-4'
-              >
-                <Upload className='mr-2 h-4 w-4' />
-                Subir todos ({allTicketsNeedingUpload.length})
-              </Button>
-            )}
-          </div>
+          <AlertDescription className='flex-1 flex items-center'>
+            Tenés {allTicketsNeedingUpload.length}{' '}
+            {allTicketsNeedingUpload.length === 1
+              ? 'ticket pendiente por subir'
+              : 'tickets pendientes por subir'}
+          </AlertDescription>
+          {allTicketsNeedingUpload.length > 0 && (
+            <Button
+              onClick={() => setCarouselOpen(true)}
+              variant='default'
+              size='sm'
+              className='ml-4'
+            >
+              <Upload className='mr-2 h-4 w-4' />
+              Subir todos ({allTicketsNeedingUpload.length})
+            </Button>
+          )}
         </Alert>
       )}
 
@@ -236,33 +230,29 @@ export function PublicationsView() {
         </AccordionItem>
       </Accordion>
 
-      {/* Single Upload Modal */}
-      {/* Render modal when subirTicket param is present, even if ticket data isn't loaded yet */}
-      {/* This allows the modal to open when coming from email links */}
-      {search.subirTicket && (
-        <TicketDocumentUploadModal
-          ticketId={search.subirTicket}
-          hasExistingDocument={ticketToUpload?.hasDocument || false}
+      {/* Single Ticket Upload Modal (from URL param) */}
+      {search.subirTicket && ticketToUpload && (
+        <TicketUploadModal
+          tickets={{
+            ...ticketToUpload,
+            listing: listings?.find(l =>
+              l.tickets.some(t => t.id === ticketToUpload.id),
+            )!,
+          }}
           open={!!search.subirTicket}
           onOpenChange={open => {
-            if (!open) {
-              handleCloseModal();
-            }
+            if (!open) handleCloseModal();
           }}
         />
       )}
 
-      {/* Carousel Upload Modal */}
-      {ticketsForCarousel.length > 0 && (
-        <TicketUploadCarousel
+      {/* Batch Upload Modal - keep mounted while open to prevent unmount during completion screen */}
+      {(carouselOpen || ticketsForCarousel.length > 0) && (
+        <TicketUploadModal
           tickets={ticketsForCarousel}
           open={carouselOpen}
           onOpenChange={handleCarouselClose}
-          initialIndex={
-            search.subirTicket
-              ? ticketsForCarousel.findIndex(t => t.id === search.subirTicket)
-              : undefined
-          }
+          initialTicketId={search.subirTicket}
         />
       )}
     </div>

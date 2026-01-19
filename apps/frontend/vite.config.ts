@@ -1,11 +1,15 @@
 import {tanstackStart} from '@tanstack/react-start/plugin/vite';
-import {defineConfig} from 'vite';
+import {defineConfig, PluginOption} from 'vite';
 import tsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import viteReact from '@vitejs/plugin-react';
 import {generateApiPlugin} from './vite-plugin-generate-api';
 import {nitro} from 'nitro/vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
+
+// HTTPS_LOCAL mode for local development with camera APIs
+// Nitro is disabled in this mode due to HTTP/2 header conflicts
+const useHttpsLocal = process.env.HTTPS_LOCAL === '1';
 
 export default defineConfig({
   server: {
@@ -14,7 +18,7 @@ export default defineConfig({
     host: '0.0.0.0',
     // Proxy API requests to HTTP backend when running HTTPS
     // This avoids mixed content blocking
-    proxy: true
+    proxy: useHttpsLocal
       ? {
           '/api': {
             target: 'http://localhost:3001',
@@ -26,10 +30,10 @@ export default defineConfig({
   },
   plugins: [
     // HTTPS plugin (only when HTTPS_LOCAL=1)
-    ...(true ? [basicSsl()] : []),
+    ...(useHttpsLocal ? [basicSsl()] : []),
     tsConfigPaths({
       projects: ['./tsconfig.json'],
-    }),
+    }) as PluginOption,
     // Run API generation on dev server start
     generateApiPlugin({
       command: 'pnpm generate:api',
@@ -43,9 +47,9 @@ export default defineConfig({
     }),
     // Nitro conflicts with HTTPS (HTTP/2 header issues), so disable it in HTTPS mode
     // SSR won't work in HTTPS mode, but camera APIs will work for testing
-    ...(true ? [] : [nitro()]),
+    ...(useHttpsLocal ? [] : [nitro()]),
     tanstackStart(),
     viteReact(),
-    tailwindcss(),
+    tailwindcss() as PluginOption,
   ],
 });

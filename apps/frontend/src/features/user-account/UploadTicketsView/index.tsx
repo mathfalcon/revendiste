@@ -2,7 +2,7 @@ import {useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
-import {TicketDocumentUploadModal, TicketUploadCarousel} from '~/components';
+import {TicketUploadModal} from '~/components';
 import {Card, CardContent} from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
 import {LoadingSpinner} from '~/components/LoadingScreen';
@@ -136,14 +136,12 @@ export function UploadTicketsView() {
       {ticketsNeedingUpload.length > 0 && (
         <div className='space-y-4'>
           <div className='flex items-center justify-between gap-4'>
-            <div className='flex-1'>
-              <SectionHeader
-                icon={Upload}
-                title='Tickets pendientes'
-                count={ticketsNeedingUpload.length}
-                className='text-orange-200'
-              />
-            </div>
+            <SectionHeader
+              icon={Upload}
+              title='Tickets pendientes'
+              count={ticketsNeedingUpload.length}
+              variant='pending'
+            />
             {ticketsNeedingUpload.length > 1 && (
               <Button onClick={() => setCarouselOpen(true)}>
                 <Upload className='mr-2 h-4 w-4' />
@@ -170,7 +168,7 @@ export function UploadTicketsView() {
             icon={Timer}
             title='Próximamente'
             count={ticketsWaiting.length}
-            className='text-muted-foreground'
+            variant='waiting'
           />
           <div className='space-y-3'>
             {ticketsWaiting.map(ticket => (
@@ -185,9 +183,9 @@ export function UploadTicketsView() {
         <div className='space-y-4'>
           <SectionHeader
             icon={XCircle}
-            title='Expirado'
+            title='Expirados'
             count={ticketsExpired.length}
-            className='text-red-600'
+            variant='expired'
           />
           <div className='space-y-3'>
             {ticketsExpired.map(ticket => (
@@ -200,31 +198,24 @@ export function UploadTicketsView() {
       {/* Empty State */}
       {hasNoTickets && <EmptyState />}
 
-      {/* Single Upload Modal */}
+      {/* Single Ticket Upload Modal (from URL param) */}
       {ticketToUpload && (
-        <TicketDocumentUploadModal
-          ticketId={ticketToUpload.id}
-          hasExistingDocument={ticketToUpload.hasDocument || false}
+        <TicketUploadModal
+          tickets={ticketToUpload}
           open={!!search.subirTicket}
           onOpenChange={open => {
-            if (!open) {
-              handleCloseModal();
-            }
+            if (!open) handleCloseModal();
           }}
         />
       )}
 
-      {/* Carousel Upload Modal */}
+      {/* Batch Upload Modal */}
       {ticketsNeedingUpload.length > 0 && (
-        <TicketUploadCarousel
+        <TicketUploadModal
           tickets={ticketsNeedingUpload}
           open={carouselOpen}
           onOpenChange={setCarouselOpen}
-          initialIndex={
-            search.subirTicket
-              ? ticketsNeedingUpload.findIndex(t => t.id === search.subirTicket)
-              : 0
-          }
+          initialTicketId={search.subirTicket}
         />
       )}
     </div>

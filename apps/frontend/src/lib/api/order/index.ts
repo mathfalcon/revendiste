@@ -1,5 +1,5 @@
 import {mutationOptions, queryOptions} from '@tanstack/react-query';
-import {AxiosError} from 'axios';
+import {AxiosError, isAxiosError} from 'axios';
 import {api, CreateOrderRouteBody, PendingOrderErrorResponse} from '..';
 import {toast} from 'sonner';
 
@@ -21,7 +21,7 @@ export const postOrderMutation = (options?: PostOrderMutationOptions) =>
     },
     onError: (error: unknown) => {
       // Check if this is an Axios error with a pending order response
-      if (error instanceof AxiosError) {
+      if (isAxiosError(error)) {
         const errorData = error.response?.data as
           | PendingOrderErrorResponse
           | undefined;
@@ -54,4 +54,16 @@ export const getOrderTicketsQuery = (orderId: string) =>
     queryKey: ['orders', orderId, 'tickets'],
     queryFn: () => api.orders.getOrderTickets(orderId).then(res => res.data),
     enabled: !!orderId && orderId.length > 0,
+  });
+
+export const cancelOrderMutation = (orderId: string) =>
+  mutationOptions({
+    mutationKey: ['cancel-order', orderId],
+    mutationFn: () => api.orders.cancelOrder(orderId).then(res => res.data),
+    onSuccess: () => {
+      toast.success('Orden cancelada exitosamente');
+    },
+    onError: () => {
+      toast.error('Error al cancelar la orden. Por favor intenta nuevamente.');
+    },
   });

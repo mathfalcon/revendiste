@@ -35,15 +35,21 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
+export type ListingTicketRefundStatus = "refund_failed" | "refund_pending" | "refunded";
+
+export type NotificationBatchStatus = "cancelled" | "pending" | "processed";
+
 export type NotificationChannel = "email" | "in_app" | "sms";
 
 export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
-export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "document_reminder" | "document_uploaded" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "ticket_sold_seller";
+export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "buyer_ticket_cancelled" | "document_reminder" | "document_uploaded" | "document_uploaded_batch" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "seller_earnings_retained" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
 export type OrderStatus = "cancelled" | "confirmed" | "expired" | "pending";
+
+export type OrderTicketReservationStatus = "active" | "cancelled" | "refund_pending" | "refunded";
 
 export type PaymentEventType = "chargeback_received" | "dispute_opened" | "dispute_resolved" | "fraud_check_failed" | "manual_review_required" | "payment_created" | "refund_completed" | "refund_initiated" | "status_change" | "status_synced" | "webhook_received";
 
@@ -59,9 +65,11 @@ export type PayoutStatus = "cancelled" | "completed" | "failed" | "pending" | "p
 
 export type PayoutType = "paypal" | "uruguayan_bank";
 
-export type QrAvailabilityTiming = "12h" | "24h" | "48h" | "6h" | "72h";
+export type QrAvailabilityTiming = "12h" | "24h" | "3h" | "48h" | "6h" | "72h";
 
-export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | "pending" | "retained";
+export type SellerEarningsRetainedReason = "dispute" | "fraud" | "missing_document" | "other";
+
+export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | "payout_requested" | "pending" | "retained";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
@@ -92,6 +100,7 @@ export interface Events {
   metadata: Json | null;
   name: string;
   platform: string;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
   status: Generated<string>;
   updatedAt: Generated<Timestamp>;
   venueAddress: string;
@@ -112,7 +121,6 @@ export interface EventTicketWaves {
   lastScrapedAt: Generated<Timestamp>;
   metadata: Json | null;
   name: string;
-  qrAvailabilityTiming: QrAvailabilityTiming | null;
   status: Generated<string>;
   updatedAt: Generated<Timestamp>;
 }
@@ -128,15 +136,36 @@ export interface Listings {
 }
 
 export interface ListingTickets {
-  cancelledAt: Timestamp | null;
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
   id: Generated<string>;
   listingId: string;
   price: Numeric;
+  refundStatus: ListingTicketRefundStatus | null;
   soldAt: Timestamp | null;
   ticketNumber: number;
   updatedAt: Generated<Timestamp>;
+}
+
+export interface NotificationBatches {
+  channels: ArrayType<NotificationChannel>;
+  createdAt: Generated<Timestamp>;
+  debounceKey: string;
+  finalNotificationId: string | null;
+  id: Generated<string>;
+  notificationType: NotificationType;
+  status: Generated<NotificationBatchStatus>;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+  windowEndsAt: Timestamp;
+}
+
+export interface NotificationBatchItems {
+  actions: Json | null;
+  batchId: string;
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  metadata: Json;
 }
 
 export interface Notifications {
@@ -193,6 +222,7 @@ export interface OrderTicketReservations {
   orderId: string;
   reservedAt: Generated<Timestamp>;
   reservedUntil: Timestamp;
+  status: Generated<OrderTicketReservationStatus>;
   updatedAt: Generated<Timestamp>;
 }
 
@@ -219,6 +249,7 @@ export interface Payments {
   createdAt: Generated<Timestamp>;
   currency: string;
   deletedAt: Timestamp | null;
+  exchangeRate: Numeric | null;
   expiredAt: Timestamp | null;
   failedAt: Timestamp | null;
   failureReason: string | null;
@@ -315,6 +346,7 @@ export interface SellerEarnings {
   id: Generated<string>;
   listingTicketId: string;
   payoutId: string | null;
+  retainedReason: SellerEarningsRetainedReason | null;
   sellerAmount: Numeric;
   sellerUserId: string;
   status: Generated<SellerEarningsStatus>;
@@ -387,6 +419,8 @@ export interface DB {
   eventTicketWaves: EventTicketWaves;
   listings: Listings;
   listingTickets: ListingTickets;
+  notificationBatches: NotificationBatches;
+  notificationBatchItems: NotificationBatchItems;
   notifications: Notifications;
   orderItems: OrderItems;
   orders: Orders;

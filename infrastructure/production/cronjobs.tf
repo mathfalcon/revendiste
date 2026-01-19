@@ -126,3 +126,34 @@ resource "aws_cloudwatch_event_target" "scrape_events" {
   }
 }
 
+# EventBridge Rule for process-pending-notifications (every 5 minutes)
+# Processes debounced notification batches and retries failed notification sends
+resource "aws_cloudwatch_event_rule" "process_notifications" {
+  name                = "${local.name_prefix}-process-notifications"
+  description         = "Run process-pending-notifications job every 5 minutes"
+  schedule_expression = "cron(*/5 * * * ? *)" # Every 5 minutes
+
+  tags = {
+    Name = "${local.name_prefix}-process-notifications-rule"
+  }
+}
+
+resource "aws_cloudwatch_event_target" "process_notifications" {
+  rule      = aws_cloudwatch_event_rule.process_notifications.name
+  target_id = "process-notifications-target"
+  arn       = aws_ecs_cluster.main.arn
+  role_arn  = aws_iam_role.eventbridge_ecs.arn
+
+  ecs_target {
+    task_count          = 1
+    task_definition_arn = aws_ecs_task_definition.cronjob_process_notifications.arn
+    launch_type         = "FARGATE"
+    platform_version    = "LATEST"
+
+    network_configuration {
+      subnets          = aws_subnet.public[*].id
+      security_groups  = [aws_security_group.ecs_tasks.id]
+      assign_public_ip = true # Public IPs to avoid NAT Gateway costs
+    }
+  }
+}

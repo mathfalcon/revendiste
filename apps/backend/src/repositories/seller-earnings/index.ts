@@ -1,5 +1,10 @@
 import {Kysely, sql} from 'kysely';
-import {DB, EventTicketCurrency} from '@revendiste/shared';
+import {
+  DB,
+  EventTicketCurrency,
+  SellerEarningsRetainedReason,
+  SellerEarningsStatus,
+} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 
 interface BalanceResult {
@@ -172,7 +177,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .updateTable('sellerEarnings')
       .set({
         payoutId,
-        status: 'paid_out',
+        status: 'payout_requested', // Status indicates payout is pending, not yet completed
         updatedAt: new Date(),
       })
       .where('payoutId', 'is', null)
@@ -328,7 +333,13 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
 
   async updateStatus(
     earningsIds: string[],
-    status: 'pending' | 'available' | 'retained' | 'paid_out' | 'failed_payout',
+    status:
+      | 'pending'
+      | 'available'
+      | 'retained'
+      | 'paid_out'
+      | 'failed_payout'
+      | 'payout_requested',
   ) {
     return await this.db
       .updateTable('sellerEarnings')
@@ -337,6 +348,77 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         updatedAt: new Date(),
       })
       .where('id', 'in', earningsIds)
+      .execute();
+  }
+
+  /**
+   * Mark all earnings linked to a payout as paid_out
+   * Called when admin completes a payout
+   */
+  async markEarningsAsPaidOut(payoutId: string) {
+    return await this.db
+      .updateTable('sellerEarnings')
+      .set({
+        status: 'paid_out',
+        updatedAt: new Date(),
+      })
+      .where('payoutId', '=', payoutId)
+      .where('status', '=', 'payout_requested')
+      .where('deletedAt', 'is', null)
+      .execute();
+  }
+
+  /**
+   * Release earnings from a payout (set back to available)
+   * Called when admin cancels or fails a payout
+   */
+  async releaseEarningsFromPayout(payoutId: string) {
+    return await this.db
+      .updateTable('sellerEarnings')
+      .set({
+        status: 'available',
+        payoutId: null,
+        updatedAt: new Date(),
+      })
+      .where('payoutId', '=', payoutId)
+      .where('status', '=', 'payout_requested')
+      .where('deletedAt', 'is', null)
+      .execute();
+  }
+
+  /**
+   * Get balance of earnings with payout_requested status (pending payout)
+   */
+  async getPayoutPendingBalance(sellerUserId: string): Promise<BalanceResult[]> {
+    return await this.db
+      .selectFrom('sellerEarnings')
+      .select(eb => [
+        'sellerEarnings.currency',
+        sql<string>`SUM(seller_earnings.seller_amount)`.as('amount'),
+        sql<number>`COUNT(*)`.as('count'),
+      ])
+      .where('sellerUserId', '=', sellerUserId)
+      .where('status', '=', 'payout_requested')
+      .where('deletedAt', 'is', null)
+      .groupBy('sellerEarnings.currency')
+      .execute();
+  }
+
+  /**
+   * Get balance of earnings that have been paid out
+   */
+  async getPaidOutBalance(sellerUserId: string): Promise<BalanceResult[]> {
+    return await this.db
+      .selectFrom('sellerEarnings')
+      .select(eb => [
+        'sellerEarnings.currency',
+        sql<string>`SUM(seller_earnings.seller_amount)`.as('amount'),
+        sql<number>`COUNT(*)`.as('count'),
+      ])
+      .where('sellerUserId', '=', sellerUserId)
+      .where('status', '=', 'paid_out')
+      .where('deletedAt', 'is', null)
+      .groupBy('sellerEarnings.currency')
       .execute();
   }
 
@@ -410,13 +492,14 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
    */
   async cloneEarningsForFailedPayout(payoutId: string): Promise<number> {
     // Get all earnings linked to this payout that need to be cloned
-    // Include both 'paid_out' (normal case) and 'failed_payout' (edge case: already marked but clones missing)
+    // Include 'payout_requested' (normal case), 'paid_out' (edge case), and 'failed_payout' (idempotency)
     const earningsToClone = await this.db
       .selectFrom('sellerEarnings')
       .selectAll()
       .where('payoutId', '=', payoutId)
       .where(eb =>
         eb.or([
+          eb('status', '=', 'payout_requested'),
           eb('status', '=', 'paid_out'),
           eb('status', '=', 'failed_payout'),
         ]),
@@ -486,5 +569,82 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
     await this.db.insertInto('sellerEarnings').values(clonedEarnings).execute();
 
     return clonedEarnings.length;
+  }
+
+  /**
+   * Update status with a retained reason
+   * Used when marking earnings as retained due to missing documents, disputes, etc.
+   */
+  async updateStatusWithReason(
+    earningsId: string,
+    status: SellerEarningsStatus,
+    retainedReason: SellerEarningsRetainedReason,
+  ) {
+    return await this.db
+      .updateTable('sellerEarnings')
+      .set({
+        status,
+        retainedReason,
+        updatedAt: new Date(),
+      })
+      .where('id', '=', earningsId)
+      .execute();
+  }
+
+  /**
+   * Find sold tickets where:
+   * - Event has ended (eventEndDate <= now)
+   * - No document was uploaded
+   * - Reservation is still active (not already processed)
+   * - Earnings status is 'pending' (not already retained)
+   *
+   * Returns data needed to cancel reservation, retain earnings, and notify both parties.
+   */
+  async getTicketsWithMissingDocumentsAfterEventEnd(limit: number = 100) {
+    const now = new Date();
+
+    return await this.db
+      .selectFrom('sellerEarnings')
+      .innerJoin(
+        'listingTickets',
+        'listingTickets.id',
+        'sellerEarnings.listingTicketId',
+      )
+      .innerJoin('listings', 'listings.id', 'listingTickets.listingId')
+      .innerJoin(
+        'eventTicketWaves',
+        'eventTicketWaves.id',
+        'listings.ticketWaveId',
+      )
+      .innerJoin('events', 'events.id', 'eventTicketWaves.eventId')
+      .innerJoin(
+        'orderTicketReservations',
+        'orderTicketReservations.listingTicketId',
+        'listingTickets.id',
+      )
+      .innerJoin('orders', 'orders.id', 'orderTicketReservations.orderId')
+      .leftJoin('ticketDocuments', join =>
+        join
+          .onRef('ticketDocuments.ticketId', '=', 'listingTickets.id')
+          .on('ticketDocuments.isPrimary', '=', true)
+          .on('ticketDocuments.deletedAt', 'is', null),
+      )
+      .select([
+        'sellerEarnings.id as earningsId',
+        'sellerEarnings.sellerUserId',
+        'listingTickets.id as ticketId',
+        'orderTicketReservations.id as reservationId',
+        'orders.userId as buyerUserId',
+        'events.name as eventName',
+      ])
+      .where('events.eventEndDate', '<=', now)
+      .where('ticketDocuments.id', 'is', null) // No document uploaded
+      .where('orderTicketReservations.status', '=', 'active') // Not already processed
+      .where('sellerEarnings.status', '=', 'pending') // Not already retained
+      .where('sellerEarnings.deletedAt', 'is', null)
+      .where('listingTickets.deletedAt', 'is', null)
+      .where('orders.status', '=', 'confirmed') // Only confirmed orders
+      .limit(limit)
+      .execute();
   }
 }

@@ -102,3 +102,11 @@ export const deleteTicketMutation = (ticketId: string) =>
       toast.success('Ticket retirado exitosamente');
     },
   });
+
+export const getTicketInfoQuery = (ticketId: string) =>
+  queryOptions({
+    queryKey: ['ticket-info', ticketId],
+    queryFn: () =>
+      api.ticketListings.getTicketInfo(ticketId).then(res => res.data),
+    enabled: !!ticketId,
+  });

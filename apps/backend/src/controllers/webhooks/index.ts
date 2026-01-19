@@ -9,6 +9,25 @@ import {
 import {validateDLocalWebhook} from '~/middleware/validateDLocalWebhook';
 import {validateClerkWebhook} from '~/middleware/validateClerkWebhook';
 import {WebhooksService} from '~/services/webhooks';
+import {PaymentWebhookAdapter} from '~/services/payments/adapters';
+import {DLocalService} from '~/services/dlocal';
+import {ClerkWebhookService} from '~/services/clerk-webhook';
+import {TicketListingsService} from '~/services/ticket-listings';
+import {SellerEarningsService} from '~/services/seller-earnings';
+import {NotificationService} from '~/services/notifications';
+import {
+  OrdersRepository,
+  OrderTicketReservationsRepository,
+  PaymentsRepository,
+  PaymentEventsRepository,
+  ListingTicketsRepository,
+  TicketListingsRepository,
+  EventsRepository,
+  EventTicketWavesRepository,
+  SellerEarningsRepository,
+  UsersRepository,
+  NotificationsRepository,
+} from '~/repositories';
 import {db} from '~/db';
 import {ValidateBody, Body} from '~/decorators';
 import {logger} from '~/utils';
@@ -19,10 +38,63 @@ import {
   ClerkWebhookValidationSchema,
 } from './validation';
 
+// Create shared repositories
+const ordersRepository = new OrdersRepository(db);
+const orderTicketReservationsRepository = new OrderTicketReservationsRepository(
+  db,
+);
+const paymentsRepository = new PaymentsRepository(db);
+const paymentEventsRepository = new PaymentEventsRepository(db);
+const listingTicketsRepository = new ListingTicketsRepository(db);
+const ticketListingsRepository = new TicketListingsRepository(db);
+const eventsRepository = new EventsRepository(db);
+const eventTicketWavesRepository = new EventTicketWavesRepository(db);
+const usersRepository = new UsersRepository(db);
+const notificationsRepository = new NotificationsRepository(db);
+const sellerEarningsRepository = new SellerEarningsRepository(db);
+
+// Create shared services
+const notificationService = new NotificationService(
+  notificationsRepository,
+  usersRepository,
+);
+
+const ticketListingsService = new TicketListingsService(
+  ticketListingsRepository,
+  eventsRepository,
+  eventTicketWavesRepository,
+  listingTicketsRepository,
+  ordersRepository,
+  usersRepository,
+  notificationService,
+);
+
+const sellerEarningsService = new SellerEarningsService(
+  sellerEarningsRepository,
+  orderTicketReservationsRepository,
+);
+
+// Create dLocal adapter with all dependencies
+const dlocalAdapter = new PaymentWebhookAdapter(
+  new DLocalService(),
+  ordersRepository,
+  orderTicketReservationsRepository,
+  paymentsRepository,
+  paymentEventsRepository,
+  listingTicketsRepository,
+  ticketListingsRepository,
+  ticketListingsService,
+  sellerEarningsService,
+  notificationService,
+);
+
 @Route('webhooks')
 @Tags('Webhooks')
 export class WebhooksController {
-  private webhooksService = new WebhooksService(db);
+  private webhooksService = new WebhooksService(
+    dlocalAdapter,
+    new ClerkWebhookService(),
+  );
 
   /**
    * Receives payment status notifications from dLocal

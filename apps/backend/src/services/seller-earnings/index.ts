@@ -1,13 +1,17 @@
 import {
   SellerEarningsRepository,
   OrderTicketReservationsRepository,
-  ListingTicketsRepository,
 } from '~/repositories';
 import {calculateSellerAmount} from '~/utils/fees';
 import {PAYOUT_HOLD_PERIOD_HOURS} from '~/config/env';
 import {logger} from '~/utils';
 import {roundOrderAmount} from '@revendiste/shared';
 import type {EventTicketCurrency} from '@revendiste/shared';
+import {NotificationService} from '~/services/notifications';
+import {
+  notifySellerEarningsRetained,
+  notifyBuyerTicketCancelled,
+} from '~/services/notifications/helpers';
 
 interface BalanceByCurrency {
   currency: EventTicketCurrency;
@@ -19,6 +23,8 @@ interface SellerBalance {
   available: BalanceByCurrency[];
   retained: BalanceByCurrency[];
   pending: BalanceByCurrency[];
+  payoutPending: BalanceByCurrency[]; // Earnings linked to pending payouts (payout_requested status)
+  paidOut: BalanceByCurrency[]; // Earnings that have been paid out
   total: BalanceByCurrency[];
 }
 
@@ -45,7 +51,7 @@ export class SellerEarningsService {
   constructor(
     private readonly sellerEarningsRepository: SellerEarningsRepository,
     private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
-    private readonly listingTicketsRepository: ListingTicketsRepository,
+    private readonly notificationService?: NotificationService,
   ) {}
 
   /**
@@ -78,7 +84,7 @@ export class SellerEarningsService {
       throw new Error('Listing not found');
     }
 
-    // Calculate seller amount and round to nearest integer (same logic as payments)
+    // Calculate seller amount and round to 2 decimal places (same logic as payments)
     const sellerAmountCalc = calculateSellerAmount(Number(ticketData.price));
     const sellerAmount = roundOrderAmount(sellerAmountCalc.totalAmount);
 
@@ -134,20 +140,25 @@ export class SellerEarningsService {
 
   /**
    * Gets seller balance grouped by currency and status
-   * Returns available, retained, pending, and total with ticket counts
+   * Returns available, retained, pending, payoutPending, paidOut, and total with ticket counts
    */
   async getSellerBalance(sellerUserId: string): Promise<SellerBalance> {
-    const [available, retained, pending, total] = await Promise.all([
-      this.sellerEarningsRepository.getAvailableBalance(sellerUserId),
-      this.sellerEarningsRepository.getRetainedBalance(sellerUserId),
-      this.sellerEarningsRepository.getPendingBalance(sellerUserId),
-      this.sellerEarningsRepository.getTotalBalance(sellerUserId),
-    ]);
+    const [available, retained, pending, payoutPending, paidOut, total] =
+      await Promise.all([
+        this.sellerEarningsRepository.getAvailableBalance(sellerUserId),
+        this.sellerEarningsRepository.getRetainedBalance(sellerUserId),
+        this.sellerEarningsRepository.getPendingBalance(sellerUserId),
+        this.sellerEarningsRepository.getPayoutPendingBalance(sellerUserId),
+        this.sellerEarningsRepository.getPaidOutBalance(sellerUserId),
+        this.sellerEarningsRepository.getTotalBalance(sellerUserId),
+      ]);
 
     return {
       available,
       retained,
       pending,
+      payoutPending,
+      paidOut,
       total,
     };
   }
@@ -224,5 +235,95 @@ export class SellerEarningsService {
       released: totalReleased,
       retained: 0, // TODO: Update when reports system is implemented
     };
+  }
+
+  /**
+   * Check for sold tickets where event has ended but seller didn't upload documents.
+   *
+   * For each match:
+   * 1. Mark seller earnings as 'retained' with reason 'missing_document'
+   * 2. Mark order ticket reservation as 'cancelled'
+   * 3. Notify seller (earnings retained)
+   * 4. Notify buyer (ticket cancelled, refund pending)
+   *
+   * This runs BEFORE checkHoldPeriods() in the cronjob so that retained earnings
+   * are skipped by the hold period release logic.
+   */
+  async checkMissingDocumentsAfterEventEnd(limit: number = 100): Promise<{
+    processed: number;
+  }> {
+    const ticketsWithMissingDocs =
+      await this.sellerEarningsRepository.getTicketsWithMissingDocumentsAfterEventEnd(
+        limit,
+      );
+
+    if (ticketsWithMissingDocs.length === 0) {
+      logger.debug('No tickets with missing documents after event end');
+      return {processed: 0};
+    }
+
+    logger.info('Found tickets with missing documents after event end', {
+      count: ticketsWithMissingDocs.length,
+    });
+
+    for (const item of ticketsWithMissingDocs) {
+      try {
+        // 1. Mark seller earnings as retained immediately
+        await this.sellerEarningsRepository.updateStatusWithReason(
+          item.earningsId,
+          'retained',
+          'missing_document',
+        );
+
+        // 2. Mark order ticket reservation as cancelled (buyer's view)
+        await this.orderTicketReservationsRepository.updateStatus(
+          item.reservationId,
+          'cancelled',
+        );
+
+        // 3. Send notifications (fire-and-forget)
+        if (this.notificationService) {
+          notifySellerEarningsRetained(this.notificationService, {
+            sellerUserId: item.sellerUserId,
+            eventName: item.eventName,
+            ticketCount: 1, // Per-ticket processing
+            reason: 'missing_document',
+          }).catch(err =>
+            logger.error('Failed to notify seller about retained earnings', {
+              error: err,
+              sellerUserId: item.sellerUserId,
+            }),
+          );
+
+          notifyBuyerTicketCancelled(this.notificationService, {
+            buyerUserId: item.buyerUserId,
+            eventName: item.eventName,
+            ticketCount: 1, // Per-ticket processing
+            reason: 'seller_failed_to_upload',
+          }).catch(err =>
+            logger.error('Failed to notify buyer about cancelled ticket', {
+              error: err,
+              buyerUserId: item.buyerUserId,
+            }),
+          );
+        }
+
+        logger.info('Processed missing document for ticket', {
+          earningsId: item.earningsId,
+          ticketId: item.ticketId,
+          reservationId: item.reservationId,
+          eventName: item.eventName,
+        });
+      } catch (error) {
+        logger.error('Failed to process missing document for ticket', {
+          error,
+          earningsId: item.earningsId,
+          ticketId: item.ticketId,
+        });
+        // Continue processing other tickets
+      }
+    }
+
+    return {processed: ticketsWithMissingDocs.length};
   }
 }

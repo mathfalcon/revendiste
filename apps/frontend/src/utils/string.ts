@@ -1,48 +1,34 @@
+/**
+ * String Utilities - Frontend
+ *
+ * Re-exports currency formatting from @revendiste/shared and provides
+ * additional frontend-specific string utilities.
+ */
+
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {EventTicketCurrency} from '~/lib';
-import type {EventTicketCurrency as EventTicketCurrencyType} from '@revendiste/shared';
 
-export const getCurrencySymbol = (currency: EventTicketCurrency) => {
-  switch (currency) {
-    case EventTicketCurrency.USD:
-      return 'U$S';
-    case EventTicketCurrency.UYU:
-      return '$';
-  }
-};
+// =============================================================================
+// RE-EXPORT CURRENCY FORMATTING FROM SHARED
+// =============================================================================
+// All currency formatting should use these functions from the shared package
+// to ensure consistency across the entire application.
+export {
+  formatPrice,
+  formatCurrency,
+  formatAmount,
+  getCurrencySymbol,
+} from '@revendiste/shared';
+
+// =============================================================================
+// DATE FORMATTING
+// =============================================================================
 
 export const formatEventDate = (date: Date) => {
   // "23 de septiembre a las 18:30"
   return format(date, "d 'de' MMMM 'a las' HH:mm", {locale: es});
 };
-
-export const formatPrice = (
-  price: number,
-  currency: EventTicketCurrency = EventTicketCurrency.UYU,
-) => {
-  return `${getCurrencySymbol(currency)} ${Math.round(price).toLocaleString('es-ES')}`;
-};
-
-/**
- * Format currency amount with currency symbol and code
- * Shows decimal places (unlike formatPrice which rounds)
- */
-export function formatCurrency(
-  amount: string | number,
-  currency: EventTicketCurrencyType,
-): string {
-  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  const formatted = new Intl.NumberFormat('es-UY', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(numAmount);
-
-  if (currency === 'UYU') {
-    return `$${formatted} UYU`;
-  }
-  return `$${formatted} USD`;
-}
 
 /**
  * Format date for display with time
@@ -59,6 +45,10 @@ export function formatDate(date: Date | string | null): string {
     minute: '2-digit',
   }).format(d);
 }
+
+// =============================================================================
+// MASKING UTILITIES
+// =============================================================================
 
 /**
  * Mask account number for display (show only last 4 digits)
@@ -78,8 +68,10 @@ export function maskAccountNumber(accountNumber: string): string {
  */
 export function maskEmail(email: string): string {
   if (!email) return email;
-  const [local, domain] = email.split('@');
-  if (!domain) return email;
+  const parts = email.split('@');
+  const local = parts[0];
+  const domain = parts[1];
+  if (!local || !domain) return email;
   const maskedLocal =
     local.length <= 2
       ? '*'.repeat(local.length)
@@ -87,5 +79,19 @@ export function maskEmail(email: string): string {
   return `${maskedLocal}@${domain}`;
 }
 
+// =============================================================================
+// LEGACY EXPORTS (for backward compatibility)
+// =============================================================================
+
 // Re-export fee calculation functions for backward compatibility
 export {calculateSellerAmount} from './fees';
+
+// Legacy getCurrencySymbol that accepts EventTicketCurrency enum
+// (the shared version accepts string, but this provides type safety for existing code)
+import {getCurrencySymbol as sharedGetCurrencySymbol} from '@revendiste/shared';
+
+export const getCurrencySymbolLegacy = (
+  currency: EventTicketCurrency,
+): string => {
+  return sharedGetCurrencySymbol(currency);
+};

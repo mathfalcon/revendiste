@@ -15,6 +15,8 @@ import {
 import {SellerEarningsService} from '~/services/seller-earnings';
 import {PayoutsService} from '~/services/payouts';
 import {PayoutMethodsService} from '~/services/payout-methods';
+import {PayoutDocumentsService} from '~/services/payout-documents';
+import {NotificationService} from '~/services/notifications';
 import {
   requireAuthMiddleware,
   ensurePagination,
@@ -27,7 +29,9 @@ import {
   PayoutMethodsRepository,
   PayoutEventsRepository,
   OrderTicketReservationsRepository,
-  ListingTicketsRepository,
+  PayoutDocumentsRepository,
+  UsersRepository,
+  NotificationsRepository,
 } from '~/repositories';
 import {db} from '~/db';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
@@ -60,6 +64,23 @@ type UpdatePayoutMethodResponse = ReturnType<
   PayoutMethodsService['updatePayoutMethod']
 >;
 
+// Create shared repositories
+const payoutsRepository = new PayoutsRepository(db);
+const payoutDocumentsRepository = new PayoutDocumentsRepository(db);
+const usersRepository = new UsersRepository(db);
+const notificationsRepository = new NotificationsRepository(db);
+
+// Create shared services
+const notificationService = new NotificationService(
+  notificationsRepository,
+  usersRepository,
+);
+
+const payoutDocumentsService = new PayoutDocumentsService(
+  payoutsRepository,
+  payoutDocumentsRepository,
+);
+
 @Route('payouts')
 @Middlewares(requireAuthMiddleware)
 @Tags('Payouts')
@@ -67,15 +88,15 @@ export class PayoutsController {
   private sellerEarningsService = new SellerEarningsService(
     new SellerEarningsRepository(db),
     new OrderTicketReservationsRepository(db),
-    new ListingTicketsRepository(db),
   );
 
   private payoutsService = new PayoutsService(
-    new PayoutsRepository(db),
+    payoutsRepository,
     new PayoutMethodsRepository(db),
     new SellerEarningsRepository(db),
     new PayoutEventsRepository(db),
-    db,
+    notificationService,
+    payoutDocumentsService,
   );
 
   private payoutMethodsService = new PayoutMethodsService(

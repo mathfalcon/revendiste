@@ -11,6 +11,12 @@ import {
 import {requireAuthMiddleware} from '~/middleware';
 import {NotFoundError, UnauthorizedError, ValidationError} from '~/errors';
 import {PaymentsService} from '~/services/payments';
+import {
+  OrdersRepository,
+  OrderTicketReservationsRepository,
+  PaymentsRepository,
+  PaymentEventsRepository,
+} from '~/repositories';
 import {db} from '~/db';
 
 interface CreatePaymentLinkResponse {
@@ -22,7 +28,12 @@ interface CreatePaymentLinkResponse {
 @Middlewares(requireAuthMiddleware)
 @Tags('Payments')
 export class PaymentsController {
-  private paymentsService = new PaymentsService(db);
+  private paymentsService = new PaymentsService(
+    new OrdersRepository(db),
+    new OrderTicketReservationsRepository(db),
+    new PaymentsRepository(db),
+    new PaymentEventsRepository(db),
+  );
 
   @Post('/create-link/{orderId}')
   @Response<UnauthorizedError>(401, 'Authentication required')

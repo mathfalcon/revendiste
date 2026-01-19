@@ -2,6 +2,7 @@ import {ModeToggle} from '../ModeToggle';
 import {cn} from '~/lib/utils';
 import {Link} from '@tanstack/react-router';
 import {FullLogo} from '~/assets';
+import {VITE_APP_VERSION, VITE_APP_ENV} from '~/config/env';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -10,6 +11,8 @@ export const Footer = () => {
     <footer
       className={cn(
         'border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80',
+        // Add bottom padding on mobile to account for sticky bottom bars
+        'pb-24 md:pb-0',
       )}
     >
       <div className='mx-auto w-full max-w-screen-2xl px-4 md:px-6 py-8 md:py-12'>
@@ -50,14 +53,15 @@ export const Footer = () => {
           <div>
             <h3 className='text-sm font-semibold mb-4'>Ayuda</h3>
             <ul className='space-y-3'>
-              {/* <li>
+              <li>
                 <Link
-                  to='/ayuda'
+                  to='/garantia'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+                  resetScroll
                 >
-                  Centro de Ayuda
+                  Garantía Revendiste
                 </Link>
-              </li> */}
+              </li>
               <li>
                 <Link
                   to='/contacto'
@@ -111,9 +115,20 @@ export const Footer = () => {
         </div>
 
         <div className='flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t'>
-          <p className='text-sm text-muted-foreground text-center md:text-left'>
-            © {currentYear} Revendiste. Todos los derechos reservados.
-          </p>
+          <div className='flex flex-col md:flex-row items-center gap-2 md:gap-4 text-center md:text-left'>
+            <p className='text-sm text-muted-foreground'>
+              © {currentYear} Revendiste. Todos los derechos reservados.
+            </p>
+            {(VITE_APP_VERSION || VITE_APP_ENV) && (
+              <p className='text-xs text-muted-foreground/70'>
+                {VITE_APP_ENV && (
+                  <span className='uppercase'>{VITE_APP_ENV}</span>
+                )}
+                {VITE_APP_ENV && VITE_APP_VERSION && <span> • </span>}
+                {VITE_APP_VERSION && <span>v{VITE_APP_VERSION}</span>}
+              </p>
+            )}
+          </div>
           <div className='flex items-center gap-4'>
             <ModeToggle />
           </div>

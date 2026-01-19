@@ -15,6 +15,7 @@ import {
 } from '@mathfalcon/tsoa-runtime';
 import {PayoutsService} from '~/services/payouts';
 import {PayoutDocumentsService} from '~/services/payout-documents';
+import {NotificationService} from '~/services/notifications';
 import {
   requireAuthMiddleware,
   requireAdminMiddleware,
@@ -26,6 +27,9 @@ import {
   PayoutMethodsRepository,
   SellerEarningsRepository,
   PayoutEventsRepository,
+  PayoutDocumentsRepository,
+  UsersRepository,
+  NotificationsRepository,
 } from '~/repositories';
 import {db} from '~/db';
 import {
@@ -66,18 +70,36 @@ type DeletePayoutDocumentResponse = ReturnType<
   PayoutDocumentsService['deletePayoutDocument']
 >;
 
+// Create shared repositories
+const payoutsRepository = new PayoutsRepository(db);
+const payoutDocumentsRepository = new PayoutDocumentsRepository(db);
+const usersRepository = new UsersRepository(db);
+const notificationsRepository = new NotificationsRepository(db);
+
+// Create shared services
+const notificationService = new NotificationService(
+  notificationsRepository,
+  usersRepository,
+);
+
+const payoutDocumentsService = new PayoutDocumentsService(
+  payoutsRepository,
+  payoutDocumentsRepository,
+);
+
 @Route('admin/payouts')
 @Middlewares(requireAuthMiddleware, requireAdminMiddleware)
 @Tags('Admin - Payouts')
 export class AdminPayoutsController {
   private payoutsService = new PayoutsService(
-    new PayoutsRepository(db),
+    payoutsRepository,
     new PayoutMethodsRepository(db),
     new SellerEarningsRepository(db),
     new PayoutEventsRepository(db),
-    db,
+    notificationService,
+    payoutDocumentsService,
   );
-  private payoutDocumentsService = new PayoutDocumentsService(db);
+  private payoutDocumentsService = payoutDocumentsService;
 
   @Get('/')
   @ValidateQuery(AdminPayoutsRouteSchema)
