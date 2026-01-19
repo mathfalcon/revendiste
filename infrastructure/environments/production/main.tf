@@ -1,5 +1,5 @@
-# Revendiste Dev Environment
-# Minimum resources for development/testing
+# Revendiste Production Environment
+# Full resources for production deployment
 
 terraform {
   required_version = ">= 1.5.0"
@@ -22,7 +22,7 @@ terraform {
   cloud {
     organization = "revendiste"
     workspaces {
-      name = "revendiste-dev"
+      name = "revendiste-production"
     }
   }
 }
@@ -44,11 +44,11 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 locals {
-  environment = "dev"
-  name_prefix = "revendiste-dev"
+  environment = "prod"
+  name_prefix = "revendiste-prod"
 
   common_tags = {
-    Environment = local.environment
+    Environment = "production"
     ManagedBy   = "terraform"
     Application = "revendiste"
   }
@@ -92,8 +92,8 @@ module "rds" {
   db_allocated_storage     = var.db_allocated_storage
   db_max_allocated_storage = var.db_max_allocated_storage
   db_backup_retention_days = var.db_backup_retention_days
-  deletion_protection      = false # Allow deletion in dev
-  skip_final_snapshot      = true  # Skip snapshot in dev
+  deletion_protection      = true  # Protect in production
+  skip_final_snapshot      = false # Always snapshot in production
   common_tags              = local.common_tags
 }
 
@@ -102,7 +102,7 @@ module "ecr" {
 
   name_prefix           = local.name_prefix
   environment           = local.environment
-  image_retention_count = 10 # Keep fewer images in dev
+  image_retention_count = 20 # Keep more images in production
   common_tags           = local.common_tags
 }
 
@@ -119,7 +119,7 @@ module "service_discovery" {
 
   name_prefix    = local.name_prefix
   vpc_id         = module.vpc.vpc_id
-  namespace_name = "revendiste-dev.local"
+  namespace_name = "revendiste.local"
   common_tags    = local.common_tags
 }
 
@@ -134,7 +134,7 @@ module "alb" {
   domain_name           = var.domain_name
   backend_port          = var.backend_port
   frontend_port         = var.frontend_port
-  deletion_protection   = false # Allow deletion in dev
+  deletion_protection   = true # Protect in production
   common_tags           = local.common_tags
 }
 
@@ -184,33 +184,33 @@ module "ecs" {
   db_credentials_secret_arn = module.rds.db_credentials_secret_arn
   backend_secrets_arn       = module.secrets.backend_secrets_arn
 
-  # Backend Configuration - MINIMUM RESOURCES
-  backend_cpu           = 256  # Minimum
-  backend_memory        = 512  # Minimum for 256 CPU
+  # Backend Configuration - PRODUCTION RESOURCES
+  backend_cpu           = var.backend_cpu
+  backend_memory        = var.backend_memory
   backend_port          = var.backend_port
   backend_image_tag     = var.backend_image_tag
-  backend_desired_count = 1
-  backend_max_capacity  = 2
-  backend_cpu_target    = 80
-  backend_memory_target = 90
+  backend_desired_count = var.backend_desired_count
+  backend_max_capacity  = var.backend_max_capacity
+  backend_cpu_target    = var.backend_cpu_target
+  backend_memory_target = var.backend_memory_target
 
-  # Frontend Configuration - MINIMUM RESOURCES
-  frontend_cpu           = 256  # Minimum
-  frontend_memory        = 512  # Minimum for 256 CPU
+  # Frontend Configuration - PRODUCTION RESOURCES
+  frontend_cpu           = var.frontend_cpu
+  frontend_memory        = var.frontend_memory
   frontend_port          = var.frontend_port
   frontend_image_tag     = var.frontend_image_tag
-  frontend_desired_count = 1
-  frontend_max_capacity  = 2
-  frontend_cpu_target    = 80
-  frontend_memory_target = 90
+  frontend_desired_count = var.frontend_desired_count
+  frontend_max_capacity  = var.frontend_max_capacity
+  frontend_cpu_target    = var.frontend_cpu_target
+  frontend_memory_target = var.frontend_memory_target
 
   # Cronjob Configuration
-  cronjob_cpu             = 256
-  cronjob_memory          = 512
-  cronjob_scraping_cpu    = 512  # Reduced from 1024 for dev
-  cronjob_scraping_memory = 1024 # Reduced from 2048 for dev
+  cronjob_cpu             = var.cronjob_cpu
+  cronjob_memory          = var.cronjob_memory
+  cronjob_scraping_cpu    = var.cronjob_scraping_cpu
+  cronjob_scraping_memory = var.cronjob_scraping_memory
 
-  log_retention_days = 3 # Short retention in dev
+  log_retention_days = var.log_retention_days
   common_tags        = local.common_tags
 }
 
@@ -261,12 +261,12 @@ module "cronjobs" {
   scrape_events_task_arn         = module.ecs.cronjob_scrape_events_task_arn
   process_notifications_task_arn = module.ecs.cronjob_process_notifications_task_arn
 
-  # LESS FREQUENT SCHEDULES FOR DEV
-  sync_payments_schedule         = "cron(*/15 * * * ? *)" # Every 15 min (prod: 5 min)
-  notify_upload_schedule         = "cron(0 */4 * * ? *)"  # Every 4 hours (prod: 1 hour)
-  check_payout_schedule          = "cron(0 */4 * * ? *)"  # Every 4 hours (prod: 1 hour)
-  scrape_events_schedule         = "cron(0 */2 * * ? *)"  # Every 2 hours (prod: 30 min)
-  process_notifications_schedule = "cron(*/15 * * * ? *)" # Every 15 min (prod: 5 min)
+  # PRODUCTION SCHEDULES
+  sync_payments_schedule         = "cron(*/5 * * * ? *)"  # Every 5 minutes
+  notify_upload_schedule         = "cron(0 * * * ? *)"    # Every hour
+  check_payout_schedule          = "cron(0 * * * ? *)"    # Every hour
+  scrape_events_schedule         = "cron(*/30 * * * ? *)" # Every 30 minutes
+  process_notifications_schedule = "cron(*/5 * * * ? *)"  # Every 5 minutes
 
   common_tags = local.common_tags
 }
@@ -300,4 +300,12 @@ module "identity_verification" {
   common_tags       = local.common_tags
 }
 
-# NO CloudWatch alarms in dev (disabled to save costs and reduce noise)
+# CloudWatch Alarms - ENABLED IN PRODUCTION
+module "cloudwatch_alarms" {
+  source = "../../modules/cloudwatch-alarms"
+
+  name_prefix            = local.name_prefix
+  enabled                = true
+  db_instance_identifier = module.rds.db_instance_identifier
+  common_tags            = local.common_tags
+}
