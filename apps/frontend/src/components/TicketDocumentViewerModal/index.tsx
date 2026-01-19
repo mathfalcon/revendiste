@@ -22,7 +22,6 @@ import {
   Eye,
   X,
 } from 'lucide-react';
-import {cn} from '~/lib/utils';
 import {VITE_APP_API_URL} from '~/config/env';
 
 interface TicketDocumentViewerModalProps {
