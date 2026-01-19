@@ -20,6 +20,15 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     return await this.db.transaction().execute(async trx => {
       const now = new Date();
 
+      // Check if event was previously soft-deleted (for logging purposes)
+      const existingEvent = await trx
+        .selectFrom('events')
+        .select(['id', 'deletedAt'])
+        .where('externalId', '=', event.externalId)
+        .executeTakeFirst();
+
+      const wasDeleted = existingEvent?.deletedAt !== null && existingEvent?.deletedAt !== undefined;
+
       // Upsert the main event
       const [upsertedEvent] = await trx
         .insertInto('events')
@@ -50,6 +59,8 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             externalUrl: event.externalUrl,
             qrAvailabilityTiming: event.qrAvailabilityTiming || null,
             status: 'active',
+            // Clear deletedAt to restore soft-deleted events that reappear in scraped results
+            deletedAt: null,
             updatedAt: now,
             lastScrapedAt: now,
           }),
@@ -78,6 +89,15 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             )
             .execute();
         }
+      }
+
+      // Log if we restored a previously deleted event
+      if (wasDeleted) {
+        logger.info('Restored previously soft-deleted event', {
+          eventId: upsertedEvent.id,
+          externalId: upsertedEvent.externalId,
+          name: upsertedEvent.name,
+        });
       }
 
       // Upsert ticket waves by eventId and externalId (composite unique constraint)
@@ -111,6 +131,8 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                 isSoldOut: ticketWave.isSoldOut,
                 isAvailable: ticketWave.isAvailable,
                 status: 'active',
+                // Clear deletedAt to restore soft-deleted ticket waves that reappear
+                deletedAt: null,
                 metadata: ticketWave.metadata || null,
                 updatedAt: now,
                 lastScrapedAt: now,
