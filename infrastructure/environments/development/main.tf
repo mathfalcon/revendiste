@@ -278,6 +278,7 @@ module "cloudflare_dns" {
   domain_name                               = var.domain_name  # dev.revendiste.com for dev
   alb_dns_name                              = module.alb.alb_dns_name
   acm_certificate_domain_validation_options = module.alb.acm_certificate_domain_validation_options
+  create_www_record                         = false # Skip www.dev.revendiste.com (nested subdomain SSL issue)
   common_tags                               = local.common_tags
 }
 
@@ -288,7 +289,9 @@ module "r2" {
   environment           = local.environment
   cloudflare_account_id = var.cloudflare_account_id
   cloudflare_zone_id    = module.cloudflare_dns.zone_id
+  zone_name             = "revendiste.com"
   domain_name           = var.domain_name
+  cdn_subdomain         = "dev-cdn" # Use flat subdomain (dev-cdn.revendiste.com) for Cloudflare Universal SSL
   r2_bucket_location    = var.r2_bucket_location
 }
 

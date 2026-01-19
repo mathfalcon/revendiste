@@ -19,17 +19,7 @@ import {DB} from '@revendiste/shared';
  * - production: SSL enabled with rejectUnauthorized: false (RDS within AWS network)
  */
 function getSslConfig(): boolean | {rejectUnauthorized: boolean} {
-  // If using DATABASE_URL, check if it's a remote connection
-  if (DATABASE_URL) {
-    const isLocalhost =
-      DATABASE_URL.includes('localhost') || DATABASE_URL.includes('127.0.0.1');
-    if (isLocalhost) {
-      return false;
-    }
-    // For Supabase and other cloud providers, use SSL
-    return {rejectUnauthorized: false};
-  }
-
+ 
   if (NODE_ENV === 'local') {
     if (POSTGRES_HOST.includes('localhost')) {
       return false;
@@ -37,14 +27,9 @@ function getSslConfig(): boolean | {rejectUnauthorized: boolean} {
     return true;
   }
 
-  if (NODE_ENV === 'production') {
-    return {
-      rejectUnauthorized: false, // Skip certificate verification for RDS (connection is within AWS network)
-    };
-  }
-
-  // development: SSL enabled
-  return true;
+  return {
+    rejectUnauthorized: false, // Skip certificate verification for RDS (connection is within AWS network)
+  };
 }
 
 /**
@@ -54,13 +39,6 @@ function getSslConfig(): boolean | {rejectUnauthorized: boolean} {
  */
 function getPoolConfig() {
   const ssl = getSslConfig();
-
-  if (DATABASE_URL) {
-    return {
-      connectionString: DATABASE_URL,
-      ssl,
-    };
-  }
 
   return {
     host: POSTGRES_HOST,

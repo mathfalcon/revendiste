@@ -24,10 +24,11 @@ resource "cloudflare_r2_bucket" "private" {
 }
 
 # Custom domain for R2 public bucket CDN
+# Uses flat subdomain (e.g., dev-cdn.revendiste.com) to work with Cloudflare Universal SSL
 resource "cloudflare_r2_custom_domain" "cdn" {
   account_id  = var.cloudflare_account_id
   bucket_name = cloudflare_r2_bucket.public.name
-  domain      = "cdn.${var.domain_name}"
+  domain      = "${var.cdn_subdomain}.${var.zone_name}"
   zone_id     = var.cloudflare_zone_id
   enabled     = true
 }

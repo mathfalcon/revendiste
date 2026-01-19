@@ -288,7 +288,9 @@ module "r2" {
   environment           = local.environment
   cloudflare_account_id = var.cloudflare_account_id
   cloudflare_zone_id    = module.cloudflare_dns.zone_id
+  zone_name             = "revendiste.com"
   domain_name           = var.domain_name
+  cdn_subdomain         = "cdn" # cdn.revendiste.com (covered by Universal SSL)
   r2_bucket_location    = var.r2_bucket_location
 }
 

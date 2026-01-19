@@ -21,7 +21,9 @@ resource "cloudflare_dns_record" "main" {
 }
 
 # A record for www subdomain (points to ALB)
+# Skipped for dev environments to avoid nested subdomain SSL issues (www.dev.revendiste.com)
 resource "cloudflare_dns_record" "www" {
+  count   = var.create_www_record ? 1 : 0
   zone_id = local.zone_id
   name    = "www.${var.domain_name}"
   type    = "CNAME"

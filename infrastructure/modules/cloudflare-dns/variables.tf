@@ -20,6 +20,12 @@ variable "acm_certificate_domain_validation_options" {
   type        = any
 }
 
+variable "create_www_record" {
+  description = "Whether to create www subdomain record (set false for dev to avoid nested subdomain SSL issues)"
+  type        = bool
+  default     = true
+}
+
 variable "common_tags" {
   description = "Common tags for all resources"
   type        = map(string)

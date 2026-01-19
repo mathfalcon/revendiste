@@ -21,9 +21,20 @@ variable "cloudflare_zone_id" {
   type        = string
 }
 
+variable "zone_name" {
+  description = "Root zone name (e.g., revendiste.com)"
+  type        = string
+}
+
 variable "domain_name" {
   description = "Main domain name"
   type        = string
+}
+
+variable "cdn_subdomain" {
+  description = "CDN subdomain (e.g., 'cdn' for cdn.revendiste.com, 'dev-cdn' for dev-cdn.revendiste.com)"
+  type        = string
+  default     = "cdn"
 }
 
 variable "r2_bucket_location" {
