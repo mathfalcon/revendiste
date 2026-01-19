@@ -63,11 +63,12 @@ export abstract class BaseScraper {
       requestHandlerTimeoutSecs: 60,
       navigationTimeoutSecs: 30,
       maxRequestsPerCrawl: 50, // Can be overridden by subclasses
-      // Limit concurrency to reduce memory pressure in containerized environments
-      maxConcurrency: 3,
+      // Limit concurrency to balance speed vs memory in containerized environments
+      // With 1GB RAM: 5 concurrent requests uses ~300-400MB, leaving headroom
+      maxConcurrency: 5,
       browserPoolOptions: {
         useFingerprints: false,
-        maxOpenPagesPerBrowser: 2, // Limit pages per browser instance
+        maxOpenPagesPerBrowser: 3, // Allow more pages per browser instance
       },
     };
   }
