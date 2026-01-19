@@ -177,7 +177,11 @@ resource "aws_lb_listener_rule" "frontend" {
 
   condition {
     host_header {
-      values = [var.domain_name, "www.${var.domain_name}"]
+      # Include main domain, www subdomain, and any additional domains (e.g., production domain for testing)
+      values = concat(
+        [var.domain_name, "www.${var.domain_name}"],
+        var.additional_domains
+      )
     }
   }
 }
