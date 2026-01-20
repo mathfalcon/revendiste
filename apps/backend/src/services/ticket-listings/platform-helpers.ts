@@ -1,18 +1,12 @@
 import type {QrAvailabilityTiming} from '@revendiste/shared';
+import {getUploadWindowStatus} from '@revendiste/shared';
 import {UploadAvailability} from './types';
 
 /**
- * Parse QR availability timing string to hours
- * e.g., '12h' -> 12, '24h' -> 24
- */
-function parseQrAvailabilityTimingToHours(
-  timing: QrAvailabilityTiming,
-): number {
-  return parseInt(timing.replace('h', ''), 10);
-}
-
-/**
  * Determine if a document can be uploaded for a ticket based on QR availability timing.
+ *
+ * This is a thin wrapper around the shared getUploadWindowStatus() utility,
+ * kept for backwards compatibility with existing code.
  *
  * Rules:
  * - If qrAvailabilityTiming is null, upload is allowed anytime before event ends
@@ -26,38 +20,27 @@ export function canUploadDocumentForPlatform(
   _hasDocument: boolean, // Kept for backwards compatibility, no longer used
   qrAvailabilityTiming: QrAvailabilityTiming | null = null,
 ): UploadAvailability {
-  const now = new Date();
+  const status = getUploadWindowStatus(
+    eventStartDate,
+    eventEndDate,
+    qrAvailabilityTiming,
+  );
 
-  // Can't upload after event has ended
-  if (now > eventEndDate) {
+  if (status.canUpload) {
+    return {canUpload: true};
+  }
+
+  if (status.reason === 'event_ended') {
     return {
       canUpload: false,
       reason: 'event_ended',
     };
   }
 
-  // If no QR availability timing is set, allow upload anytime before event ends
-  if (!qrAvailabilityTiming) {
-    return {
-      canUpload: true,
-    };
-  }
-
-  // Calculate the upload window based on qrAvailabilityTiming
-  const hoursBeforeEvent = parseQrAvailabilityTimingToHours(qrAvailabilityTiming);
-  const uploadAvailableAt = new Date(eventStartDate);
-  uploadAvailableAt.setHours(uploadAvailableAt.getHours() - hoursBeforeEvent);
-
-  // If we're before the upload window, it's too early
-  if (now < uploadAvailableAt) {
-    return {
-      canUpload: false,
-      reason: 'too_early',
-      uploadAvailableAt,
-    };
-  }
-
+  // reason === 'too_early'
   return {
-    canUpload: true,
+    canUpload: false,
+    reason: 'too_early',
+    uploadAvailableAt: status.uploadAvailableAt,
   };
 }

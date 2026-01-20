@@ -1,6 +1,31 @@
 import winston from 'winston';
 import {getLoggingConfig} from '../config/logging';
 
+/**
+ * Safe JSON stringify that handles circular references
+ */
+function safeStringify(obj: unknown): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (_key, value) => {
+    // Handle Error objects specially
+    if (value instanceof Error) {
+      return {
+        name: value.name,
+        message: value.message,
+        stack: value.stack,
+      };
+    }
+    // Handle circular references
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  });
+}
+
 // Define log levels
 const levels = {
   error: 0,
@@ -63,7 +88,7 @@ const format = winston.format.combine(
 
       // Only add metadata if there's actual metadata to show
       if (Object.keys(cleanMetadata).length > 0) {
-        logLine += ` ${JSON.stringify(cleanMetadata)}`;
+        logLine += ` ${safeStringify(cleanMetadata)}`;
       }
     }
 

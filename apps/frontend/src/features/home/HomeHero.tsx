@@ -4,9 +4,10 @@ import {EventSearchModal} from '~/components/EventSearchModal';
 import { CDN_ASSETS } from '~/assets';
 
 const homePageTaglines = [
+  "¿Plan a último momento? Conseguí o transferí tu entrada con nosotros",
   'Si no vas, que tu entrada no quede tirada. Vendela fácil y seguro',
   '¿Te pintó ir a último momento? Conseguí tu entrada al toque',
-  '¿Cambio de plan? La fiesta sigue, comprá o vendé tu entrada sin drama',
+  '¿Cambio de plan? La fiesta sigue, comprá o transferi tu entrada sin drama',
   'No llegás, pero tu entrada sí. Dejalo en nuestras manos',
   'El plan cambia, pero tu entrada no queda colgada',
   '¿Plan inesperado? La entrada la conseguís acá',

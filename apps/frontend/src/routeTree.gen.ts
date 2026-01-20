@@ -33,7 +33,6 @@ import { Route as AdminVerificacionesRouteImport } from './routes/admin/verifica
 import { Route as AdminRetirosRouteImport } from './routes/admin/retiros'
 import { Route as AdminEventosRouteImport } from './routes/admin/eventos'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
-import { Route as EntradasEditarListingIdRouteImport } from './routes/entradas/editar.$listingId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
 
 const TerminosYCondicionesRoute = TerminosYCondicionesRouteImport.update({
@@ -157,11 +156,6 @@ const CheckoutOrderIdIndexRoute = CheckoutOrderIdIndexRouteImport.update({
   path: '/checkout/$orderId/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EntradasEditarListingIdRoute = EntradasEditarListingIdRouteImport.update({
-  id: '/entradas/editar/$listingId',
-  path: '/entradas/editar/$listingId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CheckoutOrderIdSuccessRoute = CheckoutOrderIdSuccessRouteImport.update({
   id: '/checkout/$orderId/success',
   path: '/checkout/$orderId/success',
@@ -193,7 +187,6 @@ export interface FileRoutesByFullPath {
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin/': typeof AdminIndexRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
-  '/entradas/editar/$listingId': typeof EntradasEditarListingIdRoute
   '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -220,7 +213,6 @@ export interface FileRoutesByTo {
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin': typeof AdminIndexRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
-  '/entradas/editar/$listingId': typeof EntradasEditarListingIdRoute
   '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
 }
 export interface FileRoutesById {
@@ -249,7 +241,6 @@ export interface FileRoutesById {
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin/': typeof AdminIndexRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
-  '/entradas/editar/$listingId': typeof EntradasEditarListingIdRoute
   '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -279,7 +270,6 @@ export interface FileRouteTypes {
     | '/registrarse/$'
     | '/admin/'
     | '/checkout/$orderId/success'
-    | '/entradas/editar/$listingId'
     | '/checkout/$orderId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -306,7 +296,6 @@ export interface FileRouteTypes {
     | '/registrarse/$'
     | '/admin'
     | '/checkout/$orderId/success'
-    | '/entradas/editar/$listingId'
     | '/checkout/$orderId'
   id:
     | '__root__'
@@ -334,7 +323,6 @@ export interface FileRouteTypes {
     | '/registrarse/$'
     | '/admin/'
     | '/checkout/$orderId/success'
-    | '/entradas/editar/$listingId'
     | '/checkout/$orderId/'
   fileRoutesById: FileRoutesById
 }
@@ -353,7 +341,6 @@ export interface RootRouteChildren {
   IngresarSplatRoute: typeof IngresarSplatRoute
   RegistrarseSplatRoute: typeof RegistrarseSplatRoute
   CheckoutOrderIdSuccessRoute: typeof CheckoutOrderIdSuccessRoute
-  EntradasEditarListingIdRoute: typeof EntradasEditarListingIdRoute
   CheckoutOrderIdIndexRoute: typeof CheckoutOrderIdIndexRoute
 }
 
@@ -527,13 +514,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutOrderIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/entradas/editar/$listingId': {
-      id: '/entradas/editar/$listingId'
-      path: '/entradas/editar/$listingId'
-      fullPath: '/entradas/editar/$listingId'
-      preLoaderRoute: typeof EntradasEditarListingIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/checkout/$orderId/success': {
       id: '/checkout/$orderId/success'
       path: '/checkout/$orderId/success'
@@ -599,7 +579,6 @@ const rootRouteChildren: RootRouteChildren = {
   IngresarSplatRoute: IngresarSplatRoute,
   RegistrarseSplatRoute: RegistrarseSplatRoute,
   CheckoutOrderIdSuccessRoute: CheckoutOrderIdSuccessRoute,
-  EntradasEditarListingIdRoute: EntradasEditarListingIdRoute,
   CheckoutOrderIdIndexRoute: CheckoutOrderIdIndexRoute,
 }
 export const routeTree = rootRouteImport

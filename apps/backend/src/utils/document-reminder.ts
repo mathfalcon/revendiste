@@ -1,11 +1,23 @@
 /**
  * Document Reminder Utilities
  *
- * Pure functions for calculating notification milestones and determining
+ * Functions for calculating notification milestones and determining
  * when document upload reminders should be sent.
  *
- * These functions are extracted for testability and reusability.
+ * Note: For upload window logic, use @revendiste/shared utilities:
+ * - parseQrAvailabilityTiming
+ * - calculateHoursUntilEvent
+ * - getUploadWindowStatus
+ * - isWithinUploadWindow
  */
+
+// Re-export shared utilities for convenience
+export {
+  parseQrAvailabilityTiming,
+  calculateHoursUntilEvent,
+  getUploadWindowStatus,
+  isWithinUploadWindow,
+} from '@revendiste/shared';
 
 /**
  * Fixed milestone thresholds (in hours before event)
@@ -79,37 +91,6 @@ export function shouldSendDocumentReminder(
   }
 
   return false;
-}
-
-/**
- * Parse QR availability timing string to hours
- *
- * @param qrAvailabilityTiming - String like "12h", "48h", etc.
- * @returns Hours as number, or null if invalid/missing
- */
-export function parseQrAvailabilityTiming(
-  qrAvailabilityTiming: string | null | undefined,
-): number | null {
-  if (!qrAvailabilityTiming) {
-    return null;
-  }
-
-  const parsed = parseInt(qrAvailabilityTiming.replace('h', ''), 10);
-  return isNaN(parsed) ? null : parsed;
-}
-
-/**
- * Calculate hours until an event
- *
- * @param eventStartDate - The event start date
- * @param now - Current time (defaults to new Date())
- * @returns Hours until the event (can be negative if event has passed)
- */
-export function calculateHoursUntilEvent(
-  eventStartDate: Date,
-  now: Date = new Date(),
-): number {
-  return (eventStartDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 }
 
 /**

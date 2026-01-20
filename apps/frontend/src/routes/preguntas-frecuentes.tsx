@@ -121,7 +121,7 @@ const faqVendedores: FAQItem[] = [
     question:
       '¿Qué pasa si todavía no tengo el QR porque la plataforma no lo liberó?',
     answer:
-      'Tranqui, podés publicar igual. Tenés hasta 3 horas antes del evento para cargar la entrada en la plataforma. Sabemos que algunas ticketeras no liberan los QR hasta último momento. Si se te complica por algún motivo de fuerza mayor, escribinos a ayuda@revendiste.com y vemos cómo lo solucionamos.',
+      'Tranqui, podés publicar igual. Tenés hasta la hora de finalización del evento para cargar la entrada en la plataforma. Sabemos que algunas ticketeras no liberan los QR hasta último momento. Si se te complica por algún motivo de fuerza mayor, escribinos a ayuda@revendiste.com y vemos cómo lo solucionamos.',
   },
   {
     question:

@@ -1,4 +1,4 @@
-import {useState, useRef, useId, useMemo, useEffect} from 'react';
+import {useState, useRef, useId, useEffect} from 'react';
 import {Upload, FileText, AlertCircle, X, Eye, FileImage} from 'lucide-react';
 import {Button} from '~/components/ui/button';
 import {Alert, AlertDescription} from '~/components/ui/alert';
@@ -142,20 +142,24 @@ export function FileDropzone({
 
   const displayError = error || validationError;
 
-  // Create blob URL for preview
-  const previewUrl = useMemo(() => {
-    if (!selectedFile) return null;
-    return URL.createObjectURL(selectedFile);
-  }, [selectedFile]);
+  // Create blob URL for preview - handle both creation and cleanup in useEffect
+  // This avoids issues with React StrictMode double-mounting and ensures
+  // the URL is properly cleaned up when the file changes
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // Clean up blob URL when component unmounts or file changes
   useEffect(() => {
+    if (!selectedFile) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(selectedFile);
+    setPreviewUrl(url);
+
     return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
+      URL.revokeObjectURL(url);
     };
-  }, [previewUrl]);
+  }, [selectedFile]);
 
   const isImage = selectedFile?.type.startsWith('image/');
   const isPdf = selectedFile?.type === 'application/pdf';

@@ -4,6 +4,7 @@ import {z} from 'zod';
 
 const subirTicketsSearchSchema = z.object({
   subirTicket: z.string().optional(),
+  subirPublicacion: z.string().uuid().optional(),
 });
 
 export const Route = createFileRoute('/cuenta/subir-tickets')({

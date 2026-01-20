@@ -41,14 +41,12 @@ export function PublicationsView() {
     [];
 
   // Collect all tickets needing upload across all listings
+  // Now includes unsold tickets within the upload window (canUploadDocument is true)
   const allTicketsNeedingUpload =
     listings
       ?.flatMap(listing =>
         listing.tickets
-          .filter(
-            ticket =>
-              ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
-          )
+          .filter(ticket => !ticket.hasDocument && ticket.canUploadDocument)
           .map(ticket => ({
             ...ticket,
             listing,
@@ -64,22 +62,30 @@ export function PublicationsView() {
   // Get tickets from specific listing that need upload
   const listingTicketsNeedingUpload = listingFromParam
     ? listingFromParam.tickets
-        .filter(
-          ticket =>
-            ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
-        )
+        .filter(ticket => !ticket.hasDocument && ticket.canUploadDocument)
         .map(ticket => ({
           ...ticket,
           listing: listingFromParam,
         }))
     : [];
 
-  // Auto-open carousel when subirPublicacion parameter is present and has tickets
+  // Auto-open carousel when subirPublicacion parameter is present and listing exists
   useEffect(() => {
-    if (search.subirPublicacion && listingTicketsNeedingUpload.length > 0) {
-      setCarouselOpen(true);
+    if (search.subirPublicacion && listingFromParam) {
+      // Only open if there are tickets needing upload
+      if (listingTicketsNeedingUpload.length > 0) {
+        setCarouselOpen(true);
+      } else {
+        // Clear the param if no tickets need upload (listing found but no pending uploads)
+        navigate({
+          search: prev => ({
+            ...prev,
+            subirPublicacion: undefined,
+          }),
+        });
+      }
     }
-  }, [search.subirPublicacion, listingTicketsNeedingUpload.length]);
+  }, [search.subirPublicacion, listingFromParam, listingTicketsNeedingUpload.length, navigate]);
 
   const handleCloseModal = () => {
     navigate({

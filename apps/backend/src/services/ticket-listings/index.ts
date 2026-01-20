@@ -6,16 +6,24 @@ import {
   OrdersRepository,
   UsersRepository,
 } from '~/repositories';
-import {logger} from '~/utils';
-import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
-import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
-import {canUploadDocumentForPlatform} from './platform-helpers';
+import { logger } from '~/utils';
+import { NotFoundError, ValidationError, UnauthorizedError } from '~/errors';
+import { CreateTicketListingRouteBody } from '~/controllers/ticket-listings/validation';
+import { canUploadDocumentForPlatform } from './platform-helpers';
 import {
   TICKET_LISTING_ERROR_MESSAGES,
   IDENTITY_VERIFICATION_ERROR_MESSAGES,
 } from '~/constants/error-messages';
-import {NotificationService} from '~/services/notifications';
-import {notifySellerTicketSold} from '~/services/notifications/helpers';
+import { NotificationService } from '~/services/notifications';
+import {
+  notifySellerTicketSold,
+  notifyDocumentReminder,
+} from '~/services/notifications/helpers';
+import {
+  parseQrAvailabilityTiming,
+  calculateHoursUntilEvent,
+  isWithinUploadWindow,
+} from '@revendiste/shared';
 
 export class TicketListingsService {
   constructor(
@@ -26,7 +34,7 @@ export class TicketListingsService {
     private readonly ordersRepository: OrdersRepository,
     private readonly usersRepository: UsersRepository,
     private readonly notificationService: NotificationService,
-  ) {}
+  ) { }
 
   async createTicketListing(
     data: CreateTicketListingRouteBody,
@@ -107,6 +115,41 @@ export class TicketListingsService {
     logger.info(
       `Created ${data.quantity} ticket listings for user ${publisherUserId} on event ${data.eventId}`,
     );
+
+    // Check if we should send immediate document upload reminder
+    // Uses shared utility to determine if within upload window
+    const shouldSendImmediateReminder = isWithinUploadWindow(
+      event.eventStartDate,
+      event.eventEndDate,
+      event.qrAvailabilityTiming,
+    );
+
+    if (shouldSendImmediateReminder) {
+      const ticketCount = createdListings.listingTickets.length;
+      const hoursUntilEvent = calculateHoursUntilEvent(event.eventStartDate);
+
+      // Send notification (fire-and-forget, don't block the response)
+      notifyDocumentReminder(this.notificationService, {
+        sellerUserId: publisherUserId,
+        listingId: createdListings.id,
+        eventName: event.name,
+        eventStartDate: event.eventStartDate,
+        ticketCount,
+        hoursUntilEvent: Math.max(0, Math.ceil(hoursUntilEvent)),
+      }).catch(error => {
+        logger.error('Failed to send immediate document reminder notification', {
+          publisherUserId,
+          listingId: createdListings.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+
+      logger.info('Sent immediate document upload reminder', {
+        publisherUserId,
+        listingId: createdListings.id,
+        hoursUntilEvent: Math.round(hoursUntilEvent),
+      });
+    }
 
     return createdListings;
   }
@@ -326,7 +369,7 @@ export class TicketListingsService {
       await this.listingTicketsRepository.markTicketsAsSoldByOrderId(orderId);
 
     if (soldTickets.length === 0) {
-      logger.warn('No tickets found to mark as sold', {orderId});
+      logger.warn('No tickets found to mark as sold', { orderId });
       return soldTickets;
     }
 

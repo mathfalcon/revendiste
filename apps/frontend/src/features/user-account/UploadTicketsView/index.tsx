@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
@@ -23,16 +23,13 @@ export function UploadTicketsView() {
   const threeDaysAgo = new Date(now);
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-  // Find all sold tickets that need documents
-  // Backend already checks event end date via canUploadDocument
+  // Find all tickets that need documents and can upload now
+  // Includes both sold and unsold tickets within the upload window
   const ticketsNeedingUpload =
     listings
       ?.flatMap(listing =>
         listing.tickets
-          .filter(
-            ticket =>
-              ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
-          )
+          .filter(ticket => !ticket.hasDocument && ticket.canUploadDocument)
           .map(ticket => ({
             ...ticket,
             listing,
@@ -41,6 +38,7 @@ export function UploadTicketsView() {
       .filter(Boolean) || [];
 
   // Find tickets that can't upload yet (too early)
+  // Only shows unsold tickets - sold tickets should always be uploadable
   // Exclude tickets with event_ended reason (they go to expired section)
   const ticketsWaiting =
     listings
@@ -48,7 +46,7 @@ export function UploadTicketsView() {
         listing.tickets
           .filter(
             ticket =>
-              ticket.soldAt &&
+              !ticket.soldAt &&
               !ticket.hasDocument &&
               !ticket.canUploadDocument &&
               ticket.uploadUnavailableReason !== 'event_ended',
@@ -68,7 +66,6 @@ export function UploadTicketsView() {
         listing.tickets
           .filter(
             ticket =>
-              ticket.soldAt &&
               !ticket.hasDocument &&
               !ticket.canUploadDocument &&
               ticket.uploadUnavailableReason === 'event_ended',
@@ -90,6 +87,38 @@ export function UploadTicketsView() {
     ? ticketsNeedingUpload.find(ticket => ticket.id === search.subirTicket)
     : null;
 
+  // Find listing by ID from query parameter
+  const listingFromParam = search.subirPublicacion
+    ? listings?.find(listing => listing.id === search.subirPublicacion)
+    : null;
+
+  // Get tickets from specific listing that need upload
+  const listingTicketsNeedingUpload = listingFromParam
+    ? listingFromParam.tickets
+        .filter(ticket => !ticket.hasDocument && ticket.canUploadDocument)
+        .map(ticket => ({
+          ...ticket,
+          listing: listingFromParam,
+        }))
+    : [];
+
+  // Auto-open carousel when subirPublicacion parameter is present and listing exists
+  useEffect(() => {
+    if (search.subirPublicacion && listingFromParam) {
+      if (listingTicketsNeedingUpload.length > 0) {
+        setCarouselOpen(true);
+      } else {
+        // Clear the param if no tickets need upload
+        navigate({
+          search: prev => ({
+            ...prev,
+            subirPublicacion: undefined,
+          }),
+        });
+      }
+    }
+  }, [search.subirPublicacion, listingFromParam, listingTicketsNeedingUpload.length, navigate]);
+
   const handleCloseModal = () => {
     navigate({
       search: prev => ({
@@ -98,6 +127,26 @@ export function UploadTicketsView() {
       }),
     });
   };
+
+  const handleCarouselClose = (open: boolean) => {
+    setCarouselOpen(open);
+    // Clear subirPublicacion param when closing carousel
+    if (!open && search.subirPublicacion) {
+      navigate({
+        search: prev => ({
+          ...prev,
+          subirPublicacion: undefined,
+        }),
+      });
+    }
+  };
+
+  // Determine which tickets to show in carousel
+  // If subirPublicacion param is present, show only that listing's tickets
+  // Otherwise, show all tickets needing upload
+  const ticketsForCarousel = search.subirPublicacion
+    ? listingTicketsNeedingUpload
+    : ticketsNeedingUpload;
 
   const handleUploadClick = (ticketId: string) => {
     navigate({
@@ -128,7 +177,7 @@ export function UploadTicketsView() {
       <div>
         <h2 className='text-2xl font-semibold'>Subir tickets</h2>
         <p className='text-muted-foreground'>
-          Sube los documentos de tus tickets vendidos
+          Sube los documentos de tus tickets
         </p>
       </div>
 
@@ -210,11 +259,11 @@ export function UploadTicketsView() {
       )}
 
       {/* Batch Upload Modal */}
-      {ticketsNeedingUpload.length > 0 && (
+      {(carouselOpen || ticketsForCarousel.length > 0) && (
         <TicketUploadModal
-          tickets={ticketsNeedingUpload}
+          tickets={ticketsForCarousel}
           open={carouselOpen}
-          onOpenChange={setCarouselOpen}
+          onOpenChange={handleCarouselClose}
           initialTicketId={search.subirTicket}
         />
       )}

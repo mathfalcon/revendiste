@@ -73,14 +73,20 @@ export function generateNotificationText<T extends NotificationType>(
 
     case 'document_reminder': {
       const meta = metadata as TypedNotificationMetadata<'document_reminder'>;
-      const hoursText =
-        meta.hoursUntilEvent === 1 ? '1 hora' : `${meta.hoursUntilEvent} horas`;
+
+      // Handle event already started (hoursUntilEvent = 0) vs upcoming event
+      const eventStatusText =
+        meta.hoursUntilEvent === 0
+          ? `El evento "${meta.eventName}" ya comenzó`
+          : `El evento "${meta.eventName}" comienza en ${
+              meta.hoursUntilEvent === 1
+                ? '1 hora'
+                : `${meta.hoursUntilEvent} horas`
+            }`;
 
       return {
         title: 'Recordatorio: Sube los documentos de tus tickets',
-        description: `El evento "${
-          meta.eventName
-        }" comienza en ${hoursText}. Aún tienes ${meta.ticketCount} ${
+        description: `${eventStatusText}. Aún tienes ${meta.ticketCount} ${
           meta.ticketCount === 1
             ? 'ticket sin documentar'
             : 'tickets sin documentar'

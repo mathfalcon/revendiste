@@ -90,13 +90,12 @@ function RouteComponent() {
   const isWithinCuentaRoute = pathname.startsWith('/cuenta');
 
   // Calculate count of tickets needing uploads
-  // Backend already checks event end date via canUploadDocument
+  // Includes both sold and unsold tickets within the upload window
   const ticketsNeedingUploadCount =
     listings
       ?.flatMap(listing =>
         listing.tickets.filter(
-          ticket =>
-            ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
+          ticket => !ticket.hasDocument && ticket.canUploadDocument,
         ),
       )
       .filter(Boolean).length || 0;

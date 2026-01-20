@@ -63,9 +63,8 @@ export class TicketDocumentService {
       );
     }
 
-    if (!ticket.soldAt) {
-      throw new ValidationError(TICKET_DOCUMENT_ERROR_MESSAGES.UNSOLD_TICKET);
-    }
+    // Note: soldAt check removed - sellers can upload documents for unsold tickets
+    // when within the QR availability window to prepare for quick sales
 
     // Validate event hasn't ended
     if (ticket.eventEndDate && new Date(ticket.eventEndDate) < new Date()) {

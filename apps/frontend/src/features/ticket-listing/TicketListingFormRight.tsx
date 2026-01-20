@@ -1,5 +1,5 @@
 import {SubmitHandler, useFormContext} from 'react-hook-form';
-import {useState, useMemo, useEffect} from 'react';
+import {useState, useMemo} from 'react';
 import {Combobox, TextEllipsis} from '~/components';
 import {
   FormControl,
@@ -12,7 +12,7 @@ import {
 import {Input} from '~/components/ui/input';
 import {PriceInput} from '~/components/ui/price-input';
 import {Button} from '~/components/ui/button';
-import {Check, InfoIcon} from 'lucide-react';
+import {Check} from 'lucide-react';
 import {cn} from '~/lib/utils';
 import {TicketListingFormValues} from './TicketListingForm';
 import {useDebounceCallback} from 'usehooks-ts';
@@ -28,9 +28,8 @@ import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {formatPrice, calculateSellerAmount} from '~/utils';
 import {Link, useNavigate} from '@tanstack/react-router';
-import {Separator} from '~/components/ui/separator';
 import {Checkbox} from '~/components/ui/checkbox';
-import {Alert, AlertDescription} from '~/components/ui/alert';
+import {MobilePublishBar} from './MobilePublishBar';
 
 interface TicketListingFormProps {
   mode: 'create' | 'edit';
@@ -70,12 +69,15 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
   const watchEventId = form.watch('eventId');
 
   const eventsComboboxOptions = useMemo(() => {
+    const formatEventDate = (date: Date | string) =>
+      format(new Date(date), "d 'de' MMMM 'a las' HH:mm", {locale: es});
+
     const searchResults =
       eventsQuery.data?.map(event => ({
         value: event.id,
         label: event.name,
         image: event.eventImages[0]?.url,
-        date: format(event.eventStartDate, 'dd MMMM, yyyy', {locale: es}),
+        date: formatEventDate(event.eventStartDate),
       })) ?? [];
 
     if (
@@ -88,9 +90,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
           value: eventDetailsQuery.data.id,
           label: eventDetailsQuery.data.name,
           image: eventDetailsQuery.data.eventImages[0]?.url,
-          date: format(eventDetailsQuery.data.eventStartDate, 'dd MMMM, yyyy', {
-            locale: es,
-          }),
+          date: formatEventDate(eventDetailsQuery.data.eventStartDate),
         },
         ...searchResults,
       ];
@@ -238,7 +238,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
                 />
               </div>
             )}
-            disabled={eventTicketWaveComboboxOptions.length === 0}
+            disabled={!watchEventId || eventTicketWaveComboboxOptions.length === 0}
           />
         )}
       />
@@ -258,6 +258,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
                 currency={
                   selectedEventTicketWave?.currency ?? EventTicketCurrency.UYU
                 }
+                disabled={!watchEventId || !watchEventTicketWaveId}
               />
             </FormControl>
             <FormDescription>
@@ -279,88 +280,30 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
                 <Input
                   type='number'
                   placeholder='Ingresa la cantidad'
-                  {...field}
-                  onChange={e =>
-                    field.onChange(
-                      e.target.value === '' ? 0 : Number(e.target.value),
-                    )
-                  }
+                  value={field.value || ''}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      field.onChange(0);
+                    } else {
+                      // Parse as integer to remove leading zeros, clamp to max 10
+                      const num = Math.min(parseInt(val, 10) || 0, 10);
+                      field.onChange(num);
+                    }
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
                   min={1}
                   max={10}
+                  disabled={!watchEventId || !watchEventTicketWaveId}
                 />
               </FormControl>
-
               <FormMessage />
             </FormItem>
           );
         }}
       />
-
-      {!!watchPrice &&
-        !!selectedEventTicketWave?.currency &&
-        !!sellerAmountCalculation && (
-          <div className='md:hidden space-y-3 p-4 bg-muted rounded-lg border'>
-            <div className='space-y-2'>
-              <div className='flex justify-between items-center'>
-                <span className='text-sm text-muted-foreground'>
-                  Precio por entrada
-                </span>
-                <span className='font-medium'>
-                  {formatPrice(watchPrice, selectedEventTicketWave.currency)}
-                </span>
-              </div>
-              <div className='flex justify-between items-center text-sm'>
-                <span className='text-muted-foreground'>
-                  Comisión ({Math.round(0.06 * 100)}%)
-                </span>
-                <span className='text-muted-foreground'>
-                  -
-                  {formatPrice(
-                    sellerAmountCalculation.platformCommission,
-                    sellerAmountCalculation.currency,
-                  )}
-                </span>
-              </div>
-              <div className='flex justify-between items-center text-sm'>
-                <span className='text-muted-foreground'>
-                  IVA sobre comisión ({Math.round(0.22 * 100)}%)
-                </span>
-                <span className='text-muted-foreground'>
-                  -
-                  {formatPrice(
-                    sellerAmountCalculation.vatOnCommission,
-                    sellerAmountCalculation.currency,
-                  )}
-                </span>
-              </div>
-              <Separator />
-              <div className='flex justify-between items-center'>
-                <span className='font-semibold text-primary'>
-                  Recibirás por entrada
-                </span>
-                <span className='font-bold text-primary text-lg'>
-                  {formatPrice(
-                    sellerAmountCalculation.sellerAmount,
-                    sellerAmountCalculation.currency,
-                  )}
-                </span>
-              </div>
-              {watchQuantity > 1 && (
-                <div className='flex justify-between items-center pt-2 border-t'>
-                  <span className='font-semibold'>
-                    Total ({watchQuantity} entradas)
-                  </span>
-                  <span className='font-bold text-lg'>
-                    {formatPrice(
-                      sellerAmountCalculation.sellerAmount * watchQuantity,
-                      sellerAmountCalculation.currency,
-                    )}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
       <FormField
         control={form.control}
@@ -392,13 +335,27 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
         )}
       />
 
+      {/* Desktop Submit Button */}
       <Button
         type='submit'
-        className='w-full'
+        className='w-full hidden md:flex'
         disabled={form.formState.isSubmitting}
       >
         {mode === 'create' ? 'Publicar' : 'Actualizar'}
       </Button>
+
+      {/* Mobile Sticky Publish Bar */}
+      {!!watchPrice &&
+        !!selectedEventTicketWave?.currency &&
+        !!sellerAmountCalculation && (
+          <MobilePublishBar
+            price={watchPrice}
+            quantity={watchQuantity}
+            currency={selectedEventTicketWave.currency}
+            sellerAmountCalculation={sellerAmountCalculation}
+            isPending={form.formState.isSubmitting}
+          />
+        )}
     </form>
   );
 };

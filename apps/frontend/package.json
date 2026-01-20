@@ -5,7 +5,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "HTTPS_LOCAL=1 vite dev",
+    "dev": "HTTPS_LOCAL=1 vite dev --mode localdev",
     "build": "vite build",
     "start": "node --env-file=.env .output/server/index.mjs",
     "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",

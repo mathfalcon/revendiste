@@ -3,16 +3,18 @@ import {cn} from '~/lib/utils';
 import {Link} from '@tanstack/react-router';
 import {FullLogo} from '~/assets';
 import {VITE_APP_VERSION, VITE_APP_ENV} from '~/config/env';
+import {useHasStickyBar} from '~/contexts';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const hasStickyBar = useHasStickyBar();
 
   return (
     <footer
       className={cn(
         'border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80',
-        // Add bottom padding on mobile to account for sticky bottom bars
-        'pb-24 md:pb-0',
+        // Add bottom padding on mobile when a sticky bar is present
+        hasStickyBar && 'pb-20 md:pb-0',
       )}
     >
       <div className='mx-auto w-full max-w-screen-2xl px-4 md:px-6 py-8 md:py-12'>

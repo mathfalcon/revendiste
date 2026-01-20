@@ -559,9 +559,6 @@ export class IdentityVerificationService {
     faceCount: number,
     documentType: DocumentType,
   ): void {
-    // Passports typically have 2 faces: main photo + watermark
-    const maxFaces = documentType === 'passport' ? 2 : 1;
-
     if (faceCount === 0) {
       logger.warn('[STEP 2/3] ❌ No face detected in document', {
         userId,
@@ -573,22 +570,11 @@ export class IdentityVerificationService {
       );
     }
 
-    if (faceCount > maxFaces) {
-      logger.warn('[STEP 2/3] ❌ Too many faces in document', {
-        userId,
-        faceCount,
-        maxAllowed: maxFaces,
-        documentType,
-      });
-      throw new ValidationError(
-        IDENTITY_VERIFICATION_ERROR_MESSAGES.FACE_NOT_DETECTED_IN_DOCUMENT,
-      );
-    }
-
-    if (faceCount === 2 && documentType === 'passport') {
+    // Log when multiple faces are detected - we'll use the best quality one
+    if (faceCount > 1) {
       logger.info(
-        '[STEP 2/3] Passport has 2 faces (main + watermark) - using best quality',
-        {userId, faceCount},
+        '[STEP 2/3] Multiple faces detected in document - using best quality face',
+        {userId, faceCount, documentType},
       );
     }
   }
@@ -598,21 +584,36 @@ export class IdentityVerificationService {
    * Uses a combination of brightness and sharpness to determine quality.
    */
   private getBestQualityFace(
-    faces: {Quality?: {Brightness?: number; Sharpness?: number}}[],
-  ): {Quality?: {Brightness?: number; Sharpness?: number}} | undefined {
+    faces: {
+      Quality?: {Brightness?: number; Sharpness?: number};
+      BoundingBox?: {Width?: number; Height?: number};
+    }[],
+  ):
+    | {
+        Quality?: {Brightness?: number; Sharpness?: number};
+        BoundingBox?: {Width?: number; Height?: number};
+      }
+    | undefined {
     if (faces.length === 0) return undefined;
     if (faces.length === 1) return faces[0];
 
-    // Calculate quality score for each face (average of brightness and sharpness)
-    return faces.reduce((best, current) => {
-      const bestScore =
-        ((best.Quality?.Brightness ?? 0) + (best.Quality?.Sharpness ?? 0)) / 2;
-      const currentScore =
-        ((current.Quality?.Brightness ?? 0) +
-          (current.Quality?.Sharpness ?? 0)) /
-        2;
+    // Calculate combined score: face size (area) + quality (brightness/sharpness)
+    // Face size is weighted heavily because the main photo should be larger than watermarks
+    const calculateScore = (face: (typeof faces)[0]): number => {
+      const qualityScore =
+        ((face.Quality?.Brightness ?? 0) + (face.Quality?.Sharpness ?? 0)) / 2;
 
-      return currentScore > bestScore ? current : best;
+      // BoundingBox values are normalized (0-1), area gives relative face size
+      const faceArea =
+        (face.BoundingBox?.Width ?? 0) * (face.BoundingBox?.Height ?? 0);
+
+      // Weight: 60% face size, 40% quality (larger face is more important)
+      // Face area is multiplied by 100 to bring it to a similar scale as quality (0-100)
+      return faceArea * 100 * 0.6 + qualityScore * 0.4;
+    };
+
+    return faces.reduce((best, current) => {
+      return calculateScore(current) > calculateScore(best) ? current : best;
     });
   }
 

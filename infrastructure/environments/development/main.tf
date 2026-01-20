@@ -305,6 +305,11 @@ module "identity_verification" {
   ecs_task_role_id  = module.iam.ecs_task_role_id
   ecs_task_role_arn = module.iam.ecs_task_role_arn
   common_tags       = local.common_tags
+
+  # Allow local dev user to assume face liveness role for testing
+  additional_face_liveness_principals = [
+    "arn:aws:iam::521402383324:user/revendiste-local-dev"
+  ]
 }
 
 # EC2 Instance Connect Endpoint for secure database access (FREE - no EC2 needed)

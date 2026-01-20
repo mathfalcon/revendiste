@@ -49,7 +49,7 @@ resource "aws_iam_role" "face_liveness_frontend" {
       {
         Effect = "Allow"
         Principal = {
-          AWS = var.ecs_task_role_arn
+          AWS = concat([var.ecs_task_role_arn], var.additional_face_liveness_principals)
         }
         Action = "sts:AssumeRole"
       }

@@ -26,18 +26,31 @@ export const DocumentReminderEmail = ({
   uploadUrl,
   appBaseUrl,
 }: DocumentReminderEmailProps) => {
+  const eventAlreadyStarted = hoursUntilEvent === 0;
   const hoursText =
     hoursUntilEvent === 1 ? '1 hora' : `${hoursUntilEvent} horas`;
+
+  const previewText = eventAlreadyStarted
+    ? `El evento "${eventName}" ya comenzó`
+    : `El evento "${eventName}" empieza en ${hoursText}`;
 
   return (
     <BaseEmail
       title="Recordatorio: Subí los documentos de tus tickets"
-      preview={`El evento "${eventName}" empieza en ${hoursText}`}
+      preview={previewText}
       appBaseUrl={appBaseUrl}
     >
       <Text className="text-foreground mb-4">
-        Che, el evento <strong>{eventName}</strong> empieza en{' '}
-        <strong>{hoursText}</strong>.
+        {eventAlreadyStarted ? (
+          <>
+            El evento <strong>{eventName}</strong> ya comenzó.
+          </>
+        ) : (
+          <>
+            El evento <strong>{eventName}</strong> empieza en{' '}
+            <strong>{hoursText}</strong>.
+          </>
+        )}
       </Text>
 
       <Text className="text-foreground mb-4">

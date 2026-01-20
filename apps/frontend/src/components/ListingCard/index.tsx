@@ -147,6 +147,7 @@ export function ListingCard({listing}: ListingCardProps) {
             ticketWaveCurrency={ticketWave.currency}
             ticketWaveFaceValue={Number(ticketWave.faceValue)}
             isEventPast={isEventPast}
+            onUploadClick={handleUploadClick}
           />
 
           <SoldTicketsSection

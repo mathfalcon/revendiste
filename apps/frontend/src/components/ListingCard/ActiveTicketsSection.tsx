@@ -6,6 +6,9 @@ import {
   Minus,
   Clock,
   ChevronDown,
+  Upload,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -35,6 +38,7 @@ interface ActiveTicketsSectionProps {
   ticketWaveCurrency: EventTicketCurrency;
   ticketWaveFaceValue: number;
   isEventPast?: boolean;
+  onUploadClick?: (ticketId: string) => void;
 }
 
 export function ActiveTicketsSection({
@@ -43,6 +47,7 @@ export function ActiveTicketsSection({
   ticketWaveCurrency,
   ticketWaveFaceValue,
   isEventPast = false,
+  onUploadClick,
 }: ActiveTicketsSectionProps) {
   const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
   const [removingTicketId, setRemovingTicketId] = useState<string | null>(null);
@@ -54,6 +59,11 @@ export function ActiveTicketsSection({
   if (tickets.length === 0) {
     return null;
   }
+
+  // Count tickets that can upload and need documents
+  const ticketsNeedingDocument = tickets.filter(
+    ticket => ticket.canUploadDocument && !ticket.hasDocument,
+  ).length;
 
   // Different styling for expired vs active tickets
   const sectionLabel = isEventPast ? 'Tickets expirados' : 'Tickets activos';
@@ -92,6 +102,13 @@ export function ActiveTicketsSection({
               >
                 {tickets.length}
               </span>
+              {/* Alert indicator for tickets needing document upload */}
+              {ticketsNeedingDocument > 0 && (
+                <span className='flex items-center gap-1 text-xs text-orange-600 bg-orange-500/10 px-2 py-0.5 rounded-full'>
+                  <AlertCircle className='h-3 w-3' />
+                  <span>{ticketsNeedingDocument}</span>
+                </span>
+              )}
             </div>
             <ChevronDown
               className={cn(
@@ -168,35 +185,56 @@ export function ActiveTicketsSection({
                     </div>
                   </div>
 
-                  {/* Right side: Actions - only show for active events */}
-                  {!isEventPast && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant='ghost'
-                          size='icon'
-                          className='h-8 w-8 shrink-0'
-                        >
-                          <MoreVertical className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuItem
-                          onClick={() => setEditingTicketId(ticket.id)}
-                        >
-                          <Edit className='mr-2 h-4 w-4' />
-                          Editar precio
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className='text-destructive focus:text-destructive'
-                          onClick={() => setRemovingTicketId(ticket.id)}
-                        >
-                          <Minus className='mr-2 h-4 w-4' />
-                          Retirar de venta
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
+                  {/* Right side: Document status & Actions */}
+                  <div className='flex items-center gap-2 shrink-0'>
+                    {/* Document status indicator */}
+                    {ticket.hasDocument ? (
+                      <span className='flex items-center gap-1 text-xs text-green-600 bg-green-500/10 px-2 py-1 rounded-full'>
+                        <CheckCircle className='h-3 w-3' />
+                        Subido
+                      </span>
+                    ) : ticket.canUploadDocument ? (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='h-7 text-xs'
+                        onClick={() => onUploadClick?.(ticket.id)}
+                      >
+                        <Upload className='mr-1.5 h-3 w-3' />
+                        Subir ticket
+                      </Button>
+                    ) : null}
+
+                    {/* Actions dropdown - only show for active events */}
+                    {!isEventPast && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8 shrink-0'
+                          >
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            onClick={() => setEditingTicketId(ticket.id)}
+                          >
+                            <Edit className='mr-2 h-4 w-4' />
+                            Editar precio
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className='text-destructive focus:text-destructive'
+                            onClick={() => setRemovingTicketId(ticket.id)}
+                          >
+                            <Minus className='mr-2 h-4 w-4' />
+                            Retirar de venta
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

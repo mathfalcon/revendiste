@@ -67,7 +67,7 @@ export const DocumentReminderMetadataSchema = z.object({
   eventName: z.string(),
   eventStartDate: z.string(), // ISO string
   ticketCount: z.number().int().positive(),
-  hoursUntilEvent: z.number().int().positive(),
+  hoursUntilEvent: z.number().int().nonnegative(), // 0 means event already started
 });
 
 export const OrderConfirmedMetadataSchema = z.object({

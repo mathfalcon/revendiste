@@ -1,14 +1,14 @@
-import {type Kysely, type Updateable} from 'kysely';
-import type {DB, EventImageType, Events} from '@revendiste/shared';
-import type {ScrapedEventData} from '../../services/scraping';
-import {logger} from '~/utils';
-import {jsonArrayFrom} from 'kysely/helpers/postgres';
-import {mapToPaginatedResponse} from '~/middleware';
-import {NotFoundError} from '~/errors';
-import {sql} from 'kysely';
-import {BaseRepository} from '../base';
-import type {PaginationOptions} from '~/types/pagination';
-import {getStorageProvider} from '~/services';
+import { type Kysely, type Updateable } from 'kysely';
+import type { DB, EventImageType, Events } from '@revendiste/shared';
+import type { ScrapedEventData } from '../../services/scraping';
+import { logger } from '~/utils';
+import { jsonArrayFrom } from 'kysely/helpers/postgres';
+import { mapToPaginatedResponse } from '~/middleware';
+import { NotFoundError } from '~/errors';
+import { sql } from 'kysely';
+import { BaseRepository } from '../base';
+import type { PaginationOptions } from '~/types/pagination';
+import { getStorageProvider } from '~/services';
 
 export class EventsRepository extends BaseRepository<EventsRepository> {
   withTransaction(trx: Kysely<DB>): EventsRepository {
@@ -171,7 +171,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
 
   async updateEventImages(
     eventId: string,
-    images: Array<{type: EventImageType; url: string}>,
+    images: Array<{ type: EventImageType; url: string }>,
   ) {
     return await this.db.transaction().execute(async trx => {
       const now = new Date();
@@ -202,7 +202,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     pagination: PaginationOptions,
     userId?: string,
   ) {
-    const {page, limit, offset, sortBy, sortOrder} = pagination;
+    const { page, limit, offset, sortBy, sortOrder } = pagination;
 
     // Get total count
     const totalResult = await this.db
@@ -543,7 +543,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     return event;
   }
 
-  // Get upcoming events ordered by start date
+  // Get upcoming events ordered by start date (includes in-progress events)
   async getUpcomingEvents(limit: number = 8) {
     const now = new Date();
 
@@ -573,7 +573,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       ])
       .where('deletedAt', 'is', null)
       .where('status', '=', 'active')
-      .where('eventStartDate', '>=', now)
+      .where('eventEndDate', '>', now) // Include events that haven't ended yet
       .orderBy('eventStartDate', 'asc')
       .limit(limit)
       .execute();
@@ -582,8 +582,11 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
   }
 
   // Search events by name using ILIKE for substring matching and trigram similarity for fuzzy matching
+  // Only returns events that haven't ended yet (includes in-progress events)
   async getBySearch(query: string, limit: number = 20) {
     const searchPattern = `%${query}%`;
+    const now = new Date();
+
     const events = await this.db
       .selectFrom('events')
       .select(eb => [
@@ -610,6 +613,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       ])
       .where('deletedAt', 'is', null)
       .where('status', '=', 'active')
+      .where('eventEndDate', '>', now) // Only include events that haven't ended yet
       // Use ILIKE for substring matching (works for partial word matches like "fideles" in "WAVES OF LIFE w/ FIDELES PDE 2026")
       // Also use trigram similarity for fuzzy matching (handles typos and variations)
       .where(
@@ -651,7 +655,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       status?: 'active' | 'inactive';
     } = {},
   ) {
-    const {page, limit, offset} = pagination;
+    const { page, limit, offset } = pagination;
     const now = new Date();
 
     // Build count query

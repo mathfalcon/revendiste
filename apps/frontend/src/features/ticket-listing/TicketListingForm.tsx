@@ -103,7 +103,7 @@ export const TicketListingForm = ({
             <TicketListingFormRight mode={mode} />
           </div>
         </div>
-        <div className='md:hidden mt-6'>
+        <div className='md:hidden'>
           <TicketListingFormLeft />
         </div>
       </div>
