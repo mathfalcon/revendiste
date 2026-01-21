@@ -27,6 +27,7 @@ app.use(
       'http://192.168.0.127:3000',
       'https://192.168.0.127:3000',
       'https://192.168.68.115:3000',
+      'https://192.168.56.1:3000',
       APP_BASE_URL,
       'https://revendiste.com',
     ].filter(Boolean), // Remove any undefined values

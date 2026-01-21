@@ -5,7 +5,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "HTTPS_LOCAL=1 vite dev --mode localdev",
+    "dev": "cross-env HTTPS_LOCAL=1 vite dev --mode localdev",
     "build": "vite build",
     "start": "node --env-file=.env .output/server/index.mjs",
     "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
@@ -97,6 +97,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.0",
     "vite": "^7.3.1",
+    "cross-env": "^7.0.3",
     "vite-tsconfig-paths": "^5.1.4"
   }
 }

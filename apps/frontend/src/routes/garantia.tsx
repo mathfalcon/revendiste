@@ -151,14 +151,16 @@ function GarantiaPage() {
                 <div className='w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center'>
                   <Shield className='w-5 h-5 text-purple-600' />
                 </div>
-                <CardTitle className='text-lg'>Sin Sobreprecio</CardTitle>
+                <CardTitle className='text-lg'>Precios Controlados</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <p className='text-sm text-muted-foreground'>
-                Nadie puede vender una entrada por más de lo que la pagó.
-                Cumplimos con la normativa uruguaya y protegemos a los
-                compradores.
+                El precio máximo de publicación está fijado en un 15% sobre el
+                valor original de la entrada. Esto permite que quienes quieren
+                transferir su entrada puedan recuperar lo que pagaron,
+                incluyendo las comisiones que la plataforma original les haya
+                cobrado.
               </p>
             </CardContent>
           </Card>

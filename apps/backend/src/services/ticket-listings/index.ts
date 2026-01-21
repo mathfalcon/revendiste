@@ -23,6 +23,7 @@ import {
   parseQrAvailabilityTiming,
   calculateHoursUntilEvent,
   isWithinUploadWindow,
+  calculateMaxResalePrice,
 } from '@revendiste/shared';
 
 export class TicketListingsService {
@@ -91,11 +92,12 @@ export class TicketListingsService {
       );
     }
 
-    // Validate price doesn't exceed face value
-    if (data.price > Number(ticketWave.faceValue)) {
+    // Validate price doesn't exceed max resale price (115% of face value)
+    const maxResalePrice = calculateMaxResalePrice(Number(ticketWave.faceValue));
+    if (data.price > maxResalePrice) {
       throw new ValidationError(
-        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_FACE_VALUE(
-          String(ticketWave.faceValue),
+        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_MAX_RESALE(
+          maxResalePrice,
           ticketWave.currency,
         ),
       );
@@ -264,11 +266,12 @@ export class TicketListingsService {
       );
     }
 
-    // Validate price doesn't exceed face value
-    if (price > Number(ticket.faceValue)) {
+    // Validate price doesn't exceed max resale price (115% of face value)
+    const maxResalePrice = calculateMaxResalePrice(Number(ticket.faceValue));
+    if (price > maxResalePrice) {
       throw new ValidationError(
-        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_FACE_VALUE(
-          String(ticket.faceValue),
+        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_MAX_RESALE(
+          maxResalePrice,
           ticket.currency,
         ),
       );

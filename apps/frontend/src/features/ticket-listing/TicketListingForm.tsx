@@ -36,7 +36,7 @@ const TicketListingFormSchema = z
     if (ctx.value.price > ctx.value.maxPrice) {
       ctx.issues.push({
         code: 'custom',
-        message: `El precio no puede superar al precio original de la tanda ($${formatAmount(ctx.value.maxPrice)})`,
+        message: `El precio máximo es $${formatAmount(ctx.value.maxPrice)}`,
         input: ctx.value,
         path: ['price'],
       });

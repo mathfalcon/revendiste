@@ -10,7 +10,7 @@ import {EventInfoBadges} from '~/components/EventInfoBadges';
 import {ActiveTicketsSection} from './ActiveTicketsSection';
 import {SoldTicketsSection} from './SoldTicketsSection';
 import {CancelledTicketsSection} from './CancelledTicketsSection';
-import {formatEventDate} from '~/utils/string';
+import {formatEventDate, calculateMaxResalePrice} from '~/utils';
 import {Calendar, MapPin} from 'lucide-react';
 import {CDN_ASSETS} from '~/assets';
 import {CopyableText} from '~/components/ui/copyable-text';
@@ -145,7 +145,9 @@ export function ListingCard({listing}: ListingCardProps) {
             tickets={activeTickets}
             ticketWaveName={ticketWave.name}
             ticketWaveCurrency={ticketWave.currency}
-            ticketWaveFaceValue={Number(ticketWave.faceValue)}
+            ticketWaveFaceValue={calculateMaxResalePrice(
+              Number(ticketWave.faceValue),
+            )}
             isEventPast={isEventPast}
             onUploadClick={handleUploadClick}
           />

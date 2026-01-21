@@ -120,3 +120,27 @@ export function getFeeRatesDisplay(rates: FeeRates) {
     vatPercentage: Math.round(rates.vatRate * 100),
   };
 }
+
+/**
+ * Calculates the selling price needed to receive a desired seller amount (reverse calculation)
+ * Used when seller wants to input "what they want to receive" instead of the publishing price
+ * All amounts are rounded to 2 decimal places for currency precision
+ *
+ * @param desiredSellerAmount - The amount the seller wants to receive after fees
+ * @param rates - Fee rates (platformCommissionRate, vatRate)
+ * @returns The selling price that would result in the desired seller amount
+ *
+ * @example
+ * // With 6% commission and 22% VAT, to receive $92.68:
+ * calculateSellingPriceFromSellerAmount(92.68, { platformCommissionRate: 0.06, vatRate: 0.22 })
+ * // Returns: 100 (approximately)
+ */
+export function calculateSellingPriceFromSellerAmount(
+  desiredSellerAmount: number,
+  rates: FeeRates,
+): number {
+  // sellerAmount = sellingPrice * (1 - commissionRate * (1 + vatRate))
+  // sellingPrice = sellerAmount / (1 - commissionRate * (1 + vatRate))
+  const deductionFactor = 1 - rates.platformCommissionRate * (1 + rates.vatRate);
+  return roundOrderAmount(desiredSellerAmount / deductionFactor);
+}

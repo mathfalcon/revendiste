@@ -1,7 +1,7 @@
 import {useForm} from 'react-hook-form';
 import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import z from 'zod';
-import {useEffect} from 'react';
+import {useEffect, useRef, useCallback} from 'react';
 import {
   Dialog,
   DialogContent,
@@ -19,15 +19,17 @@ import {
   FormLabel,
   FormMessage,
 } from '~/components/ui/form';
-import {Input} from '~/components/ui/input';
 import {Button} from '~/components/ui/button';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {
   updateTicketPriceMutation,
   getMyListingsQuery,
 } from '~/lib/api/ticket-listings';
-import {formatPrice, formatAmount, getCurrencySymbol} from '~/utils';
+import {formatPrice, formatAmount} from '~/utils';
 import type {EventTicketCurrency} from '~/lib/api/generated';
+import {PriceInput} from '~/components/ui/price-input';
+import {toast} from 'sonner';
+import {Link} from '@tanstack/react-router';
 
 const editTicketPriceSchema = z
   .object({
@@ -38,7 +40,7 @@ const editTicketPriceSchema = z
     if (data.price > data.maxPrice) {
       ctx.addIssue({
         code: 'custom',
-        message: `El precio no puede superar al precio original de la tanda ($${formatAmount(data.maxPrice)})`,
+        message: `El precio máximo es $${formatAmount(data.maxPrice)}`,
         path: ['price'],
       });
     }
@@ -96,14 +98,34 @@ export function EditTicketPriceDialog({
     }
   };
 
+  // Throttle toast to avoid spamming when user repeatedly exceeds max
+  const lastToastTimeRef = useRef<number>(0);
+  const showMaxExceededToast = useCallback(() => {
+    const now = Date.now();
+    if (now - lastToastTimeRef.current > 2000) {
+      lastToastTimeRef.current = now;
+      toast.info(`El precio máximo es ${formatPrice(maxPrice, currency)}`);
+    }
+  }, [maxPrice, currency]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Editar precio</DialogTitle>
-          <DialogDescription>
-            Actualiza el precio de tu ticket. El precio no puede superar el
-            valor nominal de {formatPrice(maxPrice, currency)}.
+          <DialogDescription className='space-y-1'>
+            <span className='block'>Actualizá el precio de tu entrada.</span>
+            <span className='block'>
+              Máximo: {formatPrice(maxPrice, currency)}.{' '}
+              <Link
+                to='/preguntas-frecuentes'
+                search={{seccion: 'general', pregunta: 2}}
+                className='text-primary hover:underline'
+                target='_blank'
+              >
+                ¿Por qué?
+              </Link>
+            </span>
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -113,22 +135,16 @@ export function EditTicketPriceDialog({
               name='price'
               render={({field}) => (
                 <FormItem>
-                  <FormLabel>Precio</FormLabel>
+                  <FormLabel>Nuevo precio</FormLabel>
                   <FormControl>
-                    <Input
-                      type='number'
-                      step='0.01'
-                      min='1'
-                      {...field}
-                      onChange={e => {
-                        const value = parseFloat(e.target.value);
-                        if (!isNaN(value)) {
-                          field.onChange(value);
-                        } else if (e.target.value === '') {
-                          field.onChange(0);
-                        }
-                      }}
-                      value={field.value || ''}
+                    <PriceInput
+                      placeholder='Ingresá el precio'
+                      value={field.value}
+                      onChange={field.onChange}
+                      locale='es-ES'
+                      currency={currency}
+                      max={maxPrice}
+                      onMaxExceeded={showMaxExceededToast}
                     />
                   </FormControl>
                   <FormDescription>

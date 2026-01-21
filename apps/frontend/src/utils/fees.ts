@@ -9,10 +9,15 @@ import {EventTicketCurrency} from '~/lib';
 import {
   calculateOrderFees as sharedCalculateOrderFees,
   calculateSellerAmount as sharedCalculateSellerAmount,
+  calculateSellingPriceFromSellerAmount as sharedCalculateSellingPriceFromSellerAmount,
   getFeeRatesDisplay,
+  calculateMaxResalePrice,
   type FeeCalculationResult,
   type SellerAmountResult as SharedSellerAmountResult,
 } from '@revendiste/shared';
+
+// Re-export pricing utilities
+export {calculateMaxResalePrice};
 import {VITE_PLATFORM_COMMISSION_RATE, VITE_VAT_RATE} from '~/config/env';
 
 // Re-export types
@@ -64,4 +69,16 @@ export function calculateSellerAmount(
  */
 export function getFeeRates() {
   return getFeeRatesDisplay(feeRates);
+}
+
+/**
+ * Calculates the selling price needed to receive a desired seller amount (reverse calculation)
+ * Used when seller wants to input "what they want to receive" instead of the publishing price
+ * @param desiredSellerAmount - The amount the seller wants to receive after fees
+ * @returns The selling price that would result in the desired seller amount
+ */
+export function calculateSellingPriceFromSellerAmount(
+  desiredSellerAmount: number,
+): number {
+  return sharedCalculateSellingPriceFromSellerAmount(desiredSellerAmount, feeRates);
 }

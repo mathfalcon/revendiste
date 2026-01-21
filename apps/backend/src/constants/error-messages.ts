@@ -70,6 +70,11 @@ export const TICKET_LISTING_ERROR_MESSAGES = {
     'La tanda de tickets no pertenece al evento especificado',
   PRICE_EXCEEDS_FACE_VALUE: (faceValue: string, currency: string) =>
     `El precio no puede exceder el valor nominal de ${faceValue} ${currency}`,
+  PRICE_EXCEEDS_MAX_RESALE: (
+    maxResalePrice: number,
+    currency: EventTicketCurrency,
+  ) =>
+    `El precio no puede exceder ${formatPrice(maxResalePrice, currency)} (115% del valor nominal)`,
   INVALID_QUANTITY: 'La cantidad debe ser mayor que 0',
   TICKET_NOT_FOUND: 'Ticket no encontrado',
   UNAUTHORIZED_TICKET_ACCESS: 'No estás autorizado para modificar este ticket',

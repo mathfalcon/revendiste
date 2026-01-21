@@ -1,5 +1,5 @@
 import {SubmitHandler, useFormContext} from 'react-hook-form';
-import {useState, useMemo} from 'react';
+import {useState, useMemo, useCallback, useRef} from 'react';
 import {Combobox, TextEllipsis} from '~/components';
 import {
   FormControl,
@@ -26,10 +26,15 @@ import {
 } from '~/lib';
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
-import {formatPrice, calculateSellerAmount} from '~/utils';
+import {
+  formatPrice,
+  calculateSellerAmount,
+  calculateMaxResalePrice,
+} from '~/utils';
 import {Link, useNavigate} from '@tanstack/react-router';
 import {Checkbox} from '~/components/ui/checkbox';
 import {MobilePublishBar} from './MobilePublishBar';
+import {toast} from 'sonner';
 
 interface TicketListingFormProps {
   mode: 'create' | 'edit';
@@ -120,6 +125,20 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
 
   const watchPrice = form.watch('price');
   const watchQuantity = form.watch('quantity');
+  const watchMaxPrice = form.watch('maxPrice');
+
+  // Throttle toast to avoid spamming when user repeatedly exceeds max
+  const lastToastTimeRef = useRef<number>(0);
+  const showMaxExceededToast = useCallback(
+    (maxPrice: number, currency: EventTicketCurrency) => {
+      const now = Date.now();
+      if (now - lastToastTimeRef.current > 2000) {
+        lastToastTimeRef.current = now;
+        toast.warning(`El precio máximo es ${formatPrice(maxPrice, currency)}`);
+      }
+    },
+    [],
+  );
 
   const sellerAmountCalculation = useMemo(() => {
     if (!watchPrice || !selectedEventTicketWave?.currency) {
@@ -193,11 +212,11 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
                   ticketWave => ticketWave.id === newValue,
                 );
               if (selectedEventTicketWave) {
-                form.setValue(
-                  'maxPrice',
-                  Number(selectedEventTicketWave?.faceValue),
-                  {shouldValidate: true},
+                // Max resale price is 115% of face value to allow cost recovery
+                const maxResalePrice = calculateMaxResalePrice(
+                  Number(selectedEventTicketWave.faceValue),
                 );
+                form.setValue('maxPrice', maxResalePrice, {shouldValidate: true});
                 field.onChange(selectedEventTicketWave.id);
               }
             }}
@@ -246,27 +265,50 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
       <FormField
         control={form.control}
         name='price'
-        render={({field}) => (
-          <FormItem>
-            <FormLabel>Precio de venta</FormLabel>
-            <FormControl>
-              <PriceInput
-                placeholder='Ingresa el precio'
-                value={field.value}
-                onChange={field.onChange}
-                locale='es-ES'
-                currency={
-                  selectedEventTicketWave?.currency ?? EventTicketCurrency.UYU
-                }
-                disabled={!watchEventId || !watchEventTicketWaveId}
-              />
-            </FormControl>
-            <FormDescription>
-              No debe superar el precio original de la entrada
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
+        render={({field}) => {
+          const currency =
+            selectedEventTicketWave?.currency ?? EventTicketCurrency.UYU;
+          const isDisabled = !watchEventId || !watchEventTicketWaveId;
+          const maxPrice = watchMaxPrice;
+
+          const handleMaxExceeded = () => {
+            if (maxPrice) {
+              showMaxExceededToast(maxPrice, currency);
+            }
+          };
+
+          return (
+            <FormItem>
+              <FormLabel>Precio de venta</FormLabel>
+              <FormControl>
+                <PriceInput
+                  placeholder='Ingresá el precio'
+                  value={field.value}
+                  onChange={field.onChange}
+                  locale='es-ES'
+                  currency={currency}
+                  disabled={isDisabled}
+                  max={maxPrice}
+                  onMaxExceeded={handleMaxExceeded}
+                />
+              </FormControl>
+              <FormDescription>
+                {maxPrice
+                  ? `Máximo: ${formatPrice(maxPrice, currency)}. `
+                  : 'Máximo 15% sobre el valor original. '}
+                <Link
+                  to='/preguntas-frecuentes'
+                  search={{seccion: 'general', pregunta: 2}}
+                  className='text-primary hover:underline'
+                  target='_blank'
+                >
+                  ¿Por qué?
+                </Link>
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          );
+        }}
       />
 
       <FormField
