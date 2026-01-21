@@ -99,9 +99,15 @@ export abstract class BaseScraper {
       },
     };
 
-    Configuration.set('systemInfoV2', true);
+    // Configure unique storage directory per platform to avoid conflicts
+    // when multiple scrapers run in parallel
+    const config = new Configuration({
+      storageClientOptions: {
+        localDataDirectory: `./storage/${this.platform}`,
+      },
+    });
 
-    const crawler = new PlaywrightCrawler(mergedOptions);
+    const crawler = new PlaywrightCrawler(mergedOptions, config);
 
     logMemoryUsage('after crawler creation');
 

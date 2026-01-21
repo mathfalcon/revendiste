@@ -517,14 +517,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ListingTicketRefundStatus": {
-				"type": "string",
-				"enum": [
-					"refund_failed",
-					"refund_pending",
-					"refunded"
-				]
-			},
 			"CreateTicketListingResponse": {
 				"properties": {
 					"ticketWaveId": {
@@ -561,19 +553,38 @@
 									"type": "number",
 									"format": "double"
 								},
-								"refundStatus": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/ListingTicketRefundStatus"
-										}
-									],
-									"nullable": true
-								},
 								"price": {
 									"type": "string"
 								},
 								"listingId": {
 									"type": "string"
+								},
+								"documentUploadRequiredNotifiedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"documentUploadedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"documentType": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentSizeBytes": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
+								},
+								"documentPath": {
+									"type": "string",
+									"nullable": true
+								},
+								"documentOriginalName": {
+									"type": "string",
+									"nullable": true
 								},
 								"soldAt": {
 									"type": "string",
@@ -599,9 +610,14 @@
 							},
 							"required": [
 								"ticketNumber",
-								"refundStatus",
 								"price",
 								"listingId",
+								"documentUploadRequiredNotifiedAt",
+								"documentUploadedAt",
+								"documentType",
+								"documentSizeBytes",
+								"documentPath",
+								"documentOriginalName",
 								"soldAt",
 								"updatedAt",
 								"id",
@@ -1076,19 +1092,38 @@
 						"type": "number",
 						"format": "double"
 					},
-					"refundStatus": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/ListingTicketRefundStatus"
-							}
-						],
-						"nullable": true
-					},
 					"price": {
 						"type": "string"
 					},
 					"listingId": {
 						"type": "string"
+					},
+					"documentUploadRequiredNotifiedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"documentUploadedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"documentType": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentSizeBytes": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"documentPath": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentOriginalName": {
+						"type": "string",
+						"nullable": true
 					},
 					"soldAt": {
 						"type": "string",
@@ -1114,9 +1149,14 @@
 				},
 				"required": [
 					"ticketNumber",
-					"refundStatus",
 					"price",
 					"listingId",
+					"documentUploadRequiredNotifiedAt",
+					"documentUploadedAt",
+					"documentType",
+					"documentSizeBytes",
+					"documentPath",
+					"documentOriginalName",
 					"soldAt",
 					"updatedAt",
 					"id",
@@ -1143,19 +1183,38 @@
 						"type": "number",
 						"format": "double"
 					},
-					"refundStatus": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/ListingTicketRefundStatus"
-							}
-						],
-						"nullable": true
-					},
 					"price": {
 						"type": "string"
 					},
 					"listingId": {
 						"type": "string"
+					},
+					"documentUploadRequiredNotifiedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"documentUploadedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"documentType": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentSizeBytes": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"documentPath": {
+						"type": "string",
+						"nullable": true
+					},
+					"documentOriginalName": {
+						"type": "string",
+						"nullable": true
 					},
 					"soldAt": {
 						"type": "string",
@@ -1181,9 +1240,14 @@
 				},
 				"required": [
 					"ticketNumber",
-					"refundStatus",
 					"price",
 					"listingId",
+					"documentUploadRequiredNotifiedAt",
+					"documentUploadedAt",
+					"documentType",
+					"documentSizeBytes",
+					"documentPath",
+					"documentOriginalName",
 					"soldAt",
 					"updatedAt",
 					"id",
@@ -1878,9 +1942,9 @@
 									"type": "string",
 									"enum": [
 										"active",
+										"cancelled",
 										"refund_pending",
-										"refunded",
-										"cancelled"
+										"refunded"
 									]
 								},
 								"hasDocument": {
@@ -5809,6 +5873,14 @@
 						"type": "string",
 						"nullable": true
 					},
+					"venueLongitude": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueLatitude": {
+						"type": "string",
+						"nullable": true
+					},
 					"venueAddress": {
 						"type": "string"
 					},
@@ -5873,6 +5945,8 @@
 				},
 				"required": [
 					"venueName",
+					"venueLongitude",
+					"venueLatitude",
 					"venueAddress",
 					"updatedAt",
 					"status",
@@ -5946,6 +6020,14 @@
 						"type": "string",
 						"nullable": true
 					},
+					"venueLongitude": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueLatitude": {
+						"type": "string",
+						"nullable": true
+					},
 					"venueAddress": {
 						"type": "string"
 					},
@@ -6010,6 +6092,8 @@
 				},
 				"required": [
 					"venueName",
+					"venueLongitude",
+					"venueLatitude",
 					"venueAddress",
 					"updatedAt",
 					"status",

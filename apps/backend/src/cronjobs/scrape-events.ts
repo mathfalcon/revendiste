@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import {EntrasteScraper} from '../services/scraping/entraste';
+import {RedTicketsScraper} from '../services/scraping/redtickets';
 import {ScrapingService} from '~/services/scraping';
 import {EventsService} from '~/services/events';
 import {EventsRepository} from '~/repositories';
@@ -13,7 +14,7 @@ import {logger} from '~/utils';
 export async function runScrapeEvents() {
   const eventsRepository = new EventsRepository(db);
   const scrapingService = new ScrapingService(
-    [new EntrasteScraper()],
+    [new EntrasteScraper(), new RedTicketsScraper()],
     new EventsService(eventsRepository),
   );
 

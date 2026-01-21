@@ -36,9 +36,14 @@ export const HomeEvents = () => {
           : events.map(event => {
               const eventImages = event.images;
 
-              const flyerImage = eventImages.find(
-                image => image.imageType === EventImageType.Flyer,
-              );
+              // Prefer flyer image, fall back to hero if not available
+              const flyerImage =
+                eventImages.find(
+                  image => image.imageType === EventImageType.Flyer,
+                ) ??
+                eventImages.find(
+                  image => image.imageType === EventImageType.Hero,
+                );
 
               // Get lowest available ticket price and currency
               // Type assertion needed until API types are regenerated

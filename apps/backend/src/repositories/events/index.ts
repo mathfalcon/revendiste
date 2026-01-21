@@ -41,6 +41,8 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
           eventEndDate: event.eventEndDate,
           venueName: event.venueName || null,
           venueAddress: event.venueAddress,
+          venueLatitude: event.venueLatitude?.toString() || null,
+          venueLongitude: event.venueLongitude?.toString() || null,
           externalUrl: event.externalUrl,
           qrAvailabilityTiming: event.qrAvailabilityTiming || null,
           status: 'active',
@@ -56,6 +58,8 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             eventEndDate: event.eventEndDate,
             venueName: event.venueName || null,
             venueAddress: event.venueAddress,
+            venueLatitude: event.venueLatitude?.toString() || null,
+            venueLongitude: event.venueLongitude?.toString() || null,
             externalUrl: event.externalUrl,
             qrAvailabilityTiming: event.qrAvailabilityTiming || null,
             status: 'active',
@@ -561,13 +565,12 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'status',
         'createdAt',
         'updatedAt',
-        // Only include flyer images for the search results
+        // Include all images - frontend will apply fallback logic (flyer -> hero)
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
             .select(['eventImages.url', 'eventImages.imageType'])
             .whereRef('eventImages.eventId', '=', 'events.id')
-            .where('eventImages.imageType', '=', 'flyer')
             .orderBy('eventImages.displayOrder'),
         ).as('eventImages'),
       ])
@@ -601,13 +604,12 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'status',
         'createdAt',
         'updatedAt',
-        // Only include flyer images for the search results
+        // Include all images - frontend will apply fallback logic (flyer -> hero)
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
             .select(['eventImages.url', 'eventImages.imageType'])
             .whereRef('eventImages.eventId', '=', 'events.id')
-            .where('eventImages.imageType', '=', 'flyer')
             .orderBy('eventImages.displayOrder'),
         ).as('eventImages'),
       ])

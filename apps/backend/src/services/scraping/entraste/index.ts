@@ -191,6 +191,60 @@ export class EntrasteScraper extends BaseScraper {
   }
 
   /**
+   * Extract coordinates from the embedded Google Maps
+   * Looks for the ll= parameter in Google Maps links
+   */
+  private async extractCoordinates(
+    page: Page,
+  ): Promise<{latitude: number; longitude: number} | null> {
+    try {
+      // Look for Google Maps link with ll= parameter
+      const mapsHref = await page
+        .$eval(
+          '#event-map a[href*="maps.google.com"]',
+          el => el.getAttribute('href'),
+        )
+        .catch(() => null);
+
+      if (mapsHref) {
+        // Extract coordinates from ll= parameter (format: ll=lat,lng)
+        const llMatch = mapsHref.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+        if (llMatch) {
+          const latitude = parseFloat(llMatch[1]);
+          const longitude = parseFloat(llMatch[2]);
+          if (!isNaN(latitude) && !isNaN(longitude)) {
+            return {latitude, longitude};
+          }
+        }
+      }
+
+      // Fallback: try the @lat,lng format in google.com/maps links
+      const mapsAtHref = await page
+        .$eval(
+          '#event-map a[href*="google.com/maps/@"]',
+          el => el.getAttribute('href'),
+        )
+        .catch(() => null);
+
+      if (mapsAtHref) {
+        const atMatch = mapsAtHref.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+        if (atMatch) {
+          const latitude = parseFloat(atMatch[1]);
+          const longitude = parseFloat(atMatch[2]);
+          if (!isNaN(latitude) && !isNaN(longitude)) {
+            return {latitude, longitude};
+          }
+        }
+      }
+
+      return null;
+    } catch (error) {
+      logger.debug('Could not extract coordinates from map:', error);
+      return null;
+    }
+  }
+
+  /**
    * Extract and parse date/time information
    */
   private async extractDateTimeInfo(
@@ -446,6 +500,7 @@ export class EntrasteScraper extends BaseScraper {
       const {venueName, venueAddress} = await this.extractVenueInfo(page);
       const {startDate, endDate} = await this.extractDateTimeInfo(page);
       const {flyerImgSrc, heroImgSrc} = await this.extractImageUrls(page);
+      const coordinates = await this.extractCoordinates(page);
       const ticketWaves = await this.scrapeTicketWaves(page);
 
       const eventData: Partial<ScrapedEventData> = {
@@ -455,6 +510,8 @@ export class EntrasteScraper extends BaseScraper {
         description,
         venueName,
         venueAddress,
+        venueLatitude: coordinates?.latitude,
+        venueLongitude: coordinates?.longitude,
         eventStartDate: startDate,
         eventEndDate: endDate,
         externalUrl: url,

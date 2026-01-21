@@ -77,11 +77,20 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
     const formatEventDate = (date: Date | string) =>
       format(new Date(date), "d 'de' MMMM 'a las' HH:mm", {locale: es});
 
+    // Helper to get event image with fallback (flyer -> hero)
+    const getEventImage = (
+      images: Array<{url: string; imageType: string}> | undefined,
+    ) => {
+      const flyerImage = images?.find(img => img.imageType === 'flyer');
+      const heroImage = images?.find(img => img.imageType === 'hero');
+      return flyerImage?.url ?? heroImage?.url;
+    };
+
     const searchResults =
       eventsQuery.data?.map(event => ({
         value: event.id,
         label: event.name,
-        image: event.eventImages[0]?.url,
+        image: getEventImage(event.eventImages),
         date: formatEventDate(event.eventStartDate),
       })) ?? [];
 
@@ -94,7 +103,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
         {
           value: eventDetailsQuery.data.id,
           label: eventDetailsQuery.data.name,
-          image: eventDetailsQuery.data.eventImages[0]?.url,
+          image: getEventImage(eventDetailsQuery.data.eventImages),
           date: formatEventDate(eventDetailsQuery.data.eventStartDate),
         },
         ...searchResults,

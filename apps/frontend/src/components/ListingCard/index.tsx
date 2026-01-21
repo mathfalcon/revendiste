@@ -27,10 +27,10 @@ export function ListingCard({listing}: ListingCardProps) {
   const endDate = new Date(event.eventEndDate);
   const isEventPast = endDate < new Date();
 
-  // Get flyer image
-  const flyerImage = event.eventImages?.find(
-    img => img.imageType === EventImageType.Flyer,
-  );
+  // Prefer flyer image, fall back to hero if not available
+  const flyerImage =
+    event.eventImages?.find(img => img.imageType === EventImageType.Flyer) ??
+    event.eventImages?.find(img => img.imageType === EventImageType.Hero);
   const imageSrc = flyerImage?.url ?? CDN_ASSETS.DEFAULT_OG_IMAGE;
 
   const handleUploadClick = (ticketId: string) => {

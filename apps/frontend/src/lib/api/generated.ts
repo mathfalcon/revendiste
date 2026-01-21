@@ -100,12 +100,6 @@ export enum UploadAvailabilityReason {
   Unknown = "unknown",
 }
 
-export enum ListingTicketRefundStatus {
-  RefundFailed = "refund_failed",
-  RefundPending = "refund_pending",
-  Refunded = "refunded",
-}
-
 export enum EventTicketCurrency {
   USD = "USD",
   UYU = "UYU",
@@ -279,9 +273,17 @@ export interface CreateTicketListingResponse {
   listingTickets: {
     /** @format double */
     ticketNumber: number;
-    refundStatus: ListingTicketRefundStatus | null;
     price: string;
     listingId: string;
+    /** @format date-time */
+    documentUploadRequiredNotifiedAt: string | null;
+    /** @format date-time */
+    documentUploadedAt: string | null;
+    documentType: string | null;
+    /** @format double */
+    documentSizeBytes: number | null;
+    documentPath: string | null;
+    documentOriginalName: string | null;
     /** @format date-time */
     soldAt: string | null;
     /** @format date-time */
@@ -424,9 +426,17 @@ export interface UploadDocumentResponse {
 export interface UpdateTicketPriceResponse {
   /** @format double */
   ticketNumber: number;
-  refundStatus: ListingTicketRefundStatus | null;
   price: string;
   listingId: string;
+  /** @format date-time */
+  documentUploadRequiredNotifiedAt: string | null;
+  /** @format date-time */
+  documentUploadedAt: string | null;
+  documentType: string | null;
+  /** @format double */
+  documentSizeBytes: number | null;
+  documentPath: string | null;
+  documentOriginalName: string | null;
   /** @format date-time */
   soldAt: string | null;
   /** @format date-time */
@@ -446,9 +456,17 @@ export interface UpdateTicketPriceRouteBody {
 export interface RemoveTicketResponse {
   /** @format double */
   ticketNumber: number;
-  refundStatus: ListingTicketRefundStatus | null;
   price: string;
   listingId: string;
+  /** @format date-time */
+  documentUploadRequiredNotifiedAt: string | null;
+  /** @format date-time */
+  documentUploadedAt: string | null;
+  documentType: string | null;
+  /** @format double */
+  documentSizeBytes: number | null;
+  documentPath: string | null;
+  documentOriginalName: string | null;
   /** @format date-time */
   soldAt: string | null;
   /** @format date-time */
@@ -638,7 +656,7 @@ export interface GetOrderTicketsResponse {
     ticketWave: {
       name: string;
     } | null;
-    reservationStatus: "active" | "refund_pending" | "refunded" | "cancelled";
+    reservationStatus: "active" | "cancelled" | "refund_pending" | "refunded";
     hasDocument: boolean;
     /** @format date-time */
     soldAt: string | null;
@@ -1627,6 +1645,8 @@ export interface GetEventDetailsResponse {
 
 export interface UpdateEventResponse {
   venueName: string | null;
+  venueLongitude: string | null;
+  venueLatitude: string | null;
   venueAddress: string;
   /** @format date-time */
   updatedAt: string;
@@ -1665,6 +1685,8 @@ export interface UpdateEventRouteBody {
 
 export interface DeleteEventResponse {
   venueName: string | null;
+  venueLongitude: string | null;
+  venueLatitude: string | null;
   venueAddress: string;
   /** @format date-time */
   updatedAt: string;

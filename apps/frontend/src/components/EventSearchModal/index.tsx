@@ -19,6 +19,7 @@ export const EventSearchModal = ({
 }: EventSearchModalProps) => {
   const [inputValue, setInputValue] = useState('');
   const [debouncedSearchValue, setDebouncedSearchValue] = useState('');
+  const [selectedValue, setSelectedValue] = useState('');
   const debouncedSetSearchValue = useDebounceCallback(
     setDebouncedSearchValue,
     500,
@@ -104,6 +105,8 @@ export const EventSearchModal = ({
             shouldFilter={false}
             loop
             ref={modalContentRef}
+            value={selectedValue}
+            onValueChange={setSelectedValue}
           >
             <CommandInput
               ref={inputRef}
@@ -152,7 +155,7 @@ export const EventSearchModal = ({
                   return (
                     <CommandItem
                       key={event.id}
-                      value={event.name}
+                      value={event.id}
                       className='flex p-0'
                       onSelect={() => handleEventSelect(event.id)}
                     >

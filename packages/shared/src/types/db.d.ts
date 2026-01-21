@@ -35,8 +35,6 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type ListingTicketRefundStatus = "refund_failed" | "refund_pending" | "refunded";
-
 export type NotificationBatchStatus = "cancelled" | "pending" | "processed";
 
 export type NotificationChannel = "email" | "in_app" | "sms";
@@ -104,6 +102,8 @@ export interface Events {
   status: Generated<string>;
   updatedAt: Generated<Timestamp>;
   venueAddress: string;
+  venueLatitude: Numeric | null;
+  venueLongitude: Numeric | null;
   venueName: string | null;
 }
 
@@ -138,10 +138,15 @@ export interface Listings {
 export interface ListingTickets {
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
+  documentOriginalName: string | null;
+  documentPath: string | null;
+  documentSizeBytes: number | null;
+  documentType: string | null;
+  documentUploadedAt: Timestamp | null;
+  documentUploadRequiredNotifiedAt: Timestamp | null;
   id: Generated<string>;
   listingId: string;
   price: Numeric;
-  refundStatus: ListingTicketRefundStatus | null;
   soldAt: Timestamp | null;
   ticketNumber: number;
   updatedAt: Generated<Timestamp>;

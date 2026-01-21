@@ -9,12 +9,13 @@ import {TextEllipsis} from '../ui/text-ellipsis';
 
 export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [value, setValue] = useState('');
+  const [searchValue, setSearchValue] = useState('');
+  const [selectedValue, setSelectedValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
-  const debounced = useDebounceCallback(setValue, 500);
+  const debounced = useDebounceCallback(setSearchValue, 500);
 
-  const eventsQuery = useQuery(getEventBySearchQuery(value));
+  const eventsQuery = useQuery(getEventBySearchQuery(searchValue));
   const navigate = useNavigate();
   const events = eventsQuery.data ?? [];
 
@@ -25,13 +26,19 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
 
   return (
     <div className='relative w-full' ref={ref}>
-      <Command className='bg-background' shouldFilter={false} loop>
+      <Command
+        className='bg-background'
+        shouldFilter={false}
+        loop
+        value={selectedValue}
+        onValueChange={setSelectedValue}
+      >
         <CommandInput
           id='event-search'
           name='event-search'
-          placeholder='Buscar'
-          defaultValue={value}
-          onValueChange={value => debounced(value)}
+          placeholder={props.placeholder || 'Buscar'}
+          defaultValue={searchValue}
+          onValueChange={val => debounced(val)}
           onFocus={() => setIsFocused(true)}
           autoComplete='off'
           className={cx('h-8 pe-1', props.className)}
@@ -52,7 +59,7 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
               return (
                 <CommandItem
                   key={event.id}
-                  value={event.name}
+                  value={event.id}
                   className='flex'
                   onSelect={handleSelect}
                 >

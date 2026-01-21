@@ -35,7 +35,7 @@ export const PLATFORM_CONFIGS: Record<Platform, PlatformConfig> = {
   },
   [Platform.RedTickets]: {
     name: Platform.RedTickets,
-    baseUrl: 'https://redtickets.com.uy',
+    baseUrl: 'https://redtickets.uy',
     scrapingEnabled: true,
     rateLimit: 20,
     headers: {
