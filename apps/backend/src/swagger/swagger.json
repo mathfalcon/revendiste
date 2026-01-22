@@ -7,143 +7,146 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
-			"EventImageType": {
-				"type": "string",
-				"enum": [
-					"flyer",
-					"hero"
-				]
-			},
-			"PaginationMeta": {
+			"EventImage": {
 				"properties": {
-					"page": {
-						"type": "number",
-						"format": "double"
+					"url": {
+						"type": "string"
 					},
-					"limit": {
-						"type": "number",
-						"format": "double"
-					},
-					"total": {
-						"type": "number",
-						"format": "double"
-					},
-					"totalPages": {
-						"type": "number",
-						"format": "double"
-					},
-					"hasNext": {
-						"type": "boolean"
-					},
-					"hasPrev": {
-						"type": "boolean"
+					"imageType": {
+						"type": "string"
 					}
 				},
 				"required": [
-					"page",
-					"limit",
-					"total",
-					"totalPages",
-					"hasNext",
-					"hasPrev"
+					"url",
+					"imageType"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
+			"PaginatedEvent": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"eventStartDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"venueName": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueAddress": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueCity": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lowestAvailableTicketPrice": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"lowestAvailableTicketCurrency": {
+						"type": "string",
+						"nullable": true
+					},
+					"images": {
+						"items": {
+							"$ref": "#/components/schemas/EventImage"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"eventStartDate",
+					"eventEndDate",
+					"venueName",
+					"venueAddress",
+					"venueCity",
+					"externalUrl",
+					"status",
+					"createdAt",
+					"updatedAt",
+					"lowestAvailableTicketPrice",
+					"lowestAvailableTicketCurrency",
+					"images"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PaginatedEventsResponse": {
 				"properties": {
 					"data": {
 						"items": {
-							"properties": {
-								"images": {
-									"items": {
-										"properties": {
-											"imageType": {
-												"$ref": "#/components/schemas/EventImageType"
-											},
-											"url": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"imageType",
-											"url"
-										],
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"lowestAvailableTicketCurrency": {
-									"type": "string",
-									"nullable": true
-								},
-								"lowestAvailableTicketPrice": {
-									"type": "number",
-									"format": "double",
-									"nullable": true
-								},
-								"venueName": {
-									"type": "string",
-									"nullable": true
-								},
-								"venueAddress": {
-									"type": "string"
-								},
-								"updatedAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"status": {
-									"type": "string"
-								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								},
-								"externalUrl": {
-									"type": "string"
-								},
-								"eventStartDate": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"eventEndDate": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"description": {
-									"type": "string",
-									"nullable": true
-								},
-								"createdAt": {
-									"type": "string",
-									"format": "date-time"
-								}
-							},
-							"required": [
-								"images",
-								"lowestAvailableTicketCurrency",
-								"lowestAvailableTicketPrice",
-								"venueName",
-								"venueAddress",
-								"updatedAt",
-								"status",
-								"name",
-								"id",
-								"externalUrl",
-								"eventStartDate",
-								"eventEndDate",
-								"description",
-								"createdAt"
-							],
-							"type": "object"
+							"$ref": "#/components/schemas/PaginatedEvent"
 						},
 						"type": "array"
 					},
 					"pagination": {
-						"$ref": "#/components/schemas/PaginationMeta"
+						"properties": {
+							"hasPrev": {
+								"type": "boolean"
+							},
+							"hasNext": {
+								"type": "boolean"
+							},
+							"totalPages": {
+								"type": "number",
+								"format": "double"
+							},
+							"total": {
+								"type": "number",
+								"format": "double"
+							},
+							"limit": {
+								"type": "number",
+								"format": "double"
+							},
+							"page": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"hasPrev",
+							"hasNext",
+							"totalPages",
+							"total",
+							"limit",
+							"page"
+						],
+						"type": "object"
 					}
 				},
 				"required": [
@@ -154,7 +157,7 @@
 				"additionalProperties": false
 			},
 			"GetEventsPaginatedResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__"
+				"$ref": "#/components/schemas/PaginatedEventsResponse"
 			},
 			"infer_typeofPaginationSchema_": {
 				"properties": {
@@ -183,218 +186,49 @@
 				],
 				"type": "object"
 			},
-			"PaginationQuery": {
-				"$ref": "#/components/schemas/infer_typeofPaginationSchema_"
-			},
-			"SearchEventsResponse": {
-				"items": {
-					"properties": {
-						"eventImages": {
-							"items": {
-								"properties": {
-									"imageType": {
-										"$ref": "#/components/schemas/EventImageType"
-									},
-									"url": {
-										"type": "string"
-									}
-								},
-								"required": [
-									"imageType",
-									"url"
-								],
-								"type": "object"
-							},
-							"type": "array"
-						},
-						"venueName": {
-							"type": "string",
-							"nullable": true
-						},
-						"venueAddress": {
-							"type": "string"
-						},
-						"updatedAt": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"status": {
-							"type": "string"
-						},
-						"name": {
-							"type": "string"
-						},
-						"id": {
-							"type": "string"
-						},
-						"externalUrl": {
-							"type": "string"
-						},
-						"eventStartDate": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"eventEndDate": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"description": {
-							"type": "string",
-							"nullable": true
-						},
-						"createdAt": {
-							"type": "string",
-							"format": "date-time"
-						}
-					},
-					"required": [
-						"eventImages",
-						"venueName",
-						"venueAddress",
-						"updatedAt",
-						"status",
-						"name",
-						"id",
-						"externalUrl",
-						"eventStartDate",
-						"eventEndDate",
-						"description",
-						"createdAt"
-					],
-					"type": "object"
-				},
-				"type": "array"
-			},
-			"QrAvailabilityTiming": {
-				"type": "string",
-				"enum": [
-					"12h",
-					"24h",
-					"3h",
-					"48h",
-					"6h",
-					"72h"
-				]
-			},
-			"EventTicketCurrency": {
-				"type": "string",
-				"enum": [
-					"USD",
-					"UYU"
-				]
-			},
-			"GetEventByIdResponse": {
+			"EventsPaginatedQuery": {
 				"properties": {
-					"ticketWaves": {
-						"items": {
-							"properties": {
-								"priceGroups": {
-									"items": {
-										"properties": {
-											"availableTickets": {
-												"anyOf": [
-													{
-														"type": "string"
-													},
-													{
-														"type": "number",
-														"format": "double"
-													}
-												]
-											},
-											"price": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"availableTickets",
-											"price"
-										],
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"faceValue": {
-									"type": "string"
-								},
-								"currency": {
-									"$ref": "#/components/schemas/EventTicketCurrency"
-								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								},
-								"description": {
-									"type": "string",
-									"nullable": true
-								}
-							},
-							"required": [
-								"priceGroups",
-								"faceValue",
-								"currency",
-								"name",
-								"id",
-								"description"
-							],
-							"type": "object"
-						},
-						"type": "array"
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
 					},
-					"userListingsCount": {
+					"sortBy": {
+						"type": "string"
+					},
+					"limit": {
 						"type": "number",
 						"format": "double"
 					},
-					"eventImages": {
-						"items": {
-							"properties": {
-								"imageType": {
-									"$ref": "#/components/schemas/EventImageType"
-								},
-								"url": {
-									"type": "string"
-								}
-							},
-							"required": [
-								"imageType",
-								"url"
-							],
-							"type": "object"
-						},
-						"type": "array"
+					"page": {
+						"type": "number",
+						"format": "double"
 					},
-					"venueName": {
+					"city": {
 						"type": "string",
-						"nullable": true
-					},
-					"venueAddress": {
+						"description": "Filter by city name"
+					}
+				},
+				"required": [
+					"limit",
+					"page"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SearchEvent": {
+				"properties": {
+					"id": {
 						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"qrAvailabilityTiming": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/QrAvailabilityTiming"
-							}
-						],
-						"nullable": true
 					},
 					"name": {
 						"type": "string"
 					},
-					"id": {
-						"type": "string"
-					},
-					"externalUrl": {
-						"type": "string"
+					"description": {
+						"type": "string",
+						"nullable": true
 					},
 					"eventStartDate": {
 						"type": "string",
@@ -404,31 +238,317 @@
 						"type": "string",
 						"format": "date-time"
 					},
-					"description": {
+					"venueName": {
 						"type": "string",
 						"nullable": true
+					},
+					"venueAddress": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueCity": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
 					},
 					"createdAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventImages": {
+						"items": {
+							"$ref": "#/components/schemas/EventImage"
+						},
+						"type": "array"
 					}
 				},
 				"required": [
-					"ticketWaves",
-					"userListingsCount",
-					"eventImages",
-					"venueName",
-					"venueAddress",
-					"updatedAt",
-					"status",
-					"qrAvailabilityTiming",
-					"name",
 					"id",
-					"externalUrl",
+					"name",
+					"description",
 					"eventStartDate",
 					"eventEndDate",
+					"venueName",
+					"venueAddress",
+					"venueCity",
+					"externalUrl",
+					"status",
+					"createdAt",
+					"updatedAt",
+					"eventImages"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SearchEventsResponse": {
+				"items": {
+					"$ref": "#/components/schemas/SearchEvent"
+				},
+				"type": "array"
+			},
+			"TrendingEvent": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"eventStartDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"venueId": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"totalViews": {
+						"type": "number",
+						"format": "double"
+					},
+					"eventImages": {
+						"items": {
+							"$ref": "#/components/schemas/EventImage"
+						},
+						"type": "array"
+					},
+					"venue": {
+						"properties": {
+							"city": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"city",
+							"name"
+						],
+						"type": "object",
+						"nullable": true
+					}
+				},
+				"required": [
+					"id",
+					"name",
 					"description",
-					"createdAt"
+					"eventStartDate",
+					"eventEndDate",
+					"venueId",
+					"externalUrl",
+					"status",
+					"createdAt",
+					"updatedAt",
+					"totalViews",
+					"eventImages",
+					"venue"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetTrendingEventsResponse": {
+				"items": {
+					"$ref": "#/components/schemas/TrendingEvent"
+				},
+				"type": "array"
+			},
+			"GetDistinctCitiesResponse": {
+				"items": {
+					"type": "string"
+				},
+				"type": "array"
+			},
+			"PriceGroup": {
+				"properties": {
+					"price": {
+						"type": "string"
+					},
+					"availableTickets": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "number",
+								"format": "double"
+							}
+						]
+					}
+				},
+				"required": [
+					"price",
+					"availableTickets"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TicketWave": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"faceValue": {
+						"type": "string"
+					},
+					"priceGroups": {
+						"items": {
+							"$ref": "#/components/schemas/PriceGroup"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"currency",
+					"description",
+					"faceValue",
+					"priceGroups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"EventDetail": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"eventStartDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"venueName": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueAddress": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueCity": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"userListingsCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"eventImages": {
+						"items": {
+							"$ref": "#/components/schemas/EventImage"
+						},
+						"type": "array"
+					},
+					"ticketWaves": {
+						"items": {
+							"$ref": "#/components/schemas/TicketWave"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"eventStartDate",
+					"eventEndDate",
+					"venueName",
+					"venueAddress",
+					"venueCity",
+					"externalUrl",
+					"qrAvailabilityTiming",
+					"status",
+					"createdAt",
+					"updatedAt",
+					"userListingsCount",
+					"eventImages",
+					"ticketWaves"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetEventByIdResponse": {
+				"$ref": "#/components/schemas/EventDetail"
+			},
+			"TrackViewResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
 				],
 				"type": "object"
 			},
@@ -519,8 +639,9 @@
 			},
 			"CreateTicketListingResponse": {
 				"properties": {
-					"ticketWaveId": {
-						"type": "string"
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"soldAt": {
 						"type": "string",
@@ -529,10 +650,6 @@
 					},
 					"publisherUserId": {
 						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"id": {
 						"type": "string"
@@ -546,15 +663,15 @@
 						"type": "string",
 						"format": "date-time"
 					},
+					"ticketWaveId": {
+						"type": "string"
+					},
 					"listingTickets": {
 						"items": {
 							"properties": {
 								"ticketNumber": {
 									"type": "number",
 									"format": "double"
-								},
-								"price": {
-									"type": "string"
 								},
 								"listingId": {
 									"type": "string"
@@ -586,14 +703,14 @@
 									"type": "string",
 									"nullable": true
 								},
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
 								"soldAt": {
 									"type": "string",
 									"format": "date-time",
 									"nullable": true
-								},
-								"updatedAt": {
-									"type": "string",
-									"format": "date-time"
 								},
 								"id": {
 									"type": "string"
@@ -606,11 +723,13 @@
 								"createdAt": {
 									"type": "string",
 									"format": "date-time"
+								},
+								"price": {
+									"type": "string"
 								}
 							},
 							"required": [
 								"ticketNumber",
-								"price",
 								"listingId",
 								"documentUploadRequiredNotifiedAt",
 								"documentUploadedAt",
@@ -618,11 +737,12 @@
 								"documentSizeBytes",
 								"documentPath",
 								"documentOriginalName",
-								"soldAt",
 								"updatedAt",
+								"soldAt",
 								"id",
 								"deletedAt",
-								"createdAt"
+								"createdAt",
+								"price"
 							],
 							"type": "object"
 						},
@@ -630,13 +750,13 @@
 					}
 				},
 				"required": [
-					"ticketWaveId",
+					"updatedAt",
 					"soldAt",
 					"publisherUserId",
-					"updatedAt",
 					"id",
 					"deletedAt",
 					"createdAt",
+					"ticketWaveId",
 					"listingTickets"
 				],
 				"type": "object"
@@ -789,6 +909,31 @@
 					"unknown"
 				]
 			},
+			"EventTicketCurrency": {
+				"type": "string",
+				"enum": [
+					"USD",
+					"UYU"
+				]
+			},
+			"QrAvailabilityTiming": {
+				"type": "string",
+				"enum": [
+					"12h",
+					"24h",
+					"3h",
+					"48h",
+					"6h",
+					"72h"
+				]
+			},
+			"EventImageType": {
+				"type": "string",
+				"enum": [
+					"flyer",
+					"hero"
+				]
+			},
 			"GetUserListingsResponse": {
 				"items": {
 					"properties": {
@@ -812,12 +957,13 @@
 									},
 									"type": "array"
 								},
-								"venueName": {
+								"venueAddress": {
 									"type": "string",
 									"nullable": true
 								},
-								"venueAddress": {
-									"type": "string"
+								"venueName": {
+									"type": "string",
+									"nullable": true
 								},
 								"qrAvailabilityTiming": {
 									"allOf": [
@@ -830,68 +976,68 @@
 								"platform": {
 									"type": "string"
 								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								},
 								"eventStartDate": {
 									"type": "string"
 								},
 								"eventEndDate": {
 									"type": "string"
 								},
+								"name": {
+									"type": "string"
+								},
 								"description": {
 									"type": "string",
 									"nullable": true
-								}
-							},
-							"required": [
-								"eventImages",
-								"venueName",
-								"venueAddress",
-								"qrAvailabilityTiming",
-								"platform",
-								"name",
-								"id",
-								"eventStartDate",
-								"eventEndDate",
-								"description"
-							],
-							"type": "object"
-						},
-						"ticketWave": {
-							"properties": {
-								"faceValue": {
-									"type": "string"
-								},
-								"currency": {
-									"$ref": "#/components/schemas/EventTicketCurrency"
-								},
-								"name": {
-									"type": "string"
 								},
 								"id": {
 									"type": "string"
 								}
 							},
 							"required": [
-								"faceValue",
-								"currency",
+								"eventImages",
+								"venueAddress",
+								"venueName",
+								"qrAvailabilityTiming",
+								"platform",
+								"eventStartDate",
+								"eventEndDate",
 								"name",
+								"description",
 								"id"
 							],
 							"type": "object"
+						},
+						"ticketWave": {
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"faceValue": {
+									"type": "string"
+								},
+								"currency": {
+									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"name",
+								"faceValue",
+								"currency",
+								"id"
+							],
+							"type": "object"
+						},
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
 						},
 						"soldAt": {
 							"type": "string",
 							"format": "date-time",
 							"nullable": true
-						},
-						"updatedAt": {
-							"type": "string",
-							"format": "date-time"
 						},
 						"id": {
 							"type": "string"
@@ -927,15 +1073,12 @@
 										"type": "number",
 										"format": "double"
 									},
-									"price": {
+									"updatedAt": {
 										"type": "string"
 									},
 									"soldAt": {
 										"type": "string",
 										"nullable": true
-									},
-									"updatedAt": {
-										"type": "string"
 									},
 									"id": {
 										"type": "string"
@@ -945,6 +1088,9 @@
 										"nullable": true
 									},
 									"createdAt": {
+										"type": "string"
+									},
+									"price": {
 										"type": "string"
 									},
 									"uploadAvailableAt": {
@@ -963,12 +1109,12 @@
 								"required": [
 									"document",
 									"ticketNumber",
-									"price",
-									"soldAt",
 									"updatedAt",
+									"soldAt",
 									"id",
 									"deletedAt",
 									"createdAt",
+									"price",
 									"canUploadDocument",
 									"hasDocument"
 								],
@@ -980,8 +1126,8 @@
 					"required": [
 						"event",
 						"ticketWave",
-						"soldAt",
 						"updatedAt",
+						"soldAt",
 						"id",
 						"createdAt",
 						"tickets"
@@ -1010,15 +1156,12 @@
 								"format": "date-time",
 								"nullable": true
 							},
-							"ticketId": {
-								"type": "string"
-							},
-							"isPrimary": {
-								"type": "boolean"
-							},
 							"uploadedAt": {
 								"type": "string",
 								"format": "date-time"
+							},
+							"ticketId": {
+								"type": "string"
 							},
 							"storagePath": {
 								"type": "string"
@@ -1033,7 +1176,13 @@
 							"mimeType": {
 								"type": "string"
 							},
+							"isPrimary": {
+								"type": "boolean"
+							},
 							"fileName": {
+								"type": "string"
+							},
+							"status": {
 								"type": "string"
 							},
 							"documentType": {
@@ -1042,9 +1191,6 @@
 							"updatedAt": {
 								"type": "string",
 								"format": "date-time"
-							},
-							"status": {
-								"type": "string"
 							},
 							"id": {
 								"type": "string"
@@ -1063,17 +1209,17 @@
 							"version",
 							"verifiedBy",
 							"verifiedAt",
-							"ticketId",
-							"isPrimary",
 							"uploadedAt",
+							"ticketId",
 							"storagePath",
 							"sizeBytes",
 							"originalName",
 							"mimeType",
+							"isPrimary",
 							"fileName",
+							"status",
 							"documentType",
 							"updatedAt",
-							"status",
 							"id",
 							"deletedAt",
 							"createdAt"
@@ -1091,9 +1237,6 @@
 					"ticketNumber": {
 						"type": "number",
 						"format": "double"
-					},
-					"price": {
-						"type": "string"
 					},
 					"listingId": {
 						"type": "string"
@@ -1125,14 +1268,14 @@
 						"type": "string",
 						"nullable": true
 					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"soldAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"id": {
 						"type": "string"
@@ -1145,11 +1288,13 @@
 					"createdAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"price": {
+						"type": "string"
 					}
 				},
 				"required": [
 					"ticketNumber",
-					"price",
 					"listingId",
 					"documentUploadRequiredNotifiedAt",
 					"documentUploadedAt",
@@ -1157,11 +1302,12 @@
 					"documentSizeBytes",
 					"documentPath",
 					"documentOriginalName",
-					"soldAt",
 					"updatedAt",
+					"soldAt",
 					"id",
 					"deletedAt",
-					"createdAt"
+					"createdAt",
+					"price"
 				],
 				"type": "object"
 			},
@@ -1183,9 +1329,6 @@
 						"type": "number",
 						"format": "double"
 					},
-					"price": {
-						"type": "string"
-					},
 					"listingId": {
 						"type": "string"
 					},
@@ -1216,14 +1359,14 @@
 						"type": "string",
 						"nullable": true
 					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"soldAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"id": {
 						"type": "string"
@@ -1236,11 +1379,13 @@
 					"createdAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"price": {
+						"type": "string"
 					}
 				},
 				"required": [
 					"ticketNumber",
-					"price",
 					"listingId",
 					"documentUploadRequiredNotifiedAt",
 					"documentUploadedAt",
@@ -1248,11 +1393,12 @@
 					"documentSizeBytes",
 					"documentPath",
 					"documentOriginalName",
-					"soldAt",
 					"updatedAt",
+					"soldAt",
 					"id",
 					"deletedAt",
-					"createdAt"
+					"createdAt",
+					"price"
 				],
 				"type": "object"
 			},
@@ -1405,6 +1551,9 @@
 					"vatOnCommission": {
 						"type": "string"
 					},
+					"userId": {
+						"type": "string"
+					},
 					"totalAmount": {
 						"type": "string"
 					},
@@ -1428,19 +1577,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"userId": {
-						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"eventId": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
 					"status": {
 						"type": "string",
 						"enum": [
@@ -1449,6 +1585,13 @@
 							"expired",
 							"pending"
 						]
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"id": {
 						"type": "string"
@@ -1461,24 +1604,27 @@
 					"createdAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"eventId": {
+						"type": "string"
 					}
 				},
 				"required": [
 					"vatOnCommission",
+					"userId",
 					"totalAmount",
 					"subtotalAmount",
 					"reservationExpiresAt",
 					"platformCommission",
 					"confirmedAt",
 					"cancelledAt",
-					"userId",
-					"currency",
-					"eventId",
-					"updatedAt",
 					"status",
+					"currency",
+					"updatedAt",
 					"id",
 					"deletedAt",
-					"createdAt"
+					"createdAt",
+					"eventId"
 				],
 				"type": "object"
 			},
@@ -1507,11 +1653,15 @@
 					"items": {
 						"items": {
 							"properties": {
-								"ticketWaveName": {
+								"subtotal": {
 									"type": "string",
 									"nullable": true
 								},
-								"subtotal": {
+								"pricePerTicket": {
+									"type": "string",
+									"nullable": true
+								},
+								"id": {
 									"type": "string",
 									"nullable": true
 								},
@@ -1520,15 +1670,11 @@
 									"format": "double",
 									"nullable": true
 								},
-								"pricePerTicket": {
-									"type": "string",
-									"nullable": true
-								},
 								"ticketWaveId": {
 									"type": "string",
 									"nullable": true
 								},
-								"id": {
+								"ticketWaveName": {
 									"type": "string",
 									"nullable": true
 								},
@@ -1542,12 +1688,12 @@
 								}
 							},
 							"required": [
-								"ticketWaveName",
 								"subtotal",
-								"quantity",
 								"pricePerTicket",
-								"ticketWaveId",
 								"id",
+								"quantity",
+								"ticketWaveId",
+								"ticketWaveName",
 								"currency"
 							],
 							"type": "object"
@@ -1574,11 +1720,11 @@
 								},
 								"type": "array"
 							},
-							"venueName": {
+							"venueAddress": {
 								"type": "string",
 								"nullable": true
 							},
-							"venueAddress": {
+							"venueName": {
 								"type": "string",
 								"nullable": true
 							},
@@ -1594,14 +1740,6 @@
 								"type": "string",
 								"nullable": true
 							},
-							"name": {
-								"type": "string",
-								"nullable": true
-							},
-							"id": {
-								"type": "string",
-								"nullable": true
-							},
 							"eventStartDate": {
 								"type": "string",
 								"nullable": true
@@ -1609,23 +1747,34 @@
 							"eventEndDate": {
 								"type": "string",
 								"nullable": true
+							},
+							"name": {
+								"type": "string",
+								"nullable": true
+							},
+							"id": {
+								"type": "string",
+								"nullable": true
 							}
 						},
 						"required": [
 							"images",
-							"venueName",
 							"venueAddress",
+							"venueName",
 							"qrAvailabilityTiming",
 							"platform",
-							"name",
-							"id",
 							"eventStartDate",
-							"eventEndDate"
+							"eventEndDate",
+							"name",
+							"id"
 						],
 						"type": "object",
 						"nullable": true
 					},
 					"vatOnCommission": {
+						"type": "string"
+					},
+					"userId": {
 						"type": "string"
 					},
 					"totalAmount": {
@@ -1651,19 +1800,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"userId": {
-						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"eventId": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
 					"status": {
 						"type": "string",
 						"enum": [
@@ -1673,31 +1809,41 @@
 							"pending"
 						]
 					},
-					"id": {
-						"type": "string"
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"createdAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
 					}
 				},
 				"required": [
 					"items",
 					"event",
 					"vatOnCommission",
+					"userId",
 					"totalAmount",
 					"subtotalAmount",
 					"reservationExpiresAt",
 					"platformCommission",
 					"confirmedAt",
 					"cancelledAt",
-					"userId",
-					"currency",
-					"eventId",
-					"updatedAt",
 					"status",
-					"id",
-					"createdAt"
+					"currency",
+					"updatedAt",
+					"createdAt",
+					"eventId",
+					"id"
 				],
 				"type": "object"
 			},
@@ -1707,25 +1853,25 @@
 						"items": {
 							"items": {
 								"properties": {
-									"ticketWaveName": {
-										"type": "string",
-										"nullable": true
-									},
 									"subtotal": {
+										"type": "string"
+									},
+									"pricePerTicket": {
+										"type": "string"
+									},
+									"id": {
 										"type": "string"
 									},
 									"quantity": {
 										"type": "number",
 										"format": "double"
 									},
-									"pricePerTicket": {
-										"type": "string"
-									},
 									"ticketWaveId": {
 										"type": "string"
 									},
-									"id": {
-										"type": "string"
+									"ticketWaveName": {
+										"type": "string",
+										"nullable": true
 									},
 									"currency": {
 										"allOf": [
@@ -1737,12 +1883,12 @@
 									}
 								},
 								"required": [
-									"ticketWaveName",
 									"subtotal",
-									"quantity",
 									"pricePerTicket",
-									"ticketWaveId",
 									"id",
+									"quantity",
+									"ticketWaveId",
+									"ticketWaveName",
 									"currency"
 								],
 								"type": "object"
@@ -1769,23 +1915,15 @@
 									},
 									"type": "array"
 								},
-								"venueName": {
-									"type": "string",
-									"nullable": true
-								},
 								"venueAddress": {
 									"type": "string",
 									"nullable": true
 								},
+								"venueName": {
+									"type": "string",
+									"nullable": true
+								},
 								"platform": {
-									"type": "string",
-									"nullable": true
-								},
-								"name": {
-									"type": "string",
-									"nullable": true
-								},
-								"id": {
 									"type": "string",
 									"nullable": true
 								},
@@ -1796,22 +1934,33 @@
 								"eventEndDate": {
 									"type": "string",
 									"nullable": true
+								},
+								"name": {
+									"type": "string",
+									"nullable": true
+								},
+								"id": {
+									"type": "string",
+									"nullable": true
 								}
 							},
 							"required": [
 								"images",
-								"venueName",
 								"venueAddress",
+								"venueName",
 								"platform",
-								"name",
-								"id",
 								"eventStartDate",
-								"eventEndDate"
+								"eventEndDate",
+								"name",
+								"id"
 							],
 							"type": "object",
 							"nullable": true
 						},
 						"vatOnCommission": {
+							"type": "string"
+						},
+						"userId": {
 							"type": "string"
 						},
 						"totalAmount": {
@@ -1837,19 +1986,6 @@
 							"format": "date-time",
 							"nullable": true
 						},
-						"userId": {
-							"type": "string"
-						},
-						"currency": {
-							"$ref": "#/components/schemas/EventTicketCurrency"
-						},
-						"eventId": {
-							"type": "string"
-						},
-						"updatedAt": {
-							"type": "string",
-							"format": "date-time"
-						},
 						"status": {
 							"type": "string",
 							"enum": [
@@ -1859,31 +1995,41 @@
 								"pending"
 							]
 						},
-						"id": {
-							"type": "string"
+						"currency": {
+							"$ref": "#/components/schemas/EventTicketCurrency"
+						},
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
 						},
 						"createdAt": {
 							"type": "string",
 							"format": "date-time"
+						},
+						"eventId": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
 						}
 					},
 					"required": [
 						"items",
 						"event",
 						"vatOnCommission",
+						"userId",
 						"totalAmount",
 						"subtotalAmount",
 						"reservationExpiresAt",
 						"platformCommission",
 						"confirmedAt",
 						"cancelledAt",
-						"userId",
-						"currency",
-						"eventId",
-						"updatedAt",
 						"status",
-						"id",
-						"createdAt"
+						"currency",
+						"updatedAt",
+						"createdAt",
+						"eventId",
+						"id"
 					],
 					"type": "object"
 				},
@@ -1941,8 +2087,8 @@
 								"reservationStatus": {
 									"type": "string",
 									"enum": [
-										"active",
 										"cancelled",
+										"active",
 										"refund_pending",
 										"refunded"
 									]
@@ -2208,6 +2354,42 @@
 			"GetAvailableEarningsResponse": {
 				"$ref": "#/components/schemas/EarningsForSelection"
 			},
+			"PaginationMeta": {
+				"properties": {
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalPages": {
+						"type": "number",
+						"format": "double"
+					},
+					"hasNext": {
+						"type": "boolean"
+					},
+					"hasPrev": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"page",
+					"limit",
+					"total",
+					"totalPages",
+					"hasNext",
+					"hasPrev"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"GetPayoutHistoryResponse": {
 				"properties": {
 					"pagination": {
@@ -2301,6 +2483,9 @@
 				],
 				"type": "object"
 			},
+			"PaginationQuery": {
+				"$ref": "#/components/schemas/infer_typeofPaginationSchema_"
+			},
 			"JsonArray": {
 				"items": {
 					"$ref": "#/components/schemas/JsonValue"
@@ -2375,11 +2560,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -2389,15 +2569,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
 					"amount": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"status": {
 						"type": "string",
@@ -2430,6 +2608,13 @@
 						],
 						"nullable": true
 					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"id": {
 						"type": "string"
 					},
@@ -2452,14 +2637,14 @@
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
+					"completedAt",
 					"amount",
-					"currency",
-					"updatedAt",
 					"status",
 					"metadata",
+					"currency",
+					"updatedAt",
 					"id",
 					"deletedAt",
 					"createdAt"
@@ -2514,13 +2699,6 @@
 						"userId": {
 							"type": "string"
 						},
-						"currency": {
-							"$ref": "#/components/schemas/EventTicketCurrency"
-						},
-						"updatedAt": {
-							"type": "string",
-							"format": "date-time"
-						},
 						"metadata": {
 							"anyOf": [
 								{
@@ -2542,6 +2720,13 @@
 							],
 							"nullable": true
 						},
+						"currency": {
+							"$ref": "#/components/schemas/EventTicketCurrency"
+						},
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
+						},
 						"id": {
 							"type": "string"
 						},
@@ -2561,9 +2746,9 @@
 						"accountHolderSurname",
 						"accountHolderName",
 						"userId",
+						"metadata",
 						"currency",
 						"updatedAt",
-						"metadata",
 						"id",
 						"deletedAt",
 						"createdAt"
@@ -2589,13 +2774,6 @@
 					"userId": {
 						"type": "string"
 					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
 					"metadata": {
 						"anyOf": [
 							{
@@ -2617,6 +2795,13 @@
 						],
 						"nullable": true
 					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"id": {
 						"type": "string"
 					},
@@ -2636,9 +2821,9 @@
 					"accountHolderSurname",
 					"accountHolderName",
 					"userId",
+					"metadata",
 					"currency",
 					"updatedAt",
-					"metadata",
 					"id",
 					"deletedAt",
 					"createdAt"
@@ -3104,13 +3289,6 @@
 					"userId": {
 						"type": "string"
 					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
 					"metadata": {
 						"anyOf": [
 							{
@@ -3132,6 +3310,13 @@
 						],
 						"nullable": true
 					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"id": {
 						"type": "string"
 					},
@@ -3151,9 +3336,9 @@
 					"accountHolderSurname",
 					"accountHolderName",
 					"userId",
+					"metadata",
 					"currency",
 					"updatedAt",
-					"metadata",
 					"id",
 					"deletedAt",
 					"createdAt"
@@ -3218,10 +3403,10 @@
 								"currency": {
 									"$ref": "#/components/schemas/EventTicketCurrency"
 								},
-								"id": {
+								"createdAt": {
 									"type": "string"
 								},
-								"createdAt": {
+								"id": {
 									"type": "string"
 								}
 							},
@@ -3229,8 +3414,8 @@
 								"sellerAmount",
 								"listingTicketId",
 								"currency",
-								"id",
-								"createdAt"
+								"createdAt",
+								"id"
 							],
 							"type": "object"
 						},
@@ -3267,11 +3452,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -3281,15 +3461,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
 					"amount": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"status": {
 						"type": "string",
@@ -3300,6 +3478,13 @@
 							"failed",
 							"processing"
 						]
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"id": {
 						"type": "string"
@@ -3364,6 +3549,9 @@
 								"uploadedBy": {
 									"type": "string"
 								},
+								"payoutId": {
+									"type": "string"
+								},
 								"uploadedAt": {
 									"type": "string",
 									"format": "date-time"
@@ -3374,9 +3562,6 @@
 								"sizeBytes": {
 									"type": "number",
 									"format": "double"
-								},
-								"payoutId": {
-									"type": "string"
 								},
 								"originalName": {
 									"type": "string"
@@ -3412,10 +3597,10 @@
 							},
 							"required": [
 								"uploadedBy",
+								"payoutId",
 								"uploadedAt",
 								"storagePath",
 								"sizeBytes",
-								"payoutId",
 								"originalName",
 								"mimeType",
 								"fileName",
@@ -3436,9 +3621,6 @@
 								"createdBy": {
 									"type": "string",
 									"nullable": true
-								},
-								"payoutId": {
-									"type": "string"
 								},
 								"userAgent": {
 									"type": "string",
@@ -3488,6 +3670,9 @@
 									],
 									"nullable": true
 								},
+								"payoutId": {
+									"type": "string"
+								},
 								"id": {
 									"type": "string"
 								},
@@ -3498,13 +3683,13 @@
 							},
 							"required": [
 								"createdBy",
-								"payoutId",
 								"userAgent",
 								"toStatus",
 								"ipAddress",
 								"fromStatus",
 								"eventType",
 								"eventData",
+								"payoutId",
 								"id",
 								"createdAt"
 							],
@@ -3573,13 +3758,13 @@
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
+					"completedAt",
 					"amount",
+					"status",
 					"currency",
 					"updatedAt",
-					"status",
 					"id",
 					"createdAt",
 					"payoutMethod",
@@ -3589,7 +3774,7 @@
 				],
 				"type": "object"
 			},
-			"PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--amount-string--failedAt-Date-or-null--failureReason-string-or-null--completedAt-Date-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--sellerUserId-string--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
+			"PaginatedResponse__createdAt-Date--id-string--updatedAt-Date--currency-EventTicketCurrency--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--amount-string--completedAt-Date-or-null--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--sellerUserId-string--transactionReference-string-or-null--linkedEarnings_58__id-string--createdAt-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -3656,10 +3841,10 @@
 											"currency": {
 												"$ref": "#/components/schemas/EventTicketCurrency"
 											},
-											"id": {
+											"createdAt": {
 												"type": "string"
 											},
-											"createdAt": {
+											"id": {
 												"type": "string"
 											}
 										},
@@ -3667,8 +3852,8 @@
 											"sellerAmount",
 											"listingTicketId",
 											"currency",
-											"id",
-											"createdAt"
+											"createdAt",
+											"id"
 										],
 										"type": "object"
 									},
@@ -3705,11 +3890,6 @@
 									"type": "string",
 									"nullable": true
 								},
-								"completedAt": {
-									"type": "string",
-									"format": "date-time",
-									"nullable": true
-								},
 								"failureReason": {
 									"type": "string",
 									"nullable": true
@@ -3719,15 +3899,13 @@
 									"format": "date-time",
 									"nullable": true
 								},
+								"completedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
 								"amount": {
 									"type": "string"
-								},
-								"currency": {
-									"$ref": "#/components/schemas/EventTicketCurrency"
-								},
-								"updatedAt": {
-									"type": "string",
-									"format": "date-time"
 								},
 								"status": {
 									"type": "string",
@@ -3760,6 +3938,13 @@
 									],
 									"nullable": true
 								},
+								"currency": {
+									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
 								"id": {
 									"type": "string"
 								},
@@ -3780,14 +3965,14 @@
 								"processedAt",
 								"payoutMethodId",
 								"notes",
-								"completedAt",
 								"failureReason",
 								"failedAt",
+								"completedAt",
 								"amount",
-								"currency",
-								"updatedAt",
 								"status",
 								"metadata",
+								"currency",
+								"updatedAt",
 								"id",
 								"createdAt"
 							],
@@ -3807,7 +3992,7 @@
 				"additionalProperties": false
 			},
 			"GetPayoutsResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--amount-string--failedAt-Date-or-null--failureReason-string-or-null--completedAt-Date-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--sellerUserId-string--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--updatedAt-Date--currency-EventTicketCurrency--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--amount-string--completedAt-Date-or-null--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--sellerUserId-string--transactionReference-string-or-null--linkedEarnings_58__id-string--createdAt-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
 			},
 			"infer_typeofAdminPayoutsQuerySchema_": {
 				"properties": {
@@ -3862,10 +4047,10 @@
 								"currency": {
 									"$ref": "#/components/schemas/EventTicketCurrency"
 								},
-								"id": {
+								"createdAt": {
 									"type": "string"
 								},
-								"createdAt": {
+								"id": {
 									"type": "string"
 								}
 							},
@@ -3873,8 +4058,8 @@
 								"sellerAmount",
 								"listingTicketId",
 								"currency",
-								"id",
-								"createdAt"
+								"createdAt",
+								"id"
 							],
 							"type": "object"
 						},
@@ -3911,11 +4096,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -3925,15 +4105,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
 					"amount": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"status": {
 						"type": "string",
@@ -3944,6 +4122,13 @@
 							"failed",
 							"processing"
 						]
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"id": {
 						"type": "string"
@@ -4085,6 +4270,9 @@
 								"uploadedBy": {
 									"type": "string"
 								},
+								"payoutId": {
+									"type": "string"
+								},
 								"uploadedAt": {
 									"type": "string",
 									"format": "date-time"
@@ -4095,9 +4283,6 @@
 								"sizeBytes": {
 									"type": "number",
 									"format": "double"
-								},
-								"payoutId": {
-									"type": "string"
 								},
 								"originalName": {
 									"type": "string"
@@ -4133,10 +4318,10 @@
 							},
 							"required": [
 								"uploadedBy",
+								"payoutId",
 								"uploadedAt",
 								"storagePath",
 								"sizeBytes",
-								"payoutId",
 								"originalName",
 								"mimeType",
 								"fileName",
@@ -4212,13 +4397,13 @@
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
+					"completedAt",
 					"amount",
+					"status",
 					"currency",
 					"updatedAt",
-					"status",
 					"id",
 					"createdAt",
 					"payoutMethod",
@@ -4261,11 +4446,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4275,15 +4455,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
 					"amount": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"status": {
 						"type": "string",
@@ -4316,6 +4494,13 @@
 						],
 						"nullable": true
 					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"id": {
 						"type": "string"
 					},
@@ -4338,14 +4523,14 @@
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
+					"completedAt",
 					"amount",
-					"currency",
-					"updatedAt",
 					"status",
 					"metadata",
+					"currency",
+					"updatedAt",
 					"id",
 					"deletedAt",
 					"createdAt"
@@ -4403,11 +4588,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4417,15 +4597,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
 					"amount": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"status": {
 						"type": "string",
@@ -4458,6 +4636,13 @@
 						],
 						"nullable": true
 					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"id": {
 						"type": "string"
 					},
@@ -4480,14 +4665,14 @@
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
+					"completedAt",
 					"amount",
-					"currency",
-					"updatedAt",
 					"status",
 					"metadata",
+					"currency",
+					"updatedAt",
 					"id",
 					"deletedAt",
 					"createdAt"
@@ -4538,11 +4723,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4552,15 +4732,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
 					"amount": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"status": {
 						"type": "string",
@@ -4593,6 +4771,13 @@
 						],
 						"nullable": true
 					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"id": {
 						"type": "string"
 					},
@@ -4615,14 +4800,14 @@
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
+					"completedAt",
 					"amount",
-					"currency",
-					"updatedAt",
 					"status",
 					"metadata",
+					"currency",
+					"updatedAt",
 					"id",
 					"deletedAt",
 					"createdAt"
@@ -4673,11 +4858,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4687,15 +4867,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
 					"amount": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"status": {
 						"type": "string",
@@ -4728,6 +4906,13 @@
 						],
 						"nullable": true
 					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"id": {
 						"type": "string"
 					},
@@ -4750,14 +4935,14 @@
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
+					"completedAt",
 					"amount",
-					"currency",
-					"updatedAt",
 					"status",
 					"metadata",
+					"currency",
+					"updatedAt",
 					"id",
 					"deletedAt",
 					"createdAt"
@@ -4824,11 +5009,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4838,15 +5018,13 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
 					"amount": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
 					},
 					"status": {
 						"type": "string",
@@ -4879,6 +5057,13 @@
 						],
 						"nullable": true
 					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"id": {
 						"type": "string"
 					},
@@ -4901,14 +5086,14 @@
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
+					"completedAt",
 					"amount",
-					"currency",
-					"updatedAt",
 					"status",
 					"metadata",
+					"currency",
+					"updatedAt",
 					"id",
 					"deletedAt",
 					"createdAt"
@@ -4944,6 +5129,9 @@
 							"uploadedBy": {
 								"type": "string"
 							},
+							"payoutId": {
+								"type": "string"
+							},
 							"uploadedAt": {
 								"type": "string",
 								"format": "date-time"
@@ -4954,9 +5142,6 @@
 							"sizeBytes": {
 								"type": "number",
 								"format": "double"
-							},
-							"payoutId": {
-								"type": "string"
 							},
 							"originalName": {
 								"type": "string"
@@ -4989,10 +5174,10 @@
 						},
 						"required": [
 							"uploadedBy",
+							"payoutId",
 							"uploadedAt",
 							"storagePath",
 							"sizeBytes",
-							"payoutId",
 							"originalName",
 							"mimeType",
 							"fileName",
@@ -5483,163 +5668,243 @@
 				],
 				"type": "object"
 			},
-			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalId-string--externalUrl-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--images_58__url-string--id-string--displayOrder-number--imageType-EventImageType_-Array--ticketWaves_58__description-string-or-null--externalId-string--id-string--name-string--status-string--currency-EventTicketCurrency--faceValue-string--isAvailable-boolean--isSoldOut-boolean_-Array__": {
+			"AdminEventImage": {
+				"description": "Explicit response types for the Admin Events controller\r\nThese are needed because Kysely's inferred types are too complex for TSOA",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"url": {
+						"type": "string"
+					},
+					"imageType": {
+						"type": "string"
+					},
+					"displayOrder": {
+						"type": "number",
+						"format": "double"
+					},
+					"createdAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					}
+				},
+				"required": [
+					"id",
+					"url",
+					"imageType",
+					"displayOrder"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AdminTicketWave": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"createdAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"updatedAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"faceValue",
+					"currency",
+					"isSoldOut",
+					"isAvailable",
+					"externalId",
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AdminEvent": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"eventStartDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"venueName": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueAddress": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueCity": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"platform": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"images": {
+						"items": {
+							"$ref": "#/components/schemas/AdminEventImage"
+						},
+						"type": "array"
+					},
+					"ticketWaves": {
+						"items": {
+							"$ref": "#/components/schemas/AdminTicketWave"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"eventStartDate",
+					"eventEndDate",
+					"venueName",
+					"venueAddress",
+					"venueCity",
+					"externalUrl",
+					"externalId",
+					"platform",
+					"qrAvailabilityTiming",
+					"status",
+					"createdAt",
+					"updatedAt",
+					"images",
+					"ticketWaves"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PaginatedAdminEventsResponse": {
 				"properties": {
 					"data": {
 						"items": {
-							"properties": {
-								"ticketWaves": {
-									"items": {
-										"properties": {
-											"isSoldOut": {
-												"type": "boolean"
-											},
-											"isAvailable": {
-												"type": "boolean"
-											},
-											"faceValue": {
-												"type": "string"
-											},
-											"currency": {
-												"$ref": "#/components/schemas/EventTicketCurrency"
-											},
-											"status": {
-												"type": "string"
-											},
-											"name": {
-												"type": "string"
-											},
-											"id": {
-												"type": "string"
-											},
-											"externalId": {
-												"type": "string"
-											},
-											"description": {
-												"type": "string",
-												"nullable": true
-											}
-										},
-										"required": [
-											"isSoldOut",
-											"isAvailable",
-											"faceValue",
-											"currency",
-											"status",
-											"name",
-											"id",
-											"externalId",
-											"description"
-										],
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"images": {
-									"items": {
-										"properties": {
-											"imageType": {
-												"$ref": "#/components/schemas/EventImageType"
-											},
-											"displayOrder": {
-												"type": "number",
-												"format": "double"
-											},
-											"id": {
-												"type": "string"
-											},
-											"url": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"imageType",
-											"displayOrder",
-											"id",
-											"url"
-										],
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"venueName": {
-									"type": "string",
-									"nullable": true
-								},
-								"venueAddress": {
-									"type": "string"
-								},
-								"updatedAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"status": {
-									"type": "string"
-								},
-								"qrAvailabilityTiming": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/QrAvailabilityTiming"
-										}
-									],
-									"nullable": true
-								},
-								"platform": {
-									"type": "string"
-								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								},
-								"externalUrl": {
-									"type": "string"
-								},
-								"externalId": {
-									"type": "string"
-								},
-								"eventStartDate": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"eventEndDate": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"description": {
-									"type": "string",
-									"nullable": true
-								},
-								"createdAt": {
-									"type": "string",
-									"format": "date-time"
-								}
-							},
-							"required": [
-								"ticketWaves",
-								"images",
-								"venueName",
-								"venueAddress",
-								"updatedAt",
-								"status",
-								"qrAvailabilityTiming",
-								"platform",
-								"name",
-								"id",
-								"externalUrl",
-								"externalId",
-								"eventStartDate",
-								"eventEndDate",
-								"description",
-								"createdAt"
-							],
-							"type": "object"
+							"$ref": "#/components/schemas/AdminEvent"
 						},
 						"type": "array"
 					},
 					"pagination": {
-						"$ref": "#/components/schemas/PaginationMeta"
+						"properties": {
+							"hasPrev": {
+								"type": "boolean"
+							},
+							"hasNext": {
+								"type": "boolean"
+							},
+							"totalPages": {
+								"type": "number",
+								"format": "double"
+							},
+							"total": {
+								"type": "number",
+								"format": "double"
+							},
+							"limit": {
+								"type": "number",
+								"format": "double"
+							},
+							"page": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"hasPrev",
+							"hasNext",
+							"totalPages",
+							"total",
+							"limit",
+							"page"
+						],
+						"type": "object"
 					}
 				},
 				"required": [
@@ -5650,7 +5915,7 @@
 				"additionalProperties": false
 			},
 			"GetEventsResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalId-string--externalUrl-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--images_58__url-string--id-string--displayOrder-number--imageType-EventImageType_-Array--ticketWaves_58__description-string-or-null--externalId-string--id-string--name-string--status-string--currency-EventTicketCurrency--faceValue-string--isAvailable-boolean--isSoldOut-boolean_-Array__"
+				"$ref": "#/components/schemas/PaginatedAdminEventsResponse"
 			},
 			"infer_typeofAdminEventsQuerySchema_": {
 				"properties": {
@@ -5696,137 +5961,17 @@
 			"AdminEventsQuery": {
 				"$ref": "#/components/schemas/infer_typeofAdminEventsQuerySchema_"
 			},
-			"GetEventDetailsResponse": {
+			"AdminEventDetail": {
 				"properties": {
-					"ticketWaves": {
-						"items": {
-							"properties": {
-								"isSoldOut": {
-									"type": "boolean"
-								},
-								"isAvailable": {
-									"type": "boolean"
-								},
-								"faceValue": {
-									"type": "string"
-								},
-								"currency": {
-									"$ref": "#/components/schemas/EventTicketCurrency"
-								},
-								"updatedAt": {
-									"type": "string"
-								},
-								"status": {
-									"type": "string"
-								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								},
-								"externalId": {
-									"type": "string"
-								},
-								"description": {
-									"type": "string",
-									"nullable": true
-								},
-								"createdAt": {
-									"type": "string"
-								}
-							},
-							"required": [
-								"isSoldOut",
-								"isAvailable",
-								"faceValue",
-								"currency",
-								"updatedAt",
-								"status",
-								"name",
-								"id",
-								"externalId",
-								"description",
-								"createdAt"
-							],
-							"type": "object"
-						},
-						"type": "array"
-					},
-					"images": {
-						"items": {
-							"properties": {
-								"imageType": {
-									"$ref": "#/components/schemas/EventImageType"
-								},
-								"displayOrder": {
-									"type": "number",
-									"format": "double"
-								},
-								"id": {
-									"type": "string"
-								},
-								"createdAt": {
-									"type": "string"
-								},
-								"url": {
-									"type": "string"
-								}
-							},
-							"required": [
-								"imageType",
-								"displayOrder",
-								"id",
-								"createdAt",
-								"url"
-							],
-							"type": "object"
-						},
-						"type": "array"
-					},
-					"venueName": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueAddress": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"qrAvailabilityTiming": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/QrAvailabilityTiming"
-							}
-						],
-						"nullable": true
-					},
-					"platform": {
+					"id": {
 						"type": "string"
 					},
 					"name": {
 						"type": "string"
 					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"lastScrapedAt": {
+					"description": {
 						"type": "string",
-						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalUrl": {
-						"type": "string"
-					},
-					"externalId": {
-						"type": "string"
+						"nullable": true
 					},
 					"eventStartDate": {
 						"type": "string",
@@ -5836,90 +5981,98 @@
 						"type": "string",
 						"format": "date-time"
 					},
-					"description": {
+					"venueName": {
 						"type": "string",
 						"nullable": true
 					},
+					"venueAddress": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueCity": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"platform": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string"
+					},
 					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"images": {
+						"items": {
+							"$ref": "#/components/schemas/AdminEventImage"
+						},
+						"type": "array"
+					},
+					"ticketWaves": {
+						"items": {
+							"$ref": "#/components/schemas/AdminTicketWave"
+						},
+						"type": "array"
+					},
+					"metadata": {},
+					"lastScrapedAt": {
 						"type": "string",
 						"format": "date-time"
 					}
 				},
 				"required": [
-					"ticketWaves",
-					"images",
-					"venueName",
-					"venueAddress",
-					"updatedAt",
-					"status",
-					"qrAvailabilityTiming",
-					"platform",
-					"name",
-					"metadata",
-					"lastScrapedAt",
 					"id",
-					"externalUrl",
-					"externalId",
+					"name",
+					"description",
 					"eventStartDate",
 					"eventEndDate",
-					"description",
-					"createdAt"
+					"venueName",
+					"venueAddress",
+					"venueCity",
+					"externalUrl",
+					"externalId",
+					"platform",
+					"qrAvailabilityTiming",
+					"status",
+					"createdAt",
+					"updatedAt",
+					"images",
+					"ticketWaves",
+					"metadata",
+					"lastScrapedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
 			},
-			"UpdateEventResponse": {
+			"GetEventDetailsResponse": {
+				"$ref": "#/components/schemas/AdminEventDetail"
+			},
+			"UpdatedEvent": {
 				"properties": {
-					"venueName": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueLongitude": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueLatitude": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueAddress": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"qrAvailabilityTiming": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/QrAvailabilityTiming"
-							}
-						],
-						"nullable": true
-					},
-					"platform": {
+					"id": {
 						"type": "string"
 					},
 					"name": {
 						"type": "string"
 					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"lastScrapedAt": {
+					"description": {
 						"type": "string",
-						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalUrl": {
-						"type": "string"
-					},
-					"externalId": {
-						"type": "string"
+						"nullable": true
 					},
 					"eventStartDate": {
 						"type": "string",
@@ -5929,42 +6082,68 @@
 						"type": "string",
 						"format": "date-time"
 					},
-					"description": {
+					"venueId": {
 						"type": "string",
 						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"platform": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string"
+					},
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"venueName",
-					"venueLongitude",
-					"venueLatitude",
-					"venueAddress",
-					"updatedAt",
-					"status",
-					"qrAvailabilityTiming",
-					"platform",
-					"name",
-					"metadata",
-					"lastScrapedAt",
 					"id",
-					"externalUrl",
-					"externalId",
+					"name",
+					"description",
 					"eventStartDate",
 					"eventEndDate",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"venueId",
+					"externalUrl",
+					"externalId",
+					"platform",
+					"qrAvailabilityTiming",
+					"status",
+					"metadata",
+					"createdAt",
+					"updatedAt",
+					"lastScrapedAt",
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateEventResponse": {
+				"$ref": "#/components/schemas/UpdatedEvent"
 			},
 			"UpdateEventRouteBody": {
 				"properties": {
@@ -5991,13 +6170,6 @@
 					"externalUrl": {
 						"type": "string"
 					},
-					"venueAddress": {
-						"type": "string"
-					},
-					"venueName": {
-						"type": "string",
-						"nullable": true
-					},
 					"eventEndDate": {
 						"type": "string"
 					},
@@ -6014,53 +6186,29 @@
 				},
 				"type": "object"
 			},
-			"DeleteEventResponse": {
+			"DeletedEvent": {
 				"properties": {
-					"venueName": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueLongitude": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueLatitude": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueAddress": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"qrAvailabilityTiming": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/QrAvailabilityTiming"
-							}
-						],
-						"nullable": true
-					},
-					"platform": {
+					"id": {
 						"type": "string"
 					},
 					"name": {
 						"type": "string"
 					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
+					"description": {
+						"type": "string",
+						"nullable": true
 					},
-					"lastScrapedAt": {
+					"eventStartDate": {
 						"type": "string",
 						"format": "date-time"
 					},
-					"id": {
-						"type": "string"
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"venueId": {
+						"type": "string",
+						"nullable": true
 					},
 					"externalUrl": {
 						"type": "string"
@@ -6068,123 +6216,133 @@
 					"externalId": {
 						"type": "string"
 					},
-					"eventStartDate": {
-						"type": "string",
-						"format": "date-time"
+					"platform": {
+						"type": "string"
 					},
-					"eventEndDate": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"description": {
+					"qrAvailabilityTiming": {
 						"type": "string",
 						"nullable": true
+					},
+					"status": {
+						"type": "string"
+					},
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"venueName",
-					"venueLongitude",
-					"venueLatitude",
-					"venueAddress",
-					"updatedAt",
-					"status",
-					"qrAvailabilityTiming",
-					"platform",
-					"name",
-					"metadata",
-					"lastScrapedAt",
 					"id",
-					"externalUrl",
-					"externalId",
+					"name",
+					"description",
 					"eventStartDate",
 					"eventEndDate",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"venueId",
+					"externalUrl",
+					"externalId",
+					"platform",
+					"qrAvailabilityTiming",
+					"status",
+					"metadata",
+					"createdAt",
+					"updatedAt",
+					"lastScrapedAt",
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
 			},
-			"CreateTicketWaveResponse": {
+			"DeleteEventResponse": {
+				"$ref": "#/components/schemas/DeletedEvent"
+			},
+			"CreatedTicketWave": {
 				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"type": "string"
+					},
 					"isSoldOut": {
 						"type": "boolean"
 					},
 					"isAvailable": {
 						"type": "boolean"
 					},
-					"faceValue": {
+					"status": {
 						"type": "string"
 					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"eventId": {
-						"type": "string"
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"updatedAt": {
 						"type": "string",
 						"format": "date-time"
 					},
-					"status": {
-						"type": "string"
-					},
-					"name": {
-						"type": "string"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
 					"lastScrapedAt": {
 						"type": "string",
 						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalId": {
-						"type": "string"
-					},
-					"description": {
-						"type": "string",
-						"nullable": true
 					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"isSoldOut",
-					"isAvailable",
+					"id",
+					"eventId",
+					"externalId",
+					"name",
+					"description",
 					"faceValue",
 					"currency",
-					"eventId",
-					"updatedAt",
+					"isSoldOut",
+					"isAvailable",
 					"status",
-					"name",
 					"metadata",
+					"createdAt",
+					"updatedAt",
 					"lastScrapedAt",
-					"id",
-					"externalId",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateTicketWaveResponse": {
+				"$ref": "#/components/schemas/CreatedTicketWave"
 			},
 			"CreateTicketWaveRouteBody": {
 				"properties": {
@@ -6225,78 +6383,80 @@
 				],
 				"type": "object"
 			},
-			"UpdateTicketWaveResponse": {
+			"UpdatedTicketWave": {
 				"properties": {
-					"isSoldOut": {
-						"type": "boolean"
-					},
-					"isAvailable": {
-						"type": "boolean"
-					},
-					"faceValue": {
+					"id": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
 					},
 					"eventId": {
 						"type": "string"
 					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
+					"externalId": {
 						"type": "string"
 					},
 					"name": {
-						"type": "string"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"lastScrapedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalId": {
 						"type": "string"
 					},
 					"description": {
 						"type": "string",
 						"nullable": true
 					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"status": {
+						"type": "string"
+					},
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"isSoldOut",
-					"isAvailable",
+					"id",
+					"eventId",
+					"externalId",
+					"name",
+					"description",
 					"faceValue",
 					"currency",
-					"eventId",
-					"updatedAt",
+					"isSoldOut",
+					"isAvailable",
 					"status",
-					"name",
 					"metadata",
+					"createdAt",
+					"updatedAt",
 					"lastScrapedAt",
-					"id",
-					"externalId",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateTicketWaveResponse": {
+				"$ref": "#/components/schemas/UpdatedTicketWave"
 			},
 			"UpdateTicketWaveRouteBody": {
 				"properties": {
@@ -6327,103 +6487,105 @@
 				},
 				"type": "object"
 			},
-			"DeleteTicketWaveResponse": {
+			"DeletedTicketWave": {
 				"properties": {
-					"isSoldOut": {
-						"type": "boolean"
-					},
-					"isAvailable": {
-						"type": "boolean"
-					},
-					"faceValue": {
+					"id": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
 					},
 					"eventId": {
 						"type": "string"
 					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
+					"externalId": {
 						"type": "string"
 					},
 					"name": {
-						"type": "string"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"lastScrapedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalId": {
 						"type": "string"
 					},
 					"description": {
 						"type": "string",
 						"nullable": true
 					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"status": {
+						"type": "string"
+					},
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"isSoldOut",
-					"isAvailable",
+					"id",
+					"eventId",
+					"externalId",
+					"name",
+					"description",
 					"faceValue",
 					"currency",
-					"eventId",
-					"updatedAt",
+					"isSoldOut",
+					"isAvailable",
 					"status",
-					"name",
 					"metadata",
+					"createdAt",
+					"updatedAt",
 					"lastScrapedAt",
-					"id",
-					"externalId",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
 			},
-			"UploadEventImageResponse": {
+			"DeleteTicketWaveResponse": {
+				"$ref": "#/components/schemas/DeletedTicketWave"
+			},
+			"UploadImageResponse": {
 				"properties": {
-					"imageType": {
-						"type": "string",
-						"enum": [
-							"flyer",
-							"hero"
-						]
+					"id": {
+						"type": "string"
 					},
 					"url": {
 						"type": "string"
 					},
-					"id": {
+					"imageType": {
 						"type": "string"
 					}
 				},
 				"required": [
-					"imageType",
+					"id",
 					"url",
-					"id"
+					"imageType"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
 			},
-			"DeleteEventImageResponse": {
+			"UploadEventImageResponse": {
+				"$ref": "#/components/schemas/UploadImageResponse"
+			},
+			"DeleteImageResponse": {
 				"properties": {
 					"success": {
 						"type": "boolean"
@@ -6432,7 +6594,11 @@
 				"required": [
 					"success"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DeleteEventImageResponse": {
+				"$ref": "#/components/schemas/DeleteImageResponse"
 			},
 			"GetCurrentUserResponse": {
 				"properties": {
@@ -6873,6 +7039,10 @@
 					"id": {
 						"type": "string"
 					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"status": {
 						"type": "string",
 						"enum": [
@@ -6882,9 +7052,8 @@
 							"sent"
 						]
 					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
+					"userId": {
+						"type": "string"
 					},
 					"channels": {
 						"items": {
@@ -6896,9 +7065,6 @@
 							]
 						},
 						"type": "array"
-					},
-					"userId": {
-						"type": "string"
 					},
 					"channelStatus": {
 						"anyOf": [
@@ -6935,10 +7101,10 @@
 					"createdAt",
 					"deletedAt",
 					"id",
-					"status",
 					"updatedAt",
-					"channels",
+					"status",
 					"userId",
+					"channels",
 					"channelStatus",
 					"retryCount",
 					"seenAt"
@@ -7418,6 +7584,15 @@
 							"format": "double",
 							"type": "number"
 						}
+					},
+					{
+						"description": "Filter by city name",
+						"in": "query",
+						"name": "city",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
@@ -7462,6 +7637,71 @@
 				]
 			}
 		},
+		"/events/trending": {
+			"get": {
+				"operationId": "GetTrendingEvents",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetTrendingEventsResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get trending events based on view count in the last N days",
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "days",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/events/cities": {
+			"get": {
+				"operationId": "GetDistinctCities",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDistinctCitiesResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get list of distinct cities for filter dropdown",
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
 		"/events/{eventId}": {
 			"get": {
 				"operationId": "GetById",
@@ -7477,6 +7717,38 @@
 						}
 					}
 				},
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/events/{eventId}/view": {
+			"post": {
+				"operationId": "TrackView",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TrackViewResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Track a view for an event (called when user views event detail page)",
 				"tags": [
 					"Events"
 				],

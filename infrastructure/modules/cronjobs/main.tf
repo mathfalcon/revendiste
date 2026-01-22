@@ -1,5 +1,12 @@
 # Cronjobs Module
 # Creates EventBridge rules for scheduled ECS tasks
+# All cronjobs use Fargate Spot by default (up to 70% cost savings)
+# Safe for cronjobs because they are idempotent and can be retried
+
+# Local to build capacity provider strategy based on use_fargate_spot variable
+locals {
+  capacity_provider = var.use_fargate_spot ? "FARGATE_SPOT" : "FARGATE"
+}
 
 # EventBridge Rule for sync-payments-and-expire-orders
 resource "aws_cloudwatch_event_rule" "sync_payments" {
@@ -21,8 +28,13 @@ resource "aws_cloudwatch_event_target" "sync_payments" {
   ecs_target {
     task_count          = 1
     task_definition_arn = var.sync_payments_task_arn
-    launch_type         = "FARGATE"
     platform_version    = "LATEST"
+
+    capacity_provider_strategy {
+      capacity_provider = local.capacity_provider
+      weight            = 1
+      base              = 1
+    }
 
     network_configuration {
       subnets          = var.public_subnet_ids
@@ -52,8 +64,13 @@ resource "aws_cloudwatch_event_target" "notify_upload" {
   ecs_target {
     task_count          = 1
     task_definition_arn = var.notify_upload_task_arn
-    launch_type         = "FARGATE"
     platform_version    = "LATEST"
+
+    capacity_provider_strategy {
+      capacity_provider = local.capacity_provider
+      weight            = 1
+      base              = 1
+    }
 
     network_configuration {
       subnets          = var.public_subnet_ids
@@ -83,8 +100,13 @@ resource "aws_cloudwatch_event_target" "check_payout" {
   ecs_target {
     task_count          = 1
     task_definition_arn = var.check_payout_task_arn
-    launch_type         = "FARGATE"
     platform_version    = "LATEST"
+
+    capacity_provider_strategy {
+      capacity_provider = local.capacity_provider
+      weight            = 1
+      base              = 1
+    }
 
     network_configuration {
       subnets          = var.public_subnet_ids
@@ -114,8 +136,13 @@ resource "aws_cloudwatch_event_target" "scrape_events" {
   ecs_target {
     task_count          = 1
     task_definition_arn = var.scrape_events_task_arn
-    launch_type         = "FARGATE"
     platform_version    = "LATEST"
+
+    capacity_provider_strategy {
+      capacity_provider = local.capacity_provider
+      weight            = 1
+      base              = 1
+    }
 
     network_configuration {
       subnets          = var.public_subnet_ids
@@ -145,8 +172,13 @@ resource "aws_cloudwatch_event_target" "process_notifications" {
   ecs_target {
     task_count          = 1
     task_definition_arn = var.process_notifications_task_arn
-    launch_type         = "FARGATE"
     platform_version    = "LATEST"
+
+    capacity_provider_strategy {
+      capacity_provider = local.capacity_provider
+      weight            = 1
+      base              = 1
+    }
 
     network_configuration {
       subnets          = var.public_subnet_ids

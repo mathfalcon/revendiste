@@ -210,6 +210,12 @@ module "ecs" {
   cronjob_scraping_cpu    = var.cronjob_scraping_cpu
   cronjob_scraping_memory = var.cronjob_scraping_memory
 
+  # Scraper parallelism configuration
+  scraper_max_concurrency        = var.scraper_max_concurrency
+  scraper_same_domain_delay_secs = var.scraper_same_domain_delay_secs
+  scraper_max_requests_per_crawl = var.scraper_max_requests_per_crawl
+  scraper_max_pages_per_browser  = var.scraper_max_pages_per_browser
+
   log_retention_days = var.log_retention_days
   common_tags        = local.common_tags
 }
@@ -267,6 +273,10 @@ module "cronjobs" {
   check_payout_schedule          = "cron(0 * * * ? *)"    # Every hour
   scrape_events_schedule         = "cron(*/30 * * * ? *)" # Every 30 minutes
   process_notifications_schedule = "cron(*/5 * * * ? *)"  # Every 5 minutes
+
+  # Use Fargate Spot for all cronjobs (up to 70% cost savings)
+  # Safe because all cronjobs are idempotent and can be retried
+  use_fargate_spot = true
 
   common_tags = local.common_tags
 }

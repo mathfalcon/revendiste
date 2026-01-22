@@ -217,15 +217,40 @@ variable "cronjob_memory" {
 }
 
 variable "cronjob_scraping_cpu" {
-  description = "CPU units for scraping cronjob tasks"
+  description = "CPU units for scraping cronjob tasks (2048 = 2 vCPU)"
   type        = number
-  default     = 1024
+  default     = 2048 # Higher with Fargate Spot for faster completion
 }
 
 variable "cronjob_scraping_memory" {
   description = "Memory for scraping cronjob tasks (MB)"
   type        = number
-  default     = 2048
+  default     = 4096 # 4GB for multiple Chromium processes
+}
+
+# Scraper parallelism configuration
+variable "scraper_max_concurrency" {
+  description = "Max parallel browser pages for scraping"
+  type        = number
+  default     = 4 # More conservative in production to avoid bot detection
+}
+
+variable "scraper_same_domain_delay_secs" {
+  description = "Delay between requests to same domain (anti-bot measure)"
+  type        = number
+  default     = 4
+}
+
+variable "scraper_max_requests_per_crawl" {
+  description = "Max URLs to process per crawl run"
+  type        = number
+  default     = 100
+}
+
+variable "scraper_max_pages_per_browser" {
+  description = "Max pages per browser instance"
+  type        = number
+  default     = 2
 }
 
 # CloudWatch Logs

@@ -1,19 +1,44 @@
-import {EventsRepository} from '~/repositories';
+import {EventsRepository, VenuesRepository} from '~/repositories';
 import {WithPagination} from '~/types';
 import {ScrapedEventData} from '../scraping';
 import {EventImageService} from '../scraping/image-service';
 import {logger} from '~/utils';
+import {VenuesService} from '../venues';
+import {GooglePlacesService} from '../google-places';
 
 export class EventsService {
   private readonly imageService = new EventImageService();
+  private readonly venuesService: VenuesService;
 
-  constructor(private readonly eventsRepository: EventsRepository) {}
+  constructor(
+    private readonly eventsRepository: EventsRepository,
+    venuesRepository?: VenuesRepository,
+  ) {
+    // VenuesService is optional - if not provided, events will have null venueId
+    if (venuesRepository) {
+      const googlePlacesService = new GooglePlacesService();
+      this.venuesService = new VenuesService(
+        venuesRepository,
+        googlePlacesService,
+      );
+    } else {
+      // Create a dummy service that returns null
+      this.venuesService = {
+        findOrCreateVenue: async () => null,
+        getDistinctCities: async () => [],
+      } as unknown as VenuesService;
+    }
+  }
 
-  async getAllEventsPaginated(args: WithPagination<{}>, userId?: string) {
+  async getAllEventsPaginated(
+    args: WithPagination<{city?: string}>,
+    userId?: string,
+  ) {
     const paginatedEvents =
       await this.eventsRepository.findAllPaginatedWithImages(
         args.pagination,
         userId,
+        {city: args.city},
       );
 
     return paginatedEvents;
@@ -24,7 +49,10 @@ export class EventsService {
       return [];
     }
 
-    const eventsWithoutImages = events.map(event => ({
+    // Process venues for all events first (in parallel batches)
+    const eventsWithVenues = await this.processVenuesForEvents(events);
+
+    const eventsWithoutImages = eventsWithVenues.map(event => ({
       ...event,
       images: [],
     }));
@@ -79,6 +107,51 @@ export class EventsService {
     );
 
     return upsertedEvents;
+  }
+
+  /**
+   * Process venues for all events in parallel batches
+   * Creates venues if they don't exist and returns events with venueId populated
+   */
+  private async processVenuesForEvents(
+    events: ScrapedEventData[],
+  ): Promise<ScrapedEventData[]> {
+    const BATCH_SIZE = 5; // Process 5 events at a time to avoid rate limiting
+    const results: ScrapedEventData[] = [];
+
+    for (let i = 0; i < events.length; i += BATCH_SIZE) {
+      const batch = events.slice(i, i + BATCH_SIZE);
+
+      const processedBatch = await Promise.all(
+        batch.map(async event => {
+          try {
+            const venueId = await this.venuesService.findOrCreateVenue(
+              event.scrapedVenueName,
+              event.scrapedVenueAddress,
+              event.scrapedVenueLatitude,
+              event.scrapedVenueLongitude,
+            );
+
+            return {
+              ...event,
+              venueId: venueId ?? undefined,
+            };
+          } catch (error) {
+            logger.error('Failed to process venue for event', {
+              error,
+              eventName: event.name,
+              externalId: event.externalId,
+            });
+            // Return event without venueId on error
+            return event;
+          }
+        }),
+      );
+
+      results.push(...processedBatch);
+    }
+
+    return results;
   }
 
   async cleanupStaleEvents(scrapedEvents: ScrapedEventData[]) {
@@ -215,5 +288,12 @@ export class EventsService {
     }
 
     return this.eventsRepository.getBySearch(query.trim(), limit);
+  }
+
+  /**
+   * Get distinct cities for filter dropdown
+   */
+  async getDistinctCities() {
+    return this.venuesService.getDistinctCities();
   }
 }

@@ -12,6 +12,48 @@ import {PLATFORM_CONFIGS} from './config';
 import {logger} from '~/utils';
 
 /**
+ * Scraper configuration that can be overridden via environment variables.
+ * This allows running more aggressive scraping locally while keeping
+ * conservative defaults for deployed cronjobs to avoid bot detection.
+ *
+ * Environment variables:
+ * - SCRAPER_MAX_CONCURRENCY: Max parallel browser pages (default: 2)
+ * - SCRAPER_SAME_DOMAIN_DELAY_SECS: Delay between requests to same domain (default: 5)
+ * - SCRAPER_MAX_REQUESTS_PER_CRAWL: Max URLs to process per crawl (default: 50)
+ * - SCRAPER_MAX_PAGES_PER_BROWSER: Max pages per browser instance (default: 2)
+ * - SCRAPER_REQUEST_HANDLER_TIMEOUT_SECS: Timeout for processing each request (default: 90)
+ * - SCRAPER_NAVIGATION_TIMEOUT_SECS: Timeout for page navigation (default: 45)
+ */
+function getScraperConfig() {
+  const config = {
+    maxConcurrency: parseInt(process.env.SCRAPER_MAX_CONCURRENCY || '2', 10),
+    sameDomainDelaySecs: parseInt(
+      process.env.SCRAPER_SAME_DOMAIN_DELAY_SECS || '5',
+      10,
+    ),
+    maxRequestsPerCrawl: parseInt(
+      process.env.SCRAPER_MAX_REQUESTS_PER_CRAWL || '50',
+      10,
+    ),
+    maxPagesPerBrowser: parseInt(
+      process.env.SCRAPER_MAX_PAGES_PER_BROWSER || '2',
+      10,
+    ),
+    requestHandlerTimeoutSecs: parseInt(
+      process.env.SCRAPER_REQUEST_HANDLER_TIMEOUT_SECS || '90',
+      10,
+    ),
+    navigationTimeoutSecs: parseInt(
+      process.env.SCRAPER_NAVIGATION_TIMEOUT_SECS || '45',
+      10,
+    ),
+  };
+
+  logger.info('Scraper configuration loaded', config);
+  return config;
+}
+
+/**
  * Log memory usage for debugging container resource issues
  * Only logs in debug level (dev environment)
  */
@@ -30,10 +72,12 @@ function logMemoryUsage(context: string): void {
 export abstract class BaseScraper {
   protected platform: Platform;
   protected config: PlatformConfig;
+  protected scraperConfig: ReturnType<typeof getScraperConfig>;
 
   constructor(platform: Platform) {
     this.platform = platform;
     this.config = PLATFORM_CONFIGS[platform];
+    this.scraperConfig = getScraperConfig();
   }
 
   protected getCrawlerOptions(): PlaywrightCrawlerOptions {
@@ -62,18 +106,18 @@ export abstract class BaseScraper {
         },
       },
       maxRequestRetries: 3, // More retries for flaky connections
-      requestHandlerTimeoutSecs: 90,
-      navigationTimeoutSecs: 45, // Longer timeout for slow responses
-      maxRequestsPerCrawl: 50, // Can be overridden by subclasses
-      // Lower concurrency to avoid rate limiting from AWS IPs
-      // Cloudflare/bot protection often blocks rapid concurrent requests
-      maxConcurrency: 2,
-      // Add delay between requests to same domain (anti-bot measure)
-      // Random delay between 3-8 seconds reduces detection
-      sameDomainDelaySecs: 5,
+      requestHandlerTimeoutSecs: this.scraperConfig.requestHandlerTimeoutSecs,
+      navigationTimeoutSecs: this.scraperConfig.navigationTimeoutSecs,
+      maxRequestsPerCrawl: this.scraperConfig.maxRequestsPerCrawl,
+      // Concurrency settings - configurable via env vars
+      // Lower values avoid rate limiting from AWS IPs
+      // Higher values speed up local development
+      maxConcurrency: this.scraperConfig.maxConcurrency,
+      // Delay between requests to same domain (anti-bot measure)
+      sameDomainDelaySecs: this.scraperConfig.sameDomainDelaySecs,
       browserPoolOptions: {
         useFingerprints: true, // Enable fingerprint randomization
-        maxOpenPagesPerBrowser: 2,
+        maxOpenPagesPerBrowser: this.scraperConfig.maxPagesPerBrowser,
       },
     };
   }

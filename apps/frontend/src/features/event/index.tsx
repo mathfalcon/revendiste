@@ -3,7 +3,7 @@ import {EventDetails} from './EventDetails';
 import {EventDescription} from './EventDescription';
 import {TicketSelection} from './tickets';
 import {EventInfoCards} from './EventInfoCards';
-import {EventImageType, getEventByIdQuery} from '~/lib';
+import {EventImageType, getEventByIdQuery, trackEventView} from '~/lib';
 import {useParams} from '@tanstack/react-router';
 import {useEffect, useRef, useState} from 'react';
 import {FullScreenLoading, TextEllipsis} from '~/components';
@@ -20,6 +20,13 @@ export const EventPage = () => {
     i => i.imageType === EventImageType.Hero,
   );
   const src = heroImage?.url ?? CDN_ASSETS.DEFAULT_OG_IMAGE;
+
+  // Track view when page loads
+  useEffect(() => {
+    trackEventView(params.eventId).catch(() => {
+      // Silently ignore errors - view tracking is not critical
+    });
+  }, [params.eventId]);
 
   useEffect(() => {
     setImageLoaded(false);

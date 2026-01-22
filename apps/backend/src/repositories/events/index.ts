@@ -39,10 +39,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
           description: event.description || null,
           eventStartDate: event.eventStartDate,
           eventEndDate: event.eventEndDate,
-          venueName: event.venueName || null,
-          venueAddress: event.venueAddress,
-          venueLatitude: event.venueLatitude?.toString() || null,
-          venueLongitude: event.venueLongitude?.toString() || null,
+          venueId: event.venueId || null,
           externalUrl: event.externalUrl,
           qrAvailabilityTiming: event.qrAvailabilityTiming || null,
           status: 'active',
@@ -56,10 +53,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             description: event.description || null,
             eventStartDate: event.eventStartDate,
             eventEndDate: event.eventEndDate,
-            venueName: event.venueName || null,
-            venueAddress: event.venueAddress,
-            venueLatitude: event.venueLatitude?.toString() || null,
-            venueLongitude: event.venueLongitude?.toString() || null,
+            venueId: event.venueId || null,
             externalUrl: event.externalUrl,
             qrAvailabilityTiming: event.qrAvailabilityTiming || null,
             status: 'active',
@@ -205,36 +199,45 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
   async findAllPaginatedWithImages(
     pagination: PaginationOptions,
     userId?: string,
+    filters?: {city?: string},
   ) {
     const { page, limit, offset, sortBy, sortOrder } = pagination;
 
     // Get total count
-    const totalResult = await this.db
+    let countQuery = this.db
       .selectFrom('events')
-      .select(this.db.fn.count('id').as('total'))
-      .where('deletedAt', 'is', null)
-      .where('status', '=', 'active')
-      .executeTakeFirst();
+      .select(this.db.fn.count('events.id').as('total'))
+      .where('events.deletedAt', 'is', null)
+      .where('events.status', '=', 'active');
 
+    // Apply city filter to count if provided
+    if (filters?.city) {
+      countQuery = countQuery
+        .innerJoin('eventVenues', 'eventVenues.id', 'events.venueId')
+        .where('eventVenues.city', '=', filters.city);
+    }
+
+    const totalResult = await countQuery.executeTakeFirst();
     const total = Number(totalResult?.total || 0);
 
     // Get events with nested images using jsonArrayFrom
-    // Get lowest available ticket price and currency from the same ticket
-    // Note: Using two identical subqueries - PostgreSQL's query planner will optimize this
+    // Join with eventVenues to get venue info
     const events = await this.db
       .selectFrom('events')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
       .select(eb => [
-        'id',
-        'name',
-        'description',
-        'eventStartDate',
-        'eventEndDate',
-        'venueName',
-        'venueAddress',
-        'externalUrl',
-        'status',
-        'createdAt',
-        'updatedAt',
+        'events.id',
+        'events.name',
+        'events.description',
+        'events.eventStartDate',
+        'events.eventEndDate',
+        'eventVenues.name as venueName',
+        'eventVenues.address as venueAddress',
+        'eventVenues.city as venueCity',
+        'events.externalUrl',
+        'events.status',
+        'events.createdAt',
+        'events.updatedAt',
         // Get lowest available ticket price
         userId
           ? sql<number | null>`
@@ -325,9 +328,10 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             .orderBy('eventImages.displayOrder'),
         ).as('images'),
       ])
-      .where('deletedAt', 'is', null)
-      .where('status', '=', 'active')
-      .orderBy('eventStartDate', 'asc')
+      .where('events.deletedAt', 'is', null)
+      .where('events.status', '=', 'active')
+      .$if(!!filters?.city, qb => qb.where('eventVenues.city', '=', filters!.city!))
+      .orderBy('events.eventStartDate', 'asc')
       .limit(limit)
       .offset(offset)
       .execute();
@@ -450,19 +454,21 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
   async getById(eventId: string, userId?: string) {
     const event = await this.db
       .selectFrom('events')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
       .select(eb => [
-        'id',
-        'name',
-        'description',
-        'eventStartDate',
-        'eventEndDate',
-        'venueName',
-        'venueAddress',
-        'externalUrl',
-        'qrAvailabilityTiming',
-        'status',
-        'createdAt',
-        'updatedAt',
+        'events.id',
+        'events.name',
+        'events.description',
+        'events.eventStartDate',
+        'events.eventEndDate',
+        'eventVenues.name as venueName',
+        'eventVenues.address as venueAddress',
+        'eventVenues.city as venueCity',
+        'events.externalUrl',
+        'events.qrAvailabilityTiming',
+        'events.status',
+        'events.createdAt',
+        'events.updatedAt',
         // Count of current user's listings for this event (to show contextual messaging)
         userId
           ? sql<number>`
@@ -534,10 +540,10 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             .orderBy('eventTicketWaves.faceValue', 'asc'),
         ).as('ticketWaves'),
       ])
-      .where('id', '=', eventId)
-      .where('deletedAt', 'is', null)
-      .where('status', '=', 'active')
-      .orderBy('eventStartDate', 'asc')
+      .where('events.id', '=', eventId)
+      .where('events.deletedAt', 'is', null)
+      .where('events.status', '=', 'active')
+      .orderBy('events.eventStartDate', 'asc')
       .executeTakeFirst();
 
     if (!event) {
@@ -553,31 +559,34 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
 
     const events = await this.db
       .selectFrom('events')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
       .select(eb => [
-        'id',
-        'name',
-        'description',
-        'eventStartDate',
-        'eventEndDate',
-        'venueName',
-        'venueAddress',
-        'externalUrl',
-        'status',
-        'createdAt',
-        'updatedAt',
-        // Include all images - frontend will apply fallback logic (flyer -> hero)
+        'events.id',
+        'events.name',
+        'events.description',
+        'events.eventStartDate',
+        'events.eventEndDate',
+        'eventVenues.name as venueName',
+        'eventVenues.address as venueAddress',
+        'eventVenues.city as venueCity',
+        'events.externalUrl',
+        'events.status',
+        'events.createdAt',
+        'events.updatedAt',
+        // Only include flyer images for the search results
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
             .select(['eventImages.url', 'eventImages.imageType'])
             .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.imageType', '=', 'flyer')
             .orderBy('eventImages.displayOrder'),
         ).as('eventImages'),
       ])
-      .where('deletedAt', 'is', null)
-      .where('status', '=', 'active')
-      .where('eventEndDate', '>', now) // Include events that haven't ended yet
-      .orderBy('eventStartDate', 'asc')
+      .where('events.deletedAt', 'is', null)
+      .where('events.status', '=', 'active')
+      .where('events.eventEndDate', '>', now) // Include events that haven't ended yet
+      .orderBy('events.eventStartDate', 'asc')
       .limit(limit)
       .execute();
 
@@ -592,49 +601,50 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
 
     const events = await this.db
       .selectFrom('events')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
       .select(eb => [
-        'id',
-        'name',
-        'description',
-        'eventStartDate',
-        'eventEndDate',
-        'venueName',
-        'venueAddress',
-        'externalUrl',
-        'status',
-        'createdAt',
-        'updatedAt',
-        // Include all images - frontend will apply fallback logic (flyer -> hero)
+        'events.id',
+        'events.name',
+        'events.description',
+        'events.eventStartDate',
+        'events.eventEndDate',
+        'eventVenues.name as venueName',
+        'eventVenues.address as venueAddress',
+        'eventVenues.city as venueCity',
+        'events.externalUrl',
+        'events.status',
+        'events.createdAt',
+        'events.updatedAt',
+        // Only include flyer images for the search results
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
             .select(['eventImages.url', 'eventImages.imageType'])
             .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.imageType', '=', 'flyer')
             .orderBy('eventImages.displayOrder'),
         ).as('eventImages'),
       ])
-      .where('deletedAt', 'is', null)
-      .where('status', '=', 'active')
-      .where('eventEndDate', '>', now) // Only include events that haven't ended yet
+      .where('events.deletedAt', 'is', null)
+      .where('events.status', '=', 'active')
+      .where('events.eventEndDate', '>', now) // Only include events that haven't ended yet
       // Use ILIKE for substring matching (works for partial word matches like "fideles" in "WAVES OF LIFE w/ FIDELES PDE 2026")
       // Also use trigram similarity for fuzzy matching (handles typos and variations)
       .where(
         eb =>
-          sql`(${eb.ref('name')} ILIKE ${searchPattern} OR similarity(${eb.ref(
-            'name',
-          )}, ${query}) > 0.2)`,
+          sql`(events.name ILIKE ${searchPattern} OR similarity(events.name, ${query}) > 0.2)`,
       )
       // Order by relevance: exact matches first, then ILIKE matches, then similarity score, then date
       .orderBy(
         eb =>
           sql`CASE 
-          WHEN ${eb.ref('name')} ILIKE ${query} THEN 0
-          WHEN ${eb.ref('name')} ILIKE ${searchPattern} THEN 1
+          WHEN events.name ILIKE ${query} THEN 0
+          WHEN events.name ILIKE ${searchPattern} THEN 1
           ELSE 2
         END`,
       )
-      .orderBy(eb => sql`similarity(${eb.ref('name')}, ${query}) DESC`)
-      .orderBy('eventStartDate', 'asc')
+      .orderBy(eb => sql`similarity(events.name, ${query}) DESC`)
+      .orderBy('events.eventStartDate', 'asc')
       .limit(limit)
       .execute();
 
@@ -684,14 +694,16 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     // Build main query
     let query = this.db
       .selectFrom('events')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
       .select(eb => [
         'events.id',
         'events.name',
         'events.description',
         'events.eventStartDate',
         'events.eventEndDate',
-        'events.venueName',
-        'events.venueAddress',
+        'eventVenues.name as venueName',
+        'eventVenues.address as venueAddress',
+        'eventVenues.city as venueCity',
         'events.externalUrl',
         'events.externalId',
         'events.platform',
@@ -772,14 +784,16 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
   async getByIdForAdmin(eventId: string) {
     const event = await this.db
       .selectFrom('events')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
       .select(eb => [
         'events.id',
         'events.name',
         'events.description',
         'events.eventStartDate',
         'events.eventEndDate',
-        'events.venueName',
-        'events.venueAddress',
+        'eventVenues.name as venueName',
+        'eventVenues.address as venueAddress',
+        'eventVenues.city as venueCity',
         'events.externalUrl',
         'events.externalId',
         'events.platform',
@@ -894,5 +908,25 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .execute();
 
     return deleted;
+  }
+
+  /**
+   * Get distinct cities from eventVenues for active events
+   * Returns list of cities that have active events
+   */
+  async getDistinctCities(): Promise<string[]> {
+    const cities = await this.db
+      .selectFrom('eventVenues')
+      .innerJoin('events', 'events.venueId', 'eventVenues.id')
+      .select('eventVenues.city')
+      .where('events.deletedAt', 'is', null)
+      .where('events.status', '=', 'active')
+      .where('events.eventEndDate', '>', new Date())
+      .where('eventVenues.deletedAt', 'is', null)
+      .distinct()
+      .orderBy('eventVenues.city', 'asc')
+      .execute();
+
+    return cities.map(c => c.city);
   }
 }

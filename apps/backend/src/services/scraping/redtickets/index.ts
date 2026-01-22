@@ -154,6 +154,85 @@ export class RedTicketsScraper extends BaseScraper {
     }
   }
 
+  /**
+   * Debug a specific URL using the exact same logic as the main scraper.
+   * This allows testing extraction logic on a single event without crawling the list.
+   *
+   * @param url - The detail page URL to scrape
+   * @returns The scraped event data, or null if scraping failed
+   */
+  async debugScrapeUrl(url: string): Promise<ScrapedEventData | null> {
+    // Reset events array for this debug run
+    this.events = [];
+
+    const userAgent = this.getRandomUserAgent();
+    logger.info('Debug scraping URL:', {url, userAgent});
+
+    const crawler = this.createCrawler({
+      launchContext: {
+        userAgent,
+      },
+      maxRequestsPerCrawl: 1,
+      maxConcurrency: 1,
+      preNavigationHooks: [
+        async ({page}) => {
+          const viewports = [
+            {width: 1920, height: 1080},
+            {width: 1366, height: 768},
+          ];
+          const viewport =
+            viewports[Math.floor(Math.random() * viewports.length)];
+          await page.setViewportSize(viewport);
+
+          await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => false,
+            });
+          });
+        },
+      ],
+      requestHandler: this.handleRequest,
+      failedRequestHandler({request, log, error}) {
+        const err = error as Error | undefined;
+        log.error(`Debug scrape failed:`, {
+          url: request.url,
+          errorMessage: err?.message,
+        });
+      },
+    });
+
+    try {
+      // Add the URL directly as a DETAIL request (skip list crawling)
+      await crawler.addRequests([
+        {
+          url,
+          userData: {
+            label: RequestLabel.DETAIL,
+          },
+        },
+      ]);
+
+      await crawler.run();
+
+      if (this.events.length > 0) {
+        logger.info('Debug scrape successful', {
+          eventName: this.events[0].name,
+          hasCoordinates: !!(
+            this.events[0].scrapedVenueLatitude &&
+            this.events[0].scrapedVenueLongitude
+          ),
+        });
+        return this.events[0];
+      }
+
+      logger.warn('Debug scrape completed but no event data was extracted');
+      return null;
+    } catch (error) {
+      logger.error('Debug scrape error:', error);
+      return this.events[0] || null;
+    }
+  }
+
   handleRequest: PlaywrightRequestHandler = async args => {
     const {request, log} = args;
     log.info(`▶️  ${request.userData.label}  ${request.url}`);
@@ -367,10 +446,10 @@ export class RedTicketsScraper extends BaseScraper {
         platform: Platform.RedTickets,
         name,
         description: description || undefined,
-        venueName: this.extractVenueName(venueAddress),
-        venueAddress: venueAddress || '',
-        venueLatitude: coordinates?.latitude,
-        venueLongitude: coordinates?.longitude,
+        scrapedVenueName: this.extractVenueName(venueAddress),
+        scrapedVenueAddress: venueAddress || '',
+        scrapedVenueLatitude: coordinates?.latitude,
+        scrapedVenueLongitude: coordinates?.longitude,
         externalUrl: url,
         images: heroImgSrc
           ? [

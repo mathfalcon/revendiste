@@ -101,10 +101,7 @@ export interface Events {
   qrAvailabilityTiming: QrAvailabilityTiming | null;
   status: Generated<string>;
   updatedAt: Generated<Timestamp>;
-  venueAddress: string;
-  venueLatitude: Numeric | null;
-  venueLongitude: Numeric | null;
-  venueName: string | null;
+  venueId: string | null;
 }
 
 export interface EventTicketWaves {
@@ -123,6 +120,29 @@ export interface EventTicketWaves {
   name: string;
   status: Generated<string>;
   updatedAt: Generated<Timestamp>;
+}
+
+export interface EventVenues {
+  address: string;
+  city: string;
+  country: Generated<string>;
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  googlePlaceId: string | null;
+  id: Generated<string>;
+  latitude: Numeric | null;
+  longitude: Numeric | null;
+  name: string;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface EventViewsDaily {
+  createdAt: Generated<Timestamp>;
+  date: Timestamp;
+  eventId: string;
+  id: Generated<string>;
+  updatedAt: Generated<Timestamp>;
+  viewCount: Generated<number>;
 }
 
 export interface Listings {
@@ -422,6 +442,8 @@ export interface DB {
   eventImages: EventImages;
   events: Events;
   eventTicketWaves: EventTicketWaves;
+  eventVenues: EventVenues;
+  eventViewsDaily: EventViewsDaily;
   listings: Listings;
   listingTickets: ListingTickets;
   notificationBatches: NotificationBatches;

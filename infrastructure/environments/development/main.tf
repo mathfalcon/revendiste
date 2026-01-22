@@ -208,10 +208,19 @@ module "ecs" {
   frontend_memory_target = 90
 
   # Cronjob Configuration
-  cronjob_cpu             = 256
-  cronjob_memory          = 512
-  cronjob_scraping_cpu    = 1024 # Need more CPU for Playwright/Chromium
-  cronjob_scraping_memory = 2048 # Need more memory for multiple browser instances
+  cronjob_cpu    = 256
+  cronjob_memory = 512
+  # Scraping cronjob - optimized based on actual usage (~250MB at high parallelism)
+  # Using Fargate Spot for up to 70% savings
+  cronjob_scraping_cpu    = 1024 # 1 vCPU (scraping is I/O-bound, not CPU-bound)
+  cronjob_scraping_memory = 2048 # 2GB RAM (8x headroom over actual ~250MB usage)
+
+  # Scraper parallelism - optimized after benchmarking (22s with these settings)
+  # Removed 1.5s per-page wait, now using JS-based coordinate extraction
+  scraper_max_concurrency        = 20  # High parallelism within memory budget
+  scraper_same_domain_delay_secs = 0   # No delay needed - sites handle concurrent requests fine
+  scraper_max_requests_per_crawl = 150 # More events per run
+  scraper_max_pages_per_browser  = 15  # Reuse browsers more before recycling
 
   log_retention_days = 3 # Short retention in dev
   common_tags        = local.common_tags
@@ -270,6 +279,10 @@ module "cronjobs" {
   check_payout_schedule          = "cron(0 */4 * * ? *)"  # Every 4 hours (prod: 1 hour)
   scrape_events_schedule         = "cron(0 */2 * * ? *)"  # Every 2 hours (prod: 30 min)
   process_notifications_schedule = "cron(*/15 * * * ? *)" # Every 15 min (prod: 5 min)
+
+  # Use Fargate Spot for all cronjobs (up to 70% cost savings)
+  # Safe because all cronjobs are idempotent and can be retried
+  use_fargate_spot = true
 
   common_tags = local.common_tags
 }

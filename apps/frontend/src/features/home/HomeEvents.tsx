@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {useInfiniteQuery} from '@tanstack/react-query';
 import {EventCard, SkeletonEventCard} from '~/components';
 import {Separator} from '~/components/ui/separator';
@@ -7,10 +8,18 @@ import {
   EventTicketCurrency,
   getEventsInfiniteQuery,
 } from '~/lib';
+import {CityFilter} from './CityFilter';
+import { CDN_ASSETS } from '~/assets';
 
 export const HomeEvents = () => {
+  const [selectedCity, setSelectedCity] = useState<string | undefined>(
+    undefined,
+  );
+
   const {data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage} =
-    useInfiniteQuery(getEventsInfiniteQuery(20));
+    useInfiniteQuery(
+      getEventsInfiniteQuery(20, {city: selectedCity}),
+    );
 
   // Flatten all pages into a single array
   const events = data?.pages.flatMap(page => page.data) ?? [];
@@ -23,12 +32,15 @@ export const HomeEvents = () => {
   });
 
   return (
-    <div className='mx-auto flex flex-col gap-4 my-4 sm:my-6'>
-      <h2 className='text-lg sm:text-2xl font-bold text-center sm:text-left'>
-        Encontrá tu próximo evento
-      </h2>
+    <div className='mx-auto flex flex-col gap-4 my-4 sm:my-6 max-w-6xl px-4 sm:px-0'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+        <h2 className='text-lg sm:text-2xl font-bold text-center sm:text-left'>
+          Encontrá tu próximo evento
+        </h2>
+        <CityFilter value={selectedCity} onChange={setSelectedCity} />
+      </div>
       <Separator />
-      <main className='grid w-full min-w-[100vw] sm:min-w-[unset] gap-3 sm:gap-6 mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl px-4 sm:px-0'>
+      <main className='grid w-full gap-3 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'>
         {isLoading
           ? Array.from({length: 6}).map((_, index) => (
               <SkeletonEventCard key={`event-card-skeleton-${index}`} />
@@ -43,7 +55,7 @@ export const HomeEvents = () => {
                 ) ??
                 eventImages.find(
                   image => image.imageType === EventImageType.Hero,
-                );
+                ) ;
 
               // Get lowest available ticket price and currency
               // Type assertion needed until API types are regenerated
@@ -64,7 +76,7 @@ export const HomeEvents = () => {
                   key={event.id}
                   id={event.id}
                   name={event.name}
-                  imageUrl={flyerImage?.url}
+                  imageUrl={flyerImage?.url ?? CDN_ASSETS.SQUARE_LOGO}
                   date={event.eventStartDate}
                   description={event.description}
                   venueName={event.venueName}

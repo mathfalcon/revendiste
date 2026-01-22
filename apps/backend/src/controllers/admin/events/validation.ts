@@ -27,8 +27,7 @@ export const UpdateEventRouteSchema = z.object({
     description: z.string().nullable().optional(),
     eventStartDate: z.string().datetime().optional(),
     eventEndDate: z.string().datetime().optional(),
-    venueName: z.string().nullable().optional(),
-    venueAddress: z.string().optional(),
+    // Note: Venue is now managed via eventVenues table - use venueId to reference
     externalUrl: z.string().url('URL inválida').optional(),
     qrAvailabilityTiming: z
       .enum(['3h', '6h', '12h', '24h', '48h', '72h'])

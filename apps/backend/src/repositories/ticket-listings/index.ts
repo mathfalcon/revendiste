@@ -76,14 +76,15 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
         jsonObjectFrom(
           eb
             .selectFrom('events')
+            .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
             .select(eb2 => [
               'events.id',
               'events.name',
               'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',
-              'events.venueName',
-              'events.venueAddress',
+              'eventVenues.name as venueName',
+              'eventVenues.address as venueAddress',
               'events.description',
               'events.qrAvailabilityTiming',
               jsonArrayFrom(

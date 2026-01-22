@@ -54,14 +54,15 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
         jsonObjectFrom(
           eb
             .selectFrom('events')
+            .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
             .select([
               'events.id',
               'events.name',
               'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',
-              'events.venueName',
-              'events.venueAddress',
+              'eventVenues.name as venueName',
+              'eventVenues.address as venueAddress',
               'events.qrAvailabilityTiming',
               jsonArrayFrom(
                 eb
@@ -187,14 +188,15 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
         jsonObjectFrom(
           eb
             .selectFrom('events')
+            .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
             .select([
               'events.id',
               'events.name',
               'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',
-              'events.venueName',
-              'events.venueAddress',
+              'eventVenues.name as venueName',
+              'eventVenues.address as venueAddress',
               jsonArrayFrom(
                 eb
                   .selectFrom('eventImages')

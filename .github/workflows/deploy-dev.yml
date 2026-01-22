@@ -37,6 +37,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -55,6 +58,7 @@ jobs:
         with:
           context: .
           file: ./deploy/backend.Dockerfile
+          platforms: linux/arm64
           # Only push on push events (not PRs) - PRs just validate the build
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.backend-meta.outputs.tags }}
@@ -80,6 +84,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -98,6 +105,7 @@ jobs:
         with:
           context: .
           file: ./deploy/frontend.Dockerfile
+          platforms: linux/arm64
           # Only push on push events (not PRs) - PRs just validate the build
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.frontend-meta.outputs.tags }}

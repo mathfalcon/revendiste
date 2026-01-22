@@ -94,15 +94,9 @@ export enum PayoutType {
   UruguayanBank = "uruguayan_bank",
 }
 
-export enum UploadAvailabilityReason {
-  EventEnded = "event_ended",
-  TooEarly = "too_early",
-  Unknown = "unknown",
-}
-
-export enum EventTicketCurrency {
-  USD = "USD",
-  UYU = "UYU",
+export enum EventImageType {
+  Flyer = "flyer",
+  Hero = "hero",
 }
 
 export enum QrAvailabilityTiming {
@@ -114,54 +108,62 @@ export enum QrAvailabilityTiming {
   Value72H = "72h",
 }
 
-export enum EventImageType {
-  Flyer = "flyer",
-  Hero = "hero",
+export enum EventTicketCurrency {
+  USD = "USD",
+  UYU = "UYU",
 }
 
-export interface PaginationMeta {
-  /** @format double */
-  page: number;
-  /** @format double */
-  limit: number;
-  /** @format double */
-  total: number;
-  /** @format double */
-  totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
+export enum UploadAvailabilityReason {
+  EventEnded = "event_ended",
+  TooEarly = "too_early",
+  Unknown = "unknown",
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
-  data: {
-    images: {
-      imageType: EventImageType;
-      url: string;
-    }[];
-    lowestAvailableTicketCurrency: string | null;
+export interface EventImage {
+  url: string;
+  imageType: string;
+}
+
+export interface PaginatedEvent {
+  id: string;
+  name: string;
+  description: string | null;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  venueName: string | null;
+  venueAddress: string | null;
+  venueCity: string | null;
+  externalUrl: string;
+  status: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format double */
+  lowestAvailableTicketPrice: number | null;
+  lowestAvailableTicketCurrency: string | null;
+  images: EventImage[];
+}
+
+export interface PaginatedEventsResponse {
+  data: PaginatedEvent[];
+  pagination: {
+    hasPrev: boolean;
+    hasNext: boolean;
     /** @format double */
-    lowestAvailableTicketPrice: number | null;
-    venueName: string | null;
-    venueAddress: string;
-    /** @format date-time */
-    updatedAt: string;
-    status: string;
-    name: string;
-    id: string;
-    externalUrl: string;
-    /** @format date-time */
-    eventStartDate: string;
-    /** @format date-time */
-    eventEndDate: string;
-    description: string | null;
-    /** @format date-time */
-    createdAt: string;
-  }[];
-  pagination: PaginationMeta;
+    totalPages: number;
+    /** @format double */
+    total: number;
+    /** @format double */
+    limit: number;
+    /** @format double */
+    page: number;
+  };
 }
 
-export type GetEventsPaginatedResponse =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
+export type GetEventsPaginatedResponse = PaginatedEventsResponse;
 
 export interface InferTypeofPaginationSchema {
   sortOrder?: "asc" | "desc";
@@ -172,64 +174,109 @@ export interface InferTypeofPaginationSchema {
   page: number;
 }
 
-export type PaginationQuery = InferTypeofPaginationSchema;
+export interface EventsPaginatedQuery {
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+  /** Filter by city name */
+  city?: string;
+}
 
-export type SearchEventsResponse = {
-  eventImages: {
-    imageType: EventImageType;
-    url: string;
-  }[];
-  venueName: string | null;
-  venueAddress: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: string;
-  name: string;
+export interface SearchEvent {
   id: string;
-  externalUrl: string;
+  name: string;
+  description: string | null;
   /** @format date-time */
   eventStartDate: string;
   /** @format date-time */
   eventEndDate: string;
-  description: string | null;
+  venueName: string | null;
+  venueAddress: string | null;
+  venueCity: string | null;
+  externalUrl: string;
+  status: string;
   /** @format date-time */
   createdAt: string;
-}[];
+  /** @format date-time */
+  updatedAt: string;
+  eventImages: EventImage[];
+}
 
-export interface GetEventByIdResponse {
-  ticketWaves: {
-    priceGroups: {
-      availableTickets: string | number;
-      price: string;
-    }[];
-    faceValue: string;
-    currency: EventTicketCurrency;
+export type SearchEventsResponse = SearchEvent[];
+
+export interface TrendingEvent {
+  id: string;
+  name: string;
+  description: string | null;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  venueId: string | null;
+  externalUrl: string;
+  status: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format double */
+  totalViews: number;
+  eventImages: EventImage[];
+  venue: {
+    city: string;
     name: string;
-    id: string;
-    description: string | null;
-  }[];
+  } | null;
+}
+
+export type GetTrendingEventsResponse = TrendingEvent[];
+
+export type GetDistinctCitiesResponse = string[];
+
+export interface PriceGroup {
+  price: string;
+  availableTickets: string | number;
+}
+
+export interface TicketWave {
+  id: string;
+  name: string;
+  currency: string;
+  description: string | null;
+  faceValue: string;
+  priceGroups: PriceGroup[];
+}
+
+export interface EventDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  venueName: string | null;
+  venueAddress: string | null;
+  venueCity: string | null;
+  externalUrl: string;
+  qrAvailabilityTiming: string | null;
+  status: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
   /** @format double */
   userListingsCount: number;
-  eventImages: {
-    imageType: EventImageType;
-    url: string;
-  }[];
-  venueName: string | null;
-  venueAddress: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: string;
-  qrAvailabilityTiming: QrAvailabilityTiming | null;
-  name: string;
-  id: string;
-  externalUrl: string;
-  /** @format date-time */
-  eventStartDate: string;
-  /** @format date-time */
-  eventEndDate: string;
-  description: string | null;
-  /** @format date-time */
-  createdAt: string;
+  eventImages: EventImage[];
+  ticketWaves: TicketWave[];
+}
+
+export type GetEventByIdResponse = EventDetail;
+
+export interface TrackViewResponse {
+  success: boolean;
 }
 
 /** Construct a type with a set of properties K of type T */
@@ -259,21 +306,20 @@ export interface HealthCheck {
 }
 
 export interface CreateTicketListingResponse {
-  ticketWaveId: string;
+  /** @format date-time */
+  updatedAt: string;
   /** @format date-time */
   soldAt: string | null;
   publisherUserId: string;
-  /** @format date-time */
-  updatedAt: string;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
   /** @format date-time */
   createdAt: string;
+  ticketWaveId: string;
   listingTickets: {
     /** @format double */
     ticketNumber: number;
-    price: string;
     listingId: string;
     /** @format date-time */
     documentUploadRequiredNotifiedAt: string | null;
@@ -285,14 +331,15 @@ export interface CreateTicketListingResponse {
     documentPath: string | null;
     documentOriginalName: string | null;
     /** @format date-time */
-    soldAt: string | null;
-    /** @format date-time */
     updatedAt: string;
+    /** @format date-time */
+    soldAt: string | null;
     id: string;
     /** @format date-time */
     deletedAt: string | null;
     /** @format date-time */
     createdAt: string;
+    price: string;
   }[];
 }
 
@@ -349,26 +396,26 @@ export type GetUserListingsResponse = {
       imageType: EventImageType;
       url: string;
     }[];
+    venueAddress: string | null;
     venueName: string | null;
-    venueAddress: string;
     qrAvailabilityTiming: QrAvailabilityTiming | null;
     platform: string;
-    name: string;
-    id: string;
     eventStartDate: string;
     eventEndDate: string;
+    name: string;
     description: string | null;
+    id: string;
   };
   ticketWave: {
+    name: string;
     faceValue: string;
     currency: EventTicketCurrency;
-    name: string;
     id: string;
   };
   /** @format date-time */
-  soldAt: string | null;
-  /** @format date-time */
   updatedAt: string;
+  /** @format date-time */
+  soldAt: string | null;
   id: string;
   /** @format date-time */
   createdAt: string;
@@ -380,12 +427,12 @@ export type GetUserListingsResponse = {
     } | null;
     /** @format double */
     ticketNumber: number;
-    price: string;
-    soldAt: string | null;
     updatedAt: string;
+    soldAt: string | null;
     id: string;
     deletedAt: string | null;
     createdAt: string;
+    price: string;
     uploadAvailableAt?: string;
     uploadUnavailableReason?: UploadAvailabilityReason;
     canUploadDocument: boolean;
@@ -401,20 +448,20 @@ export interface UploadDocumentResponse {
     verifiedBy: string | null;
     /** @format date-time */
     verifiedAt: string | null;
-    ticketId: string;
-    isPrimary: boolean;
     /** @format date-time */
     uploadedAt: string;
+    ticketId: string;
     storagePath: string;
     /** @format double */
     sizeBytes: number;
     originalName: string;
     mimeType: string;
+    isPrimary: boolean;
     fileName: string;
+    status: string;
     documentType: string;
     /** @format date-time */
     updatedAt: string;
-    status: string;
     id: string;
     /** @format date-time */
     deletedAt: string | null;
@@ -426,7 +473,6 @@ export interface UploadDocumentResponse {
 export interface UpdateTicketPriceResponse {
   /** @format double */
   ticketNumber: number;
-  price: string;
   listingId: string;
   /** @format date-time */
   documentUploadRequiredNotifiedAt: string | null;
@@ -438,14 +484,15 @@ export interface UpdateTicketPriceResponse {
   documentPath: string | null;
   documentOriginalName: string | null;
   /** @format date-time */
-  soldAt: string | null;
-  /** @format date-time */
   updatedAt: string;
+  /** @format date-time */
+  soldAt: string | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
   /** @format date-time */
   createdAt: string;
+  price: string;
 }
 
 export interface UpdateTicketPriceRouteBody {
@@ -456,7 +503,6 @@ export interface UpdateTicketPriceRouteBody {
 export interface RemoveTicketResponse {
   /** @format double */
   ticketNumber: number;
-  price: string;
   listingId: string;
   /** @format date-time */
   documentUploadRequiredNotifiedAt: string | null;
@@ -468,14 +514,15 @@ export interface RemoveTicketResponse {
   documentPath: string | null;
   documentOriginalName: string | null;
   /** @format date-time */
-  soldAt: string | null;
-  /** @format date-time */
   updatedAt: string;
+  /** @format date-time */
+  soldAt: string | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
   /** @format date-time */
   createdAt: string;
+  price: string;
 }
 
 export interface GetTicketInfoResponse {
@@ -522,6 +569,7 @@ export interface GetTicketInfoResponse {
 
 export interface CreateOrderResponse {
   vatOnCommission: string;
+  userId: string;
   totalAmount: string;
   subtotalAmount: string;
   /** @format date-time */
@@ -531,17 +579,16 @@ export interface CreateOrderResponse {
   confirmedAt: string | null;
   /** @format date-time */
   cancelledAt: string | null;
-  userId: string;
+  status: "cancelled" | "confirmed" | "expired" | "pending";
   currency: EventTicketCurrency;
-  eventId: string;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "confirmed" | "expired" | "pending";
   id: string;
   /** @format date-time */
   deletedAt: string | null;
   /** @format date-time */
   createdAt: string;
+  eventId: string;
 }
 
 /** Construct a type with a set of properties K of type T */
@@ -555,13 +602,13 @@ export interface CreateOrderRouteBody {
 
 export interface GetOrderByIdResponse {
   items: {
-    ticketWaveName: string | null;
     subtotal: string | null;
+    pricePerTicket: string | null;
+    id: string | null;
     /** @format double */
     quantity: number | null;
-    pricePerTicket: string | null;
     ticketWaveId: string | null;
-    id: string | null;
+    ticketWaveName: string | null;
     currency: EventTicketCurrency | null;
   }[];
   event: {
@@ -569,16 +616,17 @@ export interface GetOrderByIdResponse {
       imageType: EventImageType;
       url: string;
     }[];
-    venueName: string | null;
     venueAddress: string | null;
+    venueName: string | null;
     qrAvailabilityTiming: QrAvailabilityTiming | null;
     platform: string | null;
-    name: string | null;
-    id: string | null;
     eventStartDate: string | null;
     eventEndDate: string | null;
+    name: string | null;
+    id: string | null;
   };
   vatOnCommission: string;
+  userId: string;
   totalAmount: string;
   subtotalAmount: string;
   /** @format date-time */
@@ -588,26 +636,25 @@ export interface GetOrderByIdResponse {
   confirmedAt: string | null;
   /** @format date-time */
   cancelledAt: string | null;
-  userId: string;
+  status: "cancelled" | "confirmed" | "expired" | "pending";
   currency: EventTicketCurrency;
-  eventId: string;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "confirmed" | "expired" | "pending";
-  id: string;
   /** @format date-time */
   createdAt: string;
+  eventId: string;
+  id: string;
 }
 
 export type GetUserOrdersResponse = {
   items: {
-    ticketWaveName: string | null;
     subtotal: string;
+    pricePerTicket: string;
+    id: string;
     /** @format double */
     quantity: number;
-    pricePerTicket: string;
     ticketWaveId: string;
-    id: string;
+    ticketWaveName: string | null;
     currency: EventTicketCurrency | null;
   }[];
   event: {
@@ -615,15 +662,16 @@ export type GetUserOrdersResponse = {
       imageType: EventImageType;
       url: string;
     }[];
-    venueName: string | null;
     venueAddress: string | null;
+    venueName: string | null;
     platform: string | null;
-    name: string | null;
-    id: string | null;
     eventStartDate: string | null;
     eventEndDate: string | null;
+    name: string | null;
+    id: string | null;
   };
   vatOnCommission: string;
+  userId: string;
   totalAmount: string;
   subtotalAmount: string;
   /** @format date-time */
@@ -633,15 +681,14 @@ export type GetUserOrdersResponse = {
   confirmedAt: string | null;
   /** @format date-time */
   cancelledAt: string | null;
-  userId: string;
+  status: "cancelled" | "confirmed" | "expired" | "pending";
   currency: EventTicketCurrency;
-  eventId: string;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "confirmed" | "expired" | "pending";
-  id: string;
   /** @format date-time */
   createdAt: string;
+  eventId: string;
+  id: string;
 }[];
 
 export interface GetOrderTicketsResponse {
@@ -656,7 +703,7 @@ export interface GetOrderTicketsResponse {
     ticketWave: {
       name: string;
     } | null;
-    reservationStatus: "active" | "cancelled" | "refund_pending" | "refunded";
+    reservationStatus: "cancelled" | "active" | "refund_pending" | "refunded";
     hasDocument: boolean;
     /** @format date-time */
     soldAt: string | null;
@@ -723,6 +770,19 @@ export interface EarningsForSelection {
 
 export type GetAvailableEarningsResponse = EarningsForSelection;
 
+export interface PaginationMeta {
+  /** @format double */
+  page: number;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  total: number;
+  /** @format double */
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export interface GetPayoutHistoryResponse {
   pagination: PaginationMeta;
   data: {
@@ -746,6 +806,8 @@ export interface GetPayoutHistoryResponse {
   }[];
 }
 
+export type PaginationQuery = InferTypeofPaginationSchema;
+
 export type JsonArray = JsonValue[];
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
@@ -765,17 +827,17 @@ export interface RequestPayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  /** @format date-time */
+  completedAt: string | null;
   amount: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
@@ -795,10 +857,10 @@ export type GetPayoutMethodsResponse = {
   accountHolderSurname: string;
   accountHolderName: string;
   userId: string;
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
@@ -812,10 +874,10 @@ export interface AddPayoutMethodResponse {
   accountHolderSurname: string;
   accountHolderName: string;
   userId: string;
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
@@ -923,10 +985,10 @@ export interface UpdatePayoutMethodResponse {
   accountHolderSurname: string;
   accountHolderName: string;
   userId: string;
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
@@ -947,8 +1009,8 @@ export interface GetUserPayoutDetailsResponse {
     sellerAmount: string;
     listingTicketId: string;
     currency: EventTicketCurrency;
-    id: string;
     createdAt: string;
+    id: string;
   }[];
   transactionReference: string | null;
   sellerUserId: string;
@@ -960,16 +1022,16 @@ export interface GetUserPayoutDetailsResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  /** @format date-time */
+  completedAt: string | null;
   amount: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
   id: string;
   /** @format date-time */
   createdAt: string;
@@ -983,12 +1045,12 @@ export interface GetUserPayoutDetailsResponse {
   };
   documents: {
     uploadedBy: string;
+    payoutId: string;
     /** @format date-time */
     uploadedAt: string;
     storagePath: string;
     /** @format double */
     sizeBytes: number;
-    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
@@ -1004,13 +1066,13 @@ export interface GetUserPayoutDetailsResponse {
   }[];
   events: {
     createdBy: string | null;
-    payoutId: string;
     userAgent: string | null;
     toStatus: PayoutStatus | null;
     ipAddress: string | null;
     fromStatus: PayoutStatus | null;
     eventType: PayoutEventType;
     eventData: string | number | boolean | JsonArray | JsonObject | null;
+    payoutId: string;
     id: string;
     /** @format date-time */
     createdAt: string;
@@ -1030,7 +1092,7 @@ export interface GetUserPayoutDetailsResponse {
   } | null;
 }
 
-export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencyAmountStringFailedAtDateOrNullFailureReasonStringOrNullCompletedAtDateOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateSellerUserIdStringTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
+export interface PaginatedResponseCreatedAtDateIdStringUpdatedAtDateCurrencyEventTicketCurrencyMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingAmountStringCompletedAtDateOrNullFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateSellerUserIdStringTransactionReferenceStringOrNullLinkedEarnings58IdStringCreatedAtStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
   data: {
     payoutMethod: {
       payoutType: PayoutType;
@@ -1048,8 +1110,8 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
       sellerAmount: string;
       listingTicketId: string;
       currency: EventTicketCurrency;
-      id: string;
       createdAt: string;
+      id: string;
     }[];
     transactionReference: string | null;
     sellerUserId: string;
@@ -1061,17 +1123,17 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
     processedAt: string | null;
     payoutMethodId: string;
     notes: string | null;
-    /** @format date-time */
-    completedAt: string | null;
     failureReason: string | null;
     /** @format date-time */
     failedAt: string | null;
+    /** @format date-time */
+    completedAt: string | null;
     amount: string;
+    status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+    metadata: string | number | boolean | JsonArray | JsonObject | null;
     currency: EventTicketCurrency;
     /** @format date-time */
     updatedAt: string;
-    status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-    metadata: string | number | boolean | JsonArray | JsonObject | null;
     id: string;
     /** @format date-time */
     createdAt: string;
@@ -1080,7 +1142,7 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
 }
 
 export type GetPayoutsResponse =
-  PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencyAmountStringFailedAtDateOrNullFailureReasonStringOrNullCompletedAtDateOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateSellerUserIdStringTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
+  PaginatedResponseCreatedAtDateIdStringUpdatedAtDateCurrencyEventTicketCurrencyMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingAmountStringCompletedAtDateOrNullFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateSellerUserIdStringTransactionReferenceStringOrNullLinkedEarnings58IdStringCreatedAtStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
 
 export interface InferTypeofAdminPayoutsQuerySchema {
   status?: "cancelled" | "pending" | "completed" | "failed";
@@ -1099,8 +1161,8 @@ export interface GetPayoutDetailsResponse {
     sellerAmount: string;
     listingTicketId: string;
     currency: EventTicketCurrency;
-    id: string;
     createdAt: string;
+    id: string;
   }[];
   transactionReference: string | null;
   sellerUserId: string;
@@ -1112,16 +1174,16 @@ export interface GetPayoutDetailsResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  /** @format date-time */
+  completedAt: string | null;
   amount: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
   id: string;
   /** @format date-time */
   createdAt: string;
@@ -1156,12 +1218,12 @@ export interface GetPayoutDetailsResponse {
   };
   documents: {
     uploadedBy: string;
+    payoutId: string;
     /** @format date-time */
     uploadedAt: string;
     storagePath: string;
     /** @format double */
     sizeBytes: number;
-    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
@@ -1201,17 +1263,17 @@ export interface ProcessPayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  /** @format date-time */
+  completedAt: string | null;
   amount: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
@@ -1238,17 +1300,17 @@ export interface CompletePayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  /** @format date-time */
+  completedAt: string | null;
   amount: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
@@ -1272,17 +1334,17 @@ export interface FailPayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  /** @format date-time */
+  completedAt: string | null;
   amount: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
@@ -1305,17 +1367,17 @@ export interface UpdatePayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  /** @format date-time */
+  completedAt: string | null;
   amount: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
@@ -1343,17 +1405,17 @@ export interface CancelPayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  /** @format date-time */
+  completedAt: string | null;
   amount: string;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
   id: string;
   /** @format date-time */
   deletedAt: string | null;
@@ -1370,12 +1432,12 @@ export interface UploadPayoutDocumentResponse {
   documentUrl: string;
   document: {
     uploadedBy: string;
+    payoutId: string;
     /** @format date-time */
     uploadedAt: string;
     storagePath: string;
     /** @format double */
     sizeBytes: number;
-    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
@@ -1539,50 +1601,74 @@ export interface GetVerificationAuditHistoryResponse {
   }[];
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray {
-  data: {
-    ticketWaves: {
-      isSoldOut: boolean;
-      isAvailable: boolean;
-      faceValue: string;
-      currency: EventTicketCurrency;
-      status: string;
-      name: string;
-      id: string;
-      externalId: string;
-      description: string | null;
-    }[];
-    images: {
-      imageType: EventImageType;
-      /** @format double */
-      displayOrder: number;
-      id: string;
-      url: string;
-    }[];
-    venueName: string | null;
-    venueAddress: string;
-    /** @format date-time */
-    updatedAt: string;
-    status: string;
-    qrAvailabilityTiming: QrAvailabilityTiming | null;
-    platform: string;
-    name: string;
-    id: string;
-    externalUrl: string;
-    externalId: string;
-    /** @format date-time */
-    eventStartDate: string;
-    /** @format date-time */
-    eventEndDate: string;
-    description: string | null;
-    /** @format date-time */
-    createdAt: string;
-  }[];
-  pagination: PaginationMeta;
+/**
+ * Explicit response types for the Admin Events controller
+ * These are needed because Kysely's inferred types are too complex for TSOA
+ */
+export interface AdminEventImage {
+  id: string;
+  url: string;
+  imageType: string;
+  /** @format double */
+  displayOrder: number;
+  createdAt?: string;
 }
 
-export type GetEventsResponse =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray;
+export interface AdminTicketWave {
+  id: string;
+  name: string;
+  description: string | null;
+  faceValue: string;
+  currency: string;
+  isSoldOut: boolean;
+  isAvailable: boolean;
+  externalId: string;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdminEvent {
+  id: string;
+  name: string;
+  description: string | null;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  venueName: string | null;
+  venueAddress: string | null;
+  venueCity: string | null;
+  externalUrl: string;
+  externalId: string;
+  platform: string;
+  qrAvailabilityTiming: string | null;
+  status: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  images: AdminEventImage[];
+  ticketWaves: AdminTicketWave[];
+}
+
+export interface PaginatedAdminEventsResponse {
+  data: AdminEvent[];
+  pagination: {
+    hasPrev: boolean;
+    hasNext: boolean;
+    /** @format double */
+    totalPages: number;
+    /** @format double */
+    total: number;
+    /** @format double */
+    limit: number;
+    /** @format double */
+    page: number;
+  };
+}
+
+export type GetEventsResponse = PaginatedAdminEventsResponse;
 
 export interface InferTypeofAdminEventsQuerySchema {
   status?: "active" | "inactive";
@@ -1598,140 +1684,122 @@ export interface InferTypeofAdminEventsQuerySchema {
 
 export type AdminEventsQuery = InferTypeofAdminEventsQuerySchema;
 
-export interface GetEventDetailsResponse {
-  ticketWaves: {
-    isSoldOut: boolean;
-    isAvailable: boolean;
-    faceValue: string;
-    currency: EventTicketCurrency;
-    updatedAt: string;
-    status: string;
-    name: string;
-    id: string;
-    externalId: string;
-    description: string | null;
-    createdAt: string;
-  }[];
-  images: {
-    imageType: EventImageType;
-    /** @format double */
-    displayOrder: number;
-    id: string;
-    createdAt: string;
-    url: string;
-  }[];
-  venueName: string | null;
-  venueAddress: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: string;
-  qrAvailabilityTiming: QrAvailabilityTiming | null;
-  platform: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
+export interface AdminEventDetail {
   id: string;
-  externalUrl: string;
-  externalId: string;
+  name: string;
+  description: string | null;
   /** @format date-time */
   eventStartDate: string;
   /** @format date-time */
   eventEndDate: string;
-  description: string | null;
+  venueName: string | null;
+  venueAddress: string | null;
+  venueCity: string | null;
+  externalUrl: string;
+  externalId: string;
+  platform: string;
+  qrAvailabilityTiming: string | null;
+  status: string;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  images: AdminEventImage[];
+  ticketWaves: AdminTicketWave[];
+  metadata: any;
+  /** @format date-time */
+  lastScrapedAt: string;
 }
 
-export interface UpdateEventResponse {
-  venueName: string | null;
-  venueLongitude: string | null;
-  venueLatitude: string | null;
-  venueAddress: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: string;
-  qrAvailabilityTiming: QrAvailabilityTiming | null;
-  platform: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
+export type GetEventDetailsResponse = AdminEventDetail;
+
+export interface UpdatedEvent {
   id: string;
-  externalUrl: string;
-  externalId: string;
+  name: string;
+  description: string | null;
   /** @format date-time */
   eventStartDate: string;
   /** @format date-time */
   eventEndDate: string;
-  description: string | null;
-  /** @format date-time */
-  deletedAt: string | null;
+  venueId: string | null;
+  externalUrl: string;
+  externalId: string;
+  platform: string;
+  qrAvailabilityTiming: string | null;
+  status: string;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  lastScrapedAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
 }
+
+export type UpdateEventResponse = UpdatedEvent;
 
 export interface UpdateEventRouteBody {
   status?: "active" | "inactive";
   qrAvailabilityTiming?: "12h" | "24h" | "3h" | "48h" | "6h" | "72h" | null;
   externalUrl?: string;
-  venueAddress?: string;
-  venueName?: string | null;
   eventEndDate?: string;
   eventStartDate?: string;
   description?: string | null;
   name?: string;
 }
 
-export interface DeleteEventResponse {
-  venueName: string | null;
-  venueLongitude: string | null;
-  venueLatitude: string | null;
-  venueAddress: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: string;
-  qrAvailabilityTiming: QrAvailabilityTiming | null;
-  platform: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
+export interface DeletedEvent {
   id: string;
-  externalUrl: string;
-  externalId: string;
+  name: string;
+  description: string | null;
   /** @format date-time */
   eventStartDate: string;
   /** @format date-time */
   eventEndDate: string;
-  description: string | null;
-  /** @format date-time */
-  deletedAt: string | null;
+  venueId: string | null;
+  externalUrl: string;
+  externalId: string;
+  platform: string;
+  qrAvailabilityTiming: string | null;
+  status: string;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
-}
-
-export interface CreateTicketWaveResponse {
-  isSoldOut: boolean;
-  isAvailable: boolean;
-  faceValue: string;
-  currency: EventTicketCurrency;
-  eventId: string;
   /** @format date-time */
   updatedAt: string;
-  status: string;
-  name: string;
-  metadata: JsonValue;
   /** @format date-time */
   lastScrapedAt: string;
-  id: string;
-  externalId: string;
-  description: string | null;
   /** @format date-time */
   deletedAt: string | null;
+}
+
+export type DeleteEventResponse = DeletedEvent;
+
+export interface CreatedTicketWave {
+  id: string;
+  eventId: string;
+  externalId: string;
+  name: string;
+  description: string | null;
+  faceValue: string;
+  currency: string;
+  isSoldOut: boolean;
+  isAvailable: boolean;
+  status: string;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  lastScrapedAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
 }
+
+export type CreateTicketWaveResponse = CreatedTicketWave;
 
 export interface CreateTicketWaveRouteBody {
   externalId?: string;
@@ -1744,27 +1812,29 @@ export interface CreateTicketWaveRouteBody {
   name: string;
 }
 
-export interface UpdateTicketWaveResponse {
+export interface UpdatedTicketWave {
+  id: string;
+  eventId: string;
+  externalId: string;
+  name: string;
+  description: string | null;
+  faceValue: string;
+  currency: string;
   isSoldOut: boolean;
   isAvailable: boolean;
-  faceValue: string;
-  currency: EventTicketCurrency;
-  eventId: string;
-  /** @format date-time */
-  updatedAt: string;
   status: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
-  id: string;
-  externalId: string;
-  description: string | null;
-  /** @format date-time */
-  deletedAt: string | null;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  lastScrapedAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
 }
+
+export type UpdateTicketWaveResponse = UpdatedTicketWave;
 
 export interface UpdateTicketWaveRouteBody {
   isAvailable?: boolean;
@@ -1776,37 +1846,43 @@ export interface UpdateTicketWaveRouteBody {
   name?: string;
 }
 
-export interface DeleteTicketWaveResponse {
+export interface DeletedTicketWave {
+  id: string;
+  eventId: string;
+  externalId: string;
+  name: string;
+  description: string | null;
+  faceValue: string;
+  currency: string;
   isSoldOut: boolean;
   isAvailable: boolean;
-  faceValue: string;
-  currency: EventTicketCurrency;
-  eventId: string;
-  /** @format date-time */
-  updatedAt: string;
   status: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
-  id: string;
-  externalId: string;
-  description: string | null;
-  /** @format date-time */
-  deletedAt: string | null;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  lastScrapedAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
 }
 
-export interface UploadEventImageResponse {
-  imageType: "flyer" | "hero";
-  url: string;
+export type DeleteTicketWaveResponse = DeletedTicketWave;
+
+export interface UploadImageResponse {
   id: string;
+  url: string;
+  imageType: string;
 }
 
-export interface DeleteEventImageResponse {
+export type UploadEventImageResponse = UploadImageResponse;
+
+export interface DeleteImageResponse {
   success: boolean;
 }
+
+export type DeleteEventImageResponse = DeleteImageResponse;
 
 export interface GetCurrentUserResponse {
   /** Reason for manual review rejection (if rejected by admin) */
@@ -1934,11 +2010,11 @@ export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDesc
   /** @format date-time */
   deletedAt: string | null;
   id: string;
-  status: "pending" | "failed" | "seen" | "sent";
   /** @format date-time */
   updatedAt: string;
-  channels: ("email" | "in_app" | "sms")[];
+  status: "pending" | "failed" | "seen" | "sent";
   userId: string;
+  channels: ("email" | "in_app" | "sms")[];
   channelStatus: string | number | boolean | JsonArray | JsonObject | null;
   /** @format double */
   retryCount: number;
@@ -2295,6 +2371,8 @@ export class Api<
         limit: number;
         /** @format double */
         page: number;
+        /** Filter by city name */
+        city?: string;
       },
       params: RequestParams = {},
     ) =>
@@ -2330,6 +2408,45 @@ export class Api<
       }),
 
     /**
+     * @description Get trending events based on view count in the last N days
+     *
+     * @tags Events
+     * @name GetTrendingEvents
+     * @request GET:/events/trending
+     */
+    getTrendingEvents: (
+      query?: {
+        /** @format double */
+        days?: number;
+        /** @format double */
+        limit?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetTrendingEventsResponse, any>({
+        path: `/events/trending`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Get list of distinct cities for filter dropdown
+     *
+     * @tags Events
+     * @name GetDistinctCities
+     * @request GET:/events/cities
+     */
+    getDistinctCities: (params: RequestParams = {}) =>
+      this.request<GetDistinctCitiesResponse, any>({
+        path: `/events/cities`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
      * No description
      *
      * @tags Events
@@ -2340,6 +2457,21 @@ export class Api<
       this.request<GetEventByIdResponse, any>({
         path: `/events/${eventId}`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Track a view for an event (called when user views event detail page)
+     *
+     * @tags Events
+     * @name TrackView
+     * @request POST:/events/{eventId}/view
+     */
+    trackView: (eventId: string, params: RequestParams = {}) =>
+      this.request<TrackViewResponse, any>({
+        path: `/events/${eventId}/view`,
+        method: "POST",
         format: "json",
         ...params,
       }),

@@ -64,6 +64,7 @@ const EnvSchema = z.object({
     .optional()
     .default(0.0247), // ~40.5 UYU = 1 USD
   EXCHANGE_RATE_CACHE_TTL_HOURS: z.coerce.number().default(1),
+  GOOGLE_PLACES_API_KEY: z.string().optional(),
 });
 
 export const env = EnvSchema.safeParse(process.env);
@@ -121,4 +122,5 @@ export const {
   EXCHANGE_RATE_API_URL,
   EXCHANGE_RATE_FALLBACK_UYU_TO_USD,
   EXCHANGE_RATE_CACHE_TTL_HOURS,
+  GOOGLE_PLACES_API_KEY
 } = env.data;

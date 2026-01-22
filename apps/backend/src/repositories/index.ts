@@ -27,3 +27,5 @@ export type {
   CreateBatchData,
   CreateBatchItemData,
 } from './notification-batches';
+export {VenuesRepository} from './venues';
+export {EventViewsRepository} from './event-views';

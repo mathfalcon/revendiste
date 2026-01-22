@@ -214,6 +214,31 @@ variable "cronjob_scraping_memory" {
   default     = 2048
 }
 
+# Scraper configuration (can be overridden per environment)
+variable "scraper_max_concurrency" {
+  description = "Max parallel browser pages for scraping (lower = less bot detection)"
+  type        = number
+  default     = 2
+}
+
+variable "scraper_same_domain_delay_secs" {
+  description = "Delay between requests to same domain (anti-bot measure)"
+  type        = number
+  default     = 5
+}
+
+variable "scraper_max_requests_per_crawl" {
+  description = "Max URLs to process per crawl run"
+  type        = number
+  default     = 50
+}
+
+variable "scraper_max_pages_per_browser" {
+  description = "Max pages per browser instance"
+  type        = number
+  default     = 2
+}
+
 variable "log_retention_days" {
   description = "Number of days to retain CloudWatch logs"
   type        = number

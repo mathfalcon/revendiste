@@ -80,7 +80,7 @@ export class EventImageService {
       (1 - compressedBuffer.length / originalBuffer.length) *
       100
     ).toFixed(1);
-    logger.info('Compressed event image', {
+    logger.debug('Compressed event image', {
       originalSize: originalBuffer.length,
       compressedSize: compressedBuffer.length,
       compressionRatio: `${compressionRatio}%`,
@@ -95,7 +95,7 @@ export class EventImageService {
       filename,
     });
 
-    logger.info('Uploaded event image to storage', {
+    logger.debug('Uploaded event image to storage', {
       storagePath: uploadResult.path,
       eventId,
     });

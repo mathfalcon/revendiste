@@ -126,6 +126,85 @@ export class EntrasteScraper extends BaseScraper {
     }
   }
 
+  /**
+   * Debug a specific URL using the exact same logic as the main scraper.
+   * This allows testing extraction logic on a single event without crawling the list.
+   *
+   * @param url - The detail page URL to scrape
+   * @returns The scraped event data, or null if scraping failed
+   */
+  async debugScrapeUrl(url: string): Promise<ScrapedEventData | null> {
+    // Reset events array for this debug run
+    this.events = [];
+
+    const userAgent = this.getRandomUserAgent();
+    logger.info('Debug scraping URL:', {url, userAgent});
+
+    const crawler = this.createCrawler({
+      launchContext: {
+        userAgent,
+      },
+      maxRequestsPerCrawl: 1,
+      maxConcurrency: 1,
+      preNavigationHooks: [
+        async ({page}) => {
+          const viewports = [
+            {width: 1920, height: 1080},
+            {width: 1366, height: 768},
+          ];
+          const viewport =
+            viewports[Math.floor(Math.random() * viewports.length)];
+          await page.setViewportSize(viewport);
+
+          await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => false,
+            });
+          });
+        },
+      ],
+      requestHandler: this.handleRequest,
+      failedRequestHandler({request, log, error}) {
+        const err = error as Error | undefined;
+        log.error(`Debug scrape failed:`, {
+          url: request.url,
+          errorMessage: err?.message,
+        });
+      },
+    });
+
+    try {
+      // Add the URL directly as a DETAIL request (skip list crawling)
+      await crawler.addRequests([
+        {
+          url,
+          userData: {
+            label: RequestLabel.DETAIL,
+          },
+        },
+      ]);
+
+      await crawler.run();
+
+      if (this.events.length > 0) {
+        logger.info('Debug scrape successful', {
+          eventName: this.events[0].name,
+          hasCoordinates: !!(
+            this.events[0].scrapedVenueLatitude &&
+            this.events[0].scrapedVenueLongitude
+          ),
+        });
+        return this.events[0];
+      }
+
+      logger.warn('Debug scrape completed but no event data was extracted');
+      return null;
+    } catch (error) {
+      logger.error('Debug scrape error:', error);
+      return this.events[0] || null;
+    }
+  }
+
   handleRequest: PlaywrightRequestHandler = async args => {
     const {request, log} = args;
     log.info(`▶️  ${request.userData.label}  ${request.url}`);
@@ -193,53 +272,93 @@ export class EntrasteScraper extends BaseScraper {
   /**
    * Extract coordinates from the embedded Google Maps
    * Looks for the ll= parameter in Google Maps links
+   * The map is lazy-loaded - we need to click the placeholder to trigger loading
+   *
+   * Uses retry logic to handle slow-loading maps during aggressive scraping
+   */
+  /**
+   * Extract coordinates from the page's JavaScript initMap() function.
+   *
+   * Entraste embeds coordinates directly in their JavaScript like:
+   *   function initMap() {
+   *     const lat = -34.82866;
+   *     const lng = -55.25167;
+   *     ...
+   *   }
+   *
+   * This is faster and more reliable than waiting for Google Maps to load,
+   * and allows us to detect when coordinates are missing (lat=0, lng=0).
    */
   private async extractCoordinates(
     page: Page,
   ): Promise<{latitude: number; longitude: number} | null> {
+    const pageUrl = page.url();
+    const eventSlug = pageUrl.split('/').pop() || 'unknown';
+
     try {
-      // Look for Google Maps link with ll= parameter
-      const mapsHref = await page
-        .$eval(
-          '#event-map a[href*="maps.google.com"]',
-          el => el.getAttribute('href'),
-        )
-        .catch(() => null);
+      // Extract coordinates from the JavaScript on the page
+      // The initMap() function contains: const lat = X; const lng = Y;
+      const coords = await page.evaluate(() => {
+        // Get all script tags and find the one with initMap
+        const scripts = Array.from(document.querySelectorAll('script'));
+        for (const script of scripts) {
+          const content = script.textContent || '';
+          if (content.includes('function initMap()')) {
+            // Extract lat and lng values from the script
+            // Pattern: const lat = -34.82866; or const lat = 0;
+            const latMatch = content.match(/const\s+lat\s*=\s*(-?\d+\.?\d*)/);
+            const lngMatch = content.match(/const\s+lng\s*=\s*(-?\d+\.?\d*)/);
 
-      if (mapsHref) {
-        // Extract coordinates from ll= parameter (format: ll=lat,lng)
-        const llMatch = mapsHref.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-        if (llMatch) {
-          const latitude = parseFloat(llMatch[1]);
-          const longitude = parseFloat(llMatch[2]);
-          if (!isNaN(latitude) && !isNaN(longitude)) {
-            return {latitude, longitude};
+            if (latMatch && lngMatch) {
+              return {
+                lat: parseFloat(latMatch[1]),
+                lng: parseFloat(lngMatch[1]),
+              };
+            }
           }
         }
+        return null;
+      });
+
+      if (!coords) {
+        logger.debug('No initMap() function with coordinates found in page scripts', {eventSlug});
+        return null;
       }
 
-      // Fallback: try the @lat,lng format in google.com/maps links
-      const mapsAtHref = await page
-        .$eval(
-          '#event-map a[href*="google.com/maps/@"]',
-          el => el.getAttribute('href'),
-        )
-        .catch(() => null);
+      const {lat, lng} = coords;
 
-      if (mapsAtHref) {
-        const atMatch = mapsAtHref.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-        if (atMatch) {
-          const latitude = parseFloat(atMatch[1]);
-          const longitude = parseFloat(atMatch[2]);
-          if (!isNaN(latitude) && !isNaN(longitude)) {
-            return {latitude, longitude};
-          }
-        }
+      // Check if coordinates are valid (not 0,0 which means "no location")
+      // Using a small epsilon to handle floating point comparison
+      const isZeroCoords = Math.abs(lat) < 0.001 && Math.abs(lng) < 0.001;
+
+      if (isZeroCoords) {
+        logger.debug('Event has no location data (coordinates are 0,0)', {eventSlug});
+        return null;
       }
 
-      return null;
+      // Validate coordinates are within reasonable bounds
+      // Latitude: -90 to 90, Longitude: -180 to 180
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        logger.debug('Coordinates are outside valid bounds', {
+          eventSlug,
+          lat,
+          lng,
+        });
+        return null;
+      }
+
+      logger.debug('Extracted coordinates from initMap() script', {
+        latitude: lat,
+        longitude: lng,
+        eventSlug,
+      });
+
+      return {latitude: lat, longitude: lng};
     } catch (error) {
-      logger.debug('Could not extract coordinates from map:', error);
+      logger.debug('Could not extract coordinates from page scripts', {
+        eventSlug,
+        error: error instanceof Error ? error.message : error,
+      });
       return null;
     }
   }
@@ -495,6 +614,9 @@ export class EntrasteScraper extends BaseScraper {
     const url = page.url();
 
     try {
+      // Wait for DOM to be ready (coordinates are extracted from inline JS, no need for full load)
+      await page.waitForLoadState('domcontentloaded');
+
       // Extract all event data using single-responsibility methods
       const {name, description} = await this.extractBasicEventInfo(page);
       const {venueName, venueAddress} = await this.extractVenueInfo(page);
@@ -508,10 +630,10 @@ export class EntrasteScraper extends BaseScraper {
         platform: Platform.Entraste,
         name,
         description,
-        venueName,
-        venueAddress,
-        venueLatitude: coordinates?.latitude,
-        venueLongitude: coordinates?.longitude,
+        scrapedVenueName: venueName,
+        scrapedVenueAddress: venueAddress,
+        scrapedVenueLatitude: coordinates?.latitude,
+        scrapedVenueLongitude: coordinates?.longitude,
         eventStartDate: startDate,
         eventEndDate: endDate,
         externalUrl: url,

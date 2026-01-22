@@ -37,6 +37,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -70,6 +73,7 @@ jobs:
         with:
           context: .
           file: ./deploy/backend.Dockerfile
+          platforms: linux/arm64
           push: true
           tags: ${{ steps.backend-meta.outputs.tags }}
           labels: ${{ steps.backend-meta.outputs.labels }}
@@ -99,6 +103,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -119,6 +126,7 @@ jobs:
         with:
           context: .
           file: ./deploy/frontend.Dockerfile
+          platforms: linux/arm64
           push: true
           tags: ${{ steps.frontend-meta.outputs.tags }}
           labels: ${{ steps.frontend-meta.outputs.labels }}

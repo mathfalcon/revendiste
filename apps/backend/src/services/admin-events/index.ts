@@ -19,8 +19,7 @@ interface UpdateEventData {
   description?: string | null;
   eventStartDate?: string;
   eventEndDate?: string;
-  venueName?: string | null;
-  venueAddress?: string | null;
+  // Note: Venue is now managed via eventVenues table
   externalUrl?: string | null;
   qrAvailabilityTiming?: '3h' | '6h' | '12h' | '24h' | '48h' | '72h' | null;
   status?: 'active' | 'inactive';
@@ -88,9 +87,8 @@ export class AdminEventsService {
       updateData.eventStartDate = new Date(data.eventStartDate);
     if (data.eventEndDate !== undefined)
       updateData.eventEndDate = new Date(data.eventEndDate);
-    if (data.venueName !== undefined) updateData.venueName = data.venueName;
-    if (data.venueAddress !== undefined)
-      updateData.venueAddress = data.venueAddress ?? undefined;
+    // Note: Venue is now managed via eventVenues table (venueId)
+    // Updating venue directly on events is no longer supported
     if (data.externalUrl !== undefined)
       updateData.externalUrl = data.externalUrl ?? undefined;
     if (data.qrAvailabilityTiming !== undefined)

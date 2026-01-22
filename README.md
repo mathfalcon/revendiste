@@ -276,3 +276,10 @@ For issues and questions:
 - Review the TSOA documentation for backend questions
 - Check TanStack Router docs for frontend routing
 - Open an issue in the repository
+
+SCRAPER_MAX_CONCURRENCY=10 \
+SCRAPER_SAME_DOMAIN_DELAY_SECS=1 \
+SCRAPER_MAX_PAGES_PER_BROWSER=4 \
+pnpm scrape-events
+
+LOG_LEVEL=debug pnpm tsx src/scripts/debug-scrape.ts entraste https://entraste.com/evento/no-art-open-air-uruguay-2026

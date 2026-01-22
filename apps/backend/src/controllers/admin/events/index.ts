@@ -40,28 +40,27 @@ import {
   UpdateTicketWaveRouteSchema,
 } from './validation';
 import {AdminEventsService} from '~/services/admin-events';
+import type {
+  PaginatedAdminEventsResponse,
+  AdminEventDetail,
+  UpdatedEvent,
+  DeletedEvent,
+  CreatedTicketWave,
+  UpdatedTicketWave,
+  DeletedTicketWave,
+  UploadEventImageResponse as UploadImageResponse,
+  DeleteEventImageResponse as DeleteImageResponse,
+} from './types';
 
-type GetEventsResponse = ReturnType<AdminEventsService['getEvents']>;
-type GetEventDetailsResponse = ReturnType<
-  AdminEventsService['getEventDetails']
->;
-type UpdateEventResponse = ReturnType<AdminEventsService['updateEvent']>;
-type DeleteEventResponse = ReturnType<AdminEventsService['deleteEvent']>;
-type CreateTicketWaveResponse = ReturnType<
-  AdminEventsService['createTicketWave']
->;
-type UpdateTicketWaveResponse = ReturnType<
-  AdminEventsService['updateTicketWave']
->;
-type DeleteTicketWaveResponse = ReturnType<
-  AdminEventsService['deleteTicketWave']
->;
-type UploadEventImageResponse = ReturnType<
-  AdminEventsService['uploadEventImage']
->;
-type DeleteEventImageResponse = ReturnType<
-  AdminEventsService['deleteEventImage']
->;
+type GetEventsResponse = Promise<PaginatedAdminEventsResponse>;
+type GetEventDetailsResponse = Promise<AdminEventDetail>;
+type UpdateEventResponse = Promise<UpdatedEvent>;
+type DeleteEventResponse = Promise<DeletedEvent>;
+type CreateTicketWaveResponse = Promise<CreatedTicketWave>;
+type UpdateTicketWaveResponse = Promise<UpdatedTicketWave>;
+type DeleteTicketWaveResponse = Promise<DeletedTicketWave>;
+type UploadEventImageResponse = Promise<UploadImageResponse>;
+type DeleteEventImageResponse = Promise<DeleteImageResponse>;
 
 @Route('admin/events')
 @Middlewares(requireAuthMiddleware, requireAdminMiddleware)

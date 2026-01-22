@@ -3,9 +3,11 @@ import {EntrasteScraper} from '../services/scraping/entraste';
 import {RedTicketsScraper} from '../services/scraping/redtickets';
 import {ScrapingService} from '~/services/scraping';
 import {EventsService} from '~/services/events';
-import {EventsRepository} from '~/repositories';
+import {VenuesService} from '~/services/venues';
+import {GooglePlacesService} from '~/services/google-places';
+import {EventsRepository, VenuesRepository} from '~/repositories';
 import {db} from '~/db';
-import {logger} from '~/utils';
+import {logger, startMemoryMonitor, logMemoryUsage} from '~/utils';
 
 /**
  * Runs the scrape events job logic once
@@ -13,22 +15,33 @@ import {logger} from '~/utils';
  */
 export async function runScrapeEvents() {
   const eventsRepository = new EventsRepository(db);
+  const venuesRepository = new VenuesRepository(db);
+  const googlePlacesService = new GooglePlacesService();
+  const venuesService = new VenuesService(venuesRepository, googlePlacesService);
   const scrapingService = new ScrapingService(
     [new EntrasteScraper(), new RedTicketsScraper()],
-    new EventsService(eventsRepository),
+    new EventsService(eventsRepository, venuesRepository),
+    venuesService,
   );
+
+  // Start memory monitoring (logs every 10 seconds)
+  const stopMemoryMonitor = startMemoryMonitor(10000);
 
   try {
     logger.info('Starting event scraping...');
+    logMemoryUsage('before-scrape');
 
     const result = await scrapingService.scrapeEvents();
 
+    logMemoryUsage('after-scrape');
     logger.info('Event scraping completed', {
       eventsScraped: result.length,
     });
   } catch (error) {
     logger.error('Error scraping events:', error);
     throw error;
+  } finally {
+    stopMemoryMonitor();
   }
 }
 

@@ -50,10 +50,13 @@ export const ScrapedEventDataSchema = z.object({
   description: z.string().optional(),
   eventStartDate: z.date(),
   eventEndDate: z.date(),
-  venueName: z.string().optional(),
-  venueAddress: z.string(),
-  venueLatitude: z.number().optional(),
-  venueLongitude: z.number().optional(),
+  // Venue data for finding/creating venue via VenuesService
+  scrapedVenueName: z.string().optional(),
+  scrapedVenueAddress: z.string(),
+  scrapedVenueLatitude: z.number().optional(),
+  scrapedVenueLongitude: z.number().optional(),
+  // Venue ID (populated after processing through VenuesService)
+  venueId: z.string().uuid().optional(),
   externalUrl: z.url(),
   images: z.array(
     z.object({

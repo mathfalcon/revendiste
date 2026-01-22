@@ -82,6 +82,12 @@ variable "process_notifications_schedule" {
   default     = "cron(*/5 * * * ? *)" # Every 5 minutes
 }
 
+variable "use_fargate_spot" {
+  description = "Whether to use Fargate Spot for all cronjobs (up to 70% cost savings). Safe for idempotent jobs that can tolerate interruption."
+  type        = bool
+  default     = true
+}
+
 variable "common_tags" {
   description = "Common tags for all resources"
   type        = map(string)
