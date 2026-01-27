@@ -1,6 +1,6 @@
 ---
+name: tanstack-react-router_routing
 description: TanStack Router: Routing
-alwaysApply: false
 ---
 
 # Code-Based Routing
@@ -1579,3 +1579,4 @@ Or you can define the virtual routes directly in the configuration, while much l
   }
 }
 ```
+

@@ -1,6 +1,6 @@
 ---
+name: tanstack-react-router_api
 description: TanStack Router: API
-alwaysApply: false
 ---
 
 # ActiveLinkOptions type
@@ -4348,3 +4348,4 @@ function Component() {
   // ...
 }
 ```
+

@@ -1,6 +1,6 @@
 ---
+name: tanstack-react-router_guide
 description: TanStack Router: Guide
-alwaysApply: false
 ---
 
 # Authenticated Routes
@@ -7133,3 +7133,4 @@ const {enable, disable, navigate} = useConditionalNavigate({
   params: {postId: 'postId'},
 });
 ```
+

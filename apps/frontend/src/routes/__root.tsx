@@ -15,7 +15,7 @@ import {NotFound} from '~/components/NotFound';
 import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
-import {ClerkVariables, Navbar, Footer} from '~/components';
+import {ClerkVariables, Navbar, Footer, FullScreenLoading} from '~/components';
 import {ThemeProvider} from '~/components/ThemeProvider';
 import {ClerkProvider} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
@@ -24,11 +24,12 @@ import {StickyBarProvider} from '~/contexts';
 import {createServerFn} from '@tanstack/react-start';
 import {auth} from '@clerk/tanstack-react-start/server';
 
-const fetchClerkAuth = createServerFn({method: 'GET'}).handler(async () => {
-  const {isAuthenticated, userId} = await auth();
-
-  return {isAuthenticated, userId};
-});
+export const fetchClerkAuth = createServerFn({method: 'GET'}).handler(
+  async () => {
+    const {userId} = await auth();
+    return {userId};
+  },
+);
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -113,6 +114,7 @@ export const Route = createRootRouteWithContext<{
       },
     ],
   }),
+  pendingComponent: FullScreenLoading,
   errorComponent: props => {
     return (
       <RootDocument>
@@ -122,13 +124,6 @@ export const Route = createRootRouteWithContext<{
   },
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
-  beforeLoad: async () => {
-    const {userId} = await fetchClerkAuth();
-
-    return {
-      userId,
-    };
-  },
 });
 
 function RootComponent() {

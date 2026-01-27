@@ -2,12 +2,35 @@ import {createFileRoute, redirect} from '@tanstack/react-router';
 import {Suspense} from 'react';
 import {FullScreenLoading} from '~/components';
 import {EventPage} from '~/features/event';
-import {getEventByIdQuery, EventImageType} from '~/lib';
+import {getEventByIdQuery, EventImageType, getApiBaseURL} from '~/lib';
 import {isAxiosError} from 'axios';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {EventEnded} from '~/components/EventEnded';
 import type {ErrorComponentProps} from '@tanstack/react-router';
+import {createServerFn} from '@tanstack/react-start';
+import {VITE_APP_API_URL, BACKEND_IP} from '~/config/env';
+
+/**
+ * Server-only function to track event views.
+ * This runs exclusively on the server, making the tracking request invisible to clients.
+ */
+export const trackEventViewServer = createServerFn({method: 'POST'})
+  .inputValidator((data: {eventId: string}) => data)
+  .handler(async ({data}) => {
+    // Use BACKEND_IP if available (bypasses Cloudflare during SSR), otherwise fall back to API URL
+    const apiUrl = getApiBaseURL();
+
+    // Fire-and-forget: don't await, just let it run
+    fetch(`${apiUrl}/events/${data.eventId}/view`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }).catch(() => {
+      // Silently ignore errors - view tracking is not critical
+    });
+  });
 
 export const Route = createFileRoute('/eventos/$eventId')({
   component: RouteComponent,
@@ -28,11 +51,18 @@ export const Route = createFileRoute('/eventos/$eventId')({
     }
     throw error;
   },
-  loader: async ({context, params}) => {
+  loader: async ({context, params, cause}) => {
     try {
-      return await context.queryClient.ensureQueryData(
+      const eventData = await context.queryClient.ensureQueryData(
         getEventByIdQuery(params.eventId),
       );
+
+      // Track view only on actual navigation, not on prefetch (hover)
+      if (cause === 'enter') {
+        trackEventViewServer({data: {eventId: params.eventId}});
+      }
+
+      return eventData;
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 401) {
         throw redirect({

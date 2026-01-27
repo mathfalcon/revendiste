@@ -1,6 +1,6 @@
 ---
+name: revendiste-infrastructure
 description: Useful when having to manage revendiste's infrastructure
-alwaysApply: false
 ---
 
 # Revendiste Infrastructure (Terraform)
@@ -263,3 +263,4 @@ infrastructure/
 - [AWS Route53 Documentation](https://docs.aws.amazon.com/route53/)
 - [Resend DNS Setup Guide](https://resend.com/docs/dashboard/domains/introduction)
 - [AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
+

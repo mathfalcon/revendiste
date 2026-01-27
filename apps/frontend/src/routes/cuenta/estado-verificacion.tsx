@@ -18,7 +18,6 @@ import {
   Loader2,
 } from 'lucide-react';
 import {seo} from '~/utils/seo';
-import {beforeLoadRedirectToSignInIfNotAuthenticated} from '~/utils';
 
 export const Route = createFileRoute('/cuenta/estado-verificacion')({
   component: VerificationStatusPage,
@@ -31,9 +30,7 @@ export const Route = createFileRoute('/cuenta/estado-verificacion')({
       }),
     ],
   }),
-  beforeLoad: ({context, location}) => {
-    beforeLoadRedirectToSignInIfNotAuthenticated(context.userId, location);
-  },
+  // Auth check handled by parent /cuenta route
 });
 
 function VerificationStatusPage() {

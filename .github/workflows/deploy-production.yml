@@ -73,7 +73,8 @@ jobs:
         with:
           context: .
           file: ./deploy/backend.Dockerfile
-          platforms: linux/arm64
+          # Multi-arch: ARM64 for services/most cronjobs, AMD64 for scrape-events (Playwright)
+          platforms: linux/arm64,linux/amd64
           push: true
           tags: ${{ steps.backend-meta.outputs.tags }}
           labels: ${{ steps.backend-meta.outputs.labels }}

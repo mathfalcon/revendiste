@@ -69,6 +69,46 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
             0
           )
         `.as('totalViews'),
+        // Lowest available ticket price
+        sql<number | null>`
+          (
+            SELECT listing_tickets.price
+            FROM listing_tickets
+            INNER JOIN listings ON listings.id = listing_tickets.listing_id
+            INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+            LEFT JOIN order_ticket_reservations ON 
+              order_ticket_reservations.listing_ticket_id = listing_tickets.id
+              AND order_ticket_reservations.deleted_at IS NULL
+              AND order_ticket_reservations.reserved_until > NOW()
+            WHERE event_ticket_waves.event_id = events.id
+              AND listing_tickets.sold_at IS NULL
+              AND listing_tickets.deleted_at IS NULL
+              AND listings.deleted_at IS NULL
+              AND order_ticket_reservations.id IS NULL
+            ORDER BY listing_tickets.price ASC
+            LIMIT 1
+          )
+        `.as('lowestAvailableTicketPrice'),
+        // Currency from the lowest priced ticket
+        sql<string | null>`
+          (
+            SELECT event_ticket_waves.currency
+            FROM listing_tickets
+            INNER JOIN listings ON listings.id = listing_tickets.listing_id
+            INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
+            LEFT JOIN order_ticket_reservations ON 
+              order_ticket_reservations.listing_ticket_id = listing_tickets.id
+              AND order_ticket_reservations.deleted_at IS NULL
+              AND order_ticket_reservations.reserved_until > NOW()
+            WHERE event_ticket_waves.event_id = events.id
+              AND listing_tickets.sold_at IS NULL
+              AND listing_tickets.deleted_at IS NULL
+              AND listings.deleted_at IS NULL
+              AND order_ticket_reservations.id IS NULL
+            ORDER BY listing_tickets.price ASC
+            LIMIT 1
+          )
+        `.as('lowestAvailableTicketCurrency'),
         // Include images
         jsonArrayFrom(
           eb

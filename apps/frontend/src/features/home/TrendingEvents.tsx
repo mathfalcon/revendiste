@@ -1,34 +1,64 @@
 import {useQuery} from '@tanstack/react-query';
-import {Link} from '@tanstack/react-router';
-import {getTrendingEventsQuery} from '~/lib';
+import {Link, useNavigate} from '@tanstack/react-router';
+import {EventTicketCurrency, getTrendingEventsQuery} from '~/lib';
 import {Flame} from 'lucide-react';
 import {Separator} from '~/components/ui/separator';
 import {formatDate} from '~/utils/string';
 import {Skeleton} from '~/components/ui/skeleton';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import Autoplay from 'embla-carousel-autoplay';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from '~/components/ui/carousel';
+import {TextEllipsis} from '~/components/ui/text-ellipsis';
+import {Button} from '~/components/ui/button';
+import {getCurrencySymbol} from '~/utils';
+import {cn} from '~/lib/utils';
 
-const TrendingEventCard = ({
-  event,
-}: {
-  event: {
-    id: string;
-    name: string;
-    eventStartDate: string;
-    eventImages: {url: string; imageType: string}[];
-    venue: {name: string; city: string} | null;
-    totalViews: number;
-  };
-}) => {
+type TrendingEvent = {
+  id: string;
+  name: string;
+  eventStartDate: string;
+  eventImages: {url: string; imageType: string}[];
+  venue: {name: string; city: string} | null;
+  totalViews: number;
+  lowestAvailableTicketPrice: number | null;
+  lowestAvailableTicketCurrency: string | null;
+};
+
+const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
+  const navigate = useNavigate();
   const flyerImage =
     event.eventImages.find(img => img.imageType === 'flyer') ||
     event.eventImages[0];
+
+  const hasTickets = event.lowestAvailableTicketPrice !== null;
+  const currency =
+    (event.lowestAvailableTicketCurrency as EventTicketCurrency) ||
+    EventTicketCurrency.UYU;
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    if (!hasTickets) {
+      e.preventDefault();
+      e.stopPropagation();
+      navigate({
+        to: '/entradas/publicar',
+        search: {eventoId: event.id},
+      });
+    }
+  };
 
   return (
     <Link
       to='/eventos/$eventId'
       params={{eventId: event.id}}
-      className='group flex flex-col overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md'
+      className='group flex h-28 sm:h-36 overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md'
     >
-      <div className='relative aspect-[4/3] overflow-hidden'>
+      {/* Image - Left side */}
+      <div className='relative w-28 sm:w-36 h-full overflow-hidden flex-shrink-0'>
         {flyerImage ? (
           <img
             src={flyerImage.url}
@@ -38,45 +68,109 @@ const TrendingEventCard = ({
           />
         ) : (
           <div className='flex h-full w-full items-center justify-center bg-muted'>
-            <span className='text-muted-foreground'>Sin imagen</span>
+            <span className='text-xs text-muted-foreground'>Sin imagen</span>
           </div>
         )}
-        {/* Views badge */}
-        <div className='absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-xs text-white'>
-          <Flame className='h-3 w-3 text-orange-400' />
-          <span>{event.totalViews}</span>
-        </div>
       </div>
-      <div className='flex flex-col gap-1 p-3'>
-        <h3 className='line-clamp-2 text-sm font-semibold leading-tight group-hover:text-primary'>
-          {event.name}
-        </h3>
-        <p className='text-xs text-muted-foreground'>
-          {formatDate(event.eventStartDate)}
-        </p>
-        {event.venue && (
+
+      {/* Content - Right side */}
+      <div className='flex flex-1 flex-col justify-between p-3 min-w-0'>
+        <div className='flex flex-col gap-0.5'>
+          <TextEllipsis
+            className='text-sm font-semibold leading-tight group-hover:text-primary'
+            maxLines={1}
+          >
+            {event.name}
+          </TextEllipsis>
           <p className='text-xs text-muted-foreground'>
-            {event.venue.name} · {event.venue.city}
+            {formatDate(event.eventStartDate)}
           </p>
-        )}
+          {event.venue && (
+            <p className='text-xs text-muted-foreground truncate'>
+              {event.venue.city}
+            </p>
+          )}
+        </div>
+
+        {/* Price and CTA */}
+        <div className='flex items-center justify-between gap-2'>
+          {hasTickets ? (
+            <p className='text-xs whitespace-nowrap'>
+              Desde:{' '}
+              <span className='text-primary font-medium'>
+                {getCurrencySymbol(currency)}
+                {event.lowestAvailableTicketPrice}
+              </span>
+            </p>
+          ) : (
+            <p className='text-xs text-muted-foreground whitespace-nowrap'>
+              Sin tickets
+            </p>
+          )}
+          <Button
+            variant={hasTickets ? 'default' : 'outline'}
+            className={hasTickets ? 'bg-primary-gradient' : ''}
+            size='sm'
+            onClick={handleButtonClick}
+          >
+            {hasTickets ? 'Comprar' : 'Publicar'}
+          </Button>
+        </div>
       </div>
     </Link>
   );
 };
 
 const TrendingEventSkeleton = () => (
-  <div className='flex flex-col overflow-hidden rounded-lg border bg-card'>
-    <Skeleton className='aspect-[4/3]' />
-    <div className='flex flex-col gap-2 p-3'>
-      <Skeleton className='h-4 w-3/4' />
-      <Skeleton className='h-3 w-1/2' />
-      <Skeleton className='h-3 w-2/3' />
+  <div className='flex h-28 sm:h-36 overflow-hidden rounded-lg border bg-card'>
+    <Skeleton className='w-28 sm:w-36 h-full flex-shrink-0' />
+    <div className='flex flex-1 flex-col justify-between p-3'>
+      <div className='flex flex-col gap-2'>
+        <Skeleton className='h-4 w-3/4' />
+        <Skeleton className='h-3 w-1/2' />
+        <Skeleton className='h-3 w-1/3' />
+      </div>
+      <div className='flex items-center justify-between'>
+        <Skeleton className='h-3 w-16' />
+        <Skeleton className='h-8 w-20 rounded-md' />
+      </div>
     </div>
   </div>
 );
 
 export const TrendingEvents = () => {
   const {data: events, isLoading} = useQuery(getTrendingEventsQuery(7, 6));
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+
+  const autoplayPlugin = useRef(
+    Autoplay({
+      delay: 3000,
+      stopOnInteraction: false,
+      stopOnMouseEnter: true,
+    }),
+  );
+
+  const updateCarouselState = useCallback(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+  }, [api]);
+
+  useEffect(() => {
+    if (!api) return;
+
+    updateCarouselState();
+
+    api.on('select', updateCarouselState);
+    api.on('reInit', updateCarouselState);
+
+    return () => {
+      api.off('select', updateCarouselState);
+      api.off('reInit', updateCarouselState);
+    };
+  }, [api, updateCarouselState]);
 
   // Don't render if no trending events
   if (!isLoading && (!events || events.length === 0)) {
@@ -84,21 +178,63 @@ export const TrendingEvents = () => {
   }
 
   return (
-    <section className='mx-auto flex flex-col gap-4 my-4 sm:my-6 max-w-6xl px-4 sm:px-0'>
+    <section className='mx-auto flex flex-col gap-4 my-4 sm:my-6 w-full sm:w-[624px] lg:w-[948px] sm:max-w-[624px] lg:max-w-[948px] px-4 sm:px-0 overflow-hidden'>
       <div className='flex items-center gap-2'>
         <Flame className='h-5 w-5 text-orange-500' />
         <h2 className='text-lg sm:text-2xl font-bold'>Trending esta semana</h2>
       </div>
       <Separator />
-      <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4'>
-        {isLoading
-          ? Array.from({length: 6}).map((_, i) => (
-              <TrendingEventSkeleton key={`trending-skeleton-${i}`} />
-            ))
-          : events?.map(event => (
-              <TrendingEventCard key={event.id} event={event} />
+
+      {isLoading ? (
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+          {Array.from({length: 2}).map((_, i) => (
+            <TrendingEventSkeleton key={`trending-skeleton-${i}`} />
+          ))}
+        </div>
+      ) : (
+        <div className='flex flex-col gap-3'>
+          <Carousel
+            opts={{
+              align: 'start',
+              loop: true,
+              slidesToScroll: 'auto',
+            }}
+            plugins={[autoplayPlugin.current]}
+            setApi={setApi}
+            className='w-full'
+          >
+            <CarouselContent className='-ml-4'>
+              {events?.map(event => (
+                <CarouselItem
+                  key={event.id}
+                  className='pl-4 basis-full lg:basis-1/2'
+                >
+                  <TrendingEventCard
+                    event={event as unknown as TrendingEvent}
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+
+          {/* Progress bars */}
+          <div className='flex justify-center gap-1.5'>
+            {Array.from({length: count}).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => api?.scrollTo(index)}
+                className={cn(
+                  'h-1.5 rounded-full transition-all duration-300',
+                  current === index
+                    ? 'w-8 bg-primary'
+                    : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50',
+                )}
+                aria-label={`Go to slide ${index + 1}`}
+              />
             ))}
-      </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -72,8 +72,10 @@ export const getTrendingEventsQuery = (days: number = 7, limit: number = 10) =>
   });
 
 /**
- * Track a view for an event
+ * Track a view for an event (fire-and-forget, errors are silently ignored)
  */
-export const trackEventView = async (eventId: string) => {
-  return api.events.trackView(eventId).then(res => res.data);
+export const trackEventView = (eventId: string) => {
+  return api.events.trackView(eventId).catch(() => {
+    // Silently ignore errors - view tracking is not critical
+  });
 };

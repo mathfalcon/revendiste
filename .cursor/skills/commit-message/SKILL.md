@@ -1,3 +1,9 @@
+---
+name: commit-message
+description: Auto-generate commit message
+disable-model-invocation: true
+---
+
 # Auto-generate commit message
 
 Analyze the staged git changes and generate an appropriate commit message following conventional commits format.

@@ -1,6 +1,6 @@
 ---
+name: revendiste-notification-system
 description: When using the revendiste notification system or want to send notifications
-alwaysApply: false
 ---
 
 # Revendiste Notification System
@@ -923,3 +923,4 @@ The type system ensures:
 - ✅ **Refactoring safety** - Changes propagate through type system
 - ✅ **Self-documenting** - Types show exactly what each notification needs
 - ✅ **No runtime checks needed** - Type system handles validation
+

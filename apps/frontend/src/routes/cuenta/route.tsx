@@ -1,9 +1,4 @@
-import {
-  createFileRoute,
-  Outlet,
-  Link,
-  useLocation,
-} from '@tanstack/react-router';
+import {createFileRoute, Outlet, Link, useLocation} from '@tanstack/react-router';
 import {Ticket, Upload, Menu, Wallet, ShieldCheck, QrCode} from 'lucide-react';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
 import {useQuery} from '@tanstack/react-query';
@@ -13,7 +8,7 @@ import {Button} from '~/components/ui/button';
 import {Sheet, SheetContent, SheetTrigger} from '~/components/ui/sheet';
 import {useState} from 'react';
 import {seo} from '~/utils/seo';
-import {beforeLoadRedirectToSignInIfNotAuthenticated} from '~/utils';
+import {beforeLoadRequireAuth} from '~/utils';
 
 const TAB_CONFIG = [
   {
@@ -67,8 +62,8 @@ export const Route = createFileRoute('/cuenta')({
       }),
     ],
   }),
-  beforeLoad: ({context, location}) => {
-    beforeLoadRedirectToSignInIfNotAuthenticated(context.userId, location);
+  beforeLoad: async ({location}) => {
+    return await beforeLoadRequireAuth(location);
   },
 });
 
