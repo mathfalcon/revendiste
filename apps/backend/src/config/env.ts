@@ -2,7 +2,9 @@ import {z} from 'zod';
 import 'dotenv/config';
 
 const EnvSchema = z.object({
-  NODE_ENV: z.enum(['local', 'development', 'production']).default('local'),
+  NODE_ENV: z
+    .enum(['local', 'development', 'production', 'test'])
+    .default('local'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   PORT: z.coerce.number().default(3001),
   // Database connection - either use DATABASE_URL or individual POSTGRES_* variables

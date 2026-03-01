@@ -7,7 +7,7 @@ export class EventViewsService {
    * Track a view for an event (called when user views event detail page)
    */
   async trackView(eventId: string) {
-    await this.eventViewsRepository.incrementViewCount(eventId, new Date());
+    await this.eventViewsRepository.incrementViewCount(eventId);
   }
 
   /**

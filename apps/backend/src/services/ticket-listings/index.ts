@@ -25,6 +25,8 @@ import {
   isWithinUploadWindow,
   calculateMaxResalePrice,
 } from '@revendiste/shared';
+import type {Kysely} from 'kysely';
+import type {DB} from '@revendiste/shared';
 
 export class TicketListingsService {
   constructor(
@@ -364,12 +366,23 @@ export class TicketListingsService {
 
   /**
    * Mark tickets as sold for an order and send notifications to sellers
-   * This orchestrates the repository call and notification side effects
+   * This orchestrates the repository call and notification side effects.
+   * When trx is provided, all DB operations use the transaction (e.g. from payment webhook flow).
    */
-  async markTicketsAsSoldAndNotifySeller(orderId: string) {
+  async markTicketsAsSoldAndNotifySeller(
+    orderId: string,
+    trx?: Kysely<DB>,
+  ) {
+    const listingTicketsRepo = trx
+      ? this.listingTicketsRepository.withTransaction(trx)
+      : this.listingTicketsRepository;
+    const ordersRepo = trx
+      ? this.ordersRepository.withTransaction(trx)
+      : this.ordersRepository;
+
     // Mark tickets as sold (repository operation)
     const soldTickets =
-      await this.listingTicketsRepository.markTicketsAsSoldByOrderId(orderId);
+      await listingTicketsRepo.markTicketsAsSoldByOrderId(orderId);
 
     if (soldTickets.length === 0) {
       logger.warn('No tickets found to mark as sold', { orderId });
@@ -381,8 +394,8 @@ export class TicketListingsService {
       ...new Set(soldTickets.map(ticket => ticket.listingId)),
     ];
 
-    // Get order with event info for notifications (outside transaction)
-    const order = await this.ordersRepository.getByIdWithItems(orderId);
+    // Get order with event info for notifications (outside transaction when trx not provided)
+    const order = await ordersRepo.getByIdWithItems(orderId);
     if (!order || !order.event) {
       logger.warn('Order or event not found for seller notifications', {
         orderId,
@@ -391,7 +404,7 @@ export class TicketListingsService {
     }
 
     // Get listings with seller info
-    const listings = await this.listingTicketsRepository.getListingsByIds(
+    const listings = await listingTicketsRepo.getListingsByIds(
       uniqueListingIds,
     );
 

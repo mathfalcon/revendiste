@@ -13,6 +13,7 @@ import {
   ORDER_ERROR_MESSAGES,
   PAYMENT_ERROR_MESSAGES,
 } from '~/constants/error-messages';
+import {PAYMENT_EXTENSION_WINDOW_MINUTES} from '~/constants/reservation';
 
 interface CreatePaymentLinkParams {
   orderId: string;
@@ -69,14 +70,15 @@ export class PaymentsService {
       throw new ValidationError(PAYMENT_ERROR_MESSAGES.ORDER_EXPIRED);
     }
 
-    // Check if order is still pending
+    // Check if order is still pending (we only reuse or create payment for pending orders)
     if (order.status !== 'pending') {
       throw new ValidationError(
         PAYMENT_ERROR_MESSAGES.ORDER_NOT_PENDING(order.status),
       );
     }
 
-    // Check if there's already an existing pending payment for this order
+    // Reuse existing payment link only when there is already a pending payment for this order
+    // (avoids creating duplicate payment records when user refreshes or returns to checkout)
     const existingPayment = await this.paymentsRepository.getByOrderId(orderId);
     if (
       existingPayment &&
@@ -99,10 +101,9 @@ export class PaymentsService {
     }
 
     // Extend reservation time to give user enough time to complete payment
-    // Set expiration to 10 minutes from now
-    const PAYMENT_WINDOW_MINUTES = 10;
     const newReservationExpiresAt = new Date(
-      now.getTime() + PAYMENT_WINDOW_MINUTES * 60 * 1000,
+      now.getTime() +
+        PAYMENT_EXTENSION_WINDOW_MINUTES * 60 * 1000,
     );
 
     // Extend order and ticket reservations in a single transaction
@@ -126,7 +127,7 @@ export class PaymentsService {
       logger.info('Extended reservation time for payment window', {
         orderId,
         newExpiresAt: newReservationExpiresAt,
-        windowMinutes: PAYMENT_WINDOW_MINUTES,
+        windowMinutes: PAYMENT_EXTENSION_WINDOW_MINUTES,
       });
     });
 
@@ -160,7 +161,7 @@ export class PaymentsService {
         amount: Number(order.totalAmount),
         currency: order.currency,
         description: `${order.event?.name || 'Tickets'} - (ID: ${order.id})`,
-        expirationMinutes: PAYMENT_WINDOW_MINUTES,
+        expirationMinutes: PAYMENT_EXTENSION_WINDOW_MINUTES,
         ...urls,
         ...payerData, // Include payer data if provider supports it
       });

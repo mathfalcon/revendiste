@@ -408,12 +408,24 @@ export class PaymentWebhookAdapter {
   }
 
   /**
-   * Handles successful payment - confirms order and reservations
+   * Handles successful payment - confirms order, marks tickets sold, creates earnings, then confirms reservations.
+   * Idempotent: returns early if order is already confirmed (e.g. duplicate webhook).
    */
   private async handleSuccessfulPayment(
     orderId: string,
     paymentData: NormalizedPaymentData,
   ): Promise<void> {
+    // Idempotency: skip if order already confirmed (duplicate webhook or retry)
+    const existingOrder =
+      await this.ordersRepository.getByIdWithItems(orderId);
+    if (existingOrder?.status === 'confirmed') {
+      logger.info('Order already confirmed, skipping successful payment flow', {
+        orderId,
+        paymentId: paymentData.providerPaymentId,
+      });
+      return;
+    }
+
     let soldTickets: Array<{listingId: string}> = [];
     let uniqueListingIds: string[] = [];
 
@@ -421,32 +433,36 @@ export class PaymentWebhookAdapter {
       const ordersRepo = this.ordersRepository.withTransaction(trx);
       const reservationsRepo =
         this.orderTicketReservationsRepository.withTransaction(trx);
+      const ticketListingsRepo =
+        this.ticketListingsRepository.withTransaction(trx);
 
       // Step 1: Update order status to confirmed
       await ordersRepo.updateStatus(orderId, 'confirmed', {
         confirmedAt: new Date(),
       });
 
-      // Step 2: Confirm order reservations (marks them as deleted)
-      await reservationsRepo.confirmOrderReservations(orderId);
-
-      // Step 3: Mark tickets as sold (notifications sent outside transaction by service)
+      // Step 2: Mark tickets as sold (must run before confirming reservations so reservations are still visible)
       soldTickets =
         await this.ticketListingsService.markTicketsAsSoldAndNotifySeller(
           orderId,
+          trx,
         );
 
-      // Step 3.5: Create seller earnings for sold tickets
-      await this.sellerEarningsService.createEarningsForSoldTickets(orderId);
+      // Step 3: Create seller earnings for sold tickets (uses reservations, so before confirm)
+      await this.sellerEarningsService.createEarningsForSoldTickets(
+        orderId,
+        trx,
+      );
 
-      // Step 4: Get unique listing IDs from sold tickets
+      // Step 4: Confirm order reservations (soft-delete; after mark sold + earnings so they see active reservations)
+      await reservationsRepo.confirmOrderReservations(orderId);
+
+      // Step 5: Get unique listing IDs and mark listings as sold (all in same transaction)
       uniqueListingIds = [
         ...new Set(soldTickets.map(ticket => ticket.listingId)),
       ];
-
-      // Step 5: Check if all tickets from each listing are sold and mark listings as sold
       const soldListings =
-        await this.ticketListingsRepository.checkAndMarkListingsAsSold(
+        await ticketListingsRepo.checkAndMarkListingsAsSold(
           uniqueListingIds,
         );
 

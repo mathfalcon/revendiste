@@ -9,26 +9,19 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
   }
 
   /**
-   * Increment the view count for an event on a specific date
+   * Increment the view count for an event on the current date
    * Uses upsert (INSERT ... ON CONFLICT UPDATE) for atomic increment
+   * Uses database's CURRENT_DATE to avoid timezone inconsistencies
    */
-  async incrementViewCount(eventId: string, date: Date) {
-    const dateOnly = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-
-    await this.db
-      .insertInto('eventViewsDaily')
-      .values({
-        eventId,
-        date: new Date(dateOnly),
-        viewCount: 1,
-      })
-      .onConflict(oc =>
-        oc.columns(['eventId', 'date']).doUpdateSet(eb => ({
-          viewCount: sql`${eb.ref('eventViewsDaily.viewCount')} + 1`,
-          updatedAt: new Date(),
-        })),
-      )
-      .execute();
+  async incrementViewCount(eventId: string) {
+    await sql`
+      INSERT INTO event_views_daily (id, event_id, date, view_count, created_at, updated_at)
+      VALUES (gen_random_uuid(), ${eventId}, CURRENT_DATE, 1, NOW(), NOW())
+      ON CONFLICT (event_id, date) 
+      DO UPDATE SET 
+        view_count = event_views_daily.view_count + 1,
+        updated_at = NOW()
+    `.execute(this.db);
   }
 
   /**
@@ -38,11 +31,6 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
    * @param limit - Maximum number of events to return (default: 10)
    */
   async getTrendingEvents(days: number = 7, limit: number = 10) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const now = new Date();
-
     const events = await this.db
       .selectFrom('events')
       .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
@@ -57,14 +45,14 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
         'events.status',
         'events.createdAt',
         'events.updatedAt',
-        // Sum of views in the time window
+        // Sum of views in the time window (use database's CURRENT_DATE for consistency)
         sql<number>`
           COALESCE(
             (
               SELECT SUM(view_count)::int
               FROM event_views_daily
               WHERE event_views_daily.event_id = events.id
-                AND event_views_daily.date >= ${startDate}
+                AND event_views_daily.date >= CURRENT_DATE - INTERVAL '${sql.raw(String(days))} days'
             ),
             0
           )
@@ -128,13 +116,13 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
       ])
       .where('events.deletedAt', 'is', null)
       .where('events.status', '=', 'active')
-      .where('events.eventEndDate', '>', now) // Only active/upcoming events
+      .where(sql<boolean>`events.event_end_date > NOW()`) // Only active/upcoming events (use database NOW())
       .orderBy(sql`COALESCE(
         (
           SELECT SUM(view_count)::int
           FROM event_views_daily
           WHERE event_views_daily.event_id = events.id
-            AND event_views_daily.date >= ${startDate}
+            AND event_views_daily.date >= CURRENT_DATE - INTERVAL '${sql.raw(String(days))} days'
         ),
         0
       )`, 'desc')
@@ -149,14 +137,11 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
    * Get view count for a specific event within a time window
    */
   async getEventViewCount(eventId: string, days: number = 7) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
     const result = await this.db
       .selectFrom('eventViewsDaily')
       .select(sql<number>`COALESCE(SUM(view_count), 0)::int`.as('totalViews'))
       .where('eventId', '=', eventId)
-      .where('date', '>=', startDate)
+      .where(sql<boolean>`date >= CURRENT_DATE - INTERVAL '${sql.raw(String(days))} days'`)
       .executeTakeFirst();
 
     return result?.totalViews ?? 0;

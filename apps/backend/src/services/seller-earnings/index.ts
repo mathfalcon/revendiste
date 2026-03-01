@@ -12,6 +12,8 @@ import {
   notifySellerEarningsRetained,
   notifyBuyerTicketCancelled,
 } from '~/services/notifications/helpers';
+import type {Kysely} from 'kysely';
+import type {DB} from '@revendiste/shared';
 
 interface BalanceByCurrency {
   currency: EventTicketCurrency;
@@ -55,14 +57,38 @@ export class SellerEarningsService {
   ) {}
 
   /**
-   * Creates a single seller earning from a sold ticket
+   * Creates a single seller earning from a sold ticket.
+   * When trx is provided, uses the transaction (e.g. from payment webhook flow).
+   * Idempotent: skips if an active earning already exists for this listing_ticket_id
+   * (allows clone flow where original is failed_payout and clone is available).
    */
-  async createEarningFromSale(listingTicketId: string): Promise<void> {
+  async createEarningFromSale(
+    listingTicketId: string,
+    trx?: Kysely<DB>,
+  ): Promise<void> {
+    const earningsRepo = trx
+      ? this.sellerEarningsRepository.withTransaction(trx)
+      : this.sellerEarningsRepository;
+    const reservationsRepo = trx
+      ? this.orderTicketReservationsRepository.withTransaction(trx)
+      : this.orderTicketReservationsRepository;
+
+    // Idempotency: skip if an active earning already exists for this ticket
+    // (e.g. duplicate webhook; clone flow uses failed_payout so not considered "active")
+    const existing = await earningsRepo.getEarningsByListingTicketIds([
+      listingTicketId,
+    ]);
+    const hasActiveEarning = existing.some(e => e.status !== 'failed_payout');
+    if (hasActiveEarning) {
+      logger.debug('Earning already exists for ticket, skipping', {
+        listingTicketId,
+      });
+      return;
+    }
+
     // Get listing ticket with price and event end date via repository
     const ticketData =
-      await this.sellerEarningsRepository.getTicketDataForEarnings(
-        listingTicketId,
-      );
+      await earningsRepo.getTicketDataForEarnings(listingTicketId);
 
     if (!ticketData) {
       logger.error('Ticket not found for earnings creation', {
@@ -73,9 +99,7 @@ export class SellerEarningsService {
 
     // Get seller user ID from listing via repository
     const listing =
-      await this.sellerEarningsRepository.getListingPublisherUserId(
-        ticketData.listingId,
-      );
+      await earningsRepo.getListingPublisherUserId(ticketData.listingId);
 
     if (!listing) {
       logger.error('Listing not found for earnings creation', {
@@ -93,7 +117,7 @@ export class SellerEarningsService {
     holdUntil.setHours(holdUntil.getHours() + PAYOUT_HOLD_PERIOD_HOURS);
 
     // Create earnings record
-    await this.sellerEarningsRepository.create({
+    await earningsRepo.create({
       sellerUserId: listing.publisherUserId,
       listingTicketId,
       sellerAmount,
@@ -113,12 +137,19 @@ export class SellerEarningsService {
 
   /**
    * Batch creates seller earnings for all sold tickets in an order
-   * Called from PaymentWebhookAdapter after marking tickets as sold
+   * Called from PaymentWebhookAdapter after marking tickets as sold.
+   * When trx is provided, all DB operations use the transaction.
    */
-  async createEarningsForSoldTickets(orderId: string): Promise<void> {
+  async createEarningsForSoldTickets(
+    orderId: string,
+    trx?: Kysely<DB>,
+  ): Promise<void> {
+    const reservationsRepo = trx
+      ? this.orderTicketReservationsRepository.withTransaction(trx)
+      : this.orderTicketReservationsRepository;
+
     // Get all sold tickets from order (via order_ticket_reservations)
-    const reservations =
-      await this.orderTicketReservationsRepository.getByOrderId(orderId);
+    const reservations = await reservationsRepo.getByOrderId(orderId);
 
     if (reservations.length === 0) {
       logger.warn('No reservations found for order', {orderId});
@@ -128,7 +159,7 @@ export class SellerEarningsService {
     // Create earnings for each sold ticket
     await Promise.all(
       reservations.map(reservation =>
-        this.createEarningFromSale(reservation.listingTicketId),
+        this.createEarningFromSale(reservation.listingTicketId, trx),
       ),
     );
 

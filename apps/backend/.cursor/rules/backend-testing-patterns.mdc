@@ -8,464 +8,234 @@ alwaysApply: false
 
 ## Overview
 
-This project uses **Jest** with **ts-jest** for TypeScript testing. Tests should be fast, maintainable, and follow our dependency injection patterns.
+This project uses **Jest** with **ts-jest** for TypeScript testing. Tests should be fast, maintainable, and follow our dependency injection patterns. Controllers use manual constructor injection (repos and services instantiated at module load); tests inject mocked repos into services.
 
 ## Test File Structure
 
-Tests are organized to mirror the source code structure:
+Tests mirror the source code structure under `__tests__/`:
 
 ```
 apps/backend/src/
   __tests__/
-    setup.ts                        # Global test setup (runs before all tests)
+    setup.ts                        # Global test setup (runs before each test file)
     factories/                      # Test data factories
       index.ts                      # Export all factories
       user.factory.ts
       order.factory.ts
     utils/
       document-reminder.test.ts     # Tests for ~/utils/document-reminder.ts
-      *.test.ts
+      fees.test.ts                  # Tests for fee logic (uses @revendiste/shared)
     services/
-      notifications.test.ts         # Tests for ~/services/notifications
-      *.test.ts
-    repositories/
-      listing-tickets.test.ts       # Tests for ~/repositories/listing-tickets
-      *.test.ts
-    cronjobs/
-      notify-upload-availability.test.ts
+      orders.test.ts                # Tests for ~/services/orders
       *.test.ts
 ```
 
-**Naming Convention**: Test files should match their source file name with `.test.ts` suffix.
-
-| Source File | Test File |
-|-------------|-----------|
-| `src/utils/document-reminder.ts` | `src/__tests__/utils/document-reminder.test.ts` |
-| `src/services/notifications/index.ts` | `src/__tests__/services/notifications.test.ts` |
-| `src/repositories/listing-tickets/index.ts` | `src/__tests__/repositories/listing-tickets.test.ts` |
+**Naming**: Test files match the source with a `.test.ts` suffix (e.g. `orders/index.ts` → `__tests__/services/orders.test.ts`).
 
 ## Running Tests
 
-```bash
-pnpm test                              # Run all tests
-pnpm test:watch                        # Watch mode for development
-pnpm test:coverage                     # Generate coverage report
-pnpm test -- --testPathPattern=utils   # Run only utils tests
-pnpm test -- document-reminder         # Run tests matching filename
-pnpm test -- -t "milestone"            # Run tests matching description
-```
+- **`pnpm test`** runs the full suite. A **pretest** script builds `@revendiste/shared` so Jest uses the package’s built `dist` (avoids ts-jest outDir issues when transforming workspace packages).
+- **`pnpm test:watch`** – watch mode.
+- **`pnpm test:coverage`** – coverage report.
+- **`pnpm test -- --testPathPattern=utils`** – only utils tests.
+- **`pnpm test -- document-reminder`** – tests matching filename.
+- **`pnpm test -- -t "milestone"`** – tests matching description.
+
+**Note**: Env schema allows `NODE_ENV=test` (see `config/env.ts`). Setup sets `process.env.NODE_ENV = 'test'` before tests.
 
 ## Core Principles
 
 ### 1. Extract Pure Functions for Testability
 
-**DO NOT** test database queries directly. Instead, extract business logic into pure utility functions:
+Do not test database queries directly. Extract business logic into pure utilities and test those:
 
 ```typescript
-// ✅ CORRECT - Extract logic to testable utility
+// ✅ CORRECT - Pure utility
 // src/utils/document-reminder.ts
 export function shouldSendDocumentReminder(
   hoursUntilEvent: number,
   qrAvailabilityHours: number | null,
-): boolean {
-  // Pure logic, no database dependencies
-}
-
-// src/repositories/listing-tickets/index.ts
-import { shouldSendDocumentReminder } from '~/utils/document-reminder';
+): boolean { ... }
 
 // Repository uses the utility
-.then(tickets => tickets.filter(ticket => 
+.then(tickets => tickets.filter(ticket =>
   shouldSendDocumentReminder(hours, qrHours)
 ));
 ```
 
 ```typescript
-// ❌ WRONG - Logic embedded in repository, hard to test
+// ❌ WRONG - Logic inline in repository
 async getTicketsEnteringUploadWindow() {
-  return await this.db
-    .selectFrom('listingTickets')
-    // ... complex filtering logic inline
+  return await this.db.selectFrom('listingTickets')
+  // ... complex filtering logic inline
 }
 ```
 
 ### 2. Keep Tests DRY with `it.each` and Shared Assertions
 
-Use parameterized tests to avoid repetition:
+Use parameterized tests and group related assertions:
 
 ```typescript
-// ✅ CORRECT - DRY with it.each
-const MILESTONE_THRESHOLDS = [72, 48, 24, 12, 6, 3, 2, 1];
-
+// ✅ CORRECT - it.each
 it.each(MILESTONE_THRESHOLDS)(
   'should return %i when exactly at %i hours',
-  milestone => {
-    expect(getNotificationMilestone(milestone)).toBe(milestone);
-  },
+  milestone => expect(getNotificationMilestone(milestone)).toBe(milestone),
 );
 
-// ✅ CORRECT - Multiple assertions in one test when related
-it('should return true at milestones within window (24, 12, 6, 3, 2, 1)', () => {
+// ✅ CORRECT - Related assertions in one test
+it('should return true at milestones within window', () => {
   expect(shouldSendDocumentReminder(24, 48)).toBe(true);
   expect(shouldSendDocumentReminder(12, 48)).toBe(true);
-  expect(shouldSendDocumentReminder(6, 48)).toBe(true);
-  // Group related assertions - faster than separate tests
+  // ...
 });
-```
-
-```typescript
-// ❌ WRONG - Repetitive individual tests
-it('should return 72 at 72 hours', () => {
-  expect(getNotificationMilestone(72)).toBe(72);
-});
-it('should return 48 at 48 hours', () => {
-  expect(getNotificationMilestone(48)).toBe(48);
-});
-// ... 6 more identical tests
 ```
 
 ### 3. Optimize Test Execution Time
 
-```typescript
-// ✅ CORRECT - Use describe blocks to group setup
-describe('events WITH qrAvailabilityTiming', () => {
-  const qrWindow = 48; // Shared constant
-
-  it('should return true at window start', () => {
-    expect(shouldSendDocumentReminder(48, qrWindow)).toBe(true);
-  });
-
-  it('should return true within window', () => {
-    expect(shouldSendDocumentReminder(24, qrWindow)).toBe(true);
-  });
-});
-
-// ✅ CORRECT - Avoid unnecessary async when testing pure functions
-it('should calculate hours correctly', () => {
-  // No async needed - pure function
-  expect(calculateHoursUntilEvent(future, now)).toBe(12);
-});
-```
+- Use `describe` blocks to share constants and setup.
+- Prefer synchronous tests for pure functions (no `async/await`).
+- Jest is configured with `clearMocks: true` and `restoreMocks: true`; no manual `afterEach` for mocks unless you need extra cleanup.
 
 ## Dependency Injection & Mocking
 
-### Mocking Repositories
+### Mocking Repositories in Services
 
-When testing services, mock the repository interface:
+Services receive repos via constructor; in tests, pass Jest mocks:
 
 ```typescript
-// ✅ CORRECT - Mock repository with Jest
-describe('NotificationService', () => {
-  let service: NotificationService;
-  let mockNotificationsRepository: jest.Mocked<NotificationsRepository>;
-  let mockUsersRepository: jest.Mocked<UsersRepository>;
+// ✅ CORRECT - Mock repos and inject into service
+describe('OrdersService', () => {
+  let service: OrdersService;
+  let mockOrdersRepository: jest.Mocked<OrdersRepository>;
+  // ... other repo mocks
 
   beforeEach(() => {
-    // Create mock repositories
-    mockNotificationsRepository = {
+    mockOrdersRepository = {
+      getPendingOrderByUserAndEvent: jest.fn(),
+      getByIdWithItems: jest.fn(),
+      executeTransaction: jest.fn(),
       create: jest.fn(),
-      findById: jest.fn(),
-      hasDocumentReminderForListing: jest.fn(),
       withTransaction: jest.fn(),
-    } as unknown as jest.Mocked<NotificationsRepository>;
+      getDb: jest.fn(),
+      // ... methods the test uses
+    } as unknown as jest.Mocked<OrdersRepository>;
 
-    mockUsersRepository = {
-      findById: jest.fn(),
-      withTransaction: jest.fn(),
-    } as unknown as jest.Mocked<UsersRepository>;
-
-    // Inject mocks into service
-    service = new NotificationService(
-      mockNotificationsRepository,
-      mockUsersRepository,
+    service = new OrdersService(
+      mockOrdersRepository,
+      mockOrderItemsRepository,
+      mockEventsRepository,
+      // ...
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  it('throws ValidationError when user already has pending order', async () => {
+    mockOrdersRepository.getPendingOrderByUserAndEvent.mockResolvedValue({
+      id: 'order-existing',
+      reservationExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
 
-  it('should check for existing notifications before sending', async () => {
-    mockNotificationsRepository.hasDocumentReminderForListing.mockResolvedValue(false);
-    mockUsersRepository.findById.mockResolvedValue({ id: 'user-1', email: 'test@example.com' });
-
-    await service.sendDocumentReminder('user-1', 'listing-1', 12);
-
-    expect(mockNotificationsRepository.hasDocumentReminderForListing).toHaveBeenCalledWith(
-      'user-1',
-      'listing-1',
-      12,
-    );
+    await expect(service.createOrder(data, userId)).rejects.toThrow(ValidationError);
+    await expect(service.createOrder(data, userId)).rejects.toMatchObject({
+      message: ORDER_ERROR_MESSAGES.PENDING_ORDER_EXISTS('order-existing'),
+      metadata: { orderId: 'order-existing' },  // ValidationError uses .metadata, not .data
+    });
   });
 });
 ```
 
-### Mocking Services in Controllers
+### Error Assertions
+
+- **ValidationError** and similar custom errors use **`.metadata`** (not `.data`) for extra payload.
+- Use `toThrow(ValidationError)` and `toMatchObject({ message: '...', metadata: { ... } })` for consistency.
+
+### Transaction Mocking
+
+For services that use `executeTransaction`, you can mock it to invoke the callback with a mock `trx`:
 
 ```typescript
-// ✅ CORRECT - Mock service for controller tests
-describe('OrdersController', () => {
-  let controller: OrdersController;
-  let mockOrdersService: jest.Mocked<OrdersService>;
-
-  beforeEach(() => {
-    mockOrdersService = {
-      getOrderById: jest.fn(),
-      createOrder: jest.fn(),
-    } as unknown as jest.Mocked<OrdersService>;
-
-    // Use dependency injection
-    controller = new OrdersController(mockOrdersService);
-  });
-});
-```
-
-### Transaction Mocking Pattern
-
-```typescript
-// ✅ CORRECT - Mock transaction pattern
-it('should execute operations within transaction', async () => {
-  const mockTrx = {} as Kysely<DB>;
-  
-  mockRepository.withTransaction.mockReturnValue({
-    ...mockRepository,
-    // Return a new mock that uses the transaction
-  });
-  
-  mockRepository.executeTransaction.mockImplementation(async (callback) => {
-    return callback(mockTrx);
-  });
-
-  await service.performTransactionalOperation();
-
-  expect(mockRepository.executeTransaction).toHaveBeenCalled();
+mockRepository.executeTransaction.mockImplementation(async (callback) => {
+  return callback(mockTrx);
 });
 ```
 
 ## Test Factories
 
-Test factories are an industry-standard pattern for creating test data with sensible defaults while allowing per-test overrides. They reduce boilerplate and keep tests readable.
+Factories live in `__tests__/factories/`. They use types from **`@revendiste/shared`** (e.g. `Users`, `Orders`), not local type paths.
 
-### Factory Location
+### Current Factories
 
-```
-apps/backend/src/
-  __tests__/
-    factories/
-      index.ts              # Export all factories
-      user.factory.ts       # User entity factory
-      order.factory.ts      # Order entity factory
-      listing.factory.ts    # Listing entity factory
-```
+- **user.factory.ts**: `createUser(overrides?)`, `resetUserFactory()`. Returns full `Users` shape (all required fields with defaults).
+- **order.factory.ts**: `createOrder(overrides?)`, `createPendingOrder(overrides?)`, `createConfirmedOrder(overrides?)`, `resetOrderFactory()`. Returns `Orders` with `userId`, `eventId`, `status`, amounts, `reservationExpiresAt`, etc.
 
 ### Factory Pattern
 
 ```typescript
-// src/__tests__/factories/user.factory.ts
-import type { User } from '~/types/db';
+// src/__tests__/factories/order.factory.ts
+import type { Orders } from '@revendiste/shared';
 
-type UserFactoryOverrides = Partial<User>;
+type OrderFactoryOverrides = Partial<Orders>;
 
-let userIdCounter = 1;
+let counter = 1;
 
-/**
- * Creates a mock User with sensible defaults.
- * Override any field by passing it in the overrides object.
- */
-export function createUser(overrides: UserFactoryOverrides = {}): User {
-  const id = `user-${userIdCounter++}`;
-  
-  return {
-    id,
-    email: `${id}@test.com`,
-    firstName: 'Test',
-    lastName: 'User',
-    clerkId: `clerk_${id}`,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-/**
- * Reset counter between test suites for deterministic IDs
- */
-export function resetUserFactory(): void {
-  userIdCounter = 1;
-}
-```
-
-### Using Factories in Tests
-
-```typescript
-// ✅ CORRECT - Use factory with defaults
-it('should send notification to user', async () => {
-  const user = createUser(); // Uses all defaults
-  mockUsersRepository.findById.mockResolvedValue(user);
-
-  await service.sendNotification(user.id);
-
-  expect(mockEmailService.send).toHaveBeenCalledWith(user.email);
-});
-
-// ✅ CORRECT - Override specific fields
-it('should handle user without email', async () => {
-  const user = createUser({ email: null }); // Only override email
-  mockUsersRepository.findById.mockResolvedValue(user);
-
-  await expect(service.sendNotification(user.id)).rejects.toThrow();
-});
-
-// ✅ CORRECT - Create related entities
-it('should process order with tickets', async () => {
-  const seller = createUser({ firstName: 'Seller' });
-  const buyer = createUser({ firstName: 'Buyer' });
-  const order = createOrder({ 
-    buyerUserId: buyer.id,
-    sellerUserId: seller.id,
-  });
-
-  mockOrdersRepository.findById.mockResolvedValue(order);
-  // ...
-});
-```
-
-### Factory Best Practices
-
-```typescript
-// ✅ CORRECT - Reset factories in setup for deterministic tests
-beforeEach(() => {
-  resetUserFactory();
-  resetOrderFactory();
-  jest.clearAllMocks();
-});
-
-// ✅ CORRECT - Create factory helpers for common scenarios
-export function createCompletedOrder(overrides: OrderFactoryOverrides = {}) {
-  return createOrder({
-    status: 'completed',
-    completedAt: new Date(),
-    ...overrides,
-  });
+export function createOrder(overrides: OrderFactoryOverrides = {}): Orders {
+  const id = overrides.id ?? `order-${counter++}`;
+  // ... sensible defaults, then ...overrides
 }
 
 export function createPendingOrder(overrides: OrderFactoryOverrides = {}) {
+  return createOrder({ status: 'pending', ...overrides });
+}
+
+export function createConfirmedOrder(overrides: OrderFactoryOverrides = {}) {
   return createOrder({
-    status: 'pending',
-    completedAt: null,
+    status: 'confirmed',
+    confirmedAt: new Date(),
+    cancelledAt: null,
     ...overrides,
   });
 }
 
-// ✅ CORRECT - Export all factories from index
-// src/__tests__/factories/index.ts
-export * from './user.factory';
-export * from './order.factory';
-export * from './listing.factory';
+export function resetOrderFactory(): void {
+  counter = 1;
+}
 ```
 
-```typescript
-// ❌ WRONG - Inline object literals with duplicated fields
-it('test 1', () => {
-  const user = { id: 'u1', email: 'a@b.com', firstName: 'A', lastName: 'B', ... };
-});
-it('test 2', () => {
-  const user = { id: 'u2', email: 'c@d.com', firstName: 'C', lastName: 'D', ... };
-});
+### Using Factories
 
-// ❌ WRONG - Using real database IDs or production data
-const user = createUser({ id: 'real-prod-id-123' });
-```
+- Use factories when you need entity-shaped data for mocks (e.g. repository return values).
+- Override only the fields the test cares about.
+- For repository methods that return a subset (e.g. `{ id, reservationExpiresAt }`), you can still mock with a plain object; you don’t have to use the factory for every return value.
 
-### When to Use Factories
+### Export and Reset
 
-| Use Factories | Don't Need Factories |
-|---------------|---------------------|
-| Testing services with entity data | Testing pure utility functions |
-| Mocking repository return values | Testing simple transformations |
-| Creating related entity graphs | Testing with primitive inputs |
-| Tests needing realistic entity shapes | Tests with inline test values |
-
-## Test Organization
-
-### Naming Conventions
-
-```typescript
-// ✅ CORRECT - Descriptive test names
-describe('getNotificationMilestone', () => {
-  describe('exact milestone times', () => {
-    it('should return 72 when exactly at 72 hours', () => {});
-  });
-
-  describe('±30 minute window', () => {
-    it('should return milestone when within window', () => {});
-  });
-
-  describe('edge cases', () => {
-    it('should return null for negative hours (event has passed)', () => {});
-  });
-});
-```
-
-### Integration Test Scenarios
-
-```typescript
-// ✅ CORRECT - Document real-world scenarios
-describe('integration scenarios', () => {
-  it('should correctly determine notification timing for: event in 1h 5min, no QR window, 7 tickets', () => {
-    const hoursUntilEvent = 1.08;
-    const qrAvailabilityHours = null;
-
-    const milestone = getNotificationMilestone(hoursUntilEvent);
-    expect(milestone).toBe(1);
-
-    const shouldSend = shouldSendDocumentReminder(hoursUntilEvent, qrAvailabilityHours);
-    expect(shouldSend).toBe(true);
-  });
-});
-```
+- Export all factories from `factories/index.ts` (`export * from './user.factory';` etc.).
+- Use `resetUserFactory()` / `resetOrderFactory()` in `beforeEach` when you want deterministic IDs across tests.
 
 ## What NOT to Test
 
-- **Database queries directly** - Test the logic, not the SQL
-- **External API calls** - Mock them
-- **Framework behavior** - Trust Express, Kysely, etc.
-- **Generated code** - `routes.ts`, `swagger.json`, `generated.ts`
+- **Database queries themselves** – test the logic (often in utils or services), not the SQL.
+- **External API calls** – mock at the boundary (provider/adapter).
+- **Framework behavior** – trust Express, Kysely, etc.
+- **Generated code** – `routes.ts`, `swagger.json`, OpenAPI-generated types.
 
 ## Test Setup File
 
-The `src/__tests__/setup.ts` file runs before each test:
+`src/__tests__/setup.ts` runs before each test file:
 
-```typescript
-// Set test environment
-process.env.NODE_ENV = 'test';
-
-// Increase timeout for async tests
-jest.setTimeout(10000);
-
-// Clean up mocks after each test
-afterEach(() => {
-  jest.clearAllMocks();
-});
-```
+- Sets `process.env.NODE_ENV = 'test'`.
+- Mocks `console.log`, `console.debug`, `console.info` to keep output clean (optional to comment out when debugging).
+- `clearMocks` and `restoreMocks` are set in `jest.config.js`; no need for a manual `afterEach` only for clearing mocks.
 
 ## Coverage Goals
 
-Focus on testing:
-- Business logic utilities (100% coverage goal)
-- Service layer orchestration (80%+ coverage goal)
-- Edge cases and error handling
-
-Don't chase 100% coverage on:
-- Repositories (database integration)
-- Controllers (thin layer, covered by integration tests)
-- Configuration files
+- **High**: Business logic utilities (e.g. fees, document-reminder), critical service paths (order creation, payment/earnings flows).
+- **Moderate**: Service layer orchestration and error branches (e.g. 80%+ for sensitive services).
+- **Low priority**: Repositories (integration-style), thin controllers, config.
 
 ## Performance Tips
 
-1. **Prefer synchronous tests** for pure functions - no `async/await` overhead
-2. **Group related assertions** in single tests instead of separate `it()` blocks
-3. **Use `it.each`** for parameterized tests - single test setup, multiple cases
-4. **Avoid `beforeAll` for mocks** - use `beforeEach` for isolation
-5. **Mock at the boundary** - mock repositories, not database connections
+1. Prefer **synchronous** tests for pure functions.
+2. **Group related assertions** in one `it()` instead of many.
+3. Use **`it.each`** for parameterized cases.
+4. Use **`beforeEach`** for mocks so tests stay isolated; avoid `beforeAll` for mutable mocks.
+5. **Mock at the boundary** (repositories, external services), not internal helpers, when testing services.

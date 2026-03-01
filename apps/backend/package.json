@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "pretest": "pnpm --filter @revendiste/shared build",
+    "test": "jest --silent",
+    "test:watch": "jest --watch --silent",
+    "test:coverage": "jest --coverage --silent",
     "dev": "concurrently \"tsx watch src/server.ts --require tsconfig-paths/register --clear-screen --ignore src/routes.ts --ignore src/swagger/swagger.json\" \"nodemon --ignore src/routes.ts --ignore src/swagger/swagger.json -x tsoa spec-and-routes\" \"ngrok http 3001\"",
     "start": "node dist/server.js",
     "build": "tsc && tsc-alias",

@@ -10,6 +10,7 @@ import {logger} from '~/utils';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateOrderRouteBody} from '~/controllers/orders/validation';
 import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
+import {RESERVATION_WINDOW_MINUTES} from '~/constants/reservation';
 import {calculateOrderFees} from '~/utils/fees';
 import {getStorageProvider} from '~/services/storage';
 import type {PaymentSyncService} from '~/services/payments/sync';
@@ -222,7 +223,9 @@ export class OrdersService {
         platformCommission: feeCalculation.platformCommission,
         vatOnCommission: feeCalculation.vatOnCommission,
         currency,
-        reservationExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+        reservationExpiresAt: new Date(
+        Date.now() + RESERVATION_WINDOW_MINUTES * 60 * 1000,
+      ),
       });
 
       // Create order items
@@ -240,7 +243,9 @@ export class OrdersService {
       await reservationsRepo.cleanupExpiredReservationsForTickets(allTicketIds);
 
       // Create ticket reservations with error handling for race conditions
-      const reservedUntil = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+      const reservedUntil = new Date(
+        Date.now() + RESERVATION_WINDOW_MINUTES * 60 * 1000,
+      );
 
       try {
         await reservationsRepo.createReservations(
