@@ -17,6 +17,7 @@ import {
   ORDER_ERROR_MESSAGES,
   PAYMENT_ERROR_MESSAGES,
 } from '~/constants/error-messages';
+import type {PaymentStatus, PaymentMethod} from '@revendiste/shared';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {SellerEarningsService} from '~/services/seller-earnings';
 import {NotificationService} from '~/services/notifications';
@@ -48,7 +49,7 @@ export interface NormalizedPaymentData {
     document?: string;
     country?: string;
   };
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 export interface WebhookMetadata {
@@ -62,7 +63,7 @@ export interface WebhookMetadata {
 interface PaymentUpdateResult {
   paymentId: string;
   status: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 /**
@@ -75,6 +76,10 @@ interface PaymentUpdateResult {
  * - Normalize provider data to our format
  * - Handle all business logic (database operations, order management)
  * - Provide consistent webhook processing across all providers
+ *
+ * Idempotency: Duplicate "paid" webhooks are safe. handleSuccessfulPayment returns
+ * early when the order is already confirmed, so provider retries do not re-run the
+ * confirm flow.
  */
 export class PaymentWebhookAdapter {
   constructor(
@@ -319,7 +324,7 @@ export class PaymentWebhookAdapter {
     paymentRecord = await this.paymentsRepository.update(
       String(paymentRecord.id),
       {
-        status: newStatus as any,
+        status: newStatus as PaymentStatus,
         balanceAmount: paymentData.balanceAmount
           ? String(paymentData.balanceAmount)
           : undefined,
@@ -329,7 +334,7 @@ export class PaymentWebhookAdapter {
         balanceCurrency: paymentData.balanceCurrency,
         // Store exchange rate if currencies differ (dLocal settles in UYU even for USD orders)
         exchangeRate,
-        paymentMethod: paymentData.paymentMethod as any,
+        paymentMethod: (paymentData.paymentMethod as PaymentMethod) ?? undefined,
         payerEmail: paymentData.payer?.email,
         payerFirstName: paymentData.payer?.firstName,
         payerLastName: paymentData.payer?.lastName,
@@ -349,8 +354,8 @@ export class PaymentWebhookAdapter {
     if (String(oldStatus) !== String(newStatus)) {
       await this.paymentEventsRepository.logStatusChange(
         String(paymentRecord.id),
-        String(oldStatus),
-        String(newStatus),
+        oldStatus as PaymentStatus | null,
+        newStatus as PaymentStatus,
         paymentData.metadata,
       );
     }

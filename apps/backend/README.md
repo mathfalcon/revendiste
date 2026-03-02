@@ -60,9 +60,10 @@ docker-compose up -d
 Create a `.env` file in the backend directory:
 
 ```env
+# Copy from .env.example and fill required values
 DATABASE_URL=postgresql://postgres:password@localhost:5432/your_db_name
-PORT=4000
-NODE_ENV=development
+PORT=3001
+NODE_ENV=local
 ```
 
 ### 4. Run Database Migrations
@@ -85,8 +86,8 @@ pnpm tsoa:spec
 pnpm dev
 ```
 
-The API will be available at `http://localhost:4000/api`
-API Documentation will be available at `http://localhost:4000/api/docs`
+The API will be available at `http://localhost:3001/api`
+API Documentation will be available at `http://localhost:3001/api/docs`
 
 ## 📁 Project Structure
 
@@ -233,8 +234,8 @@ pnpm tsoa:spec && pnpm tsoa:routes
 ### Swagger UI
 
 Access the interactive API documentation at:
-- **URL**: `http://localhost:4000/api/docs`
-- **OpenAPI JSON**: `http://localhost:4000/swagger.json`
+- **URL**: `http://localhost:3001/api/docs`
+- **OpenAPI JSON**: `http://localhost:3001/api/swagger.json`
 
 ### Example Endpoints
 
@@ -243,7 +244,7 @@ Access the interactive API documentation at:
 Get all examples
 
 ```bash
-curl http://localhost:4000/api/examples
+curl http://localhost:3001/api/examples
 ```
 
 #### GET /api/examples/:id
@@ -251,7 +252,7 @@ curl http://localhost:4000/api/examples
 Get a single example by ID
 
 ```bash
-curl http://localhost:4000/api/examples/123
+curl http://localhost:3001/api/examples/123
 ```
 
 #### POST /api/examples/paginated
@@ -259,7 +260,7 @@ curl http://localhost:4000/api/examples/123
 Get paginated examples with query parameters
 
 ```bash
-curl -X POST http://localhost:4000/api/examples/paginated \
+curl -X POST http://localhost:3001/api/examples/paginated \
   -H "Content-Type: application/json" \
   -d '{"page": 1, "limit": 10, "sortBy": "name", "sortOrder": "asc"}'
 ```
@@ -588,16 +589,16 @@ For Kubernetes deployments, use these endpoints:
 # livenessProbe
 livenessProbe:
   httpGet:
-    path: /health/live
-    port: 4000
+    path: /api/health/live
+    port: 3001
   initialDelaySeconds: 30
   periodSeconds: 10
 
 # readinessProbe
 readinessProbe:
   httpGet:
-    path: /health/ready
-    port: 4000
+    path: /api/health/ready
+    port: 3001
   initialDelaySeconds: 5
   periodSeconds: 5
 ```

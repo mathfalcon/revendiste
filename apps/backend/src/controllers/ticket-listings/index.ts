@@ -15,7 +15,11 @@ import {
 import {TicketListingsService} from '~/services/ticket-listings';
 import {TicketDocumentService} from '~/services/ticket-documents';
 import {NotificationService} from '~/services/notifications';
-import {requireAuthMiddleware} from '~/middleware';
+import {
+  requireAuthMiddleware,
+  paginationMiddleware,
+  ensurePagination,
+} from '~/middleware';
 import {
   TicketListingsRepository,
   EventsRepository,
@@ -130,12 +134,19 @@ export class TicketListingsController {
   }
 
   @Get('/my-listings')
+  @Middlewares(
+    requireAuthMiddleware,
+    paginationMiddleware(10, 100),
+    ensurePagination,
+  )
   @Response<UnauthorizedError>(401, 'Authentication required')
-  @Middlewares(requireAuthMiddleware)
   public async getMyListings(
     @Request() request: express.Request,
   ): Promise<GetUserListingsResponse> {
-    return this.service.getUserListingsWithTickets(request.user.id);
+    return this.service.getUserListingsWithTickets(
+      request.user.id,
+      request.pagination!,
+    );
   }
 
   /**

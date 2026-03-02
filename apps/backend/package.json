@@ -43,6 +43,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
     "kysely": "^0.28.5",
     "kysely-ctl": "^0.13.1",
     "morgan": "^1.10.1",

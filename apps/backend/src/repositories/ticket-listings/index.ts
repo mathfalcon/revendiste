@@ -46,8 +46,21 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
     });
   }
 
-  async getListingsWithTicketsByUserId(userId: string) {
-    return await this.db
+  async getListingsWithTicketsByUserIdCount(userId: string) {
+    const row = await this.db
+      .selectFrom('listings')
+      .select(this.db.fn.count('listings.id').as('count'))
+      .where('listings.publisherUserId', '=', userId)
+      .where('listings.deletedAt', 'is', null)
+      .executeTakeFirst();
+    return Number(row?.count ?? 0);
+  }
+
+  async getListingsWithTicketsByUserId(
+    userId: string,
+    options?: {limit: number; offset: number},
+  ) {
+    let query = this.db
       .selectFrom('listings')
       .innerJoin(
         'eventTicketWaves',
@@ -145,8 +158,12 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
       ])
       .where('listings.publisherUserId', '=', userId)
       .where('listings.deletedAt', 'is', null)
-      .orderBy('listings.createdAt', 'desc')
-      .execute();
+      .orderBy('listings.createdAt', 'desc');
+
+    if (options) {
+      query = query.limit(options.limit).offset(options.offset);
+    }
+    return await query.execute();
   }
 
   async markListingAsSold(listingId: string) {

@@ -1,10 +1,10 @@
 import {useEffect, useState} from 'react';
 import {EventSearchInput} from '~/components/SearchInput';
 import {EventSearchModal} from '~/components/EventSearchModal';
-import { CDN_ASSETS } from '~/assets';
+import {CDN_ASSETS} from '~/assets';
 
 const homePageTaglines = [
-  "¿Plan a último momento? Conseguí o transferí tu entrada con nosotros",
+  '¿Plan a último momento? Conseguí o transferí tu entrada con nosotros',
   'Si no vas, que tu entrada no quede tirada. Vendela fácil y seguro',
   '¿Te pintó ir a último momento? Conseguí tu entrada al toque',
   '¿Cambio de plan? La fiesta sigue, comprá o transferi tu entrada sin drama',
@@ -80,6 +80,10 @@ export const HomeHero = () => {
           alt='People partying'
           className='w-full h-full object-cover absolute top-0 left-0'
           fetchPriority='high'
+        />
+        <div
+          className='absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(0,0,0,0.35),transparent_70%)]'
+          aria-hidden
         />
         {/* Visually hidden h1 for SEO - every page needs exactly one h1 */}
         <h1 className='sr-only'>

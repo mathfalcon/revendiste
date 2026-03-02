@@ -1,6 +1,7 @@
 import {Kysely} from 'kysely';
 import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
 import {DB, EventTicketCurrency} from '@revendiste/shared';
+import type {PaginationOptions} from '~/types/pagination';
 import {BaseRepository} from '../base';
 
 export class OrdersRepository extends BaseRepository<OrdersRepository> {
@@ -166,8 +167,18 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       .executeTakeFirstOrThrow();
   }
 
-  async getByUserId(userId: string) {
-    return await this.db
+  async getByUserIdCount(userId: string) {
+    const row = await this.db
+      .selectFrom('orders')
+      .select(this.db.fn.count('orders.id').as('count'))
+      .where('orders.userId', '=', userId)
+      .where('orders.deletedAt', 'is', null)
+      .executeTakeFirst();
+    return Number(row?.count ?? 0);
+  }
+
+  async getByUserId(userId: string, options?: PaginationOptions) {
+    let query = this.db
       .selectFrom('orders')
       .leftJoin('events', 'orders.eventId', 'events.id')
       .select(eb => [
@@ -231,7 +242,11 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       ])
       .where('orders.userId', '=', userId)
       .where('orders.deletedAt', 'is', null)
-      .orderBy('orders.createdAt', 'desc')
-      .execute();
+      .orderBy('orders.createdAt', 'desc');
+
+    if (options) {
+      query = query.limit(options.limit).offset(options.offset);
+    }
+    return await query.execute();
   }
 }

@@ -27,6 +27,8 @@ import {
 } from '@revendiste/shared';
 import type {Kysely} from 'kysely';
 import type {DB} from '@revendiste/shared';
+import type {PaginationOptions} from '~/types/pagination';
+import {createPaginatedResponse} from '~/middleware/pagination';
 
 export class TicketListingsService {
   constructor(
@@ -158,11 +160,17 @@ export class TicketListingsService {
     return createdListings;
   }
 
-  async getUserListingsWithTickets(userId: string) {
-    const listings =
-      await this.ticketListingsRepository.getListingsWithTicketsByUserId(
-        userId,
-      );
+  async getUserListingsWithTickets(
+    userId: string,
+    pagination: PaginationOptions,
+  ) {
+    const [listings, total] = await Promise.all([
+      this.ticketListingsRepository.getListingsWithTicketsByUserId(userId, {
+        limit: pagination.limit,
+        offset: pagination.offset,
+      }),
+      this.ticketListingsRepository.getListingsWithTicketsByUserIdCount(userId),
+    ]);
 
     logger.info(`Retrieved ${listings.length} listings for user ${userId}`);
 
@@ -198,7 +206,7 @@ export class TicketListingsService {
       };
     });
 
-    return enrichedListings;
+    return createPaginatedResponse(enrichedListings, total, pagination);
   }
 
   /**

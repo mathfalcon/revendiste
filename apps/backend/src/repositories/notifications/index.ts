@@ -1,7 +1,7 @@
 import {Kysely, sql} from 'kysely';
 import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
-import {mapToPaginatedResponse} from '~/middleware';
+import {mapToPaginatedResponse} from '~/middleware/pagination';
 import type {
   NotificationChannel,
   NotificationMetadata,
@@ -236,7 +236,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
         // Filter by exponential backoff in application code
         // This is a temporary solution until we can use proper SQL with the new column
         return notifications.filter(notification => {
-          const retryCount = (notification as any).retryCount ?? 0;
+          const retryCount = notification.retryCount ?? 0;
           const baseDelay = 5 * 60 * 1000; // 5 minutes
           const backoffDelay = baseDelay * Math.pow(2, retryCount);
           const retryAfter = new Date(now.getTime() - backoffDelay);

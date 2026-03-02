@@ -1,4 +1,6 @@
 import {EventsRepository, VenuesRepository} from '~/repositories';
+import {NotFoundError} from '~/errors';
+import {EVENT_ERROR_MESSAGES} from '~/constants/error-messages';
 import {WithPagination} from '~/types';
 import {ScrapedEventData} from '../scraping';
 import {EventImageService} from '../scraping/image-service';
@@ -278,7 +280,9 @@ export class EventsService {
 
   async getEventById(eventId: string, userId?: string) {
     const event = await this.eventsRepository.getById(eventId, userId);
-
+    if (!event) {
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
     return event;
   }
 

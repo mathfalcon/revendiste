@@ -9,6 +9,10 @@ import {
   NotificationBatchesRepository,
   UsersRepository,
 } from '~/repositories';
+import {
+  SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
+  SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
+} from '~/constants/limits';
 import {logger} from '~/utils';
 
 /**
@@ -45,7 +49,9 @@ export async function runCheckPayoutHoldPeriods() {
     // Check 1: Handle missing documents immediately at event end
     // This MUST run before checkHoldPeriods() so retained earnings are skipped
     const missingDocsResult =
-      await sellerEarningsService.checkMissingDocumentsAfterEventEnd(100);
+      await sellerEarningsService.checkMissingDocumentsAfterEventEnd(
+      SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
+    );
 
     if (missingDocsResult.processed > 0) {
       logger.info('Processed missing documents after event end', {
@@ -54,7 +60,10 @@ export async function runCheckPayoutHoldPeriods() {
     }
 
     // Check 2: Release hold periods (existing logic)
-    const holdPeriodsResult = await sellerEarningsService.checkHoldPeriods(100);
+    const holdPeriodsResult =
+      await sellerEarningsService.checkHoldPeriods(
+        SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
+      );
 
     logger.info('Payout hold periods check completed', {
       missingDocsCancelled: missingDocsResult.processed,

@@ -3,6 +3,7 @@ import {UsersRepository} from '~/repositories/users';
 import {VerificationAuditRepository} from '~/repositories/verification-audit';
 import type {IStorageProvider} from '~/services/storage/IStorageProvider';
 import {NotFoundError, ValidationError} from '~/errors';
+import {ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES} from '~/constants/error-messages';
 import {logger} from '~/utils';
 import {getStorageProvider} from '../storage';
 import {NotificationService} from '../notifications';
@@ -10,6 +11,20 @@ import {
   notifyIdentityVerificationCompleted,
   notifyIdentityVerificationRejected,
 } from '../notifications/helpers';
+
+interface VerificationMetadata {
+  livenessReferenceImagePath?: string;
+  livenessAuditImagePaths?: string[];
+  manualReview?: {action: string; adminId: string; notes: string | null; reviewedAt: string};
+  [key: string]: unknown;
+}
+
+interface VerificationConfidenceScores {
+  textDetection?: number;
+  faceMatch?: number;
+  liveness?: number;
+  [key: string]: unknown;
+}
 
 interface PaginationParams {
   page: number;
@@ -90,12 +105,13 @@ export class AdminIdentityVerificationService {
     const user = await this.usersRepository.getById(userId);
 
     if (!user) {
-      throw new NotFoundError('Usuario no encontrado');
+      throw new NotFoundError(ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES.USER_NOT_FOUND);
     }
 
     // Parse verification metadata to get image paths
-    const metadata = (user.verificationMetadata as any) || {};
-    const confidenceScores = (user.verificationConfidenceScores as any) || {};
+    const metadata = (user.verificationMetadata as VerificationMetadata | null) ?? {};
+    const confidenceScores =
+      (user.verificationConfidenceScores as VerificationConfidenceScores | null) ?? {};
 
     return {
       id: user.id,
@@ -120,7 +136,7 @@ export class AdminIdentityVerificationService {
       images: {
         hasDocumentImage: !!user.documentImagePath,
         hasReferenceImage: !!metadata.livenessReferenceImagePath,
-        auditImagesCount: metadata.livenessAuditImagePaths?.length || 0,
+        auditImagesCount: metadata.livenessAuditImagePaths?.length ?? 0,
       },
       // Metadata for context
       metadata: {
@@ -145,10 +161,11 @@ export class AdminIdentityVerificationService {
     const user = await this.usersRepository.getById(userId);
 
     if (!user) {
-      throw new NotFoundError('Usuario no encontrado');
+      throw new NotFoundError(ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES.USER_NOT_FOUND);
     }
 
-    const metadata = (user.verificationMetadata as any) || {};
+    const metadata =
+      (user.verificationMetadata as VerificationMetadata | null) ?? {};
     let imagePath: string | null = null;
 
     switch (imageType) {
@@ -156,7 +173,7 @@ export class AdminIdentityVerificationService {
         imagePath = user.documentImagePath;
         break;
       case 'reference':
-        imagePath = metadata.livenessReferenceImagePath;
+        imagePath = metadata.livenessReferenceImagePath ?? null;
         break;
       case 'audit':
         if (
@@ -171,13 +188,15 @@ export class AdminIdentityVerificationService {
     }
 
     if (!imagePath) {
-      throw new NotFoundError('Imagen no encontrada');
+      throw new NotFoundError(
+        ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES.IMAGE_NOT_FOUND,
+      );
     }
 
     // Generate a signed URL for the image (valid for 15 minutes)
     if (!this.storageProvider.getSignedUrl) {
       throw new ValidationError(
-        'El proveedor de almacenamiento no soporta URLs firmadas',
+        ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES.STORAGE_SIGNED_URL_NOT_SUPPORTED,
       );
     }
 
@@ -199,17 +218,18 @@ export class AdminIdentityVerificationService {
     const user = await this.usersRepository.getById(userId);
 
     if (!user) {
-      throw new NotFoundError('Usuario no encontrado');
+      throw new NotFoundError(ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES.USER_NOT_FOUND);
     }
 
     if (user.verificationStatus !== 'requires_manual_review') {
       throw new ValidationError(
-        'El usuario no está pendiente de revisión manual',
+        ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES.USER_NOT_PENDING_MANUAL_REVIEW,
       );
     }
 
     const previousStatus = user.verificationStatus;
-    const confidenceScores = (user.verificationConfidenceScores as any) || {};
+    const confidenceScores =
+      (user.verificationConfidenceScores as VerificationConfidenceScores | null) ?? {};
 
     logger.info('[Admin] Approving verification', {
       userId,
@@ -218,7 +238,8 @@ export class AdminIdentityVerificationService {
       notes,
     });
 
-    const metadata = (user.verificationMetadata as any) || {};
+    const metadata =
+      (user.verificationMetadata as VerificationMetadata | null) ?? {};
 
     await this.usersRepository.updateVerification(userId, {
       documentVerified: true,
@@ -281,17 +302,18 @@ export class AdminIdentityVerificationService {
     const user = await this.usersRepository.getById(userId);
 
     if (!user) {
-      throw new NotFoundError('Usuario no encontrado');
+      throw new NotFoundError(ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES.USER_NOT_FOUND);
     }
 
     if (user.verificationStatus !== 'requires_manual_review') {
       throw new ValidationError(
-        'El usuario no está pendiente de revisión manual',
+        ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES.USER_NOT_PENDING_MANUAL_REVIEW,
       );
     }
 
     const previousStatus = user.verificationStatus;
-    const confidenceScores = (user.verificationConfidenceScores as any) || {};
+    const confidenceScores =
+      (user.verificationConfidenceScores as VerificationConfidenceScores | null) ?? {};
 
     logger.info('[Admin] Rejecting verification', {
       userId,
@@ -300,7 +322,8 @@ export class AdminIdentityVerificationService {
       reason,
     });
 
-    const metadata = (user.verificationMetadata as any) || {};
+    const metadata =
+      (user.verificationMetadata as VerificationMetadata | null) ?? {};
 
     // Use 'rejected' status to differentiate from system failures ('failed')
     await this.usersRepository.updateVerification(userId, {
@@ -365,7 +388,7 @@ export class AdminIdentityVerificationService {
     const user = await this.usersRepository.getById(userId);
 
     if (!user) {
-      throw new NotFoundError('Usuario no encontrado');
+      throw new NotFoundError(ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES.USER_NOT_FOUND);
     }
 
     const logs = await this.auditRepository.getByUserId(userId, limit, offset);

@@ -10,7 +10,11 @@ import {
   Path,
 } from '@mathfalcon/tsoa-runtime';
 import {OrdersService} from '~/services/orders';
-import {requireAuthMiddleware} from '~/middleware';
+import {
+  requireAuthMiddleware,
+  paginationMiddleware,
+  ensurePagination,
+} from '~/middleware';
 import {
   OrdersRepository,
   OrderItemsRepository,
@@ -161,11 +165,18 @@ export class OrdersController {
   }
 
   @Get('/')
+  @Middlewares(
+    paginationMiddleware(10, 100),
+    ensurePagination,
+  )
   @Response<UnauthorizedError>(401, 'Authentication required')
   public async getMyOrders(
     @Request() request: express.Request,
   ): Promise<GetUserOrdersResponse> {
-    return this.service.getUserOrders(request.user.id);
+    return this.service.getUserOrders(
+      request.user.id,
+      request.pagination!,
+    );
   }
 
   @Get('/{orderId}/tickets')

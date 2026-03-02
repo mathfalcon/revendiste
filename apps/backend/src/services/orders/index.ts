@@ -9,11 +9,17 @@ import {
 import {logger} from '~/utils';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateOrderRouteBody} from '~/controllers/orders/validation';
-import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
+import {
+  ORDER_ERROR_MESSAGES,
+  EVENT_ERROR_MESSAGES,
+} from '~/constants/error-messages';
+import {MAX_TICKETS_PER_ORDER} from '~/constants/orders';
 import {RESERVATION_WINDOW_MINUTES} from '~/constants/reservation';
 import {calculateOrderFees} from '~/utils/fees';
 import {getStorageProvider} from '~/services/storage';
 import type {PaymentSyncService} from '~/services/payments/sync';
+import type {PaginationOptions} from '~/types/pagination';
+import {createPaginatedResponse} from '~/middleware/pagination';
 
 export class OrdersService {
   private readonly storageProvider = getStorageProvider();
@@ -66,7 +72,10 @@ export class OrdersService {
     // Validate that the event exists and hasn't finished
     const event = await this.eventsRepository.getById(data.eventId);
     if (!event) {
-      throw new NotFoundError(ORDER_ERROR_MESSAGES.EVENT_NOT_FOUND);
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
+    if (!event) {
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
     }
 
     if (new Date() > event.eventEndDate) {
@@ -188,7 +197,7 @@ export class OrdersService {
     }
 
     // Validate total ticket limit
-    if (totalTickets > 10) {
+    if (totalTickets > MAX_TICKETS_PER_ORDER) {
       throw new ValidationError(ORDER_ERROR_MESSAGES.TOO_MANY_TICKETS);
     }
 
@@ -297,9 +306,12 @@ export class OrdersService {
     return order;
   }
 
-  async getUserOrders(userId: string) {
-    const orders = await this.ordersRepository.getByUserId(userId);
-    return orders;
+  async getUserOrders(userId: string, pagination: PaginationOptions) {
+    const [orders, total] = await Promise.all([
+      this.ordersRepository.getByUserId(userId, pagination),
+      this.ordersRepository.getByUserIdCount(userId),
+    ]);
+    return createPaginatedResponse(orders, total, pagination);
   }
 
   async cancelOrder(orderId: string, userId: string) {

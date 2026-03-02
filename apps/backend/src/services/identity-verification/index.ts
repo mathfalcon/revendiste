@@ -20,7 +20,10 @@ import {
 } from '~/repositories/verification-audit';
 import type {IStorageProvider} from '~/services/storage/IStorageProvider';
 import {ValidationError, MaxAttemptsExceededError} from '~/errors';
-import {IDENTITY_VERIFICATION_ERROR_MESSAGES} from '~/constants/error-messages';
+import {
+  IDENTITY_VERIFICATION_ERROR_MESSAGES,
+  NOTIFICATION_ERROR_MESSAGES,
+} from '~/constants/error-messages';
 import {logger} from '~/utils';
 import {getStorageProvider} from '../storage';
 import {NotificationService} from '../notifications';
@@ -410,7 +413,7 @@ export class IdentityVerificationService {
     const user = await this.usersRepository.getById(userId);
     if (!user) {
       logger.warn(`${logPrefix} User not found`, {userId});
-      throw new ValidationError('User not found');
+      throw new ValidationError(NOTIFICATION_ERROR_MESSAGES.USER_NOT_FOUND);
     }
     return user as UserVerificationData;
   }

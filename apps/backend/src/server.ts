@@ -3,7 +3,8 @@ import cors from 'cors';
 import morgan from 'morgan';
 import path from 'path';
 import {PORT, STORAGE_LOCAL_PATH, APP_BASE_URL, NODE_ENV} from './config/env';
-import {errorHandler, optionalAuthMiddleware} from './middleware';
+import {apiRateLimitMiddleware} from './middleware/rateLimit';
+import {errorHandler, optionalAuthMiddleware, requestIdMiddleware} from './middleware';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
 import {logger} from './utils';
@@ -38,6 +39,8 @@ app.use(
 );
 
 app.use(express.json());
+
+app.use(requestIdMiddleware);
 
 // Preserve original body before TSOA processes it
 // TSOA's getValidatedArgs may strip nested Record types, so we store the original
@@ -77,6 +80,9 @@ app.use(
 
 const router = express.Router();
 
+if (NODE_ENV !== 'test') {
+  router.use(apiRateLimitMiddleware);
+}
 registerSwaggerRoutes(router);
 RegisterRoutes(router);
 

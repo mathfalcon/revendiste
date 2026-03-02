@@ -74,6 +74,7 @@ export class MyRepository extends BaseRepository<MyRepository> {
 - ✅ **Never type return types explicitly** - Kysely's type system is excellent, let it infer
 - ✅ Use `this.executeTransaction()` from BaseRepository for transactions
 - ✅ Use `this.db` for queries
+- ✅ **Repositories return `null` (or empty) for "not found"**—do not throw. Services interpret and throw domain errors (`NotFoundError`, etc.) using messages from `constants/error-messages.ts`.
 
 ### Transaction Pattern
 
@@ -455,9 +456,19 @@ pnpm generate:api  # Generates TypeScript types from OpenAPI spec
 
 **Important:**
 
-- Always regenerate after backend API changes
+- Always regenerate after backend API changes (`pnpm generate:api` in frontend)
 - Generated types are in `apps/frontend/src/lib/api/generated.ts`
 - Manually add methods to generated client if needed
+- **Do not add explicit type casts** on API response types—use the generated types; casting breaks when the spec changes
+
+### Paginated list APIs
+
+List endpoints (e.g. `getMyOrders`, `getMyListings`) return `{ data: T[], pagination: PaginationMeta }`. In frontend query options, unwrap the array with `res.data.data` so list UIs still receive an array. Types come from the generated client after `pnpm generate:api`—no manual casts.
+
+```typescript
+// ✅ CORRECT - Unwrap paginated response; types from generated API
+queryFn: () => api.orders.getMyOrders().then(res => res.data.data),
+```
 
 ### Frontend API Generation Plugin
 
@@ -1053,6 +1064,11 @@ apps/frontend/src/
 - Create docs in `apps/frontend/docs/` for complex frontend features
 - Document platform-specific logic and business rules
 - Include examples and usage patterns when helpful
+
+## Observability and middleware
+
+- **Request ID**: Request ID middleware adds a correlation ID to each request; error JSON responses include it for debugging and logs
+- **Rate limiting**: Use the official `ipKeyGenerator` from `express-rate-limit` when using a custom store—do not build a custom IP key (IPv6 and proxies must be handled correctly; the library does this)
 
 ## Security Best Practices
 

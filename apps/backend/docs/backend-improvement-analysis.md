@@ -239,7 +239,7 @@ Transactions are scoped to a single flow; no long-held transactions wrapping ext
 
 - Clear controller → service → repository flow; TSOA and Zod for routes and validation.
 - Centralized error classes and handler.
-- Webhooks fire-and-forget and dLocal signature verification with constant-time compare.
+- Webhooks fire-and-forget (return 200 quickly so dLocal/Clerk do not timeout) and dLocal signature verification with constant-time compare. Payment webhook idempotency: duplicate "paid" webhooks are handled by returning early when the order is already confirmed. Indexes reviewed: critical query patterns (orders by user, payments by order, listings by user) are covered by existing migrations.
 - CORS and env validation.
 - Kysely transactions used in the right places without wrapping external calls.
 - Many list endpoints paginated.

@@ -22,6 +22,7 @@ import {
 import {db} from '~/db';
 import {requireAuthMiddleware} from '~/middleware';
 import {BadRequestError, ApiErrorResponse} from '~/errors';
+import {IDENTITY_VERIFICATION_ERROR_MESSAGES} from '~/constants/error-messages';
 import {Body, ValidateBody} from '~/decorators';
 import {
   InitiateVerificationRouteBody,
@@ -134,14 +135,18 @@ export class IdentityVerificationController {
     @Request() request: express.Request,
   ): Promise<ProcessDocumentResponse> {
     if (!file) {
-      throw new BadRequestError('Documento es requerido');
+      throw new BadRequestError(
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.DOCUMENT_REQUIRED,
+      );
     }
 
     if (
       !documentType ||
       !['ci_uy', 'dni_ar', 'passport'].includes(documentType)
     ) {
-      throw new BadRequestError('Tipo de documento inválido o faltante');
+      throw new BadRequestError(
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.DOCUMENT_TYPE_INVALID_OR_MISSING,
+      );
     }
 
     return this.service.processDocument(
@@ -218,7 +223,7 @@ export class IdentityVerificationController {
     if (!FACE_LIVENESS_ROLE_ARN) {
       logger.error('FACE_LIVENESS_ROLE_ARN not configured');
       throw new BadRequestError(
-        'Face Liveness no está configurado. Contactá a soporte.',
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.FACE_LIVENESS_NOT_CONFIGURED,
       );
     }
 
@@ -270,7 +275,7 @@ export class IdentityVerificationController {
     } catch (error) {
       logger.error('Failed to assume Face Liveness role', {error});
       throw new BadRequestError(
-        'No se pudieron obtener credenciales para la verificación facial.',
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.FACE_LIVENESS_CREDENTIALS_FAILED,
       );
     }
   }

@@ -3,8 +3,7 @@ import type { DB, EventImageType, Events } from '@revendiste/shared';
 import type { ScrapedEventData } from '../../services/scraping';
 import { logger } from '~/utils';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
-import { mapToPaginatedResponse } from '~/middleware';
-import { NotFoundError } from '~/errors';
+import {mapToPaginatedResponse} from '~/middleware/pagination';
 import { sql } from 'kysely';
 import { BaseRepository } from '../base';
 import type { PaginationOptions } from '~/types/pagination';
@@ -546,11 +545,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .orderBy('events.eventStartDate', 'asc')
       .executeTakeFirst();
 
-    if (!event) {
-      throw new NotFoundError('Event not found');
-    }
-
-    return event;
+    return event ?? null;
   }
 
   // Get upcoming events ordered by start date (includes in-progress events)
@@ -573,13 +568,14 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'events.status',
         'events.createdAt',
         'events.updatedAt',
-        // Only include flyer images for the search results
+        // Prefer flyer, fallback to hero for search results
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
             .select(['eventImages.url', 'eventImages.imageType'])
             .whereRef('eventImages.eventId', '=', 'events.id')
-            .where('eventImages.imageType', '=', 'flyer')
+            .where('eventImages.imageType', 'in', ['flyer', 'hero'])
+            .orderBy('eventImages.imageType', 'asc') // flyer before hero
             .orderBy('eventImages.displayOrder'),
         ).as('eventImages'),
       ])
@@ -615,13 +611,14 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'events.status',
         'events.createdAt',
         'events.updatedAt',
-        // Only include flyer images for the search results
+        // Prefer flyer, fallback to hero for search results
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
             .select(['eventImages.url', 'eventImages.imageType'])
             .whereRef('eventImages.eventId', '=', 'events.id')
-            .where('eventImages.imageType', '=', 'flyer')
+            .where('eventImages.imageType', 'in', ['flyer', 'hero'])
+            .orderBy('eventImages.imageType', 'asc') // flyer before hero
             .orderBy('eventImages.displayOrder'),
         ).as('eventImages'),
       ])
@@ -842,11 +839,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .where('events.deletedAt', 'is', null)
       .executeTakeFirst();
 
-    if (!event) {
-      throw new NotFoundError('Evento no encontrado');
-    }
-
-    return event;
+    return event ?? null;
   }
 
   /**
@@ -866,11 +859,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .returningAll()
       .execute();
 
-    if (!updated) {
-      throw new NotFoundError('Evento no encontrado');
-    }
-
-    return updated;
+    return updated ?? null;
   }
 
   /**
@@ -892,7 +881,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .execute();
 
     if (!deleted) {
-      throw new NotFoundError('Evento no encontrado');
+      return null;
     }
 
     // Also soft delete related ticket waves

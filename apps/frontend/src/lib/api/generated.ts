@@ -281,7 +281,7 @@ export interface TrackViewResponse {
 }
 
 /** Construct a type with a set of properties K of type T */
-export type RecordStringAny = Record<string, any>;
+export type RecordStringUnknown = Record<string, any>;
 
 export interface HealthCheckResult {
   status: "healthy" | "unhealthy" | "degraded";
@@ -289,7 +289,7 @@ export interface HealthCheckResult {
   /** @format double */
   responseTime?: number;
   /** Construct a type with a set of properties K of type T */
-  details?: RecordStringAny;
+  details?: RecordStringUnknown;
 }
 
 export interface HealthCheck {
@@ -371,6 +371,9 @@ export interface NotFoundError {
   isOperational: boolean;
 }
 
+/** Construct a type with a set of properties K of type T */
+export type RecordStringAny = Record<string, any>;
+
 export interface ValidationError {
   name: string;
   message: string;
@@ -391,55 +394,61 @@ export interface CreateTicketListingRouteBody {
   eventId: string;
 }
 
-export type GetUserListingsResponse = {
-  event: {
-    eventImages: {
-      imageType: EventImageType;
-      url: string;
-    }[];
-    venueAddress: string | null;
-    venueName: string | null;
-    qrAvailabilityTiming: QrAvailabilityTiming | null;
-    platform: string;
-    name: string;
-    id: string;
-    eventStartDate: string;
-    eventEndDate: string;
-    description: string | null;
-  };
-  ticketWave: {
-    faceValue: string;
-    currency: EventTicketCurrency;
-    name: string;
-    id: string;
-  };
-  /** @format date-time */
-  soldAt: string | null;
-  /** @format date-time */
-  updatedAt: string;
-  id: string;
-  /** @format date-time */
-  createdAt: string;
-  tickets: {
-    document: {
-      uploadedAt: string;
-      status: string;
+export interface PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray {
+  data: {
+    event: {
+      eventImages: {
+        imageType: EventImageType;
+        url: string;
+      }[];
+      venueAddress: string | null;
+      venueName: string | null;
+      qrAvailabilityTiming: QrAvailabilityTiming | null;
+      platform: string;
+      name: string;
       id: string;
-    } | null;
-    /** @format double */
-    ticketNumber: number;
-    price: string;
+      eventStartDate: string;
+      eventEndDate: string;
+      description: string | null;
+    };
+    ticketWave: {
+      faceValue: string;
+      currency: EventTicketCurrency;
+      name: string;
+      id: string;
+    };
+    /** @format date-time */
     soldAt: string | null;
+    /** @format date-time */
     updatedAt: string;
     id: string;
-    deletedAt: string | null;
+    /** @format date-time */
     createdAt: string;
-    uploadAvailableAt?: string;
-    uploadUnavailableReason?: UploadAvailabilityReason;
-    canUploadDocument: boolean;
-    hasDocument: boolean;
+    tickets: {
+      document: {
+        uploadedAt: string;
+        status: string;
+        id: string;
+      } | null;
+      /** @format double */
+      ticketNumber: number;
+      price: string;
+      soldAt: string | null;
+      updatedAt: string;
+      id: string;
+      deletedAt: string | null;
+      createdAt: string;
+      uploadAvailableAt?: string;
+      uploadUnavailableReason?: UploadAvailabilityReason;
+      canUploadDocument: boolean;
+      hasDocument: boolean;
+    }[];
   }[];
-}[];
+  pagination: PaginationMeta;
+}
+
+export type GetUserListingsResponse =
+  PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray;
 
 export interface UploadDocumentResponse {
   documentUrl: string;
@@ -647,50 +656,56 @@ export interface GetOrderByIdResponse {
   createdAt: string;
 }
 
-export type GetUserOrdersResponse = {
-  items: {
-    ticketWaveName: string | null;
-    subtotal: string;
-    /** @format double */
-    quantity: number;
-    pricePerTicket: string;
-    ticketWaveId: string;
-    id: string;
-    currency: EventTicketCurrency | null;
-  }[];
-  event: {
-    images: {
-      imageType: EventImageType;
-      url: string;
+export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringTotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray {
+  data: {
+    items: {
+      ticketWaveName: string | null;
+      subtotal: string;
+      /** @format double */
+      quantity: number;
+      pricePerTicket: string;
+      ticketWaveId: string;
+      id: string;
+      currency: EventTicketCurrency | null;
     }[];
-    venueAddress: string | null;
-    venueName: string | null;
-    platform: string | null;
-    name: string | null;
-    id: string | null;
-    eventStartDate: string | null;
-    eventEndDate: string | null;
-  };
-  vatOnCommission: string;
-  totalAmount: string;
-  subtotalAmount: string;
-  /** @format date-time */
-  reservationExpiresAt: string;
-  platformCommission: string;
-  /** @format date-time */
-  confirmedAt: string | null;
-  /** @format date-time */
-  cancelledAt: string | null;
-  userId: string;
-  currency: EventTicketCurrency;
-  eventId: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: "cancelled" | "confirmed" | "expired" | "pending";
-  id: string;
-  /** @format date-time */
-  createdAt: string;
-}[];
+    event: {
+      images: {
+        imageType: EventImageType;
+        url: string;
+      }[];
+      venueAddress: string | null;
+      venueName: string | null;
+      platform: string | null;
+      name: string | null;
+      id: string | null;
+      eventStartDate: string | null;
+      eventEndDate: string | null;
+    };
+    vatOnCommission: string;
+    totalAmount: string;
+    subtotalAmount: string;
+    /** @format date-time */
+    reservationExpiresAt: string;
+    platformCommission: string;
+    /** @format date-time */
+    confirmedAt: string | null;
+    /** @format date-time */
+    cancelledAt: string | null;
+    userId: string;
+    currency: EventTicketCurrency;
+    eventId: string;
+    /** @format date-time */
+    updatedAt: string;
+    status: "cancelled" | "confirmed" | "expired" | "pending";
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  pagination: PaginationMeta;
+}
+
+export type GetUserOrdersResponse =
+  PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringTotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray;
 
 export interface GetOrderTicketsResponse {
   tickets: {
@@ -1506,20 +1521,24 @@ export interface GetVerificationDetailsResponse {
   /** @format date-time */
   createdAt: string;
   metadata: {
-    failedAt: any;
-    failureReason: any;
-    processedAt: any;
-    livenessSessionId: any;
+    failedAt: object | null;
+    failureReason: object | null;
+    processedAt: object | null;
+    livenessSessionId: object | null;
   };
   images: {
-    auditImagesCount: any;
+    /** @format double */
+    auditImagesCount: number;
     hasReferenceImage: boolean;
     hasDocumentImage: boolean;
   };
   confidenceScores: {
-    liveness: any;
-    faceMatch: any;
-    textDetection: any;
+    /** @format double */
+    liveness: number | null;
+    /** @format double */
+    faceMatch: number | null;
+    /** @format double */
+    textDetection: number | null;
   };
   /** @format date-time */
   documentVerifiedAt: string | null;
@@ -1910,9 +1929,6 @@ export interface GetCurrentUserResponse {
 export interface DLocalWebhookrRouteBody {
   payment_id: string;
 }
-
-/** Construct a type with a set of properties K of type T */
-export type RecordStringUnknown = object;
 
 export interface ClerkWebhookRouteBody {
   event_attributes?: {

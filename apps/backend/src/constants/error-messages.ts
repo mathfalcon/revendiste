@@ -161,6 +161,45 @@ export const PAYOUT_ERROR_MESSAGES = {
     'No puedes solicitar un retiro de ganancias en UYU a una cuenta bancaria en USD. Selecciona un método de pago en UYU o PayPal.',
 } as const;
 
+// Error messages for webhook signature verification (Clerk, dLocal, etc.)
+export const WEBHOOK_ERROR_MESSAGES = {
+  VERIFICATION_FAILED: 'Webhook verification failed',
+} as const;
+
+// Error messages for events (used when repository returns null)
+export const EVENT_ERROR_MESSAGES = {
+  EVENT_NOT_FOUND: 'Evento no encontrado',
+} as const;
+
+// Error messages for admin events
+export const ADMIN_EVENTS_ERROR_MESSAGES = {
+  TICKET_WAVE_NOT_FOUND: 'Tanda de tickets no encontrada',
+  NO_FILE_UPLOADED: 'No se subió ningún archivo',
+  IMAGE_UPLOAD_ERROR: 'Error al subir la imagen',
+  IMAGE_NOT_FOUND: 'Imagen no encontrada',
+  INVALID_IMAGE_FILE_TYPE:
+    'Tipo de archivo no válido. Use JPEG, PNG, WebP o GIF.',
+} as const;
+
+// Error messages for admin identity verification
+export const ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES = {
+  USER_NOT_FOUND: 'Usuario no encontrado',
+  IMAGE_NOT_FOUND: 'Imagen no encontrada',
+  STORAGE_SIGNED_URL_NOT_SUPPORTED:
+    'El proveedor de almacenamiento no soporta URLs firmadas',
+  USER_NOT_PENDING_MANUAL_REVIEW:
+    'El usuario no está pendiente de revisión manual',
+  VERIFICATION_APPROVED_SUCCESS: 'Verificación aprobada exitosamente',
+  VERIFICATION_REJECTED: 'Verificación rechazada',
+} as const;
+
+// Error messages for payout documents
+export const PAYOUT_DOCUMENT_ERROR_MESSAGES = {
+  DOCUMENT_CREATE_FAILED: 'Error al crear el registro del documento',
+  DOCUMENT_NOT_FOUND: 'Documento no encontrado',
+  DOCUMENT_DELETE_FAILED: 'Error al eliminar el documento',
+} as const;
+
 // Error messages for admin operations
 export const ADMIN_ERROR_MESSAGES = {
   ADMIN_ONLY: 'Solo los administradores pueden acceder a esta funcionalidad',
@@ -185,7 +224,13 @@ export const IDENTITY_VERIFICATION_ERROR_MESSAGES = {
     'Este documento ya está verificado con otra cuenta',
   DOCUMENT_COUNTRY_REQUIRED: 'El país es requerido para pasaportes',
   DOCUMENT_REQUIRED: 'Se requiere una foto del documento',
+  DOCUMENT_TYPE_INVALID_OR_MISSING:
+    'Tipo de documento inválido o faltante',
   DOCUMENT_TYPE_NOT_SUPPORTED: 'Tipo de documento no soportado',
+  FACE_LIVENESS_NOT_CONFIGURED:
+    'Face Liveness no está configurado. Contactá a soporte.',
+  FACE_LIVENESS_CREDENTIALS_FAILED:
+    'No se pudieron obtener credenciales para la verificación facial.',
   DOCUMENT_NUMBER_MISMATCH:
     'El documento subido no coincide con los detalles ingresados anteriormente',
   MUST_INITIATE_FIRST:

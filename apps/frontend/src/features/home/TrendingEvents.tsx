@@ -104,7 +104,7 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
             </p>
           ) : (
             <p className='text-xs text-muted-foreground whitespace-nowrap'>
-              Sin tickets
+              Sin publicaciones
             </p>
           )}
           <Button

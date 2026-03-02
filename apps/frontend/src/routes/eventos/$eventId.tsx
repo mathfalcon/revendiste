@@ -2,34 +2,62 @@ import {createFileRoute, redirect} from '@tanstack/react-router';
 import {Suspense} from 'react';
 import {FullScreenLoading} from '~/components';
 import {EventPage} from '~/features/event';
-import {getEventByIdQuery, EventImageType, getApiBaseURL} from '~/lib';
+import {
+  getEventByIdQuery,
+  EventImageType,
+  getApiBaseURL,
+  GetEventByIdResponse,
+} from '~/lib';
 import {isAxiosError} from 'axios';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {EventEnded} from '~/components/EventEnded';
 import type {ErrorComponentProps} from '@tanstack/react-router';
 import {createServerFn} from '@tanstack/react-start';
-import {VITE_APP_API_URL, BACKEND_IP} from '~/config/env';
 
 /**
- * Server-only function to track event views.
- * This runs exclusively on the server, making the tracking request invisible to clients.
+ * Server-only function to fetch event data and track views.
+ * This runs exclusively on the server, hiding the API endpoint from clients.
  */
-export const trackEventViewServer = createServerFn({method: 'POST'})
-  .inputValidator((data: {eventId: string}) => data)
+export const fetchEventServer = createServerFn({method: 'GET'})
+  .inputValidator((data: {eventId: string; trackView: boolean}) => data)
   .handler(async ({data}) => {
-    // Use BACKEND_IP if available (bypasses Cloudflare during SSR), otherwise fall back to API URL
     const apiUrl = getApiBaseURL();
 
-    // Fire-and-forget: don't await, just let it run
-    fetch(`${apiUrl}/events/${data.eventId}/view`, {
-      method: 'POST',
+    // Fetch event data on the server
+    const response = await fetch(`${apiUrl}/events/${data.eventId}`, {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-    }).catch(() => {
-      // Silently ignore errors - view tracking is not critical
     });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('404: Event not found');
+      }
+      if (response.status === 401) {
+        throw new Error('401: Unauthorized');
+      }
+      throw new Error(`Failed to fetch event: ${response.status}`);
+    }
+
+    const eventData: GetEventByIdResponse = await response.json();
+
+    // Track view only on actual navigation (fire-and-forget)
+    if (data.trackView) {
+      console.log('Tracking event view for eventId:', data.eventId);
+      fetch(`${apiUrl}/events/${data.eventId}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).catch(() => {
+        // Silently ignore errors - view tracking is not critical
+      });
+    }
+
+    return eventData;
   });
 
 export const Route = createFileRoute('/eventos/$eventId')({
@@ -53,17 +81,32 @@ export const Route = createFileRoute('/eventos/$eventId')({
   },
   loader: async ({context, params, cause}) => {
     try {
-      const eventData = await context.queryClient.ensureQueryData(
-        getEventByIdQuery(params.eventId),
-      );
+      // Fetch event data on the server (hides API endpoint from client)
+      const eventData = await fetchEventServer({
+        data: {
+          eventId: params.eventId,
+          trackView: cause === 'enter', // Only track view on actual navigation
+        },
+      });
 
-      // Track view only on actual navigation, not on prefetch (hover)
-      if (cause === 'enter') {
-        trackEventViewServer({data: {eventId: params.eventId}});
-      }
+      // Seed the React Query cache with the server-fetched data
+      context.queryClient.setQueryData(
+        getEventByIdQuery(params.eventId).queryKey,
+        eventData,
+      );
 
       return eventData;
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          throw redirect({
+            to: '/ingresar/$',
+          });
+        }
+        if (error.message.includes('404')) {
+          throw error;
+        }
+      }
       if (isAxiosError(error) && error.response?.status === 401) {
         throw redirect({
           to: '/ingresar/$',

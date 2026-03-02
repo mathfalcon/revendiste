@@ -12,7 +12,12 @@ import {z} from 'zod';
 import {useEffect, useRef} from 'react';
 import {cn} from '~/lib/utils';
 
-const faqSections = ['general', 'compradores', 'publicadores', 'pagos'] as const;
+const faqSections = [
+  'general',
+  'compradores',
+  'publicadores',
+  'pagos',
+] as const;
 type FAQSection = (typeof faqSections)[number];
 
 const faqSearchSchema = z.object({
@@ -56,7 +61,7 @@ const faqGeneral: FAQItem[] = [
   {
     question: '¿Puedo vender mi entrada a un precio mayor al que la pagué?',
     answer:
-      'Sí, hasta un 15% más del valor original. La idea es que puedas recuperar las comisiones que pagaste cuando compraste la entrada, no que hagas negocio. Por ejemplo, si pagaste $1.000 más $100 de comisión, podés publicarla hasta por $1.150.',
+      'Sí, hasta un 15% más del valor original. La idea es que puedas recuperar las comisiones que pagaste cuando compraste la entrada, sin especular con la misma. Por ejemplo, si pagaste $1.000 más $100 de comisión, podés publicarla hasta por $1.150.',
   },
   {
     question: '¿Cómo sé que no me van a estafar?',
@@ -197,7 +202,9 @@ function FAQSection({
       value={openItem !== undefined ? `item-${openItem}` : undefined}
       onValueChange={value => {
         if (onOpenChange) {
-          const index = value ? parseInt(value.replace('item-', ''), 10) : undefined;
+          const index = value
+            ? parseInt(value.replace('item-', ''), 10)
+            : undefined;
           onOpenChange(index);
         }
       }}
@@ -305,7 +312,10 @@ function FAQPage() {
                 <TabsTrigger value='compradores' className='text-xs md:text-sm'>
                   Compradores
                 </TabsTrigger>
-                <TabsTrigger value='publicadores' className='text-xs md:text-sm'>
+                <TabsTrigger
+                  value='publicadores'
+                  className='text-xs md:text-sm'
+                >
                   Publicadores
                 </TabsTrigger>
                 <TabsTrigger value='pagos' className='text-xs md:text-sm'>

@@ -1,8 +1,8 @@
 import {mutationOptions, queryOptions} from '@tanstack/react-query';
 import {
   api,
-  CreateTicketListingRouteBody,
-  UpdateTicketPriceRouteBody,
+  type CreateTicketListingRouteBody,
+  type UpdateTicketPriceRouteBody,
 } from '..';
 import {toast} from 'sonner';
 
@@ -17,10 +17,15 @@ export const postTicketListingMutation = () =>
     },
   });
 
+/**
+ * My listings list. Backend returns paginated { data, pagination }; we unwrap to the array for the list UI.
+ * Default pagination (page 1, limit 10) is applied by the backend.
+ */
 export const getMyListingsQuery = () =>
   queryOptions({
     queryKey: ['listings'],
-    queryFn: () => api.ticketListings.getMyListings().then(data => data.data),
+    queryFn: () =>
+      api.ticketListings.getMyListings().then(res => res.data.data),
   });
 
 export const uploadTicketDocumentMutation = (ticketId: string) =>

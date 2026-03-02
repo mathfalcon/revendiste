@@ -16,6 +16,7 @@ interface ErrorResponse {
   timestamp: string;
   path: string;
   method: string;
+  requestId?: string;
   stack?: string;
 }
 
@@ -31,6 +32,7 @@ export const errorHandler = (
     return res.status(422).json({
       message: 'Validation Failed',
       details: err?.fields,
+      ...(req.id && {requestId: req.id}),
     });
   }
 
@@ -52,6 +54,7 @@ export const errorHandler = (
         timestamp: new Date().toISOString(),
         path: req.path,
         method: req.method,
+        ...(req.id && {requestId: req.id}),
       };
 
     // Include metadata if available (e.g., orderId for duplicate order errors)
@@ -98,6 +101,7 @@ export const errorHandler = (
     timestamp: new Date().toISOString(),
     path: req.path,
     method: req.method,
+    ...(req.id && {requestId: req.id}),
   };
 
   // Include stack trace in development

@@ -4,6 +4,10 @@ import {
 } from '~/repositories';
 import {calculateSellerAmount} from '~/utils/fees';
 import {PAYOUT_HOLD_PERIOD_HOURS} from '~/config/env';
+import {
+  SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
+  SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
+} from '~/constants/limits';
 import {logger} from '~/utils';
 import {roundOrderAmount} from '@revendiste/shared';
 import type {EventTicketCurrency} from '@revendiste/shared';
@@ -226,7 +230,9 @@ export class SellerEarningsService {
    * Updates to 'available' if no reports, 'retained' if reports exist
    * Processes in batches to avoid transactional issues
    */
-  async checkHoldPeriods(limit: number = 100): Promise<{
+  async checkHoldPeriods(
+    limit: number = SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
+  ): Promise<{
     released: number;
     retained: number;
   }> {
@@ -280,7 +286,9 @@ export class SellerEarningsService {
    * This runs BEFORE checkHoldPeriods() in the cronjob so that retained earnings
    * are skipped by the hold period release logic.
    */
-  async checkMissingDocumentsAfterEventEnd(limit: number = 100): Promise<{
+  async checkMissingDocumentsAfterEventEnd(
+    limit: number = SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
+  ): Promise<{
     processed: number;
   }> {
     const ticketsWithMissingDocs =
