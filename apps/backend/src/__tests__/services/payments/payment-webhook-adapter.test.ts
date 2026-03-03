@@ -62,7 +62,15 @@ function createAdapterMocks() {
 
   const mockTicketListingsService = {
     markTicketsAsSoldAndNotifySeller: jest.fn(),
+    markTicketsAsSoldAndReturnSellerData: jest.fn().mockResolvedValue({
+      soldTickets: [],
+      sellerNotifications: [],
+    }),
   } as unknown as jest.Mocked<TicketListingsService>;
+
+  const mockJobQueueService = {
+    enqueue: jest.fn().mockResolvedValue(undefined),
+  };
 
   const mockSellerEarningsService = {
     createEarningsForSoldTickets: jest.fn(),
@@ -88,6 +96,7 @@ function createAdapterMocks() {
     mockTicketListingsService,
     mockSellerEarningsService,
     mockNotificationService,
+    () => mockJobQueueService as any,
   );
 
   return {
@@ -98,6 +107,7 @@ function createAdapterMocks() {
     mockTicketListingsService,
     mockSellerEarningsService,
     mockProvider,
+    mockJobQueueService,
   };
 }
 
@@ -126,7 +136,7 @@ describe('PaymentWebhookAdapter', () => {
       await mocks.adapter.processWebhook('ext-1');
 
       expect(mocks.mockOrdersRepository.executeTransaction).not.toHaveBeenCalled();
-      expect(mocks.mockTicketListingsService.markTicketsAsSoldAndNotifySeller).not.toHaveBeenCalled();
+      expect(mocks.mockTicketListingsService.markTicketsAsSoldAndReturnSellerData).not.toHaveBeenCalled();
       expect(mocks.mockSellerEarningsService.createEarningsForSoldTickets).not.toHaveBeenCalled();
     });
 

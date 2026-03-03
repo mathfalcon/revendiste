@@ -18,6 +18,7 @@ if (!jobName) {
   logger.info('  - notify-upload-availability');
   logger.info('  - check-payout-hold-periods');
   logger.info('  - process-pending-notifications');
+  logger.info('  - process-pending-jobs');
   logger.info('  - scrape-events');
   process.exit(1);
 }
@@ -70,6 +71,16 @@ async function runJob() {
           '~/cronjobs/process-pending-notifications'
         );
         await runProcessPendingNotifications();
+        break;
+      }
+
+      case 'process-pending-jobs': {
+        const {
+          initializeJobQueue,
+          runProcessPendingJobs,
+        } = await import('~/cronjobs/process-pending-jobs');
+        initializeJobQueue();
+        await runProcessPendingJobs();
         break;
       }
 

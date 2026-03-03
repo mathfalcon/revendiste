@@ -29,3 +29,6 @@ export type {
 } from './notification-batches';
 export {VenuesRepository} from './venues';
 export {EventViewsRepository} from './event-views';
+export {InvoicesRepository} from './invoices';
+export {JobsRepository} from './jobs';
+export type {EnqueueJobData} from './jobs';

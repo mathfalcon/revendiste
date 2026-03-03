@@ -21,6 +21,7 @@ import {SellerEarningsService} from '~/services/seller-earnings';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
 import {logger} from '~/utils';
 import {Payment} from '~/types';
+import {getJobQueueService} from '~/services/job-queue';
 
 // Create shared repositories
 const ordersRepository = new OrdersRepository(db);
@@ -74,6 +75,7 @@ const createPaymentWebhookAdapter = (
     ticketListingsService,
     sellerEarningsService,
     notificationService,
+    () => getJobQueueService(),
   );
 };
 

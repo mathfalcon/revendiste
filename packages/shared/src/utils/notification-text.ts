@@ -110,6 +110,18 @@ export function generateNotificationText<T extends NotificationType>(
       };
     }
 
+    case 'order_invoice': {
+      const meta = metadata as TypedNotificationMetadata<'order_invoice'>;
+      const isBuyer = meta.party === 'buyer';
+      const compraVenta = isBuyer ? 'compra' : 'venta';
+      return {
+        title: isBuyer ? 'Tu factura de compra' : 'Tu factura de venta',
+        description: meta.eventName
+          ? `Se te envió la factura de tu ${compraVenta} de ${meta.eventName} por email.`
+          : `Se te envió la factura de tu ${compraVenta} por email.`,
+      };
+    }
+
     case 'payment_failed': {
       const meta = metadata as TypedNotificationMetadata<'payment_failed'>;
       return {

@@ -70,6 +70,16 @@ const EnvSchema = z.object({
   // Rate limiting (Postgres-backed; optional, defaults apply to /api)
   RATE_LIMIT_WINDOW_MS: z.coerce.number().optional().default(60_000), // 1 minute
   RATE_LIMIT_MAX: z.coerce.number().optional().default(100), // max requests per window per IP
+  // FEU Electronic Invoicing (optional; required for invoice generation)
+  FEU_ENV: z.enum(['test', 'prod']).optional().default('test'),
+  FEU_AUTH_URL: z.url().optional(),
+  FEU_API_BASE_URL: z.url().optional(),
+  FEU_USERNAME: z.string().optional(),
+  FEU_PASSWORD: z.string().optional(),
+  FEU_REFRESH_TOKEN: z.string().optional(), // Long-lived (e.g. 365 days); update in secrets yearly
+  FEU_EMISOR_RUT: z.string().optional(),
+  FEU_SUCURSAL: z.coerce.number().optional().default(1),
+  FEU_REQUEST_TIMEOUT_MS: z.coerce.number().optional().default(30_000),
 });
 
 export const env = EnvSchema.safeParse(process.env);
@@ -130,4 +140,13 @@ export const {
   GOOGLE_PLACES_API_KEY,
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_MAX,
+  FEU_ENV,
+  FEU_AUTH_URL,
+  FEU_API_BASE_URL,
+  FEU_USERNAME,
+  FEU_PASSWORD,
+  FEU_REFRESH_TOKEN,
+  FEU_EMISOR_RUT,
+  FEU_SUCURSAL,
+  FEU_REQUEST_TIMEOUT_MS,
 } = env.data;

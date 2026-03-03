@@ -51,6 +51,11 @@ variable "process_notifications_task_arn" {
   type        = string
 }
 
+variable "process_pending_jobs_task_arn" {
+  description = "ARN of the process pending jobs task definition"
+  type        = string
+}
+
 # Schedule expressions - environment specific
 variable "sync_payments_schedule" {
   description = "Schedule expression for sync-payments job"
@@ -80,6 +85,12 @@ variable "process_notifications_schedule" {
   description = "Schedule expression for process-notifications job"
   type        = string
   default     = "cron(*/5 * * * ? *)" # Every 5 minutes
+}
+
+variable "process_pending_jobs_schedule" {
+  description = "Schedule expression for process-pending-jobs (job queue processor)"
+  type        = string
+  default     = "cron(*/2 * * * ? *)" # Every 2 minutes - keep post-payment confirmation latency low for buyers
 }
 
 variable "use_fargate_spot" {

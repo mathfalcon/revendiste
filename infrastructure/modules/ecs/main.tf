@@ -446,6 +446,51 @@ resource "aws_ecs_task_definition" "cronjob_process_notifications" {
   })
 }
 
+resource "aws_ecs_task_definition" "cronjob_process_pending_jobs" {
+  family                   = "${var.name_prefix}-cronjob-process-pending-jobs"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.cronjob_cpu
+  memory                   = var.cronjob_memory
+  execution_role_arn       = var.ecs_task_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
+
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
+
+  container_definitions = jsonencode([
+    {
+      name    = "cronjob"
+      image   = "${var.backend_repository_url}:${var.backend_image_tag}"
+      command = ["node", "dist/src/scripts/run-job.js", "process-pending-jobs"]
+
+      environment = [
+        {
+          name  = "NODE_ENV"
+          value = var.environment == "prod" ? "production" : "development"
+        }
+      ]
+
+      secrets = local.backend_secrets
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.cronjob.name
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "process-pending-jobs"
+        }
+      }
+    }
+  ])
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-cronjob-process-pending-jobs"
+  })
+}
+
 # Backend ECS Service
 resource "aws_ecs_service" "backend" {
   name            = "${var.name_prefix}-backend"

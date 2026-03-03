@@ -187,3 +187,39 @@ resource "aws_cloudwatch_event_target" "process_notifications" {
     }
   }
 }
+
+# EventBridge Rule for process-pending-jobs (job queue: notify-order-confirmed, send-notification, etc.)
+resource "aws_cloudwatch_event_rule" "process_pending_jobs" {
+  name                = "${var.name_prefix}-process-pending-jobs"
+  description         = "Run process-pending-jobs (job queue processor)"
+  schedule_expression = var.process_pending_jobs_schedule
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-process-pending-jobs-rule"
+  })
+}
+
+resource "aws_cloudwatch_event_target" "process_pending_jobs" {
+  rule      = aws_cloudwatch_event_rule.process_pending_jobs.name
+  target_id = "process-pending-jobs-target"
+  arn       = var.ecs_cluster_arn
+  role_arn  = var.eventbridge_role_arn
+
+  ecs_target {
+    task_count          = 1
+    task_definition_arn = var.process_pending_jobs_task_arn
+    platform_version    = "LATEST"
+
+    capacity_provider_strategy {
+      capacity_provider = local.capacity_provider
+      weight            = 1
+      base              = 1
+    }
+
+    network_configuration {
+      subnets          = var.public_subnet_ids
+      security_groups  = [var.ecs_security_group_id]
+      assign_public_ip = true
+    }
+  }
+}

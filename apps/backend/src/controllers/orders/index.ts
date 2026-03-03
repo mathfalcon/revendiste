@@ -44,6 +44,7 @@ import {
 } from '~/errors';
 import {CreateOrderRouteBody, CreateOrderRouteSchema} from './validation';
 import {ValidateBody, Body} from '~/decorators';
+import {getJobQueueService} from '~/services/job-queue';
 
 type CreateOrderResponse = ReturnType<OrdersService['createOrder']>;
 type GetOrderByIdResponse = ReturnType<OrdersService['getOrderById']>;
@@ -104,6 +105,7 @@ const createPaymentWebhookAdapter = (
     ticketListingsService,
     sellerEarningsService,
     notificationService,
+    () => getJobQueueService(),
   );
 };
 

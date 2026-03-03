@@ -14,6 +14,14 @@ import {startNotifyUploadAvailabilityJob} from './cronjobs/notify-upload-availab
 import {startCheckPayoutHoldPeriodsJob} from './cronjobs/check-payout-hold-periods';
 import {startScrapeEventsJob} from './cronjobs/scrape-events';
 import {startProcessPendingNotificationsJob} from './cronjobs/process-pending-notifications';
+import {
+  initializeJobQueue,
+  startProcessPendingJobsJob,
+} from './cronjobs/process-pending-jobs';
+
+// Initialize job queue early so getJobQueueService() is available when controllers load
+initializeJobQueue();
+logger.info('Job queue initialized');
 
 const app: express.Application = express();
 
@@ -134,6 +142,7 @@ app.listen(PORT, '0.0.0.0', () => {
     startNotifyUploadAvailabilityJob();
     startCheckPayoutHoldPeriodsJob();
     startProcessPendingNotificationsJob();
+    startProcessPendingJobsJob();
   } else {
     logger.info(
       'Cronjobs disabled in production (using EventBridge + ECS RunTask)',

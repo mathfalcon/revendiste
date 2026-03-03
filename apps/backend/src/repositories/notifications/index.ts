@@ -20,6 +20,8 @@ export interface CreateNotificationData {
     data?: Record<string, unknown>;
   }> | null;
   metadata?: NotificationMetadata;
+  /** When true, delivery must go through send-notification job; when false, can call sendNotification directly. */
+  sendViaJob?: boolean;
 }
 
 const channelsAsJsonb = sql<NotificationChannel[]>`to_jsonb(channels)`.as(
@@ -46,6 +48,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
             : undefined,
         metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
         status: 'pending',
+        sendViaJob: data.sendViaJob === true,
       })
       .returningAll()
       .executeTakeFirstOrThrow();

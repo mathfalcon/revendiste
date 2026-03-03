@@ -26,7 +26,18 @@ import {
   calculateMaxResalePrice,
 } from '@revendiste/shared';
 import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
+import type {DB, QrAvailabilityTiming} from '@revendiste/shared';
+
+export interface SellerNotificationData {
+  sellerUserId: string;
+  listingId: string;
+  eventName: string;
+  eventStartDate: Date;
+  eventEndDate: Date;
+  platform: string;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  ticketCount: number;
+}
 import type {PaginationOptions} from '~/types/pagination';
 import {createPaginatedResponse} from '~/middleware/pagination';
 
@@ -373,14 +384,17 @@ export class TicketListingsService {
   }
 
   /**
-   * Mark tickets as sold for an order and send notifications to sellers
-   * This orchestrates the repository call and notification side effects.
-   * When trx is provided, all DB operations use the transaction (e.g. from payment webhook flow).
+   * Mark tickets as sold and return seller notification data.
+   * Caller is responsible for sending in_app notifications and enqueueing email jobs.
+   * When trx is provided, all DB operations use the transaction.
    */
-  async markTicketsAsSoldAndNotifySeller(
+  async markTicketsAsSoldAndReturnSellerData(
     orderId: string,
     trx?: Kysely<DB>,
-  ) {
+  ): Promise<{
+    soldTickets: Array<{listingId: string}>;
+    sellerNotifications: SellerNotificationData[];
+  }> {
     const listingTicketsRepo = trx
       ? this.listingTicketsRepository.withTransaction(trx)
       : this.listingTicketsRepository;
@@ -388,35 +402,30 @@ export class TicketListingsService {
       ? this.ordersRepository.withTransaction(trx)
       : this.ordersRepository;
 
-    // Mark tickets as sold (repository operation)
     const soldTickets =
       await listingTicketsRepo.markTicketsAsSoldByOrderId(orderId);
 
     if (soldTickets.length === 0) {
       logger.warn('No tickets found to mark as sold', { orderId });
-      return soldTickets;
+      return { soldTickets, sellerNotifications: [] };
     }
 
-    // Get unique listing IDs from sold tickets
     const uniqueListingIds = [
       ...new Set(soldTickets.map(ticket => ticket.listingId)),
     ];
 
-    // Get order with event info for notifications (outside transaction when trx not provided)
     const order = await ordersRepo.getByIdWithItems(orderId);
     if (!order || !order.event) {
       logger.warn('Order or event not found for seller notifications', {
         orderId,
       });
-      return soldTickets;
+      return { soldTickets, sellerNotifications: [] };
     }
 
-    // Get listings with seller info
     const listings = await listingTicketsRepo.getListingsByIds(
       uniqueListingIds,
     );
 
-    // Group tickets by listing to count per listing
     const ticketsByListing = new Map<string, number>();
     for (const ticket of soldTickets) {
       ticketsByListing.set(
@@ -425,54 +434,71 @@ export class TicketListingsService {
       );
     }
 
-    // Send notification to each seller (grouped by listing)
-    const sellerNotifications = new Map<string, number>(); // sellerId -> total tickets sold
-
+    const sellerCountMap = new Map<string, number>();
     for (const listing of listings) {
       const ticketCount = ticketsByListing.get(listing.id) || 0;
       if (ticketCount === 0) continue;
-
-      const currentCount =
-        sellerNotifications.get(listing.publisherUserId) || 0;
-      sellerNotifications.set(
-        listing.publisherUserId,
-        currentCount + ticketCount,
-      );
+      const current = sellerCountMap.get(listing.publisherUserId) || 0;
+      sellerCountMap.set(listing.publisherUserId, current + ticketCount);
     }
 
-    // Get qrAvailabilityTiming from the event (now stored at event level)
-    const qrAvailabilityTiming = order.event.qrAvailabilityTiming || null;
+    const qrAvailabilityTiming = order.event.qrAvailabilityTiming ?? null;
+    const sellerNotifications: SellerNotificationData[] = [];
 
-    for (const [sellerUserId, totalTicketCount] of sellerNotifications) {
-      // Use the first listing ID for the upload link (they're all from the same seller)
-      const firstListingId = listings.find(
+    for (const [sellerUserId, totalTicketCount] of sellerCountMap) {
+      const firstListing = listings.find(
         l => l.publisherUserId === sellerUserId,
-      )?.id;
-
+      );
       if (
-        firstListingId &&
+        firstListing &&
         order.event.name &&
         order.event.eventStartDate &&
         order.event.eventEndDate
       ) {
-        notifySellerTicketSold(this.notificationService, {
+        sellerNotifications.push({
           sellerUserId,
-          listingId: firstListingId,
+          listingId: firstListing.id,
           eventName: order.event.name,
           eventStartDate: new Date(order.event.eventStartDate),
           eventEndDate: new Date(order.event.eventEndDate),
-          platform: order.event.platform || 'unknown',
+          platform: order.event.platform ?? 'unknown',
           qrAvailabilityTiming,
           ticketCount: totalTicketCount,
-        }).catch((error: unknown) => {
-          console.error('Failed to send seller notification', error);
-          logger.error('Failed to send seller notification', {
-            sellerUserId,
-            orderId,
-            error: error instanceof Error ? error.message : String(error),
-          });
         });
       }
+    }
+
+    return { soldTickets, sellerNotifications };
+  }
+
+  /**
+   * Mark tickets as sold and send notifications to sellers (legacy).
+   * Prefer markTicketsAsSoldAndReturnSellerData + caller sending in_app and enqueueing emails.
+   */
+  async markTicketsAsSoldAndNotifySeller(
+    orderId: string,
+    trx?: Kysely<DB>,
+  ) {
+    const { soldTickets, sellerNotifications } =
+      await this.markTicketsAsSoldAndReturnSellerData(orderId, trx);
+
+    for (const seller of sellerNotifications) {
+      notifySellerTicketSold(this.notificationService, {
+        sellerUserId: seller.sellerUserId,
+        listingId: seller.listingId,
+        eventName: seller.eventName,
+        eventStartDate: seller.eventStartDate,
+        eventEndDate: seller.eventEndDate,
+        platform: seller.platform,
+        qrAvailabilityTiming: seller.qrAvailabilityTiming,
+        ticketCount: seller.ticketCount,
+      }).catch((error: unknown) => {
+        logger.error('Failed to send seller notification', {
+          sellerUserId: seller.sellerUserId,
+          orderId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
     }
 
     return soldTickets;

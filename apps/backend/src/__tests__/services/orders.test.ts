@@ -60,11 +60,15 @@ describe('OrdersService', () => {
 
     mockListingTicketsRepository = {
       findAvailableTicketsByPriceGroup: jest.fn(),
+      findAvailableTicketsByPriceGroupForUpdate: jest.fn(),
       getListingsByIds: jest.fn(),
       markTicketsAsSoldByOrderId: jest.fn(),
       withTransaction: jest.fn(),
       getDb: jest.fn(),
     } as unknown as jest.Mocked<ListingTicketsRepository>;
+    mockListingTicketsRepository.withTransaction.mockReturnValue(
+      mockListingTicketsRepository,
+    );
 
     mockOrderTicketReservationsRepository = {
       createReservations: jest.fn(),
@@ -74,6 +78,16 @@ describe('OrdersService', () => {
       withTransaction: jest.fn(),
       getDb: jest.fn(),
     } as unknown as jest.Mocked<OrderTicketReservationsRepository>;
+    mockOrderTicketReservationsRepository.withTransaction.mockReturnValue(
+      mockOrderTicketReservationsRepository,
+    );
+    mockOrdersRepository.executeTransaction.mockImplementation(
+      async (fn: any) => fn({}),
+    );
+    mockOrdersRepository.withTransaction.mockReturnValue(mockOrdersRepository);
+    mockOrderItemsRepository.withTransaction.mockReturnValue(
+      mockOrderItemsRepository,
+    );
 
     mockPaymentSyncService = {
       syncPendingOrderPayment: jest.fn(),
@@ -157,8 +171,8 @@ describe('OrdersService', () => {
         currency: 'UYU',
       };
       mockEventTicketWavesRepository.getById.mockResolvedValue(wave as any);
-      // User wants 3 tickets but only 2 available
-      mockListingTicketsRepository.findAvailableTicketsByPriceGroup.mockResolvedValue(
+      // User wants 3 tickets but only 2 available (locked inside tx via ForUpdate)
+      mockListingTicketsRepository.findAvailableTicketsByPriceGroupForUpdate.mockResolvedValue(
         [{ id: 't1', listingId: 'l1' }, { id: 't2', listingId: 'l1' }] as any,
       );
 
@@ -190,7 +204,7 @@ describe('OrdersService', () => {
         name: 'General',
         currency: 'UYU',
       } as any);
-      mockListingTicketsRepository.findAvailableTicketsByPriceGroup.mockResolvedValue(
+      mockListingTicketsRepository.findAvailableTicketsByPriceGroupForUpdate.mockResolvedValue(
         [{ id: 't1', listingId: 'l1' }, { id: 't2', listingId: 'l1' }] as any,
       );
       // Listings belong to user-1 (the buyer)

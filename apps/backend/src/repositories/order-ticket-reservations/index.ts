@@ -58,6 +58,30 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
       .execute();
   }
 
+  /**
+   * Get all tickets in an order with price and seller (publisherUserId).
+   * Includes reservations that were soft-deleted on confirm, so we can compute commission per seller for invoices.
+   */
+  async getByOrderIdWithSellerAndPrice(orderId: string) {
+    return await this.db
+      .selectFrom('orderTicketReservations')
+      .innerJoin(
+        'listingTickets',
+        'orderTicketReservations.listingTicketId',
+        'listingTickets.id',
+      )
+      .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
+      .select([
+        'orderTicketReservations.listingTicketId',
+        'listingTickets.price',
+        'listings.publisherUserId',
+      ])
+      .where('orderTicketReservations.orderId', '=', orderId)
+      .where('listingTickets.deletedAt', 'is', null)
+      .where('listings.deletedAt', 'is', null)
+      .execute();
+  }
+
   async releaseByOrderId(orderId: string) {
     return await this.db
       .updateTable('orderTicketReservations')

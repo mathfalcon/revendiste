@@ -7,7 +7,12 @@ import {
   EventTicketCurrency,
   createPaymentLinkMutation,
 } from '~/lib';
-import {formatPrice, formatEventDate, getOrderStatusLabel} from '~/utils';
+import {
+  formatPrice,
+  formatEventDate,
+  getOrderStatusLabel,
+  getEventDisplayImage,
+} from '~/utils';
 import {useCountdown} from '~/hooks';
 import {Button} from '~/components/ui/button';
 import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
@@ -100,14 +105,10 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
     };
   }, [countdown.isExpired, order.eventId, navigate]);
 
-  // Find flyer image from event images
-  // Type assertion needed since generated types don't include images yet
   const eventWithImages = order.event as typeof order.event & {
     images?: Array<{imageType: string; url: string}>;
   };
-  const flyerImage = eventWithImages?.images?.find(
-    (img: {imageType: string; url: string}) => img.imageType === 'flyer',
-  );
+  const displayImage = getEventDisplayImage(eventWithImages?.images);
 
   const isButtonDisabled =
     countdown.isExpired || createPaymentLink.isPending || isRedirecting;
@@ -161,12 +162,12 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
           <div className='rounded-lg border bg-card p-4 sm:p-6 space-y-4 sm:space-y-6'>
             {/* Event Info */}
             <div className='flex gap-3 sm:gap-4'>
-              {flyerImage && (
+              {displayImage && (
                 <div className='shrink-0'>
                   <img
-                    src={flyerImage.url}
-                    alt={`Flyer de ${order.event?.name || 'evento'}`}
-                    className='w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-lg'
+                    src={displayImage.url}
+                    alt={`Imagen de ${order.event?.name || 'evento'}`}
+                    className='w-16 h-16 sm:w-24 sm:h-24 rounded-lg object-cover object-center'
                   />
                 </div>
               )}

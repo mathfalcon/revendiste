@@ -44,6 +44,20 @@ export async function notifyDocumentReminder(
   });
 }
 
+export interface NotificationOptions {
+  channels?: Array<'in_app' | 'email'>;
+  /** When true, send is delegated to cronjob (use for e.g. email + attachments). When false/omit, send immediately. */
+  deferSendToJob?: boolean;
+  /** Refs for send-notification job: storage path + optional filename (generic; used when deferSendToJob is true) */
+  attachmentRefs?: Array<{
+    type: 'storage';
+    storagePath: string;
+    filename?: string;
+  }>;
+  /** Actions to run after the notification is sent (e.g. mark invoice email sent); used when deferSendToJob is true */
+  postSendActions?: Array<{ type: 'markInvoiceEmailSent'; invoiceId: string }>;
+}
+
 /**
  * Notify buyer when order is confirmed
  */
@@ -71,11 +85,12 @@ export async function notifyOrderConfirmed(
       currency?: string;
     }>;
   },
+  options?: NotificationOptions,
 ) {
   return await service.createNotification({
     userId: params.buyerUserId,
     type: 'order_confirmed',
-    channels: ['in_app', 'email'],
+    channels: options?.channels ?? ['in_app', 'email'],
     actions: [
       {
         type: 'view_order',
@@ -98,6 +113,66 @@ export async function notifyOrderConfirmed(
       currency: params.currency,
       items: params.items,
     },
+    deferSendToJob: options?.deferSendToJob,
+    attachmentRefs: options?.attachmentRefs,
+    postSendActions: options?.postSendActions,
+  });
+}
+
+/**
+ * Notify buyer or seller with invoice PDF only (deferred send).
+ * Used by job handlers after FEU invoice issuance; instant confirmation emails are sent separately from the webhook.
+ * Optional breakdown params are shown in the email (buyer: subtotal, commission, total; seller: published total, commission, amount to receive).
+ */
+export async function notifyOrderInvoice(
+  service: NotificationService,
+  params: {
+    userId: string;
+    orderId: string;
+    party: 'buyer' | 'seller';
+    eventName?: string;
+    currency?: string;
+    subtotalAmount?: string;
+    platformCommission?: string;
+    vatOnCommission?: string;
+    totalAmount?: string;
+    items?: Array<{
+      ticketWaveName: string;
+      quantity: number;
+      pricePerTicket: string;
+      subtotal: string;
+    }>;
+    sellerSubtotal?: string;
+    sellerCommission?: string;
+    sellerVat?: string;
+    sellerAmount?: string;
+  },
+  options: NotificationOptions & { attachmentRefs: NonNullable<NotificationOptions['attachmentRefs']>; postSendActions: NonNullable<NotificationOptions['postSendActions']> },
+) {
+  return await service.createNotification({
+    userId: params.userId,
+    type: 'order_invoice',
+    channels: ['email'],
+    actions: undefined, // No link: invoice was sent by email; in-app is informational only
+    metadata: {
+      type: 'order_invoice',
+      orderId: params.orderId,
+      party: params.party,
+      eventName: params.eventName,
+      currency: params.currency,
+      subtotalAmount: params.subtotalAmount,
+      platformCommission: params.platformCommission,
+      vatOnCommission: params.vatOnCommission,
+      totalAmount: params.totalAmount,
+      items: params.items,
+      sellerSubtotal: params.sellerSubtotal,
+      sellerCommission: params.sellerCommission,
+      sellerVat: params.sellerVat,
+      sellerAmount: params.sellerAmount,
+    },
+    deferSendToJob: true,
+    attachmentRefs: options.attachmentRefs,
+    postSendActions: options.postSendActions,
   });
 }
 
@@ -284,6 +359,7 @@ export async function notifySellerTicketSold(
     qrAvailabilityTiming: QrAvailabilityTiming | null;
     ticketCount: number;
   },
+  options?: NotificationOptions,
 ) {
   const shouldPrompt = shouldPromptUpload(
     params.qrAvailabilityTiming,
@@ -309,7 +385,7 @@ export async function notifySellerTicketSold(
   return await service.createNotification({
     userId: params.sellerUserId,
     type: 'ticket_sold_seller',
-    channels: ['in_app', 'email'],
+    channels: options?.channels ?? ['in_app', 'email'],
     actions: actions.length > 0 ? actions : undefined,
     metadata: {
       type: 'ticket_sold_seller',
@@ -321,6 +397,9 @@ export async function notifySellerTicketSold(
       qrAvailabilityTiming: params.qrAvailabilityTiming,
       shouldPromptUpload: shouldPrompt,
     },
+    deferSendToJob: options?.deferSendToJob,
+    attachmentRefs: options?.attachmentRefs,
+    postSendActions: options?.postSendActions,
   });
 }
 

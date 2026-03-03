@@ -155,10 +155,17 @@ export function useTicketSelection({
       return;
     }
 
-    form.setValue(ticketWaveId, {
-      ...currentWaveData,
-      [priceGroupPrice]: newCount,
-    });
+    // Set the whole wave object: price keys can contain '.' or ',' (e.g. 379.50),
+    // so we must not use setValue(ticketWaveId + '.' + priceGroupPrice) as RHF
+    // treats dots as path separators and would corrupt the form state.
+    form.setValue(
+      ticketWaveId,
+      {
+        ...currentWaveData,
+        [priceGroupPrice]: newCount,
+      },
+      {shouldDirty: true, shouldValidate: true},
+    );
   };
 
   const onSubmit = async (data: TicketSelectionFormValues) => {

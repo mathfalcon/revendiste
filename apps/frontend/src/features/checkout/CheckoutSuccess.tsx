@@ -2,7 +2,7 @@ import {Suspense} from 'react';
 import {useSuspenseQuery} from '@tanstack/react-query';
 import {Link} from '@tanstack/react-router';
 import {getOrderByIdQuery} from '~/lib';
-import {formatPrice, formatEventDate} from '~/utils';
+import {formatPrice, formatEventDate, getEventDisplayImage} from '~/utils';
 import {Button} from '~/components/ui/button';
 import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
 import {CheckCircle2, CalendarIcon, MapPinIcon, Ticket} from 'lucide-react';
@@ -18,13 +18,10 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
 
   const currency = order.items[0]!.currency!;
 
-  // Find flyer image from event images
   const eventWithImages = order.event as typeof order.event & {
     images?: Array<{imageType: string; url: string}>;
   };
-  const flyerImage = eventWithImages?.images?.find(
-    (img: {imageType: string; url: string}) => img.imageType === 'flyer',
-  );
+  const displayImage = getEventDisplayImage(eventWithImages?.images);
 
   return (
     <Suspense fallback={<FullScreenLoading />}>
@@ -65,12 +62,12 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
                 Detalles del evento
               </h2>
               <div className='flex gap-4'>
-                {flyerImage && (
+                {displayImage && (
                   <div className='shrink-0'>
                     <img
-                      src={flyerImage.url}
-                      alt={`Flyer de ${order.event?.name || 'evento'}`}
-                      className='w-32 h-32 object-cover rounded-lg'
+                      src={displayImage.url}
+                      alt={`Imagen de ${order.event?.name || 'evento'}`}
+                      className='w-32 h-32 rounded-lg object-cover object-center'
                     />
                   </div>
                 )}

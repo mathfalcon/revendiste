@@ -281,6 +281,16 @@ export const IDENTITY_VERIFICATION_ERROR_MESSAGES = {
   MANUAL_REVIEW_MULTIPLE_ATTEMPTS: 'Multiple failed verification attempts',
 } as const;
 
+// Error messages for FEU invoicing and jobs
+export const INVOICE_ERROR_MESSAGES = {
+  FEU_AUTH_FAILED:
+    'Error de autenticación con el servicio de facturación electrónica',
+  FEU_CREATE_FAILED: 'Error al crear el comprobante fiscal electrónico',
+  FEU_PDF_DOWNLOAD_FAILED: 'Error al descargar el PDF de la factura',
+  INVOICE_ALREADY_EXISTS: (orderId: string, party: string) =>
+    `Ya existe una factura para la orden ${orderId} y parte ${party}`,
+} as const;
+
 // Type for error message keys (useful for type safety)
 export type OrderErrorKey = keyof typeof ORDER_ERROR_MESSAGES;
 export type NotificationErrorKey = keyof typeof NOTIFICATION_ERROR_MESSAGES;

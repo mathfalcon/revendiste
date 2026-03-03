@@ -23,6 +23,12 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type InvoiceParty = "buyer" | "seller";
+
+export type InvoiceStatus = "failed" | "issued" | "pending";
+
+export type JobStatus = "completed" | "failed" | "pending" | "processing";
+
 export type Json = JsonValue;
 
 export type JsonArray = JsonValue[];
@@ -41,7 +47,7 @@ export type NotificationChannel = "email" | "in_app" | "sms";
 
 export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
-export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "buyer_ticket_cancelled" | "document_reminder" | "document_uploaded" | "document_uploaded_batch" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "seller_earnings_retained" | "ticket_sold_seller";
+export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "buyer_ticket_cancelled" | "document_reminder" | "document_uploaded" | "document_uploaded_batch" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "order_invoice" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "seller_earnings_retained" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
@@ -145,6 +151,41 @@ export interface EventViewsDaily {
   viewCount: Generated<number>;
 }
 
+export interface Invoices {
+  baseAmount: Numeric;
+  createdAt: Generated<Timestamp>;
+  currency: EventTicketCurrency;
+  emailSentAt: Timestamp | null;
+  externalId: string;
+  id: Generated<string>;
+  issuedAt: Timestamp | null;
+  lastError: string | null;
+  orderId: string;
+  party: InvoiceParty;
+  pdfStoragePath: string | null;
+  provider: Generated<string>;
+  providerResponse: Json | null;
+  sellerUserId: string | null;
+  status: Generated<InvoiceStatus>;
+  totalAmount: Numeric;
+  vatAmount: Numeric;
+}
+
+export interface Jobs {
+  attempts: Generated<number>;
+  completedAt: Timestamp | null;
+  createdAt: Generated<Timestamp>;
+  error: string | null;
+  id: Generated<string>;
+  idempotencyKey: string | null;
+  jobType: string;
+  maxAttempts: Generated<number>;
+  payload: Json;
+  scheduledAt: Generated<Timestamp>;
+  startedAt: Timestamp | null;
+  status: Generated<JobStatus>;
+}
+
 export interface Listings {
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
@@ -158,12 +199,6 @@ export interface Listings {
 export interface ListingTickets {
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
-  documentOriginalName: string | null;
-  documentPath: string | null;
-  documentSizeBytes: number | null;
-  documentType: string | null;
-  documentUploadedAt: Timestamp | null;
-  documentUploadRequiredNotifiedAt: Timestamp | null;
   id: Generated<string>;
   listingId: string;
   price: Numeric;
@@ -203,6 +238,7 @@ export interface Notifications {
   metadata: Json | null;
   retryCount: Generated<number>;
   seenAt: Timestamp | null;
+  sendViaJob: Generated<boolean>;
   status: Generated<NotificationStatus>;
   type: NotificationType;
   updatedAt: Generated<Timestamp>;
@@ -363,6 +399,12 @@ export interface Payouts {
   updatedAt: Generated<Timestamp>;
 }
 
+export interface RateLimit {
+  count: Generated<number>;
+  key: string;
+  resetTime: Timestamp;
+}
+
 export interface SellerEarnings {
   createdAt: Generated<Timestamp>;
   currency: EventTicketCurrency;
@@ -444,6 +486,8 @@ export interface DB {
   eventTicketWaves: EventTicketWaves;
   eventVenues: EventVenues;
   eventViewsDaily: EventViewsDaily;
+  invoices: Invoices;
+  jobs: Jobs;
   listings: Listings;
   listingTickets: ListingTickets;
   notificationBatches: NotificationBatches;
@@ -458,6 +502,7 @@ export interface DB {
   payoutEvents: PayoutEvents;
   payoutMethods: PayoutMethods;
   payouts: Payouts;
+  rateLimit: RateLimit;
   sellerEarnings: SellerEarnings;
   ticketDocuments: TicketDocuments;
   users: Users;

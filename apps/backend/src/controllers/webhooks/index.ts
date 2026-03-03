@@ -29,6 +29,7 @@ import {
   NotificationsRepository,
 } from '~/repositories';
 import {db} from '~/db';
+import {getJobQueueService} from '~/services/job-queue';
 import {ValidateBody, Body} from '~/decorators';
 import {logger} from '~/utils';
 import {
@@ -89,6 +90,7 @@ export function createWebhookDependencies(database: Kysely<DB> = db) {
     ticketListingsService,
     sellerEarningsService,
     notificationService,
+    () => getJobQueueService(),
   );
 
   const webhooksService = new WebhooksService(

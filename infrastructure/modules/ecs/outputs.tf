@@ -32,7 +32,8 @@ output "cronjob_task_definition_arns" {
     aws_ecs_task_definition.cronjob_notify_upload.arn,
     aws_ecs_task_definition.cronjob_check_payout.arn,
     aws_ecs_task_definition.cronjob_scrape_events.arn,
-    aws_ecs_task_definition.cronjob_process_notifications.arn
+    aws_ecs_task_definition.cronjob_process_notifications.arn,
+    aws_ecs_task_definition.cronjob_process_pending_jobs.arn
   ]
 }
 
@@ -59,6 +60,11 @@ output "cronjob_scrape_events_task_arn" {
 output "cronjob_process_notifications_task_arn" {
   description = "Process notifications cronjob task definition ARN"
   value       = aws_ecs_task_definition.cronjob_process_notifications.arn
+}
+
+output "cronjob_process_pending_jobs_task_arn" {
+  description = "Process pending jobs cronjob task definition ARN"
+  value       = aws_ecs_task_definition.cronjob_process_pending_jobs.arn
 }
 
 output "backend_log_group_name" {

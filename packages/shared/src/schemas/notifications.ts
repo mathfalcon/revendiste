@@ -7,6 +7,10 @@
 
 import {z} from 'zod';
 import type {QrAvailabilityTiming, NotificationType} from '../types';
+import type {
+  PostSendAction,
+  SendNotificationAttachmentRef,
+} from './jobs';
 
 /**
  * Base notification schema with shared properties
@@ -287,6 +291,33 @@ export const BuyerTicketCancelledMetadataSchema = z.object({
   reason: z.enum(['seller_failed_to_upload', 'seller_fraud', 'other']),
 });
 
+// order_invoice - Deferred email with invoice PDF only (buyer or seller)
+export const OrderInvoiceItemSchema = z.object({
+  ticketWaveName: z.string(),
+  quantity: z.number().int().positive(),
+  pricePerTicket: z.string(),
+  subtotal: z.string(),
+});
+
+export const OrderInvoiceMetadataSchema = z.object({
+  type: z.literal('order_invoice'),
+  orderId: z.string().uuid(),
+  party: z.enum(['buyer', 'seller']),
+  eventName: z.string().optional(),
+  currency: z.string().optional(),
+  // Buyer breakdown (when party=buyer)
+  subtotalAmount: z.string().optional(),
+  platformCommission: z.string().optional(),
+  vatOnCommission: z.string().optional(),
+  totalAmount: z.string().optional(),
+  items: z.array(OrderInvoiceItemSchema).optional(),
+  // Seller breakdown (when party=seller)
+  sellerSubtotal: z.string().optional(),
+  sellerCommission: z.string().optional(),
+  sellerVat: z.string().optional(),
+  sellerAmount: z.string().optional(),
+});
+
 /**
  * Discriminated union of all notification metadata types
  * Uses 'type' as the discriminator field for type safety
@@ -320,12 +351,22 @@ export const NotificationMetadataSchema = z.discriminatedUnion('type', [
   // Missing document refund notification types
   SellerEarningsRetainedMetadataSchema,
   BuyerTicketCancelledMetadataSchema,
+  OrderInvoiceMetadataSchema,
 ]);
 
 /**
  * TypeScript type inferred from the discriminated union schema
  */
 export type NotificationMetadata = z.infer<typeof NotificationMetadataSchema>;
+
+/**
+ * Metadata as stored in DB / used internally; may include attachmentRefs and postSendActions for send-notification job.
+ * Do not expose attachmentRefs or postSendActions in API responses.
+ */
+export type NotificationMetadataStored = NotificationMetadata & {
+  attachmentRefs?: SendNotificationAttachmentRef[];
+  postSendActions?: PostSendAction[];
+};
 
 /**
  * Typed metadata based on notification type
@@ -370,6 +411,17 @@ export const OrderConfirmedActionsSchema = z
       type: z.literal('view_order'),
       label: z.string(),
       url: z.url(),
+    }),
+  )
+  .nullable();
+
+// Actions for order_invoice - optional view order action
+export const OrderInvoiceActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_order'),
+      label: z.string(),
+      url: z.url().optional(),
     }),
   )
   .nullable();
@@ -768,6 +820,13 @@ export const BuyerTicketCancelledNotificationSchema =
     actions: BuyerTicketCancelledActionsSchema,
   });
 
+// order_invoice
+export const OrderInvoiceNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('order_invoice'),
+  metadata: OrderInvoiceMetadataSchema,
+  actions: OrderInvoiceActionsSchema,
+});
+
 /**
  * Discriminated union of all notification types
  * Uses 'type' as the discriminator field for type safety
@@ -802,6 +861,7 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   // Missing document refund notification types
   SellerEarningsRetainedNotificationSchema,
   BuyerTicketCancelledNotificationSchema,
+  OrderInvoiceNotificationSchema,
 ]);
 
 /**

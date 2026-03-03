@@ -17,6 +17,10 @@ import {
   type OrderExpiredEmailProps,
 } from '../emails/order-expired-email';
 import {
+  OrderInvoiceEmail as OrderInvoiceEmailComponent,
+  type OrderInvoiceEmailProps,
+} from '../emails/order-invoice-email';
+import {
   PaymentFailedEmail as PaymentFailedEmailComponent,
   type PaymentFailedEmailProps,
 } from '../emails/payment-failed-email';
@@ -179,6 +183,29 @@ export function getEmailTemplate<T extends NotificationType>(
         props: {
           eventName: meta?.eventName || 'el evento',
           appBaseUrl,
+        },
+      };
+    }
+
+    case 'order_invoice': {
+      const meta = metadata as TypedNotificationMetadata<'order_invoice'>;
+      return {
+        Component: OrderInvoiceEmailComponent,
+        props: {
+          orderId: meta?.orderId || '',
+          party: meta?.party || 'buyer',
+          eventName: meta?.eventName,
+          appBaseUrl,
+          currency: meta?.currency,
+          subtotalAmount: meta?.subtotalAmount,
+          platformCommission: meta?.platformCommission,
+          vatOnCommission: meta?.vatOnCommission,
+          totalAmount: meta?.totalAmount,
+          items: meta?.items,
+          sellerSubtotal: meta?.sellerSubtotal,
+          sellerCommission: meta?.sellerCommission,
+          sellerVat: meta?.sellerVat,
+          sellerAmount: meta?.sellerAmount,
         },
       };
     }

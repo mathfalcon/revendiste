@@ -5,3 +5,4 @@ export * from './fees';
 export * from './errors';
 export * from './orders';
 export * from './clipboard';
+export * from './event-images';
