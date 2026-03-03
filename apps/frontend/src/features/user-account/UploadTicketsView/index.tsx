@@ -6,12 +6,11 @@ import {TicketUploadModal} from '~/components';
 import {Card, CardContent} from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
 import {LoadingSpinner} from '~/components/LoadingScreen';
-import {Upload, Timer, XCircle} from 'lucide-react';
-import {EmptyState} from './EmptyState';
+import {AccountSectionHeader, AccountEmptyState} from '~/features/user-account';
+import {Upload, Timer, XCircle, UploadCloud} from 'lucide-react';
 import {TicketNeedingUploadCard} from './TicketCard';
 import {TicketWaitingCard} from './TicketWaitingCard';
 import {TicketExpiredCard} from './TicketExpiredCard';
-import {SectionHeader} from './SectionHeader';
 
 export function UploadTicketsView() {
   const {data: listings, isPending} = useQuery(getMyListingsQuery());
@@ -185,7 +184,7 @@ export function UploadTicketsView() {
       {ticketsNeedingUpload.length > 0 && (
         <div className='space-y-4'>
           <div className='flex items-center justify-between gap-4'>
-            <SectionHeader
+            <AccountSectionHeader
               icon={Upload}
               title='Tickets pendientes'
               count={ticketsNeedingUpload.length}
@@ -213,7 +212,7 @@ export function UploadTicketsView() {
       {/* Tickets Waiting (too early) */}
       {ticketsWaiting.length > 0 && (
         <div className='space-y-4'>
-          <SectionHeader
+          <AccountSectionHeader
             icon={Timer}
             title='Próximamente'
             count={ticketsWaiting.length}
@@ -230,7 +229,7 @@ export function UploadTicketsView() {
       {/* Tickets Expired (event ended, visible for 3 days) */}
       {ticketsExpired.length > 0 && (
         <div className='space-y-4'>
-          <SectionHeader
+          <AccountSectionHeader
             icon={XCircle}
             title='Expirados'
             count={ticketsExpired.length}
@@ -245,7 +244,13 @@ export function UploadTicketsView() {
       )}
 
       {/* Empty State */}
-      {hasNoTickets && <EmptyState />}
+      {hasNoTickets && (
+        <AccountEmptyState
+          icon={<UploadCloud className='h-8 w-8 text-muted-foreground' />}
+          title='No hay tickets para subir'
+          description='Cuando tus publicaciones sean vendidas, aparecerán aquí para que puedas subir sus documentos'
+        />
+      )}
 
       {/* Single Ticket Upload Modal (from URL param) */}
       {ticketToUpload && (

@@ -91,7 +91,37 @@ export class TicketDocumentsRepository extends BaseRepository<TicketDocumentsRep
   }
 
   /**
-   * Mark old primary documents as replaced and set new document as primary
+   * In one transaction: demote current primary (is_primary = false, status = 'replaced')
+   * and insert the new document as primary. Use for replace flow so the unique index
+   * is never violated.
+   */
+  async createReplacingPrimary(
+    ticketId: string,
+    data: Insertable<TicketDocuments>,
+  ) {
+    return await this.executeTransaction(async (trx: Kysely<DB>) => {
+      const repo = this.withTransaction(trx);
+
+      // Demote current primary first so only one row has is_primary = true at a time
+      await trx
+        .updateTable('ticketDocuments')
+        .set({
+          isPrimary: false,
+          status: 'replaced',
+          updatedAt: new Date(),
+        })
+        .where('ticketId', '=', ticketId)
+        .where('isPrimary', '=', true)
+        .where('deletedAt', 'is', null)
+        .execute();
+
+      return await repo.create({...data, isPrimary: true});
+    });
+  }
+
+  /**
+   * Mark old primary documents as replaced and set new document as primary.
+   * Use when the new document row already exists (e.g. created with isPrimary: false).
    */
   async replacePrimaryDocument(ticketId: string, newDocumentId: string) {
     await this.executeTransaction(async (trx: Kysely<DB>) => {

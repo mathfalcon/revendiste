@@ -135,4 +135,39 @@
   *::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--muted-foreground) / 0.6);
   }
+
+  /* Lighter toast backgrounds + darker text/icons in light mode for better contrast */
+  html:not(.dark) [data-sonner-toast] {
+    background: hsl(0 0% 100%) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+  html:not(.dark) [data-sonner-toast][data-type='success'] {
+    background: hsl(142 76% 97%) !important;
+    border-color: hsl(142 76% 91%) !important;
+    color: hsl(142 72% 22%) !important;
+  }
+  html:not(.dark) [data-sonner-toast][data-type='error'] {
+    background: hsl(0 86% 97%) !important;
+    border-color: hsl(0 86% 91%) !important;
+    color: hsl(0 72% 42%) !important;
+  }
+  html:not(.dark) [data-sonner-toast][data-type='info'] {
+    background: hsl(214 95% 97%) !important;
+    border-color: hsl(214 95% 91%) !important;
+    color: hsl(214 95% 35%) !important;
+  }
+  html:not(.dark) [data-sonner-toast][data-type='warning'] {
+    background: hsl(48 96% 97%) !important;
+    border-color: hsl(48 96% 91%) !important;
+    color: hsl(38 92% 35%) !important;
+  }
+  html:not(.dark) [data-sonner-toast] [data-description] {
+    color: inherit;
+    opacity: 0.9;
+  }
+  html:not(.dark) [data-sonner-toast] [data-icon] svg,
+  html:not(.dark) [data-sonner-toast] [data-close-button] {
+    color: inherit;
+  }
 }

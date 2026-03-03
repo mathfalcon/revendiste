@@ -2,23 +2,29 @@ import {useQuery} from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog';
-import {Button} from '~/components/ui/button';
 import {
-  ChevronLeft,
-  ChevronRight,
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from '~/components/ui/carousel';
+import {
   AlertCircle,
   Ticket,
   FileCheck,
   Clock,
   XCircle,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
+import {Button} from '~/components/ui/button';
 import {getOrderTicketsQuery} from '~/lib/api/order';
-import {useState} from 'react';
+import type {GetOrderTicketsResponse} from '~/lib/api/generated';
+import {useState, useMemo, useEffect, useCallback, useRef} from 'react';
 import {Alert, AlertDescription} from '~/components/ui/alert';
 import {TextEllipsis} from '~/components/ui/text-ellipsis';
 import {TicketDetails} from './TicketDetails';
@@ -26,11 +32,19 @@ import {OrderDetailsAccordion} from './OrderDetailsAccordion';
 import {TicketIds} from './TicketIds';
 import {DocumentPreview} from './DocumentPreview';
 import {getFullFileUrl} from './utils';
+import {formatEventDateSmart} from '~/utils/string';
+
+type OrderTicket = GetOrderTicketsResponse['tickets'][number];
 
 interface TicketViewModalProps {
   orderId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+/** Sort so tickets with document come first (so first view is a usable ticket when any exist). */
+function sortTicketsWithDocumentFirst(tickets: OrderTicket[]): OrderTicket[] {
+  return [...tickets].sort((a, b) => (b.hasDocument ? 1 : 0) - (a.hasDocument ? 1 : 0));
 }
 
 export function TicketViewModal({
@@ -41,9 +55,16 @@ export function TicketViewModal({
   const {data: orderTicketsData, isPending} = useQuery(
     getOrderTicketsQuery(orderId),
   );
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
 
   const tickets = orderTicketsData?.tickets;
+  const sortedTickets = useMemo(
+    () => (tickets ? sortTicketsWithDocumentFirst(tickets) : []),
+    [tickets],
+  );
   const event = orderTicketsData?.event;
   const orderIdFromData = orderTicketsData?.orderId;
   const subtotalAmount = orderTicketsData?.subtotalAmount;
@@ -51,27 +72,44 @@ export function TicketViewModal({
   const platformCommission = orderTicketsData?.platformCommission;
   const vatOnCommission = orderTicketsData?.vatOnCommission;
   const currency = orderTicketsData?.currency;
-  const currentTicket = tickets?.[currentIndex];
-  const hasMultipleTickets = (tickets?.length || 0) > 1;
+  const currentTicket = sortedTickets[selectedIndex];
+  const hasMultipleTickets = sortedTickets.length > 1;
+  const withDocumentCount = sortedTickets.filter(t => t.hasDocument).length;
+  const pendingCount = sortedTickets.length - withDocumentCount;
 
-  const handleNext = () => {
-    if (tickets && currentIndex < tickets.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
+  const updateCarouselState = useCallback((api: CarouselApi | undefined) => {
+    if (!api) return;
+    setSelectedIndex(api.selectedScrollSnap());
+    setCanScrollPrev(api.canScrollPrev());
+    setCanScrollNext(api.canScrollNext());
+  }, []);
 
-  const handlePrevious = () => {
-    if (tickets && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
+  const updateRef = useRef(updateCarouselState);
+  updateRef.current = updateCarouselState;
 
-  const handleDownload = () => {
-    if (currentTicket?.document?.url) {
-      const fullUrl = getFullFileUrl(currentTicket.document.url);
+  useEffect(() => {
+    if (!carouselApi) return;
+    updateCarouselState(carouselApi);
+    const handler = () => updateRef.current(carouselApi);
+    carouselApi.on('select', handler);
+    return () => {
+      carouselApi.off('select', handler);
+    };
+  }, [carouselApi, updateCarouselState]);
+
+  // Reset to first slide when modal opens or order/tickets change
+  useEffect(() => {
+    if (!open || sortedTickets.length === 0) return;
+    setSelectedIndex(0);
+    carouselApi?.scrollTo(0);
+  }, [open, orderId, sortedTickets.length, carouselApi]);
+
+  const handleDownload = (ticket: OrderTicket) => {
+    if (ticket?.document?.url) {
+      const fullUrl = getFullFileUrl(ticket.document.url);
       const link = document.createElement('a');
       link.href = fullUrl;
-      link.download = `ticket-${currentTicket.id}`;
+      link.download = `ticket-${ticket.id}`;
       link.target = '_blank';
       document.body.appendChild(link);
       link.click();
@@ -82,23 +120,45 @@ export function TicketViewModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='sm:max-w-[600px] max-h-[90vh] overflow-y-auto'>
-        <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <Ticket className='h-5 w-5' />
-            {event?.name ? (
-              <TextEllipsis maxLines={1} className='text-lg font-semibold'>
-                {event.name}
-              </TextEllipsis>
-            ) : (
-              'Mis tickets'
+        <DialogHeader className='text-left'>
+          <DialogTitle className='flex flex-col gap-0.5'>
+            <div className='flex items-center gap-2'>
+              <Ticket className='h-5 w-5 shrink-0' />
+              {event?.name ? (
+                <TextEllipsis maxLines={1} className='text-lg font-semibold'>
+                  {event.name}
+                </TextEllipsis>
+              ) : (
+                'Mis tickets'
+              )}
+            </div>
+            {event?.eventStartDate && (
+              <p className='text-sm font-normal text-muted-foreground'>
+                {formatEventDateSmart(event.eventStartDate)}
+              </p>
+            )}
+            {sortedTickets.length > 0 && (
+              <div className='space-y-0.5'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  {sortedTickets.length}{' '}
+                  {sortedTickets.length === 1 ? 'entrada' : 'entradas'}{' '}
+                  en esta orden
+                </p>
+                {hasMultipleTickets &&
+                  (withDocumentCount > 0 || pendingCount > 0) && (
+                    <p className='text-sm font-normal text-muted-foreground'>
+                      {withDocumentCount > 0 && (
+                        <span className='text-primary'>
+                          {withDocumentCount} disponible{withDocumentCount !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {withDocumentCount > 0 && pendingCount > 0 && ', '}
+                      {pendingCount > 0 && `${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''}`}
+                    </p>
+                  )}
+              </div>
             )}
           </DialogTitle>
-          {currentTicket && (
-            <DialogDescription>
-              {currentTicket.ticketWave?.name}
-              {hasMultipleTickets && ` • Ticket ${currentIndex + 1} de ${tickets?.length}`}
-            </DialogDescription>
-          )}
         </DialogHeader>
 
         {isPending ? (
@@ -121,67 +181,125 @@ export function TicketViewModal({
           </Alert>
         ) : (
           <div className='space-y-4'>
-            {/* Ticket details */}
-            <TicketDetails
-              ticketWaveName={currentTicket.ticketWave?.name}
-              eventStartDate={event?.eventStartDate || null}
-              price={currentTicket.price}
-              currency={currency || null}
-            />
-
-            {/* Document section */}
-            {currentTicket.reservationStatus === 'cancelled' ? (
-              <Alert className='bg-destructive/10 border-destructive/30'>
-                <AlertTriangle className='h-4 w-4 text-destructive' />
-                <AlertDescription className='text-destructive'>
-                  <span className='font-semibold'>Ticket cancelado</span> - El
-                  vendedor no subió el documento a tiempo. Tu reembolso está en
-                  proceso.
-                </AlertDescription>
-              </Alert>
-            ) : currentTicket.reservationStatus === 'refunded' ? (
-              <Alert className='bg-muted/50 border-muted'>
-                <XCircle className='h-4 w-4 text-muted-foreground' />
-                <AlertDescription className='text-muted-foreground'>
-                  <span className='font-semibold'>Ticket reembolsado</span> -
-                  Este ticket fue reembolsado.
-                </AlertDescription>
-              </Alert>
-            ) : currentTicket.reservationStatus === 'refund_pending' ? (
-              <Alert className='bg-yellow-500/10 border-yellow-500/30'>
-                <Clock className='h-4 w-4 text-yellow-600' />
-                <AlertDescription className='text-yellow-700'>
-                  <span className='font-semibold'>Reembolso en proceso</span> -
-                  Tu reembolso está siendo procesado.
-                </AlertDescription>
-              </Alert>
-            ) : currentTicket.hasDocument && currentTicket.document?.url ? (
-              <div className='space-y-3'>
-                {/* Document status */}
-                <div className='flex items-center gap-2 text-sm'>
-                  <FileCheck className='h-4 w-4 text-green-500' />
-                  <span className='text-green-600 font-medium'>
-                    Ticket disponible
+            {/* Carousel nav: visible on all breakpoints, touch-friendly */}
+            {hasMultipleTickets && (
+              <div className='flex items-center justify-between gap-2 rounded-xl border bg-muted/20 px-2 py-2 sm:px-4 sm:py-2.5'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='h-10 min-w-10 shrink-0 touch-manipulation sm:h-9 sm:min-w-9'
+                  onClick={() => carouselApi?.scrollPrev()}
+                  disabled={!canScrollPrev}
+                >
+                  <ChevronLeft className='h-5 w-5 sm:h-4 sm:w-4' />
+                  <span className='hidden sm:inline ml-1'>Anterior</span>
+                </Button>
+                <p className='text-sm font-semibold text-center min-w-0 flex-1 px-2'>
+                  <span className='tabular-nums'>
+                    Entrada {selectedIndex + 1} de {sortedTickets.length}
                   </span>
-                </div>
-
-                {/* Document preview */}
-                <DocumentPreview
-                  url={currentTicket.document.url}
-                  ticketId={currentTicket.id}
-                  mimeType={currentTicket.document.mimeType}
-                  onDownload={handleDownload}
-                />
+                  {currentTicket?.ticketWave?.name && (
+                    <span className='font-normal text-muted-foreground block truncate sm:inline sm:ml-1'>
+                      {currentTicket.ticketWave.name}
+                    </span>
+                  )}
+                </p>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='h-10 min-w-10 shrink-0 touch-manipulation sm:h-9 sm:min-w-9'
+                  onClick={() => carouselApi?.scrollNext()}
+                  disabled={!canScrollNext}
+                >
+                  <span className='hidden sm:inline mr-1'>Siguiente</span>
+                  <ChevronRight className='h-5 w-5 sm:h-4 sm:w-4' />
+                </Button>
               </div>
-            ) : (
-              <Alert className='bg-muted/50'>
-                <Clock className='h-4 w-4' />
-                <AlertDescription>
-                  El vendedor aún no ha subido el ticket. Te notificaremos cuando
-                  esté disponible.
-                </AlertDescription>
-              </Alert>
             )}
+
+            <Carousel
+              setApi={setCarouselApi}
+              opts={{ align: 'start', loop: false, dragFree: false }}
+              className='w-full'
+            >
+              <CarouselContent className='-ml-4'>
+                {sortedTickets.map(ticket => (
+                  <CarouselItem key={ticket.id} className='pl-4'>
+                    <div className='space-y-4 pb-2'>
+                      <TicketDetails
+                        ticketWaveName={ticket.ticketWave?.name}
+                        price={ticket.price}
+                        currency={currency || null}
+                      />
+
+                      {ticket.reservationStatus === 'cancelled' ? (
+                        <Alert className='bg-destructive/10 border-destructive/30'>
+                          <AlertTriangle className='h-4 w-4 text-destructive' />
+                          <AlertDescription className='text-destructive'>
+                            <span className='font-semibold'>Ticket cancelado</span> - El
+                            vendedor no subió el documento a tiempo. Tu reembolso está en
+                            proceso.
+                          </AlertDescription>
+                        </Alert>
+                      ) : ticket.reservationStatus === 'refunded' ? (
+                        <Alert className='bg-muted/50 border-muted'>
+                          <XCircle className='h-4 w-4 text-muted-foreground' />
+                          <AlertDescription className='text-muted-foreground'>
+                            <span className='font-semibold'>Ticket reembolsado</span> -
+                            Este ticket fue reembolsado.
+                          </AlertDescription>
+                        </Alert>
+                      ) : ticket.reservationStatus === 'refund_pending' ? (
+                        <Alert className='bg-yellow-500/10 border-yellow-500/30'>
+                          <Clock className='h-4 w-4 text-yellow-600' />
+                          <AlertDescription className='text-yellow-700'>
+                            <span className='font-semibold'>Reembolso en proceso</span> -
+                            Tu reembolso está siendo procesado.
+                          </AlertDescription>
+                        </Alert>
+                      ) : ticket.hasDocument && ticket.document?.url ? (
+                        <div className='space-y-3'>
+                          <div className='flex items-center gap-2 text-sm'>
+                            <FileCheck className='h-4 w-4 text-green-500' />
+                            <span className='text-green-600 font-medium'>
+                              Ticket disponible
+                            </span>
+                          </div>
+                          <DocumentPreview
+                            url={ticket.document.url}
+                            ticketId={ticket.id}
+                            mimeType={ticket.document.mimeType}
+                            onDownload={() => handleDownload(ticket)}
+                          />
+                        </div>
+                      ) : (
+                        <div className='rounded-lg border border-dashed bg-muted/30 p-6 text-center space-y-3'>
+                          <div className='flex justify-center'>
+                            <div className='flex h-12 w-12 items-center justify-center rounded-full bg-muted'>
+                              <Clock className='h-6 w-6 text-muted-foreground' />
+                            </div>
+                          </div>
+                          <div className='space-y-1'>
+                            <p className='font-medium text-foreground'>
+                              Esta entrada aún no está disponible
+                            </p>
+                            <p className='text-sm text-muted-foreground'>
+                              El vendedor todavía no subió el documento. Te notificaremos
+                              cuando esté disponible.
+                            </p>
+                          </div>
+                          {hasMultipleTickets && (
+                            <p className='text-sm text-muted-foreground pt-1'>
+                              Deslizá o usá las flechas para ver otras entradas.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
 
             {/* Order details accordion */}
             <OrderDetailsAccordion
@@ -192,32 +310,8 @@ export function TicketViewModal({
               currency={currency || null}
             />
 
-            {/* Ticket IDs */}
-            <TicketIds orderId={orderIdFromData || null} ticketId={currentTicket.id} />
-
-            {/* Navigation buttons */}
-            {hasMultipleTickets && (
-              <div className='flex justify-between gap-2 pt-2'>
-                <Button
-                  onClick={handlePrevious}
-                  disabled={currentIndex === 0}
-                  variant='outline'
-                  className='flex-1'
-                >
-                  <ChevronLeft className='h-4 w-4' />
-                  Anterior
-                </Button>
-                <Button
-                  onClick={handleNext}
-                  disabled={currentIndex === tickets.length - 1}
-                  variant='outline'
-                  className='flex-1'
-                >
-                  Siguiente
-                  <ChevronRight className='h-4 w-4' />
-                </Button>
-              </div>
-            )}
+            {/* Ticket IDs for current slide */}
+            <TicketIds orderId={orderIdFromData || null} ticketId={currentTicket?.id ?? ''} />
           </div>
         )}
       </DialogContent>

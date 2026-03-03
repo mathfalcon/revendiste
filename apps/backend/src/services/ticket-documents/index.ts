@@ -115,29 +115,32 @@ export class TicketDocumentService {
     // Extract just the filename from the storage path (not the full URL)
     const fileName = uploadResult.path.split('/').pop() || uploadResult.path;
 
-    const newDocument = await this.ticketDocumentsRepository.create({
+    const documentData = {
       ticketId: ticketId,
       storagePath: uploadResult.path,
       fileName: fileName,
       originalName: file.originalName,
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
-      documentType: 'ticket',
+      documentType: 'ticket' as const,
       version: existingDocument
         ? (existingDocument.version as unknown as number) + 1
         : 1,
-      isPrimary: true,
-      status: 'verified',
+      status: 'verified' as const,
       uploadedAt: new Date(),
-    });
+    };
 
-    // If there was an existing document, replace it
+    const newDocument = existingDocument
+      ? await this.ticketDocumentsRepository.createReplacingPrimary(
+          ticketId,
+          documentData,
+        )
+      : await this.ticketDocumentsRepository.create({
+          ...documentData,
+          isPrimary: true,
+        });
+
     if (existingDocument) {
-      await this.ticketDocumentsRepository.replacePrimaryDocument(
-        ticketId,
-        newDocument!.id as unknown as string,
-      );
-
       // Optionally delete old file from storage
       try {
         await this.storageProvider.delete(existingDocument.storagePath);

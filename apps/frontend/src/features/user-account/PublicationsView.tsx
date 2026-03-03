@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from '~/components/ui/accordion';
 import {Button} from '~/components/ui/button';
+import {AccountEmptyState} from '~/features/user-account';
 import {Package, Archive, Upload, AlertCircle} from 'lucide-react';
 import {LoadingSpinner} from '~/components/LoadingScreen';
 import {Card, CardContent} from '~/components/ui/card';
@@ -108,13 +109,18 @@ export function PublicationsView() {
 
   if (!listings || listings.length === 0) {
     return (
-      <div className='flex h-96 items-center justify-center rounded-lg border bg-card p-6 text-card-foreground shadow-sm'>
-        <div className='text-center'>
-          <p className='text-lg font-semibold'>No hay publicaciones</p>
+      <div className='space-y-6'>
+        <div>
+          <h2 className='text-2xl font-semibold'>Mis publicaciones</h2>
           <p className='text-muted-foreground'>
-            Comienza creando tu primera publicación de entradas
+            Administra tus publicaciones de entradas
           </p>
         </div>
+        <AccountEmptyState
+          icon={<Package className='h-8 w-8 text-muted-foreground' />}
+          title='No hay publicaciones'
+          description='Comienza creando tu primera publicación de entradas'
+        />
       </div>
     );
   }
@@ -197,7 +203,7 @@ export function PublicationsView() {
           </AccordionTrigger>
           <AccordionContent className='pt-4'>
             {activeListings.length > 0 ? (
-              <div className='space-y-4'>
+              <div className='space-y-3'>
                 {activeListings.map(listing => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))}
@@ -222,7 +228,7 @@ export function PublicationsView() {
           </AccordionTrigger>
           <AccordionContent className='pt-4'>
             {soldListings.length > 0 ? (
-              <div className='space-y-4'>
+              <div className='space-y-3'>
                 {soldListings.map(listing => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))}

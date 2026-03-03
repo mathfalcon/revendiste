@@ -74,7 +74,9 @@ export async function runProcessPendingNotifications() {
  * In production, use runProcessPendingNotifications() via EventBridge
  */
 export function startProcessPendingNotificationsJob() {
-  const job = cron.schedule('*/5 * * * *', async () => {
+  // Run every minute so debounced notifications (e.g. document_uploaded with 60s window)
+  // are delivered soon after the batch window ends
+  const job = cron.schedule('* * * * *', async () => {
     try {
       await runProcessPendingNotifications();
     } catch (error) {
@@ -86,7 +88,7 @@ export function startProcessPendingNotificationsJob() {
   });
 
   logger.info(
-    'Scheduled job: process-pending-notifications started (runs every 5 minutes)',
+    'Scheduled job: process-pending-notifications started (runs every minute)',
   );
 
   return job;

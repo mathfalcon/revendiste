@@ -1,6 +1,6 @@
-import { NotificationService, type CreateNotificationParams } from './index';
-import { APP_BASE_URL } from '~/config/env';
-import type { QrAvailabilityTiming } from '@revendiste/shared';
+import {NotificationService, type CreateNotificationParams} from './index';
+import {APP_BASE_URL} from '~/config/env';
+import type {QrAvailabilityTiming} from '@revendiste/shared';
 
 /**
  * Helper functions for creating common notification types
@@ -55,7 +55,7 @@ export interface NotificationOptions {
     filename?: string;
   }>;
   /** Actions to run after the notification is sent (e.g. mark invoice email sent); used when deferSendToJob is true */
-  postSendActions?: Array<{ type: 'markInvoiceEmailSent'; invoiceId: string }>;
+  postSendActions?: Array<{type: 'markInvoiceEmailSent'; invoiceId: string}>;
 }
 
 /**
@@ -147,7 +147,10 @@ export async function notifyOrderInvoice(
     sellerVat?: string;
     sellerAmount?: string;
   },
-  options: NotificationOptions & { attachmentRefs: NonNullable<NotificationOptions['attachmentRefs']>; postSendActions: NonNullable<NotificationOptions['postSendActions']> },
+  options: NotificationOptions & {
+    attachmentRefs: NonNullable<NotificationOptions['attachmentRefs']>;
+    postSendActions: NonNullable<NotificationOptions['postSendActions']>;
+  },
 ) {
   return await service.createNotification({
     userId: params.userId,
@@ -236,7 +239,10 @@ export async function notifyPaymentFailed(
  * Notify buyer when seller uploads ticket documents
  *
  * Uses debouncing to batch multiple uploads for the same order into a single notification.
- * If multiple tickets are uploaded within 5 minutes, only one email is sent.
+ * If multiple tickets are uploaded within the window, they are merged into one notification.
+ *
+ * Window is short (60s) so the buyer is notified quickly while still batching
+ * when the seller uploads several tickets in one go.
  *
  * IMPORTANT: Requires NotificationBatchesRepository to be configured in the NotificationService
  * for debouncing to work. If not configured, falls back to immediate notifications.
@@ -250,9 +256,9 @@ export async function notifyDocumentUploaded(
     ticketCount: number;
   },
 ) {
-  // Default debounce window: 5 minutes
-  // This allows multiple uploads for the same order to be batched into one notification
-  const DEBOUNCE_WINDOW_MS = 5 * 60 * 1000;
+  // 60s window: batches quick successive uploads (e.g. 3 tickets in 30s → one notification)
+  // while keeping time-to-notification low (next processPendingBatches run sends it)
+  const DEBOUNCE_WINDOW_MS = 2 * 60 * 1000;
 
   return await service.createDebouncedNotification({
     userId: params.buyerUserId,

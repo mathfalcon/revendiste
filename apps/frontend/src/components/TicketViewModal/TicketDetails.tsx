@@ -1,13 +1,11 @@
 interface TicketDetailsProps {
   ticketWaveName?: string | null;
-  eventStartDate?: string | null;
   price: string;
   currency?: string | null;
 }
 
 export function TicketDetails({
   ticketWaveName,
-  eventStartDate,
   price,
   currency,
 }: TicketDetailsProps) {
@@ -17,20 +15,6 @@ export function TicketDetails({
         <div className='flex justify-between text-sm'>
           <span className='text-muted-foreground'>Categoría:</span>
           <span className='font-medium'>{ticketWaveName}</span>
-        </div>
-      )}
-      {eventStartDate && (
-        <div className='flex justify-between text-sm'>
-          <span className='text-muted-foreground'>Fecha del evento:</span>
-          <span className='font-medium'>
-            {new Date(eventStartDate).toLocaleDateString('es-UY', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
         </div>
       )}
       <div className='flex justify-between text-sm'>

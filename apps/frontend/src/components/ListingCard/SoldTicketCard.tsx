@@ -1,7 +1,7 @@
 import {Tooltip, TooltipContent, TooltipTrigger} from '~/components/ui/tooltip';
 import {Info, TicketCheck} from 'lucide-react';
 import {cn} from '~/lib/utils';
-import {formatPrice} from '~/utils';
+import {formatPrice, calculateSellerAmount} from '~/utils';
 import type {
   GetUserListingsResponse,
   EventTicketCurrency,
@@ -41,6 +41,11 @@ export function SoldTicketCard({
     uploadUnavailableReason: ticket.uploadUnavailableReason,
     uploadAvailableAt: ticket.uploadAvailableAt,
   });
+
+  const sellerBreakdown = calculateSellerAmount(
+    parseFloat(ticket.price),
+    ticketWaveCurrency,
+  );
 
   const handleButtonClick = () => {
     if (config.disabled) return;
@@ -82,9 +87,24 @@ export function SoldTicketCard({
                 />
               )}
             </div>
-            <div className='flex items-center gap-1.5 mt-0.5'>
-              <span className='text-sm font-medium'>
-                {formatPrice(parseFloat(ticket.price), ticketWaveCurrency)}
+            <div className='flex flex-col gap-0.5 mt-0.5 text-sm'>
+              <span className='font-medium'>
+                {formatPrice(parseFloat(ticket.price), ticketWaveCurrency)}{' '}
+                <span className='text-muted-foreground font-normal'>
+                  por entrada
+                </span>
+              </span>
+              <span className='text-muted-foreground'>
+                Comisión:{' '}
+                {formatPrice(
+                  sellerBreakdown.platformCommission +
+                    sellerBreakdown.vatOnCommission,
+                  ticketWaveCurrency,
+                )}{' '}
+                · Recibís:{' '}
+                <span className='font-medium text-foreground'>
+                  {formatPrice(sellerBreakdown.sellerAmount, ticketWaveCurrency)}
+                </span>
               </span>
             </div>
             <CopyableText

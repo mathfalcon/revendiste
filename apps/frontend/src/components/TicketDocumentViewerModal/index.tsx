@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import {VITE_APP_API_URL} from '~/config/env';
+import {toast} from 'sonner';
 
 interface TicketDocumentViewerModalProps {
   ticketId: string;
@@ -68,6 +69,8 @@ export function TicketDocumentViewerModal({
       queryClient.invalidateQueries({queryKey: ['listings']});
       setIsReplacing(false);
       setSelectedFile(null);
+      onOpenChange(false);
+      toast.success('Documento reemplazado correctamente');
     },
   });
 
