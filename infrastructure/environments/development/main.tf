@@ -272,13 +272,15 @@ module "cronjobs" {
   check_payout_task_arn          = module.ecs.cronjob_check_payout_task_arn
   scrape_events_task_arn         = module.ecs.cronjob_scrape_events_task_arn
   process_notifications_task_arn = module.ecs.cronjob_process_notifications_task_arn
+  process_pending_jobs_task_arn  = module.ecs.cronjob_process_pending_jobs_task_arn
 
   # LESS FREQUENT SCHEDULES FOR DEV
   sync_payments_schedule         = "cron(*/15 * * * ? *)" # Every 15 min (prod: 5 min)
   notify_upload_schedule         = "cron(0 */4 * * ? *)"  # Every 4 hours (prod: 1 hour)
   check_payout_schedule          = "cron(0 */4 * * ? *)"  # Every 4 hours (prod: 1 hour)
-  scrape_events_schedule         = "cron(0 */2 * * ? *)"  # Every 2 hours (prod: 30 min)
+  scrape_events_schedule         = "cron(0 */2 * * ? *)"  # Every 2 hours (prod: 15 min)
   process_notifications_schedule = "cron(*/15 * * * ? *)" # Every 15 min (prod: 5 min)
+  process_pending_jobs_schedule  = "cron(*/15 * * * ? *)" # Every 15 min (prod: 2 min)
 
   # Use Fargate Spot for all cronjobs (up to 70% cost savings)
   # Safe because all cronjobs are idempotent and can be retried
