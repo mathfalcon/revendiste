@@ -6981,6 +6981,14 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CreatePaymentLinkRouteBody": {
+				"properties": {
+					"country": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"Pick_Notification.Exclude_keyofNotification.metadata-or-actions-or-type-or-title-or-description__": {
 				"properties": {
 					"createdAt": {
@@ -11261,7 +11269,17 @@
 							"type": "string"
 						}
 					}
-				]
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreatePaymentLinkRouteBody"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/notifications": {

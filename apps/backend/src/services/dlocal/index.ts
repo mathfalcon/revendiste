@@ -35,8 +35,10 @@ export type {
 } from './types';
 
 /**
- * DLocal Payment Provider
- * Handles ONLY API communication with dLocal - no business logic
+ * DLocal Payment Provider (dLocal Go API)
+ *
+ * Handles ONLY API communication with dLocal - no business logic.
+ * API reference: https://docs.dlocalgo.com/integration-api/welcome-to-dlocal-go-api/payments/create-a-payment
  */
 export class DLocalService implements PaymentProvider {
   readonly name = 'dlocal' as const;
@@ -162,7 +164,8 @@ export class DLocalService implements PaymentProvider {
   // ========================================================================
 
   /**
-   * Creates a payment with dLocal-specific parameters
+   * Creates a payment with dLocal-specific parameters.
+   * @see https://docs.dlocalgo.com/integration-api/welcome-to-dlocal-go-api/payments/create-a-payment
    */
   async createDLocalPayment(
     params: DLocalCreatePaymentParams,

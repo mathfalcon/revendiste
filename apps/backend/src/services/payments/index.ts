@@ -21,6 +21,8 @@ interface CreatePaymentLinkParams {
   userEmail: string;
   userFirstName: string | null;
   userLastName: string | null;
+  /** Payer country (ISO 3166-1 alpha-2). Defaults to UY if not provided. */
+  country?: string;
 }
 
 interface CreatePaymentLinkResult {
@@ -45,7 +47,14 @@ export class PaymentsService {
   async createPaymentLink(
     params: CreatePaymentLinkParams,
   ): Promise<CreatePaymentLinkResult> {
-    const {orderId, userId, userEmail, userFirstName, userLastName} = params;
+    const {
+      orderId,
+      userId,
+      userEmail,
+      userFirstName,
+      userLastName,
+      country: payerCountry,
+    } = params;
 
     logger.debug('Creating payment link', {orderId, userId});
 
@@ -138,13 +147,16 @@ export class PaymentsService {
         notificationUrl: `${API_BASE_URL}/api/webhooks/${this.paymentProvider.name}`,
       };
 
-      // Build payer data for dLocal (only if provider supports it)
-      // dLocal uses payer object with id, name, and email
+      // Build payer data for dLocal (only if provider supports it).
+      // Do NOT send payer.id: dLocal persists a "client" by that id and locks it to a country;
+      // once set, that client cannot change country, causing "Client is not from checkout's country"
+      // (5000) when the same user pays from a different country. Omitting id avoids client reuse.
+      // We still send name and email to prefill checkout. Country from selector (or default UY).
       const payerData =
         this.paymentProvider.name === 'dlocal'
           ? {
+              country: payerCountry ?? 'UY',
               payer: {
-                id: userId,
                 name:
                   [userFirstName, userLastName]
                     .filter(Boolean)

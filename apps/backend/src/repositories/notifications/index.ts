@@ -64,6 +64,23 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .executeTakeFirst();
   }
 
+  /** Used to avoid duplicate order_confirmed in-app when webhook and sync-on-order-access both run. */
+  async existsOrderConfirmedForUserAndOrder(
+    userId: string,
+    orderId: string,
+  ): Promise<boolean> {
+    const row = await this.db
+      .selectFrom('notifications')
+      .select('id')
+      .where('userId', '=', userId)
+      .where('type', '=', 'order_confirmed')
+      .where(sql`metadata->>'orderId'`, '=', orderId)
+      .where('deletedAt', 'is', null)
+      .limit(1)
+      .executeTakeFirst();
+    return !!row;
+  }
+
   async getByUserId(
     userId: string,
     options?: {

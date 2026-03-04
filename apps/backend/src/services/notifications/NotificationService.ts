@@ -86,6 +86,20 @@ export class NotificationService {
   }
 
   /**
+   * True if we already have an order_confirmed notification for this user and order.
+   * Used to avoid duplicate in-app notifications when webhook and sync-on-order-access both run.
+   */
+  async hasOrderConfirmedInAppForOrder(
+    userId: string,
+    orderId: string,
+  ): Promise<boolean> {
+    return this.notificationsRepository.existsOrderConfirmedForUserAndOrder(
+      userId,
+      orderId,
+    );
+  }
+
+  /**
    * Create a notification and send it through configured channels
    * Validates the notification data before creating it
    */

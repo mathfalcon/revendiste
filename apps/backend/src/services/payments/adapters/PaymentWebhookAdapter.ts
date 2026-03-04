@@ -493,7 +493,7 @@ export class PaymentWebhookAdapter {
     );
     if (!orderWithItems?.event) return;
 
-    this.sendInAppNotifications(orderWithItems, sellerNotifications);
+    await this.sendInAppNotifications(orderWithItems, sellerNotifications);
     await this.sendInstantConfirmationEmails(
       orderWithItems,
       sellerNotifications,
@@ -574,12 +574,24 @@ export class PaymentWebhookAdapter {
     });
   }
 
-  private sendInAppNotifications(
+  private async sendInAppNotifications(
     order: NonNullable<
       Awaited<ReturnType<OrdersRepository['getByIdWithItems']>>
     >,
     sellerNotifications: SellerNotificationData[],
-  ): void {
+  ): Promise<void> {
+    // Avoid duplicate order_confirmed in-app when webhook and sync-on-order-access both run
+    const alreadySent = await this.notificationService.hasOrderConfirmedInAppForOrder(
+      order.userId,
+      order.id,
+    );
+    if (alreadySent) {
+      logger.debug('Skipping duplicate order_confirmed in_app', {
+        orderId: order.id,
+        userId: order.userId,
+      });
+      return;
+    }
     notifyOrderConfirmed(
       this.notificationService,
       {

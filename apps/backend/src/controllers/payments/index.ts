@@ -9,6 +9,7 @@ import {
   Response,
 } from '@mathfalcon/tsoa-runtime';
 import {requireAuthMiddleware} from '~/middleware';
+import {Body, ValidateBody} from '~/decorators';
 import {NotFoundError, UnauthorizedError, ValidationError} from '~/errors';
 import {PaymentsService} from '~/services/payments';
 import {
@@ -18,6 +19,10 @@ import {
   PaymentEventsRepository,
 } from '~/repositories';
 import {db} from '~/db';
+import {
+  CreatePaymentLinkRouteBody,
+  CreatePaymentLinkRouteSchema,
+} from './validation';
 
 interface CreatePaymentLinkResponse {
   redirectUrl: string;
@@ -36,6 +41,7 @@ export class PaymentsController {
   );
 
   @Post('/create-link/{orderId}')
+  @ValidateBody(CreatePaymentLinkRouteSchema)
   @Response<UnauthorizedError>(401, 'Authentication required')
   @Response<NotFoundError>(404, 'Order not found')
   @Response<ValidationError>(
@@ -44,6 +50,7 @@ export class PaymentsController {
   )
   public async createPaymentLink(
     @Path() orderId: string,
+    @Body() body: CreatePaymentLinkRouteBody,
     @Request() request: express.Request,
   ): Promise<CreatePaymentLinkResponse> {
     const user = request.user;
@@ -54,6 +61,7 @@ export class PaymentsController {
       userEmail: user.email,
       userFirstName: user.firstName,
       userLastName: user.lastName,
+      country: body?.country,
     });
   }
 }

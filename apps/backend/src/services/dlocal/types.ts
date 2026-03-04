@@ -50,14 +50,15 @@ export type DLocalPaymentType =
   | 'VOUCHER';
 
 /**
- * Parameters for creating a dLocal payment
+ * Parameters for creating a dLocal payment.
+ * @see https://docs.dlocalgo.com/integration-api/welcome-to-dlocal-go-api/payments/create-a-payment
  */
 export interface CreatePaymentParams {
   /** Three-letter ISO-4217 currency code (uppercase) */
   currency: 'USD' | 'UYU';
   /** Transaction amount in the specified currency */
   amount: number;
-  /** User's country code (ISO 3166-1 alpha-2). Optional - checkout will prompt if not provided */
+  /** User's country code (ISO 3166-1 alpha-2). If not provided, checkout will prompt the payer. Send e.g. UY to lock checkout to Uruguay. */
   country?: string;
   /** Merchant-side payment identifier (max 128 chars). Auto-generated if not provided */
   orderId?: string;

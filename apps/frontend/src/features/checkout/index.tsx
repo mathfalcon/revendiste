@@ -16,7 +16,26 @@ import {
 import {useCountdown} from '~/hooks';
 import {Button} from '~/components/ui/button';
 import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
-import {InfoIcon, ClockIcon, X, Ticket, Calendar, MapPin} from 'lucide-react';
+import {Popover, PopoverContent, PopoverTrigger} from '~/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '~/components/ui/command';
+import {Label} from '~/components/ui/label';
+import {
+  InfoIcon,
+  ClockIcon,
+  X,
+  Ticket,
+  Calendar,
+  MapPin,
+  ChevronsUpDown,
+  Check,
+} from 'lucide-react';
 import {
   FullScreenLoading,
   CopyableText,
@@ -25,6 +44,23 @@ import {
   TextEllipsis,
 } from '~/components';
 import {TicketWaveCard} from '~/features/event/tickets';
+
+/** Americas only (dLocal Go). ISO 3166-1 alpha-2 → label. Sorted by label. */
+const CHECKOUT_COUNTRIES: Array<{value: string; label: string}> = [
+  {value: 'AR', label: 'Argentina'},
+  {value: 'BO', label: 'Bolivia'},
+  {value: 'BR', label: 'Brasil'},
+  {value: 'CL', label: 'Chile'},
+  {value: 'CO', label: 'Colombia'},
+  {value: 'CR', label: 'Costa Rica'},
+  {value: 'EC', label: 'Ecuador'},
+  {value: 'GT', label: 'Guatemala'},
+  {value: 'MX', label: 'México'},
+  {value: 'PA', label: 'Panamá'},
+  {value: 'PY', label: 'Paraguay'},
+  {value: 'PE', label: 'Perú'},
+  {value: 'UY', label: 'Uruguay'},
+];
 
 interface CheckoutPageProps {
   orderId: string;
@@ -35,6 +71,8 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
   const navigate = useNavigate();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [payerCountry, setPayerCountry] = useState<string>('UY');
+  const [countryPopoverOpen, setCountryPopoverOpen] = useState(false);
 
   const countdown = useCountdown(
     order.reservationExpiresAt ? new Date(order.reservationExpiresAt) : null,
@@ -137,7 +175,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
 
           {/* Reservation Timer Alert */}
           {!countdown.isExpired && (
-            <Alert className='border-orange-500/30 bg-orange-500/5 sm:visible hidden'>
+            <Alert className='border-orange-500/30 bg-orange-500/5 hidden sm:block'>
               <ClockIcon className='h-4 w-4 text-orange-500 dark:text-orange-400' />
               <AlertTitle className='text-orange-500'>
                 Tiempo restante para completar el pago
@@ -183,7 +221,9 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                   {order.event?.eventStartDate && (
                     <div className='flex items-center gap-1.5'>
                       <Calendar className='h-3.5 w-3.5 shrink-0' />
-                      <span>{formatEventDate(new Date(order.event.eventStartDate))}</span>
+                      <span>
+                        {formatEventDate(new Date(order.event.eventStartDate))}
+                      </span>
                     </div>
                   )}
                   {order.event?.venueName && (
@@ -202,7 +242,9 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
               </h2>
               <div className='space-y-2 sm:space-y-3'>
                 <div className='flex justify-between items-center text-sm gap-2'>
-                  <span className='text-muted-foreground shrink-0'>Orden ID:</span>
+                  <span className='text-muted-foreground shrink-0'>
+                    Orden ID:
+                  </span>
                   <CopyableText
                     text={order.id}
                     truncateOnMobile
@@ -280,6 +322,58 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
             </div>
           </div>
 
+          {/* Payer country: locks dLocal checkout to this country to avoid 5000 on retry. Searchable. */}
+          <div className='space-y-2'>
+            <Label htmlFor='payer-country'>País desde el que pagas</Label>
+            <Popover
+              open={countryPopoverOpen}
+              onOpenChange={setCountryPopoverOpen}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  id='payer-country'
+                  variant='outline'
+                  role='combobox'
+                  aria-expanded={countryPopoverOpen}
+                  disabled={countdown.isExpired}
+                  className='w-full justify-between font-normal'
+                >
+                  {CHECKOUT_COUNTRIES.find(c => c.value === payerCountry)
+                    ?.label ?? 'Elige tu país'}
+                  <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className='w-[var(--radix-popover-trigger-width)] p-0'
+                align='start'
+              >
+                <Command>
+                  <CommandInput placeholder='Buscar país...' />
+                  <CommandList>
+                    <CommandEmpty>No hay resultados.</CommandEmpty>
+                    <CommandGroup>
+                      {CHECKOUT_COUNTRIES.map(c => (
+                        <CommandItem
+                          key={c.value}
+                          value={c.label}
+                          onSelect={() => {
+                            setPayerCountry(c.value);
+                            setCountryPopoverOpen(false);
+                          }}
+                        >
+                          {c.label}
+                          {payerCountry === c.value ? (
+                            <Check className='ml-auto h-4 w-4' />
+                          ) : null}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* Payment Disclaimer */}
           <Alert>
             <InfoIcon className='h-4 w-4' />
@@ -312,7 +406,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
               size='lg'
               className='bg-primary-gradient h-12 px-8'
               disabled={isButtonDisabled}
-              onClick={() => createPaymentLink.mutate()}
+              onClick={() => createPaymentLink.mutate({country: payerCountry})}
             >
               {getButtonText()}
             </Button>
@@ -363,7 +457,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
               size='lg'
               className='bg-primary-gradient h-12 px-6 text-base font-semibold'
               disabled={isButtonDisabled}
-              onClick={() => createPaymentLink.mutate()}
+              onClick={() => createPaymentLink.mutate({country: payerCountry})}
             >
               {createPaymentLink.isPending ? 'Procesando...' : 'Pagar'}
             </Button>

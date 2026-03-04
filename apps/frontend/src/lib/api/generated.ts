@@ -1981,6 +1981,10 @@ export interface CreatePaymentLinkResponse {
   paymentId: string;
 }
 
+export interface CreatePaymentLinkRouteBody {
+  country?: string;
+}
+
 /** From T, pick a set of properties whose keys are in the union K */
 export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDescription {
   /** @format date-time */
@@ -3632,13 +3636,19 @@ export class Api<
      * @name CreatePaymentLink
      * @request POST:/payments/create-link/{orderId}
      */
-    createPaymentLink: (orderId: string, params: RequestParams = {}) =>
+    createPaymentLink: (
+      orderId: string,
+      data: CreatePaymentLinkRouteBody,
+      params: RequestParams = {},
+    ) =>
       this.request<
         CreatePaymentLinkResponse,
         UnauthorizedError | NotFoundError | ValidationError
       >({
         path: `/payments/create-link/${orderId}`,
         method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
