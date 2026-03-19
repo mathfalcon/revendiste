@@ -27,6 +27,15 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       .executeTakeFirstOrThrow();
   }
 
+  async getById(orderId: string) {
+    return await this.db
+      .selectFrom('orders')
+      .selectAll()
+      .where('id', '=', orderId)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
+  }
+
   async getByIdWithItems(orderId: string) {
     return await this.db
       .selectFrom('orders')

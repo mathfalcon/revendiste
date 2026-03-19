@@ -9,7 +9,7 @@ import type {
 import {getTicketStatusConfig} from './sold-ticket-utils';
 import {CopyableText} from '~/components/ui/copyable-text';
 
-type Ticket = GetUserListingsResponse[number]['tickets'][number];
+type Ticket = GetUserListingsResponse['data'][number]['tickets'][number];
 
 interface SoldTicketCardProps {
   ticket: Ticket;

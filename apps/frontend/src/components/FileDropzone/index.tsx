@@ -7,6 +7,8 @@ import {cn} from '~/lib/utils';
 export interface FileDropzoneProps {
   /** Callback when a file is selected */
   onFileSelect: (file: File) => void;
+  /** Callback when multiple files are selected (used with multiple prop) */
+  onFilesSelect?: (files: File[]) => void;
   /** Currently selected file */
   selectedFile?: File | null;
   /** Clear the selected file */
@@ -33,6 +35,8 @@ export interface FileDropzoneProps {
   compact?: boolean;
   /** Custom display name for the selected file (overrides selectedFile.name) */
   displayFileName?: string;
+  /** Allow selecting multiple files at once */
+  multiple?: boolean;
 }
 
 const DEFAULT_MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -45,6 +49,7 @@ const DEFAULT_ACCEPTED_TYPES = [
 
 export function FileDropzone({
   onFileSelect,
+  onFilesSelect,
   selectedFile,
   onClear,
   accept = '.pdf,.png,.jpg,.jpeg',
@@ -58,6 +63,7 @@ export function FileDropzone({
   className,
   compact = false,
   displayFileName,
+  multiple = false,
 }: FileDropzoneProps) {
   const [dragActive, setDragActive] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -121,14 +127,44 @@ export function FileDropzone({
 
     if (disabled) return;
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelect(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      if (multiple && onFilesSelect) {
+        const validFiles: File[] = [];
+        for (const file of Array.from(e.dataTransfer.files)) {
+          const err = validateFile(file);
+          if (err) {
+            setValidationError(err);
+            return;
+          }
+          validFiles.push(file);
+        }
+        setValidationError(null);
+        onFilesSelect(validFiles);
+      } else {
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelect(file);
+      }
     }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileSelect(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      if (multiple && onFilesSelect) {
+        const validFiles: File[] = [];
+        for (const file of Array.from(e.target.files)) {
+          const err = validateFile(file);
+          if (err) {
+            setValidationError(err);
+            return;
+          }
+          validFiles.push(file);
+        }
+        setValidationError(null);
+        onFilesSelect(validFiles);
+      } else {
+        const file = e.target.files[0];
+        if (file) handleFileSelect(file);
+      }
     }
   };
 
@@ -209,6 +245,7 @@ export function FileDropzone({
           ref={fileInputRef}
           type='file'
           accept={accept}
+          multiple={multiple}
           onChange={handleFileInputChange}
           className='hidden'
           disabled={disabled}

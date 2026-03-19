@@ -168,8 +168,8 @@ function RootDocument({children}: {children: React.ReactNode}) {
                 {!shouldHideNavbar && <Navbar />}
                 <main className='flex-1'>{children}</main>
                 {!shouldHideNavbar && <Footer />}
-                {/* <TanStackRouterDevtools position='bottom-right' />
-                <ReactQueryDevtools buttonPosition='bottom-left' /> */}
+                <TanStackRouterDevtools position='bottom-right' />
+                <ReactQueryDevtools buttonPosition='bottom-left' />
                 <Scripts />
                 <Toaster position='top-center' />
               </div>

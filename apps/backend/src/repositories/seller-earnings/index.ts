@@ -426,11 +426,48 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
     const now = new Date();
     return await this.db
       .selectFrom('sellerEarnings')
-      .selectAll()
-      .where('holdUntil', '<=', now)
-      .where('status', '=', 'pending')
-      .where('deletedAt', 'is', null)
-      .orderBy('holdUntil', 'asc')
+      .innerJoin(
+        'orderTicketReservations',
+        'orderTicketReservations.listingTicketId',
+        'sellerEarnings.listingTicketId',
+      )
+      .select([
+        'sellerEarnings.id',
+        'sellerEarnings.sellerUserId',
+        'sellerEarnings.listingTicketId',
+        'sellerEarnings.sellerAmount',
+        'sellerEarnings.currency',
+        'sellerEarnings.status',
+        'sellerEarnings.holdUntil',
+        'orderTicketReservations.orderId',
+      ])
+      // Skip earnings with an open ticket report (on the order or the specific reservation)
+      .where(eb =>
+        eb.not(
+          eb.or([
+            eb.exists(
+              eb
+                .selectFrom('ticketReports')
+                .select('ticketReports.id')
+                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.orderId')
+                .where('ticketReports.entityType', '=', 'order')
+                .where('ticketReports.status', '!=', 'closed'),
+            ),
+            eb.exists(
+              eb
+                .selectFrom('ticketReports')
+                .select('ticketReports.id')
+                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.id')
+                .where('ticketReports.entityType', '=', 'order_ticket_reservation')
+                .where('ticketReports.status', '!=', 'closed'),
+            ),
+          ]),
+        ),
+      )
+      .where('sellerEarnings.holdUntil', '<=', now)
+      .where('sellerEarnings.status', '=', 'pending')
+      .where('sellerEarnings.deletedAt', 'is', null)
+      .orderBy('sellerEarnings.holdUntil', 'asc')
       .limit(limit)
       .execute();
   }
@@ -634,6 +671,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'sellerEarnings.sellerUserId',
         'listingTickets.id as ticketId',
         'orderTicketReservations.id as reservationId',
+        'orderTicketReservations.orderId',
         'orders.userId as buyerUserId',
         'events.name as eventName',
       ])

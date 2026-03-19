@@ -33,7 +33,7 @@ import {CopyableText} from '~/components/ui/copyable-text';
 import {cn} from '~/lib/utils';
 
 interface ActiveTicketsSectionProps {
-  tickets: GetUserListingsResponse[number]['tickets'];
+  tickets: GetUserListingsResponse['data'][number]['tickets'];
   ticketWaveName: string;
   ticketWaveCurrency: EventTicketCurrency;
   ticketWaveFaceValue: number;

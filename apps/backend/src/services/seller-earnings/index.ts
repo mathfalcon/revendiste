@@ -18,6 +18,7 @@ import {
 } from '~/services/notifications/helpers';
 import type {Kysely} from 'kysely';
 import type {DB} from '@revendiste/shared';
+import type {TicketReportsService} from '~/services/ticket-reports';
 
 interface BalanceByCurrency {
   currency: EventTicketCurrency;
@@ -58,6 +59,7 @@ export class SellerEarningsService {
     private readonly sellerEarningsRepository: SellerEarningsRepository,
     private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
     private readonly notificationService?: NotificationService,
+    private readonly ticketReportsService?: TicketReportsService,
   ) {}
 
   /**
@@ -244,8 +246,7 @@ export class SellerEarningsService {
       return {released: 0, retained: 0};
     }
 
-    // TODO: Check for open reports/disputes (future: query reports table)
-    // For now, assume no reports exist and release all
+    // Repository query already excludes earnings with open ticket reports
     const earningsToRelease = earningsReady.map(e => e.id);
 
     // Process in batches to avoid transactional issues
@@ -270,7 +271,7 @@ export class SellerEarningsService {
 
     return {
       released: totalReleased,
-      retained: 0, // TODO: Update when reports system is implemented
+      retained: 0, // Earnings with open reports are excluded by the repository query
     };
   }
 
@@ -360,6 +361,30 @@ export class SellerEarningsService {
           ticketId: item.ticketId,
         });
         // Continue processing other tickets
+      }
+    }
+
+    // Create one auto-case per reservation (not per order) for finer control —
+    // an order may have multiple tickets where only some are missing docs.
+    // Runs outside transactions per revendiste patterns.
+    if (this.ticketReportsService) {
+      for (const item of ticketsWithMissingDocs) {
+        try {
+          await this.ticketReportsService.createAutoCase({
+            caseType: 'ticket_not_received',
+            entityType: 'order_ticket_reservation',
+            entityId: item.reservationId,
+            source: 'auto_missing_document',
+            reservationIds: [item.reservationId],
+            reportedByUserId: item.buyerUserId ?? null,
+            eventName: item.eventName,
+          });
+        } catch (err) {
+          logger.error('Failed to create auto-case for reservation', {
+            reservationId: item.reservationId,
+            error: err,
+          });
+        }
       }
     }
 

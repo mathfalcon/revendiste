@@ -1,6 +1,6 @@
 import {NotificationService, type CreateNotificationParams} from './index';
 import {APP_BASE_URL} from '~/config/env';
-import type {QrAvailabilityTiming} from '@revendiste/shared';
+import type {QrAvailabilityTiming, TicketReportCaseType, TicketReportEntityType, TicketReportActionType, TicketReportStatus} from '@revendiste/shared';
 
 /**
  * Helper functions for creating common notification types
@@ -663,7 +663,12 @@ export async function notifySellerEarningsRetained(
     currency?: 'UYU' | 'USD';
   },
 ) {
-  return await service.createNotification({
+  // 5 min window: batches per-ticket calls from a single cron run into one notification per seller+event+reason
+  // reason is included in the key so tickets with different retention reasons are never merged
+  // (email template only renders a single reason)
+  const DEBOUNCE_WINDOW_MS = 5 * 60 * 1000;
+
+  return await service.createDebouncedNotification({
     userId: params.sellerUserId,
     type: 'seller_earnings_retained',
     channels: ['in_app', 'email'],
@@ -671,7 +676,7 @@ export async function notifySellerEarningsRetained(
       {
         type: 'view_earnings',
         label: 'Ver ganancias',
-        url: `${APP_BASE_URL}/cuenta/ganancias`,
+        url: `${APP_BASE_URL}/cuenta/retiro`,
       },
     ],
     metadata: {
@@ -681,6 +686,10 @@ export async function notifySellerEarningsRetained(
       reason: params.reason,
       totalAmount: params.totalAmount,
       currency: params.currency,
+    },
+    debounce: {
+      key: `seller_earnings_retained:${params.sellerUserId}:${params.eventName}:${params.reason}`,
+      windowMs: DEBOUNCE_WINDOW_MS,
     },
   });
 }
@@ -714,6 +723,149 @@ export async function notifyBuyerTicketCancelled(
       eventName: params.eventName,
       ticketCount: params.ticketCount,
       reason: params.reason,
+    },
+  });
+}
+
+// ============================================================================
+// Ticket report / case system notification helpers
+// ============================================================================
+
+/**
+ * Notify the reporter that their case was created (confirmation)
+ */
+export async function notifyTicketReportCreated(
+  service: NotificationService,
+  params: {
+    ticketReportId: string;
+    caseType: TicketReportCaseType;
+    reportedByUserId: string;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    isAutoCase?: boolean;
+    eventName?: string;
+  },
+) {
+  return await service.createNotification({
+    userId: params.reportedByUserId,
+    type: 'ticket_report_created',
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'view_report',
+        label: 'Ver mi caso',
+        url: `${APP_BASE_URL}/cuenta/reportes/${params.ticketReportId}`,
+      },
+    ],
+    metadata: {
+      type: 'ticket_report_created',
+      ticketReportId: params.ticketReportId,
+      caseType: params.caseType,
+      reportedByUserId: params.reportedByUserId,
+      entityType: params.entityType,
+      entityId: params.entityId,
+      isAutoCase: params.isAutoCase,
+      eventName: params.eventName,
+    },
+  });
+}
+
+/**
+ * Notify the reporter that the status of their case changed
+ */
+export async function notifyTicketReportStatusChanged(
+  service: NotificationService,
+  params: {
+    ticketReportId: string;
+    reportedByUserId: string;
+    oldStatus: TicketReportStatus;
+    newStatus: TicketReportStatus;
+  },
+) {
+  return await service.createNotification({
+    userId: params.reportedByUserId,
+    type: 'ticket_report_status_changed',
+    channels: ['in_app'],
+    actions: [
+      {
+        type: 'view_report',
+        label: 'Ver mi caso',
+        url: `${APP_BASE_URL}/cuenta/reportes/${params.ticketReportId}`,
+      },
+    ],
+    metadata: {
+      type: 'ticket_report_status_changed',
+      ticketReportId: params.ticketReportId,
+      oldStatus: params.oldStatus,
+      newStatus: params.newStatus,
+    },
+  });
+}
+
+/**
+ * Notify a party that a new action was added to a case
+ */
+export async function notifyTicketReportActionAdded(
+  service: NotificationService,
+  params: {
+    ticketReportId: string;
+    notifyUserId: string;
+    actionType: TicketReportActionType;
+    performedByRole: 'admin' | 'user';
+    comment?: string;
+  },
+) {
+  return await service.createNotification({
+    userId: params.notifyUserId,
+    type: 'ticket_report_action_added',
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'view_report',
+        label: 'Ver mi caso',
+        url: `${APP_BASE_URL}/cuenta/reportes/${params.ticketReportId}`,
+      },
+    ],
+    metadata: {
+      type: 'ticket_report_action_added',
+      ticketReportId: params.ticketReportId,
+      actionType: params.actionType,
+      performedByRole: params.performedByRole,
+      comment: params.comment,
+    },
+  });
+}
+
+/**
+ * Notify the reporter that their case was closed
+ */
+export async function notifyTicketReportClosed(
+  service: NotificationService,
+  params: {
+    ticketReportId: string;
+    reportedByUserId: string;
+    closedByRole: 'admin' | 'user';
+    actionType?: TicketReportActionType;
+    refundIssued?: boolean;
+  },
+) {
+  return await service.createNotification({
+    userId: params.reportedByUserId,
+    type: 'ticket_report_closed',
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'view_report',
+        label: 'Ver mi caso',
+        url: `${APP_BASE_URL}/cuenta/reportes/${params.ticketReportId}`,
+      },
+    ],
+    metadata: {
+      type: 'ticket_report_closed',
+      ticketReportId: params.ticketReportId,
+      closedByRole: params.closedByRole,
+      actionType: params.actionType,
+      refundIssued: params.refundIssued,
     },
   });
 }

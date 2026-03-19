@@ -63,7 +63,44 @@ export enum NotificationType {
   PayoutFailed = "payout_failed",
   PayoutProcessing = "payout_processing",
   SellerEarningsRetained = "seller_earnings_retained",
+  TicketReportActionAdded = "ticket_report_action_added",
+  TicketReportClosed = "ticket_report_closed",
+  TicketReportCreated = "ticket_report_created",
+  TicketReportStatusChanged = "ticket_report_status_changed",
   TicketSoldSeller = "ticket_sold_seller",
+}
+
+export enum TicketReportActionType {
+  Close = "close",
+  Comment = "comment",
+  RefundFull = "refund_full",
+  RefundPartial = "refund_partial",
+  Reject = "reject",
+}
+
+export enum TicketReportSource {
+  AutoMissingDocument = "auto_missing_document",
+  UserReport = "user_report",
+}
+
+export enum TicketReportStatus {
+  AwaitingCustomer = "awaiting_customer",
+  AwaitingSupport = "awaiting_support",
+  Closed = "closed",
+}
+
+export enum TicketReportEntityType {
+  Listing = "listing",
+  ListingTicket = "listing_ticket",
+  Order = "order",
+  OrderTicketReservation = "order_ticket_reservation",
+}
+
+export enum TicketReportCaseType {
+  InvalidTicket = "invalid_ticket",
+  Other = "other",
+  ProblemWithSeller = "problem_with_seller",
+  TicketNotReceived = "ticket_not_received",
 }
 
 export enum DocumentTypeEnum {
@@ -1976,6 +2013,230 @@ export interface ClerkWebhookRouteBody {
   object: "event";
 }
 
+export interface UserCreateCaseResponse {
+  source: "auto_missing_document" | "user_report";
+  reportedByUserId: string | null;
+  entityType: TicketReportEntityType;
+  entityId: string;
+  /** @format date-time */
+  closedAt: string | null;
+  caseType: TicketReportCaseType;
+  /** @format date-time */
+  updatedAt: string;
+  status: "awaiting_customer" | "awaiting_support" | "closed";
+  id: string;
+  description: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface ConflictError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+  /** Construct a type with a set of properties K of type T */
+  metadata?: RecordStringAny;
+}
+
+export interface CreateTicketReportBody {
+  description?: string;
+  entityId: string;
+  entityType:
+    | "listing"
+    | "listing_ticket"
+    | "order"
+    | "order_ticket_reservation";
+  caseType:
+    | "other"
+    | "invalid_ticket"
+    | "problem_with_seller"
+    | "ticket_not_received";
+}
+
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReport {
+  data: {
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  pagination: PaginationMeta;
+}
+
+export type UserListMyCasesResponse =
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReport;
+
+export type CheckExistingReportResponse =
+  | {
+      status: "awaiting_customer" | "awaiting_support" | "closed";
+      reportId: string;
+      exists: true;
+    }
+  | {
+      status?: any;
+      reportId?: any;
+      exists: false;
+    };
+
+export interface UserGetCaseDetailsResponse {
+  entityDetails: any;
+  initialAttachments: {
+    /** @format date-time */
+    createdAt: string;
+    /** @format double */
+    sizeBytes: number;
+    mimeType: string;
+    originalName: string;
+    fileName: string;
+    id: string;
+  }[];
+  actions: {
+    attachments: {
+      /** @format date-time */
+      createdAt: string;
+      /** @format double */
+      sizeBytes: number;
+      mimeType: string;
+      originalName: string;
+      fileName: string;
+      id: string;
+    }[];
+    /** @format date-time */
+    createdAt: string;
+    metadata: any;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    performedByUserId: string;
+    ticketReportId: string;
+    id: string;
+  }[];
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  closedAt: string | null;
+  source: TicketReportSource;
+  description: string | null;
+  reportedByUserId: string | null;
+  entityId: string;
+  entityType: TicketReportEntityType;
+  caseType: TicketReportCaseType;
+  status: TicketReportStatus;
+  id: string;
+}
+
+export interface UserAddActionResponse {
+  action: {
+    ticketReportId: string;
+    performedByUserId: string;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    metadata: JsonValue;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  };
+  report: {
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  };
+}
+
+export interface AddUserActionBody {
+  comment?: string;
+  actionType: "comment" | "close";
+}
+
+export interface UserCloseCaseResponse {
+  action: {
+    ticketReportId: string;
+    performedByUserId: string;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    metadata: JsonValue;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  };
+  report: {
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  };
+}
+
+export interface UploadAttachmentResponse {
+  uploadedByUserId: string;
+  ticketReportActionId: string | null;
+  ticketReportId: string;
+  storagePath: string;
+  /** @format double */
+  sizeBytes: number;
+  originalName: string;
+  mimeType: string;
+  fileName: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export type ListAttachmentsResponse = {
+  uploadedByUserId: string;
+  ticketReportActionId: string | null;
+  ticketReportId: string;
+  storagePath: string;
+  /** @format double */
+  sizeBytes: number;
+  originalName: string;
+  mimeType: string;
+  fileName: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+  url: string;
+}[];
+
+export interface GetAttachmentUrlResponse {
+  url: string;
+}
+
 export interface CreatePaymentLinkResponse {
   redirectUrl: string;
   paymentId: string;
@@ -2043,7 +2304,8 @@ export interface InferTypeofBaseActionSchema {
     | "view_payout"
     | "start_verification"
     | "publish_tickets"
-    | "view_earnings";
+    | "view_earnings"
+    | "view_report";
 }
 
 export type NotificationAction = InferTypeofBaseActionSchema;
@@ -2152,6 +2414,169 @@ export interface VerifyLivenessResultsResponse {
 export interface VerifyLivenessRouteBody {
   sessionId: string;
 }
+
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReportReporterEmailStringOrNullReporterFirstNameStringOrNullReporterLastNameStringOrNull {
+  data: {
+    reporterLastName: string | null;
+    reporterFirstName: string | null;
+    reporterEmail: string | null;
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  pagination: PaginationMeta;
+}
+
+export type AdminListCasesResponse =
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReportReporterEmailStringOrNullReporterFirstNameStringOrNullReporterLastNameStringOrNull;
+
+export interface InferTypeofAdminListTicketReportsQuerySchema {
+  caseType?:
+    | "other"
+    | "invalid_ticket"
+    | "problem_with_seller"
+    | "ticket_not_received";
+  status?: "awaiting_customer" | "awaiting_support" | "closed";
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+}
+
+export type AdminListTicketReportsQuery =
+  InferTypeofAdminListTicketReportsQuerySchema;
+
+export interface AdminGetCaseDetailsResponse {
+  entityDetails: any;
+  initialAttachments: {
+    /** @format date-time */
+    createdAt: string;
+    /** @format double */
+    sizeBytes: number;
+    mimeType: string;
+    originalName: string;
+    fileName: string;
+    id: string;
+  }[];
+  actions: {
+    attachments: {
+      /** @format date-time */
+      createdAt: string;
+      /** @format double */
+      sizeBytes: number;
+      mimeType: string;
+      originalName: string;
+      fileName: string;
+      id: string;
+    }[];
+    /** @format date-time */
+    createdAt: string;
+    metadata: any;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    performedByUserId: string;
+    ticketReportId: string;
+    id: string;
+  }[];
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  closedAt: string | null;
+  source: TicketReportSource;
+  description: string | null;
+  reportedByUserId: string | null;
+  entityId: string;
+  entityType: TicketReportEntityType;
+  caseType: TicketReportCaseType;
+  status: TicketReportStatus;
+  id: string;
+}
+
+export interface AdminAddActionResponse {
+  action: {
+    ticketReportId: string;
+    performedByUserId: string;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    metadata: JsonValue;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  };
+  report: {
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  };
+}
+
+export interface AddAdminActionBody {
+  metadata?: {
+    reservationIds?: string[];
+    refundReason?: string;
+    /** @format double */
+    refundAmount?: number;
+  };
+  comment?: string;
+  actionType: "comment" | "close" | "refund_full" | "refund_partial" | "reject";
+}
+
+export interface AdminUploadAttachmentResponse {
+  uploadedByUserId: string;
+  ticketReportActionId: string | null;
+  ticketReportId: string;
+  storagePath: string;
+  /** @format double */
+  sizeBytes: number;
+  originalName: string;
+  mimeType: string;
+  fileName: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export type AdminListAttachmentsResponse = {
+  uploadedByUserId: string;
+  ticketReportActionId: string | null;
+  ticketReportId: string;
+  storagePath: string;
+  /** @format double */
+  sizeBytes: number;
+  originalName: string;
+  mimeType: string;
+  fileName: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+  url: string;
+}[];
 
 import type {
   AxiosInstance,
@@ -3558,6 +3983,129 @@ export class Api<
           ...params,
         },
       ),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name ListCases
+     * @request GET:/admin/ticket-reports
+     */
+    listCases: (
+      query: {
+        caseType?:
+          | "other"
+          | "invalid_ticket"
+          | "problem_with_seller"
+          | "ticket_not_received";
+        status?: "awaiting_customer" | "awaiting_support" | "closed";
+        sortOrder?: "asc" | "desc";
+        sortBy?: string;
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<AdminListCasesResponse, UnauthorizedError>({
+        path: `/admin/ticket-reports`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name GetCaseDetails
+     * @request GET:/admin/ticket-reports/{reportId}
+     */
+    getCaseDetails: (reportId: string, params: RequestParams = {}) =>
+      this.request<
+        AdminGetCaseDetailsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/ticket-reports/${reportId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name AddAction
+     * @request POST:/admin/ticket-reports/{reportId}/actions
+     */
+    addAction: (
+      reportId: string,
+      data: AddAdminActionBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AdminAddActionResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/ticket-reports/${reportId}/actions`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name UploadAttachment
+     * @request POST:/admin/ticket-reports/{reportId}/attachments
+     */
+    uploadAttachment: (
+      reportId: string,
+      data: {
+        /** @format binary */
+        file: File;
+      },
+      query?: {
+        actionId?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AdminUploadAttachmentResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/ticket-reports/${reportId}/attachments`,
+        method: "POST",
+        query: query,
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name ListAttachments
+     * @request GET:/admin/ticket-reports/{reportId}/attachments
+     */
+    listAttachments: (reportId: string, params: RequestParams = {}) =>
+      this.request<
+        AdminListAttachmentsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/ticket-reports/${reportId}/attachments`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
   };
   users = {
     /**
@@ -3627,6 +4175,188 @@ export class Api<
         format: "json",
         ...params,
       }),
+  };
+  ticketReports = {
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name CreateCase
+     * @request POST:/ticket-reports
+     */
+    createCase: (data: CreateTicketReportBody, params: RequestParams = {}) =>
+      this.request<UserCreateCaseResponse, ConflictError | ValidationError>({
+        path: `/ticket-reports`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name ListMyCases
+     * @request GET:/ticket-reports
+     */
+    listMyCases: (params: RequestParams = {}) =>
+      this.request<UserListMyCasesResponse, any>({
+        path: `/ticket-reports`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name CheckExistingReport
+     * @request GET:/ticket-reports/check-existing
+     */
+    checkExistingReport: (
+      query: {
+        entityType: string;
+        entityId: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<CheckExistingReportResponse, any>({
+        path: `/ticket-reports/check-existing`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name GetCaseDetails
+     * @request GET:/ticket-reports/{reportId}
+     */
+    getCaseDetails: (reportId: string, params: RequestParams = {}) =>
+      this.request<
+        UserGetCaseDetailsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/ticket-reports/${reportId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name AddAction
+     * @request POST:/ticket-reports/{reportId}/actions
+     */
+    addAction: (
+      reportId: string,
+      data: AddUserActionBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UserAddActionResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-reports/${reportId}/actions`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name CloseCase
+     * @request POST:/ticket-reports/{reportId}/close
+     */
+    closeCase: (reportId: string, params: RequestParams = {}) =>
+      this.request<
+        UserCloseCaseResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-reports/${reportId}/close`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name UploadAttachment
+     * @request POST:/ticket-reports/{reportId}/attachments
+     */
+    uploadAttachment: (
+      reportId: string,
+      data: {
+        /** @format binary */
+        file: File;
+      },
+      query?: {
+        actionId?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UploadAttachmentResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-reports/${reportId}/attachments`,
+        method: "POST",
+        query: query,
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name ListAttachments
+     * @request GET:/ticket-reports/{reportId}/attachments
+     */
+    listAttachments: (reportId: string, params: RequestParams = {}) =>
+      this.request<ListAttachmentsResponse, UnauthorizedError | NotFoundError>({
+        path: `/ticket-reports/${reportId}/attachments`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name GetAttachmentUrl
+     * @request GET:/ticket-reports/{reportId}/attachments/{attachmentId}/url
+     */
+    getAttachmentUrl: (
+      reportId: string,
+      attachmentId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<GetAttachmentUrlResponse, UnauthorizedError | NotFoundError>(
+        {
+          path: `/ticket-reports/${reportId}/attachments/${attachmentId}/url`,
+          method: "GET",
+          format: "json",
+          ...params,
+        },
+      ),
   };
   payments = {
     /**

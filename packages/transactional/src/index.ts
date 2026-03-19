@@ -51,6 +51,11 @@ export * from '../emails/identity-verification-rejected-email';
 export * from '../emails/seller-earnings-retained-email';
 export * from '../emails/buyer-ticket-cancelled-email';
 
+// Ticket report email templates
+export * from '../emails/ticket-report-created-email';
+export * from '../emails/ticket-report-action-email';
+export * from '../emails/ticket-report-closed-email';
+
 export {render, pretty, toPlainText} from '@react-email/render';
 
 // Email template mapping utilities
@@ -85,6 +90,11 @@ export type {IdentityVerificationRejectedEmailProps} from '../emails/identity-ve
 // Missing document refund email prop types
 export type {SellerEarningsRetainedEmailProps} from '../emails/seller-earnings-retained-email';
 export type {BuyerTicketCancelledEmailProps} from '../emails/buyer-ticket-cancelled-email';
+
+// Ticket report email prop types
+export type {TicketReportCreatedEmailProps} from '../emails/ticket-report-created-email';
+export type {TicketReportActionEmailProps} from '../emails/ticket-report-action-email';
+export type {TicketReportClosedEmailProps} from '../emails/ticket-report-closed-email';
 
 /**
  * Render a React Email component to HTML string

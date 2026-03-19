@@ -291,9 +291,30 @@ export const INVOICE_ERROR_MESSAGES = {
     `Ya existe una factura para la orden ${orderId} y parte ${party}`,
 } as const;
 
+// Error messages for the ticket report / case system
+export const TICKET_REPORT_ERROR_MESSAGES = {
+  REPORT_NOT_FOUND: 'Reporte no encontrado',
+  UNAUTHORIZED_ACCESS: 'No estás autorizado para acceder a este reporte',
+  UNAUTHORIZED_ENTITY_ACCESS:
+    'No puedes crear un reporte para esta entidad porque no te pertenece',
+  ENTITY_NOT_FOUND: 'La entidad especificada no fue encontrada',
+  ALREADY_CLOSED: 'Este caso ya está cerrado',
+  INVALID_ACTION_FOR_USER:
+    'Esta acción solo puede ser realizada por un administrador',
+  INVALID_TICKET_NO_DOCUMENT:
+    'No podés reportar una entrada como inválida si aún no recibiste el documento',
+  ATTACHMENT_NOT_FOUND: 'Adjunto no encontrado',
+  ATTACHMENT_INVALID_TYPE: 'Tipo de archivo no permitido. Se aceptan imágenes (JPG, PNG, WEBP, HEIC) y videos (MP4, MOV, WEBM)',
+  ATTACHMENT_IMAGE_TOO_LARGE: 'La imagen debe ser menor a 10 MB',
+  ATTACHMENT_VIDEO_TOO_LARGE: 'El video debe ser menor a 50 MB',
+  ATTACHMENT_CASE_CLOSED: 'No se pueden agregar adjuntos a un caso cerrado',
+  DUPLICATE_ACTIVE_REPORT: 'Ya existe un reporte abierto para esta entidad.',
+} as const;
+
 // Type for error message keys (useful for type safety)
 export type OrderErrorKey = keyof typeof ORDER_ERROR_MESSAGES;
 export type NotificationErrorKey = keyof typeof NOTIFICATION_ERROR_MESSAGES;
 export type PayoutErrorKey = keyof typeof PAYOUT_ERROR_MESSAGES;
 export type IdentityVerificationErrorKey =
   keyof typeof IDENTITY_VERIFICATION_ERROR_MESSAGES;
+export type TicketReportErrorKey = keyof typeof TICKET_REPORT_ERROR_MESSAGES;

@@ -21,3 +21,4 @@ export * from './MarkdownContent';
 export * from './StickyBottomBar';
 export * from './CancelOrderDialog';
 export * from './EventInfoBadges';
+export * from './CreateCaseDialog';

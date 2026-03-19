@@ -32,18 +32,8 @@ export const uploadTicketDocumentMutation = (ticketId: string) =>
   mutationOptions({
     mutationKey: ['upload-ticket-document', ticketId],
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
       return api.ticketListings
-        .uploadDocument(
-          ticketId,
-          {file},
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        )
+        .uploadDocument(ticketId, {file})
         .then(res => res.data);
     },
     onSuccess: () => {
@@ -61,18 +51,8 @@ export const updateTicketDocumentMutation = (ticketId: string) =>
   mutationOptions({
     mutationKey: ['update-ticket-document', ticketId],
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
       return api.ticketListings
-        .updateDocument(
-          ticketId,
-          {file},
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        )
+        .updateDocument(ticketId, {file})
         .then(res => res.data);
     },
     onSuccess: () => {

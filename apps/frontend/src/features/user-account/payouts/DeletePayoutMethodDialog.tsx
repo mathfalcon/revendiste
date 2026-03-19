@@ -11,7 +11,9 @@ import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {deletePayoutMethodMutation} from '~/lib/api/payouts';
 import {AlertTriangle} from 'lucide-react';
 import {getPayoutMethodDisplayName} from './payout-method-utils';
-import type {PayoutMethod} from '~/lib/api/generated';
+import type {GetPayoutMethodsResponse} from '~/lib/api/generated';
+
+type PayoutMethod = GetPayoutMethodsResponse[number];
 
 interface DeletePayoutMethodDialogProps {
   open: boolean;

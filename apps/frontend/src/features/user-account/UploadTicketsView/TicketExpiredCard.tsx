@@ -7,8 +7,8 @@ import type {GetUserListingsResponse} from '~/lib/api/generated';
 import {CDN_ASSETS} from '~/assets';
 
 interface TicketExpiredCardProps {
-  ticket: GetUserListingsResponse[number]['tickets'][number] & {
-    listing: GetUserListingsResponse[number];
+  ticket: GetUserListingsResponse['data'][number]['tickets'][number] & {
+    listing: GetUserListingsResponse['data'][number];
   };
 }
 

@@ -183,3 +183,33 @@ export interface DLocalWebhookPayload {
   /** Payment ID that changed status */
   payment_id: string;
 }
+
+/**
+ * dLocal refund status
+ */
+export type DLocalRefundStatus = 'PENDING' | 'PAID' | 'REJECTED' | 'CANCELLED';
+
+/**
+ * Response from dLocal refund creation and retrieval
+ * @see https://docs.dlocalgo.com/integration-api/welcome-to-dlocal-go-api/refunds
+ */
+export interface DLocalRefundResponse {
+  /** Refund ID */
+  id: string;
+  /** Payment ID being refunded */
+  payment_id: string;
+  /** Refund amount */
+  amount: number;
+  /** Three-letter ISO-4217 currency code */
+  currency: string;
+  /** Refund status */
+  status: DLocalRefundStatus;
+  /** Reason for refund */
+  reason?: string;
+  /** Merchant refund ID */
+  merchant_refund_id?: string;
+  /** Refund creation date (ISO 8601) */
+  created_date: string;
+  /** Refund approval date (ISO 8601) */
+  approved_date?: string;
+}

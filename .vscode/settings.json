@@ -9,7 +9,7 @@
     "**/routeTree.gen.ts": true
   },
   "tailwindCSS.experimental.configFile": {
-    "apps/frontend/tailwind.config.js": "apps/frontend/src/**",
-    "packages/transactional/tailwind.config.js": "packages/transactional/src/**"
+    "apps/frontend/src/styles/app.css": "apps/frontend/src/**",
+    "packages/transactional/tailwind.config.ts": "packages/transactional/src/**"
   }
 }

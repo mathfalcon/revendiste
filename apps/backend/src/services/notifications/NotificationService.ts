@@ -870,6 +870,8 @@ export class NotificationService {
     switch (notificationType) {
       case 'document_uploaded':
         return this.mergeDocumentUploadedItems.bind(this);
+      case 'seller_earnings_retained':
+        return this.mergeSellerEarningsRetainedItems.bind(this);
       default:
         // Default merger: use the last item's metadata (simple replace strategy)
         return items => {
@@ -924,6 +926,46 @@ export class NotificationService {
     };
 
     // Use actions from the first item (they should all point to the same order)
+    const actions = items[0].actions as NotificationAction[] | null;
+
+    return {
+      metadata: mergedMetadata as unknown as NotificationMetadata,
+      actions,
+    };
+  }
+
+  /**
+   * Merge seller_earnings_retained items by summing ticketCount
+   */
+  private mergeSellerEarningsRetainedItems(
+    items: Array<{metadata: NotificationMetadata; actions?: unknown}>,
+  ): {
+    metadata: NotificationMetadata;
+    actions: NotificationAction[] | null;
+  } {
+    const firstItem = items[0].metadata as {
+      type: 'seller_earnings_retained';
+      eventName: string;
+      ticketCount: number;
+      reason: string;
+      totalAmount?: string;
+      currency?: string;
+    };
+
+    const totalTicketCount = items.reduce((sum, item) => {
+      const meta = item.metadata as {ticketCount: number};
+      return sum + meta.ticketCount;
+    }, 0);
+
+    const mergedMetadata = {
+      type: 'seller_earnings_retained' as const,
+      eventName: firstItem.eventName,
+      ticketCount: totalTicketCount,
+      reason: firstItem.reason,
+      totalAmount: firstItem.totalAmount,
+      currency: firstItem.currency,
+    };
+
     const actions = items[0].actions as NotificationAction[] | null;
 
     return {

@@ -5,6 +5,7 @@ import {
   ZodValidationError,
   InternalServerError,
   ValidationError,
+  ConflictError,
 } from '~/errors';
 import {ValidateError} from '@mathfalcon/tsoa-runtime';
 import {logger} from '~/utils';
@@ -57,8 +58,8 @@ export const errorHandler = (
         ...(req.id && {requestId: req.id}),
       };
 
-    // Include metadata if available (e.g., orderId for duplicate order errors)
-    if (error instanceof ValidationError && error.metadata) {
+    // Include metadata if available (e.g., orderId for duplicate order errors, existingReportId for duplicate reports)
+    if ((error instanceof ValidationError || error instanceof ConflictError) && error.metadata) {
       errorResponse.metadata = error.metadata;
     }
 

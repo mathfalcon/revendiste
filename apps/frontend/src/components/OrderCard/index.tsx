@@ -113,7 +113,6 @@ function ViewTicketsButton({orderId}: {orderId: string}) {
 
 export function OrderCard({order}: OrderCardProps) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [showOrderDetailsDialog, setShowOrderDetailsDialog] = useState(false);
   const status = STATUS_CONFIG[order.status];
   const StatusIcon = status.icon;
 
@@ -281,6 +280,7 @@ export function OrderCard({order}: OrderCardProps) {
         open={showCancelDialog}
         onOpenChange={setShowCancelDialog}
       />
+
     </Card>
   );
 }

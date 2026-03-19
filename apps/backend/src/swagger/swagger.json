@@ -5630,7 +5630,7 @@
 				"type": "object"
 			},
 			"AdminEventImage": {
-				"description": "Explicit response types for the Admin Events controller\r\nThese are needed because Kysely's inferred types are too complex for TSOA",
+				"description": "Explicit response types for the Admin Events controller\nThese are needed because Kysely's inferred types are too complex for TSOA",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -6965,6 +6965,846 @@
 				],
 				"type": "object"
 			},
+			"TicketReportCaseType": {
+				"type": "string",
+				"enum": [
+					"invalid_ticket",
+					"other",
+					"problem_with_seller",
+					"ticket_not_received"
+				]
+			},
+			"TicketReportEntityType": {
+				"type": "string",
+				"enum": [
+					"listing",
+					"listing_ticket",
+					"order",
+					"order_ticket_reservation"
+				]
+			},
+			"UserCreateCaseResponse": {
+				"properties": {
+					"source": {
+						"type": "string",
+						"enum": [
+							"auto_missing_document",
+							"user_report"
+						]
+					},
+					"reportedByUserId": {
+						"type": "string",
+						"nullable": true
+					},
+					"entityType": {
+						"$ref": "#/components/schemas/TicketReportEntityType"
+					},
+					"entityId": {
+						"type": "string"
+					},
+					"closedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"caseType": {
+						"$ref": "#/components/schemas/TicketReportCaseType"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"awaiting_customer",
+							"awaiting_support",
+							"closed"
+						]
+					},
+					"id": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"source",
+					"reportedByUserId",
+					"entityType",
+					"entityId",
+					"closedAt",
+					"caseType",
+					"updatedAt",
+					"status",
+					"id",
+					"description",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"ConflictError": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double"
+					},
+					"isOperational": {
+						"type": "boolean"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.any_"
+					}
+				},
+				"required": [
+					"name",
+					"message",
+					"statusCode",
+					"isOperational"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateTicketReportBody": {
+				"properties": {
+					"description": {
+						"type": "string"
+					},
+					"entityId": {
+						"type": "string"
+					},
+					"entityType": {
+						"type": "string",
+						"enum": [
+							"listing",
+							"listing_ticket",
+							"order",
+							"order_ticket_reservation"
+						]
+					},
+					"caseType": {
+						"type": "string",
+						"enum": [
+							"other",
+							"invalid_ticket",
+							"problem_with_seller",
+							"ticket_not_received"
+						]
+					}
+				},
+				"required": [
+					"entityId",
+					"entityType",
+					"caseType"
+				],
+				"type": "object"
+			},
+			"PaginatedResponse__createdAt-Date--description-string-or-null--id-string--status-awaiting_customer-or-awaiting_support-or-closed--updatedAt-Date--caseType-TicketReportCaseType--closedAt-Date-or-null--entityId-string--entityType-TicketReportEntityType--reportedByUserId-string-or-null--source-auto_missing_document-or-user_report__": {
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"source": {
+									"type": "string",
+									"enum": [
+										"auto_missing_document",
+										"user_report"
+									]
+								},
+								"reportedByUserId": {
+									"type": "string",
+									"nullable": true
+								},
+								"entityType": {
+									"$ref": "#/components/schemas/TicketReportEntityType"
+								},
+								"entityId": {
+									"type": "string"
+								},
+								"closedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"caseType": {
+									"$ref": "#/components/schemas/TicketReportCaseType"
+								},
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"status": {
+									"type": "string",
+									"enum": [
+										"awaiting_customer",
+										"awaiting_support",
+										"closed"
+									]
+								},
+								"id": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string",
+									"nullable": true
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								}
+							},
+							"required": [
+								"source",
+								"reportedByUserId",
+								"entityType",
+								"entityId",
+								"closedAt",
+								"caseType",
+								"updatedAt",
+								"status",
+								"id",
+								"description",
+								"createdAt"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UserListMyCasesResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--id-string--status-awaiting_customer-or-awaiting_support-or-closed--updatedAt-Date--caseType-TicketReportCaseType--closedAt-Date-or-null--entityId-string--entityType-TicketReportEntityType--reportedByUserId-string-or-null--source-auto_missing_document-or-user_report__"
+			},
+			"CheckExistingReportResponse": {
+				"anyOf": [
+					{
+						"properties": {
+							"status": {
+								"type": "string",
+								"enum": [
+									"awaiting_customer",
+									"awaiting_support",
+									"closed"
+								]
+							},
+							"reportId": {
+								"type": "string"
+							},
+							"exists": {
+								"type": "boolean",
+								"enum": [
+									true
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"status",
+							"reportId",
+							"exists"
+						],
+						"type": "object"
+					},
+					{
+						"properties": {
+							"status": {},
+							"reportId": {},
+							"exists": {
+								"type": "boolean",
+								"enum": [
+									false
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"exists"
+						],
+						"type": "object"
+					}
+				]
+			},
+			"TicketReportStatus": {
+				"type": "string",
+				"enum": [
+					"awaiting_customer",
+					"awaiting_support",
+					"closed"
+				]
+			},
+			"TicketReportSource": {
+				"type": "string",
+				"enum": [
+					"auto_missing_document",
+					"user_report"
+				]
+			},
+			"TicketReportActionType": {
+				"type": "string",
+				"enum": [
+					"close",
+					"comment",
+					"refund_full",
+					"refund_partial",
+					"reject"
+				]
+			},
+			"UserGetCaseDetailsResponse": {
+				"properties": {
+					"entityDetails": {},
+					"initialAttachments": {
+						"items": {
+							"properties": {
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"sizeBytes": {
+									"type": "number",
+									"format": "double"
+								},
+								"mimeType": {
+									"type": "string"
+								},
+								"originalName": {
+									"type": "string"
+								},
+								"fileName": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"createdAt",
+								"sizeBytes",
+								"mimeType",
+								"originalName",
+								"fileName",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"actions": {
+						"items": {
+							"properties": {
+								"attachments": {
+									"items": {
+										"properties": {
+											"createdAt": {
+												"type": "string",
+												"format": "date-time"
+											},
+											"sizeBytes": {
+												"type": "number",
+												"format": "double"
+											},
+											"mimeType": {
+												"type": "string"
+											},
+											"originalName": {
+												"type": "string"
+											},
+											"fileName": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"createdAt",
+											"sizeBytes",
+											"mimeType",
+											"originalName",
+											"fileName",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"metadata": {},
+								"comment": {
+									"type": "string",
+									"nullable": true
+								},
+								"actionType": {
+									"$ref": "#/components/schemas/TicketReportActionType"
+								},
+								"performedByUserId": {
+									"type": "string"
+								},
+								"ticketReportId": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"attachments",
+								"createdAt",
+								"metadata",
+								"comment",
+								"actionType",
+								"performedByUserId",
+								"ticketReportId",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"closedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"source": {
+						"$ref": "#/components/schemas/TicketReportSource"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"reportedByUserId": {
+						"type": "string",
+						"nullable": true
+					},
+					"entityId": {
+						"type": "string"
+					},
+					"entityType": {
+						"$ref": "#/components/schemas/TicketReportEntityType"
+					},
+					"caseType": {
+						"$ref": "#/components/schemas/TicketReportCaseType"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TicketReportStatus"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"entityDetails",
+					"initialAttachments",
+					"actions",
+					"updatedAt",
+					"createdAt",
+					"closedAt",
+					"source",
+					"description",
+					"reportedByUserId",
+					"entityId",
+					"entityType",
+					"caseType",
+					"status",
+					"id"
+				],
+				"type": "object"
+			},
+			"UserAddActionResponse": {
+				"properties": {
+					"action": {
+						"properties": {
+							"ticketReportId": {
+								"type": "string"
+							},
+							"performedByUserId": {
+								"type": "string"
+							},
+							"comment": {
+								"type": "string",
+								"nullable": true
+							},
+							"actionType": {
+								"$ref": "#/components/schemas/TicketReportActionType"
+							},
+							"metadata": {
+								"$ref": "#/components/schemas/JsonValue"
+							},
+							"id": {
+								"type": "string"
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"ticketReportId",
+							"performedByUserId",
+							"comment",
+							"actionType",
+							"metadata",
+							"id",
+							"createdAt"
+						],
+						"type": "object"
+					},
+					"report": {
+						"properties": {
+							"source": {
+								"type": "string",
+								"enum": [
+									"auto_missing_document",
+									"user_report"
+								]
+							},
+							"reportedByUserId": {
+								"type": "string",
+								"nullable": true
+							},
+							"entityType": {
+								"$ref": "#/components/schemas/TicketReportEntityType"
+							},
+							"entityId": {
+								"type": "string"
+							},
+							"closedAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"caseType": {
+								"$ref": "#/components/schemas/TicketReportCaseType"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"status": {
+								"type": "string",
+								"enum": [
+									"awaiting_customer",
+									"awaiting_support",
+									"closed"
+								]
+							},
+							"id": {
+								"type": "string"
+							},
+							"description": {
+								"type": "string",
+								"nullable": true
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"source",
+							"reportedByUserId",
+							"entityType",
+							"entityId",
+							"closedAt",
+							"caseType",
+							"updatedAt",
+							"status",
+							"id",
+							"description",
+							"createdAt"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"action",
+					"report"
+				],
+				"type": "object"
+			},
+			"AddUserActionBody": {
+				"properties": {
+					"comment": {
+						"type": "string"
+					},
+					"actionType": {
+						"type": "string",
+						"enum": [
+							"comment",
+							"close"
+						]
+					}
+				},
+				"required": [
+					"actionType"
+				],
+				"type": "object"
+			},
+			"UserCloseCaseResponse": {
+				"properties": {
+					"action": {
+						"properties": {
+							"ticketReportId": {
+								"type": "string"
+							},
+							"performedByUserId": {
+								"type": "string"
+							},
+							"comment": {
+								"type": "string",
+								"nullable": true
+							},
+							"actionType": {
+								"$ref": "#/components/schemas/TicketReportActionType"
+							},
+							"metadata": {
+								"$ref": "#/components/schemas/JsonValue"
+							},
+							"id": {
+								"type": "string"
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"ticketReportId",
+							"performedByUserId",
+							"comment",
+							"actionType",
+							"metadata",
+							"id",
+							"createdAt"
+						],
+						"type": "object"
+					},
+					"report": {
+						"properties": {
+							"source": {
+								"type": "string",
+								"enum": [
+									"auto_missing_document",
+									"user_report"
+								]
+							},
+							"reportedByUserId": {
+								"type": "string",
+								"nullable": true
+							},
+							"entityType": {
+								"$ref": "#/components/schemas/TicketReportEntityType"
+							},
+							"entityId": {
+								"type": "string"
+							},
+							"closedAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"caseType": {
+								"$ref": "#/components/schemas/TicketReportCaseType"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"status": {
+								"type": "string",
+								"enum": [
+									"awaiting_customer",
+									"awaiting_support",
+									"closed"
+								]
+							},
+							"id": {
+								"type": "string"
+							},
+							"description": {
+								"type": "string",
+								"nullable": true
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"source",
+							"reportedByUserId",
+							"entityType",
+							"entityId",
+							"closedAt",
+							"caseType",
+							"updatedAt",
+							"status",
+							"id",
+							"description",
+							"createdAt"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"action",
+					"report"
+				],
+				"type": "object"
+			},
+			"UploadAttachmentResponse": {
+				"properties": {
+					"uploadedByUserId": {
+						"type": "string"
+					},
+					"ticketReportActionId": {
+						"type": "string",
+						"nullable": true
+					},
+					"ticketReportId": {
+						"type": "string"
+					},
+					"storagePath": {
+						"type": "string"
+					},
+					"sizeBytes": {
+						"type": "number",
+						"format": "double"
+					},
+					"originalName": {
+						"type": "string"
+					},
+					"mimeType": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"uploadedByUserId",
+					"ticketReportActionId",
+					"ticketReportId",
+					"storagePath",
+					"sizeBytes",
+					"originalName",
+					"mimeType",
+					"fileName",
+					"id",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"ListAttachmentsResponse": {
+				"items": {
+					"properties": {
+						"uploadedByUserId": {
+							"type": "string"
+						},
+						"ticketReportActionId": {
+							"type": "string",
+							"nullable": true
+						},
+						"ticketReportId": {
+							"type": "string"
+						},
+						"storagePath": {
+							"type": "string"
+						},
+						"sizeBytes": {
+							"type": "number",
+							"format": "double"
+						},
+						"originalName": {
+							"type": "string"
+						},
+						"mimeType": {
+							"type": "string"
+						},
+						"fileName": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"url": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"uploadedByUserId",
+						"ticketReportActionId",
+						"ticketReportId",
+						"storagePath",
+						"sizeBytes",
+						"originalName",
+						"mimeType",
+						"fileName",
+						"id",
+						"createdAt",
+						"url"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"GetAttachmentUrlResponse": {
+				"properties": {
+					"url": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"url"
+				],
+				"type": "object"
+			},
 			"CreatePaymentLinkResponse": {
 				"properties": {
 					"redirectUrl": {
@@ -7112,6 +7952,10 @@
 					"payout_failed",
 					"payout_processing",
 					"seller_earnings_retained",
+					"ticket_report_action_added",
+					"ticket_report_closed",
+					"ticket_report_created",
+					"ticket_report_status_changed",
 					"ticket_sold_seller"
 				]
 			},
@@ -7151,7 +7995,8 @@
 							"view_payout",
 							"start_verification",
 							"publish_tickets",
-							"view_earnings"
+							"view_earnings",
+							"view_report"
 						]
 					}
 				},
@@ -7319,10 +8164,10 @@
 					"DatabaseError",
 					"ZodValidationError"
 				],
-				"description": "Union type of all error class names that can be returned by the API.\r\nUsed for type-safe error handling on the frontend."
+				"description": "Union type of all error class names that can be returned by the API.\nUsed for type-safe error handling on the frontend."
 			},
 			"ApiErrorResponse": {
-				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\r\nUse this type in",
+				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\nUse this type in",
 				"properties": {
 					"error": {
 						"$ref": "#/components/schemas/ErrorClassName",
@@ -7483,6 +8328,583 @@
 					"sessionId"
 				],
 				"type": "object"
+			},
+			"PaginatedResponse__createdAt-Date--description-string-or-null--id-string--status-awaiting_customer-or-awaiting_support-or-closed--updatedAt-Date--caseType-TicketReportCaseType--closedAt-Date-or-null--entityId-string--entityType-TicketReportEntityType--reportedByUserId-string-or-null--source-auto_missing_document-or-user_report--reporterEmail-string-or-null--reporterFirstName-string-or-null--reporterLastName-string-or-null__": {
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"reporterLastName": {
+									"type": "string",
+									"nullable": true
+								},
+								"reporterFirstName": {
+									"type": "string",
+									"nullable": true
+								},
+								"reporterEmail": {
+									"type": "string",
+									"nullable": true
+								},
+								"source": {
+									"type": "string",
+									"enum": [
+										"auto_missing_document",
+										"user_report"
+									]
+								},
+								"reportedByUserId": {
+									"type": "string",
+									"nullable": true
+								},
+								"entityType": {
+									"$ref": "#/components/schemas/TicketReportEntityType"
+								},
+								"entityId": {
+									"type": "string"
+								},
+								"closedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"caseType": {
+									"$ref": "#/components/schemas/TicketReportCaseType"
+								},
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"status": {
+									"type": "string",
+									"enum": [
+										"awaiting_customer",
+										"awaiting_support",
+										"closed"
+									]
+								},
+								"id": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string",
+									"nullable": true
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								}
+							},
+							"required": [
+								"reporterLastName",
+								"reporterFirstName",
+								"reporterEmail",
+								"source",
+								"reportedByUserId",
+								"entityType",
+								"entityId",
+								"closedAt",
+								"caseType",
+								"updatedAt",
+								"status",
+								"id",
+								"description",
+								"createdAt"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AdminListCasesResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--id-string--status-awaiting_customer-or-awaiting_support-or-closed--updatedAt-Date--caseType-TicketReportCaseType--closedAt-Date-or-null--entityId-string--entityType-TicketReportEntityType--reportedByUserId-string-or-null--source-auto_missing_document-or-user_report--reporterEmail-string-or-null--reporterFirstName-string-or-null--reporterLastName-string-or-null__"
+			},
+			"infer_typeofAdminListTicketReportsQuerySchema_": {
+				"properties": {
+					"caseType": {
+						"type": "string",
+						"enum": [
+							"other",
+							"invalid_ticket",
+							"problem_with_seller",
+							"ticket_not_received"
+						]
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"awaiting_customer",
+							"awaiting_support",
+							"closed"
+						]
+					},
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
+					},
+					"sortBy": {
+						"type": "string"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"limit",
+					"page"
+				],
+				"type": "object"
+			},
+			"AdminListTicketReportsQuery": {
+				"$ref": "#/components/schemas/infer_typeofAdminListTicketReportsQuerySchema_"
+			},
+			"AdminGetCaseDetailsResponse": {
+				"properties": {
+					"entityDetails": {},
+					"initialAttachments": {
+						"items": {
+							"properties": {
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"sizeBytes": {
+									"type": "number",
+									"format": "double"
+								},
+								"mimeType": {
+									"type": "string"
+								},
+								"originalName": {
+									"type": "string"
+								},
+								"fileName": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"createdAt",
+								"sizeBytes",
+								"mimeType",
+								"originalName",
+								"fileName",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"actions": {
+						"items": {
+							"properties": {
+								"attachments": {
+									"items": {
+										"properties": {
+											"createdAt": {
+												"type": "string",
+												"format": "date-time"
+											},
+											"sizeBytes": {
+												"type": "number",
+												"format": "double"
+											},
+											"mimeType": {
+												"type": "string"
+											},
+											"originalName": {
+												"type": "string"
+											},
+											"fileName": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"createdAt",
+											"sizeBytes",
+											"mimeType",
+											"originalName",
+											"fileName",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"metadata": {},
+								"comment": {
+									"type": "string",
+									"nullable": true
+								},
+								"actionType": {
+									"$ref": "#/components/schemas/TicketReportActionType"
+								},
+								"performedByUserId": {
+									"type": "string"
+								},
+								"ticketReportId": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"attachments",
+								"createdAt",
+								"metadata",
+								"comment",
+								"actionType",
+								"performedByUserId",
+								"ticketReportId",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"closedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"source": {
+						"$ref": "#/components/schemas/TicketReportSource"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"reportedByUserId": {
+						"type": "string",
+						"nullable": true
+					},
+					"entityId": {
+						"type": "string"
+					},
+					"entityType": {
+						"$ref": "#/components/schemas/TicketReportEntityType"
+					},
+					"caseType": {
+						"$ref": "#/components/schemas/TicketReportCaseType"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TicketReportStatus"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"entityDetails",
+					"initialAttachments",
+					"actions",
+					"updatedAt",
+					"createdAt",
+					"closedAt",
+					"source",
+					"description",
+					"reportedByUserId",
+					"entityId",
+					"entityType",
+					"caseType",
+					"status",
+					"id"
+				],
+				"type": "object"
+			},
+			"AdminAddActionResponse": {
+				"properties": {
+					"action": {
+						"properties": {
+							"ticketReportId": {
+								"type": "string"
+							},
+							"performedByUserId": {
+								"type": "string"
+							},
+							"comment": {
+								"type": "string",
+								"nullable": true
+							},
+							"actionType": {
+								"$ref": "#/components/schemas/TicketReportActionType"
+							},
+							"metadata": {
+								"$ref": "#/components/schemas/JsonValue"
+							},
+							"id": {
+								"type": "string"
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"ticketReportId",
+							"performedByUserId",
+							"comment",
+							"actionType",
+							"metadata",
+							"id",
+							"createdAt"
+						],
+						"type": "object"
+					},
+					"report": {
+						"properties": {
+							"source": {
+								"type": "string",
+								"enum": [
+									"auto_missing_document",
+									"user_report"
+								]
+							},
+							"reportedByUserId": {
+								"type": "string",
+								"nullable": true
+							},
+							"entityType": {
+								"$ref": "#/components/schemas/TicketReportEntityType"
+							},
+							"entityId": {
+								"type": "string"
+							},
+							"closedAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"caseType": {
+								"$ref": "#/components/schemas/TicketReportCaseType"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"status": {
+								"type": "string",
+								"enum": [
+									"awaiting_customer",
+									"awaiting_support",
+									"closed"
+								]
+							},
+							"id": {
+								"type": "string"
+							},
+							"description": {
+								"type": "string",
+								"nullable": true
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"source",
+							"reportedByUserId",
+							"entityType",
+							"entityId",
+							"closedAt",
+							"caseType",
+							"updatedAt",
+							"status",
+							"id",
+							"description",
+							"createdAt"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"action",
+					"report"
+				],
+				"type": "object"
+			},
+			"AddAdminActionBody": {
+				"properties": {
+					"metadata": {
+						"properties": {
+							"reservationIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"refundReason": {
+								"type": "string"
+							},
+							"refundAmount": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"type": "object"
+					},
+					"comment": {
+						"type": "string"
+					},
+					"actionType": {
+						"type": "string",
+						"enum": [
+							"comment",
+							"close",
+							"refund_full",
+							"refund_partial",
+							"reject"
+						]
+					}
+				},
+				"required": [
+					"actionType"
+				],
+				"type": "object"
+			},
+			"AdminUploadAttachmentResponse": {
+				"properties": {
+					"uploadedByUserId": {
+						"type": "string"
+					},
+					"ticketReportActionId": {
+						"type": "string",
+						"nullable": true
+					},
+					"ticketReportId": {
+						"type": "string"
+					},
+					"storagePath": {
+						"type": "string"
+					},
+					"sizeBytes": {
+						"type": "number",
+						"format": "double"
+					},
+					"originalName": {
+						"type": "string"
+					},
+					"mimeType": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"uploadedByUserId",
+					"ticketReportActionId",
+					"ticketReportId",
+					"storagePath",
+					"sizeBytes",
+					"originalName",
+					"mimeType",
+					"fileName",
+					"id",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"AdminListAttachmentsResponse": {
+				"items": {
+					"properties": {
+						"uploadedByUserId": {
+							"type": "string"
+						},
+						"ticketReportActionId": {
+							"type": "string",
+							"nullable": true
+						},
+						"ticketReportId": {
+							"type": "string"
+						},
+						"storagePath": {
+							"type": "string"
+						},
+						"sizeBytes": {
+							"type": "number",
+							"format": "double"
+						},
+						"originalName": {
+							"type": "string"
+						},
+						"mimeType": {
+							"type": "string"
+						},
+						"fileName": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"url": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"uploadedByUserId",
+						"ticketReportActionId",
+						"ticketReportId",
+						"storagePath",
+						"sizeBytes",
+						"originalName",
+						"mimeType",
+						"fileName",
+						"id",
+						"createdAt",
+						"url"
+					],
+					"type": "object"
+				},
+				"type": "array"
 			}
 		},
 		"securitySchemes": {}
@@ -8142,7 +9564,7 @@
 						}
 					}
 				},
-				"description": "Upload a ticket document\r\n\r\nSellers can upload PDF/image documents for their sold tickets.\r\nDocuments must be uploaded before the event ends.",
+				"description": "Upload a ticket document\n\nSellers can upload PDF/image documents for their sold tickets.\nDocuments must be uploaded before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -8233,7 +9655,7 @@
 						}
 					}
 				},
-				"description": "Update/replace a ticket document\r\n\r\nUploads a new version of the document. Previous versions are kept for audit trail.\r\nCan only update before the event ends.",
+				"description": "Update/replace a ticket document\n\nUploads a new version of the document. Previous versions are kept for audit trail.\nCan only update before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -8316,7 +9738,7 @@
 						}
 					}
 				},
-				"description": "Update ticket price\r\n\r\nOnly active tickets (not reserved, sold, or cancelled) can have their price updated.\r\nPrice cannot exceed the ticket wave face value.",
+				"description": "Update ticket price\n\nOnly active tickets (not reserved, sold, or cancelled) can have their price updated.\nPrice cannot exceed the ticket wave face value.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -8391,7 +9813,7 @@
 						}
 					}
 				},
-				"description": "Remove a ticket from listing\r\n\r\nOnly active tickets (not reserved, sold, or cancelled) can be removed.\r\nThis performs a soft delete (sets deletedAt timestamp).",
+				"description": "Remove a ticket from listing\n\nOnly active tickets (not reserved, sold, or cancelled) can be removed.\nThis performs a soft delete (sets deletedAt timestamp).",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -8444,7 +9866,7 @@
 						}
 					}
 				},
-				"description": "Get ticket information with document details\r\n\r\nReturns ticket info including document URL for viewing.\r\nOnly the seller (ticket publisher) can access this endpoint.",
+				"description": "Get ticket information with document details\n\nReturns ticket info including document URL for viewing.\nOnly the seller (ticket publisher) can access this endpoint.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -11211,6 +12633,496 @@
 				}
 			}
 		},
+		"/ticket-reports": {
+			"post": {
+				"operationId": "CreateCase",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserCreateCaseResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Ya existe un reporte abierto para esta entidad",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConflictError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTicketReportBody"
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "ListMyCases",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserListMyCasesResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/ticket-reports/check-existing": {
+			"get": {
+				"operationId": "CheckExistingReport",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CheckExistingReportResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "entityType",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "entityId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/ticket-reports/{reportId}": {
+			"get": {
+				"operationId": "GetCaseDetails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserGetCaseDetailsResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/ticket-reports/{reportId}/actions": {
+			"post": {
+				"operationId": "AddAction",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserAddActionResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddUserActionBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/ticket-reports/{reportId}/close": {
+			"post": {
+				"operationId": "CloseCase",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserCloseCaseResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Case already closed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/ticket-reports/{reportId}/attachments": {
+			"post": {
+				"operationId": "UploadAttachment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UploadAttachmentResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "actionId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "ListAttachments",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ListAttachmentsResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/ticket-reports/{reportId}/attachments/{attachmentId}/url": {
+			"get": {
+				"operationId": "GetAttachmentUrl",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetAttachmentUrlResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Attachment not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "attachmentId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/payments/create-link/{orderId}": {
 			"post": {
 				"operationId": "CreatePaymentLink",
@@ -11562,7 +13474,7 @@
 						}
 					}
 				},
-				"description": "Initiate identity verification process\r\n\r\nUser provides document type, number, and country (for passports).\r\nSystem validates the document format and checks for duplicates.",
+				"description": "Initiate identity verification process\n\nUser provides document type, number, and country (for passports).\nSystem validates the document format and checks for duplicates.",
 				"tags": [
 					"Identity Verification"
 				],
@@ -11625,7 +13537,7 @@
 						}
 					}
 				},
-				"description": "Verify document (upload document photo only)\r\n\r\nProcesses uploaded document image:\r\n- Extracts text from document\r\n- Detects face in document\r\n- Validates document number\r\n- Determines if manual review is needed\r\n\r\nFace comparison will happen during liveness check using the liveness reference image",
+				"description": "Verify document (upload document photo only)\n\nProcesses uploaded document image:\n- Extracts text from document\n- Detects face in document\n- Validates document number\n- Determines if manual review is needed\n\nFace comparison will happen during liveness check using the liveness reference image",
 				"tags": [
 					"Identity Verification"
 				],
@@ -11706,7 +13618,7 @@
 						}
 					}
 				},
-				"description": "Start liveness check session\r\n\r\nCreates an AWS Rekognition Face Liveness session for the user.\r\nReturns session ID and region for the frontend to complete the check.",
+				"description": "Start liveness check session\n\nCreates an AWS Rekognition Face Liveness session for the user.\nReturns session ID and region for the frontend to complete the check.",
 				"tags": [
 					"Identity Verification"
 				],
@@ -11749,7 +13661,7 @@
 						}
 					}
 				},
-				"description": "Verify liveness results\r\n\r\nProcesses the results of the liveness check:\r\n- Validates liveness confidence\r\n- Determines if verification is complete or requires manual review\r\n- Updates user verification status",
+				"description": "Verify liveness results\n\nProcesses the results of the liveness check:\n- Validates liveness confidence\n- Determines if verification is complete or requires manual review\n- Updates user verification status",
 				"tags": [
 					"Identity Verification"
 				],
@@ -11826,12 +13738,409 @@
 						}
 					}
 				},
-				"description": "Get temporary AWS credentials for Face Liveness SDK\r\n\r\nThe backend assumes a minimal IAM role that can ONLY call StartFaceLivenessSession.\r\nThis is more secure than Cognito because credentials are only given to authenticated users.\r\nCredentials expire in 15 minutes.",
+				"description": "Get temporary AWS credentials for Face Liveness SDK\n\nThe backend assumes a minimal IAM role that can ONLY call StartFaceLivenessSession.\nThis is more secure than Cognito because credentials are only given to authenticated users.\nCredentials expire in 15 minutes.",
 				"tags": [
 					"Identity Verification"
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/admin/ticket-reports": {
+			"get": {
+				"operationId": "ListCases",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminListCasesResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "caseType",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"other",
+								"invalid_ticket",
+								"problem_with_seller",
+								"ticket_not_received"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"awaiting_customer",
+								"awaiting_support",
+								"closed"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/admin/ticket-reports/{reportId}": {
+			"get": {
+				"operationId": "GetCaseDetails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminGetCaseDetailsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/ticket-reports/{reportId}/actions": {
+			"post": {
+				"operationId": "AddAction",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminAddActionResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddAdminActionBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/ticket-reports/{reportId}/attachments": {
+			"post": {
+				"operationId": "UploadAttachment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminUploadAttachmentResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "actionId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "ListAttachments",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminListAttachmentsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},

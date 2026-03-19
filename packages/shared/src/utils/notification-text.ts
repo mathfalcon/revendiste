@@ -8,6 +8,7 @@
 
 import {TypedNotificationMetadata} from '~/schemas';
 import type {NotificationType} from '../types';
+import {CASE_STATUS_LABELS, CASE_TYPE_LABELS} from '../schemas/ticket-reports';
 
 export interface NotificationText {
   title: string;
@@ -354,6 +355,47 @@ export function generateNotificationText<T extends NotificationType>(
       return {
         title: 'Entrada cancelada - Reembolso en proceso',
         description: `${ticketText} para ${meta.eventName}. ${reasonText}. Tu reembolso está en proceso.`,
+      };
+    }
+
+    // Ticket report / case system notification types
+    case 'ticket_report_created': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_created'>;
+      return {
+        title: 'Caso abierto',
+        description: `Tu reporte de tipo "${CASE_TYPE_LABELS[meta.caseType]}" fue recibido. Te notificaremos sobre el progreso.`,
+      };
+    }
+
+    case 'ticket_report_status_changed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_status_changed'>;
+      return {
+        title: 'Estado de tu caso actualizado',
+        description: `Tu caso cambió a "${CASE_STATUS_LABELS[meta.newStatus]}".`,
+      };
+    }
+
+    case 'ticket_report_action_added': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_action_added'>;
+      const who = meta.performedByRole === 'admin' ? 'soporte' : 'el usuario';
+      return {
+        title: 'Nueva actualización en tu caso',
+        description: `${who === 'soporte' ? 'El equipo de soporte' : 'El usuario'} agregó una actualización a tu caso.`,
+      };
+    }
+
+    case 'ticket_report_closed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_closed'>;
+      const refundText = meta.refundIssued
+        ? ' Se procesó un reembolso.'
+        : '';
+      return {
+        title: 'Tu caso fue cerrado',
+        description: `El caso ha sido cerrado.${refundText}`,
       };
     }
 
