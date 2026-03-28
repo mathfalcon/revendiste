@@ -10,6 +10,7 @@ import {buildEmailTemplate} from '~/services/notifications/email-template-builde
 import {generateNotificationText} from '@revendiste/shared';
 import {EMAIL_FROM, APP_BASE_URL} from '~/config/env';
 import {logger} from '~/utils';
+import {CLERK_AUTH_NOTIFICATION_TITLES} from '~/constants/error-messages';
 import type {
   ClerkWebhookRouteBody,
   ClerkEmailSlug,
@@ -206,19 +207,19 @@ export class ClerkWebhookService {
         } es tu código para restablecer la contraseña - Revendiste`;
 
       case 'auth_invitation':
-        return 'Tenés una invitación a Revendiste';
+        return CLERK_AUTH_NOTIFICATION_TITLES.INVITATION;
 
       case 'auth_password_changed':
-        return 'Tu contraseña de Revendiste fue cambiada';
+        return CLERK_AUTH_NOTIFICATION_TITLES.PASSWORD_CHANGED;
 
       case 'auth_password_removed':
-        return 'Se eliminó la contraseña de tu cuenta en Revendiste';
+        return CLERK_AUTH_NOTIFICATION_TITLES.PASSWORD_REMOVED;
 
       case 'auth_primary_email_changed':
-        return 'Se actualizó el email principal de tu cuenta en Revendiste';
+        return CLERK_AUTH_NOTIFICATION_TITLES.PRIMARY_EMAIL_CHANGED;
 
       case 'auth_new_device_sign_in':
-        return 'Nuevo inicio de sesión en tu cuenta de Revendiste';
+        return CLERK_AUTH_NOTIFICATION_TITLES.NEW_DEVICE_SIGN_IN;
 
       default:
         return defaultTitle;

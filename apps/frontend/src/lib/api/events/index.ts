@@ -3,6 +3,13 @@ import {api, PaginationQuery} from '..';
 
 interface EventsFilter {
   city?: string;
+  region?: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  hasTickets?: boolean;
 }
 
 export const getEventsPaginatedQuery = (
@@ -13,7 +20,7 @@ export const getEventsPaginatedQuery = (
     queryKey: ['events', pagination, filters],
     queryFn: () =>
       api.events
-        .getAllPaginated({...pagination, city: filters?.city})
+        .getAllPaginated({...pagination, ...filters})
         .then(res => res.data),
   });
 
@@ -25,10 +32,10 @@ export const getEventsInfiniteQuery = (
     queryKey: ['events', 'infinite', filters],
     queryFn: ({pageParam = 1}) =>
       api.events
-        .getAllPaginated({limit, page: pageParam, city: filters?.city})
+        .getAllPaginated({limit, page: pageParam, ...filters})
         .then(res => res.data),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
+    getNextPageParam: lastPage => {
       if (lastPage.pagination.hasNext) {
         return lastPage.pagination.page + 1;
       }
@@ -57,18 +64,39 @@ export const getEventCitiesQuery = () =>
   queryOptions({
     queryKey: ['events', 'cities'],
     queryFn: () => api.events.getDistinctCities().then(res => res.data),
-    staleTime: 1000 * 60 * 5, // 5 minutes - cities don't change often
+    staleTime: 1000 * 60 * 5,
+  });
+
+/**
+ * Get distinct regions with active events, grouped by country
+ */
+export const getRegionsQuery = () =>
+  queryOptions({
+    queryKey: ['events', 'regions'],
+    queryFn: () => api.events.getDistinctRegions().then(res => res.data),
+    staleTime: 1000 * 60 * 10, // 10 minutes — regions change rarely
   });
 
 /**
  * Get trending events based on view count
  */
-export const getTrendingEventsQuery = (days: number = 7, limit: number = 10) =>
+export const getTrendingEventsQuery = (
+  days: number = 7,
+  limit: number = 10,
+  locationFilter?: {
+    region?: string;
+    lat?: number;
+    lng?: number;
+    radiusKm?: number;
+  },
+) =>
   queryOptions({
-    queryKey: ['events', 'trending', days, limit],
+    queryKey: ['events', 'trending', days, limit, locationFilter],
     queryFn: () =>
-      api.events.getTrendingEvents({days, limit}).then(res => res.data),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+      api.events
+        .getTrendingEvents({days, limit, ...locationFilter})
+        .then(res => res.data),
+    staleTime: 1000 * 60 * 5,
   });
 
 /**

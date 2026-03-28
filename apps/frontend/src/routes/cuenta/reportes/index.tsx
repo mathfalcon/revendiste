@@ -1,19 +1,14 @@
-import {createFileRoute, useNavigate, Link} from '@tanstack/react-router';
-import {useQuery, useQueryClient} from '@tanstack/react-query';
-import {useState} from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card';
-import {Button} from '~/components/ui/button';
+import {createFileRoute, Link} from '@tanstack/react-router';
+import {useQuery} from '@tanstack/react-query';
+import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
 import {seo} from '~/utils/seo';
 import {getMyTicketReportsQuery} from '~/lib';
 import {CASE_STATUS_LABELS, CASE_TYPE_LABELS} from '@revendiste/shared';
-import type {TicketReportStatus, TicketReportCaseType} from '@revendiste/shared';
-import {Plus, Flag} from 'lucide-react';
-import {CreateCaseDialog} from '~/components';
+import type {
+  TicketReportStatus,
+  TicketReportCaseType,
+} from '@revendiste/shared';
+import {Flag, Ticket} from 'lucide-react';
 
 export const Route = createFileRoute('/cuenta/reportes/')({
   component: MisReportesPage,
@@ -52,19 +47,12 @@ const STATUS_CONFIG: Record<
 };
 
 function MisReportesPage() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
   const {data, isLoading} = useQuery(getMyTicketReportsQuery());
-
-  const [createOpen, setCreateOpen] = useState(false);
 
   if (isLoading) {
     return (
       <div className='space-y-4'>
-        <div className='flex items-center justify-between'>
-          <h2 className='text-xl font-semibold'>Mis Reportes</h2>
-        </div>
+        <h2 className='text-xl font-semibold'>Mis Reportes</h2>
         <div className='flex items-center justify-center py-12'>
           <div className='h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent' />
         </div>
@@ -74,29 +62,31 @@ function MisReportesPage() {
 
   return (
     <div className='space-y-4'>
-      <div className='flex flex-col gap-2'>
-        <div className='flex items-center justify-between'>
-          <h2 className='text-xl font-semibold'>Mis Reportes</h2>
-          <Button size='sm' onClick={() => setCreateOpen(true)}>
-            <Plus className='h-4 w-4 mr-1' />
-            Abrir un caso
-          </Button>
-        </div>
-        <p className='text-sm text-muted-foreground'>
-          Sugerencia: También podés reportar problemas directamente desde tus entradas.
-        </p>
-      </div>
+      <h2 className='text-xl font-semibold'>Mis Reportes</h2>
 
       {(data as any)?.data?.length === 0 ? (
-        <div className='text-center py-12 text-muted-foreground'>
-          <Flag className='h-12 w-12 mx-auto mb-3 opacity-30' />
-          <p>No tienes reportes abiertos</p>
-          <p className='text-sm mt-1'>Si tuviste un problema con una compra, podés abrir un caso.</p>
+        <div className='text-center py-12 text-muted-foreground space-y-3'>
+          <Flag className='h-12 w-12 mx-auto opacity-20' />
+          <p className='font-medium'>No tenés reportes abiertos</p>
+          <p className='text-sm max-w-sm mx-auto'>
+            Si tuviste un problema con una entrada, podés reportarla
+            directamente desde{' '}
+            <Link
+              to='/cuenta/tickets'
+              className='underline underline-offset-2 hover:text-foreground transition-colors'
+            >
+              <Ticket className='inline h-3.5 w-3.5 mr-0.5 -mt-0.5' />
+              Mis Entradas
+            </Link>
+            , haciendo clic en la entrada y seleccionando "Reportar problema".
+          </p>
         </div>
       ) : (
         <div className='space-y-3'>
           {(data as any)?.data?.map((report: any) => {
-            const status = STATUS_CONFIG[report.status as TicketReportStatus] ?? {
+            const status = STATUS_CONFIG[
+              report.status as TicketReportStatus
+            ] ?? {
               label: report.status,
               dotColor: 'bg-muted-foreground',
               textColor: 'text-muted-foreground',
@@ -104,18 +94,22 @@ function MisReportesPage() {
             return (
               <Link
                 key={report.id}
-                to="/cuenta/reportes/$reportId"
+                to='/cuenta/reportes/$reportId'
                 params={{reportId: report.id}}
-                className="block"
+                className='block'
               >
                 <Card className='cursor-pointer hover:bg-muted/30 transition-colors'>
                   <CardHeader className='pb-2'>
                     <div className='flex items-start justify-between gap-3'>
                       <CardTitle className='text-base leading-snug'>
-                        {CASE_TYPE_LABELS[report.caseType as TicketReportCaseType] ?? report.caseType}
+                        {CASE_TYPE_LABELS[
+                          report.caseType as TicketReportCaseType
+                        ] ?? report.caseType}
                       </CardTitle>
                       <div className='flex items-center gap-1.5 shrink-0 mt-0.5'>
-                        <span className={`h-1.5 w-1.5 rounded-full ${status.dotColor}`} />
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${status.dotColor}`}
+                        />
                         <span className={`text-xs ${status.textColor}`}>
                           {status.label}
                         </span>
@@ -142,15 +136,6 @@ function MisReportesPage() {
           })}
         </div>
       )}
-
-      <CreateCaseDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onSuccess={reportId => {
-          queryClient.invalidateQueries({queryKey: ['ticket-reports']});
-          navigate({to: '/cuenta/reportes/$reportId', params: {reportId}});
-        }}
-      />
     </div>
   );
 }

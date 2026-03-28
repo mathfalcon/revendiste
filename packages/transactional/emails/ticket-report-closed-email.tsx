@@ -20,12 +20,12 @@ export const TicketReportClosedEmail = ({
   appBaseUrl,
 }: TicketReportClosedEmailProps) => (
   <BaseEmail
-    title="Tu caso fue cerrado"
+    title="Caso cerrado"
     preview="Tu caso fue revisado y cerrado"
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      Tu caso ha sido revisado y cerrado por nuestro equipo de soporte.
+      Tu caso fue revisado y cerrado por soporte.
     </Text>
 
     {refundIssued && (

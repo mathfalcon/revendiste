@@ -2,7 +2,7 @@ import {Button} from '~/components/ui/button';
 import {FullLogo} from '~/assets';
 import {EventSearchInput} from '../SearchInput';
 import {Link} from '@tanstack/react-router';
-import {SignedIn, SignedOut, SignInButton} from '@clerk/tanstack-react-start';
+import {Show, SignInButton} from '@clerk/tanstack-react-start';
 import {cn} from '~/lib/utils';
 import {UserProfile} from '../UserProfile';
 import {SignInAppearance} from '../SignInModal';
@@ -98,7 +98,7 @@ export const Navbar = () => {
               </Link>
             </Button>
 
-            <SignedOut>
+            <Show when='signed-out'>
               <SignInButton mode='modal' appearance={SignInAppearance}>
                 <Button
                   variant='ghost'
@@ -108,7 +108,7 @@ export const Navbar = () => {
                   Ingresar
                 </Button>
               </SignInButton>
-            </SignedOut>
+            </Show>
 
             <Button
               size='sm'
@@ -119,14 +119,12 @@ export const Navbar = () => {
             >
               <Link to='/entradas/publicar'>Publicá tus entradas</Link>
             </Button>
-            <SignedIn>
+            <Show when='signed-in'>
               <NotificationBell />
-            </SignedIn>
-            <SignedIn>
               <div className='w-[36px] h-[36px] flex items-center justify-center'>
                 <UserProfile />
               </div>
-            </SignedIn>
+            </Show>
           </div>
         </div>
       </header>

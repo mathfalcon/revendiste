@@ -247,4 +247,20 @@ export class TicketReportsRepository extends BaseRepository<TicketReportsReposit
       .where('status', '!=', 'closed')
       .executeTakeFirst();
   }
+
+  async getReporterInfo(userId: string) {
+    return await this.db
+      .selectFrom('users')
+      .select(['firstName', 'lastName', 'email'])
+      .where('id', '=', userId)
+      .executeTakeFirst();
+  }
+
+  async getTicketPrice(listingTicketId: string) {
+    return await this.db
+      .selectFrom('listingTickets')
+      .select('price')
+      .where('id', '=', listingTicketId)
+      .executeTakeFirst();
+  }
 }

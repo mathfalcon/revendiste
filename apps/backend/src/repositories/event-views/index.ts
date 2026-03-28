@@ -30,7 +30,16 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
    * @param days - Number of days to look back (default: 7)
    * @param limit - Maximum number of events to return (default: 10)
    */
-  async getTrendingEvents(days: number = 7, limit: number = 10) {
+  async getTrendingEvents(
+    days: number = 7,
+    limit: number = 10,
+    locationFilter?: {
+      region?: string;
+      lat?: number;
+      lng?: number;
+      radiusKm?: number;
+    },
+  ) {
     const events = await this.db
       .selectFrom('events')
       .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
@@ -116,7 +125,31 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
       ])
       .where('events.deletedAt', 'is', null)
       .where('events.status', '=', 'active')
-      .where(sql<boolean>`events.event_end_date > NOW()`) // Only active/upcoming events (use database NOW())
+      .where(sql<boolean>`events.event_end_date > NOW()`)
+      .$if(!!locationFilter?.region, qb => {
+        const regions = locationFilter!.region!.split(',').map(r => r.trim());
+        return regions.length === 1
+          ? qb.where('eventVenues.region', '=', regions[0])
+          : qb.where('eventVenues.region', 'in', regions);
+      })
+      .$if(locationFilter?.lat != null && locationFilter?.lng != null, qb => {
+        const radiusMeters = (locationFilter!.radiusKm ?? 30) * 1000;
+        const radiusDegrees = radiusMeters / 111320;
+        return qb
+          .where('eventVenues.latitude', 'is not', null)
+          .where('eventVenues.longitude', 'is not', null)
+          .where('eventVenues.latitude', '>=', (locationFilter!.lat! - radiusDegrees).toString())
+          .where('eventVenues.latitude', '<=', (locationFilter!.lat! + radiusDegrees).toString())
+          .where('eventVenues.longitude', '>=', (locationFilter!.lng! - radiusDegrees).toString())
+          .where('eventVenues.longitude', '<=', (locationFilter!.lng! + radiusDegrees).toString())
+          .where(
+            sql<boolean>`6371000 * 2 * ASIN(SQRT(
+              POWER(SIN((RADIANS(${locationFilter!.lat!}) - RADIANS(event_venues.latitude)) / 2), 2) +
+              COS(RADIANS(${locationFilter!.lat!})) * COS(RADIANS(event_venues.latitude)) *
+              POWER(SIN((RADIANS(${locationFilter!.lng!}) - RADIANS(event_venues.longitude)) / 2), 2)
+            )) <= ${radiusMeters}`,
+          );
+      })
       .orderBy(sql`COALESCE(
         (
           SELECT SUM(view_count)::int

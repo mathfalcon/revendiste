@@ -17,6 +17,8 @@ import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
 import {Badge} from '~/components/ui/badge';
 import {Textarea} from '~/components/ui/textarea';
+import {Input} from '~/components/ui/input';
+import {Label} from '~/components/ui/label';
 import {
   Tooltip,
   TooltipContent,
@@ -49,6 +51,12 @@ import type {
   TicketReportStatus,
   TicketReportActionType,
 } from '@revendiste/shared';
+import type {
+  UserGetCaseDetailsResponse,
+  AdminGetCaseDetailsResponse,
+  AddUserActionBody,
+  AddAdminActionBody,
+} from '~/lib/api/generated';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -72,6 +80,28 @@ import {
 } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
+
+type CaseDetailsResponse = UserGetCaseDetailsResponse | AdminGetCaseDetailsResponse;
+type ReportAction = CaseDetailsResponse['actions'][number];
+// Backend enriches attachments with a `url` from the storage provider (not in generated types)
+type ReportAttachment = CaseDetailsResponse['actions'][number]['attachments'][number] & {url: string};
+type InitialAttachment = CaseDetailsResponse['initialAttachments'][number] & {url: string};
+
+interface EntityDetails {
+  reservationId?: string;
+  reservationStatus?: string;
+  price?: string;
+  orderId?: string;
+  currency?: string;
+  eventId?: string;
+  eventName?: string;
+  eventStartDate?: string;
+  ticketWaveName?: string;
+  totalAmount?: string;
+  orderStatus?: string;
+  listingId?: string;
+  listingStatus?: string;
+}
 
 interface ReportDetailPageProps {
   reportId: string;
@@ -116,6 +146,25 @@ const ADMIN_ACTION_TYPES: {value: TicketReportActionType; label: string}[] = [
   {value: 'reject', label: 'Rechazar'},
   {value: 'close', label: 'Cerrar caso'},
 ];
+
+const RESERVATION_STATUS_LABELS: Record<string, string> = {
+  active: 'Activa',
+  cancelled: 'Cancelada',
+  refund_pending: 'Reembolso pendiente',
+  refunded: 'Reembolsada',
+};
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendiente',
+  confirmed: 'Confirmada',
+  cancelled: 'Cancelada',
+  expired: 'Expirada',
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  user_report: 'Reporte de usuario',
+  auto_missing_document: 'Automático (documento faltante)',
+};
 
 const ACCEPTED_MIME_TYPES = [
   'image/jpeg',
@@ -176,7 +225,7 @@ function FilePreviewRow({file, onRemove}: {file: File; onRemove: () => void}) {
   );
 }
 
-function AttachmentLink({att}: {att: any}) {
+function AttachmentLink({att}: {att: ReportAttachment}) {
   const isImage = att.mimeType?.startsWith('image/');
   return (
     <a
@@ -224,6 +273,7 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
 
   const [comment, setComment] = useState('');
   const [actionType, setActionType] = useState<TicketReportActionType>('comment');
+  const [refundAmount, setRefundAmount] = useState('');
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -260,11 +310,29 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
       toast.error('Por favor agregá un comentario para esta acción.');
       return;
     }
+    if (effectiveActionType === 'refund_partial') {
+      const amount = parseFloat(refundAmount);
+      if (!amount || amount <= 0) {
+        toast.error('Ingresá un monto válido para el reembolso parcial.');
+        return;
+      }
+    }
 
-    const actionResult = await actionMutation.mutateAsync({
-      actionType: effectiveActionType,
-      comment: comment.trim() || undefined,
-    } as any);
+    const metadata =
+      effectiveActionType === 'refund_partial'
+        ? {refundAmount: parseFloat(refundAmount)}
+        : undefined;
+
+    const actionResult = isAdmin
+      ? await adminActionMutation.mutateAsync({
+          actionType: effectiveActionType as AddAdminActionBody['actionType'],
+          comment: comment.trim() || undefined,
+          ...(metadata ? {metadata} : {}),
+        })
+      : await userActionMutation.mutateAsync({
+          actionType: effectiveActionType as AddUserActionBody['actionType'],
+          comment: comment.trim() || undefined,
+        });
 
     if (selectedFiles.length > 0) {
       setIsUploading(true);
@@ -291,6 +359,7 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
     queryClient.invalidateQueries({queryKey: invalidateKeys});
     setComment('');
     setActionType('comment');
+    setRefundAmount('');
     setSelectedFiles([]);
   };
 
@@ -336,6 +405,9 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
   const entityDetails = reportDetail.entityDetails;
   const initialAttachments = reportDetail.initialAttachments || [];
   const statusCfg = STATUS_CONFIG[reportDetail.status];
+  const hasRefundAction = actions.some(
+    (a: ReportAction) => a.actionType === 'refund_full' || a.actionType === 'refund_partial',
+  );
   const backTo = isAdmin ? '/admin/reportes' : '/cuenta/reportes';
 
   // Entity link — uses correct `orden` query param for /cuenta/tickets
@@ -375,8 +447,8 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">
 
-        {/* ── Left column: conversation + reply ── */}
-        <div className="space-y-3 min-w-0">
+        {/* ── Left column: conversation + reply (order-2 on mobile so sidebar shows first) ── */}
+        <div className="space-y-3 min-w-0 order-2 lg:order-1">
 
           {/* Conversation card */}
           <Card className="overflow-hidden">
@@ -415,7 +487,7 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
 
                   {initialAttachments.length > 0 && (
                     <div className="ml-8 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                      {initialAttachments.map((att: any) => (
+                      {(initialAttachments as InitialAttachment[]).map((att) => (
                         <AttachmentLink key={att.id} att={att} />
                       ))}
                     </div>
@@ -440,9 +512,8 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {actions.map((action: any) => {
-                    const isActionAdmin =
-                      action.performedByUserId !== reportDetail.reportedByUserId;
+                  {actions.map((action: ReportAction) => {
+                    const isActionAdmin = action.performedByAdmin;
                     const isComment = action.actionType === 'comment';
                     const isOwnMessage = isAdmin === isActionAdmin;
                     const date = new Date(action.createdAt);
@@ -514,7 +585,7 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
                           {/* Attachments */}
                           {action.attachments && action.attachments.length > 0 && (
                             <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-1 w-full">
-                              {action.attachments.map((att: any) => (
+                              {(action.attachments as ReportAttachment[]).map((att) => (
                                 <AttachmentLink key={att.id} att={att} />
                               ))}
                             </div>
@@ -541,7 +612,10 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
                 {isAdmin && (
                   <Select
                     value={actionType}
-                    onValueChange={v => setActionType(v as TicketReportActionType)}
+                    onValueChange={v => {
+                      setActionType(v as TicketReportActionType);
+                      if (v !== 'refund_partial') setRefundAmount('');
+                    }}
                   >
                     <SelectTrigger className="h-8 text-sm">
                       <SelectValue />
@@ -554,6 +628,38 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
                       ))}
                     </SelectContent>
                   </Select>
+                )}
+
+                {isAdmin && actionType === 'refund_partial' && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="refundAmount" className="text-xs text-muted-foreground">
+                      Monto a reembolsar ({entityDetails && 'currency' in entityDetails ? entityDetails.currency : 'UYU'})
+                    </Label>
+                    <Input
+                      id="refundAmount"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      placeholder="Ej: 575.00"
+                      value={refundAmount}
+                      onChange={e => setRefundAmount(e.target.value)}
+                      disabled={isPending}
+                      className="h-8 text-sm"
+                    />
+                    {entityDetails && 'price' in entityDetails && entityDetails.price && (
+                      <p className="text-xs text-muted-foreground">
+                        Precio de la entrada: {entityDetails.currency} {entityDetails.price}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {isAdmin && actionType === 'refund_full' && entityDetails && 'price' in entityDetails && (
+                  <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2">
+                    <p className="text-xs text-amber-800">
+                      Se reembolsará el precio de la entrada ({entityDetails.currency} {entityDetails.price}) sin incluir la comisión de Revendiste.
+                    </p>
+                  </div>
                 )}
 
                 <Textarea
@@ -620,7 +726,8 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
                       isPending ||
                       ((!isAdmin || actionType === 'comment') &&
                         !comment.trim() &&
-                        selectedFiles.length === 0)
+                        selectedFiles.length === 0) ||
+                      (actionType === 'refund_partial' && (!refundAmount || parseFloat(refundAmount) <= 0))
                     }
                     size="sm"
                     className="gap-1.5"
@@ -632,15 +739,27 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
               </CardContent>
             </Card>
           ) : (
-            <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground rounded-xl border bg-muted/20">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span>Caso cerrado — no se pueden agregar más mensajes.</span>
+            <div className="rounded-xl border bg-muted/20 p-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>Caso cerrado — no se pueden agregar más mensajes.</span>
+              </div>
+              {hasRefundAction && (
+                <div className="rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2">
+                  <p className="text-sm text-emerald-800 font-medium">
+                    Tu reembolso fue procesado
+                  </p>
+                  <p className="text-xs text-emerald-700 mt-1">
+                    Dependiendo de tu medio de pago, el reembolso puede demorar entre 5 y 10 días hábiles en verse reflejado en tu cuenta.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* ── Right column: case info panel (sticky) ── */}
-        <div className="lg:sticky lg:top-4 space-y-3">
+        {/* ── Right column: case info panel (first on mobile, sticky on desktop) ── */}
+        <div className="lg:sticky lg:top-4 space-y-3 order-1 lg:order-2">
 
           {/* Case header */}
           <Card>
@@ -677,14 +796,7 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
                 {statusCfg.label}
               </div>
 
-              {/* Source badge (admin only) */}
-              {isAdmin && reportDetail.source && (
-                <div className="flex justify-center">
-                  <Badge variant="outline" className="text-xs h-5 px-1.5 font-normal">
-                    {reportDetail.source}
-                  </Badge>
-                </div>
-              )}
+              {/* Source badge only shown here for non-admin (admin sees it in reporter card) */}
             </CardContent>
           </Card>
 
@@ -702,12 +814,6 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4 space-y-2.5">
-                {'eventName' in entityDetails && entityDetails.eventName && (
-                  <p className="font-medium text-sm leading-snug">
-                    {entityDetails.eventName}
-                  </p>
-                )}
-
                 <div className="space-y-1.5 text-sm">
                   {'ticketWaveName' in entityDetails && entityDetails.ticketWaveName && (
                     <div className="flex items-center gap-2">
@@ -738,7 +844,7 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
                           {entityDetails.currency}{' '}
                           {'price' in entityDetails
                             ? entityDetails.price
-                            : (entityDetails as any).totalAmount}
+                            : (entityDetails as EntityDetails).totalAmount}
                         </span>
                       </div>
                     )}
@@ -746,7 +852,18 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
                   {'reservationStatus' in entityDetails && entityDetails.reservationStatus && (
                     <div className="flex items-center gap-2">
                       <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <span className="text-foreground/80">{entityDetails.reservationStatus}</span>
+                      <span className="text-foreground/80">
+                        {RESERVATION_STATUS_LABELS[entityDetails.reservationStatus] || entityDetails.reservationStatus}
+                      </span>
+                    </div>
+                  )}
+
+                  {'orderStatus' in entityDetails && entityDetails.orderStatus && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-foreground/80">
+                        {ORDER_STATUS_LABELS[entityDetails.orderStatus] || entityDetails.orderStatus}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -766,16 +883,32 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
             </Card>
           )}
 
-          {/* Admin: reporter info */}
-          {isAdmin && reportDetail.reportedByUserId && (
+          {/* Admin: reporter info + source */}
+          {isAdmin && (
             <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+              <CardContent className="p-4 space-y-2.5">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">
                   Reportado por
                 </p>
-                <p className="text-xs font-mono text-foreground/70 break-all">
-                  {reportDetail.reportedByUserId}
-                </p>
+                {reportDetail.reporter ? (
+                  <>
+                    <p className="text-sm font-medium text-foreground">
+                      {[reportDetail.reporter.firstName, reportDetail.reporter.lastName]
+                        .filter(Boolean)
+                        .join(' ') || 'Sin nombre'}
+                    </p>
+                    <p className="text-xs text-muted-foreground -mt-1.5">
+                      {reportDetail.reporter.email}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sistema (automático)</p>
+                )}
+                {reportDetail.source && (
+                  <Badge variant="outline" className="text-xs h-5 px-1.5 font-normal">
+                    {SOURCE_LABELS[reportDetail.source] || reportDetail.source}
+                  </Badge>
+                )}
               </CardContent>
             </Card>
           )}

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   QrCode,
   Flag,
+  Settings,
 } from 'lucide-react';
 import {useQuery} from '@tanstack/react-query';
 import {getMyListingsQuery} from '~/lib';
@@ -58,10 +59,10 @@ const TAB_CONFIG = [
     to: '/cuenta/retiro',
   },
   {
-    value: 'estado-verificacion',
-    label: 'Verificación',
-    icon: ShieldCheck,
-    to: '/cuenta/estado-verificacion',
+    value: 'configuracion',
+    label: 'Configuración',
+    icon: Settings,
+    to: '/cuenta/configuracion',
   },
   {
     value: 'reportes',

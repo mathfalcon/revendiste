@@ -33,14 +33,34 @@ export class EventsService {
   }
 
   async getAllEventsPaginated(
-    args: WithPagination<{city?: string}>,
+    args: WithPagination<{
+      city?: string;
+      region?: string;
+      lat?: number;
+      lng?: number;
+      radiusKm?: number;
+      dateFrom?: string;
+      dateTo?: string;
+      hasTickets?: boolean;
+      tzOffset?: number;
+    }>,
     userId?: string,
   ) {
     const paginatedEvents =
       await this.eventsRepository.findAllPaginatedWithImages(
         args.pagination,
         userId,
-        {city: args.city},
+        {
+          city: args.city,
+          region: args.region,
+          lat: args.lat,
+          lng: args.lng,
+          radiusKm: args.radiusKm,
+          dateFrom: args.dateFrom,
+          dateTo: args.dateTo,
+          hasTickets: args.hasTickets,
+          tzOffset: args.tzOffset,
+        },
       );
 
     return paginatedEvents;
@@ -51,8 +71,15 @@ export class EventsService {
       return [];
     }
 
+    // Strip free (faceValue === 0) ticket waves — these are guest-list entries
+    // The event-level filter (all waves free / no waves) is done upstream in ScrapingService
+    const eventsWithPaidWaves = events.map(event => ({
+      ...event,
+      ticketWaves: event.ticketWaves.filter(w => w.faceValue > 0),
+    }));
+
     // Process venues for all events first (in parallel batches)
-    const eventsWithVenues = await this.processVenuesForEvents(events);
+    const eventsWithVenues = await this.processVenuesForEvents(eventsWithPaidWaves);
 
     const eventsWithoutImages = eventsWithVenues.map(event => ({
       ...event,

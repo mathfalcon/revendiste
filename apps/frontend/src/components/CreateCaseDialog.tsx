@@ -45,8 +45,8 @@ interface CreateCaseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 
-  // Optional pre-filled context - when provided, hides UUID input
-  prefillContext?: {
+  // Always required — reports can only be created from a ticket or order
+  prefillContext: {
     entityType: TicketReportEntityType;
     entityId: string;
     hasDocument?: boolean;
@@ -57,13 +57,6 @@ interface CreateCaseDialogProps {
   // Optional callback after successful creation
   onSuccess?: (reportId: string) => void;
 }
-
-const ENTITY_TYPE_LABELS: Record<TicketReportEntityType, string> = {
-  order: 'Una orden completa',
-  order_ticket_reservation: 'Una entrada específica',
-  listing: 'Una publicación',
-  listing_ticket: 'Un ticket publicado',
-};
 
 const ALL_USER_CASE_TYPES: {value: TicketReportCaseType; label: string}[] = [
   {value: 'invalid_ticket', label: CASE_TYPE_LABELS.invalid_ticket},
@@ -81,7 +74,7 @@ const ACCEPTED_MIME_TYPES = [
   'video/quicktime',
   'video/webm',
 ];
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB (videos); images validated at 10 MB in backend
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 function formatFileSize(bytes: number) {
   if (bytes === 0) return '0 B';
@@ -123,14 +116,9 @@ export function CreateCaseDialog({
 }: CreateCaseDialogProps) {
   const queryClient = useQueryClient();
 
-  // Form state
   const [caseType, setCaseType] = useState<TicketReportCaseType>('other');
-  const [entityType, setEntityType] = useState<TicketReportEntityType>('order');
-  const [entityId, setEntityId] = useState('');
   const [description, setDescription] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
-
-  // Attachment state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
@@ -138,7 +126,7 @@ export function CreateCaseDialog({
 
   // "invalid_ticket" only available if the ticket has a document uploaded
   const availableCaseTypes =
-    prefillContext?.hasDocument === false
+    prefillContext.hasDocument === false
       ? ALL_USER_CASE_TYPES.filter(t => t.value !== 'invalid_ticket')
       : ALL_USER_CASE_TYPES;
 
@@ -146,8 +134,6 @@ export function CreateCaseDialog({
 
   const resetForm = useCallback(() => {
     setCaseType('other');
-    setEntityType('order');
-    setEntityId('');
     setDescription('');
     setSelectedFiles([]);
     setIsSubmitting(false);
@@ -160,17 +146,14 @@ export function CreateCaseDialog({
     setShowConfirm(false);
 
     try {
-      // Step 1: Create the case
       setUploadStatus('Abriendo caso...');
-      const submitData = {
+      const result = await createMutation.mutateAsync({
         caseType,
-        entityType: prefillContext?.entityType ?? entityType,
-        entityId: prefillContext?.entityId ?? entityId,
+        entityType: prefillContext.entityType,
+        entityId: prefillContext.entityId,
         description: description || undefined,
-      };
-      const result = await createMutation.mutateAsync(submitData);
+      });
 
-      // Step 2: Upload attachments (if any)
       if (selectedFiles.length > 0) {
         let uploaded = 0;
         let failed = 0;
@@ -178,9 +161,7 @@ export function CreateCaseDialog({
 
         for (const file of selectedFiles) {
           uploaded++;
-          setUploadStatus(
-            `Subiendo archivo ${uploaded} de ${selectedFiles.length}...`,
-          );
+          setUploadStatus(`Subiendo archivo ${uploaded} de ${selectedFiles.length}...`);
           try {
             await mutation.mutationFn(file);
           } catch {
@@ -195,13 +176,11 @@ export function CreateCaseDialog({
         }
       }
 
-      // Success
       resetForm();
       onOpenChange(false);
       queryClient.invalidateQueries({queryKey: ['ticket-reports']});
       onSuccess?.(result.id);
     } catch (err: any) {
-      // Detect 409 conflict (duplicate report) and extract existing report ID
       if (axios.isAxiosError(err) && err.response?.status === 409) {
         const errorData = err.response?.data as StandardizedErrorResponse;
         const existingReportId = errorData?.metadata?.existingReportId;
@@ -214,22 +193,13 @@ export function CreateCaseDialog({
     }
   };
 
-  const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Determine if we can submit
-  const canSubmit = prefillContext
-    ? !!caseType // Only need case type when prefilled
-    : !!caseType && !!entityId; // Need both when manual entry
-
-  const handleOpenChange = useCallback((newOpen: boolean) => {
-    if (!newOpen) {
-      // Clear existingReportInfo when closing
-      setExistingReportInfo(null);
-    }
-    onOpenChange(newOpen);
-  }, [onOpenChange]);
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      if (!newOpen) setExistingReportInfo(null);
+      onOpenChange(newOpen);
+    },
+    [onOpenChange],
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -240,14 +210,14 @@ export function CreateCaseDialog({
 
         <div className='space-y-4 pt-2'>
           {existingReportInfo && (
-            <Alert className="bg-yellow-500/10 border-yellow-500/30">
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <Alert className='bg-yellow-500/10 border-yellow-500/30'>
+              <AlertCircle className='h-4 w-4 text-yellow-600' />
               <AlertDescription>
-                Ya existe un caso abierto para esta entidad.{' '}
+                Ya existe un caso abierto para esta entrada.{' '}
                 <Link
-                  to="/cuenta/reportes/$reportId"
+                  to='/cuenta/reportes/$reportId'
                   params={{reportId: existingReportInfo.reportId}}
-                  className="underline font-medium"
+                  className='underline font-medium'
                 >
                   Ver reporte
                 </Link>
@@ -255,74 +225,31 @@ export function CreateCaseDialog({
             </Alert>
           )}
 
-          {prefillContext ? (
-            // Pre-filled mode: show structured summary
+          {/* Pre-filled context summary */}
+          {prefillContext.details && prefillContext.details.length > 0 && (
             <>
-              {prefillContext.details && prefillContext.details.length > 0 && (
-                <div className='rounded-lg border bg-muted/30 p-3 space-y-1.5'>
-                  <div className='flex items-center gap-2 text-sm font-medium'>
-                    <Ticket className='h-4 w-4 text-muted-foreground' />
-                    Entrada a reportar
-                  </div>
-                  {prefillContext.details.map((detail, i) => (
-                    <div key={i} className='flex justify-between text-sm'>
-                      <span className='text-muted-foreground'>
-                        {detail.label}
-                      </span>
-                      <TextEllipsis
-                        maxLines={1}
-                        className='font-medium text-right max-w-[50%]'
-                      >
-                        {detail.value}
-                      </TextEllipsis>
-                    </div>
-                  ))}
+              <div className='rounded-lg border bg-muted/30 p-3 space-y-1.5'>
+                <div className='flex items-center gap-2 text-sm font-medium'>
+                  <Ticket className='h-4 w-4 text-muted-foreground' />
+                  Entrada a reportar
                 </div>
-              )}
+                {prefillContext.details.map((detail, i) => (
+                  <div key={i} className='flex justify-between text-sm'>
+                    <span className='text-muted-foreground'>{detail.label}</span>
+                    <TextEllipsis
+                      maxLines={1}
+                      className='font-medium text-right max-w-[50%]'
+                    >
+                      {detail.value}
+                    </TextEllipsis>
+                  </div>
+                ))}
+              </div>
               <div className='border-b' />
-            </>
-          ) : (
-            // Manual mode: show entity type selector and UUID input
-            <>
-              <div>
-                <Label>¿Qué querés reportar?</Label>
-                <Select
-                  value={entityType}
-                  onValueChange={v =>
-                    setEntityType(v as TicketReportEntityType)
-                  }
-                >
-                  <SelectTrigger className='mt-1'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(
-                      Object.keys(
-                        ENTITY_TYPE_LABELS,
-                      ) as TicketReportEntityType[]
-                    ).map(type => (
-                      <SelectItem key={type} value={type}>
-                        {ENTITY_TYPE_LABELS[type]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>ID de la orden o entrada</Label>
-                <input
-                  type='text'
-                  className='mt-1 w-full border rounded px-3 py-2 text-sm'
-                  value={entityId}
-                  onChange={e => setEntityId(e.target.value)}
-                  placeholder='UUID de la orden o entrada...'
-                />
-              </div>
             </>
           )}
 
-          {/* Case type selector - always shown */}
+          {/* Case type selector */}
           <div>
             <Label>Motivo del reporte</Label>
             <Select
@@ -342,7 +269,7 @@ export function CreateCaseDialog({
             </Select>
           </div>
 
-          {/* Description - always shown */}
+          {/* Description */}
           <div>
             <Label>Descripción (opcional)</Label>
             <Textarea
@@ -358,8 +285,7 @@ export function CreateCaseDialog({
           <div>
             <Label>Adjuntos (opcional)</Label>
             <p className='text-xs text-muted-foreground mt-0.5 mb-2'>
-              Imágenes o videos como prueba del problema. Máx. {MAX_FILES}{' '}
-              archivos.
+              Imágenes o videos como prueba del problema. Máx. {MAX_FILES} archivos.
             </p>
 
             {selectedFiles.length > 0 && (
@@ -368,7 +294,9 @@ export function CreateCaseDialog({
                   <FilePreviewRow
                     key={`${file.name}-${file.size}`}
                     file={file}
-                    onRemove={() => removeFile(i)}
+                    onRemove={() =>
+                      setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))
+                    }
                   />
                 ))}
               </div>
@@ -391,10 +319,9 @@ export function CreateCaseDialog({
             )}
           </div>
 
-          {/* Submit button */}
           <Button
             className='w-full'
-            disabled={!canSubmit || isSubmitting}
+            disabled={!caseType || isSubmitting}
             onClick={() => setShowConfirm(true)}
           >
             {isSubmitting ? uploadStatus : 'Abrir caso'}

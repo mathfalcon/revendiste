@@ -285,6 +285,15 @@ export class TicketReportsService {
       data.actionType === 'refund_partial' ||
       data.actionType === 'refund_full';
 
+    // Phase 1: DB transaction — create records, mark reservations as refund_pending
+    let pendingRefunds: Array<{
+      refundRecordId: string;
+      reservationId: string;
+      orderId: string;
+      refundAmount: number;
+      currency: string;
+    }> = [];
+
     const result = await this.ticketReportsRepository.executeTransaction(
       async trx => {
         const reportsRepo = this.ticketReportsRepository.withTransaction(trx);
@@ -296,7 +305,7 @@ export class TicketReportsService {
           this.orderTicketReservationsRepository.withTransaction(trx);
 
         if (isRefund) {
-          await this.processRefund(
+          pendingRefunds = await this.prepareRefunds(
             {
               id: report.id,
               entityType: report.entityType,
@@ -316,6 +325,7 @@ export class TicketReportsService {
         const action = await actionsRepo.create({
           ticketReportId: reportId,
           performedByUserId,
+          performedByAdmin: isAdmin,
           actionType: data.actionType,
           comment: data.comment ?? null,
           metadata: data.metadata ?? null,
@@ -324,6 +334,16 @@ export class TicketReportsService {
         return {report: updatedReport, action};
       },
     );
+
+    // Phase 2: External dLocal refund calls — OUTSIDE the transaction
+    if (pendingRefunds.length > 0) {
+      this.executeDLocalRefunds(pendingRefunds).catch(err =>
+        logger.error('Failed to process dLocal refunds', {
+          reportId,
+          error: err,
+        }),
+      );
+    }
 
     // Fire notifications outside the transaction
     // Skip reporter-targeted notifications for auto-cases (reportedByUserId is null)
@@ -424,10 +444,16 @@ export class TicketReportsService {
     closedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
+    reporter: {
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+    } | null;
     actions: Array<{
       id: string;
       ticketReportId: string;
       performedByUserId: string;
+      performedByAdmin: boolean;
       actionType: TicketReportActionType;
       comment: string | null;
       metadata: any;
@@ -462,11 +488,16 @@ export class TicketReportsService {
       );
     }
 
-    // Fetch entity details based on entityType
-    const entityDetails = await this.ticketReportsRepository.getEntityDetails(
-      report.entityType,
-      report.entityId,
-    );
+    // Fetch entity details and reporter info in parallel
+    const [entityDetails, reporterInfo] = await Promise.all([
+      this.ticketReportsRepository.getEntityDetails(
+        report.entityType,
+        report.entityId,
+      ),
+      report.reportedByUserId
+        ? this.ticketReportsRepository.getReporterInfo(report.reportedByUserId)
+        : null,
+    ]);
 
     // Fetch all attachments for this report
     const allAttachments =
@@ -535,13 +566,25 @@ export class TicketReportsService {
       closedAt: report.closedAt,
       createdAt: report.createdAt,
       updatedAt: report.updatedAt,
+      reporter: reporterInfo
+        ? {
+            firstName: reporterInfo.firstName,
+            lastName: reporterInfo.lastName,
+            email: reporterInfo.email,
+          }
+        : null,
       actions: actionsWithAttachments,
       initialAttachments,
       entityDetails: entityDetails || null,
     };
   }
 
-  private async processRefund(
+  /**
+   * Phase 1 (inside transaction): Resolve reservations, validate amounts,
+   * mark reservations as refund_pending, create refund records.
+   * Returns pending refund info for Phase 2 dLocal calls.
+   */
+  private async prepareRefunds(
     report: {id: string; entityType: string; entityId: string},
     data: AddActionData,
     repos: {
@@ -549,117 +592,212 @@ export class TicketReportsService {
       reservationsRepo: OrderTicketReservationsRepository;
     },
   ) {
-    // Build a map of reservationId -> orderId so we can look up payments correctly
-    const reservationOrderMap = new Map<string, string>();
+    const pendingRefunds: Array<{
+      refundRecordId: string;
+      reservationId: string;
+      orderId: string;
+      refundAmount: number;
+      currency: string;
+    }> = [];
 
-    let reservationIds: string[] = [];
+    // Resolve which reservations to refund and their ticket prices
+    interface ReservationInfo {
+      reservationId: string;
+      orderId: string;
+      listingTicketId: string;
+      ticketPrice: number;
+      currency: string;
+    }
+    const reservationsToRefund: ReservationInfo[] = [];
 
-    if (data.actionType === 'refund_partial') {
-      reservationIds = data.metadata?.reservationIds ?? [];
-      // Look up orderId for each reservation
-      for (const reservationId of reservationIds) {
-        const reservation = await repos.reservationsRepo.getById(reservationId);
-        if (reservation?.orderId) {
-          reservationOrderMap.set(reservationId, reservation.orderId);
-        }
-      }
-    } else {
-      // refund_full: get all active reservations for the entity
+    if (data.actionType === 'refund_full') {
       if (report.entityType === 'order') {
+        // Refund all active reservations in the order — each at their ticket price
         const reservations = await repos.reservationsRepo.getByOrderId(report.entityId);
-        const activeReservations = reservations.filter(
-          r => (r as {status?: string}).status === 'active',
-        );
-        reservationIds = activeReservations.map(r => r.id);
-        // All share the same orderId
-        for (const r of activeReservations) {
-          reservationOrderMap.set(r.id, report.entityId);
+        for (const r of reservations) {
+          if ((r as {status?: string}).status !== 'active') continue;
+          // Get ticket price
+          const ticketPrice = await this.getTicketPrice(r.listingTicketId);
+          const order = await this.ordersRepository.getById(r.orderId);
+          reservationsToRefund.push({
+            reservationId: r.id,
+            orderId: r.orderId,
+            listingTicketId: r.listingTicketId,
+            ticketPrice,
+            currency: order?.currency ?? 'UYU',
+          });
         }
       } else if (report.entityType === 'order_ticket_reservation') {
-        // entityId is the listing ticket ID — look up the reservation by ticket
+        // entityId is listing ticket ID
         const reservation = await repos.reservationsRepo.getByListingTicketId(report.entityId);
         if (reservation && (reservation as {status?: string}).status === 'active') {
-          reservationIds = [reservation.id];
-          if (reservation.orderId) {
-            reservationOrderMap.set(reservation.id, reservation.orderId);
+          const ticketPrice = await this.getTicketPrice(reservation.listingTicketId);
+          const order = await this.ordersRepository.getById(reservation.orderId);
+          reservationsToRefund.push({
+            reservationId: reservation.id,
+            orderId: reservation.orderId,
+            listingTicketId: reservation.listingTicketId,
+            ticketPrice,
+            currency: order?.currency ?? 'UYU',
+          });
+        }
+      }
+    } else if (data.actionType === 'refund_partial') {
+      // For partial refund on order_ticket_reservation, refund the single ticket
+      if (report.entityType === 'order_ticket_reservation') {
+        const reservation = await repos.reservationsRepo.getByListingTicketId(report.entityId);
+        if (reservation && (reservation as {status?: string}).status === 'active') {
+          const ticketPrice = await this.getTicketPrice(reservation.listingTicketId);
+          const order = await this.ordersRepository.getById(reservation.orderId);
+
+          const refundAmount = data.metadata?.refundAmount;
+          if (!refundAmount || refundAmount <= 0) {
+            throw new ValidationError('El monto del reembolso debe ser mayor a 0');
           }
+          if (refundAmount > ticketPrice) {
+            throw new ValidationError(
+              `El monto del reembolso ($${refundAmount}) no puede superar el precio de la entrada ($${ticketPrice})`,
+            );
+          }
+
+          reservationsToRefund.push({
+            reservationId: reservation.id,
+            orderId: reservation.orderId,
+            listingTicketId: reservation.listingTicketId,
+            ticketPrice: refundAmount,
+            currency: order?.currency ?? 'UYU',
+          });
+        }
+      } else if (report.entityType === 'order') {
+        // Partial refund on an order — admin specifies the amount
+        // We pick the first active reservation to link the refund record
+        const reservations = await repos.reservationsRepo.getByOrderId(report.entityId);
+        const activeReservation = reservations.find(
+          r => (r as {status?: string}).status === 'active',
+        );
+        if (activeReservation) {
+          const order = await this.ordersRepository.getById(activeReservation.orderId);
+          const refundAmount = data.metadata?.refundAmount;
+          if (!refundAmount || refundAmount <= 0) {
+            throw new ValidationError('El monto del reembolso debe ser mayor a 0');
+          }
+          // For order-level partial, validate against subtotal (sum of ticket prices)
+          const subtotal = order ? Number(order.subtotalAmount) : 0;
+          if (refundAmount > subtotal) {
+            throw new ValidationError(
+              `El monto del reembolso ($${refundAmount}) no puede superar el subtotal de las entradas ($${subtotal})`,
+            );
+          }
+          reservationsToRefund.push({
+            reservationId: activeReservation.id,
+            orderId: activeReservation.orderId,
+            listingTicketId: activeReservation.listingTicketId,
+            ticketPrice: refundAmount,
+            currency: order?.currency ?? 'UYU',
+          });
         }
       }
     }
 
-    for (const reservationId of reservationIds) {
+    // Create DB records inside the transaction
+    for (const info of reservationsToRefund) {
+      await repos.reservationsRepo.updateStatus(info.reservationId, 'refund_pending');
+
+      const refundRecord = await repos.refundsRepo.create({
+        ticketReportId: report.id,
+        orderTicketReservationId: info.reservationId,
+        refundStatus: 'pending',
+        refundAmount: info.ticketPrice,
+      });
+
+      pendingRefunds.push({
+        refundRecordId: refundRecord.id,
+        reservationId: info.reservationId,
+        orderId: info.orderId,
+        refundAmount: info.ticketPrice,
+        currency: info.currency,
+      });
+    }
+
+    return pendingRefunds;
+  }
+
+  /**
+   * Phase 2 (outside transaction): Execute dLocal refund API calls
+   * and update refund records with the result.
+   */
+  private async executeDLocalRefunds(
+    pendingRefunds: Array<{
+      refundRecordId: string;
+      reservationId: string;
+      orderId: string;
+      refundAmount: number;
+      currency: string;
+    }>,
+  ) {
+    for (const refund of pendingRefunds) {
       try {
-        // Mark reservation as refund_pending
-        await repos.reservationsRepo.updateStatus(
-          reservationId,
-          'refund_pending',
-        );
+        const payment = await this.paymentsRepository.getByOrderId(refund.orderId);
 
-        // Create a pending refund record
-        const refundRecord = await repos.refundsRepo.create({
-          ticketReportId: report.id,
-          orderTicketReservationId: reservationId,
-          refundStatus: 'pending',
-          refundAmount: data.metadata?.refundAmount ?? null,
-        });
-
-        // Attempt dLocal refund using the correct orderId for payment lookup
-        const orderId = reservationOrderMap.get(reservationId);
-        try {
-          const payment = orderId
-            ? await this.paymentsRepository.getByOrderId(orderId)
-            : null;
-
-          if (payment) {
-            await this.dLocalService.createRefund({
-              paymentId: payment.providerPaymentId ?? '',
-              amount: data.metadata?.refundAmount,
-              currency: payment.currency ?? undefined,
-              reason: data.metadata?.refundReason,
-            });
-
-            await repos.refundsRepo.updateStatus(
-              refundRecord.id,
-              'refunded',
-              new Date(),
-              data.metadata?.refundAmount,
-            );
-
-            await repos.reservationsRepo.updateStatus(
-              reservationId,
-              'refunded',
-            );
-          } else {
-            // No payment found - mark as skipped
-            logger.warn('No payment found for reservation during refund', {
-              reservationId,
-              ticketReportId: report.id,
-            });
-            await repos.refundsRepo.updateStatus(
-              refundRecord.id,
-              'skipped',
-              new Date(),
-            );
-          }
-        } catch (refundErr) {
-          logger.error('dLocal refund failed for reservation', {
-            reservationId,
-            ticketReportId: report.id,
-            error: refundErr,
+        if (!payment?.providerPaymentId) {
+          logger.warn('No payment found for reservation during refund', {
+            reservationId: refund.reservationId,
+            orderId: refund.orderId,
           });
-          await repos.refundsRepo.updateStatus(
-            refundRecord.id,
+          await this.ticketReportRefundsRepository.updateStatus(
+            refund.refundRecordId,
             'skipped',
             new Date(),
           );
+          continue;
         }
+
+        await this.dLocalService.createRefund({
+          paymentId: payment.providerPaymentId,
+          amount: refund.refundAmount,
+          currency: refund.currency,
+          reason: 'Reembolso por reporte de ticket',
+        });
+
+        await this.ticketReportRefundsRepository.updateStatus(
+          refund.refundRecordId,
+          'refunded',
+          new Date(),
+          refund.refundAmount,
+        );
+
+        await this.orderTicketReservationsRepository.updateStatus(
+          refund.reservationId,
+          'refunded',
+        );
+
+        logger.info('dLocal refund processed successfully', {
+          reservationId: refund.reservationId,
+          refundAmount: refund.refundAmount,
+          currency: refund.currency,
+        });
       } catch (err) {
-        logger.error('Failed to process refund for reservation', {
-          reservationId,
-          ticketReportId: report.id,
+        logger.error('dLocal refund failed for reservation', {
+          reservationId: refund.reservationId,
+          orderId: refund.orderId,
           error: err,
         });
+        await this.ticketReportRefundsRepository.updateStatus(
+          refund.refundRecordId,
+          'skipped',
+          new Date(),
+        ).catch(updateErr =>
+          logger.error('Failed to update refund record after dLocal failure', {
+            refundRecordId: refund.refundRecordId,
+            error: updateErr,
+          }),
+        );
       }
     }
+  }
+
+  private async getTicketPrice(listingTicketId: string): Promise<number> {
+    const result = await this.ticketReportsRepository.getTicketPrice(listingTicketId);
+    return result ? Number(result.price) : 0;
   }
 }

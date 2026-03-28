@@ -46,8 +46,7 @@ import {TicketIds} from './TicketIds';
 import {DocumentPreview} from './DocumentPreview';
 import {getFullFileUrl} from './utils';
 import {formatEventDateSmart} from '~/utils/string';
-import {CreateCaseDialog} from '~/components';
-import {toast} from 'sonner';
+import {CreateCaseDialog} from '~/components/CreateCaseDialog';
 
 type OrderTicket = GetOrderTicketsResponse['tickets'][number];
 
@@ -86,7 +85,7 @@ export function TicketViewModal({
     price: string;
   } | null>(null);
   const [existingReportId, setExistingReportId] = useState<string | null>(null);
-  const [isCheckingExisting, setIsCheckingExisting] = useState(false);
+  const [isReportPending, setIsReportPending] = useState(false);
 
   const tickets = orderTicketsData?.tickets;
   const sortedTickets = useMemo(
@@ -145,9 +144,42 @@ export function TicketViewModal({
     }
   };
 
+  const handleReportClick = async (ticket: OrderTicket) => {
+    setIsReportPending(true);
+    try {
+      const response = await api.ticketReports.checkExistingReport({
+        entityType: 'order_ticket_reservation',
+        entityId: ticket.id,
+      });
+      if (response.data.exists) {
+        setExistingReportId(response.data.reportId!);
+      } else {
+        setReportingTicket({
+          id: ticket.id,
+          waveName: ticket.ticketWave?.name || 'Entrada',
+          ticketIndex: sortedTickets.indexOf(ticket) + 1,
+          hasDocument: ticket.hasDocument,
+          price: ticket.price,
+        });
+        setShowReportDialog(true);
+      }
+    } catch {
+      setReportingTicket({
+        id: ticket.id,
+        waveName: ticket.ticketWave?.name || 'Entrada',
+        ticketIndex: sortedTickets.indexOf(ticket) + 1,
+        hasDocument: ticket.hasDocument,
+        price: ticket.price,
+      });
+      setShowReportDialog(true);
+    } finally {
+      setIsReportPending(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[600px] max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='sm:max-w-[600px] max-h-[calc(100dvh-2rem)] overflow-y-auto'>
         <DialogHeader className='text-left'>
           <DialogTitle className='flex flex-col gap-0.5'>
             <div className='flex items-center gap-2'>
@@ -199,14 +231,14 @@ export function TicketViewModal({
           <Alert>
             <AlertCircle className='h-4 w-4' />
             <AlertDescription>
-              No se encontraron tickets para esta orden
+              No se encontraron entradas para esta orden
             </AlertDescription>
           </Alert>
         ) : !currentTicket ? (
           <Alert>
             <AlertCircle className='h-4 w-4' />
             <AlertDescription>
-              No se pudo cargar el ticket seleccionado
+              No se pudo cargar la entrada seleccionada
             </AlertDescription>
           </Alert>
         ) : (
@@ -255,21 +287,29 @@ export function TicketViewModal({
               <CarouselContent className='-ml-4'>
                 {sortedTickets.map(ticket => (
                   <CarouselItem key={ticket.id} className='pl-4'>
-                    <div className='space-y-4 pb-2'>
+                    <div className='space-y-2 pb-2'>
+                      {/* Ticket details + IDs: full width, tight spacing */}
                       <TicketDetails
                         ticketWaveName={ticket.ticketWave?.name}
                         price={ticket.price}
                         currency={currency || null}
                       />
+                      {/* Ticket IDs always visible (for screenshots) */}
+                      <TicketIds
+                        orderId={orderIdFromData || null}
+                        ticketId={ticket.id}
+                      />
+
+                      <div className='pt-1' />
 
                       {ticket.reservationStatus === 'cancelled' ? (
                         <Alert className='bg-destructive/10 border-destructive/30'>
                           <AlertTriangle className='h-4 w-4 text-destructive' />
                           <AlertDescription className='text-destructive'>
                             <span className='font-semibold'>
-                              Ticket cancelado
+                              Entrada cancelada
                             </span>{' '}
-                            - El vendedor no subió el documento a tiempo. Tu
+                            — El vendedor no subió el documento a tiempo. Tu
                             reembolso está en proceso.
                           </AlertDescription>
                         </Alert>
@@ -278,9 +318,8 @@ export function TicketViewModal({
                           <XCircle className='h-4 w-4 text-muted-foreground' />
                           <AlertDescription className='text-muted-foreground'>
                             <span className='font-semibold'>
-                              Ticket reembolsado
-                            </span>{' '}
-                            - Este ticket fue reembolsado.
+                              Entrada reembolsada
+                            </span>
                           </AlertDescription>
                         </Alert>
                       ) : ticket.reservationStatus === 'refund_pending' ? (
@@ -289,8 +328,7 @@ export function TicketViewModal({
                           <AlertDescription className='text-yellow-700'>
                             <span className='font-semibold'>
                               Reembolso en proceso
-                            </span>{' '}
-                            - Tu reembolso está siendo procesado.
+                            </span>
                           </AlertDescription>
                         </Alert>
                       ) : ticket.hasDocument && ticket.document?.url ? (
@@ -298,7 +336,7 @@ export function TicketViewModal({
                           <div className='flex items-center gap-2 text-sm'>
                             <FileCheck className='h-4 w-4 text-green-500' />
                             <span className='text-green-600 font-medium'>
-                              Ticket disponible
+                              Entrada disponible
                             </span>
                           </div>
                           <DocumentPreview
@@ -306,6 +344,8 @@ export function TicketViewModal({
                             ticketId={ticket.id}
                             mimeType={ticket.document.mimeType}
                             onDownload={() => handleDownload(ticket)}
+                            onReport={() => handleReportClick(ticket)}
+                            isReportDisabled={isReportPending}
                           />
                         </div>
                       ) : (
@@ -317,72 +357,30 @@ export function TicketViewModal({
                           </div>
                           <div className='space-y-1'>
                             <p className='font-medium text-foreground'>
-                              Esta entrada aún no está disponible
+                              Entrada aún no disponible
                             </p>
                             <p className='text-sm text-muted-foreground'>
                               El vendedor todavía no subió el documento. Te
-                              notificaremos cuando esté disponible.
+                              avisamos cuando esté listo.
                             </p>
                           </div>
                           {hasMultipleTickets && (
                             <p className='text-sm text-muted-foreground pt-1'>
-                              Deslizá o usá las flechas para ver otras entradas.
+                              Deslizá para ver otras entradas.
                             </p>
                           )}
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            className='h-8 text-xs text-muted-foreground hover:text-destructive'
+                            disabled={isReportPending}
+                            onClick={() => handleReportClick(ticket)}
+                          >
+                            <Flag className='h-3.5 w-3.5 mr-1' />
+                            Reportar problema
+                          </Button>
                         </div>
                       )}
-
-                      {/* Report Issue button for each ticket */}
-                      {ticket.reservationStatus !== 'refunded' &&
-                        ticket.reservationStatus !== 'refund_pending' && (
-                          <div className='pt-2 border-t'>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              className='w-full'
-                              disabled={isCheckingExisting}
-                              onClick={async () => {
-                                setIsCheckingExisting(true);
-                                try {
-                                  const response = await api.ticketReports.checkExistingReport(
-                                    {entityType: 'order_ticket_reservation', entityId: ticket.id},
-                                  );
-                                  if (response.data.exists) {
-                                    setExistingReportId(response.data.reportId!);
-                                  } else {
-                                    setReportingTicket({
-                                      id: ticket.id,
-                                      waveName:
-                                        ticket.ticketWave?.name || 'Entrada',
-                                      ticketIndex:
-                                        sortedTickets.indexOf(ticket) + 1,
-                                      hasDocument: ticket.hasDocument,
-                                      price: ticket.price,
-                                    });
-                                    setShowReportDialog(true);
-                                  }
-                                } catch {
-                                  // On error, fallback to opening dialog (backend guard will catch duplicates)
-                                  setReportingTicket({
-                                    id: ticket.id,
-                                    waveName:
-                                      ticket.ticketWave?.name || 'Entrada',
-                                    ticketIndex:
-                                      sortedTickets.indexOf(ticket) + 1,
-                                    hasDocument: ticket.hasDocument,
-                                    price: ticket.price,
-                                  });
-                                  setShowReportDialog(true);
-                                } finally {
-                                  setIsCheckingExisting(false);
-                                }
-                              }}
-                            >
-                              <Flag className='h-4 w-4 mr-2' />
-                              {isCheckingExisting ? 'Verificando...' : 'Reportar problema con esta entrada'}
-                            </Button>
-                          </div>
-                        )}
                     </div>
                   </CarouselItem>
                 ))}
@@ -397,67 +395,64 @@ export function TicketViewModal({
               vatOnCommission={vatOnCommission || null}
               currency={currency || null}
             />
-
-            {/* Ticket IDs for current slide */}
-            <TicketIds
-              orderId={orderIdFromData || null}
-              ticketId={currentTicket?.id ?? ''}
-            />
           </div>
         )}
       </DialogContent>
 
-      <CreateCaseDialog
-        open={showReportDialog}
-        onOpenChange={setShowReportDialog}
-        prefillContext={
-          reportingTicket
-            ? {
-                entityType: 'order_ticket_reservation',
-                entityId: reportingTicket.id,
-                hasDocument: reportingTicket.hasDocument,
-                details: [
-                  ...(event?.name
-                    ? [{label: 'Evento', value: event.name}]
-                    : []),
-                  {
-                    label: 'Entrada',
-                    value: `${reportingTicket.ticketIndex} de ${sortedTickets.length}`,
-                  },
-                  ...(reportingTicket.waveName !== 'Entrada'
-                    ? [{label: 'Tipo', value: reportingTicket.waveName}]
-                    : []),
-                  {
-                    label: 'Precio',
-                    value: `${currency ?? ''} ${reportingTicket.price}`,
-                  },
-                  ...(orderIdFromData
-                    ? [{label: 'Orden', value: orderIdFromData}]
-                    : []),
-                ],
-              }
-            : undefined
-        }
-        onSuccess={(reportId) => {
-          setShowReportDialog(false);
-          onOpenChange(false);
-          navigate({to: '/cuenta/reportes/$reportId', params: {reportId}});
-        }}
-      />
+      {reportingTicket && (
+        <CreateCaseDialog
+          open={showReportDialog}
+          onOpenChange={setShowReportDialog}
+          prefillContext={{
+            entityType: 'order_ticket_reservation',
+            entityId: reportingTicket.id,
+            hasDocument: reportingTicket.hasDocument,
+            details: [
+              ...(event?.name ? [{label: 'Evento', value: event.name}] : []),
+              {
+                label: 'Entrada',
+                value: `${reportingTicket.ticketIndex} de ${sortedTickets.length}`,
+              },
+              ...(reportingTicket.waveName !== 'Entrada'
+                ? [{label: 'Tipo', value: reportingTicket.waveName}]
+                : []),
+              {
+                label: 'Precio',
+                value: `${currency ?? ''} ${reportingTicket.price}`,
+              },
+              ...(orderIdFromData
+                ? [{label: 'Orden', value: orderIdFromData}]
+                : []),
+            ],
+          }}
+          onSuccess={reportId => {
+            setShowReportDialog(false);
+            onOpenChange(false);
+            navigate({to: '/cuenta/reportes/$reportId', params: {reportId}});
+          }}
+        />
+      )}
 
-      <AlertDialog open={!!existingReportId} onOpenChange={(open) => !open && setExistingReportId(null)}>
+      <AlertDialog
+        open={!!existingReportId}
+        onOpenChange={open => !open && setExistingReportId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ya tienes un reporte abierto</AlertDialogTitle>
+            <AlertDialogTitle>Ya tenés un caso abierto</AlertDialogTitle>
             <AlertDialogDescription>
-              Ya existe un caso abierto para esta entrada. Podés ver su estado y agregar comentarios desde tus reportes.
+              Ya existe un caso abierto para esta entrada. Podés ver su estado y
+              agregar comentarios desde tus reportes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cerrar</AlertDialogCancel>
             <AlertDialogAction asChild>
-              <Link to="/cuenta/reportes/$reportId" params={{reportId: existingReportId!}}>
-                Ver mi reporte
+              <Link
+                to='/cuenta/reportes/$reportId'
+                params={{reportId: existingReportId!}}
+              >
+                Ver mi caso
               </Link>
             </AlertDialogAction>
           </AlertDialogFooter>

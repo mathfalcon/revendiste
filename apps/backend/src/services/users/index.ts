@@ -1,4 +1,5 @@
 import {UsersRepository} from '~/repositories';
+import {getStorageProvider} from '~/services/storage/StorageFactory';
 import {logger} from '~/utils';
 import type {User} from '~/types';
 
@@ -82,6 +83,15 @@ export class UsersService {
       } else {
         // User doesn't exist, create new one
         user = await this.usersRepository.upsertByClerkId(userData);
+
+        // If user has a Clerk-hosted image (e.g. Google OAuth photo),
+        // sync it to our CDN in the background for faster loading
+        if (userData.imageUrl && !userData.imageUrl.includes('/avatars/')) {
+          this.syncAvatarToCdn(user.clerkId, userData.imageUrl).catch(err =>
+            logger.warn('Failed to sync avatar to CDN:', err),
+          );
+        }
+
         return user;
       }
     } catch (error) {
@@ -91,6 +101,36 @@ export class UsersService {
       );
       throw error;
     }
+  }
+
+  // Download an external avatar and re-upload to our CDN
+  private async syncAvatarToCdn(clerkId: string, externalUrl: string) {
+    const response = await fetch(externalUrl);
+    if (!response.ok) return;
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+    const storage = getStorageProvider();
+    const result = await storage.upload(buffer, {
+      directory: 'public/avatars',
+      originalName: `${clerkId}-oauth.jpg`,
+      mimeType: contentType,
+      sizeBytes: buffer.length,
+    });
+
+    await this.usersRepository.updateImageUrl(clerkId, result.url);
+    logger.info(`Synced OAuth avatar to CDN for user ${clerkId}`);
+  }
+
+  // Update user's avatar URL
+  async updateImageUrl(clerkId: string, imageUrl: string | null) {
+    return this.usersRepository.updateImageUrl(clerkId, imageUrl);
+  }
+
+  // Find user by Clerk ID (direct passthrough)
+  async findByClerkId(clerkId: string) {
+    return this.usersRepository.findByClerkId(clerkId);
   }
 
   // Get user by email

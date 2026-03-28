@@ -59,7 +59,7 @@ export const TicketReportCreatedEmail = ({
             - Nuestro equipo está procesando el reembolso.
           </Text>
           <Text className="text-sm text-muted-foreground m-0 mb-1">
-            - Te notificaremos cuando el reembolso sea confirmado.
+            - Te avisamos cuando el reembolso se confirme.
           </Text>
           <Text className="text-sm text-muted-foreground m-0">
             - Podés seguir el estado de tu caso en cualquier momento.
@@ -90,7 +90,7 @@ export const TicketReportCreatedEmail = ({
     >
       <Text className="text-foreground mb-4">
         Recibimos tu reporte de tipo <strong>{caseTypeLabel}</strong>. Nuestro
-        equipo de soporte lo va a revisar y te notificaremos sobre el progreso.
+        equipo de soporte lo va a revisar y te vamos a avisar sobre el progreso.
       </Text>
 
       <Section className="bg-muted p-4 rounded-md mb-6">
@@ -98,10 +98,10 @@ export const TicketReportCreatedEmail = ({
           <strong>¿Qué sigue?</strong>
         </Text>
         <Text className="text-sm text-muted-foreground m-0 mb-1">
-          - Nuestro equipo revisará tu caso lo antes posible.
+          - Nuestro equipo va a revisar tu caso lo antes posible.
         </Text>
         <Text className="text-sm text-muted-foreground m-0 mb-1">
-          - Te enviaremos una notificación cuando haya novedades.
+          - Te avisamos cuando haya novedades.
         </Text>
         <Text className="text-sm text-muted-foreground m-0">
           - Podés agregar comentarios o adjuntos desde tu reporte.

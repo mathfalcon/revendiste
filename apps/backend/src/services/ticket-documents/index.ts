@@ -19,6 +19,14 @@ import {notifyDocumentUploaded} from '~/services/notifications/helpers';
  * Documents are stored using the configured storage provider (local or S3).
  * Supports document versioning and multiple documents per ticket.
  */
+export interface UploadedDocumentData {
+  storagePath: string;
+  fileName: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
 export class TicketDocumentService {
   private storageProvider = getStorageProvider();
 
@@ -413,6 +421,66 @@ export class TicketDocumentService {
         name: ticket.ticketWaveName,
       },
     };
+  }
+
+  /**
+   * Upload a file buffer to storage only — no DB writes.
+   * Use this when you need the storage path before you have a ticketId
+   * (e.g. uploading at listing creation time before the DB transaction).
+   *
+   * The eventId is used for directory organisation on storage.
+   */
+  async uploadToStorage(
+    eventId: string,
+    file: {
+      buffer: Buffer;
+      originalName: string;
+      mimeType: string;
+      sizeBytes: number;
+    },
+  ): Promise<UploadedDocumentData> {
+    this.validateFileType(file.mimeType);
+
+    const maxSizeBytes = 10 * 1024 * 1024;
+    if (file.sizeBytes > maxSizeBytes) {
+      throw new ValidationError(
+        TICKET_DOCUMENT_ERROR_MESSAGES.FILE_SIZE_EXCEEDED(
+          maxSizeBytes / 1024 / 1024,
+        ),
+      );
+    }
+
+    const uploadResult = await this.storageProvider.upload(file.buffer, {
+      originalName: file.originalName,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+      directory: `private/tickets/${eventId}`,
+      filename: `ticket-creation-${Date.now()}`,
+    });
+
+    const fileName = uploadResult.path.split('/').pop() || uploadResult.path;
+
+    return {
+      storagePath: uploadResult.path,
+      fileName,
+      originalName: file.originalName,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+    };
+  }
+
+  /**
+   * Delete a file from storage — used for cleanup after a failed DB transaction.
+   */
+  async deleteFromStorage(storagePath: string): Promise<void> {
+    try {
+      await this.storageProvider.delete(storagePath);
+    } catch (error) {
+      logger.warn('Failed to delete orphaned document from storage', {
+        storagePath,
+        error,
+      });
+    }
   }
 
   /**

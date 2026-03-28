@@ -80,7 +80,7 @@ function ReportesPage() {
   const rawSearch = useSearch({from: '/admin/reportes/'});
   const search = rawSearch as ReportesSearch;
   const navigate = useNavigate({
-    from: '/admin/reportes/' as '/admin/reportes',
+    from: '/admin/reportes/',
   });
 
   const {data} = useSuspenseQuery(

@@ -552,9 +552,7 @@ export function getEmailTemplate<T extends NotificationType>(
         actions?.find(a => a.type === 'view_report')?.url ||
         `${appBaseUrl}/cuenta/reportes/${meta?.ticketReportId}`;
       const who =
-        meta?.performedByRole === 'admin'
-          ? 'El equipo de soporte'
-          : 'El usuario';
+        meta?.performedByRole === 'admin' ? 'Soporte' : 'El usuario';
       return {
         Component: TicketReportActionEmailComponent,
         props: {

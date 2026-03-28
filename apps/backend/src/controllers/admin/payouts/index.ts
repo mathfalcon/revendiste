@@ -38,6 +38,11 @@ import {
   UnauthorizedError,
   BadRequestError,
 } from '~/errors';
+import {
+  PAYOUT_ERROR_MESSAGES,
+  PAYOUT_DOCUMENT_ERROR_MESSAGES,
+  VALIDATION_MESSAGES,
+} from '~/constants/error-messages';
 import {ValidateBody, ValidateQuery, Body, Query} from '~/decorators';
 import {
   ProcessPayoutRouteBody,
@@ -220,7 +225,7 @@ export class AdminPayoutsController {
     @Request() request: express.Request,
   ): Promise<UploadPayoutDocumentResponse> {
     if (!file) {
-      throw new BadRequestError('No se subió ningún archivo');
+      throw new BadRequestError(VALIDATION_MESSAGES.NO_FILE_UPLOADED);
     }
 
     return this.payoutDocumentsService.uploadPayoutDocument(

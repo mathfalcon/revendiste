@@ -1,7 +1,7 @@
 import {useQuery} from '@tanstack/react-query';
 import {Link, useNavigate} from '@tanstack/react-router';
 import {EventTicketCurrency, getTrendingEventsQuery} from '~/lib';
-import {Flame} from 'lucide-react';
+import {Flame, TrendingUp} from 'lucide-react';
 import {Separator} from '~/components/ui/separator';
 import {formatDate} from '~/utils/string';
 import {Skeleton} from '~/components/ui/skeleton';
@@ -139,7 +139,9 @@ const TrendingEventSkeleton = () => (
 );
 
 export const TrendingEvents = () => {
-  const {data: events, isLoading} = useQuery(getTrendingEventsQuery(7, 6));
+  const {data: events, isLoading} = useQuery(
+    getTrendingEventsQuery(7, 6),
+  );
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
@@ -178,9 +180,9 @@ export const TrendingEvents = () => {
   }
 
   return (
-    <section className='mx-auto flex flex-col gap-4 my-4 sm:my-6 w-full sm:w-[624px] lg:w-[948px] sm:max-w-[624px] lg:max-w-[948px] px-4 sm:px-0 overflow-hidden'>
+    <section className='mx-auto flex flex-col gap-4 my-4 sm:my-6 w-full sm:w-[624px] lg:w-[948px] px-4 sm:px-0 overflow-hidden'>
       <div className='flex items-center gap-2'>
-        <Flame className='h-5 w-5 text-orange-500' />
+        <TrendingUp className='h-5 w-5 text-primary' />
         <h2 className='text-lg sm:text-2xl font-bold'>Trending esta semana</h2>
       </div>
       <Separator />

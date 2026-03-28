@@ -559,6 +559,7 @@ export class PaymentWebhookAdapter {
           platform: seller.platform,
           qrAvailabilityTiming: seller.qrAvailabilityTiming,
           ticketCount: seller.ticketCount,
+          allDocumentsUploaded: seller.allDocumentsUploaded,
         }, { channels: ['email'], deferSendToJob: false }),
       ),
     ]).then(results => {
@@ -642,6 +643,7 @@ export class PaymentWebhookAdapter {
           platform: seller.platform,
           qrAvailabilityTiming: seller.qrAvailabilityTiming,
           ticketCount: seller.ticketCount,
+          allDocumentsUploaded: seller.allDocumentsUploaded,
         },
         { channels: ['in_app'] },
       ).catch(err => {

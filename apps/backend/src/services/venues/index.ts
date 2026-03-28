@@ -21,6 +21,12 @@ const VENUE_REFRESH_DAYS = 7;
  * 7. Return venue ID
  */
 export class VenuesService {
+  /**
+   * Session-level cache: googlePlaceId → venueId
+   * Prevents redundant DB lookups and race conditions within a single scraping run
+   */
+  private readonly resolvedPlaceIds = new Map<string, string>();
+
   constructor(
     private readonly venuesRepository: VenuesRepository,
     private readonly googlePlacesService: GooglePlacesService,
@@ -87,6 +93,11 @@ export class VenuesService {
         updatedAt: existingVenue.updatedAt,
       });
 
+      // Populate session cache for future lookups
+      if (existingVenue.googlePlaceId) {
+        this.resolvedPlaceIds.set(existingVenue.googlePlaceId, existingVenue.id);
+      }
+
       // If venue data is fresh, return it immediately
       if (!isStale) {
         return existingVenue.id;
@@ -111,13 +122,24 @@ export class VenuesService {
       150, // Slightly larger radius for API search
     );
 
-    // 3. If Google Places found a place, check by placeId to avoid duplicates
+    // 3. If Google Places found a place, check session cache and DB by placeId
     if (placeResult?.placeId) {
+      // Check session cache first (avoids DB roundtrip for venues already resolved this run)
+      const cachedVenueId = this.resolvedPlaceIds.get(placeResult.placeId);
+      if (cachedVenueId) {
+        logger.debug('Found venue in session cache by Google Place ID', {
+          venueId: cachedVenueId,
+          googlePlaceId: placeResult.placeId,
+        });
+        return cachedVenueId;
+      }
+
       const existingByPlaceId = await this.venuesRepository.findByGooglePlaceId(
         placeResult.placeId,
       );
 
       if (existingByPlaceId) {
+        this.resolvedPlaceIds.set(placeResult.placeId, existingByPlaceId.id);
         logger.debug('Found existing venue by Google Place ID', {
           venueId: existingByPlaceId.id,
           venueName: existingByPlaceId.name,
@@ -133,6 +155,7 @@ export class VenuesService {
           name: placeResult.name,
           address: placeResult.address,
           city: placeResult.city,
+          region: placeResult.region || null,
           country: placeResult.country,
           googlePlaceId: placeResult.placeId,
           latitude: placeResult.latitude.toString(),
@@ -142,13 +165,21 @@ export class VenuesService {
           name: scrapedVenueName || 'Venue desconocido',
           address: scrapedVenueAddress,
           city: this.extractCityFromAddress(scrapedVenueAddress),
+          region: null,
           country: 'Uruguay',
           googlePlaceId: null,
           latitude: lat.toString(),
           longitude: lng.toString(),
         };
 
-    const newVenue = await this.venuesRepository.create(venueData);
+    // Use conflict-safe insert when we have a placeId to handle concurrent creation races
+    const newVenue = placeResult
+      ? await this.venuesRepository.createOrFindByPlaceId(venueData)
+      : await this.venuesRepository.create(venueData);
+
+    if (newVenue.googlePlaceId) {
+      this.resolvedPlaceIds.set(newVenue.googlePlaceId, newVenue.id);
+    }
 
     logger.info('Created new venue', {
       venueId: newVenue.id,
@@ -254,21 +285,45 @@ export class VenuesService {
       return await this.venuesRepository.updateVenue(venueId, {});
     }
 
+    // Check if the new placeId is already owned by a different venue
+    if (placeResult.placeId) {
+      const existingWithPlaceId = await this.venuesRepository.findByGooglePlaceId(
+        placeResult.placeId,
+      );
+
+      if (existingWithPlaceId && existingWithPlaceId.id !== venueId) {
+        // Another venue already owns this placeId — return that one instead of updating
+        logger.info('Refresh found existing venue with same Google Place ID, deduplicating', {
+          staleVenueId: venueId,
+          existingVenueId: existingWithPlaceId.id,
+          googlePlaceId: placeResult.placeId,
+        });
+        this.resolvedPlaceIds.set(placeResult.placeId, existingWithPlaceId.id);
+        return existingWithPlaceId;
+      }
+    }
+
     // Update venue with fresh Google Places data
     const updatedVenue = await this.venuesRepository.updateVenue(venueId, {
       name: placeResult.name,
       address: placeResult.address,
       city: placeResult.city,
+      region: placeResult.region || null,
       country: placeResult.country,
       googlePlaceId: placeResult.placeId,
       latitude: placeResult.latitude.toString(),
       longitude: placeResult.longitude.toString(),
     });
 
+    if (updatedVenue?.googlePlaceId) {
+      this.resolvedPlaceIds.set(updatedVenue.googlePlaceId, updatedVenue.id);
+    }
+
     logger.info('Refreshed venue from Google Places', {
       venueId,
       venueName: updatedVenue?.name,
       city: updatedVenue?.city,
+      region: updatedVenue?.region ?? '(null)',
     });
 
     return updatedVenue;
@@ -279,6 +334,13 @@ export class VenuesService {
    */
   async getDistinctCities(): Promise<string[]> {
     return await this.venuesRepository.getDistinctCities();
+  }
+
+  /**
+   * Get distinct regions with active events, grouped by country
+   */
+  async getDistinctRegions() {
+    return await this.venuesRepository.getDistinctRegions();
   }
 
   /**

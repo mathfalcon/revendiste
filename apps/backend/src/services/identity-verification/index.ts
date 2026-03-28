@@ -23,6 +23,8 @@ import {ValidationError, MaxAttemptsExceededError} from '~/errors';
 import {
   IDENTITY_VERIFICATION_ERROR_MESSAGES,
   NOTIFICATION_ERROR_MESSAGES,
+  USER_MESSAGES,
+  INTERNAL_VERIFICATION_REASONS,
 } from '~/constants/error-messages';
 import {logger} from '~/utils';
 import {getStorageProvider} from '../storage';
@@ -70,7 +72,7 @@ const THRESHOLDS = {
 // ============================================================================
 
 type DocumentType = 'ci_uy' | 'dni_ar' | 'passport';
-type VerificationStatus =
+type IdentityVerificationStatus =
   | 'pending'
   | 'requires_manual_review'
   | 'completed'
@@ -201,7 +203,7 @@ export class IdentityVerificationService {
       documentCountry: finalDocumentCountry,
     });
 
-    return {success: true, message: 'Verificación iniciada'};
+    return {success: true, message: USER_MESSAGES.VERIFICATION_INITIATED};
   }
 
   /**
@@ -341,7 +343,7 @@ export class IdentityVerificationService {
     sessionId: string,
   ): Promise<{
     verified: boolean;
-    status: VerificationStatus;
+    status: IdentityVerificationStatus;
     message?: string;
     canRetry?: boolean;
     retriesRemaining?: number;
@@ -698,7 +700,7 @@ export class IdentityVerificationService {
 
     if (textConfidence < THRESHOLDS.TEXT_DETECTION) {
       status = 'requires_manual_review';
-      reason = 'Low text detection confidence';
+      reason = INTERNAL_VERIFICATION_REASONS.LOW_TEXT_CONFIDENCE;
       logger.info('[STEP 2/3] Low text confidence flagged', {
         userId,
         textConfidence,
@@ -711,7 +713,7 @@ export class IdentityVerificationService {
       sharpness < THRESHOLDS.DOCUMENT_QUALITY
     ) {
       status = 'requires_manual_review';
-      reason = this.appendReviewReason(reason, 'Poor document image quality');
+      reason = this.appendReviewReason(reason, INTERNAL_VERIFICATION_REASONS.POOR_IMAGE_QUALITY);
       logger.info('[STEP 2/3] Poor document quality flagged', {
         userId,
         brightness,
@@ -881,7 +883,7 @@ export class IdentityVerificationService {
     await this.usersRepository.updateVerification(userId, {
       verificationStatus: 'failed',
       verificationMetadata: this.mergeMetadata(user.verificationMetadata, {
-        failureReason: 'Liveness check failed',
+        failureReason: INTERNAL_VERIFICATION_REASONS.LIVENESS_CHECK_FAILED,
         failedAt: new Date().toISOString(),
         livenessStatus: results.Status,
       }),
@@ -912,7 +914,7 @@ export class IdentityVerificationService {
 
       await this.usersRepository.updateVerification(userId, {
         verificationStatus: 'requires_manual_review',
-        manualReviewReason: 'Multiple failed verification attempts',
+        manualReviewReason: INTERNAL_VERIFICATION_REASONS.MULTIPLE_FAILED_ATTEMPTS,
       });
 
       // Create audit log for escalation to manual review
@@ -923,7 +925,7 @@ export class IdentityVerificationService {
         'requires_manual_review',
         {liveness: results.Confidence ?? 0},
         {
-          reason: 'Multiple failed verification attempts',
+          reason: INTERNAL_VERIFICATION_REASONS.MULTIPLE_FAILED_ATTEMPTS,
           attemptNumber: user.verificationAttempts ?? 0,
         },
       );
@@ -952,7 +954,7 @@ export class IdentityVerificationService {
     // Send notification for liveness failure (fire-and-forget, in_app only)
     notifyIdentityVerificationFailed(this.notificationService, {
       userId,
-      failureReason: 'No pudimos verificar que sos una persona real',
+      failureReason: USER_MESSAGES.LIVENESS_FAILED_USER,
       attemptsRemaining,
     }).catch(err => {
       logger.error('Failed to send verification failed notification', {
@@ -986,7 +988,7 @@ export class IdentityVerificationService {
       );
       return {
         faceSimilarity: 0,
-        faceComparisonError: 'No reference image in liveness results',
+        faceComparisonError: INTERNAL_VERIFICATION_REASONS.NO_REFERENCE_IMAGE,
       };
     }
 
@@ -1067,12 +1069,12 @@ export class IdentityVerificationService {
       logger.warn('[STEP 3/3] ⚠️ Face detected but no match', {userId});
       return {
         faceSimilarity: 0,
-        error: 'Face detected in liveness but no match found in document',
+        error: INTERNAL_VERIFICATION_REASONS.NO_FACE_MATCH,
       };
     }
 
     logger.warn('[STEP 3/3] ⚠️ No faces detected for comparison', {userId});
-    return {faceSimilarity: 0, error: 'No face detected in one or both images'};
+    return {faceSimilarity: 0, error: INTERNAL_VERIFICATION_REASONS.NO_FACE_DETECTED};
   }
 
   private async storeVerificationImages(
@@ -1152,7 +1154,7 @@ export class IdentityVerificationService {
     livenessAuditImagePaths?: string[],
   ): Promise<{
     verified: boolean;
-    status: VerificationStatus;
+    status: IdentityVerificationStatus;
     message?: string;
     canRetry?: boolean;
     retriesRemaining?: number;
@@ -1172,7 +1174,7 @@ export class IdentityVerificationService {
       await this.markVerificationFailed(
         userId,
         user,
-        'Face mismatch between document and liveness check',
+        INTERNAL_VERIFICATION_REASONS.FACE_MISMATCH,
         faceSimilarity,
       );
 
@@ -1185,7 +1187,7 @@ export class IdentityVerificationService {
         {liveness: livenessConfidence, faceMatch: faceSimilarity},
         {
           sessionId,
-          reason: 'Face mismatch between document and liveness check',
+          reason: INTERNAL_VERIFICATION_REASONS.FACE_MISMATCH,
         },
       );
 
@@ -1197,7 +1199,7 @@ export class IdentityVerificationService {
       notifyIdentityVerificationFailed(this.notificationService, {
         userId,
         failureReason:
-          'La foto de tu documento no coincide con la verificación facial',
+          USER_MESSAGES.FACE_MISMATCH_USER,
         attemptsRemaining,
       }).catch(err => {
         logger.error('Failed to send verification failed notification', {
@@ -1275,7 +1277,7 @@ export class IdentityVerificationService {
         status: 'pending',
         // Generic message - never disclose liveness scores to users per AWS guidelines
         message:
-          'La verificación no fue exitosa. Puedes intentarlo de nuevo asegurándote de tener buena iluminación.',
+          USER_MESSAGES.VERIFICATION_FAILED_RETRY,
         canRetry: true,
         retriesRemaining,
       };
@@ -1401,7 +1403,7 @@ export class IdentityVerificationService {
     reason?: string;
   } {
     if (error || faceSimilarity === 0) {
-      const detail = error || 'Face comparison returned no result';
+      const detail = error || INTERNAL_VERIFICATION_REASONS.FACE_COMPARISON_NO_RESULT;
       logger.info(
         '[STEP 3/3] Face comparison error/no result → manual review',
         {userId, errorDetail: detail},

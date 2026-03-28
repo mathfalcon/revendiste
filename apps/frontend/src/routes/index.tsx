@@ -1,10 +1,21 @@
 import {createFileRoute} from '@tanstack/react-router';
+import {z} from 'zod';
 import {HomePage} from '~/features';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 
+const homeSearchSchema = z.object({
+  ubicacion: z.string().optional().catch(undefined),
+  lat: z.coerce.number().optional().catch(undefined),
+  lng: z.coerce.number().optional().catch(undefined),
+  desde: z.string().optional().catch(undefined),
+  hasta: z.string().optional().catch(undefined),
+  conEntradas: z.coerce.boolean().optional().catch(undefined),
+});
+
 export const Route = createFileRoute('/')({
   component: Home,
+  validateSearch: homeSearchSchema,
   head: () => {
     const baseUrl = getBaseUrl();
 

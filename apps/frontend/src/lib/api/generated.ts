@@ -10,31 +10,11 @@
  * ---------------------------------------------------------------
  */
 
-export enum VerificationStatus {
+export enum IdentityVerificationStatus {
   Pending = "pending",
   RequiresManualReview = "requires_manual_review",
   Completed = "completed",
   Failed = "failed",
-}
-
-/**
- * Union type of all error class names that can be returned by the API.
- * Used for type-safe error handling on the frontend.
- */
-export enum ErrorClassName {
-  AppError = "AppError",
-  BadRequestError = "BadRequestError",
-  UnauthorizedError = "UnauthorizedError",
-  ForbiddenError = "ForbiddenError",
-  NotFoundError = "NotFoundError",
-  ConflictError = "ConflictError",
-  ValidationError = "ValidationError",
-  TooManyRequestsError = "TooManyRequestsError",
-  MaxAttemptsExceededError = "MaxAttemptsExceededError",
-  InternalServerError = "InternalServerError",
-  ServiceUnavailableError = "ServiceUnavailableError",
-  DatabaseError = "DatabaseError",
-  ZodValidationError = "ZodValidationError",
 }
 
 export enum NotificationType {
@@ -68,6 +48,26 @@ export enum NotificationType {
   TicketReportCreated = "ticket_report_created",
   TicketReportStatusChanged = "ticket_report_status_changed",
   TicketSoldSeller = "ticket_sold_seller",
+}
+
+/**
+ * Union type of all error class names that can be returned by the API.
+ * Used for type-safe error handling on the frontend.
+ */
+export enum ErrorClassName {
+  AppError = "AppError",
+  BadRequestError = "BadRequestError",
+  UnauthorizedError = "UnauthorizedError",
+  ForbiddenError = "ForbiddenError",
+  NotFoundError = "NotFoundError",
+  ConflictError = "ConflictError",
+  ValidationError = "ValidationError",
+  TooManyRequestsError = "TooManyRequestsError",
+  MaxAttemptsExceededError = "MaxAttemptsExceededError",
+  InternalServerError = "InternalServerError",
+  ServiceUnavailableError = "ServiceUnavailableError",
+  DatabaseError = "DatabaseError",
+  ZodValidationError = "ZodValidationError",
 }
 
 export enum TicketReportActionType {
@@ -220,6 +220,29 @@ export interface EventsPaginatedQuery {
   page: number;
   /** Filter by city name */
   city?: string;
+  /** Filter by region/state/departamento name */
+  region?: string;
+  /**
+   * Latitude for proximity search (requires lng)
+   * @format double
+   */
+  lat?: number;
+  /**
+   * Longitude for proximity search (requires lat)
+   * @format double
+   */
+  lng?: number;
+  /**
+   * Radius in km for proximity search (default: 30)
+   * @format double
+   */
+  radiusKm?: number;
+  /** Filter events starting from this date (ISO format) */
+  dateFrom?: string;
+  /** Filter events ending before this date (ISO format) */
+  dateTo?: string;
+  /** Only show events with at least one available ticket */
+  hasTickets?: boolean;
 }
 
 export type SearchEventsResponse = {
@@ -277,6 +300,11 @@ export type GetTrendingEventsResponse = {
 
 export type GetDistinctCitiesResponse = string[];
 
+export type GetDistinctRegionsResponse = {
+  regions: string[];
+  country: string;
+}[];
+
 export interface GetEventByIdResponse {
   ticketWaves: {
     priceGroups: {
@@ -290,7 +318,11 @@ export interface GetEventByIdResponse {
     description: string | null;
   }[];
   /** @format double */
+  userActiveTicketCount: number;
+  /** @format double */
   userListingsCount: number;
+  venueLongitude: string | null;
+  venueLatitude: string | null;
   eventImages: {
     imageType: EventImageType;
     url: string;
@@ -412,15 +444,6 @@ export interface ValidationError {
   isOperational: boolean;
   /** Construct a type with a set of properties K of type T */
   metadata?: RecordStringAny;
-}
-
-export interface CreateTicketListingRouteBody {
-  /** @format double */
-  quantity: number;
-  /** @format double */
-  price: number;
-  ticketWaveId: string;
-  eventId: string;
 }
 
 export interface PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray {
@@ -1580,7 +1603,7 @@ export interface GetVerificationImageUrlResponse {
 }
 
 export interface ApproveVerificationResponse {
-  message: string;
+  message: "Verificación aprobada";
   success: boolean;
 }
 
@@ -1589,7 +1612,7 @@ export interface ApproveVerificationRouteBody {
 }
 
 export interface RejectVerificationResponse {
-  message: string;
+  message: "Verificación rechazada";
   success: boolean;
 }
 
@@ -2119,10 +2142,16 @@ export interface UserGetCaseDetailsResponse {
     metadata: any;
     comment: string | null;
     actionType: TicketReportActionType;
+    performedByAdmin: boolean;
     performedByUserId: string;
     ticketReportId: string;
     id: string;
   }[];
+  reporter: {
+    email: string;
+    lastName: string | null;
+    firstName: string | null;
+  };
   /** @format date-time */
   updatedAt: string;
   /** @format date-time */
@@ -2143,6 +2172,7 @@ export interface UserAddActionResponse {
   action: {
     ticketReportId: string;
     performedByUserId: string;
+    performedByAdmin: boolean;
     comment: string | null;
     actionType: TicketReportActionType;
     metadata: JsonValue;
@@ -2177,6 +2207,7 @@ export interface UserCloseCaseResponse {
   action: {
     ticketReportId: string;
     performedByUserId: string;
+    performedByAdmin: boolean;
     comment: string | null;
     actionType: TicketReportActionType;
     metadata: JsonValue;
@@ -2235,6 +2266,148 @@ export type ListAttachmentsResponse = {
 
 export interface GetAttachmentUrlResponse {
   url: string;
+}
+
+export interface UpdateProfileResponse {
+  lastName: string | null;
+  firstName: string | null;
+}
+
+/**
+ * API Error Response - This is the actual shape returned by the error handler middleware.
+ * Use this type in
+ */
+export interface ApiErrorResponse {
+  /** The error class name (e.g., 'ValidationError', 'UnauthorizedError') */
+  error: ErrorClassName;
+  /** Human-readable error message */
+  message: string;
+  /**
+   * HTTP status code
+   * @format double
+   */
+  statusCode: number;
+  /** ISO timestamp of when the error occurred */
+  timestamp: string;
+  /** Request path that caused the error */
+  path: string;
+  /** HTTP method of the request */
+  method: string;
+  /** Additional metadata (e.g., for validation errors) */
+  metadata?: RecordStringUnknown;
+}
+
+export interface UpdateProfileRouteBody {
+  lastName: string;
+  firstName: string;
+}
+
+export interface UploadProfileImageResponse {
+  imageUrl: string;
+}
+
+export interface DeleteProfileImageResponse {
+  success: boolean;
+}
+
+export type GetEmailsResponse = {
+  verification: {
+    status: string;
+  } | null;
+  isPrimary: boolean;
+  emailAddress: string;
+  id: string;
+}[];
+
+export interface AddEmailResponse {
+  emailAddress: string;
+  emailAddressId: string;
+}
+
+export interface AddEmailRouteBody {
+  emailAddress: string;
+}
+
+export interface VerifyEmailResponse {
+  success: boolean;
+}
+
+export interface VerifyEmailRouteBody {
+  code: string;
+  emailAddressId: string;
+}
+
+export interface SetPrimaryEmailResponse {
+  success: boolean;
+}
+
+export interface SetPrimaryEmailRouteBody {
+  emailAddressId: string;
+}
+
+export interface DeleteEmailResponse {
+  success: boolean;
+}
+
+export type GetExternalAccountsResponse = {
+  imageUrl: string;
+  lastName: string;
+  firstName: string;
+  emailAddress: string;
+  provider: string;
+  id: string;
+}[];
+
+export interface GetPasswordStatusResponse {
+  hasPassword: boolean;
+}
+
+export interface SetPasswordResponse {
+  success: boolean;
+}
+
+export interface SetPasswordRouteBody {
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+}
+
+export interface ChangePasswordRouteBody {
+  newPassword: string;
+  currentPassword: string;
+}
+
+export type GetSessionsResponse = {
+  latestActivity: {
+    isMobile: boolean;
+    country?: string;
+    city?: string;
+    ipAddress?: string;
+    deviceType?: string;
+    browserVersion?: string;
+    browserName?: string;
+  } | null;
+  status: string;
+  /** @format double */
+  expireAt: number;
+  /** @format double */
+  lastActiveAt: number;
+  clientId: string;
+  id: string;
+}[];
+
+export interface RevokeSessionResponse {
+  success: boolean;
+}
+
+export interface DeleteAccountResponse {
+  success: boolean;
+}
+
+export interface DeleteAccountRouteBody {
+  confirmation: "ELIMINAR";
 }
 
 export interface CreatePaymentLinkResponse {
@@ -2352,32 +2525,8 @@ export type MarkAllAsSeenResponse = TypedNotification[];
 export type DeleteNotificationResponse = TypedNotification | null;
 
 export interface InitiateVerificationResponse {
-  message: string;
+  message: "Verificación iniciada";
   success: boolean;
-}
-
-/**
- * API Error Response - This is the actual shape returned by the error handler middleware.
- * Use this type in
- */
-export interface ApiErrorResponse {
-  /** The error class name (e.g., 'ValidationError', 'UnauthorizedError') */
-  error: ErrorClassName;
-  /** Human-readable error message */
-  message: string;
-  /**
-   * HTTP status code
-   * @format double
-   */
-  statusCode: number;
-  /** ISO timestamp of when the error occurred */
-  timestamp: string;
-  /** Request path that caused the error */
-  path: string;
-  /** HTTP method of the request */
-  method: string;
-  /** Additional metadata (e.g., for validation errors) */
-  metadata?: RecordStringUnknown;
 }
 
 export interface InitiateVerificationRouteBody {
@@ -2407,7 +2556,7 @@ export interface VerifyLivenessResultsResponse {
   retriesRemaining?: number;
   canRetry?: boolean;
   message?: string;
-  status: VerificationStatus;
+  status: IdentityVerificationStatus;
   verified: boolean;
 }
 
@@ -2487,10 +2636,16 @@ export interface AdminGetCaseDetailsResponse {
     metadata: any;
     comment: string | null;
     actionType: TicketReportActionType;
+    performedByAdmin: boolean;
     performedByUserId: string;
     ticketReportId: string;
     id: string;
   }[];
+  reporter: {
+    email: string;
+    lastName: string | null;
+    firstName: string | null;
+  };
   /** @format date-time */
   updatedAt: string;
   /** @format date-time */
@@ -2511,6 +2666,7 @@ export interface AdminAddActionResponse {
   action: {
     ticketReportId: string;
     performedByUserId: string;
+    performedByAdmin: boolean;
     comment: string | null;
     actionType: TicketReportActionType;
     metadata: JsonValue;
@@ -2781,6 +2937,29 @@ export class Api<
         page: number;
         /** Filter by city name */
         city?: string;
+        /** Filter by region/state/departamento name */
+        region?: string;
+        /**
+         * Latitude for proximity search (requires lng)
+         * @format double
+         */
+        lat?: number;
+        /**
+         * Longitude for proximity search (requires lat)
+         * @format double
+         */
+        lng?: number;
+        /**
+         * Radius in km for proximity search (default: 30)
+         * @format double
+         */
+        radiusKm?: number;
+        /** Filter events starting from this date (ISO format) */
+        dateFrom?: string;
+        /** Filter events ending before this date (ISO format) */
+        dateTo?: string;
+        /** Only show events with at least one available ticket */
+        hasTickets?: boolean;
       },
       params: RequestParams = {},
     ) =>
@@ -2828,6 +3007,13 @@ export class Api<
         days?: number;
         /** @format double */
         limit?: number;
+        region?: string;
+        /** @format double */
+        lat?: number;
+        /** @format double */
+        lng?: number;
+        /** @format double */
+        radiusKm?: number;
       },
       params: RequestParams = {},
     ) =>
@@ -2849,6 +3035,21 @@ export class Api<
     getDistinctCities: (params: RequestParams = {}) =>
       this.request<GetDistinctCitiesResponse, any>({
         path: `/events/cities`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Get distinct regions with active events, grouped by country
+     *
+     * @tags Events
+     * @name GetDistinctRegions
+     * @request GET:/events/regions
+     */
+    getDistinctRegions: (params: RequestParams = {}) =>
+      this.request<GetDistinctRegionsResponse, any>({
+        path: `/events/regions`,
         method: "GET",
         format: "json",
         ...params,
@@ -3025,7 +3226,18 @@ export class Api<
      * @name Create
      * @request POST:/ticket-listings
      */
-    create: (data: CreateTicketListingRouteBody, params: RequestParams = {}) =>
+    create: (
+      data: {
+        eventId: string;
+        ticketWaveId: string;
+        /** @format double */
+        price: number;
+        /** @format double */
+        quantity: number;
+        documents?: File[];
+      },
+      params: RequestParams = {},
+    ) =>
       this.request<
         CreateTicketListingResponse,
         BadRequestError | UnauthorizedError | NotFoundError | ValidationError
@@ -3033,7 +3245,7 @@ export class Api<
         path: `/ticket-listings`,
         method: "POST",
         body: data,
-        type: ContentType.Json,
+        type: ContentType.FormData,
         format: "json",
         ...params,
       }),
@@ -4357,6 +4569,260 @@ export class Api<
           ...params,
         },
       ),
+  };
+  profile = {
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name UpdateProfile
+     * @request PUT:/profile
+     */
+    updateProfile: (data: UpdateProfileRouteBody, params: RequestParams = {}) =>
+      this.request<UpdateProfileResponse, ApiErrorResponse>({
+        path: `/profile`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name UploadProfileImage
+     * @request PUT:/profile/image
+     */
+    uploadProfileImage: (
+      data: {
+        /** @format binary */
+        file: File;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<UploadProfileImageResponse, ApiErrorResponse>({
+        path: `/profile/image`,
+        method: "PUT",
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name DeleteProfileImage
+     * @request DELETE:/profile/image
+     */
+    deleteProfileImage: (params: RequestParams = {}) =>
+      this.request<DeleteProfileImageResponse, ApiErrorResponse>({
+        path: `/profile/image`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name GetEmails
+     * @request GET:/profile/emails
+     */
+    getEmails: (params: RequestParams = {}) =>
+      this.request<GetEmailsResponse, ApiErrorResponse>({
+        path: `/profile/emails`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name AddEmail
+     * @request POST:/profile/emails
+     */
+    addEmail: (data: AddEmailRouteBody, params: RequestParams = {}) =>
+      this.request<AddEmailResponse, ApiErrorResponse>({
+        path: `/profile/emails`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name VerifyEmail
+     * @request POST:/profile/emails/verify
+     */
+    verifyEmail: (data: VerifyEmailRouteBody, params: RequestParams = {}) =>
+      this.request<VerifyEmailResponse, ApiErrorResponse>({
+        path: `/profile/emails/verify`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name SetPrimaryEmail
+     * @request PUT:/profile/emails/primary
+     */
+    setPrimaryEmail: (
+      data: SetPrimaryEmailRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<SetPrimaryEmailResponse, ApiErrorResponse>({
+        path: `/profile/emails/primary`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name DeleteEmail
+     * @request DELETE:/profile/emails/{emailAddressId}
+     */
+    deleteEmail: (emailAddressId: string, params: RequestParams = {}) =>
+      this.request<DeleteEmailResponse, ApiErrorResponse>({
+        path: `/profile/emails/${emailAddressId}`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name GetExternalAccounts
+     * @request GET:/profile/external-accounts
+     */
+    getExternalAccounts: (params: RequestParams = {}) =>
+      this.request<GetExternalAccountsResponse, ApiErrorResponse>({
+        path: `/profile/external-accounts`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name GetPasswordStatus
+     * @request GET:/profile/password-status
+     */
+    getPasswordStatus: (params: RequestParams = {}) =>
+      this.request<GetPasswordStatusResponse, ApiErrorResponse>({
+        path: `/profile/password-status`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name SetPassword
+     * @request POST:/profile/password
+     */
+    setPassword: (data: SetPasswordRouteBody, params: RequestParams = {}) =>
+      this.request<SetPasswordResponse, ApiErrorResponse>({
+        path: `/profile/password`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name ChangePassword
+     * @request PUT:/profile/password
+     */
+    changePassword: (
+      data: ChangePasswordRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<ChangePasswordResponse, ApiErrorResponse>({
+        path: `/profile/password`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name GetSessions
+     * @request GET:/profile/sessions
+     */
+    getSessions: (params: RequestParams = {}) =>
+      this.request<GetSessionsResponse, ApiErrorResponse>({
+        path: `/profile/sessions`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name RevokeSession
+     * @request DELETE:/profile/sessions/{sessionId}
+     */
+    revokeSession: (sessionId: string, params: RequestParams = {}) =>
+      this.request<RevokeSessionResponse, ApiErrorResponse>({
+        path: `/profile/sessions/${sessionId}`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name DeleteAccount
+     * @request DELETE:/profile/account
+     */
+    deleteAccount: (data: DeleteAccountRouteBody, params: RequestParams = {}) =>
+      this.request<DeleteAccountResponse, ApiErrorResponse>({
+        path: `/profile/account`,
+        method: "DELETE",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   payments = {
     /**

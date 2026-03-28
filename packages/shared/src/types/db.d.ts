@@ -151,6 +151,7 @@ export interface EventVenues {
   latitude: Numeric | null;
   longitude: Numeric | null;
   name: string;
+  region: string | null;
   updatedAt: Generated<Timestamp>;
 }
 
@@ -458,6 +459,7 @@ export interface TicketReportActions {
   createdAt: Generated<Timestamp>;
   id: Generated<string>;
   metadata: Json | null;
+  performedByAdmin: Generated<boolean>;
   performedByUserId: string;
   ticketReportId: string;
 }

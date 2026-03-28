@@ -35,6 +35,10 @@ import {
 } from '~/repositories';
 import {db} from '~/db';
 import {NotFoundError, ValidationError, UnauthorizedError, BadRequestError, ConflictError} from '~/errors';
+import {
+  TICKET_REPORT_ERROR_MESSAGES,
+  VALIDATION_MESSAGES,
+} from '~/constants/error-messages';
 import {ValidateBody, Body} from '~/decorators';
 import {
   CreateTicketReportBody,
@@ -170,7 +174,7 @@ export class TicketReportsController {
     @Query() actionId?: string,
   ): Promise<UploadAttachmentResponse> {
     if (!file) {
-      throw new BadRequestError('No se subió ningún archivo');
+      throw new BadRequestError(VALIDATION_MESSAGES.NO_FILE_UPLOADED);
     }
     return this.attachmentService.uploadAttachment(
       reportId,

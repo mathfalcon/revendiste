@@ -22,8 +22,8 @@ export const TicketReportActionEmail = ({
   appBaseUrl,
 }: TicketReportActionEmailProps) => (
   <BaseEmail
-    title="Nueva actualización en tu caso"
-    preview="El equipo de soporte actualizó tu caso"
+    title="Novedad en tu caso"
+    preview="Soporte actualizó tu caso"
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">{actionDescription}</Text>
@@ -55,8 +55,8 @@ export const TicketReportActionEmail = ({
 
 TicketReportActionEmail.PreviewProps = {
   actionDescription:
-    'El equipo de soporte agregó una actualización a tu caso.',
-  comment: 'Estamos revisando tu reporte. Te contactaremos pronto.',
+    'Soporte agregó una actualización a tu caso.',
+  comment: 'Estamos revisando tu caso. Te avisamos pronto.',
   reportUrl: 'https://revendiste.com/cuenta/reportes/123',
 } as TicketReportActionEmailProps;
 

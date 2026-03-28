@@ -43,7 +43,7 @@ export const requestPayoutMutation = () =>
       listingIds?: string[];
     }) => api.payouts.requestPayout(data).then(res => res.data),
     onSuccess: () => {
-      toast.success('Solicitud de pago creada exitosamente');
+      toast.success('Solicitud de retiro creada');
     },
   });
 
@@ -59,7 +59,7 @@ export const addPayoutMethodMutation = () =>
     mutationFn: (data: AddPayoutMethodRouteBody) =>
       api.payouts.addPayoutMethod(data).then(res => res.data),
     onSuccess: () => {
-      toast.success('Método de pago agregado exitosamente');
+      toast.success('Método de pago agregado');
     },
   });
 
@@ -90,7 +90,7 @@ export const updatePayoutMethodMutation = () =>
         .updatePayoutMethod(payoutMethodId, data)
         .then(res => res.data),
     onSuccess: () => {
-      toast.success('Método de pago actualizado exitosamente');
+      toast.success('Método de pago actualizado');
     },
   });
 
@@ -100,6 +100,6 @@ export const deletePayoutMethodMutation = () =>
     mutationFn: (payoutMethodId: string) =>
       api.payouts.deletePayoutMethod(payoutMethodId).then(res => res.data),
     onSuccess: () => {
-      toast.success('Método de pago eliminado exitosamente');
+      toast.success('Método de pago eliminado');
     },
   });

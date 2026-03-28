@@ -29,6 +29,7 @@ import { Route as CuentaSubirTicketsRouteImport } from './routes/cuenta/subir-ti
 import { Route as CuentaRetiroRouteImport } from './routes/cuenta/retiro'
 import { Route as CuentaPublicacionesRouteImport } from './routes/cuenta/publicaciones'
 import { Route as CuentaEstadoVerificacionRouteImport } from './routes/cuenta/estado-verificacion'
+import { Route as CuentaConfiguracionRouteImport } from './routes/cuenta/configuracion'
 import { Route as AdminVerificacionesRouteImport } from './routes/admin/verificaciones'
 import { Route as AdminRetirosRouteImport } from './routes/admin/retiros'
 import { Route as AdminEventosRouteImport } from './routes/admin/eventos'
@@ -140,6 +141,11 @@ const CuentaEstadoVerificacionRoute =
     path: '/estado-verificacion',
     getParentRoute: () => CuentaRouteRoute,
   } as any)
+const CuentaConfiguracionRoute = CuentaConfiguracionRouteImport.update({
+  id: '/configuracion',
+  path: '/configuracion',
+  getParentRoute: () => CuentaRouteRoute,
+} as any)
 const AdminVerificacionesRoute = AdminVerificacionesRouteImport.update({
   id: '/verificaciones',
   path: '/verificaciones',
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/admin/eventos': typeof AdminEventosRoute
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
+  '/cuenta/configuracion': typeof CuentaConfiguracionRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
@@ -213,9 +220,9 @@ export interface FileRoutesByFullPath {
   '/admin/reportes/$reportId': typeof AdminReportesReportIdRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/cuenta/reportes/$reportId': typeof CuentaReportesReportIdRoute
-  '/admin/reportes': typeof AdminReportesIndexRoute
-  '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
-  '/cuenta/reportes': typeof CuentaReportesIndexRoute
+  '/admin/reportes/': typeof AdminReportesIndexRoute
+  '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
+  '/cuenta/reportes/': typeof CuentaReportesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/admin/eventos': typeof AdminEventosRoute
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
+  '/cuenta/configuracion': typeof CuentaConfiguracionRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
@@ -261,6 +269,7 @@ export interface FileRoutesById {
   '/admin/eventos': typeof AdminEventosRoute
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
+  '/cuenta/configuracion': typeof CuentaConfiguracionRoute
   '/cuenta/estado-verificacion': typeof CuentaEstadoVerificacionRoute
   '/cuenta/publicaciones': typeof CuentaPublicacionesRoute
   '/cuenta/retiro': typeof CuentaRetiroRoute
@@ -294,6 +303,7 @@ export interface FileRouteTypes {
     | '/admin/eventos'
     | '/admin/retiros'
     | '/admin/verificaciones'
+    | '/cuenta/configuracion'
     | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
@@ -308,9 +318,9 @@ export interface FileRouteTypes {
     | '/admin/reportes/$reportId'
     | '/checkout/$orderId/success'
     | '/cuenta/reportes/$reportId'
-    | '/admin/reportes'
-    | '/checkout/$orderId'
-    | '/cuenta/reportes'
+    | '/admin/reportes/'
+    | '/checkout/$orderId/'
+    | '/cuenta/reportes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/admin/eventos'
     | '/admin/retiros'
     | '/admin/verificaciones'
+    | '/cuenta/configuracion'
     | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/admin/eventos'
     | '/admin/retiros'
     | '/admin/verificaciones'
+    | '/cuenta/configuracion'
     | '/cuenta/estado-verificacion'
     | '/cuenta/publicaciones'
     | '/cuenta/retiro'
@@ -534,6 +546,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CuentaEstadoVerificacionRouteImport
       parentRoute: typeof CuentaRouteRoute
     }
+    '/cuenta/configuracion': {
+      id: '/cuenta/configuracion'
+      path: '/configuracion'
+      fullPath: '/cuenta/configuracion'
+      preLoaderRoute: typeof CuentaConfiguracionRouteImport
+      parentRoute: typeof CuentaRouteRoute
+    }
     '/admin/verificaciones': {
       id: '/admin/verificaciones'
       path: '/verificaciones'
@@ -558,21 +577,21 @@ declare module '@tanstack/react-router' {
     '/cuenta/reportes/': {
       id: '/cuenta/reportes/'
       path: '/reportes'
-      fullPath: '/cuenta/reportes'
+      fullPath: '/cuenta/reportes/'
       preLoaderRoute: typeof CuentaReportesIndexRouteImport
       parentRoute: typeof CuentaRouteRoute
     }
     '/checkout/$orderId/': {
       id: '/checkout/$orderId/'
       path: '/checkout/$orderId'
-      fullPath: '/checkout/$orderId'
+      fullPath: '/checkout/$orderId/'
       preLoaderRoute: typeof CheckoutOrderIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/reportes/': {
       id: '/admin/reportes/'
       path: '/reportes'
-      fullPath: '/admin/reportes'
+      fullPath: '/admin/reportes/'
       preLoaderRoute: typeof AdminReportesIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
@@ -623,6 +642,7 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 )
 
 interface CuentaRouteRouteChildren {
+  CuentaConfiguracionRoute: typeof CuentaConfiguracionRoute
   CuentaEstadoVerificacionRoute: typeof CuentaEstadoVerificacionRoute
   CuentaPublicacionesRoute: typeof CuentaPublicacionesRoute
   CuentaRetiroRoute: typeof CuentaRetiroRoute
@@ -634,6 +654,7 @@ interface CuentaRouteRouteChildren {
 }
 
 const CuentaRouteRouteChildren: CuentaRouteRouteChildren = {
+  CuentaConfiguracionRoute: CuentaConfiguracionRoute,
   CuentaEstadoVerificacionRoute: CuentaEstadoVerificacionRoute,
   CuentaPublicacionesRoute: CuentaPublicacionesRoute,
   CuentaRetiroRoute: CuentaRetiroRoute,

@@ -14,7 +14,9 @@ import type {NotificationService} from '~/services/notifications';
 import type {DLocalService} from '~/services/dlocal';
 import type {IStorageProvider} from '~/services/storage/IStorageProvider';
 import {NotFoundError, UnauthorizedError, ValidationError} from '~/errors';
-import {TICKET_REPORT_ERROR_MESSAGES} from '~/constants/error-messages';
+import type {Orders, Payments, OrderTicketReservations, ListingTickets, DB} from '@revendiste/shared';
+import type {Selectable, Kysely} from 'kysely';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import {
   createMockTicketReport,
   createMockTicketReportAction,
@@ -43,6 +45,10 @@ describe('TicketReportsService', () => {
       getByUserId: jest.fn(),
       getForAdmin: jest.fn(),
       updateStatus: jest.fn(),
+      findActiveByEntity: jest.fn().mockResolvedValue(null),
+      getEntityDetails: jest.fn().mockResolvedValue(null),
+      getReporterInfo: jest.fn().mockResolvedValue(null),
+      getTicketPrice: jest.fn().mockResolvedValue(null),
       withTransaction: jest.fn(),
       executeTransaction: jest.fn(),
       getDb: jest.fn(),
@@ -81,6 +87,7 @@ describe('TicketReportsService', () => {
     mockReservationsRepo = {
       getByOrderId: jest.fn(),
       getById: jest.fn(),
+      getByListingTicketId: jest.fn(),
       updateStatus: jest.fn(),
       withTransaction: jest.fn(),
       executeTransaction: jest.fn(),
@@ -123,9 +130,9 @@ describe('TicketReportsService', () => {
       delete: jest.fn(),
     } as unknown as jest.Mocked<IStorageProvider>;
 
-    // executeTransaction delegates to callback
+    // executeTransaction delegates to callback with a stub Kysely instance
     mockReportsRepo.executeTransaction.mockImplementation(cb =>
-      cb({} as any),
+      cb({} as unknown as Kysely<DB>),
     );
     mockReportsRepo.withTransaction.mockReturnValue(mockReportsRepo);
     mockActionsRepo.withTransaction.mockReturnValue(mockActionsRepo);
@@ -152,7 +159,7 @@ describe('TicketReportsService', () => {
   describe('createCase', () => {
     it('creates a report with status awaiting_support and source user_report', async () => {
       const mockReport = createMockTicketReport({reportedByUserId: 'user-1'});
-      mockOrdersRepo.getById.mockResolvedValue({id: 'entity-1', userId: 'user-1'} as any);
+      mockOrdersRepo.getById.mockResolvedValue({id: 'entity-1', userId: 'user-1'} as unknown as Selectable<Orders>);
       mockReportsRepo.create.mockResolvedValue(mockReport);
 
       const result = await service.createCase(
@@ -173,7 +180,7 @@ describe('TicketReportsService', () => {
 
     it('fires a notification after creating the case', async () => {
       const mockReport = createMockTicketReport();
-      mockOrdersRepo.getById.mockResolvedValue({id: 'entity-1', userId: 'user-1'} as any);
+      mockOrdersRepo.getById.mockResolvedValue({id: 'entity-1', userId: 'user-1'} as unknown as Selectable<Orders>);
       mockReportsRepo.create.mockResolvedValue(mockReport);
 
       await service.createCase(
@@ -200,7 +207,7 @@ describe('TicketReportsService', () => {
     });
 
     it('throws UnauthorizedError when user does not own the order', async () => {
-      mockOrdersRepo.getById.mockResolvedValue({id: 'entity-1', userId: 'other-user'} as any);
+      mockOrdersRepo.getById.mockResolvedValue({id: 'entity-1', userId: 'other-user'} as unknown as Selectable<Orders>);
 
       await expect(
         service.createCase(
@@ -211,7 +218,7 @@ describe('TicketReportsService', () => {
     });
 
     it('throws NotFoundError when reservation does not exist', async () => {
-      mockReservationsRepo.getById.mockResolvedValue(undefined);
+      mockReservationsRepo.getByListingTicketId.mockResolvedValue(undefined);
 
       await expect(
         service.createCase(
@@ -222,8 +229,8 @@ describe('TicketReportsService', () => {
     });
 
     it('throws UnauthorizedError when user does not own the reservation', async () => {
-      mockReservationsRepo.getById.mockResolvedValue({id: 'res-1', orderId: 'order-1'} as any);
-      mockOrdersRepo.getById.mockResolvedValue({id: 'order-1', userId: 'other-user'} as any);
+      mockReservationsRepo.getByListingTicketId.mockResolvedValue({id: 'res-1', orderId: 'order-1'} as unknown as Selectable<OrderTicketReservations>);
+      mockOrdersRepo.getById.mockResolvedValue({id: 'order-1', userId: 'other-user'} as unknown as Selectable<Orders>);
 
       await expect(
         service.createCase(
@@ -341,21 +348,25 @@ describe('TicketReportsService', () => {
       mockActionsRepo.create.mockResolvedValue(createMockTicketReportAction({actionType: 'refund_full'}));
 
       mockReservationsRepo.getByOrderId.mockResolvedValue([
-        {id: 'res-1', status: 'active'} as any,
+        {id: 'res-1', status: 'active', orderId: 'order-1', listingTicketId: 'lt-1'} as unknown as Awaited<ReturnType<OrderTicketReservationsRepository['getByOrderId']>>[number],
       ]);
+      mockReportsRepo.getTicketPrice.mockResolvedValue({price: '575'} as unknown as Pick<Selectable<ListingTickets>, 'price'>);
+      mockOrdersRepo.getById.mockResolvedValue({id: 'order-1', currency: 'UYU'} as unknown as Selectable<Orders>);
       mockRefundsRepo.create.mockResolvedValue(createMockTicketReportRefund());
       mockPaymentsRepo.getByOrderId.mockResolvedValue({
         id: 'payment-1',
         providerPaymentId: 'dlocal-123',
         currency: 'UYU',
-      } as any);
+      } as unknown as Selectable<Payments>);
       mockDLocalService.createRefund.mockResolvedValue({
         id: 'refund-1',
         status: 'PAID',
-      } as any);
+      } as unknown as Awaited<ReturnType<DLocalService['createRefund']>>);
       mockRefundsRepo.updateStatus.mockResolvedValue(createMockTicketReportRefund({refundStatus: 'refunded'}));
 
       await service.addAction(report.id, {actionType: 'refund_full'}, 'admin-1', true);
+      // executeDLocalRefunds is fire-and-forget — flush microtasks/promises to let it complete
+      await new Promise(r => setTimeout(r, 10));
 
       expect(mockDLocalService.createRefund).toHaveBeenCalledWith(
         expect.objectContaining({paymentId: 'dlocal-123'}),
@@ -366,7 +377,7 @@ describe('TicketReportsService', () => {
         expect.any(String),
         'refunded',
         expect.any(Date),
-        undefined,
+        expect.any(Number), // refundAmount (ticket price)
       );
       expect(mockReservationsRepo.updateStatus).toHaveBeenCalledWith('res-1', 'refunded');
       expect(mockReportsRepo.updateStatus).toHaveBeenCalledWith(
@@ -387,13 +398,15 @@ describe('TicketReportsService', () => {
       mockActionsRepo.create.mockResolvedValue(createMockTicketReportAction());
 
       mockReservationsRepo.getByOrderId.mockResolvedValue([
-        {id: 'res-1', status: 'active'} as any,
+        {id: 'res-1', status: 'active', orderId: 'order-1', listingTicketId: 'lt-1'} as unknown as Awaited<ReturnType<OrderTicketReservationsRepository['getByOrderId']>>[number],
       ]);
+      mockReportsRepo.getTicketPrice.mockResolvedValue({price: '575'} as unknown as Pick<Selectable<ListingTickets>, 'price'>);
+      mockOrdersRepo.getById.mockResolvedValue({id: 'order-1', currency: 'UYU'} as unknown as Selectable<Orders>);
       mockRefundsRepo.create.mockResolvedValue(createMockTicketReportRefund());
       mockPaymentsRepo.getByOrderId.mockResolvedValue({
         providerPaymentId: 'dlocal-123',
         currency: 'UYU',
-      } as any);
+      } as unknown as Selectable<Payments>);
       mockDLocalService.createRefund.mockRejectedValue(new Error('dLocal unavailable'));
       mockRefundsRepo.updateStatus.mockResolvedValue(createMockTicketReportRefund({refundStatus: 'skipped'}));
 

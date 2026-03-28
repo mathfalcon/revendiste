@@ -212,6 +212,42 @@
 					"city": {
 						"type": "string",
 						"description": "Filter by city name"
+					},
+					"region": {
+						"type": "string",
+						"description": "Filter by region/state/departamento name"
+					},
+					"lat": {
+						"type": "number",
+						"format": "double",
+						"description": "Latitude for proximity search (requires lng)"
+					},
+					"lng": {
+						"type": "number",
+						"format": "double",
+						"description": "Longitude for proximity search (requires lat)"
+					},
+					"radiusKm": {
+						"type": "number",
+						"format": "double",
+						"description": "Radius in km for proximity search (default: 30)"
+					},
+					"dateFrom": {
+						"type": "string",
+						"description": "Filter events starting from this date (ISO format)"
+					},
+					"dateTo": {
+						"type": "string",
+						"description": "Filter events ending before this date (ISO format)"
+					},
+					"hasTickets": {
+						"type": "boolean",
+						"description": "Only show events with at least one available ticket"
+					},
+					"tzOffset": {
+						"type": "number",
+						"format": "double",
+						"description": "User timezone offset in minutes from UTC (e.g. 180 for UTC-3)"
 					}
 				},
 				"required": [
@@ -420,6 +456,27 @@
 				},
 				"type": "array"
 			},
+			"GetDistinctRegionsResponse": {
+				"items": {
+					"properties": {
+						"regions": {
+							"items": {
+								"type": "string"
+							},
+							"type": "array"
+						},
+						"country": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"regions",
+						"country"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
 			"QrAvailabilityTiming": {
 				"type": "string",
 				"enum": [
@@ -498,9 +555,21 @@
 						},
 						"type": "array"
 					},
+					"userActiveTicketCount": {
+						"type": "number",
+						"format": "double"
+					},
 					"userListingsCount": {
 						"type": "number",
 						"format": "double"
+					},
+					"venueLongitude": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueLatitude": {
+						"type": "string",
+						"nullable": true
 					},
 					"eventImages": {
 						"items": {
@@ -575,7 +644,10 @@
 				},
 				"required": [
 					"ticketWaves",
+					"userActiveTicketCount",
 					"userListingsCount",
+					"venueLongitude",
+					"venueLatitude",
 					"eventImages",
 					"venueCity",
 					"venueAddress",
@@ -900,31 +972,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"CreateTicketListingRouteBody": {
-				"properties": {
-					"quantity": {
-						"type": "number",
-						"format": "double"
-					},
-					"price": {
-						"type": "number",
-						"format": "double"
-					},
-					"ticketWaveId": {
-						"type": "string"
-					},
-					"eventId": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"quantity",
-					"price",
-					"ticketWaveId",
-					"eventId"
-				],
-				"type": "object"
 			},
 			"UploadAvailabilityReason": {
 				"type": "string",
@@ -5507,7 +5554,11 @@
 			"ApproveVerificationResponse": {
 				"properties": {
 					"message": {
-						"type": "string"
+						"type": "string",
+						"enum": [
+							"Verificación aprobada"
+						],
+						"nullable": false
 					},
 					"success": {
 						"type": "boolean"
@@ -5530,7 +5581,11 @@
 			"RejectVerificationResponse": {
 				"properties": {
 					"message": {
-						"type": "string"
+						"type": "string",
+						"enum": [
+							"Verificación rechazada"
+						],
+						"nullable": false
 					},
 					"success": {
 						"type": "boolean"
@@ -7363,6 +7418,9 @@
 								"actionType": {
 									"$ref": "#/components/schemas/TicketReportActionType"
 								},
+								"performedByAdmin": {
+									"type": "boolean"
+								},
 								"performedByUserId": {
 									"type": "string"
 								},
@@ -7379,6 +7437,7 @@
 								"metadata",
 								"comment",
 								"actionType",
+								"performedByAdmin",
 								"performedByUserId",
 								"ticketReportId",
 								"id"
@@ -7386,6 +7445,28 @@
 							"type": "object"
 						},
 						"type": "array"
+					},
+					"reporter": {
+						"properties": {
+							"email": {
+								"type": "string"
+							},
+							"lastName": {
+								"type": "string",
+								"nullable": true
+							},
+							"firstName": {
+								"type": "string",
+								"nullable": true
+							}
+						},
+						"required": [
+							"email",
+							"lastName",
+							"firstName"
+						],
+						"type": "object",
+						"nullable": true
 					},
 					"updatedAt": {
 						"type": "string",
@@ -7431,6 +7512,7 @@
 					"entityDetails",
 					"initialAttachments",
 					"actions",
+					"reporter",
 					"updatedAt",
 					"createdAt",
 					"closedAt",
@@ -7455,6 +7537,9 @@
 							"performedByUserId": {
 								"type": "string"
 							},
+							"performedByAdmin": {
+								"type": "boolean"
+							},
 							"comment": {
 								"type": "string",
 								"nullable": true
@@ -7476,6 +7561,7 @@
 						"required": [
 							"ticketReportId",
 							"performedByUserId",
+							"performedByAdmin",
 							"comment",
 							"actionType",
 							"metadata",
@@ -7585,6 +7671,9 @@
 							"performedByUserId": {
 								"type": "string"
 							},
+							"performedByAdmin": {
+								"type": "boolean"
+							},
 							"comment": {
 								"type": "string",
 								"nullable": true
@@ -7606,6 +7695,7 @@
 						"required": [
 							"ticketReportId",
 							"performedByUserId",
+							"performedByAdmin",
 							"comment",
 							"actionType",
 							"metadata",
@@ -7802,6 +7892,436 @@
 				},
 				"required": [
 					"url"
+				],
+				"type": "object"
+			},
+			"UpdateProfileResponse": {
+				"properties": {
+					"lastName": {
+						"type": "string",
+						"nullable": true
+					},
+					"firstName": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"lastName",
+					"firstName"
+				],
+				"type": "object"
+			},
+			"ErrorClassName": {
+				"type": "string",
+				"enum": [
+					"AppError",
+					"BadRequestError",
+					"UnauthorizedError",
+					"ForbiddenError",
+					"NotFoundError",
+					"ConflictError",
+					"ValidationError",
+					"TooManyRequestsError",
+					"MaxAttemptsExceededError",
+					"InternalServerError",
+					"ServiceUnavailableError",
+					"DatabaseError",
+					"ZodValidationError"
+				],
+				"description": "Union type of all error class names that can be returned by the API.\nUsed for type-safe error handling on the frontend."
+			},
+			"ApiErrorResponse": {
+				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\nUse this type in",
+				"properties": {
+					"error": {
+						"$ref": "#/components/schemas/ErrorClassName",
+						"description": "The error class name (e.g., 'ValidationError', 'UnauthorizedError')"
+					},
+					"message": {
+						"type": "string",
+						"description": "Human-readable error message"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double",
+						"description": "HTTP status code"
+					},
+					"timestamp": {
+						"type": "string",
+						"description": "ISO timestamp of when the error occurred"
+					},
+					"path": {
+						"type": "string",
+						"description": "Request path that caused the error"
+					},
+					"method": {
+						"type": "string",
+						"description": "HTTP method of the request"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "Additional metadata (e.g., for validation errors)"
+					}
+				},
+				"required": [
+					"error",
+					"message",
+					"statusCode",
+					"timestamp",
+					"path",
+					"method"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateProfileRouteBody": {
+				"properties": {
+					"lastName": {
+						"type": "string"
+					},
+					"firstName": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"lastName",
+					"firstName"
+				],
+				"type": "object"
+			},
+			"UploadProfileImageResponse": {
+				"properties": {
+					"imageUrl": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"imageUrl"
+				],
+				"type": "object"
+			},
+			"DeleteProfileImageResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"GetEmailsResponse": {
+				"items": {
+					"properties": {
+						"verification": {
+							"properties": {
+								"status": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"status"
+							],
+							"type": "object",
+							"nullable": true
+						},
+						"isPrimary": {
+							"type": "boolean"
+						},
+						"emailAddress": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"verification",
+						"isPrimary",
+						"emailAddress",
+						"id"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"AddEmailResponse": {
+				"properties": {
+					"emailAddress": {
+						"type": "string"
+					},
+					"emailAddressId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"emailAddress",
+					"emailAddressId"
+				],
+				"type": "object"
+			},
+			"AddEmailRouteBody": {
+				"properties": {
+					"emailAddress": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"emailAddress"
+				],
+				"type": "object"
+			},
+			"VerifyEmailResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"VerifyEmailRouteBody": {
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"emailAddressId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"code",
+					"emailAddressId"
+				],
+				"type": "object"
+			},
+			"SetPrimaryEmailResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"SetPrimaryEmailRouteBody": {
+				"properties": {
+					"emailAddressId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"emailAddressId"
+				],
+				"type": "object"
+			},
+			"DeleteEmailResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"GetExternalAccountsResponse": {
+				"items": {
+					"properties": {
+						"imageUrl": {
+							"type": "string"
+						},
+						"lastName": {
+							"type": "string"
+						},
+						"firstName": {
+							"type": "string"
+						},
+						"emailAddress": {
+							"type": "string"
+						},
+						"provider": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"imageUrl",
+						"lastName",
+						"firstName",
+						"emailAddress",
+						"provider",
+						"id"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"GetPasswordStatusResponse": {
+				"properties": {
+					"hasPassword": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"hasPassword"
+				],
+				"type": "object"
+			},
+			"SetPasswordResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"SetPasswordRouteBody": {
+				"properties": {
+					"newPassword": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"newPassword"
+				],
+				"type": "object"
+			},
+			"ChangePasswordResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"ChangePasswordRouteBody": {
+				"properties": {
+					"newPassword": {
+						"type": "string"
+					},
+					"currentPassword": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"newPassword",
+					"currentPassword"
+				],
+				"type": "object"
+			},
+			"GetSessionsResponse": {
+				"items": {
+					"properties": {
+						"latestActivity": {
+							"properties": {
+								"isMobile": {
+									"type": "boolean"
+								},
+								"country": {
+									"type": "string"
+								},
+								"city": {
+									"type": "string"
+								},
+								"ipAddress": {
+									"type": "string"
+								},
+								"deviceType": {
+									"type": "string"
+								},
+								"browserVersion": {
+									"type": "string"
+								},
+								"browserName": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"isMobile"
+							],
+							"type": "object",
+							"nullable": true
+						},
+						"status": {
+							"type": "string"
+						},
+						"expireAt": {
+							"type": "number",
+							"format": "double"
+						},
+						"lastActiveAt": {
+							"type": "number",
+							"format": "double"
+						},
+						"clientId": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"latestActivity",
+						"status",
+						"expireAt",
+						"lastActiveAt",
+						"clientId",
+						"id"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"RevokeSessionResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"DeleteAccountResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"DeleteAccountRouteBody": {
+				"properties": {
+					"confirmation": {
+						"type": "string",
+						"enum": [
+							"ELIMINAR"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"confirmation"
 				],
 				"type": "object"
 			},
@@ -8135,7 +8655,11 @@
 			"InitiateVerificationResponse": {
 				"properties": {
 					"message": {
-						"type": "string"
+						"type": "string",
+						"enum": [
+							"Verificación iniciada"
+						],
+						"nullable": false
 					},
 					"success": {
 						"type": "boolean"
@@ -8146,69 +8670,6 @@
 					"success"
 				],
 				"type": "object"
-			},
-			"ErrorClassName": {
-				"type": "string",
-				"enum": [
-					"AppError",
-					"BadRequestError",
-					"UnauthorizedError",
-					"ForbiddenError",
-					"NotFoundError",
-					"ConflictError",
-					"ValidationError",
-					"TooManyRequestsError",
-					"MaxAttemptsExceededError",
-					"InternalServerError",
-					"ServiceUnavailableError",
-					"DatabaseError",
-					"ZodValidationError"
-				],
-				"description": "Union type of all error class names that can be returned by the API.\nUsed for type-safe error handling on the frontend."
-			},
-			"ApiErrorResponse": {
-				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\nUse this type in",
-				"properties": {
-					"error": {
-						"$ref": "#/components/schemas/ErrorClassName",
-						"description": "The error class name (e.g., 'ValidationError', 'UnauthorizedError')"
-					},
-					"message": {
-						"type": "string",
-						"description": "Human-readable error message"
-					},
-					"statusCode": {
-						"type": "number",
-						"format": "double",
-						"description": "HTTP status code"
-					},
-					"timestamp": {
-						"type": "string",
-						"description": "ISO timestamp of when the error occurred"
-					},
-					"path": {
-						"type": "string",
-						"description": "Request path that caused the error"
-					},
-					"method": {
-						"type": "string",
-						"description": "HTTP method of the request"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/Record_string.unknown_",
-						"description": "Additional metadata (e.g., for validation errors)"
-					}
-				},
-				"required": [
-					"error",
-					"message",
-					"statusCode",
-					"timestamp",
-					"path",
-					"method"
-				],
-				"type": "object",
-				"additionalProperties": false
 			},
 			"InitiateVerificationRouteBody": {
 				"properties": {
@@ -8284,7 +8745,7 @@
 				],
 				"type": "object"
 			},
-			"VerificationStatus": {
+			"IdentityVerificationStatus": {
 				"type": "string",
 				"enum": [
 					"pending",
@@ -8306,7 +8767,7 @@
 						"type": "string"
 					},
 					"status": {
-						"$ref": "#/components/schemas/VerificationStatus"
+						"$ref": "#/components/schemas/IdentityVerificationStatus"
 					},
 					"verified": {
 						"type": "boolean"
@@ -8566,6 +9027,9 @@
 								"actionType": {
 									"$ref": "#/components/schemas/TicketReportActionType"
 								},
+								"performedByAdmin": {
+									"type": "boolean"
+								},
 								"performedByUserId": {
 									"type": "string"
 								},
@@ -8582,6 +9046,7 @@
 								"metadata",
 								"comment",
 								"actionType",
+								"performedByAdmin",
 								"performedByUserId",
 								"ticketReportId",
 								"id"
@@ -8589,6 +9054,28 @@
 							"type": "object"
 						},
 						"type": "array"
+					},
+					"reporter": {
+						"properties": {
+							"email": {
+								"type": "string"
+							},
+							"lastName": {
+								"type": "string",
+								"nullable": true
+							},
+							"firstName": {
+								"type": "string",
+								"nullable": true
+							}
+						},
+						"required": [
+							"email",
+							"lastName",
+							"firstName"
+						],
+						"type": "object",
+						"nullable": true
 					},
 					"updatedAt": {
 						"type": "string",
@@ -8634,6 +9121,7 @@
 					"entityDetails",
 					"initialAttachments",
 					"actions",
+					"reporter",
 					"updatedAt",
 					"createdAt",
 					"closedAt",
@@ -8658,6 +9146,9 @@
 							"performedByUserId": {
 								"type": "string"
 							},
+							"performedByAdmin": {
+								"type": "boolean"
+							},
 							"comment": {
 								"type": "string",
 								"nullable": true
@@ -8679,6 +9170,7 @@
 						"required": [
 							"ticketReportId",
 							"performedByUserId",
+							"performedByAdmin",
 							"comment",
 							"actionType",
 							"metadata",
@@ -8984,6 +9476,82 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"description": "Filter by region/state/departamento name",
+						"in": "query",
+						"name": "region",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Latitude for proximity search (requires lng)",
+						"in": "query",
+						"name": "lat",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Longitude for proximity search (requires lat)",
+						"in": "query",
+						"name": "lng",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Radius in km for proximity search (default: 30)",
+						"in": "query",
+						"name": "radiusKm",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Filter events starting from this date (ISO format)",
+						"in": "query",
+						"name": "dateFrom",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter events ending before this date (ISO format)",
+						"in": "query",
+						"name": "dateTo",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Only show events with at least one available ticket",
+						"in": "query",
+						"name": "hasTickets",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"description": "User timezone offset in minutes from UTC (e.g. 180 for UTC-3)",
+						"in": "query",
+						"name": "tzOffset",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
 					}
 				]
 			}
@@ -9066,6 +9634,41 @@
 							"format": "double",
 							"type": "number"
 						}
+					},
+					{
+						"in": "query",
+						"name": "region",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "lat",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "lng",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "radiusKm",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
 					}
 				]
 			}
@@ -9086,6 +9689,29 @@
 					}
 				},
 				"description": "Get list of distinct cities for filter dropdown",
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/events/regions": {
+			"get": {
+				"operationId": "GetDistinctRegions",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDistinctRegionsResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get distinct regions with active events, grouped by country",
 				"tags": [
 					"Events"
 				],
@@ -9450,7 +10076,7 @@
 						}
 					},
 					"422": {
-						"description": "Validation failed: Cannot create listing for finished event, ticket wave does not belong to event, price exceeds face value, or quantity must be greater than 0",
+						"description": "Validation failed: Cannot create listing for finished event, ticket wave does not belong to event, price exceeds face value, quantity must be greater than 0, or ticket limit exceeded",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -9468,9 +10094,38 @@
 				"requestBody": {
 					"required": true,
 					"content": {
-						"application/json": {
+						"multipart/form-data": {
 							"schema": {
-								"$ref": "#/components/schemas/CreateTicketListingRouteBody"
+								"type": "object",
+								"properties": {
+									"eventId": {
+										"type": "string"
+									},
+									"ticketWaveId": {
+										"type": "string"
+									},
+									"price": {
+										"type": "number",
+										"format": "double"
+									},
+									"quantity": {
+										"type": "number",
+										"format": "double"
+									},
+									"documents": {
+										"items": {
+											"type": "string",
+											"format": "binary"
+										},
+										"type": "array"
+									}
+								},
+								"required": [
+									"eventId",
+									"ticketWaveId",
+									"price",
+									"quantity"
+								]
 							}
 						}
 					}
@@ -13121,6 +13776,697 @@
 						}
 					}
 				]
+			}
+		},
+		"/profile": {
+			"put": {
+				"operationId": "UpdateProfile",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UpdateProfileResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateProfileRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/image": {
+			"put": {
+				"operationId": "UploadProfileImage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UploadProfileImageResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Image upload failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteProfileImage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteProfileImageResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/profile/emails": {
+			"get": {
+				"operationId": "GetEmails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetEmailsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			},
+			"post": {
+				"operationId": "AddEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AddEmailResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Failed to add email",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddEmailRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/emails/verify": {
+			"post": {
+				"operationId": "VerifyEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifyEmailResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Verification failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Email does not belong to user",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifyEmailRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/emails/primary": {
+			"put": {
+				"operationId": "SetPrimaryEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SetPrimaryEmailResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Email does not belong to user",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SetPrimaryEmailRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/emails/{emailAddressId}": {
+			"delete": {
+				"operationId": "DeleteEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteEmailResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Cannot delete primary email",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Email does not belong to user",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "emailAddressId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/profile/external-accounts": {
+			"get": {
+				"operationId": "GetExternalAccounts",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetExternalAccountsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/profile/password-status": {
+			"get": {
+				"operationId": "GetPasswordStatus",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetPasswordStatusResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/profile/password": {
+			"post": {
+				"operationId": "SetPassword",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SetPasswordResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Already has password",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SetPasswordRouteBody"
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"operationId": "ChangePassword",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ChangePasswordResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Current password incorrect",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ChangePasswordRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/sessions": {
+			"get": {
+				"operationId": "GetSessions",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetSessionsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/profile/sessions/{sessionId}": {
+			"delete": {
+				"operationId": "RevokeSession",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RevokeSessionResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Session does not belong to user",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/profile/account": {
+			"delete": {
+				"operationId": "DeleteAccount",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteAccountResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Invalid confirmation",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/DeleteAccountRouteBody"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/payments/create-link/{orderId}": {

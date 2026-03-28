@@ -37,6 +37,10 @@ import {TicketReportAttachmentsService} from '~/services/ticket-report-attachmen
 import {getStorageProvider} from '~/services/storage/StorageFactory';
 import {db} from '~/db';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
+import {
+  TICKET_REPORT_ERROR_MESSAGES,
+  VALIDATION_MESSAGES,
+} from '~/constants/error-messages';
 import {ValidateBody, ValidateQuery, Body} from '~/decorators';
 import {
   AddAdminActionBody,
@@ -143,7 +147,7 @@ export class AdminTicketReportsController {
     @Query() actionId?: string,
   ): Promise<AdminUploadAttachmentResponse> {
     if (!file) {
-      throw new ValidationError('No se subió ningún archivo');
+      throw new ValidationError(VALIDATION_MESSAGES.NO_FILE_UPLOADED);
     }
     return this.attachmentService.uploadAttachment(
       reportId,

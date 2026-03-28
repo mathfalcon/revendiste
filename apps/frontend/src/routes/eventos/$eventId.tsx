@@ -14,6 +14,7 @@ import {getBaseUrl} from '~/config/env';
 import {EventEnded} from '~/components/EventEnded';
 import type {ErrorComponentProps} from '@tanstack/react-router';
 import {createServerFn} from '@tanstack/react-start';
+import {auth} from '@clerk/tanstack-react-start/server';
 
 /**
  * Server-only function to fetch event data and track views.
@@ -24,12 +25,24 @@ export const fetchEventServer = createServerFn({method: 'GET'})
   .handler(async ({data}) => {
     const apiUrl = getApiBaseURL();
 
+    // Get auth token to forward to backend (needed to filter out user's own listings)
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    try {
+      const {getToken} = await auth();
+      const token = await getToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch {
+      // Auth not available — request proceeds as anonymous
+    }
+
     // Fetch event data on the server
     const response = await fetch(`${apiUrl}/events/${data.eventId}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -207,6 +220,15 @@ export const Route = createFileRoute('/eventos/$eventId')({
           streetAddress: event.venueAddress,
           addressLocality: event.venueName,
         },
+        ...(event.venueLatitude && event.venueLongitude
+          ? {
+              geo: {
+                '@type': 'GeoCoordinates',
+                latitude: parseFloat(event.venueLatitude),
+                longitude: parseFloat(event.venueLongitude),
+              },
+            }
+          : {}),
       },
       image: imageUrl ? [imageUrl] : undefined,
       offers: {

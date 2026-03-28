@@ -3,7 +3,10 @@ import {UsersRepository} from '~/repositories/users';
 import {VerificationAuditRepository} from '~/repositories/verification-audit';
 import type {IStorageProvider} from '~/services/storage/IStorageProvider';
 import {NotFoundError, ValidationError} from '~/errors';
-import {ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES} from '~/constants/error-messages';
+import {
+  ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES,
+  USER_MESSAGES,
+} from '~/constants/error-messages';
 import {logger} from '~/utils';
 import {getStorageProvider} from '../storage';
 import {NotificationService} from '../notifications';
@@ -290,7 +293,7 @@ export class AdminIdentityVerificationService {
 
     return {
       success: true,
-      message: 'Verificación aprobada exitosamente',
+      message: USER_MESSAGES.VERIFICATION_APPROVED,
     };
   }
 
@@ -377,7 +380,7 @@ export class AdminIdentityVerificationService {
 
     return {
       success: true,
-      message: 'Verificación rechazada',
+      message: USER_MESSAGES.VERIFICATION_REJECTED,
     };
   }
 

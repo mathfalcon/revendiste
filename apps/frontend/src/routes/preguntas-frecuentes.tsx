@@ -157,7 +157,7 @@ const faqPagos: FAQItem[] = [
   {
     question: '¿Qué es eso de "custodia de fondos"?',
     answer:
-      'Cuando un comprador paga, la plata no va directo al vendedor. Nosotros la guardamos hasta que se complete la operación exitosamente (o sea, que el comprador use la entrada sin problemas). Esto protege a ambas partes: el comprador sabe que si algo falla recupera su plata, y el vendedor sabe que cuando todo sale bien, cobra seguro.',
+      'Cuando un comprador paga, la plata no va directo al vendedor. Nosotros la guardamos hasta que se complete la operación sin problemas (o sea, que el comprador use la entrada sin problemas). Esto protege a ambas partes: el comprador sabe que si algo falla recupera su plata, y el vendedor sabe que cuando todo sale bien, cobra seguro.',
   },
   {
     question: '¿Me devuelven la comisión si hay un problema?',

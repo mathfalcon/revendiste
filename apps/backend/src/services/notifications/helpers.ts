@@ -1,5 +1,6 @@
 import {NotificationService, type CreateNotificationParams} from './index';
 import {APP_BASE_URL} from '~/config/env';
+import {NOTIFICATION_BUTTON_LABELS} from '~/constants/error-messages';
 import type {QrAvailabilityTiming, TicketReportCaseType, TicketReportEntityType, TicketReportActionType, TicketReportStatus} from '@revendiste/shared';
 
 /**
@@ -29,7 +30,7 @@ export async function notifyDocumentReminder(
     actions: [
       {
         type: 'upload_documents',
-        label: 'Subir documentos',
+        label: NOTIFICATION_BUTTON_LABELS.UPLOAD_DOCUMENTS,
         url: `${APP_BASE_URL}/cuenta/publicaciones?subirPublicacion=${params.listingId}`,
       },
     ],
@@ -94,7 +95,7 @@ export async function notifyOrderConfirmed(
     actions: [
       {
         type: 'view_order',
-        label: 'Ver mis tickets',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_MY_TICKETS,
         url: `${APP_BASE_URL}/cuenta/tickets?orderId=${params.orderId}`,
       },
     ],
@@ -222,7 +223,7 @@ export async function notifyPaymentFailed(
     actions: [
       {
         type: 'retry_payment',
-        label: 'Reintentar pago',
+        label: NOTIFICATION_BUTTON_LABELS.RETRY_PAYMENT,
         url: `${APP_BASE_URL}/checkout/${params.orderId}`,
       },
     ],
@@ -267,7 +268,7 @@ export async function notifyDocumentUploaded(
     actions: [
       {
         type: 'view_order',
-        label: 'Ver y descargar entradas',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_AND_DOWNLOAD_TICKETS,
         url: `${APP_BASE_URL}/cuenta/tickets?orden=${params.orderId}`,
       },
     ],
@@ -306,7 +307,7 @@ export async function notifyDocumentUploadedImmediate(
     actions: [
       {
         type: 'view_order',
-        label: 'Ver y descargar entradas',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_AND_DOWNLOAD_TICKETS,
         url: `${APP_BASE_URL}/cuenta/tickets?orden=${params.orderId}`,
       },
     ],
@@ -364,14 +365,18 @@ export async function notifySellerTicketSold(
     platform: string;
     qrAvailabilityTiming: QrAvailabilityTiming | null;
     ticketCount: number;
+    allDocumentsUploaded?: boolean;
   },
   options?: NotificationOptions,
 ) {
-  const shouldPrompt = shouldPromptUpload(
-    params.qrAvailabilityTiming,
-    params.eventStartDate,
-    params.eventEndDate,
-  );
+  // Skip upload prompt if all documents were already uploaded at listing creation
+  const shouldPrompt = params.allDocumentsUploaded
+    ? false
+    : shouldPromptUpload(
+        params.qrAvailabilityTiming,
+        params.eventStartDate,
+        params.eventEndDate,
+      );
 
   const actions: Array<{
     type: 'upload_documents' | 'view_order' | 'retry_payment';
@@ -430,7 +435,7 @@ export async function notifyPayoutCompleted(
     actions: [
       {
         type: 'view_payout',
-        label: 'Ver detalles del retiro',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_PAYOUT_DETAILS,
         url: `${APP_BASE_URL}/cuenta/retiro?payoutId=${params.payoutId}`,
       },
     ],
@@ -465,7 +470,7 @@ export async function notifyPayoutFailed(
     actions: [
       {
         type: 'view_payout',
-        label: 'Ver detalles del retiro',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_PAYOUT_DETAILS,
         url: `${APP_BASE_URL}/cuenta/retiro?payoutId=${params.payoutId}`,
       },
     ],
@@ -499,7 +504,7 @@ export async function notifyPayoutCancelled(
     actions: [
       {
         type: 'view_payout',
-        label: 'Ver detalles del retiro',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_PAYOUT_DETAILS,
         url: `${APP_BASE_URL}/cuenta/retiro?payoutId=${params.payoutId}`,
       },
     ],
@@ -534,7 +539,7 @@ export async function notifyIdentityVerificationCompleted(
     actions: [
       {
         type: 'publish_tickets',
-        label: 'Publicar entradas',
+        label: NOTIFICATION_BUTTON_LABELS.PUBLISH_TICKETS,
         url: `${APP_BASE_URL}/entradas/publicar`,
       },
     ],
@@ -565,7 +570,7 @@ export async function notifyIdentityVerificationRejected(
   if (params.canRetry) {
     actions.push({
       type: 'start_verification',
-      label: 'Reintentar verificación',
+      label: NOTIFICATION_BUTTON_LABELS.RETRY_VERIFICATION,
       url: `${APP_BASE_URL}/cuenta/verificar`,
     });
   }
@@ -605,7 +610,7 @@ export async function notifyIdentityVerificationFailed(
   if (params.attemptsRemaining > 0) {
     actions.push({
       type: 'start_verification',
-      label: 'Reintentar verificación',
+      label: NOTIFICATION_BUTTON_LABELS.RETRY_VERIFICATION,
       url: `${APP_BASE_URL}/cuenta/verificar`,
     });
   }
@@ -675,7 +680,7 @@ export async function notifySellerEarningsRetained(
     actions: [
       {
         type: 'view_earnings',
-        label: 'Ver ganancias',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_EARNINGS,
         url: `${APP_BASE_URL}/cuenta/retiro`,
       },
     ],
@@ -714,7 +719,7 @@ export async function notifyBuyerTicketCancelled(
     actions: [
       {
         type: 'view_order',
-        label: 'Ver mis tickets',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_MY_TICKETS,
         url: `${APP_BASE_URL}/cuenta/tickets`,
       },
     ],
@@ -753,7 +758,7 @@ export async function notifyTicketReportCreated(
     actions: [
       {
         type: 'view_report',
-        label: 'Ver mi caso',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_MY_CASE,
         url: `${APP_BASE_URL}/cuenta/reportes/${params.ticketReportId}`,
       },
     ],
@@ -789,7 +794,7 @@ export async function notifyTicketReportStatusChanged(
     actions: [
       {
         type: 'view_report',
-        label: 'Ver mi caso',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_MY_CASE,
         url: `${APP_BASE_URL}/cuenta/reportes/${params.ticketReportId}`,
       },
     ],
@@ -822,7 +827,7 @@ export async function notifyTicketReportActionAdded(
     actions: [
       {
         type: 'view_report',
-        label: 'Ver mi caso',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_MY_CASE,
         url: `${APP_BASE_URL}/cuenta/reportes/${params.ticketReportId}`,
       },
     ],
@@ -856,7 +861,7 @@ export async function notifyTicketReportClosed(
     actions: [
       {
         type: 'view_report',
-        label: 'Ver mi caso',
+        label: NOTIFICATION_BUTTON_LABELS.VIEW_MY_CASE,
         url: `${APP_BASE_URL}/cuenta/reportes/${params.ticketReportId}`,
       },
     ],

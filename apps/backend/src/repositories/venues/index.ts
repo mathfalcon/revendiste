@@ -98,6 +98,35 @@ export class VenuesRepository extends BaseRepository<VenuesRepository> {
   }
 
   /**
+   * Create a new venue, handling googlePlaceId conflicts gracefully.
+   * If a venue with the same googlePlaceId already exists, returns the existing one.
+   * This prevents race conditions when multiple events with the same venue
+   * are processed concurrently.
+   *
+   * Uses try-catch instead of ON CONFLICT because the unique index on
+   * googlePlaceId is a partial index (WHERE google_place_id IS NOT NULL),
+   * which PostgreSQL's ON CONFLICT (column) cannot match.
+   */
+  async createOrFindByPlaceId(data: InsertableVenue) {
+    try {
+      return await this.db
+        .insertInto('eventVenues')
+        .values(data)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    } catch (error: any) {
+      // Unique constraint violation on googlePlaceId — return existing venue
+      if (error?.code === '23505' && data.googlePlaceId) {
+        const existing = await this.findByGooglePlaceId(
+          data.googlePlaceId as string,
+        );
+        if (existing) return existing;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Get all distinct cities for the filter dropdown
    * Only returns cities that have at least one active event
    */
@@ -115,6 +144,39 @@ export class VenuesRepository extends BaseRepository<VenuesRepository> {
       .execute();
 
     return result.map(r => r.city);
+  }
+
+  /**
+   * Get distinct regions with active future events, grouped by country
+   */
+  async getDistinctRegions() {
+    const result = await this.db
+      .selectFrom('eventVenues')
+      .select(['country', 'region'])
+      .distinct()
+      .innerJoin('events', 'events.venueId', 'eventVenues.id')
+      .where('eventVenues.deletedAt', 'is', null)
+      .where('eventVenues.region', 'is not', null)
+      .where('events.deletedAt', 'is', null)
+      .where('events.status', '=', 'active')
+      .where('events.eventEndDate', '>', new Date())
+      .orderBy('country', 'asc')
+      .orderBy('region', 'asc')
+      .execute();
+
+    // Group by country
+    const grouped = new Map<string, string[]>();
+    for (const row of result) {
+      if (!row.region) continue;
+      const regions = grouped.get(row.country) ?? [];
+      regions.push(row.region);
+      grouped.set(row.country, regions);
+    }
+
+    return Array.from(grouped.entries()).map(([country, regions]) => ({
+      country,
+      regions,
+    }));
   }
 
   /**
@@ -138,6 +200,7 @@ export class VenuesRepository extends BaseRepository<VenuesRepository> {
       name?: string;
       address?: string;
       city?: string;
+      region?: string | null;
       country?: string;
       googlePlaceId?: string | null;
       latitude?: string | null;

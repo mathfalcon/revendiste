@@ -31,6 +31,7 @@ export function createMockTicketReportAction(
     id: `action-${counter++}`,
     ticketReportId: 'report-1',
     performedByUserId: 'user-1',
+    performedByAdmin: false,
     actionType: 'comment',
     comment: 'Un comentario de prueba',
     metadata: null,

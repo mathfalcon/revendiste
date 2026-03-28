@@ -23,14 +23,14 @@ function getReasonText(
 ): string {
   switch (reason) {
     case 'missing_document':
-      return 'No subiste los documentos de los tickets antes de que el evento terminara.';
+      return 'No subiste los documentos de tus entradas antes de que el evento terminara.';
     case 'dispute':
-      return 'El comprador abrió una disputa sobre los tickets.';
+      return 'El comprador abrió una disputa sobre las entradas.';
     case 'fraud':
       return 'Se detectó actividad sospechosa en tu cuenta.';
     case 'other':
     default:
-      return 'Se detectó un problema con los tickets.';
+      return 'Se detectó un problema con las entradas.';
   }
 }
 
@@ -43,7 +43,7 @@ export const SellerEarningsRetainedEmail = ({
   appBaseUrl,
 }: SellerEarningsRetainedEmailProps) => {
   const ticketText =
-    ticketCount === 1 ? '1 ticket' : `${ticketCount} tickets`;
+    ticketCount === 1 ? '1 entrada' : `${ticketCount} entradas`;
   const reasonText = getReasonText(reason);
 
   return (
@@ -53,9 +53,8 @@ export const SellerEarningsRetainedEmail = ({
       appBaseUrl={appBaseUrl}
     >
       <Text className="text-foreground mb-4">
-        Lamentamos informarte que tus ganancias por la venta de{' '}
-        <strong>{ticketText}</strong> para <strong>{eventName}</strong> han sido
-        retenidas.
+        Tus ganancias por la venta de <strong>{ticketText}</strong> para{' '}
+        <strong>{eventName}</strong> fueron retenidas.
       </Text>
 
       {/* Reason Section */}
@@ -69,10 +68,10 @@ export const SellerEarningsRetainedEmail = ({
       {/* What happens next */}
       <Section className="bg-muted/30 p-4 rounded-md mb-4">
         <Text className="text-lg font-semibold text-foreground m-0 mb-2">
-          ¿Qué sucede ahora?
+          ¿Qué pasa ahora?
         </Text>
         <Text className="text-sm text-muted-foreground m-0 mb-2">
-          • El comprador será reembolsado por los tickets afectados.
+          • El comprador va a recibir un reembolso por las entradas afectadas.
         </Text>
         <Text className="text-sm text-muted-foreground m-0 mb-2">
           • Las ganancias retenidas quedarán bajo revisión de nuestro equipo.
@@ -94,7 +93,7 @@ export const SellerEarningsRetainedEmail = ({
       )}
 
       <Text className="text-sm text-muted-foreground mb-0 mt-4">
-        Recordá que es importante subir los documentos de tus tickets a tiempo
+        Recordá que es importante subir los documentos de tus entradas a tiempo
         para evitar retenciones futuras.
       </Text>
     </BaseEmail>
