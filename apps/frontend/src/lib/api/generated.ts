@@ -155,6 +155,7 @@ export enum QrAvailabilityTiming {
 export enum EventImageType {
   Flyer = "flyer",
   Hero = "hero",
+  OgHero = "og_hero",
 }
 
 export interface PaginationMeta {
@@ -243,6 +244,11 @@ export interface EventsPaginatedQuery {
   dateTo?: string;
   /** Only show events with at least one available ticket */
   hasTickets?: boolean;
+  /**
+   * User timezone offset in minutes from UTC (e.g. 180 for UTC-3)
+   * @format double
+   */
+  tzOffset?: number;
 }
 
 export type SearchEventsResponse = {
@@ -2960,6 +2966,11 @@ export class Api<
         dateTo?: string;
         /** Only show events with at least one available ticket */
         hasTickets?: boolean;
+        /**
+         * User timezone offset in minutes from UTC (e.g. 180 for UTC-3)
+         * @format double
+         */
+        tzOffset?: number;
       },
       params: RequestParams = {},
     ) =>

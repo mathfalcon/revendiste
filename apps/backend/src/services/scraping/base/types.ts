@@ -3,6 +3,7 @@ import {z} from 'zod';
 export enum ScrapedImageType {
   Flyer = 'flyer',
   Hero = 'hero',
+  OgHero = 'og_hero',
 }
 
 export enum Platform {

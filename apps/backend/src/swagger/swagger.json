@@ -11,7 +11,8 @@
 				"type": "string",
 				"enum": [
 					"flyer",
-					"hero"
+					"hero",
+					"og_hero"
 				]
 			},
 			"PaginationMeta": {

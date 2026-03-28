@@ -93,7 +93,9 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .selectFrom('notifications')
       .selectAll()
       .where('userId', '=', userId)
-      .where('deletedAt', 'is', null);
+      .where('deletedAt', 'is', null)
+      // Only show notifications intended for in-app display
+      .where(sql`'in_app' = ANY(channels)`);
 
     if (options?.includeSeen === false) {
       query = query.where('seenAt', 'is', null);
@@ -125,7 +127,9 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
     let baseQuery = this.db
       .selectFrom('notifications')
       .where('userId', '=', userId)
-      .where('deletedAt', 'is', null);
+      .where('deletedAt', 'is', null)
+      // Only show notifications intended for in-app display
+      .where(sql`'in_app' = ANY(channels)`);
 
     if (options?.includeSeen === false) {
       baseQuery = baseQuery.where('seenAt', 'is', null);
@@ -169,6 +173,8 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('userId', '=', userId)
       .where('seenAt', 'is', null)
       .where('deletedAt', 'is', null)
+      // Only count notifications intended for in-app display
+      .where(sql`'in_app' = ANY(channels)`)
       .executeTakeFirst();
 
     return Number(result?.count || 0);
@@ -192,7 +198,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
   }
 
   async markAllAsSeen(userId: string) {
-    // Update all notifications
+    // Update all in-app notifications
     const updated = await this.db
       .updateTable('notifications')
       .set({
@@ -202,6 +208,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('userId', '=', userId)
       .where('seenAt', 'is', null)
       .where('deletedAt', 'is', null)
+      .where(sql`'in_app' = ANY(channels)`)
       .returning('id')
       .execute();
 

@@ -42,8 +42,9 @@ export const Route = createRootRouteWithContext<{
         content: 'width=device-width, initial-scale=1',
       },
       ...seo({
-        title: 'Revendiste | Transferí tus entradas de forma fácil y segura',
-        description: `Revendiste es una plataforma de venta de entradas de forma fácil y segura. `,
+        title: 'Revendiste | Comprá y vendé entradas de forma segura en Uruguay',
+        description:
+          'Revendiste es la plataforma más segura de Uruguay para comprar y vender entradas a conciertos, fiestas y eventos. Custodia de fondos, vendedores verificados y garantía de compra.',
         baseUrl: getBaseUrl(),
       }),
     ],
@@ -178,6 +179,12 @@ function RootDocument({children}: {children: React.ReactNode}) {
           formButtonPrimary: {
             background: '#de2486',
             boxShadow: 'none',
+          },
+          modalBackdrop: {
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          },
+          modalContent: {
+            backgroundColor: 'hsl(var(--background))',
           },
         },
         variables: ClerkVariables,

@@ -17,14 +17,14 @@ export const HomeAbout = () => {
           <p className='text-xs md:text-sm text-muted-foreground'>
             Al usar nuestros servicios, aceptás nuestros{' '}
             <a
-              href='/terminos-y-condiciones'
+              href='https://revendiste.com/terminos-y-condiciones'
               className='text-primary hover:underline'
             >
               Términos de Servicio
             </a>{' '}
             y nuestra{' '}
             <a
-              href='/politica-de-privacidad'
+              href='https://revendiste.com/politica-de-privacidad'
               className='text-primary hover:underline'
             >
               Política de Privacidad
@@ -33,22 +33,6 @@ export const HomeAbout = () => {
           </p>
         </div>
       </section>
-      {/* Also keep sr-only version for screen readers with more detail */}
-      <div className='sr-only'>
-        <h2>¿Qué es Revendiste?</h2>
-        <p>
-          Revendiste es una plataforma de intermediación que facilita la
-          transferencia segura de entradas entre personas para eventos,
-          conciertos y fiestas en Uruguay. Si no podés asistir a un evento,
-          podés transferir tu entrada de forma fácil y segura. Si te pintó ir a
-          último momento, encontrá entradas disponibles para transferencia.
-        </p>
-        <p>
-          Al usar nuestros servicios, aceptás nuestros{' '}
-          <a href='/terminos-y-condiciones'>Términos de Servicio</a> y nuestra{' '}
-          <a href='/politica-de-privacidad'>Política de Privacidad</a>.
-        </p>
-      </div>
     </>
   );
 };

@@ -15,7 +15,7 @@ export type ArrayTypeImpl<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type DocumentTypeEnum = "ci_uy" | "dni_ar" | "passport";
 
-export type EventImageType = "flyer" | "hero";
+export type EventImageType = "flyer" | "hero" | "og_hero";
 
 export type EventTicketCurrency = "USD" | "UYU";
 

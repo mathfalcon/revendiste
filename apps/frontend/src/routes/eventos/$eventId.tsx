@@ -140,9 +140,14 @@ export const Route = createFileRoute('/eventos/$eventId')({
     }
 
     const event = loaderData;
+    // Prefer og_hero (watermarked) for meta tags, fall back to hero
+    const ogHeroImage = event.eventImages.find(
+      img => img.imageType === EventImageType.OgHero,
+    );
     const heroImage = event.eventImages.find(
       img => img.imageType === EventImageType.Hero,
     );
+    const metaImage = ogHeroImage || heroImage;
 
     // Get base URL for canonical and absolute URLs
     const baseUrl = getBaseUrl();
@@ -162,23 +167,26 @@ export const Route = createFileRoute('/eventos/$eventId')({
       ? `${event.description}${eventDate ? ` - ${eventDate}` : ''}${
           event.venueName ? ` en ${event.venueName}` : ''
         }`
-      : `Evento${eventDate ? ` el ${eventDate}` : ''}${
+      : `Comprá entradas para ${event.name}${eventDate ? ` el ${eventDate}` : ''}${
           event.venueName ? ` en ${event.venueName}` : ''
-        }. Encuentra entradas disponibles en Revendiste.`;
+        }. Compra segura con garantía en Revendiste.`;
 
     // Get absolute URL for image (required for Open Graph)
-    const imageUrl = heroImage?.url
-      ? heroImage.url.startsWith('http')
-        ? heroImage.url
-        : `${baseUrl}${heroImage.url.startsWith('/') ? '' : '/'}${heroImage.url}`
+    const imageUrl = metaImage?.url
+      ? metaImage.url.startsWith('http')
+        ? metaImage.url
+        : `${baseUrl}${metaImage.url.startsWith('/') ? '' : '/'}${metaImage.url}`
       : undefined;
 
     // Build keywords from event data
     const keywords = [
+      `entradas ${event.name}`,
+      `comprar entradas ${event.name}`,
+      event.venueName ? `entradas ${event.venueName}` : null,
       event.name,
       event.venueName,
-      'entradas',
-      'eventos',
+      'comprar entradas Uruguay',
+      'entradas eventos',
       'revendiste',
       eventDate?.split(' ')[2], // Year
     ]
@@ -295,6 +303,33 @@ export const Route = createFileRoute('/eventos/$eventId')({
         {
           type: 'application/ld+json',
           children: JSON.stringify(structuredData, null, 2),
+        },
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Inicio',
+                item: baseUrl,
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Eventos',
+                item: `${baseUrl}/eventos`,
+              },
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: event.name,
+                item: canonicalUrl,
+              },
+            ],
+          }),
         },
       ],
     };

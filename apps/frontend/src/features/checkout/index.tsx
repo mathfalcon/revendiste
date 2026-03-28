@@ -35,6 +35,8 @@ import {
   MapPin,
   ChevronsUpDown,
   Check,
+  Globe,
+  AlertCircle,
 } from 'lucide-react';
 import {
   FullScreenLoading,
@@ -45,11 +47,12 @@ import {
 } from '~/components';
 import {TicketWaveCard} from '~/features/event/tickets';
 
-/** Americas only (dLocal Go). ISO 3166-1 alpha-2 → label. Sorted by label. */
+/** Americas only (dLocal Go). ISO 3166-1 alpha-2 → label. Top 3 pinned, rest alphabetical. */
 const CHECKOUT_COUNTRIES: Array<{value: string; label: string}> = [
+  {value: 'UY', label: 'Uruguay'},
   {value: 'AR', label: 'Argentina'},
-  {value: 'BO', label: 'Bolivia'},
   {value: 'BR', label: 'Brasil'},
+  {value: 'BO', label: 'Bolivia'},
   {value: 'CL', label: 'Chile'},
   {value: 'CO', label: 'Colombia'},
   {value: 'CR', label: 'Costa Rica'},
@@ -59,7 +62,6 @@ const CHECKOUT_COUNTRIES: Array<{value: string; label: string}> = [
   {value: 'PA', label: 'Panamá'},
   {value: 'PY', label: 'Paraguay'},
   {value: 'PE', label: 'Perú'},
-  {value: 'UY', label: 'Uruguay'},
 ];
 
 interface CheckoutPageProps {
@@ -71,8 +73,10 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
   const navigate = useNavigate();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [payerCountry, setPayerCountry] = useState<string>('UY');
+  const [payerCountry, setPayerCountry] = useState<string>('');
   const [countryPopoverOpen, setCountryPopoverOpen] = useState(false);
+  const [countryTouched, setCountryTouched] = useState(false);
+  const countryRef = useRef<HTMLDivElement>(null);
 
   const countdown = useCountdown(
     order.reservationExpiresAt ? new Date(order.reservationExpiresAt) : null,
@@ -87,9 +91,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       navigate({href: data.redirectUrl});
     },
     onError: err => {
-      toast.error(
-        'Error al crear el link de pago. Por favor intenta nuevamente.',
-      );
+      toast.error('No pudimos crear el link de pago. Intentá de nuevo.');
     },
   });
 
@@ -148,6 +150,9 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
   };
   const displayImage = getEventDisplayImage(eventWithImages?.images);
 
+  const isCountrySelected = payerCountry !== '';
+  const showCountryError = countryTouched && !isCountrySelected;
+
   const isButtonDisabled =
     countdown.isExpired || createPaymentLink.isPending || isRedirecting;
 
@@ -156,6 +161,15 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
     if (isRedirecting) return 'Redirigiendo...';
     if (createPaymentLink.isPending) return 'Creando link de pago...';
     return 'Continuar con el pago';
+  };
+
+  const handlePay = () => {
+    if (!isCountrySelected) {
+      setCountryTouched(true);
+      countryRef.current?.scrollIntoView({behavior: 'smooth', block: 'center'});
+      return;
+    }
+    createPaymentLink.mutate({country: payerCountry});
   };
 
   return (
@@ -169,7 +183,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
               Checkout
             </h1>
             <p className='text-sm sm:text-base text-muted-foreground'>
-              Completa el pago para confirmar tu reserva
+              Completá el pago para confirmar tu reserva
             </p>
           </div>
 
@@ -190,8 +204,8 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
             <Alert variant='destructive'>
               <AlertTitle>Reserva expirada</AlertTitle>
               <AlertDescription>
-                El tiempo para completar el pago ha expirado. Por favor, crea
-                una nueva orden.
+                El tiempo para completar el pago expiró. Volvé al evento para
+                crear una nueva orden.
               </AlertDescription>
             </Alert>
           )}
@@ -322,12 +336,40 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
             </div>
           </div>
 
-          {/* Payer country: locks dLocal checkout to this country to avoid 5000 on retry. Searchable. */}
-          <div className='space-y-2'>
-            <Label htmlFor='payer-country'>País desde el que pagas</Label>
+          {/* Payer country — required step before payment */}
+          <div
+            ref={countryRef}
+            className={`rounded-lg border bg-card p-4 sm:p-6 space-y-3 transition-colors ${
+              showCountryError
+                ? 'border-destructive ring-1 ring-destructive/30'
+                : isCountrySelected
+                  ? 'border-green-500/40'
+                  : ''
+            }`}
+          >
+            <div className='flex items-center gap-2'>
+              <Globe className='h-4 w-4 sm:h-5 sm:w-5 text-primary' />
+              <Label
+                htmlFor='payer-country'
+                className='text-base sm:text-lg font-semibold'
+              >
+                ¿Desde qué país pagás?
+              </Label>
+              <span className='text-xs text-destructive font-medium'>
+                *Requerido
+              </span>
+            </div>
+            <p className='text-sm text-muted-foreground'>
+              Seleccioná tu país para que podamos mostrarte los medios de pago
+              disponibles.
+            </p>
             <Popover
               open={countryPopoverOpen}
-              onOpenChange={setCountryPopoverOpen}
+              onOpenChange={open => {
+                setCountryPopoverOpen(open);
+                // Only mark as touched when closing without a selection
+                if (!open && !isCountrySelected) setCountryTouched(true);
+              }}
             >
               <PopoverTrigger asChild>
                 <Button
@@ -336,10 +378,16 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                   role='combobox'
                   aria-expanded={countryPopoverOpen}
                   disabled={countdown.isExpired}
-                  className='w-full justify-between font-normal'
+                  className={`w-full justify-between h-12 text-base ${
+                    !isCountrySelected
+                      ? 'text-muted-foreground'
+                      : 'font-medium'
+                  } ${showCountryError ? 'border-destructive' : ''}`}
                 >
-                  {CHECKOUT_COUNTRIES.find(c => c.value === payerCountry)
-                    ?.label ?? 'Elige tu país'}
+                  {isCountrySelected
+                    ? CHECKOUT_COUNTRIES.find(c => c.value === payerCountry)
+                        ?.label
+                    : 'Elegí tu país...'}
                   <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
                 </Button>
               </PopoverTrigger>
@@ -372,6 +420,12 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                 </Command>
               </PopoverContent>
             </Popover>
+            {showCountryError && (
+              <div className='flex items-center gap-1.5 text-sm text-destructive'>
+                <AlertCircle className='h-3.5 w-3.5' />
+                <span>Seleccioná un país para continuar</span>
+              </div>
+            )}
           </div>
 
           {/* Payment Disclaimer */}
@@ -380,13 +434,12 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
             <AlertTitle>Información de pago</AlertTitle>
             <AlertDescription className='space-y-2'>
               <p>
-                Serás redirigido a nuestro procesador de pagos para completar la
-                transacción de forma segura. No necesitas proporcionar
-                información adicional aquí.
+                Te vamos a redirigir a nuestro procesador de pagos para
+                completar la transacción de forma segura.
               </p>
               <p className='text-xs text-muted-foreground'>
-                El pago será procesado en tu moneda local. El tipo de cambio
-                será determinado al momento del pago.
+                El pago se procesa en tu moneda local. El tipo de cambio se
+                determina al momento del pago.
               </p>
             </AlertDescription>
           </Alert>
@@ -406,7 +459,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
               size='lg'
               className='bg-primary-gradient h-12 px-8'
               disabled={isButtonDisabled}
-              onClick={() => createPaymentLink.mutate({country: payerCountry})}
+              onClick={handlePay}
             >
               {getButtonText()}
             </Button>
@@ -431,6 +484,22 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
               <ClockIcon className='h-3.5 w-3.5' />
               <span className='text-xs font-medium'>Reserva expirada</span>
             </div>
+          )}
+          {/* Country warning for mobile */}
+          {!isCountrySelected && !countdown.isExpired && (
+            <button
+              type='button'
+              onClick={() =>
+                countryRef.current?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center',
+                })
+              }
+              className='flex items-center justify-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium'
+            >
+              <AlertCircle className='h-3 w-3' />
+              <span>Seleccioná tu país antes de pagar</span>
+            </button>
           )}
           {/* Price and Button Row */}
           <div className='flex items-center justify-between gap-4'>
@@ -457,7 +526,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
               size='lg'
               className='bg-primary-gradient h-12 px-6 text-base font-semibold'
               disabled={isButtonDisabled}
-              onClick={() => createPaymentLink.mutate({country: payerCountry})}
+              onClick={handlePay}
             >
               {createPaymentLink.isPending ? 'Procesando...' : 'Pagar'}
             </Button>

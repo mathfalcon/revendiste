@@ -21,7 +21,24 @@ import {
   Settings,
   LogOut,
   TicketPlus,
+  Sun,
+  Moon,
+  Monitor,
+  ChevronRight,
 } from 'lucide-react';
+import {useTheme} from '../ThemeProvider';
+
+const THEME_OPTIONS = [
+  {value: 'light' as const, icon: Sun, label: 'Claro'},
+  {value: 'dark' as const, icon: Moon, label: 'Oscuro'},
+  {value: 'system' as const, icon: Monitor, label: 'Automático'},
+];
+
+const getActiveThemeIcon = (theme: string | undefined) => {
+  if (theme === 'dark') return Moon;
+  if (theme === 'light') return Sun;
+  return Monitor;
+};
 
 const MENU_ITEMS = [
   {to: '/entradas/publicar', icon: TicketPlus, label: 'Publicar entradas'},
@@ -35,8 +52,11 @@ export const UserProfile = () => {
   const {data: currentUser} = useQuery(getCurrentUserQuery());
   const {signOut} = useClerk();
   const [open, setOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const isMobile = useIsMobile();
 
+  const {theme, setTheme} = useTheme();
+  const ActiveThemeIcon = getActiveThemeIcon(theme);
   const avatarUrl = currentUser?.imageUrl || user?.imageUrl;
   const initials =
     (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '');
@@ -98,6 +118,31 @@ export const UserProfile = () => {
               Configuración
             </Link>
 
+            <div>
+              <button
+                onClick={() => setThemeOpen(prev => !prev)}
+                className='flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
+              >
+                <ActiveThemeIcon className='h-4 w-4 text-muted-foreground' />
+                Tema
+                <ChevronRight className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${themeOpen ? 'rotate-90' : ''}`} />
+              </button>
+              {themeOpen && (
+                <div className='flex flex-col gap-0.5 pl-7 pr-4 pb-2'>
+                  {THEME_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setTheme(opt.value)}
+                      className={`flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-colors cursor-pointer ${theme === opt.value ? 'bg-accent text-accent-foreground' : 'hover:bg-accent'}`}
+                    >
+                      <opt.icon className='h-3.5 w-3.5' />
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => {
                 setOpen(false);
@@ -156,6 +201,31 @@ export const UserProfile = () => {
             <Settings className='h-5 w-5' />
             Configuración
           </Link>
+
+          <Separator className='my-2' />
+
+          <button
+            onClick={() => setThemeOpen(prev => !prev)}
+            className='flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
+          >
+            <ActiveThemeIcon className='h-5 w-5' />
+            Tema
+            <ChevronRight className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${themeOpen ? 'rotate-90' : ''}`} />
+          </button>
+          {themeOpen && (
+            <div className='flex flex-col gap-0.5 pl-6 pr-3 pb-2'>
+              {THEME_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setTheme(opt.value)}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${theme === opt.value ? 'bg-accent text-accent-foreground' : 'hover:bg-accent'}`}
+                >
+                  <opt.icon className='h-4 w-4' />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           <Separator className='my-2' />
 
