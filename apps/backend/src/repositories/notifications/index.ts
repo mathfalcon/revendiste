@@ -1,4 +1,4 @@
-import {Kysely, sql} from 'kysely';
+import {Kysely, sql, type SqlBool} from 'kysely';
 import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 import {mapToPaginatedResponse} from '~/middleware/pagination';
@@ -95,7 +95,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('userId', '=', userId)
       .where('deletedAt', 'is', null)
       // Only show notifications intended for in-app display
-      .where(sql`'in_app' = ANY(channels)`);
+      .where(sql<SqlBool>`'in_app' = ANY(channels)`);
 
     if (options?.includeSeen === false) {
       query = query.where('seenAt', 'is', null);
@@ -129,7 +129,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('userId', '=', userId)
       .where('deletedAt', 'is', null)
       // Only show notifications intended for in-app display
-      .where(sql`'in_app' = ANY(channels)`);
+      .where(sql<SqlBool>`'in_app' = ANY(channels)`);
 
     if (options?.includeSeen === false) {
       baseQuery = baseQuery.where('seenAt', 'is', null);
@@ -174,7 +174,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('seenAt', 'is', null)
       .where('deletedAt', 'is', null)
       // Only count notifications intended for in-app display
-      .where(sql`'in_app' = ANY(channels)`)
+      .where(sql<SqlBool>`'in_app' = ANY(channels)`)
       .executeTakeFirst();
 
     return Number(result?.count || 0);
@@ -208,7 +208,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('userId', '=', userId)
       .where('seenAt', 'is', null)
       .where('deletedAt', 'is', null)
-      .where(sql`'in_app' = ANY(channels)`)
+      .where(sql<SqlBool>`'in_app' = ANY(channels)`)
       .returning('id')
       .execute();
 
