@@ -19,10 +19,10 @@ env:
   FRONTEND_SERVICE: revendiste-production-frontend
 
 jobs:
-  build-backend:
+  # Build backend for each architecture natively (no QEMU emulation)
+  build-backend-amd64:
     runs-on: ubuntu-latest
     environment: production
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,24 +37,66 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend (amd64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/backend.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:amd64
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache-amd64
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache-amd64,mode=max
+
+  build-backend-arm64:
+    runs-on: ubuntu-24.04-arm
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Extract version from tag (if applicable)
-        id: version
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "version_major=$(echo $VERSION | cut -d. -f1)" >> $GITHUB_OUTPUT
-            echo "version_minor=$(echo $VERSION | cut -d. -f2)" >> $GITHUB_OUTPUT
-            echo "Deploying version: $VERSION"
-          else
-            echo "Deploying from branch (using latest tag)"
-          fi
+      - name: Build and push backend (arm64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/backend.Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:arm64
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache-arm64
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache-arm64,mode=max
+
+  # Merge per-arch images into a single multi-arch manifest
+  build-backend:
+    runs-on: ubuntu-latest
+    needs: [build-backend-amd64, build-backend-arm64]
+    environment: production
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Extract backend metadata
         id: backend-meta
@@ -68,18 +110,17 @@ jobs:
             type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=semver,pattern={{major}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
-      - name: Build and push backend Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./deploy/backend.Dockerfile
-          # Multi-arch: ARM64 for services/most cronjobs, AMD64 for scrape-events (Playwright)
-          platforms: linux/arm64,linux/amd64
-          push: true
-          tags: ${{ steps.backend-meta.outputs.tags }}
-          labels: ${{ steps.backend-meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache,mode=max
+      - name: Create and push multi-arch manifest
+        run: |
+          TAGS="${{ steps.backend-meta.outputs.tags }}"
+          SOURCE_AMD64="${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:amd64"
+          SOURCE_ARM64="${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:arm64"
+
+          # Create a manifest for each tag
+          while IFS= read -r TAG; do
+            echo "Creating manifest for: $TAG"
+            docker buildx imagetools create -t "$TAG" "$SOURCE_AMD64" "$SOURCE_ARM64"
+          done <<< "$TAGS"
 
       - name: Output backend image tags
         run: |
@@ -87,9 +128,8 @@ jobs:
           echo "${{ steps.backend-meta.outputs.tags }}"
 
   build-frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     environment: production
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -103,9 +143,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -167,18 +204,18 @@ jobs:
             --image-ids imageTag=latest \
             --query 'imageDetails[0].imagePushedAt' \
             --output text
-          
+
           if [ $? -ne 0 ]; then
             echo "Error: Backend image 'latest' not found in ECR"
             exit 1
           fi
-          
+
           echo "Backend image 'latest' verified successfully"
 
       - name: Update ECS backend service
         run: |
           echo "Updating ECS service: ${{ env.BACKEND_SERVICE }}"
-          
+
           # Force new deployment to pull latest image
           # ECS will automatically pull secrets from Secrets Manager (already configured in task definition)
           aws ecs update-service \
@@ -190,39 +227,39 @@ jobs:
       - name: Wait for backend deployment to stabilize
         run: |
           echo "Waiting for backend deployment to complete..."
-          
+
           # Wait for service to reach stable state (all tasks running and healthy)
           aws ecs wait services-stable \
             --cluster ${{ env.ECS_CLUSTER }} \
             --services ${{ env.BACKEND_SERVICE }} \
             --region ${{ env.AWS_REGION }}
-          
+
           echo "Backend deployment completed successfully!"
 
       - name: Verify backend health
         run: |
           echo "Performing health check on https://api.revendiste.com/api/health"
-          
+
           MAX_RETRIES=10
           RETRY_COUNT=0
           HEALTH_CHECK_URL="https://api.revendiste.com/api/health"
-          
+
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$HEALTH_CHECK_URL" || echo "000")
-            
+
             if [ "$HTTP_CODE" = "200" ]; then
               echo "Health check passed! HTTP $HTTP_CODE"
               exit 0
             fi
-            
+
             RETRY_COUNT=$((RETRY_COUNT + 1))
             echo "Health check returned HTTP $HTTP_CODE, retry $RETRY_COUNT/$MAX_RETRIES..."
-            
+
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
               sleep 10
             fi
           done
-          
+
           echo "Warning: Health check failed after $MAX_RETRIES attempts"
           echo "Service may still be starting up. Check CloudWatch logs for details."
           exit 0  # Don't fail the deployment if health check fails
@@ -264,18 +301,18 @@ jobs:
             --image-ids imageTag=latest \
             --query 'imageDetails[0].imagePushedAt' \
             --output text
-          
+
           if [ $? -ne 0 ]; then
             echo "Error: Frontend image 'latest' not found in ECR"
             exit 1
           fi
-          
+
           echo "Frontend image 'latest' verified successfully"
 
       - name: Update ECS frontend service
         run: |
           echo "Updating ECS service: ${{ env.FRONTEND_SERVICE }}"
-          
+
           # Force new deployment to pull latest image
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
@@ -286,39 +323,39 @@ jobs:
       - name: Wait for frontend deployment to stabilize
         run: |
           echo "Waiting for frontend deployment to complete..."
-          
+
           # Wait for service to reach stable state (all tasks running and healthy)
           aws ecs wait services-stable \
             --cluster ${{ env.ECS_CLUSTER }} \
             --services ${{ env.FRONTEND_SERVICE }} \
             --region ${{ env.AWS_REGION }}
-          
+
           echo "Frontend deployment completed successfully!"
 
       - name: Verify frontend health
         run: |
           echo "Performing health check on https://revendiste.com"
-          
+
           MAX_RETRIES=10
           RETRY_COUNT=0
           HEALTH_CHECK_URL="https://revendiste.com"
-          
+
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$HEALTH_CHECK_URL" || echo "000")
-            
+
             if [ "$HTTP_CODE" = "200" ]; then
               echo "Health check passed! HTTP $HTTP_CODE"
               exit 0
             fi
-            
+
             RETRY_COUNT=$((RETRY_COUNT + 1))
             echo "Health check returned HTTP $HTTP_CODE, retry $RETRY_COUNT/$MAX_RETRIES..."
-            
+
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
               sleep 10
             fi
           done
-          
+
           echo "Warning: Health check failed after $MAX_RETRIES attempts"
           echo "Service may still be starting up. Check CloudWatch logs for details."
           exit 0  # Don't fail the deployment if health check fails
@@ -331,12 +368,11 @@ jobs:
           name: Release ${{ steps.version.outputs.version }}
           body: |
             ## Version ${{ steps.version.outputs.version }}
-            
+
             Production deployment completed successfully.
-            
+
             ### Images
             - Backend: `${{ env.BACKEND_IMAGE_NAME }}:${{ steps.version.outputs.version }}`
             - Frontend: `${{ env.FRONTEND_IMAGE_NAME }}:${{ steps.version.outputs.version }}`
           draft: false
           prerelease: false
-
