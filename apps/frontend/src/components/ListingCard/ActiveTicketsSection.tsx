@@ -9,6 +9,7 @@ import {
   Upload,
   CheckCircle,
   AlertCircle,
+  Eye,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -29,11 +30,12 @@ import type {
 } from '~/lib/api/generated';
 import {EditTicketPriceDialog} from './EditTicketPriceDialog';
 import {RemoveTicketDialog} from './RemoveTicketDialog';
+import {TicketDocumentViewerModal} from '~/components';
 import {CopyableText} from '~/components/ui/copyable-text';
 import {cn} from '~/lib/utils';
 
 interface ActiveTicketsSectionProps {
-  tickets: GetUserListingsResponse[number]['tickets'];
+  tickets: GetUserListingsResponse['data'][number]['tickets'];
   ticketWaveName: string;
   ticketWaveCurrency: EventTicketCurrency;
   ticketWaveFaceValue: number;
@@ -51,6 +53,7 @@ export function ActiveTicketsSection({
 }: ActiveTicketsSectionProps) {
   const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
   const [removingTicketId, setRemovingTicketId] = useState<string | null>(null);
+  const [viewingTicketId, setViewingTicketId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const editingTicket = tickets.find(t => t.id === editingTicketId);
@@ -189,10 +192,15 @@ export function ActiveTicketsSection({
                   <div className='flex items-center gap-2 shrink-0'>
                     {/* Document status indicator */}
                     {ticket.hasDocument ? (
-                      <span className='flex items-center gap-1 text-xs text-green-600 bg-green-500/10 px-2 py-1 rounded-full'>
-                        <CheckCircle className='h-3 w-3' />
-                        Subido
-                      </span>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='h-7 text-xs text-green-600 border-green-500/30 hover:bg-green-500/10'
+                        onClick={() => setViewingTicketId(ticket.id)}
+                      >
+                        <Eye className='mr-1.5 h-3 w-3' />
+                        Ver documento
+                      </Button>
                     ) : ticket.canUploadDocument ? (
                       <Button
                         variant='outline'
@@ -265,6 +273,18 @@ export function ActiveTicketsSection({
           }}
           ticketId={removingTicket.id}
           ticketNumber={removingTicket.ticketNumber}
+        />
+      )}
+
+      {/* Document Viewer Modal */}
+      {viewingTicketId && (
+        <TicketDocumentViewerModal
+          ticketId={viewingTicketId}
+          open={!!viewingTicketId}
+          onOpenChange={open => {
+            if (!open) setViewingTicketId(null);
+          }}
+          isEventPast={isEventPast}
         />
       )}
     </>

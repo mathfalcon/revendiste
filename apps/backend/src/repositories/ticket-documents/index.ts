@@ -209,6 +209,24 @@ export class TicketDocumentsRepository extends BaseRepository<TicketDocumentsRep
   }
 
   /**
+   * Check which ticket IDs have primary documents
+   * Returns a Set of ticket IDs that have documents
+   */
+  async getTicketIdsWithDocuments(ticketIds: string[]) {
+    if (ticketIds.length === 0) return new Set<string>();
+
+    const rows = await this.db
+      .selectFrom('ticketDocuments')
+      .select('ticketId')
+      .where('ticketId', 'in', ticketIds)
+      .where('isPrimary', '=', true)
+      .where('deletedAt', 'is', null)
+      .execute();
+
+    return new Set(rows.map(r => r.ticketId));
+  }
+
+  /**
    * Get document count for a ticket
    */
   async getDocumentCount(ticketId: string) {

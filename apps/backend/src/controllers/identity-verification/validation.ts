@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 
 export const InitiateVerificationRouteSchema = z.object({
   body: z
@@ -16,7 +17,7 @@ export const InitiateVerificationRouteSchema = z.object({
         return true;
       },
       {
-        message: 'El país es requerido para pasaportes',
+        message: VALIDATION_MESSAGES.DOCUMENT_COUNTRY_REQUIRED_PASSPORT,
         path: ['documentCountry'],
       },
     ),

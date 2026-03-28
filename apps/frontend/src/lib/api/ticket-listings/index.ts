@@ -1,18 +1,24 @@
 import {mutationOptions, queryOptions} from '@tanstack/react-query';
 import {
   api,
-  type CreateTicketListingRouteBody,
   type UpdateTicketPriceRouteBody,
 } from '..';
 import {toast} from 'sonner';
 
+export interface CreateTicketListingData {
+  eventId: string;
+  ticketWaveId: string;
+  price: number;
+  quantity: number;
+  documents?: File[];
+}
+
 export const postTicketListingMutation = () =>
   mutationOptions({
     mutationKey: ['create-ticket-listing'],
-    mutationFn: (data: CreateTicketListingRouteBody) =>
+    mutationFn: (data: CreateTicketListingData) =>
       api.ticketListings.create(data).then(data => data.data),
-    onSuccess(data) {
-      // TODO: redirect to listings page
+    onSuccess() {
       toast.success('Entradas publicadas con éxito');
     },
   });
@@ -32,27 +38,17 @@ export const uploadTicketDocumentMutation = (ticketId: string) =>
   mutationOptions({
     mutationKey: ['upload-ticket-document', ticketId],
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
       return api.ticketListings
-        .uploadDocument(
-          ticketId,
-          {file},
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        )
+        .uploadDocument(ticketId, {file})
         .then(res => res.data);
     },
     onSuccess: () => {
-      toast.success('Documento subido exitosamente');
+      toast.success('Documento subido');
     },
     onError: (error: any) => {
       toast.error(
         error.response?.data?.message ||
-          'Error al subir el documento. Por favor intenta nuevamente.',
+          'No pudimos subir el documento. Intentá de nuevo.',
       );
     },
   });
@@ -61,27 +57,17 @@ export const updateTicketDocumentMutation = (ticketId: string) =>
   mutationOptions({
     mutationKey: ['update-ticket-document', ticketId],
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
       return api.ticketListings
-        .updateDocument(
-          ticketId,
-          {file},
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        )
+        .updateDocument(ticketId, {file})
         .then(res => res.data);
     },
     onSuccess: () => {
-      toast.success('Documento actualizado exitosamente');
+      toast.success('Documento actualizado');
     },
     onError: (error: any) => {
       toast.error(
         error.response?.data?.message ||
-          'Error al actualizar el documento. Por favor intenta nuevamente.',
+          'No pudimos actualizar el documento. Intentá de nuevo.',
       );
     },
   });
@@ -94,7 +80,7 @@ export const updateTicketPriceMutation = (ticketId: string) =>
         .updateTicketPrice(ticketId, data)
         .then(res => res.data),
     onSuccess: () => {
-      toast.success('Precio actualizado exitosamente');
+      toast.success('Precio actualizado');
     },
   });
 
@@ -104,7 +90,7 @@ export const deleteTicketMutation = (ticketId: string) =>
     mutationFn: () =>
       api.ticketListings.removeTicket(ticketId).then(res => res.data),
     onSuccess: () => {
-      toast.success('Ticket retirado exitosamente');
+      toast.success('Entrada retirada');
     },
   });
 

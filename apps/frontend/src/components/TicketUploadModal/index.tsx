@@ -29,9 +29,10 @@ import {toast} from 'sonner';
 import {formatEventDate} from '~/utils/string';
 import {cn} from '~/lib/utils';
 
-type TicketWithListing = GetUserListingsResponse[number]['tickets'][number] & {
-  listing: GetUserListingsResponse[number];
-};
+type TicketWithListing =
+  GetUserListingsResponse['data'][number]['tickets'][number] & {
+    listing: GetUserListingsResponse['data'][number];
+  };
 
 interface TicketUploadModalProps {
   /** Single ticket or array of tickets to upload */
@@ -240,7 +241,9 @@ export function TicketUploadModal({
   // Get current ticket data for upload state
   const event = currentTicket?.listing?.event;
   const ticketWave = currentTicket?.listing?.ticketWave;
-  const isCompleted = currentTicket ? completedIds.has(currentTicket.id) : false;
+  const isCompleted = currentTicket
+    ? completedIds.has(currentTicket.id)
+    : false;
 
   // Single Dialog - content changes based on state
   return (

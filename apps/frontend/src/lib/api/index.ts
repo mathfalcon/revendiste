@@ -107,4 +107,6 @@ export * from './payments';
 export * from './payouts';
 export * from './users';
 export * from './identity-verification';
+export * from './ticket-reports';
+export * from './profile';
 export * from './generated';

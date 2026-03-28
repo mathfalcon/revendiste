@@ -74,7 +74,7 @@ export function RequestPayoutForm({
   const requestPayout = useMutation({
     ...requestPayoutMutation(),
     onSuccess: () => {
-      toast.success('Solicitud de pago creada exitosamente');
+      toast.success('Solicitud de retiro creada');
       queryClient.invalidateQueries({queryKey: ['payouts']});
       onSuccess?.();
     },

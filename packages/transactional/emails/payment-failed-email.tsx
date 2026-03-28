@@ -22,8 +22,8 @@ export const PaymentFailedEmail = ({
   appBaseUrl,
 }: PaymentFailedEmailProps) => (
   <BaseEmail
-    title="El pago falló"
-    preview={`El pago para tu orden de ${eventName} falló`}
+    title="No pudimos procesar tu pago"
+    preview={`El pago para ${eventName} falló`}
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
@@ -48,8 +48,8 @@ export const PaymentFailedEmail = ({
     )}
 
     <Text className="text-foreground mb-6">
-      Por favor, verificá los datos de tu método de pago e intentá de nuevo.
-      Si el problema sigue, contactá con tu banco o método de pago.
+      Revisá los datos de tu medio de pago e intentá de nuevo. Si el problema
+      sigue, contactá a tu banco.
     </Text>
 
     <Section className="text-center mb-6">

@@ -69,8 +69,8 @@ export const SellerTicketSoldEmail = ({
       {canUpload ? (
         <>
           <Text className="text-foreground mb-4">
-            Para completar la venta, por favor subí los documentos de tus
-            tickets lo antes posible.
+            Para completar la venta, subí los documentos de tus entradas
+            cuanto antes.
           </Text>
 
           <Section className="text-center mb-6">
@@ -93,19 +93,17 @@ export const SellerTicketSoldEmail = ({
               {hoursUntilAvailable}{' '}
               {hoursUntilAvailable === 1 ? 'hora' : 'horas'}
             </strong>
-            . Te vamos a avisar cuando puedas subirlos.
+            . Te avisamos cuando los puedas subir.
           </Text>
         </Section>
       ) : (
         <Text className="text-foreground mb-6">
-          Te vamos a avisar cuando puedas subir los documentos de tus
-          tickets.
+          Te avisamos cuando puedas subir los documentos de tus entradas.
         </Text>
       )}
 
       <Text className="text-sm text-muted-foreground mb-0">
-        Subir los documentos es obligatorio para completar la venta y recibir
-        el pago.
+        Subir los documentos es obligatorio para completar la venta y cobrar.
       </Text>
     </BaseEmail>
   );

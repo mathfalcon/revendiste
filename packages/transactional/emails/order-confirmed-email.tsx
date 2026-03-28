@@ -73,12 +73,11 @@ export const OrderConfirmedEmail = ({
 }: OrderConfirmedEmailProps) => (
   <BaseEmail
     title="¡Pago confirmado!"
-    preview={`Tu orden para ${eventName} fue confirmada exitosamente`}
+    preview={`Tu compra para ${eventName} está confirmada`}
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      Tu compra se procesó correctamente. Tu orden para{' '}
-      <strong>{eventName}</strong> ya está confirmada.
+      Listo, tu compra para <strong>{eventName}</strong> está confirmada.
     </Text>
 
     {/* CTA Button - Moved up to prevent truncation */}
@@ -272,14 +271,13 @@ export const OrderConfirmedEmail = ({
         ¿Qué sigue ahora?
       </Text>
       <Text className="text-sm text-muted-foreground m-0 mb-1">
-        ✓ Revisá tu correo para encontrar todos los detalles de tu compra
+        ✓ Acá tenés todos los detalles de tu compra
       </Text>
       <Text className="text-sm text-muted-foreground m-0 mb-1">
         ✓ Accedé a tus entradas cuando quieras desde tu perfil
       </Text>
       <Text className="text-sm text-muted-foreground m-0">
-        ✓ Te vamos a avisar cuando el vendedor suba los documentos de tus
-        tickets
+        ✓ Te avisamos cuando el vendedor suba los documentos de tus entradas
       </Text>
     </Section>
 

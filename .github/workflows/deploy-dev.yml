@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - development
-  pull_request:
-    branches:
-      - development
 
 env:
   AWS_REGION: sa-east-1

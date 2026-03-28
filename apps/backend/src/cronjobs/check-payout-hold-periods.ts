@@ -1,19 +1,29 @@
 import cron from 'node-cron';
 import {db} from '~/db';
 import {SellerEarningsService} from '~/services/seller-earnings';
+import {TicketReportsService} from '~/services/ticket-reports';
 import {NotificationService} from '~/services/notifications';
+import {DLocalService} from '~/services/dlocal';
 import {
   SellerEarningsRepository,
   OrderTicketReservationsRepository,
+  OrdersRepository,
   NotificationsRepository,
   NotificationBatchesRepository,
   UsersRepository,
+  TicketReportsRepository,
+  TicketReportActionsRepository,
+  TicketReportRefundsRepository,
+  TicketReportAttachmentsRepository,
+  PaymentsRepository,
+  TicketDocumentsRepository,
 } from '~/repositories';
 import {
   SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
   SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
 } from '~/constants/limits';
 import {logger} from '~/utils';
+import {getStorageProvider} from '~/services/storage/StorageFactory';
 
 /**
  * Runs the check payout hold periods job logic once
@@ -37,10 +47,25 @@ export async function runCheckPayoutHoldPeriods() {
     notificationBatchesRepository,
   );
 
+  const ticketReportsService = new TicketReportsService(
+    new TicketReportsRepository(db),
+    new TicketReportActionsRepository(db),
+    new TicketReportRefundsRepository(db),
+    new TicketReportAttachmentsRepository(db),
+    orderTicketReservationsRepository,
+    new OrdersRepository(db),
+    new PaymentsRepository(db),
+    new TicketDocumentsRepository(db),
+    notificationService,
+    new DLocalService(),
+    getStorageProvider(),
+  );
+
   const sellerEarningsService = new SellerEarningsService(
     sellerEarningsRepository,
     orderTicketReservationsRepository,
     notificationService,
+    ticketReportsService,
   );
 
   try {

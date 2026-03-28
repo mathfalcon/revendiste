@@ -1,7 +1,5 @@
 import {Button} from '../ui/button';
-import {format} from 'date-fns';
-import {es} from 'date-fns/locale';
-import {getCurrencySymbol} from '~/utils';
+import {getCurrencySymbol, formatEventDateSmart} from '~/utils';
 import {Link, useNavigate} from '@tanstack/react-router';
 import {Separator} from '../ui/separator';
 import {Calendar, MapPin} from '~/assets';
@@ -76,8 +74,8 @@ export const EventCard = (props: EventCardProps) => {
             {/* Date */}
             <div className='opacity-70 flex items-center gap-1.5 text-xs shrink-0'>
               <Calendar className='w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0' />
-              <span className='capitalize truncate'>
-                {format(new Date(date), 'EEEE dd MMMM yyyy', {locale: es})}
+              <span className='truncate'>
+                {formatEventDateSmart(date)}
               </span>
             </div>
 

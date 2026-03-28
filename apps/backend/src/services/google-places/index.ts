@@ -6,6 +6,7 @@ export interface GooglePlaceResult {
   name: string;
   address: string;
   city: string;
+  region: string;
   country: string;
   latitude: number;
   longitude: number;
@@ -80,6 +81,12 @@ export class GooglePlacesService {
     string,
     Promise<GooglePlaceResult | null>
   >();
+
+  /**
+   * Session-level cache for Place Details results
+   * Avoids re-fetching details for the same placeId across batches
+   */
+  private readonly placeDetailsCache = new Map<string, GooglePlaceResult>();
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || GOOGLE_PLACES_API_KEY || '';
@@ -218,6 +225,13 @@ export class GooglePlacesService {
       // Get the first (most relevant) result
       const place = data.results[0];
 
+      // Check session cache for previously fetched details
+      const cachedDetails = this.placeDetailsCache.get(place.place_id);
+      if (cachedDetails) {
+        logger.debug('Using cached Place Details', {placeId: place.place_id});
+        return cachedDetails;
+      }
+
       // Fetch place details to get proper address components
       const details = await this.getPlaceDetails(place.place_id);
 
@@ -228,7 +242,8 @@ export class GooglePlacesService {
           name: place.name,
           address: place.vicinity,
           city: this.extractCityFromVicinity(place.vicinity),
-          country: 'Uruguay', // Default for our use case
+          region: '',
+          country: 'Uruguay',
           latitude: place.geometry.location.lat,
           longitude: place.geometry.location.lng,
         };
@@ -237,9 +252,11 @@ export class GooglePlacesService {
           result: fallbackResult,
         });
 
+        this.placeDetailsCache.set(place.place_id, fallbackResult);
         return fallbackResult;
       }
 
+      this.placeDetailsCache.set(place.place_id, details);
       return details;
     } catch (error) {
       logger.error('Error calling Google Places API', {error});
@@ -345,6 +362,7 @@ export class GooglePlacesService {
         name: result.name,
         address: result.formatted_address,
         city,
+        region: adminArea1,
         country,
         latitude: result.geometry.location.lat,
         longitude: result.geometry.location.lng,
@@ -352,6 +370,7 @@ export class GooglePlacesService {
 
       logger.debug('Google Places final enriched venue', {
         result: finalResult,
+        region: adminArea1 || '(empty)',
         citySource: locality
           ? 'locality'
           : adminArea2

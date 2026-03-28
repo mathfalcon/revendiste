@@ -100,7 +100,7 @@ export function PayoutEditDialog({
     ...updatePayoutMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
-      toast.success('Pago actualizado exitosamente');
+      toast.success('Pago actualizado');
       onOpenChange(false);
     },
     onError: (error: any) => {

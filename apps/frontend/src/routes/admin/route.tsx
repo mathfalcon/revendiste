@@ -1,5 +1,12 @@
 import {createFileRoute, Outlet, redirect} from '@tanstack/react-router';
-import {LayoutDashboard, Wallet, UserCheck, Menu, Calendar} from 'lucide-react';
+import {
+  LayoutDashboard,
+  Wallet,
+  UserCheck,
+  Menu,
+  Calendar,
+  Flag,
+} from 'lucide-react';
 import {Link, useLocation} from '@tanstack/react-router';
 import {useState, useEffect} from 'react';
 import {cn} from '~/lib/utils';
@@ -49,6 +56,7 @@ const navigation = [
   {name: 'Eventos', href: '/admin/eventos', icon: Calendar},
   {name: 'Verificaciones', href: '/admin/verificaciones', icon: UserCheck},
   {name: 'Pagos', href: '/admin/retiros', icon: Wallet},
+  {name: 'Reportes', href: '/admin/reportes', icon: Flag},
 ];
 
 function SidebarNav({onNavigate}: {onNavigate?: () => void}) {
@@ -91,7 +99,7 @@ function AdminDashboardLayout() {
   }, [location.pathname]);
 
   return (
-    <div className='flex h-screen bg-background'>
+    <div className='flex bg-background h-full'>
       {/* Mobile header with menu button */}
       <div className='fixed left-0 right-0 top-0 z-40 flex h-14 items-center border-b bg-background px-4 md:hidden'>
         <Button
@@ -126,10 +134,15 @@ function AdminDashboardLayout() {
       </aside>
 
       {/* Main content */}
-      <main className='flex-1 overflow-y-auto pt-14 md:pt-0'>
-        <div className='container mx-auto px-4 py-6 md:px-6 md:py-8'>
-          <Outlet />
-        </div>
+      {/* 
+        py-6 sets the default (base) vertical padding for all screen sizes.
+        md:py-12 applies vertical padding of 12 when the screen is at least 'md' (768px).
+        Tailwind CSS applies responsive classes in order, so md:py-12 WILL override py-6 when the media query is active.
+        If you're seeing py-4 (not py-6) taking precedence, check for a more specific selector or another class further up the tree. 
+        Correct base + responsive usage is shown below.
+      */}
+      <main className='flex-1 container mx-auto p-6'>
+        <Outlet />
       </main>
     </div>
   );

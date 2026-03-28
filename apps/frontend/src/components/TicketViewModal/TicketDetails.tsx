@@ -10,7 +10,7 @@ export function TicketDetails({
   currency,
 }: TicketDetailsProps) {
   return (
-    <div className='space-y-2'>
+    <div className='space-y-1'>
       {ticketWaveName && (
         <div className='flex justify-between text-sm'>
           <span className='text-muted-foreground'>Categoría:</span>

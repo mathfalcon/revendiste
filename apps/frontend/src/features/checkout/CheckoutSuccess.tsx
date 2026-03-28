@@ -37,7 +37,7 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
             <div>
               <h1 className='text-3xl font-bold mb-2'>¡Pago confirmado!</h1>
               <p className='text-muted-foreground'>
-                Tu compra ha sido procesada exitosamente
+                Tu compra se procesó
               </p>
             </div>
           </div>

@@ -578,8 +578,9 @@ export class RedTicketsScraper extends BaseScraper {
     const now = new Date();
     let year = now.getFullYear();
 
-    // If the date has passed, assume next year
-    const tentativeDate = new Date(year, monthNum, parseInt(day, 10));
+    // If the date+time has passed, assume next year
+    // Use the actual event time (not midnight) to avoid same-day false positives
+    const tentativeDate = new Date(year, monthNum, parseInt(day, 10), hour, minute);
     if (tentativeDate < now) {
       year++;
     }

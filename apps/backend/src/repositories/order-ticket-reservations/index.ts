@@ -22,6 +22,28 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
       .execute();
   }
 
+  async getById(reservationId: string) {
+    return await this.db
+      .selectFrom('orderTicketReservations')
+      .selectAll()
+      .where('id', '=', reservationId)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
+  }
+
+  /**
+   * Find the reservation for a given listing ticket ID.
+   * Includes soft-deleted reservations (confirmed orders soft-delete reservations).
+   */
+  async getByListingTicketId(listingTicketId: string) {
+    return await this.db
+      .selectFrom('orderTicketReservations')
+      .selectAll()
+      .where('listingTicketId', '=', listingTicketId)
+      .orderBy('createdAt', 'desc')
+      .executeTakeFirst();
+  }
+
   async createReservations(
     orderId: string,
     ticketIds: string[],

@@ -15,7 +15,7 @@ export type ArrayTypeImpl<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type DocumentTypeEnum = "ci_uy" | "dni_ar" | "passport";
 
-export type EventImageType = "flyer" | "hero";
+export type EventImageType = "flyer" | "hero" | "og_hero";
 
 export type EventTicketCurrency = "USD" | "UYU";
 
@@ -47,7 +47,7 @@ export type NotificationChannel = "email" | "in_app" | "sms";
 
 export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
-export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "buyer_ticket_cancelled" | "document_reminder" | "document_uploaded" | "document_uploaded_batch" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "order_invoice" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "seller_earnings_retained" | "ticket_sold_seller";
+export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "buyer_ticket_cancelled" | "document_reminder" | "document_uploaded" | "document_uploaded_batch" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "order_invoice" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "seller_earnings_retained" | "ticket_report_action_added" | "ticket_report_closed" | "ticket_report_created" | "ticket_report_status_changed" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
@@ -74,6 +74,18 @@ export type QrAvailabilityTiming = "12h" | "24h" | "3h" | "48h" | "6h" | "72h";
 export type SellerEarningsRetainedReason = "dispute" | "fraud" | "missing_document" | "other";
 
 export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | "payout_requested" | "pending" | "retained";
+
+export type TicketReportActionType = "close" | "comment" | "refund_full" | "refund_partial" | "reject";
+
+export type TicketReportCaseType = "invalid_ticket" | "other" | "problem_with_seller" | "ticket_not_received";
+
+export type TicketReportEntityType = "listing" | "listing_ticket" | "order" | "order_ticket_reservation";
+
+export type TicketReportRefundStatus = "pending" | "refunded" | "skipped";
+
+export type TicketReportSource = "auto_missing_document" | "user_report";
+
+export type TicketReportStatus = "awaiting_customer" | "awaiting_support" | "closed";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
@@ -139,6 +151,7 @@ export interface EventVenues {
   latitude: Numeric | null;
   longitude: Numeric | null;
   name: string;
+  region: string | null;
   updatedAt: Generated<Timestamp>;
 }
 
@@ -440,6 +453,56 @@ export interface TicketDocuments {
   version: Generated<number>;
 }
 
+export interface TicketReportActions {
+  actionType: TicketReportActionType;
+  comment: string | null;
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  metadata: Json | null;
+  performedByAdmin: Generated<boolean>;
+  performedByUserId: string;
+  ticketReportId: string;
+}
+
+export interface TicketReportAttachments {
+  createdAt: Generated<Timestamp>;
+  fileName: string;
+  id: Generated<string>;
+  mimeType: string;
+  originalName: string;
+  sizeBytes: number;
+  storagePath: string;
+  ticketReportActionId: string | null;
+  ticketReportId: string;
+  uploadedByUserId: string;
+}
+
+export interface TicketReportRefunds {
+  createdAt: Generated<Timestamp>;
+  currency: EventTicketCurrency | null;
+  id: Generated<string>;
+  orderTicketReservationId: string;
+  processedAt: Timestamp | null;
+  refundAmount: Numeric | null;
+  refundStatus: Generated<TicketReportRefundStatus>;
+  ticketReportId: string;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface TicketReports {
+  caseType: TicketReportCaseType;
+  closedAt: Timestamp | null;
+  createdAt: Generated<Timestamp>;
+  description: string | null;
+  entityId: string;
+  entityType: TicketReportEntityType;
+  id: Generated<string>;
+  reportedByUserId: string | null;
+  source: Generated<TicketReportSource>;
+  status: Generated<TicketReportStatus>;
+  updatedAt: Generated<Timestamp>;
+}
+
 export interface Users {
   clerkId: string;
   createdAt: Generated<Timestamp>;
@@ -505,6 +568,10 @@ export interface DB {
   rateLimit: RateLimit;
   sellerEarnings: SellerEarnings;
   ticketDocuments: TicketDocuments;
+  ticketReportActions: TicketReportActions;
+  ticketReportAttachments: TicketReportAttachments;
+  ticketReportRefunds: TicketReportRefunds;
+  ticketReports: TicketReports;
   users: Users;
   verificationAuditLogs: VerificationAuditLogs;
 }

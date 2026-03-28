@@ -11,7 +11,7 @@ import {TextEllipsis} from '../ui/text-ellipsis';
 import {CopyableText} from '~/components/ui/copyable-text';
 
 interface CancelledTicketsSectionProps {
-  tickets: GetUserListingsResponse[number]['tickets'];
+  tickets: GetUserListingsResponse['data'][number]['tickets'];
   ticketWaveName: string;
 }
 

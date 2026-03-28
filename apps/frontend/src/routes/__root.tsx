@@ -6,8 +6,6 @@ import {
   createRootRouteWithContext,
   useLocation,
 } from '@tanstack/react-router';
-import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
-import {TanStackRouterDevtools} from '@tanstack/react-router-devtools';
 import * as React from 'react';
 import type {QueryClient} from '@tanstack/react-query';
 import {DefaultCatchBoundary} from '~/components/DefaultCatchBoundary';
@@ -16,7 +14,7 @@ import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {ClerkVariables, Navbar, Footer, FullScreenLoading} from '~/components';
-import {ThemeProvider} from '~/components/ThemeProvider';
+import {ThemeProvider, useTheme} from '~/components/ThemeProvider';
 import {ClerkProvider} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
 import {Toaster} from '~/components/ui/sonner';
@@ -44,8 +42,9 @@ export const Route = createRootRouteWithContext<{
         content: 'width=device-width, initial-scale=1',
       },
       ...seo({
-        title: 'Revendiste | Transferí tus entradas de forma fácil y segura',
-        description: `Revendiste es una plataforma de venta de entradas de forma fácil y segura. `,
+        title: 'Revendiste | Comprá y vendé entradas de forma segura en Uruguay',
+        description:
+          'Revendiste es la plataforma más segura de Uruguay para comprar y vender entradas a conciertos, fiestas y eventos. Custodia de fondos, vendedores verificados y garantía de compra.',
         baseUrl: getBaseUrl(),
       }),
     ],
@@ -94,6 +93,19 @@ export const Route = createRootRouteWithContext<{
       },
     ],
     scripts: [
+      // Sync theme-color meta tag with app theme before hydration to avoid flash
+      {
+        children: `
+          (function() {
+            var t = localStorage.getItem('vite-ui-theme');
+            var dark = t === 'dark' || ((t === null || t === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            var meta = document.createElement('meta');
+            meta.name = 'theme-color';
+            meta.content = dark ? '#181819' : '#ffffff';
+            document.head.appendChild(meta);
+          })();
+        `,
+      },
       // Convert print media stylesheet to all media after load (async font loading)
       {
         children: `
@@ -126,6 +138,21 @@ export const Route = createRootRouteWithContext<{
   component: RootComponent,
 });
 
+const THEME_COLORS = {light: '#ffffff', dark: '#181819'} as const;
+
+function ThemeColorSync() {
+  const {resolvedTheme} = useTheme();
+
+  React.useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute('content', THEME_COLORS[resolvedTheme]);
+    }
+  }, [resolvedTheme]);
+
+  return null;
+}
+
 function RootComponent() {
   return (
     <RootDocument>
@@ -153,6 +180,12 @@ function RootDocument({children}: {children: React.ReactNode}) {
             background: '#de2486',
             boxShadow: 'none',
           },
+          modalBackdrop: {
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          },
+          modalContent: {
+            backgroundColor: 'hsl(var(--background))',
+          },
         },
         variables: ClerkVariables,
       }}
@@ -163,6 +196,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
         </head>
         <body>
           <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
+            <ThemeColorSync />
             <StickyBarProvider>
               <div className='flex flex-col h-screen bg-background-secondary'>
                 {!shouldHideNavbar && <Navbar />}

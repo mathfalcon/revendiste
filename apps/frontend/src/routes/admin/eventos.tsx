@@ -236,7 +236,7 @@ function EventsPage() {
                   <TableCell>{formatDate(event.eventStartDate)}</TableCell>
                   <TableCell>{formatDate(event.eventEndDate)}</TableCell>
                   <TableCell>
-                    <div className='max-w-[150px] truncate' title={event.venueName || event.venueAddress}>
+                    <div className='max-w-[150px] truncate' title={event.venueName || event.venueAddress || undefined}>
                       {event.venueName || event.venueAddress || '—'}
                     </div>
                   </TableCell>

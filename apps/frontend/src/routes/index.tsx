@@ -1,10 +1,21 @@
 import {createFileRoute} from '@tanstack/react-router';
+import {z} from 'zod';
 import {HomePage} from '~/features';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 
+const homeSearchSchema = z.object({
+  ubicacion: z.string().optional().catch(undefined),
+  lat: z.coerce.number().optional().catch(undefined),
+  lng: z.coerce.number().optional().catch(undefined),
+  desde: z.string().optional().catch(undefined),
+  hasta: z.string().optional().catch(undefined),
+  conEntradas: z.coerce.boolean().optional().catch(undefined),
+});
+
 export const Route = createFileRoute('/')({
   component: Home,
+  validateSearch: homeSearchSchema,
   head: () => {
     const baseUrl = getBaseUrl();
 
@@ -14,13 +25,17 @@ export const Route = createFileRoute('/')({
       '@type': 'Organization',
       name: 'Revendiste',
       url: baseUrl,
-      logo: `${baseUrl}/favicon-32x32.png`,
+      logo: `${baseUrl}/android-chrome-512x512.png`,
       description:
-        'Plataforma de compra y venta de entradas de forma segura en Uruguay.',
-      sameAs: ['https://twitter.com/revendiste'],
+        'Plataforma de compra y venta segura de entradas para conciertos, fiestas y eventos en Uruguay. Custodia de fondos y vendedores verificados.',
+      sameAs: [
+        'https://twitter.com/revendiste',
+        'https://www.instagram.com/revendiste',
+      ],
       contactPoint: {
         '@type': 'ContactPoint',
         contactType: 'customer service',
+        email: 'ayuda@revendiste.com',
         availableLanguage: 'Spanish',
       },
     };
@@ -44,11 +59,12 @@ export const Route = createFileRoute('/')({
     return {
       meta: [
         ...seo({
-          title: 'Revendiste | Transferí tus entradas de forma fácil y segura',
+          title:
+            'Revendiste | Comprá y vendé entradas de forma segura en Uruguay',
           description:
-            'Compra y vende entradas para eventos, conciertos y fiestas de forma segura en Uruguay. Revendiste es la plataforma más confiable para transferir tus entradas.',
+            'Comprá entradas para conciertos, fiestas y eventos en Uruguay con garantía de compra. Vendé las que no vas a usar de forma segura. Custodia de fondos y vendedores verificados.',
           keywords:
-            'entradas, eventos, conciertos, fiestas, comprar entradas, vender entradas, Uruguay, Montevideo, reventa segura',
+            'comprar entradas Uruguay, vender entradas, entradas conciertos Montevideo, reventa segura de entradas, entradas fiestas Uruguay, entradas eventos, transferir entradas',
           baseUrl,
         }),
         {
@@ -58,7 +74,7 @@ export const Route = createFileRoute('/')({
         // Additional meta tag for app purpose (for Google verification)
         {
           name: 'application-name',
-          content: 'Revendiste - Plataforma de compra y venta de entradas',
+          content: 'Revendiste - Compra y venta segura de entradas en Uruguay',
         },
       ],
       links: [
@@ -82,19 +98,5 @@ export const Route = createFileRoute('/')({
 });
 
 function Home() {
-  return (
-    <>
-      {/* Noscript fallback for bots without JavaScript */}
-      <noscript>
-        <div>
-          <p>
-            Revendiste es una plataforma segura para comprar y vender entradas
-            para eventos, conciertos y fiestas en Uruguay.{' '}
-            <a href='/politica-de-privacidad'>Política de Privacidad</a>
-          </p>
-        </div>
-      </noscript>
-      <HomePage />
-    </>
-  );
+  return <HomePage />;
 }

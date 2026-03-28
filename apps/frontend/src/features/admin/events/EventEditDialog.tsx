@@ -135,7 +135,7 @@ export function EventEditDialog({
     ...updateEventMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'events']});
-      toast.success('Evento actualizado exitosamente');
+      toast.success('Evento actualizado');
     },
     onError: (error: any) => {
       toast.error(
@@ -148,7 +148,7 @@ export function EventEditDialog({
     ...deleteEventMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'events']});
-      toast.success('Evento eliminado exitosamente');
+      toast.success('Evento eliminado');
       onOpenChange(false);
     },
     onError: (error: any) => {
@@ -177,7 +177,7 @@ export function EventEditDialog({
     ...uploadEventImageMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'events', eventId]});
-      toast.success('Imagen subida exitosamente');
+      toast.success('Imagen subida');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Error al subir la imagen');

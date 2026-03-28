@@ -11,6 +11,12 @@ import type {
   PostSendAction,
   SendNotificationAttachmentRef,
 } from './jobs';
+import {
+  TicketReportCaseTypeSchema,
+  TicketReportEntityTypeSchema,
+  TicketReportStatusSchema,
+  TicketReportActionTypeSchema,
+} from './ticket-reports';
 
 /**
  * Base notification schema with shared properties
@@ -36,6 +42,7 @@ export const NotificationActionType = z.enum([
   'start_verification',
   'publish_tickets',
   'view_earnings',
+  'view_report',
 ]);
 
 export type NotificationActionType = z.infer<typeof NotificationActionType>;
@@ -319,6 +326,48 @@ export const OrderInvoiceMetadataSchema = z.object({
 });
 
 /**
+ * Ticket report / case system notification metadata schemas
+ */
+
+// ticket_report_created - confirmation to the reporter
+export const TicketReportCreatedMetadataSchema = z.object({
+  type: z.literal('ticket_report_created'),
+  ticketReportId: z.uuid(),
+  caseType: TicketReportCaseTypeSchema,
+  reportedByUserId: z.uuid(),
+  entityType: TicketReportEntityTypeSchema,
+  entityId: z.uuid(),
+  isAutoCase: z.boolean().optional(), // true when created by system (e.g. missing document)
+  eventName: z.string().optional(),   // event name for auto-case emails
+});
+
+// ticket_report_status_changed - notifies reporter when admin changes status
+export const TicketReportStatusChangedMetadataSchema = z.object({
+  type: z.literal('ticket_report_status_changed'),
+  ticketReportId: z.uuid(),
+  oldStatus: TicketReportStatusSchema,
+  newStatus: TicketReportStatusSchema,
+});
+
+// ticket_report_action_added - notifies counterparty of a new action
+export const TicketReportActionAddedMetadataSchema = z.object({
+  type: z.literal('ticket_report_action_added'),
+  ticketReportId: z.uuid(),
+  actionType: TicketReportActionTypeSchema,
+  performedByRole: z.enum(['admin', 'user']),
+  comment: z.string().optional(),
+});
+
+// ticket_report_closed - notifies reporter when case is closed
+export const TicketReportClosedMetadataSchema = z.object({
+  type: z.literal('ticket_report_closed'),
+  ticketReportId: z.uuid(),
+  closedByRole: z.enum(['admin', 'user']),
+  actionType: TicketReportActionTypeSchema.optional(),
+  refundIssued: z.boolean().optional(),
+});
+
+/**
  * Discriminated union of all notification metadata types
  * Uses 'type' as the discriminator field for type safety
  */
@@ -352,6 +401,11 @@ export const NotificationMetadataSchema = z.discriminatedUnion('type', [
   SellerEarningsRetainedMetadataSchema,
   BuyerTicketCancelledMetadataSchema,
   OrderInvoiceMetadataSchema,
+  // Ticket report / case system
+  TicketReportCreatedMetadataSchema,
+  TicketReportStatusChangedMetadataSchema,
+  TicketReportActionAddedMetadataSchema,
+  TicketReportClosedMetadataSchema,
 ]);
 
 /**
@@ -606,6 +660,49 @@ export const BuyerTicketCancelledActionsSchema = z
   .nullable();
 
 /**
+ * Ticket report action schemas
+ */
+export const TicketReportCreatedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_report'),
+      label: z.string(),
+      url: z.url().optional(),
+    }),
+  )
+  .nullable();
+
+export const TicketReportStatusChangedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_report'),
+      label: z.string(),
+      url: z.url().optional(),
+    }),
+  )
+  .nullable();
+
+export const TicketReportActionAddedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_report'),
+      label: z.string(),
+      url: z.url().optional(),
+    }),
+  )
+  .nullable();
+
+export const TicketReportClosedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_report'),
+      label: z.string(),
+      url: z.url().optional(),
+    }),
+  )
+  .nullable();
+
+/**
  * Individual notification schemas per type
  * Each extends the base schema and defines its own metadata and actions
  */
@@ -828,6 +925,42 @@ export const OrderInvoiceNotificationSchema = BaseNotificationSchema.extend({
 });
 
 /**
+ * Ticket report / case system notification schemas
+ */
+
+// ticket_report_created
+export const TicketReportCreatedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('ticket_report_created'),
+    metadata: TicketReportCreatedMetadataSchema,
+    actions: TicketReportCreatedActionsSchema,
+  });
+
+// ticket_report_status_changed
+export const TicketReportStatusChangedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('ticket_report_status_changed'),
+    metadata: TicketReportStatusChangedMetadataSchema,
+    actions: TicketReportStatusChangedActionsSchema,
+  });
+
+// ticket_report_action_added
+export const TicketReportActionAddedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('ticket_report_action_added'),
+    metadata: TicketReportActionAddedMetadataSchema,
+    actions: TicketReportActionAddedActionsSchema,
+  });
+
+// ticket_report_closed
+export const TicketReportClosedNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('ticket_report_closed'),
+    metadata: TicketReportClosedMetadataSchema,
+    actions: TicketReportClosedActionsSchema,
+  });
+
+/**
  * Discriminated union of all notification types
  * Uses 'type' as the discriminator field for type safety
  * Reference: https://zod.dev/api?id=discriminated-unions
@@ -862,6 +995,11 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   SellerEarningsRetainedNotificationSchema,
   BuyerTicketCancelledNotificationSchema,
   OrderInvoiceNotificationSchema,
+  // Ticket report / case system
+  TicketReportCreatedNotificationSchema,
+  TicketReportStatusChangedNotificationSchema,
+  TicketReportActionAddedNotificationSchema,
+  TicketReportClosedNotificationSchema,
 ]);
 
 /**

@@ -90,6 +90,22 @@ export class UsersRepository extends BaseRepository<UsersRepository> {
     return user;
   }
 
+  // Update user's image URL
+  async updateImageUrl(clerkId: string, imageUrl: string | null) {
+    const [user] = await this.db
+      .updateTable('users')
+      .set({
+        imageUrl,
+        updatedAt: new Date(),
+      })
+      .where('clerkId', '=', clerkId)
+      .where('deletedAt', 'is', null)
+      .returningAll()
+      .execute();
+
+    return user;
+  }
+
   // Soft delete user
   async softDelete(clerkId: string) {
     const now = new Date();

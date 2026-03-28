@@ -5,7 +5,7 @@
  * additional frontend-specific string utilities.
  */
 
-import {format, isToday, isTomorrow} from 'date-fns';
+import {format, isToday, isTomorrow, isThisWeek, differenceInCalendarDays} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {EventTicketCurrency} from '~/lib';
 
@@ -36,7 +36,8 @@ const timeFormat = "HH:mm";
  * Format event date in a relative, human-friendly way:
  * - Today → "Hoy a las 18:30"
  * - Tomorrow → "Mañana a las 09:00"
- * - Other days → "23 de septiembre a las 18:30"
+ * - Within 7 days → "Lunes a las 18:30"
+ * - Other days → "28 de marzo a las 18:30"
  */
 export function formatEventDateSmart(date: Date | string | null): string {
   if (!date) return '';
@@ -44,6 +45,11 @@ export function formatEventDateSmart(date: Date | string | null): string {
   const time = format(d, timeFormat, {locale: es});
   if (isToday(d)) return `Hoy a las ${time}`;
   if (isTomorrow(d)) return `Mañana a las ${time}`;
+  const daysAway = differenceInCalendarDays(d, new Date());
+  if (daysAway > 0 && daysAway <= 7) {
+    const dayName = format(d, 'EEEE', {locale: es});
+    return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} a las ${time}`;
+  }
   return format(d, "d 'de' MMMM 'a las' HH:mm", {locale: es});
 }
 

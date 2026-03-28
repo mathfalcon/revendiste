@@ -1,0 +1,205 @@
+---
+description: Notification system architecture, channels, and how to add new notification types with email templates
+globs: apps/backend/src/services/notifications/**/*.ts, packages/transactional/**/*.ts, packages/transactional/**/*.tsx, packages/shared/src/schemas/notifications.ts, packages/shared/src/utils/notification-text.ts
+alwaysApply: false
+---
+
+# Notification System
+
+## Architecture overview
+
+Notifications flow through a chain of files. Every new notification type must touch each layer:
+
+```
+Shared schemas  ->  Text generation  ->  Helper function  ->  NotificationService
+                                                                    |
+                                                              in_app + email
+                                                                    |
+                                                          Email template mapper
+                                                                    |
+                                                        React Email component
+```
+
+## Chain of files (in order)
+
+| Step | File | Purpose |
+|------|------|---------|
+| 1 | `packages/shared/src/schemas/notifications.ts` | Zod metadata schema, actions schema, and full notification schema |
+| 2 | `packages/shared/src/utils/notification-text.ts` | `generateNotificationText()` switch case for title/description |
+| 3 | `apps/backend/src/services/notifications/helpers.ts` | Helper function that calls `service.createNotification()` |
+| 4 | `packages/transactional/emails/{name}-email.tsx` | React Email template component |
+| 5 | `packages/transactional/src/email-templates.ts` | `getEmailTemplate()` switch case mapping type to component |
+| 6 | `packages/transactional/src/index.ts` | Export the template and its props type |
+
+## Adding a new notification type
+
+### Step 1: Database migration
+
+Add the new type to the `notification_type` enum in a migration:
+
+```sql
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'my_new_type';
+```
+
+Then regenerate DB types: `cd apps/backend && pnpm generate:db`
+
+### Step 2: Shared metadata schema (`packages/shared/src/schemas/notifications.ts`)
+
+Define three schemas and add them to the discriminated unions:
+
+```typescript
+// 1. Metadata schema
+export const MyNewTypeMetadataSchema = z.object({
+  type: z.literal('my_new_type'),
+  // ... type-specific fields
+});
+
+// 2. Actions schema
+export const MyNewTypeActionsSchema = z
+  .array(BaseActionSchema.extend({
+    type: z.literal('view_something'),
+    label: z.string(),
+    url: z.url().optional(),
+  }))
+  .nullable();
+
+// 3. Full notification schema
+export const MyNewTypeNotificationSchema = BaseNotificationSchema.extend({
+  type: z.literal('my_new_type'),
+  metadata: MyNewTypeMetadataSchema,
+  actions: MyNewTypeActionsSchema,
+});
+```
+
+Add the metadata schema to `NotificationMetadataSchema` (discriminated union) and the full schema to `NotificationSchema`.
+
+### Step 3: Text generation (`packages/shared/src/utils/notification-text.ts`)
+
+Add a case in `generateNotificationText()`:
+
+```typescript
+case 'my_new_type': {
+  const meta = metadata as TypedNotificationMetadata<'my_new_type'>;
+  return {
+    title: 'Titulo en espanol',
+    description: `Descripcion con ${meta.someField}`,
+  };
+}
+```
+
+### Step 4: Notification helper (`apps/backend/src/services/notifications/helpers.ts`)
+
+Create a helper function:
+
+```typescript
+export async function notifyMyNewType(
+  service: NotificationService,
+  params: { userId: string; /* ... */ },
+) {
+  return await service.createNotification({
+    userId: params.userId,
+    type: 'my_new_type',
+    channels: ['in_app', 'email'], // or ['in_app'] for in-app only
+    actions: [{ type: 'view_something', label: 'Ver', url: `${APP_BASE_URL}/...` }],
+    metadata: { type: 'my_new_type', /* ... */ },
+  });
+}
+```
+
+### Step 5: Email template (skip if in-app only)
+
+Create `packages/transactional/emails/my-new-type-email.tsx`:
+
+```typescript
+import React from 'react';
+import {Button, Section, Text} from '@react-email/components';
+import {BaseEmail} from './base-template';
+
+export interface MyNewTypeEmailProps {
+  someField: string;
+  actionUrl: string;
+  appBaseUrl?: string;
+}
+
+export const MyNewTypeEmail = ({someField, actionUrl, appBaseUrl}: MyNewTypeEmailProps) => (
+  <BaseEmail title="Email title" preview="Preview text" appBaseUrl={appBaseUrl}>
+    <Text className="text-foreground mb-4">Content with {someField}.</Text>
+    <Section className="text-center mb-6">
+      <Button
+        href={actionUrl}
+        className="bg-primary text-primary-foreground px-6 py-3 rounded-md font-semibold text-base no-underline inline-block"
+      >
+        Call to action
+      </Button>
+    </Section>
+  </BaseEmail>
+);
+
+MyNewTypeEmail.PreviewProps = { someField: 'example', actionUrl: '#' } as MyNewTypeEmailProps;
+export default MyNewTypeEmail;
+```
+
+### Step 6: Email template mapper (`packages/transactional/src/email-templates.ts`)
+
+Add import and switch case in `getEmailTemplate()`:
+
+```typescript
+// Import
+import {
+  MyNewTypeEmail as MyNewTypeEmailComponent,
+  type MyNewTypeEmailProps,
+} from '../emails/my-new-type-email';
+
+// In switch statement
+case 'my_new_type': {
+  const meta = metadata as TypedNotificationMetadata<'my_new_type'>;
+  return {
+    Component: MyNewTypeEmailComponent,
+    props: { someField: meta?.someField, actionUrl: '...', appBaseUrl } as MyNewTypeEmailProps,
+  };
+}
+```
+
+For **in-app only** types (no email), add them to the throw block instead:
+
+```typescript
+case 'my_inapp_only_type':
+  throw new Error(`Notification type ${notificationType} is in_app only and does not have an email template`);
+```
+
+### Step 7: Export from transactional package (`packages/transactional/src/index.ts`)
+
+```typescript
+export * from '../emails/my-new-type-email';
+export type {MyNewTypeEmailProps} from '../emails/my-new-type-email';
+```
+
+## Channels
+
+- `in_app` - Stored in DB, shown in the notification bell UI. Always "sent" on creation.
+- `email` - Rendered via React Email and sent through email provider (Resend). Requires a template in `packages/transactional/emails/`.
+
+When adding `email` channel, the type **must** have a case in `getEmailTemplate()`. Otherwise it hits the `default` branch and throws "Unknown notification type".
+
+## Key patterns
+
+- **Fire-and-forget**: Helpers are called with `.catch()` so notification failures don't break the main flow
+- **Deferred jobs**: Use `deferSendToJob: true` for heavy emails (attachments, invoices). The cronjob picks them up.
+- **Debounced notifications**: Use `createDebouncedNotification()` to batch rapid notifications (e.g. multiple document uploads) into one
+- **Metadata validation**: `NotificationService` validates metadata against the Zod schema before storing. Invalid metadata throws `ValidationError`.
+- **Text from metadata**: Title and description are generated from metadata via `generateNotificationText()`, not stored directly.
+
+## Existing notification types by channel
+
+**in_app + email**: `order_confirmed`, `order_expired`, `payment_failed`, `document_reminder`, `document_uploaded`, `ticket_sold_seller`, `payout_completed`, `payout_failed`, `payout_cancelled`, `seller_earnings_retained`, `buyer_ticket_cancelled`, `ticket_report_created`, `ticket_report_action_added`, `ticket_report_closed`, auth types
+
+**in_app only**: `identity_verification_failed`, `identity_verification_manual_review`, `ticket_report_status_changed`
+
+## Reference files
+
+- Existing email template example: `@packages/transactional/emails/order-expired-email.tsx`
+- Email template mapper: `@packages/transactional/src/email-templates.ts`
+- Notification helpers: `@apps/backend/src/services/notifications/helpers.ts`
+- NotificationService: `@apps/backend/src/services/notifications/NotificationService.ts`
+- Shared schemas: `@packages/shared/src/schemas/notifications.ts`
+- Text generation: `@packages/shared/src/utils/notification-text.ts`

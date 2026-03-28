@@ -8,6 +8,7 @@
 
 import {TypedNotificationMetadata} from '~/schemas';
 import type {NotificationType} from '../types';
+import {CASE_STATUS_LABELS, CASE_TYPE_LABELS} from '../schemas/ticket-reports';
 
 export interface NotificationText {
   title: string;
@@ -27,13 +28,9 @@ export function generateNotificationText<T extends NotificationType>(
       let description: string;
 
       if (meta.shouldPromptUpload) {
-        description = `¡Tus ${meta.ticketCount} ${
-          meta.ticketCount === 1
-            ? 'entrada ha sido vendida'
-            : 'entradas han sido vendidas'
-        } para ${
-          meta.eventName
-        }! Por favor, sube los documentos de tus tickets.`;
+        description = `Se ${
+          meta.ticketCount === 1 ? 'vendió tu entrada' : `vendieron tus ${meta.ticketCount} entradas`
+        } para ${meta.eventName}. Subí los documentos para completar la venta.`;
       } else if (meta.qrAvailabilityTiming) {
         const hoursBeforeEvent = parseInt(
           meta.qrAvailabilityTiming.replace('h', ''),
@@ -48,25 +45,19 @@ export function generateNotificationText<T extends NotificationType>(
             (1000 * 60 * 60),
         );
 
-        description = `¡Tus ${meta.ticketCount} ${
-          meta.ticketCount === 1
-            ? 'entrada ha sido vendida'
-            : 'entradas han sido vendidas'
-        } para ${
-          meta.eventName
-        }! Los documentos estarán disponibles en aproximadamente ${hoursUntilAvailable} ${
+        description = `Se ${
+          meta.ticketCount === 1 ? 'vendió tu entrada' : `vendieron tus ${meta.ticketCount} entradas`
+        } para ${meta.eventName}. Vas a poder subir los documentos en ${hoursUntilAvailable} ${
           hoursUntilAvailable === 1 ? 'hora' : 'horas'
         }.`;
       } else {
-        description = `¡Tus ${meta.ticketCount} ${
-          meta.ticketCount === 1
-            ? 'entrada ha sido vendida'
-            : 'entradas han sido vendidas'
-        } para ${meta.eventName}!`;
+        description = `Se ${
+          meta.ticketCount === 1 ? 'vendió tu entrada' : `vendieron tus ${meta.ticketCount} entradas`
+        } para ${meta.eventName}.`;
       }
 
       return {
-        title: '¡Tus entradas han sido vendidas!',
+        title: 'Entradas vendidas',
         description,
       };
     }
@@ -77,28 +68,28 @@ export function generateNotificationText<T extends NotificationType>(
       // Handle event already started (hoursUntilEvent = 0) vs upcoming event
       const eventStatusText =
         meta.hoursUntilEvent === 0
-          ? `El evento "${meta.eventName}" ya comenzó`
-          : `El evento "${meta.eventName}" comienza en ${
+          ? `${meta.eventName} ya arrancó`
+          : `${meta.eventName} arranca en ${
               meta.hoursUntilEvent === 1
                 ? '1 hora'
                 : `${meta.hoursUntilEvent} horas`
             }`;
 
       return {
-        title: 'Recordatorio: Sube los documentos de tus tickets',
-        description: `${eventStatusText}. Aún tienes ${meta.ticketCount} ${
+        title: 'Subí los documentos de tus entradas',
+        description: `${eventStatusText} y tenés ${meta.ticketCount} ${
           meta.ticketCount === 1
-            ? 'ticket sin documentar'
-            : 'tickets sin documentar'
-        }. Por favor, sube los documentos lo antes posible.`,
+            ? 'entrada sin documentar'
+            : 'entradas sin documentar'
+        }. Subí los documentos cuanto antes.`,
       };
     }
 
     case 'order_confirmed': {
       const meta = metadata as TypedNotificationMetadata<'order_confirmed'>;
       return {
-        title: 'Orden confirmada',
-        description: `Tu orden para ${meta.eventName} ha sido confirmada. Total pagado: ${meta.totalAmount} ${meta.currency}.`,
+        title: 'Pago confirmado',
+        description: `Listo, tu compra para ${meta.eventName} está confirmada. Total: ${meta.totalAmount} ${meta.currency}.`,
       };
     }
 
@@ -106,7 +97,7 @@ export function generateNotificationText<T extends NotificationType>(
       const meta = metadata as TypedNotificationMetadata<'order_expired'>;
       return {
         title: 'Orden expirada',
-        description: `Tu orden para ${meta.eventName} ha expirado. Las entradas han sido liberadas.`,
+        description: `Tu orden para ${meta.eventName} expiró. Las entradas quedaron disponibles para otros compradores.`,
       };
     }
 
@@ -115,21 +106,21 @@ export function generateNotificationText<T extends NotificationType>(
       const isBuyer = meta.party === 'buyer';
       const compraVenta = isBuyer ? 'compra' : 'venta';
       return {
-        title: isBuyer ? 'Tu factura de compra' : 'Tu factura de venta',
+        title: isBuyer ? 'Factura de compra' : 'Factura de venta',
         description: meta.eventName
-          ? `Se te envió la factura de tu ${compraVenta} de ${meta.eventName} por email.`
-          : `Se te envió la factura de tu ${compraVenta} por email.`,
+          ? `Te enviamos la factura de tu ${compraVenta} de ${meta.eventName} por email.`
+          : `Te enviamos la factura de tu ${compraVenta} por email.`,
       };
     }
 
     case 'payment_failed': {
       const meta = metadata as TypedNotificationMetadata<'payment_failed'>;
       return {
-        title: 'Pago fallido',
-        description: `El pago para tu orden de ${meta.eventName} ha fallado. ${
+        title: 'No se pudo procesar el pago',
+        description: `El pago para ${meta.eventName} falló. ${
           meta.errorMessage
-            ? `Error: ${meta.errorMessage}`
-            : 'Por favor, intenta nuevamente.'
+            ? `Motivo: ${meta.errorMessage}`
+            : 'Revisá los datos e intentá de nuevo.'
         }`,
       };
     }
@@ -137,18 +128,18 @@ export function generateNotificationText<T extends NotificationType>(
     case 'payment_succeeded': {
       const meta = metadata as TypedNotificationMetadata<'payment_succeeded'>;
       return {
-        title: 'Pago exitoso',
-        description: `Tu pago de ${meta.totalAmount} ${meta.currency} para ${meta.eventName} fue procesado exitosamente.`,
+        title: 'Pago confirmado',
+        description: `Tu pago de ${meta.totalAmount} ${meta.currency} para ${meta.eventName} se procesó correctamente.`,
       };
     }
 
     case 'document_uploaded': {
       const meta = metadata as TypedNotificationMetadata<'document_uploaded'>;
       return {
-        title: '¡Tus entradas están listas!',
-        description: `El vendedor subió los documentos de tus ${
-          meta.ticketCount === 1 ? 'entrada' : 'entradas'
-        } para ${meta.eventName}. Ya puedes acceder a ellas.`,
+        title: 'Tus entradas están listas',
+        description: `El vendedor subió ${
+          meta.ticketCount === 1 ? 'tu entrada' : `tus ${meta.ticketCount} entradas`
+        } para ${meta.eventName}. Ya podés acceder a ellas.`,
       };
     }
 
@@ -157,24 +148,23 @@ export function generateNotificationText<T extends NotificationType>(
         metadata as TypedNotificationMetadata<'document_uploaded_batch'>;
       const countText =
         meta.uploadedCount === 1
-          ? '1 entrada está lista'
-          : `${meta.uploadedCount} entradas están listas`;
+          ? '1 entrada lista'
+          : `${meta.uploadedCount} entradas listas`;
       return {
-        title: '¡Tus entradas están listas!',
-        description: `${countText} para ${meta.eventName}. Ya puedes acceder a ellas.`,
+        title: 'Tus entradas están listas',
+        description: `Tenés ${countText} para ${meta.eventName}. Ya podés acceder a ellas.`,
       };
     }
 
     case 'payout_processing': {
       // Legacy notification type - no longer used, but kept for backward compatibility
-      // Map to completed text since processing now goes directly to completed
       const meta = metadata as TypedNotificationMetadata<'payout_processing'>;
       const refText = meta.transactionReference
         ? ` Referencia: ${meta.transactionReference}.`
         : '';
       return {
         title: 'Retiro completado',
-        description: `Tu retiro de ${meta.amount} ${meta.currency} ha sido completado exitosamente.${refText}`,
+        description: `Tu retiro de ${meta.amount} ${meta.currency} se completó.${refText}`,
       };
     }
 
@@ -185,7 +175,7 @@ export function generateNotificationText<T extends NotificationType>(
         : '';
       return {
         title: 'Retiro completado',
-        description: `Tu retiro de ${meta.amount} ${meta.currency} ha sido completado exitosamente.${refText}`,
+        description: `Tu retiro de ${meta.amount} ${meta.currency} se completó.${refText}`,
       };
     }
 
@@ -193,7 +183,7 @@ export function generateNotificationText<T extends NotificationType>(
       const meta = metadata as TypedNotificationMetadata<'payout_failed'>;
       return {
         title: 'Retiro fallido',
-        description: `Tu retiro de ${meta.amount} ${meta.currency} ha fallado: ${meta.failureReason}`,
+        description: `No se pudo procesar tu retiro de ${meta.amount} ${meta.currency}: ${meta.failureReason}`,
       };
     }
 
@@ -201,7 +191,7 @@ export function generateNotificationText<T extends NotificationType>(
       const meta = metadata as TypedNotificationMetadata<'payout_cancelled'>;
       return {
         title: 'Retiro cancelado',
-        description: `Tu retiro de ${meta.amount} ${meta.currency} ha sido cancelado: ${meta.cancellationReason}`,
+        description: `Tu retiro de ${meta.amount} ${meta.currency} fue cancelado: ${meta.cancellationReason}`,
       };
     }
 
@@ -231,7 +221,7 @@ export function generateNotificationText<T extends NotificationType>(
         : 'Te invitaron a';
       return {
         title: 'Invitación a Revendiste',
-        description: `${inviterText} unirte a Revendiste. La invitación expira en ${meta.expiresInDays} días.`,
+        description: `${inviterText} sumarte a Revendiste. La invitación vence en ${meta.expiresInDays} días.`,
       };
     }
 
@@ -240,7 +230,7 @@ export function generateNotificationText<T extends NotificationType>(
         metadata as TypedNotificationMetadata<'auth_password_changed'>;
       return {
         title: 'Contraseña cambiada',
-        description: `La contraseña asociada a ${meta.primaryEmailAddress} fue cambiada correctamente.`,
+        description: `La contraseña de ${meta.primaryEmailAddress} fue cambiada.`,
       };
     }
 
@@ -249,7 +239,7 @@ export function generateNotificationText<T extends NotificationType>(
         metadata as TypedNotificationMetadata<'auth_password_removed'>;
       return {
         title: 'Contraseña eliminada',
-        description: `La contraseña asociada a ${meta.primaryEmailAddress} fue eliminada.`,
+        description: `Se eliminó la contraseña de ${meta.primaryEmailAddress}.`,
       };
     }
 
@@ -258,7 +248,7 @@ export function generateNotificationText<T extends NotificationType>(
         metadata as TypedNotificationMetadata<'auth_primary_email_changed'>;
       return {
         title: 'Email actualizado',
-        description: `Tu email principal fue actualizado a ${meta.newEmailAddress}.`,
+        description: `Tu email principal ahora es ${meta.newEmailAddress}.`,
       };
     }
 
@@ -274,18 +264,18 @@ export function generateNotificationText<T extends NotificationType>(
         .join(' ');
       return {
         title: 'Nuevo inicio de sesión',
-        description: `Se detectó un nuevo inicio de sesión${
+        description: `Alguien inició sesión en tu cuenta${
           deviceInfo ? ` desde ${deviceInfo}` : ''
-        }${meta.location ? ` en ${meta.location}` : ''}.`,
+        }${meta.location ? ` en ${meta.location}` : ''}. Si no fuiste vos, revisá tu cuenta.`,
       };
     }
 
     // Identity verification notification types
     case 'identity_verification_completed': {
       return {
-        title: '¡Ya podés publicar tus entradas!',
+        title: 'Ya podés vender entradas',
         description:
-          'Tu verificación de identidad se completó exitosamente. Empezá a vender entradas en Revendiste.',
+          'Tu verificación de identidad se completó. Empezá a publicar tus entradas en Revendiste.',
       };
     }
 
@@ -293,10 +283,10 @@ export function generateNotificationText<T extends NotificationType>(
       const meta =
         metadata as TypedNotificationMetadata<'identity_verification_rejected'>;
       const retryText = meta.canRetry
-        ? ' Podés intentarlo nuevamente.'
-        : ' Por favor, contactá a soporte si tenés dudas.';
+        ? ' Podés intentarlo de nuevo.'
+        : ' Contactá a soporte si tenés dudas.';
       return {
-        title: 'Verificación de identidad rechazada',
+        title: 'Verificación rechazada',
         description: `Tu verificación fue rechazada: ${meta.rejectionReason}.${retryText}`,
       };
     }
@@ -311,7 +301,7 @@ export function generateNotificationText<T extends NotificationType>(
             }.`
           : '';
       return {
-        title: 'Verificación de identidad fallida',
+        title: 'Verificación fallida',
         description: `No pudimos verificar tu identidad: ${meta.failureReason}.${attemptsText}`,
       };
     }
@@ -320,7 +310,7 @@ export function generateNotificationText<T extends NotificationType>(
       return {
         title: 'Verificación en revisión',
         description:
-          'Tu verificación de identidad está siendo revisada por nuestro equipo. Te avisaremos cuando esté lista.',
+          'Tu verificación está siendo revisada por nuestro equipo. Te avisamos cuando esté lista.',
       };
     }
 
@@ -329,14 +319,14 @@ export function generateNotificationText<T extends NotificationType>(
       const meta =
         metadata as TypedNotificationMetadata<'seller_earnings_retained'>;
       const ticketText =
-        meta.ticketCount === 1 ? '1 ticket' : `${meta.ticketCount} tickets`;
+        meta.ticketCount === 1 ? '1 entrada' : `${meta.ticketCount} entradas`;
       const reasonText =
         meta.reason === 'missing_document'
           ? 'no subiste los documentos a tiempo'
           : 'incumplimiento de las políticas';
       return {
         title: 'Ganancias retenidas',
-        description: `Tus ganancias por ${ticketText} de ${meta.eventName} fueron retenidas porque ${reasonText}. Nuestro equipo de soporte revisará tu caso.`,
+        description: `Tus ganancias por ${ticketText} de ${meta.eventName} fueron retenidas porque ${reasonText}. Soporte va a revisar tu caso.`,
       };
     }
 
@@ -345,15 +335,55 @@ export function generateNotificationText<T extends NotificationType>(
         metadata as TypedNotificationMetadata<'buyer_ticket_cancelled'>;
       const ticketText =
         meta.ticketCount === 1
-          ? 'Tu entrada ha sido cancelada'
-          : `Tus ${meta.ticketCount} entradas han sido canceladas`;
+          ? 'Tu entrada fue cancelada'
+          : `Tus ${meta.ticketCount} entradas fueron canceladas`;
       const reasonText =
         meta.reason === 'seller_failed_to_upload'
           ? 'El vendedor no subió los documentos a tiempo'
           : 'Hubo un problema con el vendedor';
       return {
-        title: 'Entrada cancelada - Reembolso en proceso',
-        description: `${ticketText} para ${meta.eventName}. ${reasonText}. Tu reembolso está en proceso.`,
+        title: 'Entrada cancelada',
+        description: `${ticketText} para ${meta.eventName}. ${reasonText}. Ya estamos procesando tu reembolso.`,
+      };
+    }
+
+    // Ticket report / case system notification types
+    case 'ticket_report_created': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_created'>;
+      return {
+        title: 'Caso abierto',
+        description: `Recibimos tu caso de tipo "${CASE_TYPE_LABELS[meta.caseType]}". Te vamos a avisar sobre el progreso.`,
+      };
+    }
+
+    case 'ticket_report_status_changed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_status_changed'>;
+      return {
+        title: 'Tu caso se actualizó',
+        description: `Tu caso pasó a "${CASE_STATUS_LABELS[meta.newStatus]}".`,
+      };
+    }
+
+    case 'ticket_report_action_added': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_action_added'>;
+      return {
+        title: 'Novedad en tu caso',
+        description: `${meta.performedByRole === 'admin' ? 'Soporte' : 'El usuario'} agregó una actualización a tu caso.`,
+      };
+    }
+
+    case 'ticket_report_closed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_closed'>;
+      const refundText = meta.refundIssued
+        ? ' Se procesó un reembolso.'
+        : '';
+      return {
+        title: 'Caso cerrado',
+        description: `Tu caso fue cerrado.${refundText}`,
       };
     }
 

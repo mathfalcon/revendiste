@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {Clock, ShieldCheck, ChevronRight} from 'lucide-react';
 import {QrAvailabilityDialog} from './QrAvailabilityDialog';
 import type {QrAvailabilityTiming} from '~/lib/api/generated';
+import {cn} from '~/lib/utils';
 
 interface EventInfoCardsProps {
   qrAvailabilityTiming: QrAvailabilityTiming | null;
@@ -21,7 +22,7 @@ export function EventInfoCards({qrAvailabilityTiming}: EventInfoCardsProps) {
 
   return (
     <>
-      <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+      <div className={cn('grid grid-cols-1 gap-2', qrAvailabilityTiming && 'sm:grid-cols-2')}>
         {/* QR Availability Card */}
         {qrAvailabilityTiming && (
           <button

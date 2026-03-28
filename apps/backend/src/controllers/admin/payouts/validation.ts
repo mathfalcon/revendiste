@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {PaginationSchema} from '~/middleware';
+import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 
 export const AdminPayoutsQuerySchema = PaginationSchema.extend({
   status: z
@@ -43,7 +44,7 @@ export const FailPayoutRouteSchema = z.object({
   body: z.object({
     failureReason: z
       .string()
-      .min(1, 'Debe proporcionar una razón para el fallo'),
+      .min(1, VALIDATION_MESSAGES.FAILURE_REASON_REQUIRED),
   }),
 });
 
@@ -70,7 +71,7 @@ export const CancelPayoutRouteSchema = z.object({
     reasonType: z.enum(['error', 'other']),
     failureReason: z
       .string()
-      .min(1, 'Debe proporcionar una razón para la cancelación'),
+      .min(1, VALIDATION_MESSAGES.CANCELLATION_REASON_REQUIRED),
   }),
 });
 

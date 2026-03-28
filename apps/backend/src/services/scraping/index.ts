@@ -25,13 +25,47 @@ export class ScrapingService {
       durationMs: scrapeTime,
     });
 
+    // Separate events into categories:
+    // 1. Valid events (has at least one paid wave) → ingest normally
+    // 2. Guest-list events (has waves but all faceValue === 0) → skip AND soft-delete existing
+    // 3. Empty-wave events (no waves at all) → skip but protect from deletion (could be sold out)
+    const validEvents: typeof allEvents = [];
+    const guestListEvents: typeof allEvents = [];
+    const emptyWaveEvents: typeof allEvents = [];
+
+    for (const event of allEvents) {
+      const paidWaves = event.ticketWaves.filter(w => w.faceValue > 0);
+      if (paidWaves.length > 0) {
+        validEvents.push(event);
+      } else if (event.ticketWaves.length > 0) {
+        // Has waves but all are free → guest list
+        guestListEvents.push(event);
+      } else {
+        // No waves at all → could be sold out
+        emptyWaveEvents.push(event);
+      }
+    }
+
+    if (guestListEvents.length > 0 || emptyWaveEvents.length > 0) {
+      logger.info('Filtered scraped events', {
+        valid: validEvents.length,
+        guestList: guestListEvents.length,
+        emptyWaves: emptyWaveEvents.length,
+        guestListNames: guestListEvents.map(e => e.name),
+      });
+    }
+
+    // For cleanup: include valid + empty-wave events as "safe" (won't be deleted)
+    // Guest-list events are excluded → will be soft-deleted if they exist in DB
+    const eventsForCleanup = [...validEvents, ...emptyWaveEvents];
+
     // Phase 2: Venue processing
     // Process venues for each event before storing
     // This finds or creates venues based on coordinates/Google Places
     const venueStart = Date.now();
     const BATCH_SIZE = 10; // Increased from 5 for better parallelism
-    for (let i = 0; i < allEvents.length; i += BATCH_SIZE) {
-      const batch = allEvents.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < validEvents.length; i += BATCH_SIZE) {
+      const batch = validEvents.slice(i, i + BATCH_SIZE);
       await Promise.all(
         batch.map(async event => {
           try {
@@ -55,13 +89,13 @@ export class ScrapingService {
     }
     const venueTime = Date.now() - venueStart;
     logger.info(`Phase 2: Venue processing completed`, {
-      eventCount: allEvents.length,
+      eventCount: validEvents.length,
       durationMs: venueTime,
     });
 
-    // Phase 3: Store events
+    // Phase 3: Store events (only valid events with paid ticket waves)
     const storeStart = Date.now();
-    await this.eventsService.storeScrapedEvents(allEvents);
+    await this.eventsService.storeScrapedEvents(validEvents);
     const storeTime = Date.now() - storeStart;
     logger.info(`Phase 3: Event storage completed`, {
       durationMs: storeTime,
@@ -69,7 +103,7 @@ export class ScrapingService {
 
     // Phase 4: Cleanup
     const cleanupStart = Date.now();
-    await this.eventsService.cleanupStaleEvents(allEvents);
+    await this.eventsService.cleanupStaleEvents(eventsForCleanup);
     const cleanupTime = Date.now() - cleanupStart;
     logger.info(`Phase 4: Cleanup completed`, {
       durationMs: cleanupTime,
@@ -78,6 +112,8 @@ export class ScrapingService {
     const totalTime = Date.now() - totalStart;
     logger.info(`Scraping pipeline completed`, {
       totalEvents: allEvents.length,
+      validEvents: validEvents.length,
+      filteredOut: allEvents.length - validEvents.length,
       totalDurationMs: totalTime,
       breakdown: {
         scraping: scrapeTime,
@@ -87,7 +123,7 @@ export class ScrapingService {
       },
     });
 
-    return allEvents;
+    return validEvents;
   }
 }
 

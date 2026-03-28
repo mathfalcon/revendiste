@@ -35,12 +35,11 @@ export const PayoutFailedEmail = ({
 }: PayoutFailedEmailProps) => (
   <BaseEmail
     title="Retiro fallido"
-    preview={`Tu retiro de ${formatPrice(amount, currency)} ha fallado`}
+    preview={`Tu retiro de ${formatPrice(amount, currency)} falló`}
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      Lamentablemente, tu solicitud de retiro no pudo ser procesada. Por favor,
-      revisá los detalles a continuación.
+      No pudimos procesar tu retiro. Revisá los detalles a continuación.
     </Text>
 
     {/* CTA Button */}

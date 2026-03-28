@@ -8,21 +8,23 @@ import {
 } from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
 import {Shield, Lock, Clock, CheckCircle, ArrowRight} from 'lucide-react';
+import {seo} from '~/utils/seo';
+import {getBaseUrl} from '~/config/env';
 
 export const Route = createFileRoute('/garantia')({
   component: GarantiaPage,
-  head: () => ({
-    meta: [
-      {
-        title: 'Garantía Revendiste | Compra y Venta Segura de Entradas',
-      },
-      {
-        name: 'description',
-        content:
-          'Conocé cómo funciona la Garantía Revendiste: custodia de fondos, verificación de vendedores y protección para compradores y vendedores.',
-      },
-    ],
-  }),
+  head: () => {
+    const baseUrl = getBaseUrl();
+    return {
+      meta: seo({
+        title: 'Garantía Revendiste | Compra segura de entradas en Uruguay',
+        description:
+          'Tu plata queda en custodia hasta que todo salga bien. Conocé cómo Revendiste protege a compradores y vendedores con verificación de identidad y garantía de reembolso.',
+        baseUrl,
+      }),
+      links: [{rel: 'canonical', href: `${baseUrl}/garantia`}],
+    };
+  },
 });
 
 function GarantiaPage() {

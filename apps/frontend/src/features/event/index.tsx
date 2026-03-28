@@ -3,6 +3,7 @@ import {EventDetails} from './EventDetails';
 import {EventDescription} from './EventDescription';
 import {TicketSelection} from './tickets';
 import {EventInfoCards} from './EventInfoCards';
+import {VenueMapLazy} from './VenueMapLazy';
 import {EventImageType, getEventByIdQuery} from '~/lib';
 import {useParams} from '@tanstack/react-router';
 import {useEffect, useRef, useState} from 'react';
@@ -11,6 +12,7 @@ import {CDN_ASSETS} from '~/assets';
 
 export const EventPage = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const params = useParams({from: '/eventos/$eventId'});
   const response = useSuspenseQuery(getEventByIdQuery(params.eventId));
@@ -20,6 +22,11 @@ export const EventPage = () => {
     i => i.imageType === EventImageType.Hero,
   );
   const src = heroImage?.url ?? CDN_ASSETS.DEFAULT_OG_IMAGE;
+
+  const lat = event.venueLatitude ? parseFloat(event.venueLatitude) : null;
+  const lng = event.venueLongitude ? parseFloat(event.venueLongitude) : null;
+  const hasCoordinates =
+    lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng);
 
   useEffect(() => {
     setImageLoaded(false);
@@ -46,7 +53,7 @@ export const EventPage = () => {
           onError={() => setImageLoaded(true)}
           className='w-full h-full min-h-[15vh] max-h-[15vh] object-cover transition-opacity duration-300'
         />
-        <div className='absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none' />
+        <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 via-30% to-transparent pointer-events-none' />
 
         {/* Title - Mobile */}
         <div className='absolute bottom-0 left-0 right-0 p-4'>
@@ -73,25 +80,42 @@ export const EventPage = () => {
       </div>
 
       <div className='container mx-auto px-4 md:px-0 py-4 md:py-6 flex flex-col gap-6'>
-        {/* 
-          Mobile order: Details (1) → Info Cards (2) → Tickets (3) → Description (4)
-          Desktop: Two columns - Left (Details + Description), Right (Info Cards + Tickets)
+        {/*
+          Mobile (flex-col): Details(1) → InfoCards(2) → Tickets(3) → Map(4) → Description(5)
+          Desktop (grid-cols-2): Left col (Details, Map, Description) | Right col (InfoCards, Tickets)
+
+          `contents` on column wrappers makes children participate directly in the
+          parent flex on mobile (respecting order-*), while on desktop the wrappers
+          become flex columns that flow independently — no rigid grid rows, no whitespace.
         */}
         <div className='flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-10'>
-          {/* Event Details - Always first */}
-          <div className='order-1 md:row-span-2 flex flex-col gap-6'>
-            <EventDetails
-              name={event.name}
-              eventStartDate={event.eventStartDate}
-              eventEndDate={event.eventEndDate}
-              venueName={event.venueName}
-              venueAddress={event.venueAddress}
-            />
-            {/* Info Cards + Description - Desktop: shows here in left column */}
-            <div className='hidden md:flex md:flex-col md:gap-4'>
-              <EventInfoCards
-                qrAvailabilityTiming={event.qrAvailabilityTiming}
+          {/* Left column */}
+          <div className='contents md:flex md:flex-col md:gap-6'>
+            <div className='order-1 md:order-0'>
+              <EventDetails
+                name={event.name}
+                eventStartDate={event.eventStartDate}
+                eventEndDate={event.eventEndDate}
+                venueName={event.venueName}
+                venueAddress={event.venueAddress}
+                onAddressClick={
+                  hasCoordinates ? () => setMapExpanded(true) : undefined
+                }
               />
+            </div>
+            {hasCoordinates && (
+              <div className='order-4 md:order-0'>
+                <VenueMapLazy
+                  latitude={lat}
+                  longitude={lng}
+                  venueName={event.venueName}
+                  venueAddress={event.venueAddress}
+                  expanded={mapExpanded}
+                  onExpandedChange={setMapExpanded}
+                />
+              </div>
+            )}
+            <div className='order-5 md:order-0'>
               <EventDescription
                 description={event.description}
                 externalUrl={event.externalUrl}
@@ -99,26 +123,20 @@ export const EventPage = () => {
             </div>
           </div>
 
-          {/* Info Cards - Mobile only: shows after details */}
-          <div className='order-2 md:hidden'>
-            <EventInfoCards qrAvailabilityTiming={event.qrAvailabilityTiming} />
-          </div>
-
-          {/* Tickets Section */}
-          <div className='order-3 md:order-2 flex flex-col gap-4'>
-            <TicketSelection
-              ticketWaves={event.ticketWaves}
-              eventId={params.eventId}
-              userListingsCount={event.userListingsCount}
-            />
-          </div>
-
-          {/* Description - Mobile only: shows after tickets */}
-          <div className='order-4 md:hidden'>
-            <EventDescription
-              description={event.description}
-              externalUrl={event.externalUrl}
-            />
+          {/* Right column */}
+          <div className='contents md:flex md:flex-col md:gap-6'>
+            <div className='order-2'>
+              <EventInfoCards
+                qrAvailabilityTiming={event.qrAvailabilityTiming}
+              />
+            </div>
+            <div className='order-3 flex flex-col gap-4'>
+              <TicketSelection
+                ticketWaves={event.ticketWaves}
+                eventId={params.eventId}
+                userListingsCount={event.userListingsCount}
+              />
+            </div>
           </div>
         </div>
       </div>

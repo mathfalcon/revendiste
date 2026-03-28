@@ -27,14 +27,13 @@ export const OrderExpiredEmail = ({
     </Text>
 
     <Text className="text-foreground mb-4">
-      Las entradas fueron liberadas y ya están disponibles de nuevo para otros
-      compradores.
+      Las entradas quedaron disponibles de nuevo para otros compradores.
     </Text>
 
     <Section className="bg-muted p-4 rounded-md mb-6">
       <Text className="text-sm text-foreground m-0">
-        Si todavía estás interesado en comprar tickets para este evento, podés
-        buscar nuevas ofertas disponibles.
+        Si todavía te interesa ir a este evento, podés buscar nuevas entradas
+        disponibles.
       </Text>
     </Section>
 

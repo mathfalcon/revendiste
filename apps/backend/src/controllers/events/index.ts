@@ -18,6 +18,9 @@ import {
   PaginationQuery,
 } from '~/middleware';
 import {EventsRepository, EventViewsRepository} from '~/repositories';
+import {VenuesRepository} from '~/repositories/venues';
+import {VenuesService} from '~/services/venues';
+import {GooglePlacesService} from '~/services/google-places';
 import {db} from '~/db';
 
 // --- Explicit controller response types for TSOA Swagger generation ---
@@ -33,14 +36,31 @@ export type GetTrendingEventsResponse = ReturnType<
 export type GetDistinctCitiesResponse = ReturnType<
   EventsService['getDistinctCities']
 >;
+export type GetDistinctRegionsResponse = ReturnType<
+  VenuesService['getDistinctRegions']
+>;
 export type GetEventByIdResponse = ReturnType<EventsService['getEventById']>;
 export type TrackViewResponse = {success: boolean};
 
 interface EventsPaginatedQuery extends PaginationQuery {
-  /**
-   * Filter by city name
-   */
+  /** Filter by city name */
   city?: string;
+  /** Filter by region/state/departamento name */
+  region?: string;
+  /** Latitude for proximity search (requires lng) */
+  lat?: number;
+  /** Longitude for proximity search (requires lat) */
+  lng?: number;
+  /** Radius in km for proximity search (default: 30) */
+  radiusKm?: number;
+  /** Filter events starting from this date (ISO format) */
+  dateFrom?: string;
+  /** Filter events ending before this date (ISO format) */
+  dateTo?: string;
+  /** Only show events with at least one available ticket */
+  hasTickets?: boolean;
+  /** User timezone offset in minutes from UTC (e.g. 180 for UTC-3) */
+  tzOffset?: number;
 }
 
 @Route('events')
@@ -49,6 +69,10 @@ export class EventsController {
   private service = new EventsService(new EventsRepository(db));
   private eventViewsService = new EventViewsService(
     new EventViewsRepository(db),
+  );
+  private venuesService = new VenuesService(
+    new VenuesRepository(db),
+    new GooglePlacesService(),
   );
 
   @Get('/')
@@ -61,6 +85,14 @@ export class EventsController {
       {
         pagination: request.pagination!,
         city: query.city,
+        region: query.region,
+        lat: query.lat != null ? Number(query.lat) : undefined,
+        lng: query.lng != null ? Number(query.lng) : undefined,
+        radiusKm: query.radiusKm != null ? Number(query.radiusKm) : undefined,
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+        hasTickets: query.hasTickets != null ? String(query.hasTickets) === 'true' : undefined,
+        tzOffset: query.tzOffset != null ? Number(query.tzOffset) : undefined,
       },
       request.user?.id,
     );
@@ -81,8 +113,17 @@ export class EventsController {
   public async getTrendingEvents(
     @Query() days?: number,
     @Query() limit?: number,
+    @Query() region?: string,
+    @Query() lat?: number,
+    @Query() lng?: number,
+    @Query() radiusKm?: number,
   ): GetTrendingEventsResponse {
-    return this.eventViewsService.getTrendingEvents(days ?? 7, limit ?? 10);
+    return this.eventViewsService.getTrendingEvents(days ?? 7, limit ?? 10, {
+      region,
+      lat: lat != null ? Number(lat) : undefined,
+      lng: lng != null ? Number(lng) : undefined,
+      radiusKm: radiusKm != null ? Number(radiusKm) : undefined,
+    });
   }
 
   /**
@@ -91,6 +132,14 @@ export class EventsController {
   @Get('/cities')
   public async getDistinctCities(): GetDistinctCitiesResponse {
     return this.service.getDistinctCities();
+  }
+
+  /**
+   * Get distinct regions with active events, grouped by country
+   */
+  @Get('/regions')
+  public async getDistinctRegions(): GetDistinctRegionsResponse {
+    return this.venuesService.getDistinctRegions();
   }
 
   @Get('/{eventId}')

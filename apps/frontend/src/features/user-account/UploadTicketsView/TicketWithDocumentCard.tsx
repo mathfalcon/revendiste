@@ -12,8 +12,8 @@ import {formatEventDate} from '~/utils/string';
 import type {GetUserListingsResponse} from '~/lib/api/generated';
 
 interface TicketWithDocumentCardProps {
-  ticket: GetUserListingsResponse[number]['tickets'][number] & {
-    listing: GetUserListingsResponse[number];
+  ticket: GetUserListingsResponse['data'][number]['tickets'][number] & {
+    listing: GetUserListingsResponse['data'][number];
   };
   onEditClick: (ticketId: string) => void;
 }

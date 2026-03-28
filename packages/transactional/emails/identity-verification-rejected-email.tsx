@@ -22,13 +22,12 @@ export const IdentityVerificationRejectedEmail = ({
   appBaseUrl,
 }: IdentityVerificationRejectedEmailProps) => (
   <BaseEmail
-    title="Verificación de identidad rechazada"
-    preview="Tu verificación de identidad no pudo ser aprobada"
+    title="Verificación rechazada"
+    preview="Tu verificación de identidad no fue aprobada"
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      Lamentamos informarte que tu verificación de identidad no pudo ser
-      aprobada.
+      Tu verificación de identidad no fue aprobada.
     </Text>
 
     {/* Rejection Reason */}

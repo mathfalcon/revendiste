@@ -15,7 +15,7 @@ import {TicketDocumentViewerModal} from '~/components';
 import {SoldTicketCard} from './SoldTicketCard';
 
 interface SoldTicketsSectionProps {
-  tickets: GetUserListingsResponse[number]['tickets'];
+  tickets: GetUserListingsResponse['data'][number]['tickets'];
   ticketWaveName: string;
   ticketWaveCurrency: EventTicketCurrency;
   onUploadClick: (ticketId: string) => void;

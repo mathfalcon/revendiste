@@ -45,7 +45,7 @@ export function VerificationReviewDialog({
   const approveMutation = useMutation({
     ...approveVerificationMutation(),
     onSuccess: () => {
-      toast.success('Verificación aprobada exitosamente');
+      toast.success('Verificación aprobada');
       queryClient.invalidateQueries({queryKey: ['admin', 'verifications']});
       onOpenChange(false);
     },

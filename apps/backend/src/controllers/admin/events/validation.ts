@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {PaginationSchema} from '~/middleware';
+import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 
 // ============================================================================
 // Events Query/List
@@ -23,12 +24,12 @@ export type AdminEventsQuery = z.infer<typeof AdminEventsQuerySchema>;
 
 export const UpdateEventRouteSchema = z.object({
   body: z.object({
-    name: z.string().min(1, 'El nombre es requerido').optional(),
+    name: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED).optional(),
     description: z.string().nullable().optional(),
     eventStartDate: z.string().datetime().optional(),
     eventEndDate: z.string().datetime().optional(),
     // Note: Venue is now managed via eventVenues table - use venueId to reference
-    externalUrl: z.string().url('URL inválida').optional(),
+    externalUrl: z.string().url(VALIDATION_MESSAGES.URL_INVALID).optional(),
     qrAvailabilityTiming: z
       .enum(['3h', '6h', '12h', '24h', '48h', '72h'])
       .nullable()
@@ -45,9 +46,9 @@ export type UpdateEventRouteBody = z.infer<typeof UpdateEventRouteSchema>['body'
 
 export const CreateTicketWaveRouteSchema = z.object({
   body: z.object({
-    name: z.string().min(1, 'El nombre es requerido'),
+    name: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED),
     description: z.string().nullable().optional(),
-    faceValue: z.number().positive('El valor debe ser positivo'),
+    faceValue: z.number().positive(VALIDATION_MESSAGES.PRICE_MUST_BE_POSITIVE),
     currency: z.enum(['UYU', 'USD']),
     isSoldOut: z.boolean().optional().default(false),
     isAvailable: z.boolean().optional().default(true),
@@ -61,9 +62,9 @@ export type CreateTicketWaveRouteBody = z.infer<
 
 export const UpdateTicketWaveRouteSchema = z.object({
   body: z.object({
-    name: z.string().min(1, 'El nombre es requerido').optional(),
+    name: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED).optional(),
     description: z.string().nullable().optional(),
-    faceValue: z.number().positive('El valor debe ser positivo').optional(),
+    faceValue: z.number().positive(VALIDATION_MESSAGES.PRICE_MUST_BE_POSITIVE).optional(),
     currency: z.enum(['UYU', 'USD']).optional(),
     isSoldOut: z.boolean().optional(),
     isAvailable: z.boolean().optional(),

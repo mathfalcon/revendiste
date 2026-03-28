@@ -111,7 +111,7 @@ export function TicketWaveEditDialog({
     ...createTicketWaveMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'events', eventId]});
-      toast.success('Tanda de tickets creada exitosamente');
+      toast.success('Tanda de entradas creada');
       onOpenChange(false);
     },
     onError: (error: any) => {
@@ -125,7 +125,7 @@ export function TicketWaveEditDialog({
     ...updateTicketWaveMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'events', eventId]});
-      toast.success('Tanda de tickets actualizada exitosamente');
+      toast.success('Tanda de entradas actualizada');
       onOpenChange(false);
     },
     onError: (error: any) => {

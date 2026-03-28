@@ -20,6 +20,7 @@ interface MobilePublishBarProps {
   currency: string;
   sellerAmountCalculation: SellerAmountCalculation;
   isPending: boolean;
+  submitLabel?: string;
 }
 
 export function MobilePublishBar({
@@ -28,6 +29,7 @@ export function MobilePublishBar({
   currency,
   sellerAmountCalculation,
   isPending,
+  submitLabel,
 }: MobilePublishBarProps) {
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
@@ -186,11 +188,11 @@ export function MobilePublishBar({
               </div>
               <Button
                 type='submit'
-                className='bg-primary-gradient h-12 px-8 text-base font-semibold'
+                className='bg-primary-gradient h-12 px-8 text-base font-semibold max-w-[50%]'
                 disabled={isPending}
                 onClick={e => e.stopPropagation()}
               >
-                {isPending ? 'Publicando...' : 'Publicar'}
+                {isPending ? 'Publicando...' : submitLabel ? 'Siguiente' : 'Publicar'}
               </Button>
             </div>
           </div>

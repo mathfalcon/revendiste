@@ -16,7 +16,7 @@ import {CDN_ASSETS} from '~/assets';
 import {CopyableText} from '~/components/ui/copyable-text';
 
 interface ListingCardProps {
-  listing: GetUserListingsResponse[number];
+  listing: GetUserListingsResponse['data'][number];
 }
 
 export function ListingCard({listing}: ListingCardProps) {

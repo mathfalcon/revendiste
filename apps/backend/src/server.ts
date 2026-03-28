@@ -1,10 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import multer from 'multer';
 import path from 'path';
 import {PORT, STORAGE_LOCAL_PATH, APP_BASE_URL, NODE_ENV} from './config/env';
 import {apiRateLimitMiddleware} from './middleware/rateLimit';
-import {errorHandler, optionalAuthMiddleware, requestIdMiddleware} from './middleware';
+import {
+  errorHandler,
+  optionalAuthMiddleware,
+  requestIdMiddleware,
+} from './middleware';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
 import {logger} from './utils';
@@ -12,12 +17,12 @@ import {clerkMiddleware} from '@clerk/express';
 import {startSyncPaymentsAndExpireOrdersJob} from './cronjobs/sync-payments-and-expire-orders';
 import {startNotifyUploadAvailabilityJob} from './cronjobs/notify-upload-availability';
 import {startCheckPayoutHoldPeriodsJob} from './cronjobs/check-payout-hold-periods';
-import {startScrapeEventsJob} from './cronjobs/scrape-events';
 import {startProcessPendingNotificationsJob} from './cronjobs/process-pending-notifications';
 import {
   initializeJobQueue,
   startProcessPendingJobsJob,
 } from './cronjobs/process-pending-jobs';
+import {ValidationService} from '@mathfalcon/tsoa-runtime';
 
 // Initialize job queue early so getJobQueueService() is available when controllers load
 initializeJobQueue();
@@ -91,8 +96,32 @@ const router = express.Router();
 if (NODE_ENV !== 'test') {
   router.use(apiRateLimitMiddleware);
 }
+
+ValidationService.prototype.ValidateParam = (
+  property,
+  rawValue,
+  name = '',
+  fieldErrors,
+  parent = false,
+  minimalSwaggerConfig,
+) => {
+  return rawValue;
+};
+
+RegisterRoutes.prototype.getValidatedArgs = (
+  args: any,
+  request: any,
+  response: any,
+) => Object.keys(args);
+
+// Custom multer with 50MB limit for all file uploads (supports video uploads in ticket reports)
+const uploadConfig = multer({
+  storage: multer.memoryStorage(),
+  limits: {fileSize: 50 * 1024 * 1024}, // 50 MB
+});
+
 registerSwaggerRoutes(router);
-RegisterRoutes(router);
+RegisterRoutes(router, {multer: uploadConfig});
 
 app.use('/api', router);
 

@@ -16,12 +16,12 @@ export const IdentityVerificationCompletedEmail = ({
   appBaseUrl,
 }: IdentityVerificationCompletedEmailProps) => (
   <BaseEmail
-    title="¡Ya podés publicar tus entradas!"
-    preview="Tu verificación de identidad se completó - empezá a vender"
+    title="Ya podés vender entradas"
+    preview="Tu verificación de identidad se completó. Empezá a publicar tus entradas."
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      ¡Felicitaciones! Tu verificación de identidad se completó exitosamente.
+      Tu verificación de identidad se completó.
     </Text>
 
     <Text className="text-foreground mb-4">

@@ -1,6 +1,19 @@
-import {createFileRoute, Outlet, Link, useLocation} from '@tanstack/react-router';
-import {Ticket, Upload, Menu, Wallet, ShieldCheck, QrCode} from 'lucide-react';
-import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
+import {
+  createFileRoute,
+  Outlet,
+  Link,
+  useLocation,
+} from '@tanstack/react-router';
+import {
+  Ticket,
+  Upload,
+  Menu,
+  Wallet,
+  ShieldCheck,
+  QrCode,
+  Flag,
+  Settings,
+} from 'lucide-react';
 import {useQuery} from '@tanstack/react-query';
 import {getMyListingsQuery} from '~/lib';
 import {Badge} from '~/components/ui/badge';
@@ -9,6 +22,7 @@ import {Sheet, SheetContent, SheetTrigger} from '~/components/ui/sheet';
 import {useState} from 'react';
 import {seo} from '~/utils/seo';
 import {beforeLoadRequireAuth} from '~/utils';
+import {cn} from '~/lib/utils';
 
 const TAB_CONFIG = [
   {
@@ -45,10 +59,16 @@ const TAB_CONFIG = [
     to: '/cuenta/retiro',
   },
   {
-    value: 'estado-verificacion',
-    label: 'Verificación',
-    icon: ShieldCheck,
-    to: '/cuenta/estado-verificacion',
+    value: 'configuracion',
+    label: 'Configuración',
+    icon: Settings,
+    to: '/cuenta/configuracion',
+  },
+  {
+    value: 'reportes',
+    label: 'Reportes',
+    icon: Flag,
+    to: '/cuenta/reportes',
   },
 ] as const;
 
@@ -67,25 +87,25 @@ export const Route = createFileRoute('/cuenta')({
   },
 });
 
-// List of tab values for checking if current route is a tabbed route
-const TAB_VALUES = TAB_CONFIG.map(tab => tab.value);
-
 function RouteComponent() {
   const {pathname} = useLocation();
-  const path = pathname.split('/').pop();
   const {data: listings} = useQuery(getMyListingsQuery());
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Check if the current route is part of the tabs
-  const isTabRoute =
-    path && TAB_VALUES.includes(path as (typeof TAB_VALUES)[number]);
+  // Match the active tab by pathname prefix (handles sub-routes like /cuenta/reportes/$reportId)
+  const activeTab = TAB_CONFIG.find(
+    tab => pathname === tab.to || pathname.startsWith(tab.to + '/'),
+  );
+  const activeTabValue = activeTab?.value;
+  const isTabRoute = !!activeTabValue;
 
-  // Check if we're still within the /cuenta route tree
-  // This prevents layout flash when navigating away from /cuenta
+  // Prevent layout flash when navigating away from /cuenta entirely
   const isWithinCuentaRoute = pathname.startsWith('/cuenta');
+  if (!isWithinCuentaRoute) {
+    return null;
+  }
 
   // Calculate count of tickets needing uploads
-  // Includes both sold and unsold tickets within the upload window
   const ticketsNeedingUploadCount =
     listings
       ?.flatMap(listing =>
@@ -95,22 +115,19 @@ function RouteComponent() {
       )
       .filter(Boolean).length || 0;
 
-  // If navigating away from /cuenta entirely, render nothing to prevent flash
-  if (!isWithinCuentaRoute) {
-    return null;
-  }
-
-  // If the route is not a tab route (e.g., /cuenta/verificar), render just the Outlet
+  // Routes outside any tab (e.g. /cuenta/verificar) — render with container but no sidebar
   if (!isTabRoute) {
-    return <Outlet />;
+    return (
+      <div className='container mx-auto max-w-4xl mt-4 md:mt-20 mb-6 md:mb-8 px-4 md:px-0'>
+        <Outlet />
+      </div>
+    );
   }
 
   return (
-    <div className='container mx-auto max-w-4xl mt-4 md:mt-20 mb-6 md:mb-8 px-4 md:px-0'>
-      <Tabs
-        defaultValue={path}
-        className='w-full flex flex-col md:flex-row gap-2'
-      >
+    <div className='container mx-auto max-w-6xl mt-4 md:mt-20 mb-6 md:mb-8 px-4 md:px-0'>
+      <div className='w-full flex flex-col md:flex-row gap-2'>
+        {/* Mobile hamburger */}
         <div className='md:hidden mb-4 flex items-center justify-end'>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
@@ -122,7 +139,7 @@ function RouteComponent() {
             <SheetContent side='right' className='w-[85vw] sm:max-w-sm'>
               <nav className='mt-6 flex flex-col gap-2'>
                 {TAB_CONFIG.map(tab => {
-                  const isActive = tab.value === path;
+                  const isActive = tab.value === activeTabValue;
                   return (
                     <Link
                       key={tab.value}
@@ -149,32 +166,36 @@ function RouteComponent() {
           </Sheet>
         </div>
 
-        <TabsList className='hidden md:flex h-auto flex-col justify-start bg-inherit w-auto min-w-[200px]'>
-          {TAB_CONFIG.map(tab => (
-            <TabsTrigger
-              key={tab.value}
-              className='w-full justify-start text-[1rem] flex items-center gap-2'
-              value={tab.value}
-              asChild
-            >
-              <Link to={tab.to}>
-                <tab.icon /> {tab.label}
+        {/* Desktop sidebar — plain nav, single Outlet avoids multiple-outlet flash */}
+        <nav className='hidden md:flex flex-col w-auto min-w-[200px] gap-0.5 p-1'>
+          {TAB_CONFIG.map(tab => {
+            const isActive = tab.value === activeTabValue;
+            return (
+              <Link
+                key={tab.value}
+                to={tab.to}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-3 py-1.5 text-[1rem] font-medium transition-all w-full',
+                  isActive
+                    ? 'bg-background text-foreground shadow'
+                    : 'text-muted-foreground hover:bg-muted/50',
+                )}
+              >
+                <tab.icon className='h-4 w-4 shrink-0' />
+                <span>{tab.label}</span>
                 {'badge' in tab && tab.badge
                   ? tab.badge(ticketsNeedingUploadCount)
                   : null}
               </Link>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+            );
+          })}
+        </nav>
 
-        <div className='flex-1 w-full'>
-          {TAB_CONFIG.map(tab => (
-            <TabsContent key={tab.value} value={tab.value} className='mt-0'>
-              <Outlet />
-            </TabsContent>
-          ))}
+        {/* Content — single Outlet, always rendered */}
+        <div className='flex-1 w-full min-w-0'>
+          <Outlet />
         </div>
-      </Tabs>
+      </div>
     </div>
   );
 }

@@ -11,6 +11,8 @@ import {Button} from '~/components/ui/button';
 import {z} from 'zod';
 import {useEffect, useRef} from 'react';
 import {cn} from '~/lib/utils';
+import {seo} from '~/utils/seo';
+import {getBaseUrl} from '~/config/env';
 
 const faqSections = [
   'general',
@@ -28,18 +30,45 @@ const faqSearchSchema = z.object({
 export const Route = createFileRoute('/preguntas-frecuentes')({
   component: FAQPage,
   validateSearch: faqSearchSchema,
-  head: () => ({
-    meta: [
-      {
-        title: 'Preguntas Frecuentes | Revendiste',
-      },
-      {
-        name: 'description',
-        content:
-          'Encontrá respuestas a las preguntas más comunes sobre cómo comprar y vender entradas en Revendiste.',
-      },
-    ],
-  }),
+  head: () => {
+    const baseUrl = getBaseUrl();
+
+    const allFaqItems = [
+      ...faqGeneral,
+      ...faqCompradores,
+      ...faqVendedores,
+      ...faqPagos,
+    ];
+    const faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: allFaqItems.map(item => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
+    };
+
+    return {
+      meta: seo({
+        title:
+          'Preguntas Frecuentes | Revendiste - Compra y venta de entradas',
+        description:
+          'Dudas sobre cómo comprar o vender entradas en Revendiste? Acá te explicamos todo: comisiones, pagos, plazos de entrega, garantías y más.',
+        baseUrl,
+      }),
+      links: [{rel: 'canonical', href: `${baseUrl}/preguntas-frecuentes`}],
+      scripts: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(faqSchema),
+        },
+      ],
+    };
+  },
 });
 
 interface FAQItem {
@@ -157,7 +186,7 @@ const faqPagos: FAQItem[] = [
   {
     question: '¿Qué es eso de "custodia de fondos"?',
     answer:
-      'Cuando un comprador paga, la plata no va directo al vendedor. Nosotros la guardamos hasta que se complete la operación exitosamente (o sea, que el comprador use la entrada sin problemas). Esto protege a ambas partes: el comprador sabe que si algo falla recupera su plata, y el vendedor sabe que cuando todo sale bien, cobra seguro.',
+      'Cuando un comprador paga, la plata no va directo al vendedor. Nosotros la guardamos hasta que se complete la operación sin problemas (o sea, que el comprador use la entrada sin problemas). Esto protege a ambas partes: el comprador sabe que si algo falla recupera su plata, y el vendedor sabe que cuando todo sale bien, cobra seguro.',
   },
   {
     question: '¿Me devuelven la comisión si hay un problema?',

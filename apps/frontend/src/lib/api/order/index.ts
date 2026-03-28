@@ -65,9 +65,9 @@ export const cancelOrderMutation = (orderId: string) =>
     mutationKey: ['cancel-order', orderId],
     mutationFn: () => api.orders.cancelOrder(orderId).then(res => res.data),
     onSuccess: () => {
-      toast.success('Orden cancelada exitosamente');
+      toast.success('Orden cancelada');
     },
     onError: () => {
-      toast.error('Error al cancelar la orden. Por favor intenta nuevamente.');
+      toast.error('No pudimos cancelar la orden. Intentá de nuevo.');
     },
   });

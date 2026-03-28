@@ -1,5 +1,7 @@
 import {createFileRoute} from '@tanstack/react-router';
 import {MarkdownPage} from '~/components';
+import {seo} from '~/utils/seo';
+import {getBaseUrl} from '~/config/env';
 
 export const Route = createFileRoute('/terminos-y-condiciones')({
   component: TermsPage,
@@ -8,13 +10,18 @@ export const Route = createFileRoute('/terminos-y-condiciones')({
     const content = await import('~/assets/documents/tos.md?raw');
     return {markdown: content.default};
   },
-  head: () => ({
-    meta: [
-      {
+  head: () => {
+    const baseUrl = getBaseUrl();
+    return {
+      meta: seo({
         title: 'Términos y Condiciones | Revendiste',
-      },
-    ],
-  }),
+        description:
+          'Leé los términos y condiciones de Revendiste. Reglas claras para la compra y venta segura de entradas a eventos en Uruguay.',
+        baseUrl,
+      }),
+      links: [{rel: 'canonical', href: `${baseUrl}/terminos-y-condiciones`}],
+    };
+  },
 });
 
 function TermsPage() {

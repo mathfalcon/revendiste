@@ -13,3 +13,4 @@
 
 export * from './user.factory';
 export * from './order.factory';
+export * from './ticket-reports.factory';

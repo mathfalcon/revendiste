@@ -2,8 +2,10 @@ import {Kysely} from 'kysely';
 import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
 import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
 import {ValidationError} from '~/errors';
+import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
+import type {UploadedDocumentData} from '~/services/ticket-documents';
 
 export class TicketListingsRepository extends BaseRepository<TicketListingsRepository> {
   withTransaction(trx: Kysely<DB>): TicketListingsRepository {
@@ -12,9 +14,10 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
 
   async createBatch(
     ticketListings: CreateTicketListingRouteBody & {publisherUserId: string},
+    documents?: UploadedDocumentData[],
   ) {
     if (ticketListings.quantity === 0) {
-      throw new ValidationError('Quantity must be greater than 0');
+      throw new ValidationError(VALIDATION_MESSAGES.QUANTITY_MUST_BE_POSITIVE);
     }
 
     return this.db.transaction().execute(async tx => {
@@ -39,11 +42,55 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
         .returningAll()
         .execute();
 
+      // If documents were pre-uploaded to storage, create TicketDocument records
+      // within the same transaction so listing + tickets + documents are atomic
+      if (documents && documents.length > 0) {
+        await tx
+          .insertInto('ticketDocuments')
+          .values(
+            documents.map((doc, i) => ({
+              ticketId: createdListingTickets[i].id,
+              storagePath: doc.storagePath,
+              fileName: doc.fileName,
+              originalName: doc.originalName,
+              mimeType: doc.mimeType,
+              sizeBytes: doc.sizeBytes,
+              documentType: 'ticket' as const,
+              version: 1,
+              status: 'verified' as const,
+              isPrimary: true,
+              uploadedAt: new Date(),
+            })),
+          )
+          .execute();
+      }
+
       return {
         ...listing,
         listingTickets: createdListingTickets,
       };
     });
+  }
+
+  async countActiveTicketsByUserAndEvent(
+    userId: string,
+    eventId: string,
+  ) {
+    const row = await this.db
+      .selectFrom('listingTickets')
+      .innerJoin('listings', 'listings.id', 'listingTickets.listingId')
+      .innerJoin(
+        'eventTicketWaves',
+        'eventTicketWaves.id',
+        'listings.ticketWaveId',
+      )
+      .select(this.db.fn.count('listingTickets.id').as('count'))
+      .where('eventTicketWaves.eventId', '=', eventId)
+      .where('listings.publisherUserId', '=', userId)
+      .where('listings.deletedAt', 'is', null)
+      .where('listingTickets.deletedAt', 'is', null)
+      .executeTakeFirst();
+    return Number(row?.count ?? 0);
   }
 
   async getListingsWithTicketsByUserIdCount(userId: string) {

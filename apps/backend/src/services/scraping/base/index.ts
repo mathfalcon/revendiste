@@ -28,7 +28,7 @@ function getScraperConfig() {
   const config = {
     maxConcurrency: parseInt(process.env.SCRAPER_MAX_CONCURRENCY || '2', 10),
     sameDomainDelaySecs: parseInt(
-      process.env.SCRAPER_SAME_DOMAIN_DELAY_SECS || '5',
+      process.env.SCRAPER_SAME_DOMAIN_DELAY_SECS || '2',
       10,
     ),
     maxRequestsPerCrawl: parseInt(

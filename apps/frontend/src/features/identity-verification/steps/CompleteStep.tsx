@@ -12,7 +12,7 @@ export function CompleteStep() {
       <CardHeader>
         <CardTitle>¡Verificación Completada!</CardTitle>
         <CardDescription>
-          Tu identidad ha sido verificada exitosamente
+          Tu identidad se verificó
         </CardDescription>
       </CardHeader>
       <CardContent>

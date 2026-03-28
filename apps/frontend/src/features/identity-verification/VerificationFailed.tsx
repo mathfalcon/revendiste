@@ -101,7 +101,7 @@ export function VerificationFailed({
           ) : (
             <p className='text-muted-foreground'>
               {canRetry
-                ? 'Tu verificación anterior no fue exitosa. Podés intentar nuevamente o contactarnos si necesitás ayuda.'
+                ? 'Tu verificación anterior no funcionó. Podés intentar de nuevo o escribinos si necesitás ayuda.'
                 : 'Has agotado los intentos de verificación. Contactanos para resolver tu situación.'}
             </p>
           )}
