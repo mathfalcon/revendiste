@@ -238,11 +238,11 @@ jobs:
 
       - name: Verify backend health
         run: |
-          echo "Performing health check on https://api.revendiste.com/api/health"
+          echo "Performing health check on https://revendiste.com/api/health"
 
           MAX_RETRIES=10
           RETRY_COUNT=0
-          HEALTH_CHECK_URL="https://api.revendiste.com/api/health"
+          HEALTH_CHECK_URL="https://revendiste.com/api/health"
 
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$HEALTH_CHECK_URL" || echo "000")

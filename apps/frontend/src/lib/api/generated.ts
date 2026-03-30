@@ -329,6 +329,7 @@ export interface GetEventByIdResponse {
   userListingsCount: number;
   venueLongitude: string | null;
   venueLatitude: string | null;
+  venueCountry: string | null;
   eventImages: {
     imageType: EventImageType;
     url: string;
@@ -666,6 +667,7 @@ export interface GetOrderByIdResponse {
       imageType: EventImageType;
       url: string;
     }[];
+    venueCountry: string | null;
     venueAddress: string | null;
     venueName: string | null;
     qrAvailabilityTiming: QrAvailabilityTiming | null;
@@ -696,7 +698,7 @@ export interface GetOrderByIdResponse {
   createdAt: string;
 }
 
-export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray {
+export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray {
   data: {
     items: {
       ticketWaveName: string | null;
@@ -713,6 +715,7 @@ export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirme
         imageType: EventImageType;
         url: string;
       }[];
+      venueCountry: string | null;
       venueAddress: string | null;
       venueName: string | null;
       platform: string | null;
@@ -745,7 +748,7 @@ export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirme
 }
 
 export type GetUserOrdersResponse =
-  PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray;
+  PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray;
 
 export interface GetOrderTicketsResponse {
   tickets: {

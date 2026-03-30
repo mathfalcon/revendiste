@@ -7,13 +7,13 @@ const subirTicketsSearchSchema = z.object({
   subirPublicacion: z.string().uuid().optional(),
 });
 
-export const Route = createFileRoute('/cuenta/subir-tickets')({
+export const Route = createFileRoute('/cuenta/subir-entradas')({
   component: UploadTicketsView,
   validateSearch: subirTicketsSearchSchema,
   head: () => ({
     meta: [
       {
-        title: 'Subir Tickets | Revendiste',
+        title: 'Subir Entradas | Revendiste',
       },
     ],
   }),

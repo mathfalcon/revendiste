@@ -67,6 +67,9 @@ const EnvSchema = z.object({
     .default(0.0247), // ~40.5 UYU = 1 USD
   EXCHANGE_RATE_CACHE_TTL_HOURS: z.coerce.number().default(1),
   GOOGLE_PLACES_API_KEY: z.string().optional(),
+  // PostHog analytics
+  POSTHOG_KEY: z.string().optional(),
+  POSTHOG_HOST: z.string().optional().default('https://e-proxy.revendiste.com'),
   // Rate limiting (Postgres-backed; optional, defaults apply to /api)
   RATE_LIMIT_WINDOW_MS: z.coerce.number().optional().default(60_000), // 1 minute
   RATE_LIMIT_MAX: z.coerce.number().optional().default(100), // max requests per window per IP
@@ -138,6 +141,8 @@ export const {
   EXCHANGE_RATE_FALLBACK_UYU_TO_USD,
   EXCHANGE_RATE_CACHE_TTL_HOURS,
   GOOGLE_PLACES_API_KEY,
+  POSTHOG_KEY,
+  POSTHOG_HOST,
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_MAX,
   FEU_ENV,

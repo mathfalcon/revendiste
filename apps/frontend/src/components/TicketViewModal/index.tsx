@@ -1,5 +1,6 @@
 import {useQuery} from '@tanstack/react-query';
 import {Link, useNavigate} from '@tanstack/react-router';
+import posthog from 'posthog-js';
 import {
   Dialog,
   DialogContent,
@@ -40,13 +41,12 @@ import {api} from '~/lib/api';
 import {useState, useMemo, useEffect, useCallback, useRef} from 'react';
 import {Alert, AlertDescription} from '~/components/ui/alert';
 import {TextEllipsis} from '~/components/ui/text-ellipsis';
-import {TicketDetails} from './TicketDetails';
-import {OrderDetailsAccordion} from './OrderDetailsAccordion';
-import {TicketIds} from './TicketIds';
+import {TicketIdHero} from './TicketIds';
 import {DocumentPreview} from './DocumentPreview';
+import {SlideDetailsAccordion} from './SlideDetailsAccordion';
 import {getFullFileUrl} from './utils';
-import {formatEventDateSmart} from '~/utils/string';
 import {CreateCaseDialog} from '~/components/CreateCaseDialog';
+import {cn} from '~/lib/utils';
 
 type OrderTicket = GetOrderTicketsResponse['tickets'][number];
 
@@ -101,8 +101,6 @@ export function TicketViewModal({
   const currency = orderTicketsData?.currency;
   const currentTicket = sortedTickets[selectedIndex];
   const hasMultipleTickets = sortedTickets.length > 1;
-  const withDocumentCount = sortedTickets.filter(t => t.hasDocument).length;
-  const pendingCount = sortedTickets.length - withDocumentCount;
 
   const updateCarouselState = useCallback((api: CarouselApi | undefined) => {
     if (!api) return;
@@ -133,6 +131,11 @@ export function TicketViewModal({
 
   const handleDownload = (ticket: OrderTicket) => {
     if (ticket?.document?.url) {
+      posthog.capture('ticket_document_downloaded', {
+        ticket_id: ticket.id,
+        order_id: orderId,
+        mime_type: ticket.document.mimeType,
+      });
       const fullUrl = getFullFileUrl(ticket.document.url);
       const link = document.createElement('a');
       link.href = fullUrl;
@@ -181,44 +184,14 @@ export function TicketViewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='sm:max-w-[600px] max-h-[calc(100dvh-2rem)] overflow-y-auto'>
         <DialogHeader className='text-left'>
-          <DialogTitle className='flex flex-col gap-0.5'>
-            <div className='flex items-center gap-2'>
-              <Ticket className='h-5 w-5 shrink-0' />
-              {event?.name ? (
-                <TextEllipsis maxLines={1} className='text-lg font-semibold'>
-                  {event.name}
-                </TextEllipsis>
-              ) : (
-                'Mis tickets'
-              )}
-            </div>
-            {event?.eventStartDate && (
-              <p className='text-sm font-normal text-muted-foreground'>
-                {formatEventDateSmart(event.eventStartDate)}
-              </p>
-            )}
-            {sortedTickets.length > 0 && (
-              <div className='space-y-0.5'>
-                <p className='text-sm font-medium text-muted-foreground'>
-                  {sortedTickets.length}{' '}
-                  {sortedTickets.length === 1 ? 'entrada' : 'entradas'} en esta
-                  orden
-                </p>
-                {hasMultipleTickets &&
-                  (withDocumentCount > 0 || pendingCount > 0) && (
-                    <p className='text-sm font-normal text-muted-foreground'>
-                      {withDocumentCount > 0 && (
-                        <span className='text-primary'>
-                          {withDocumentCount} disponible
-                          {withDocumentCount !== 1 ? 's' : ''}
-                        </span>
-                      )}
-                      {withDocumentCount > 0 && pendingCount > 0 && ', '}
-                      {pendingCount > 0 &&
-                        `${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''}`}
-                    </p>
-                  )}
-              </div>
+          <DialogTitle className='flex items-center gap-2'>
+            <Ticket className='h-5 w-5 shrink-0' />
+            {event?.name ? (
+              <TextEllipsis maxLines={1} className='text-lg font-semibold'>
+                {event.name}
+              </TextEllipsis>
+            ) : (
+              'Mis entradas'
             )}
           </DialogTitle>
         </DialogHeader>
@@ -242,39 +215,49 @@ export function TicketViewModal({
             </AlertDescription>
           </Alert>
         ) : (
-          <div className='space-y-4'>
-            {/* Carousel nav: visible on all breakpoints, touch-friendly */}
+          <div className='space-y-3'>
+            {/* Navigation: arrows + counter (only for multiple tickets) */}
             {hasMultipleTickets && (
-              <div className='flex items-center justify-between gap-2 rounded-xl border bg-muted/20 px-2 py-2 sm:px-4 sm:py-2.5'>
+              <div className='flex items-center justify-between gap-2'>
                 <Button
                   variant='outline'
-                  size='sm'
-                  className='h-10 min-w-10 shrink-0 touch-manipulation sm:h-9 sm:min-w-9'
+                  size='icon'
+                  className='h-9 w-9 shrink-0 touch-manipulation'
                   onClick={() => carouselApi?.scrollPrev()}
                   disabled={!canScrollPrev}
                 >
-                  <ChevronLeft className='h-5 w-5 sm:h-4 sm:w-4' />
-                  <span className='hidden sm:inline ml-1'>Anterior</span>
+                  <ChevronLeft className='h-4 w-4' />
                 </Button>
-                <p className='text-sm font-semibold text-center min-w-0 flex-1 px-2'>
-                  <span className='tabular-nums'>
-                    Entrada {selectedIndex + 1} de {sortedTickets.length}
+                <div className='flex flex-col items-center gap-1.5 min-w-0 flex-1'>
+                  <span className='text-sm font-medium tabular-nums'>
+                    {selectedIndex + 1} / {sortedTickets.length}
                   </span>
-                  {currentTicket?.ticketWave?.name && (
-                    <span className='font-normal text-muted-foreground block truncate sm:inline sm:ml-1'>
-                      {currentTicket.ticketWave.name}
-                    </span>
-                  )}
-                </p>
+                  {/* Dot indicators */}
+                  <div className='flex items-center gap-1.5'>
+                    {sortedTickets.map((_, idx) => (
+                      <button
+                        key={idx}
+                        type='button'
+                        className={cn(
+                          'h-2 rounded-full transition-all duration-200 touch-manipulation',
+                          idx === selectedIndex
+                            ? 'w-5 bg-primary'
+                            : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50',
+                        )}
+                        onClick={() => carouselApi?.scrollTo(idx)}
+                        aria-label={`Ir a entrada ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
                 <Button
                   variant='outline'
-                  size='sm'
-                  className='h-10 min-w-10 shrink-0 touch-manipulation sm:h-9 sm:min-w-9'
+                  size='icon'
+                  className='h-9 w-9 shrink-0 touch-manipulation'
                   onClick={() => carouselApi?.scrollNext()}
                   disabled={!canScrollNext}
                 >
-                  <span className='hidden sm:inline mr-1'>Siguiente</span>
-                  <ChevronRight className='h-5 w-5 sm:h-4 sm:w-4' />
+                  <ChevronRight className='h-4 w-4' />
                 </Button>
               </div>
             )}
@@ -287,50 +270,58 @@ export function TicketViewModal({
               <CarouselContent className='-ml-4'>
                 {sortedTickets.map(ticket => (
                   <CarouselItem key={ticket.id} className='pl-4'>
-                    <div className='space-y-2 pb-2'>
-                      {/* Ticket details + IDs: full width, tight spacing */}
-                      <TicketDetails
-                        ticketWaveName={ticket.ticketWave?.name}
-                        price={ticket.price}
-                        currency={currency || null}
-                      />
-                      {/* Ticket IDs always visible (for screenshots) */}
-                      <TicketIds
-                        orderId={orderIdFromData || null}
+                    <div className='space-y-3 pb-2'>
+                      {/* Hero: Ticket ID + wave name — always visible, prominent */}
+                      <TicketIdHero
                         ticketId={ticket.id}
+                        waveName={ticket.ticketWave?.name}
                       />
 
-                      <div className='pt-1' />
-
+                      {/* Main content: document or status */}
                       {ticket.reservationStatus === 'cancelled' ? (
-                        <Alert className='bg-destructive/10 border-destructive/30'>
-                          <AlertTriangle className='h-4 w-4 text-destructive' />
-                          <AlertDescription className='text-destructive'>
-                            <span className='font-semibold'>
+                        <div className='rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center space-y-3 min-h-[200px] flex flex-col items-center justify-center'>
+                          <div className='flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10'>
+                            <AlertTriangle className='h-7 w-7 text-destructive' />
+                          </div>
+                          <div className='space-y-1'>
+                            <p className='font-semibold text-destructive'>
                               Entrada cancelada
-                            </span>{' '}
-                            — El vendedor no subió el documento a tiempo. Tu
-                            reembolso está en proceso.
-                          </AlertDescription>
-                        </Alert>
+                            </p>
+                            <p className='text-sm text-muted-foreground max-w-[280px]'>
+                              El vendedor no subió el documento a tiempo. Tu
+                              reembolso está en proceso.
+                            </p>
+                          </div>
+                        </div>
                       ) : ticket.reservationStatus === 'refunded' ? (
-                        <Alert className='bg-muted/50 border-muted'>
-                          <XCircle className='h-4 w-4 text-muted-foreground' />
-                          <AlertDescription className='text-muted-foreground'>
-                            <span className='font-semibold'>
+                        <div className='rounded-lg border border-muted bg-muted/30 p-6 text-center space-y-3 min-h-[200px] flex flex-col items-center justify-center'>
+                          <div className='flex h-14 w-14 items-center justify-center rounded-full bg-muted'>
+                            <XCircle className='h-7 w-7 text-muted-foreground' />
+                          </div>
+                          <div className='space-y-1'>
+                            <p className='font-semibold text-foreground'>
                               Entrada reembolsada
-                            </span>
-                          </AlertDescription>
-                        </Alert>
+                            </p>
+                            <p className='text-sm text-muted-foreground max-w-[280px]'>
+                              Ya se procesó el reembolso por esta entrada.
+                            </p>
+                          </div>
+                        </div>
                       ) : ticket.reservationStatus === 'refund_pending' ? (
-                        <Alert className='bg-yellow-500/10 border-yellow-500/30'>
-                          <Clock className='h-4 w-4 text-yellow-600' />
-                          <AlertDescription className='text-yellow-700'>
-                            <span className='font-semibold'>
+                        <div className='rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-6 text-center space-y-3 min-h-[200px] flex flex-col items-center justify-center'>
+                          <div className='flex h-14 w-14 items-center justify-center rounded-full bg-yellow-500/10'>
+                            <Clock className='h-7 w-7 text-yellow-600' />
+                          </div>
+                          <div className='space-y-1'>
+                            <p className='font-semibold text-yellow-700'>
                               Reembolso en proceso
-                            </span>
-                          </AlertDescription>
-                        </Alert>
+                            </p>
+                            <p className='text-sm text-muted-foreground max-w-[280px]'>
+                              Estamos procesando tu reembolso. Te avisamos
+                              cuando se acredite.
+                            </p>
+                          </div>
+                        </div>
                       ) : ticket.hasDocument && ticket.document?.url ? (
                         <div className='space-y-3'>
                           <div className='flex items-center gap-2 text-sm'>
@@ -364,11 +355,6 @@ export function TicketViewModal({
                               avisamos cuando esté listo.
                             </p>
                           </div>
-                          {hasMultipleTickets && (
-                            <p className='text-sm text-muted-foreground pt-1'>
-                              Deslizá para ver otras entradas.
-                            </p>
-                          )}
                           <Button
                             variant='ghost'
                             size='sm'
@@ -381,20 +367,24 @@ export function TicketViewModal({
                           </Button>
                         </div>
                       )}
+
+                      {/* Secondary details in accordion */}
+                      <SlideDetailsAccordion
+                        ticketId={ticket.id}
+                        orderId={orderIdFromData}
+                        ticketWaveName={ticket.ticketWave?.name}
+                        price={ticket.price}
+                        currency={currency}
+                        subtotalAmount={subtotalAmount}
+                        totalAmount={totalAmount}
+                        platformCommission={platformCommission}
+                        vatOnCommission={vatOnCommission}
+                      />
                     </div>
                   </CarouselItem>
                 ))}
               </CarouselContent>
             </Carousel>
-
-            {/* Order details accordion */}
-            <OrderDetailsAccordion
-              subtotalAmount={subtotalAmount || null}
-              totalAmount={totalAmount || null}
-              platformCommission={platformCommission || null}
-              vatOnCommission={vatOnCommission || null}
-              currency={currency || null}
-            />
           </div>
         )}
       </DialogContent>

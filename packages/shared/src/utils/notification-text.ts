@@ -57,7 +57,8 @@ export function generateNotificationText<T extends NotificationType>(
       }
 
       return {
-        title: 'Entradas vendidas',
+        title:
+          meta.ticketCount === 1 ? 'Entrada vendida' : 'Entradas vendidas',
         description,
       };
     }

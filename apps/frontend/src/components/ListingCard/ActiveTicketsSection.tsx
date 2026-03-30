@@ -69,7 +69,7 @@ export function ActiveTicketsSection({
   ).length;
 
   // Different styling for expired vs active tickets
-  const sectionLabel = isEventPast ? 'Tickets expirados' : 'Tickets activos';
+  const sectionLabel = isEventPast ? 'Entradas expiradas' : 'Entradas activas';
   const iconColorClass = isEventPast
     ? 'text-muted-foreground'
     : 'text-blue-600';
@@ -157,7 +157,7 @@ export function ActiveTicketsSection({
                               : 'text-foreground',
                           )}
                         >
-                          Ticket #{ticket.ticketNumber} - {ticketWaveName}
+                          Entrada #{ticket.ticketNumber} - {ticketWaveName}
                         </p>
                       </div>
                       <div className='flex items-center gap-1.5 mt-0.5'>
@@ -209,7 +209,7 @@ export function ActiveTicketsSection({
                         onClick={() => onUploadClick?.(ticket.id)}
                       >
                         <Upload className='mr-1.5 h-3 w-3' />
-                        Subir ticket
+                        Subir entrada
                       </Button>
                     ) : null}
 

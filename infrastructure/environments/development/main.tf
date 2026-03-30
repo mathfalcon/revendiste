@@ -134,11 +134,8 @@ module "alb" {
   domain_name           = var.domain_name
   backend_port          = var.backend_port
   frontend_port         = var.frontend_port
-  deletion_protection   = false # Allow deletion in dev
-  # Temporarily accept revendiste.com for payment gateway approval
-  # Remove this after production is ready, TODO remove
-  additional_domains = ["revendiste.com", "www.revendiste.com"]
-  common_tags        = local.common_tags
+  deletion_protection = false # Allow deletion in dev
+  common_tags         = local.common_tags
 }
 
 # IAM module

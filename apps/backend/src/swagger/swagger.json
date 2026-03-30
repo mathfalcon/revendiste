@@ -572,6 +572,10 @@
 						"type": "string",
 						"nullable": true
 					},
+					"venueCountry": {
+						"type": "string",
+						"nullable": true
+					},
 					"eventImages": {
 						"items": {
 							"properties": {
@@ -649,6 +653,7 @@
 					"userListingsCount",
 					"venueLongitude",
 					"venueLatitude",
+					"venueCountry",
 					"eventImages",
 					"venueCity",
 					"venueAddress",
@@ -1718,6 +1723,10 @@
 								},
 								"type": "array"
 							},
+							"venueCountry": {
+								"type": "string",
+								"nullable": true
+							},
 							"venueAddress": {
 								"type": "string",
 								"nullable": true
@@ -1757,6 +1766,7 @@
 						},
 						"required": [
 							"images",
+							"venueCountry",
 							"venueAddress",
 							"venueName",
 							"qrAvailabilityTiming",
@@ -1845,7 +1855,7 @@
 				],
 				"type": "object"
 			},
-			"PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--venueName-string-or-null--venueAddress-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__": {
+			"PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--venueName-string-or-null--venueAddress-string-or-null--venueCountry-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -1915,6 +1925,10 @@
 											},
 											"type": "array"
 										},
+										"venueCountry": {
+											"type": "string",
+											"nullable": true
+										},
 										"venueAddress": {
 											"type": "string",
 											"nullable": true
@@ -1946,6 +1960,7 @@
 									},
 									"required": [
 										"images",
+										"venueCountry",
 										"venueAddress",
 										"venueName",
 										"platform",
@@ -2047,7 +2062,7 @@
 				"additionalProperties": false
 			},
 			"GetUserOrdersResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--venueName-string-or-null--venueAddress-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--venueName-string-or-null--venueAddress-string-or-null--venueCountry-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__"
 			},
 			"GetOrderTicketsResponse": {
 				"properties": {

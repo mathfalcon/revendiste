@@ -5,3 +5,4 @@ export * from './payment-providers';
 export * from './notification-text';
 export * from './upload-window';
 export * from './pricing';
+export * from './timezone';

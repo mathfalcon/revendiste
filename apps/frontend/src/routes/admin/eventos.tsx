@@ -132,7 +132,7 @@ function EventsPage() {
         <div>
           <h1 className='text-3xl font-bold'>Eventos</h1>
           <p className='text-muted-foreground'>
-            Gestiona los eventos y sus olas de tickets
+            Gestiona los eventos y sus olas de entradas
           </p>
         </div>
         <div className='flex flex-wrap gap-2'>

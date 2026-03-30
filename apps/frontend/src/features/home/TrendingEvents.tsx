@@ -188,10 +188,14 @@ export const TrendingEvents = () => {
       <Separator />
 
       {isLoading ? (
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-          {Array.from({length: 2}).map((_, i) => (
-            <TrendingEventSkeleton key={`trending-skeleton-${i}`} />
-          ))}
+        <div className='flex flex-col gap-3'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+            <TrendingEventSkeleton />
+            <div className='hidden lg:block'>
+              <TrendingEventSkeleton />
+            </div>
+          </div>
+          <div className='h-1.5' />
         </div>
       ) : (
         <div className='flex flex-col gap-3'>

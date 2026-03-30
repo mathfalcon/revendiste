@@ -21,6 +21,7 @@ export interface OrderConfirmedEmailProps {
   eventName: string;
   eventStartDate?: string;
   eventEndDate?: string;
+  eventTimezone?: string;
   venueName?: string;
   venueAddress?: string;
   flyerImageUrl?: string;
@@ -36,12 +37,13 @@ export interface OrderConfirmedEmailProps {
   appBaseUrl?: string;
 }
 
-function formatDate(dateString?: string): string {
+function formatDate(dateString?: string, timeZone?: string): string {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleString('es-UY', {
     dateStyle: 'long',
     timeStyle: 'short',
+    timeZone,
   });
 }
 
@@ -57,6 +59,7 @@ export const OrderConfirmedEmail = ({
   eventName,
   eventStartDate,
   eventEndDate,
+  eventTimezone,
   venueName,
   venueAddress,
   flyerImageUrl,
@@ -113,7 +116,7 @@ export const OrderConfirmedEmail = ({
       </Text>
       {eventStartDate && (
         <Text className="text-sm text-muted-foreground m-0 mb-1">
-          📅 {formatDate(eventStartDate)}
+          📅 {formatDate(eventStartDate, eventTimezone)}
         </Text>
       )}
       {venueName && (
@@ -134,7 +137,7 @@ export const OrderConfirmedEmail = ({
       </Text>
       {confirmedAt && (
         <Text className="text-sm text-muted-foreground m-0">
-          Confirmada el: {formatDate(confirmedAt)}
+          Confirmada el: {formatDate(confirmedAt, eventTimezone)}
         </Text>
       )}
     </Section>

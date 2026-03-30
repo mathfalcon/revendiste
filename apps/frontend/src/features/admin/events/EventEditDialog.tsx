@@ -272,7 +272,7 @@ export function EventEditDialog({
               <TabsTrigger value='general'>General</TabsTrigger>
               <TabsTrigger value='images'>Imágenes</TabsTrigger>
               <TabsTrigger value='ticketWaves'>
-                Tandas de Tickets ({event.ticketWaves?.length || 0})
+                Tandas de Entradas ({event.ticketWaves?.length || 0})
               </TabsTrigger>
             </TabsList>
 

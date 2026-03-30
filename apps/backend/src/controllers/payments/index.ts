@@ -23,6 +23,7 @@ import {
   CreatePaymentLinkRouteBody,
   CreatePaymentLinkRouteSchema,
 } from './validation';
+import {getPostHog} from '~/lib/posthog';
 
 interface CreatePaymentLinkResponse {
   redirectUrl: string;
@@ -55,7 +56,7 @@ export class PaymentsController {
   ): Promise<CreatePaymentLinkResponse> {
     const user = request.user;
 
-    return this.paymentsService.createPaymentLink({
+    const result = await this.paymentsService.createPaymentLink({
       orderId,
       userId: user.id,
       userEmail: user.email,
@@ -63,5 +64,14 @@ export class PaymentsController {
       userLastName: user.lastName,
       country: body?.country,
     });
+    getPostHog()?.capture({
+      distinctId: user.id,
+      event: 'payment_link_created',
+      properties: {
+        order_id: orderId,
+        country: body?.country,
+      },
+    });
+    return result;
   }
 }

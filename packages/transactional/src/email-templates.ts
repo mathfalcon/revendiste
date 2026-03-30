@@ -152,6 +152,7 @@ export function getEmailTemplate<T extends NotificationType>(
         props: {
           eventName: meta?.eventName || 'el evento',
           eventStartDate: meta?.eventStartDate || new Date().toISOString(),
+          eventTimezone: meta?.eventTimezone,
           ticketCount: meta?.ticketCount || 1,
           hoursUntilEvent: meta?.hoursUntilEvent || 24,
           uploadUrl:
@@ -172,6 +173,7 @@ export function getEmailTemplate<T extends NotificationType>(
           eventName: meta?.eventName || 'el evento',
           eventStartDate: meta?.eventStartDate,
           eventEndDate: meta?.eventEndDate,
+          eventTimezone: meta?.eventTimezone,
           venueName: meta?.venueName,
           venueAddress: meta?.venueAddress,
           flyerImageUrl,
@@ -244,6 +246,7 @@ export function getEmailTemplate<T extends NotificationType>(
         props: {
           eventName: meta?.eventName || 'el evento',
           eventStartDate: meta?.eventStartDate || new Date().toISOString(),
+          eventTimezone: meta?.eventTimezone,
           ticketCount: meta?.ticketCount || 1,
           uploadUrl: meta?.shouldPromptUpload
             ? uploadUrl ||

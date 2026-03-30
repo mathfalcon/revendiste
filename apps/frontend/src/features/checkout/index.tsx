@@ -1,5 +1,6 @@
 import {Suspense, useEffect, useRef, useState} from 'react';
 import {useSuspenseQuery, useMutation} from '@tanstack/react-query';
+import posthog from 'posthog-js';
 import {useNavigate} from '@tanstack/react-router';
 import {toast} from 'sonner';
 import {
@@ -90,7 +91,11 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       // Redirect to payment page
       navigate({href: data.redirectUrl});
     },
-    onError: err => {
+    onError: () => {
+      posthog.capture('payment_link_error', {
+        order_id: orderId,
+        country: payerCountry,
+      });
       toast.error('No pudimos crear el link de pago. Intentá de nuevo.');
     },
   });
@@ -169,6 +174,12 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       countryRef.current?.scrollIntoView({behavior: 'smooth', block: 'center'});
       return;
     }
+    posthog.capture('checkout_payment_initiated', {
+      order_id: orderId,
+      country: payerCountry,
+      total_amount: Number(order.totalAmount),
+      currency,
+    });
     createPaymentLink.mutate({country: payerCountry});
   };
 
@@ -407,6 +418,10 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                           onSelect={() => {
                             setPayerCountry(c.value);
                             setCountryPopoverOpen(false);
+                            posthog.capture('checkout_country_selected', {
+                              order_id: orderId,
+                              country: c.value,
+                            });
                           }}
                         >
                           {c.label}

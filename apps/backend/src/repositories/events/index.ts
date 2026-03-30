@@ -586,6 +586,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'eventVenues.name as venueName',
         'eventVenues.address as venueAddress',
         'eventVenues.city as venueCity',
+        'eventVenues.country as venueCountry',
         'eventVenues.latitude as venueLatitude',
         'eventVenues.longitude as venueLongitude',
         'events.externalUrl',

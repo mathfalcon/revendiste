@@ -1,0 +1,77 @@
+[
+  {
+    "event": "order_created",
+    "description": "Buyer creates a new order for tickets — top of the purchase funnel",
+    "file": "apps/backend/src/controllers/orders/index.ts"
+  },
+  {
+    "event": "order_cancelled",
+    "description": "Buyer cancels a pending order before paying",
+    "file": "apps/backend/src/controllers/orders/index.ts"
+  },
+  {
+    "event": "payment_link_created",
+    "description": "Buyer initiates checkout by requesting a payment link for an order",
+    "file": "apps/backend/src/controllers/payments/index.ts"
+  },
+  {
+    "event": "payment_confirmed",
+    "description": "Payment webhook received and order confirmed — completed purchase",
+    "file": "apps/backend/src/services/payments/adapters/PaymentWebhookAdapter.ts"
+  },
+  {
+    "event": "payment_failed",
+    "description": "Payment webhook received with failed/cancelled status — failed purchase",
+    "file": "apps/backend/src/services/payments/adapters/PaymentWebhookAdapter.ts"
+  },
+  {
+    "event": "payment_expired",
+    "description": "Payment webhook received with expired status — buyer did not complete checkout in time",
+    "file": "apps/backend/src/services/payments/adapters/PaymentWebhookAdapter.ts"
+  },
+  {
+    "event": "ticket_listing_created",
+    "description": "Seller creates a new ticket listing to sell tickets",
+    "file": "apps/backend/src/controllers/ticket-listings/index.ts"
+  },
+  {
+    "event": "ticket_document_uploaded",
+    "description": "Seller uploads or updates the document for a sold ticket",
+    "file": "apps/backend/src/controllers/ticket-listings/index.ts"
+  },
+  {
+    "event": "ticket_price_updated",
+    "description": "Seller updates the price of an active ticket",
+    "file": "apps/backend/src/controllers/ticket-listings/index.ts"
+  },
+  {
+    "event": "ticket_removed",
+    "description": "Seller removes (soft deletes) an active ticket from their listing",
+    "file": "apps/backend/src/controllers/ticket-listings/index.ts"
+  },
+  {
+    "event": "payout_requested",
+    "description": "Seller requests a payout of their earnings",
+    "file": "apps/backend/src/controllers/payouts/index.ts"
+  },
+  {
+    "event": "payout_method_added",
+    "description": "Seller adds a new payout method (bank account, PayPal, etc.)",
+    "file": "apps/backend/src/controllers/payouts/index.ts"
+  },
+  {
+    "event": "identity_verification_initiated",
+    "description": "User starts the KYC identity verification flow",
+    "file": "apps/backend/src/controllers/identity-verification/index.ts"
+  },
+  {
+    "event": "identity_verification_document_processed",
+    "description": "User uploads and processes their identity document",
+    "file": "apps/backend/src/controllers/identity-verification/index.ts"
+  },
+  {
+    "event": "identity_verification_liveness_completed",
+    "description": "User completes the liveness check step of KYC",
+    "file": "apps/backend/src/controllers/identity-verification/index.ts"
+  }
+]

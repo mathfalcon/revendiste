@@ -13,8 +13,8 @@ import {Link} from '@tanstack/react-router';
 
 export function MyTicketsView() {
   const {data: orders, isPending} = useQuery(getMyOrdersQuery());
-  const search = useSearch({from: '/cuenta/tickets'});
-  const navigate = useNavigate({from: '/cuenta/tickets'});
+  const search = useSearch({from: '/cuenta/entradas'});
+  const navigate = useNavigate({from: '/cuenta/entradas'});
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
@@ -62,9 +62,9 @@ export function MyTicketsView() {
     <>
       <div className='space-y-6'>
         <div>
-          <h2 className='text-2xl font-semibold'>Mis tickets</h2>
+          <h2 className='text-2xl font-semibold'>Mis entradas</h2>
           <p className='text-muted-foreground'>
-            Accede a tus órdenes en cualquier momento
+            Accedé a tus órdenes en cualquier momento
           </p>
         </div>
 
@@ -123,8 +123,8 @@ export function MyTicketsView() {
         {hasNoOrders && (
           <AccountEmptyState
             icon={<QrCode className='h-8 w-8 text-muted-foreground' />}
-            title='No tienes órdenes'
-            description='Cuando compres entradas, aparecerán aquí para que puedas acceder a tus tickets.'
+            title='No tenés órdenes'
+            description='Cuando compres entradas, aparecerán acá para que puedas acceder a ellas.'
             action={
               <Link
                 to='/'

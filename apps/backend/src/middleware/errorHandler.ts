@@ -9,6 +9,7 @@ import {
 } from '~/errors';
 import {ValidateError} from '@mathfalcon/tsoa-runtime';
 import {logger} from '~/utils';
+import {getPostHog} from '~/lib/posthog';
 
 interface ErrorResponse {
   error: string;
@@ -92,6 +93,12 @@ export const errorHandler = (
   const isOperational = error instanceof AppError && error.isOperational;
   if (!isOperational) {
     logger.error('Non-operational error:', error);
+    const distinctId = (req as any).user?.id;
+    getPostHog()?.captureException(error, distinctId, {
+      path: req.path,
+      method: req.method,
+      request_id: req.id,
+    });
     error = new InternalServerError();
   }
 

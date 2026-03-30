@@ -28,28 +28,29 @@ function ActionButtons({
   openLabel?: string;
 }) {
   return (
-    <div className='flex gap-2'>
-      <Button variant='outline' size='sm' asChild className='flex-1 h-9'>
+    <div className='flex gap-2 justify-center'>
+      <Button variant='outline' size='sm' asChild className='h-9'>
         <a href={fullUrl} target='_blank' rel='noopener noreferrer'>
-          <ExternalLink className='h-4 w-4 mr-1.5' />
-          {openLabel}
+          <ExternalLink className='h-4 w-4 min-[420px]:mr-1.5' />
+          <span className='hidden min-[420px]:inline'>{openLabel}</span>
         </a>
       </Button>
       {onDownload && (
-        <Button onClick={onDownload} size='sm' className='flex-1 h-9'>
-          <Download className='h-4 w-4 mr-1.5' />
-          Descargar
+        <Button onClick={onDownload} size='sm' className='h-9'>
+          <Download className='h-4 w-4 min-[420px]:mr-1.5' />
+          <span className='hidden min-[420px]:inline'>Descargar</span>
         </Button>
       )}
       {onReport && (
         <Button
           variant='ghost'
-          size='icon'
-          className='h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive'
+          size='sm'
+          className='h-9 text-muted-foreground hover:text-destructive'
           disabled={isReportDisabled}
           onClick={onReport}
         >
-          <Flag className='h-4 w-4' />
+          <Flag className='h-4 w-4 mr-1.5' />
+          Reportar
         </Button>
       )}
     </div>
@@ -73,14 +74,14 @@ export function DocumentPreview({
   if (isImage) {
     return (
       <div className='space-y-3'>
-        <div className='rounded-lg border overflow-hidden bg-muted/30'>
+        <div className='aspect-square max-w-[358px] mx-auto rounded-lg border overflow-hidden bg-muted/30 flex items-center justify-center'>
           <ImageWithLoading
             src={fullUrl}
             alt={`Ticket ${ticketId}`}
-            className='w-full object-contain max-h-[400px]'
-            containerClassName='rounded-lg'
+            className='w-full h-full object-contain'
+            containerClassName='w-full h-full rounded-lg'
             loadingOverlayClassName='rounded-lg'
-            minHeight={200}
+            minHeight='100%'
           />
         </div>
         {showDownload && (
@@ -98,13 +99,11 @@ export function DocumentPreview({
   if (isPdf) {
     return (
       <div className='space-y-3'>
-        <div className='rounded-lg border overflow-hidden bg-muted/30 p-8'>
-          <div className='flex flex-col items-center justify-center gap-4'>
-            <FileText className='h-16 w-16 text-muted-foreground' />
-            <p className='text-sm text-muted-foreground text-center'>
-              {originalName ? `PDF: ${originalName}` : 'Documento PDF'}
-            </p>
-          </div>
+        <div className='aspect-square max-w-[358px] mx-auto rounded-lg border overflow-hidden bg-muted/30 flex flex-col items-center justify-center gap-4'>
+          <FileText className='h-16 w-16 text-muted-foreground' />
+          <p className='text-sm text-muted-foreground text-center'>
+            {originalName ? `PDF: ${originalName}` : 'Documento PDF'}
+          </p>
         </div>
         <ActionButtons
           fullUrl={fullUrl}
@@ -120,13 +119,11 @@ export function DocumentPreview({
   // Unknown file type
   return (
     <div className='space-y-3'>
-      <div className='rounded-lg border overflow-hidden bg-muted/30 p-8'>
-        <div className='flex flex-col items-center justify-center gap-4'>
-          <FileText className='h-16 w-16 text-muted-foreground' />
-          <p className='text-sm text-muted-foreground text-center'>
-            {originalName || 'Documento'}
-          </p>
-        </div>
+      <div className='aspect-square rounded-lg border overflow-hidden bg-muted/30 flex flex-col items-center justify-center gap-4'>
+        <FileText className='h-16 w-16 text-muted-foreground' />
+        <p className='text-sm text-muted-foreground text-center'>
+          {originalName || 'Documento'}
+        </p>
       </div>
       <div className='flex gap-2'>
         {onDownload && (
@@ -138,12 +135,13 @@ export function DocumentPreview({
         {onReport && (
           <Button
             variant='ghost'
-            size='icon'
-            className='h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive'
+            size='sm'
+            className='h-9 shrink-0 text-muted-foreground hover:text-destructive'
             disabled={isReportDisabled}
             onClick={onReport}
           >
-            <Flag className='h-4 w-4' />
+            <Flag className='h-4 w-4 mr-1.5' />
+            Reportar
           </Button>
         )}
       </div>

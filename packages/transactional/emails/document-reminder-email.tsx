@@ -12,6 +12,7 @@ import {BaseEmail} from './base-template';
 export interface DocumentReminderEmailProps {
   eventName: string;
   eventStartDate: string;
+  eventTimezone?: string;
   ticketCount: number;
   hoursUntilEvent: number;
   uploadUrl: string;
@@ -21,6 +22,7 @@ export interface DocumentReminderEmailProps {
 export const DocumentReminderEmail = ({
   eventName,
   eventStartDate,
+  eventTimezone,
   ticketCount,
   hoursUntilEvent,
   uploadUrl,
@@ -76,6 +78,7 @@ export const DocumentReminderEmail = ({
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: eventTimezone,
           })}
         </Text>
       </Section>

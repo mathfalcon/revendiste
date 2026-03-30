@@ -9,6 +9,7 @@ import {useParams} from '@tanstack/react-router';
 import {useEffect, useRef, useState} from 'react';
 import {FullScreenLoading, TextEllipsis} from '~/components';
 import {CDN_ASSETS} from '~/assets';
+import posthog from 'posthog-js';
 
 export const EventPage = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -35,6 +36,16 @@ export const EventPage = () => {
       setImageLoaded(true);
     }
   }, [src]);
+
+  useEffect(() => {
+    posthog.capture('event_page_viewed', {
+      event_id: params.eventId,
+      event_name: event.name,
+      venue_name: event.venueName,
+      has_tickets: (event.ticketWaves?.length ?? 0) > 0,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.eventId]);
 
   return (
     <>

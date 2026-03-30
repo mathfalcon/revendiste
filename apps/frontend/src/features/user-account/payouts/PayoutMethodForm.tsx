@@ -1,6 +1,7 @@
 import {useForm} from 'react-hook-form';
 import {z} from 'zod';
 import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
+import {usePostHog} from 'posthog-js/react';
 import {
   Form,
   FormControl,
@@ -53,6 +54,7 @@ interface PayoutMethodFormProps {
 
 export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const {data: payoutMethods} = useQuery(getPayoutMethodsQuery());
   const existingMethod = methodId
     ? payoutMethods?.find(m => m.id === methodId)
@@ -199,6 +201,12 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
         });
       }
     }
+    posthog.capture('payout_method_added', {
+      payout_type: data.payoutType,
+      currency: data.currency,
+      is_default: data.isDefault,
+      action: methodId ? 'updated' : 'added',
+    });
     form.reset();
   };
 

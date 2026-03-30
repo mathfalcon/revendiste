@@ -161,8 +161,8 @@ export function PublicationsView() {
           <AlertDescription className='flex-1 flex items-center'>
             Tenés {allTicketsNeedingUpload.length}{' '}
             {allTicketsNeedingUpload.length === 1
-              ? 'ticket pendiente por subir'
-              : 'tickets pendientes por subir'}
+              ? 'entrada pendiente por subir'
+              : 'entradas pendientes por subir'}
           </AlertDescription>
           {allTicketsNeedingUpload.length > 0 && (
             <Button
@@ -210,7 +210,7 @@ export function PublicationsView() {
               </div>
             ) : (
               <p className='py-8 text-center text-muted-foreground'>
-                No tienes publicaciones activas
+                No tenés publicaciones activas
               </p>
             )}
           </AccordionContent>
@@ -235,7 +235,7 @@ export function PublicationsView() {
               </div>
             ) : (
               <p className='py-8 text-center text-muted-foreground'>
-                No tienes publicaciones vendidas
+                No tenés publicaciones pasadas
               </p>
             )}
           </AccordionContent>

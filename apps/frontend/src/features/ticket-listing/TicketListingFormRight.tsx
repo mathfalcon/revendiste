@@ -31,6 +31,7 @@ import {Link, useNavigate} from '@tanstack/react-router';
 import {Checkbox} from '~/components/ui/checkbox';
 import {MobilePublishBar} from './MobilePublishBar';
 import {toast} from 'sonner';
+import {usePostHog} from 'posthog-js/react';
 import {Alert, AlertDescription} from '~/components/ui/alert';
 import {isWithinUploadWindow} from '@revendiste/shared';
 import {DocumentUploadStep} from './DocumentUploadStep';
@@ -123,6 +124,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
   const form = useFormContext<TicketListingFormValues>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [eventSearchValue, setEventSearchValue] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [step, setStep] = useState<'form' | 'documents' | 'upload-info'>(
@@ -132,6 +134,11 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
     setEventSearchValue,
     500,
   );
+
+  useEffect(() => {
+    posthog.capture('listing_form_started');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---------- Queries ----------
 
@@ -260,6 +267,16 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
         price: data.price,
         quantity: data.quantity,
         documents: isUploadWindowActive ? data.documents : undefined,
+      });
+      posthog.capture('ticket_listing_created', {
+        event_id: data.eventId,
+        event_name: eventDetailsQuery.data?.name,
+        ticket_wave_id: data.eventTicketWaveId,
+        ticket_wave_name: selectedEventTicketWave?.name,
+        price: data.price,
+        quantity: data.quantity,
+        currency: selectedEventTicketWave?.currency,
+        with_document: isUploadWindowActive && (data.documents?.length ?? 0) > 0,
       });
       void queryClient.invalidateQueries({
         queryKey: getMyListingsQuery().queryKey,

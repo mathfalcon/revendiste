@@ -49,6 +49,7 @@ import {
 } from './validation';
 import {Body, ValidateBody} from '~/decorators';
 import {TICKET_LISTING_ERROR_MESSAGES} from '~/constants/error-messages';
+import {getPostHog} from '~/lib/posthog';
 
 type CreateTicketListingResponse = ReturnType<
   TicketListingsService['createTicketListing']
@@ -161,11 +162,23 @@ export class TicketListingsController {
       sizeBytes: f.size,
     }));
 
-    return this.service.createTicketListing(
+    const result = await this.service.createTicketListing(
       body,
       request.user.id,
       documentFiles,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_listing_created',
+      properties: {
+        event_id: body.eventId,
+        ticket_wave_id: body.ticketWaveId,
+        quantity: body.quantity,
+        price: body.price,
+        has_documents: !!documents?.length,
+      },
+    });
+    return result;
   }
 
   @Get('/my-listings')
@@ -214,7 +227,7 @@ export class TicketListingsController {
       throw new BadRequestError(VALIDATION_MESSAGES.NO_FILE_UPLOADED);
     }
 
-    return this.documentService.uploadTicketDocument(
+    const result = await this.documentService.uploadTicketDocument(
       ticketId,
       request.user.id,
       {
@@ -224,6 +237,16 @@ export class TicketListingsController {
         sizeBytes: file.size,
       },
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_document_uploaded',
+      properties: {
+        ticket_id: ticketId,
+        file_type: file.mimetype,
+        file_size_bytes: file.size,
+      },
+    });
+    return result;
   }
 
   /**
@@ -257,7 +280,7 @@ export class TicketListingsController {
     }
 
     // Uses the same service method - it handles versioning automatically
-    return this.documentService.uploadTicketDocument(
+    const result = await this.documentService.uploadTicketDocument(
       ticketId,
       request.user.id,
       {
@@ -267,6 +290,17 @@ export class TicketListingsController {
         sizeBytes: file.size,
       },
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_document_uploaded',
+      properties: {
+        ticket_id: ticketId,
+        file_type: file.mimetype,
+        file_size_bytes: file.size,
+        is_update: true,
+      },
+    });
+    return result;
   }
 
   /**
@@ -295,11 +329,20 @@ export class TicketListingsController {
     @Body() body: UpdateTicketPriceRouteBody,
     @Request() request: express.Request,
   ): Promise<UpdateTicketPriceResponse> {
-    return this.service.updateTicketPrice(
+    const result = await this.service.updateTicketPrice(
       ticketId,
       body.price,
       request.user.id,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_price_updated',
+      properties: {
+        ticket_id: ticketId,
+        new_price: body.price,
+      },
+    });
+    return result;
   }
 
   /**
@@ -325,7 +368,15 @@ export class TicketListingsController {
     @Path() ticketId: string,
     @Request() request: express.Request,
   ): Promise<RemoveTicketResponse> {
-    return this.service.removeTicket(ticketId, request.user.id);
+    const result = await this.service.removeTicket(ticketId, request.user.id);
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_removed',
+      properties: {
+        ticket_id: ticketId,
+      },
+    });
+    return result;
   }
 
   /**

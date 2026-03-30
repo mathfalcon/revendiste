@@ -19,6 +19,7 @@ export async function notifyDocumentReminder(
     listingId: string;
     eventName: string;
     eventStartDate: Date;
+    eventTimezone?: string;
     ticketCount: number;
     hoursUntilEvent: number;
   },
@@ -39,6 +40,7 @@ export async function notifyDocumentReminder(
       listingId: params.listingId,
       eventName: params.eventName,
       eventStartDate: params.eventStartDate.toISOString(),
+      eventTimezone: params.eventTimezone,
       ticketCount: params.ticketCount,
       hoursUntilEvent: params.hoursUntilEvent,
     },
@@ -70,6 +72,7 @@ export async function notifyOrderConfirmed(
     eventName: string;
     eventStartDate?: Date;
     eventEndDate?: Date;
+    eventTimezone?: string;
     venueName?: string;
     venueAddress?: string;
     totalAmount: string;
@@ -105,6 +108,7 @@ export async function notifyOrderConfirmed(
       eventName: params.eventName,
       eventStartDate: params.eventStartDate?.toISOString(),
       eventEndDate: params.eventEndDate?.toISOString(),
+      eventTimezone: params.eventTimezone,
       venueName: params.venueName,
       venueAddress: params.venueAddress,
       totalAmount: params.totalAmount,
@@ -362,6 +366,7 @@ export async function notifySellerTicketSold(
     eventName: string;
     eventStartDate: Date;
     eventEndDate: Date;
+    eventTimezone?: string;
     platform: string;
     qrAvailabilityTiming: QrAvailabilityTiming | null;
     ticketCount: number;
@@ -403,6 +408,7 @@ export async function notifySellerTicketSold(
       listingId: params.listingId,
       eventName: params.eventName,
       eventStartDate: params.eventStartDate.toISOString(),
+      eventTimezone: params.eventTimezone,
       ticketCount: params.ticketCount,
       platform: params.platform,
       qrAvailabilityTiming: params.qrAvailabilityTiming,

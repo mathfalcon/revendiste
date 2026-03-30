@@ -12,6 +12,7 @@ import {BaseEmail} from './base-template';
 export interface SellerTicketSoldEmailProps {
   eventName: string;
   eventStartDate: string;
+  eventTimezone?: string;
   ticketCount: number;
   uploadUrl?: string;
   hoursUntilAvailable?: number;
@@ -21,6 +22,7 @@ export interface SellerTicketSoldEmailProps {
 export const SellerTicketSoldEmail = ({
   eventName,
   eventStartDate,
+  eventTimezone,
   ticketCount,
   uploadUrl,
   hoursUntilAvailable,
@@ -62,6 +64,7 @@ export const SellerTicketSoldEmail = ({
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: eventTimezone,
           })}
         </Text>
       </Section>

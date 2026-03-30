@@ -76,7 +76,7 @@ export function getTicketStatusConfig({
       buttonText: 'Ver detalles',
       disabled: true,
       tooltipMessage:
-        'No subiste el ticket antes del evento. El comprador será reembolsado.',
+        'No subiste la entrada antes del evento. El comprador será reembolsado.',
       hideButton: true,
       isViewOnly: true,
     };
@@ -108,7 +108,7 @@ export function getTicketStatusConfig({
     if (isEventPast) {
       return {
         status: 'complete',
-        statusText: 'Ticket subido',
+        statusText: 'Entrada subida',
         statusIcon: <FileCheck className='h-4 w-4' />,
         cardClass: 'border-green-500/30 bg-green-500/5',
         badgeClass: 'bg-green-500/10 text-green-500',
@@ -128,7 +128,7 @@ export function getTicketStatusConfig({
     // Active events: can view and edit
     return {
       status: 'complete',
-      statusText: 'Ticket subido',
+      statusText: 'Entrada subida',
       statusIcon: <FileCheck className='h-4 w-4' />,
       cardClass: 'border-green-500/30 bg-green-500/5',
       badgeClass: 'bg-green-500/10 text-green-500',
@@ -158,7 +158,7 @@ export function getTicketStatusConfig({
       buttonClass:
         'bg-primary text-primary-foreground hover:bg-primary/90 border-primary',
       buttonIcon: <Upload className='h-4 w-4' />,
-      buttonText: 'Subir ticket',
+      buttonText: 'Subir entrada',
       disabled: false,
       tooltipMessage: null,
       hideButton: false,
