@@ -480,3 +480,4 @@ The frontend container runs the TanStack Start SSR server, which handles:
 - Check security group allows port 3001
 - Verify DNS points to backend instance IP
 - Check frontend can reach backend (security group rules)
+ssh-keygen -R 56.126.61.129 && ssh -i ~/.ssh/revendiste-dev-keypair.pe ec2-user@56.126.61.129

@@ -12,6 +12,7 @@ import {BaseEmail} from './base-template';
 export interface DocumentReminderEmailProps {
   eventName: string;
   eventStartDate: string;
+  eventTimezone?: string;
   ticketCount: number;
   hoursUntilEvent: number;
   uploadUrl: string;
@@ -21,23 +22,37 @@ export interface DocumentReminderEmailProps {
 export const DocumentReminderEmail = ({
   eventName,
   eventStartDate,
+  eventTimezone,
   ticketCount,
   hoursUntilEvent,
   uploadUrl,
   appBaseUrl,
 }: DocumentReminderEmailProps) => {
+  const eventAlreadyStarted = hoursUntilEvent === 0;
   const hoursText =
     hoursUntilEvent === 1 ? '1 hora' : `${hoursUntilEvent} horas`;
 
+  const previewText = eventAlreadyStarted
+    ? `${eventName} ya arrancó y tenés entradas sin documentar`
+    : `${eventName} arranca en ${hoursText} y tenés entradas sin documentar`;
+
   return (
     <BaseEmail
-      title="Recordatorio: Subí los documentos de tus tickets"
-      preview={`El evento "${eventName}" empieza en ${hoursText}`}
+      title="Subí los documentos de tus entradas"
+      preview={previewText}
       appBaseUrl={appBaseUrl}
     >
       <Text className="text-foreground mb-4">
-        Che, el evento <strong>{eventName}</strong> empieza en{' '}
-        <strong>{hoursText}</strong>.
+        {eventAlreadyStarted ? (
+          <>
+            <strong>{eventName}</strong> ya arrancó.
+          </>
+        ) : (
+          <>
+            <strong>{eventName}</strong> arranca en{' '}
+            <strong>{hoursText}</strong>.
+          </>
+        )}
       </Text>
 
       <Text className="text-foreground mb-4">
@@ -45,11 +60,10 @@ export const DocumentReminderEmail = ({
         <strong>
           {ticketCount}{' '}
           {ticketCount === 1
-            ? 'ticket sin documentar'
-            : 'tickets sin documentar'}
+            ? 'entrada sin documentar'
+            : 'entradas sin documentar'}
         </strong>
-        . Por favor, subí los documentos lo antes posible para evitar
-        problemas.
+        . Subí los documentos cuanto antes para evitar problemas.
       </Text>
 
       <Section className="bg-muted p-4 rounded-md mb-6">
@@ -64,6 +78,7 @@ export const DocumentReminderEmail = ({
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: eventTimezone,
           })}
         </Text>
       </Section>
@@ -78,8 +93,7 @@ export const DocumentReminderEmail = ({
       </Section>
 
       <Text className="text-sm text-muted-foreground mb-0">
-        Subir los documentos es obligatorio para completar la venta de tus
-        tickets.
+        Subir los documentos es obligatorio para completar la venta y cobrar.
       </Text>
     </BaseEmail>
   );

@@ -1,6 +1,6 @@
 # Términos y Condiciones de Uso – Revendiste
 
-**Última actualización:** 8 de Enero de 2026
+**Última actualización:** 1 de Marzo de 2026
 
 ---
 
@@ -8,8 +8,8 @@
 
 ## 1. Información General
 
-**Operador de la Plataforma:** Mathias Falcon, C.I. 5.104.254-0, persona física  
-**Cédula de Identidad:** 5.104.254-0  
+**Operador de la Plataforma:** FALCON GALLAZTEGUI MATHIAS, empresa unipersonal  
+**RUT:** 218826920018  
 **Domicilio:** Avenida Ocho de Octubre 2487, Apartamento 801, Montevideo, Uruguay  
 **Contacto:** ayuda@revendiste.com
 
@@ -53,13 +53,21 @@ Salvo indicación expresa en contrario, Revendiste actúa exclusivamente como **
 
 Revendiste **garantiza la ejecución de la transferencia** del Ticket del Vendedor al Comprador y la **validez del Ticket** conforme los procedimientos de verificación establecidos, cobrando una comisión únicamente por este servicio de intermediación segura.
 
-### 4.2. Regla de No Sobreprecio (Obligatoria)
+### 4.2. Regla de Precio Máximo (Protección al Consumidor)
 
-En todas las operaciones realizadas a través de la Plataforma, el Ticket **NO podrá ser transferido a un precio superior al Precio Original** por el cual fue adquirido por el Vendedor.
+En todas las operaciones realizadas a través de la Plataforma, el Ticket **podrá ser transferido hasta un máximo del 120% del Precio Original** (es decir, hasta un 20% por encima del valor nominal).
+
+**Fundamento de esta regla:**
+
+- **Protección al comprador:** Limitar el precio máximo protege a los compradores de sobreprecios excesivos y especulación.
+- **Recuperación de costos de adquisición:** El margen del 20% permite a los publicadores recuperar los costos asociados a la compra original (comisiones de plataformas de venta primaria, que típicamente son del 10-12%), sin generar ganancias.
+- **Equilibrio justo:** Esta regla equilibra los intereses de compradores y publicadores, permitiendo la recuperación de la inversión original sin fomentar la reventa con fines de lucro.
+
+**Aplicación:**
 
 - Revendiste podrá solicitar comprobantes de compra para verificar el cumplimiento de esta regla.
-- Las publicaciones u operaciones que no cumplan con esta regla serán rechazadas o canceladas.
-- Esta regla existe para cumplir con el marco regulatorio uruguayo y proteger a los consumidores.
+- Las publicaciones u operaciones que excedan el precio máximo permitido serán rechazadas o canceladas.
+- Esta regla es una medida de protección al consumidor que busca mantener precios justos en el mercado secundario.
 
 ### 4.3. Venta Oficial (si aplica)
 
@@ -314,8 +322,8 @@ El Comprador se obliga a mantener indemne a Revendiste, sus socios, empleados, c
 
 ## 1. Información General
 
-**Operador de la Plataforma:** Mathias Falcon, C.I. 5.104.254-0, persona física  
-**Cédula de Identidad:** 5.104.254-0  
+**Operador de la Plataforma:** FALCON GALLAZTEGUI MATHIAS, empresa unipersonal  
+**RUT:** 218826920018  
 **Domicilio:** Avenida Ocho de Octubre 2487, Apartamento 801, Montevideo, Uruguay  
 **Contacto:** ayuda@revendiste.com
 
@@ -354,11 +362,11 @@ Al utilizar la Plataforma, el Vendedor declara y garantiza que:
 - No ha sido previamente transferido a otra persona.
 - Es válido para el Evento indicado.
 
-### 4.4. **No sobreprecio:** El Vendedor se compromete a **NO publicar ni transferir Tickets a un precio superior al Precio Original** por el cual los adquirió. Revendiste podrá solicitar comprobantes de compra para verificar el cumplimiento de esta regla obligatoria.
+### 4.4. **Precio máximo:** El Vendedor (Publicador) se compromete a **NO publicar ni transferir Tickets a un precio superior al 120% del Precio Original** (valor nominal más un máximo de 20% para recuperación de costos de adquisición). Este margen permite recuperar las comisiones pagadas en la compra original, pero no está destinado a generar ganancias. Revendiste podrá solicitar comprobantes de compra para verificar el cumplimiento de esta regla.
 
 ### 4.5. **Información exacta:** Proveerá información exacta y completa del Ticket (evento, fecha, hora, sector, fila, asiento, restricciones, etc.).
 
-### 4.6. **Categoría/Tanda correcta:** El Vendedor se compromete a seleccionar la **categoría, tanda o tipo de entrada correcta** que corresponde exactamente al Ticket que posee. Queda **expresamente prohibido** seleccionar una categoría diferente a la real (por ejemplo, seleccionar "Tanda General" cuando el Ticket es de "Preventa", o viceversa) con el fin de publicar a un precio mayor al permitido o engañar al Comprador.
+### 4.6. **Categoría/Tanda correcta:** El Publicador se compromete a seleccionar la **categoría, tanda o tipo de entrada correcta** que corresponde exactamente al Ticket que posee. Queda **expresamente prohibido** seleccionar una categoría diferente a la real (por ejemplo, seleccionar "Tanda General" cuando el Ticket es de "Preventa", o viceversa) con el fin de evadir el límite de precio máximo permitido o engañar al Comprador.
 
 > **ADVERTENCIA:** La falsificación de la categoría o tanda del Ticket constituye una **violación grave** de estos Términos y será considerada **conducta fraudulenta**, con las consecuencias establecidas en la Sección 5.3.
 
@@ -409,7 +417,7 @@ Si un Vendedor incurre en cualquiera de las siguientes conductas, será consider
 
 - Publicar Tickets falsos, inválidos, duplicados o bloqueados.
 - **Falsificar la categoría, tanda o tipo de entrada** (por ejemplo, seleccionar "Tanda General 4" cuando el Ticket es de "Preventa" o una categoría de menor precio).
-- Publicar a un precio superior al Precio Original del Ticket.
+- Publicar a un precio superior al máximo permitido (120% del Precio Original).
 - Proporcionar información falsa o engañosa sobre el Ticket.
 - Cualquier otra conducta destinada a engañar al Comprador o evadir las reglas de la Plataforma.
 
@@ -443,9 +451,9 @@ El Vendedor debe cargar información **completa, veraz y exacta** del Ticket, in
 - Sector, fila y asiento (cuando aplique)
 - Restricciones (si las hubiere)
 - Precio Original de compra (según comprobante)
-- Precio de publicación (igual o menor al Precio Original)
+- Precio de publicación (hasta un máximo del 120% del Precio Original, permitiendo recuperar costos de adquisición)
 
-> **OBLIGATORIO:** La categoría/tanda seleccionada **DEBE coincidir exactamente** con la categoría real del Ticket. Seleccionar una categoría diferente para poder publicar a un precio mayor es considerado **fraude** y resultará en la suspensión de la cuenta y retención de fondos (ver Sección 5.3).
+> **OBLIGATORIO:** La categoría/tanda seleccionada **DEBE coincidir exactamente** con la categoría real del Ticket. Seleccionar una categoría diferente para evadir el límite de precio máximo es considerado **fraude** y resultará en la suspensión de la cuenta y retención de fondos (ver Sección 5.3).
 
 ### 6.2. Carga del Ticket
 
@@ -594,8 +602,8 @@ Revendiste podrá aplicar las siguientes sanciones ante incumplimientos de estos
 
 Las siguientes conductas se consideran **infracciones graves** y resultarán en **suspensión o cancelación inmediata** de la cuenta, junto con **retención de todos los fondos pendientes**:
 
-- **Falsificación de categoría/tanda:** Seleccionar una categoría diferente a la real del Ticket para vender a un precio mayor.
-- **Publicación con sobreprecio:** Publicar a un precio superior al Precio Original.
+- **Falsificación de categoría/tanda:** Seleccionar una categoría diferente a la real del Ticket para evadir el límite de precio máximo.
+- **Exceder precio máximo:** Publicar a un precio superior al 120% del Precio Original.
 - **Tickets falsos o inválidos:** Publicar entradas falsas, duplicadas, bloqueadas o inválidas.
 - **Información fraudulenta:** Proporcionar información falsa sobre el Ticket o el Evento.
 - **Múltiples cuentas:** Crear múltiples cuentas para evadir sanciones o restricciones.
@@ -653,9 +661,9 @@ El tratamiento de datos personales del Vendedor (incluyendo los datos de verific
 
 El Vendedor se obliga a mantener indemne a Revendiste, sus socios, empleados, colaboradores y representantes ante cualquier reclamo, demanda, pérdida, daño, penalidad, costo o gasto (incluyendo honorarios de abogados) derivado de:
 
-- Tickets inválidos, falsos, duplicados o bloqueados publicados por el Vendedor.
+- Tickets inválidos, falsos, duplicados o bloqueados publicados por el Publicador.
 - Incumplimiento de la obligación de entrega/transferencia.
-- Publicación con sobreprecio.
+- Publicación que exceda el precio máximo permitido.
 - Información falsa o inexacta proporcionada por el Vendedor.
 - Infracciones a las condiciones del organizador del Evento.
 - Violación de normativa aplicable.
@@ -699,7 +707,7 @@ El Vendedor se obliga a mantener indemne a Revendiste, sus socios, empleados, co
 
 ## 1. Sobre Revendiste
 
-Revendiste es una plataforma de intermediación operada por Mathias Falcon, persona física, que facilita la **transferencia segura de entradas** entre personas. Nuestro servicio garantiza:
+Revendiste es una plataforma de intermediación operada por FALCON GALLAZTEGUI MATHIAS, empresa unipersonal (RUT 218826920018), que facilita la **transferencia segura de entradas** entre personas. Nuestro servicio garantiza:
 
 - La **validez del Ticket** mediante procesos de verificación.
 - La **ejecución segura de la transferencia** entre Vendedor y Comprador.
@@ -707,11 +715,17 @@ Revendiste es una plataforma de intermediación operada por Mathias Falcon, pers
 
 **Revendiste NO es una revendedora de entradas.** No compramos ni vendemos Tickets. Cobramos una comisión únicamente por nuestro servicio de intermediación segura.
 
-## 2. Regla Fundamental: No Sobreprecio
+## 2. Regla Fundamental: Precio Justo
 
-En cumplimiento del marco regulatorio uruguayo y en protección del consumidor, **está prohibido transferir entradas a un precio superior al originalmente pagado**.
+En protección del consumidor, **el precio máximo de transferencia está limitado al 120% del valor original** (hasta un 20% por encima del precio nominal).
 
-Esta regla es obligatoria para todas las operaciones en la Plataforma y su incumplimiento resultará en la cancelación de publicaciones, operaciones y/o cuentas.
+**Esta regla existe para:**
+
+- **Proteger a los compradores** de sobreprecios excesivos y especulación.
+- **Permitir a los publicadores recuperar su inversión**, incluyendo los costos de adquisición (comisiones de plataformas originales, típicamente 10-12%).
+- **Evitar la generación de ganancias** a través de la reventa de entradas.
+
+Esta regla es obligatoria para todas las operaciones en la Plataforma. Exceder el precio máximo permitido resultará en la cancelación de publicaciones, operaciones y/o cuentas.
 
 ## 3. Contacto
 

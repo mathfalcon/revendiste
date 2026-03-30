@@ -27,9 +27,27 @@ import {
   buildEmailTemplate,
 } from './email-template-builder';
 import {generateNotificationText} from '@revendiste/shared';
+import {getJobQueueService} from '~/services/job-queue';
+import type {
+  PostSendAction,
+  SendNotificationAttachmentRef,
+} from '@revendiste/shared';
+
+export interface EmailAttachmentParam {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
 
 export interface CreateNotificationParams extends CreateNotificationData {
-  // Additional params can be added here
+  /** When true, enqueue send-notification job (cronjob sends later). When false/undefined, send immediately (fire-and-forget). Use job for heavy/attachments, immediate for low-latency. */
+  deferSendToJob?: boolean;
+  /** In-memory attachments; used when deferSendToJob is false/undefined (immediate send) */
+  attachments?: EmailAttachmentParam[];
+  /** Refs for the send-notification job to load attachments from storage (generic: path + filename); used when deferSendToJob is true */
+  attachmentRefs?: SendNotificationAttachmentRef[];
+  /** Actions to run after the notification is sent (e.g. mark invoice email sent); used when deferSendToJob is true */
+  postSendActions?: PostSendAction[];
 }
 
 export interface DebounceConfig {
@@ -65,6 +83,20 @@ export class NotificationService {
   ) {
     // Use provided provider or get from factory based on configuration
     this.emailProvider = emailProvider || getEmailProvider();
+  }
+
+  /**
+   * True if we already have an order_confirmed notification for this user and order.
+   * Used to avoid duplicate in-app notifications when webhook and sync-on-order-access both run.
+   */
+  async hasOrderConfirmedInAppForOrder(
+    userId: string,
+    orderId: string,
+  ): Promise<boolean> {
+    return this.notificationsRepository.existsOrderConfirmedForUserAndOrder(
+      userId,
+      orderId,
+    );
   }
 
   /**
@@ -160,22 +192,54 @@ export class NotificationService {
       );
     }
 
+    // Store attachmentRefs and postSendActions in metadata when deferring to job (job payload stays only notificationId)
+    const metadataToStore =
+      params.deferSendToJob === true &&
+      (params.attachmentRefs?.length || params.postSendActions?.length)
+        ? {
+            ...validatedMetadata,
+            ...(params.attachmentRefs?.length && {
+              attachmentRefs: params.attachmentRefs,
+            }),
+            ...(params.postSendActions?.length && {
+              postSendActions: params.postSendActions,
+            }),
+          }
+        : validatedMetadata;
+
     // Create notification record (repository assumes data is already validated)
     const notification = await this.notificationsRepository.create({
       userId: params.userId,
       type: params.type,
       channels: params.channels,
       actions: actionsForValidation,
-      metadata: validatedMetadata,
+      metadata: metadataToStore,
+      sendViaJob: params.deferSendToJob === true,
     });
 
-    // Send through configured channels (fire-and-forget)
-    this.sendNotification(notification.id).catch(error => {
-      logger.error('Failed to send notification', {
-        notificationId: notification.id,
-        error: error.message,
-      });
-    });
+    if (params.deferSendToJob === true) {
+      // Delegate sending to the cronjob; attachments are read from notification.metadata.attachmentRefs
+      const jobQueue = getJobQueueService();
+      await jobQueue.enqueue(
+        'send-notification',
+        {notificationId: notification.id},
+        `send-notification:${notification.id}`,
+      );
+    } else {
+      // Send immediately (fire-and-forget) for low-latency notifications
+      this.sendNotification(notification.id, params.attachments).catch(
+        async error => {
+          logger.error('Failed to send notification', {
+            notificationId: notification.id,
+            error: error.message,
+          });
+          await this.notificationsRepository.updateStatus(
+            notification.id,
+            'failed',
+          );
+        },
+      );
+    }
 
     return notification;
   }
@@ -185,7 +249,10 @@ export class NotificationService {
    * Tracks per-channel delivery status
    * This is called asynchronously after notification creation
    */
-  public async sendNotification(notificationId: string) {
+  public async sendNotification(
+    notificationId: string,
+    attachments?: EmailAttachmentParam[],
+  ) {
     const notification = await this.notificationsRepository.getById(
       notificationId,
     );
@@ -212,6 +279,7 @@ export class NotificationService {
     const channelStatus = await this.sendThroughChannels(
       notification,
       userEmail,
+      attachments,
     );
 
     // Update channel status in database
@@ -330,6 +398,7 @@ export class NotificationService {
       Awaited<ReturnType<NotificationsRepository['getById']>>
     >,
     userEmail: string,
+    attachments?: EmailAttachmentParam[],
   ): Promise<
     Record<string, {status: 'sent' | 'failed'; sentAt?: string; error?: string}>
   > {
@@ -343,7 +412,11 @@ export class NotificationService {
       notification.channels.map(async channel => {
         try {
           if (channel === 'email') {
-            await this.sendEmailNotification(notification, userEmail);
+            await this.sendEmailNotification(
+              notification,
+              userEmail,
+              attachments,
+            );
             channelStatus[channel] = {
               status: 'sent',
               sentAt: new Date().toISOString(),
@@ -414,6 +487,7 @@ export class NotificationService {
       metadata?: unknown;
     },
     userEmail: string,
+    attachments?: EmailAttachmentParam[],
   ) {
     const notificationType = notification.type as NotificationType;
 
@@ -454,6 +528,7 @@ export class NotificationService {
       html,
       text,
       from: EMAIL_FROM,
+      attachments,
     });
   }
 
@@ -526,23 +601,32 @@ export class NotificationService {
   }
 
   /**
-   * Process pending notifications (for background job)
-   * Processes in parallel batches for better performance
-   * This can be called by a cron job to retry failed notifications
+   * Process pending notifications (retry): for each pending notification, either enqueue
+   * send-notification job (when sendViaJob is true) or send directly (when sendViaJob is false).
+   * Called by cron to retry failed or never-delivered notifications.
    */
   async processPendingNotifications(limit: number = 100) {
     const pending = await this.notificationsRepository.getPendingNotifications(
       limit,
     );
 
-    // Process in parallel batches to improve throughput
+    const jobQueue = getJobQueueService();
+
     const BATCH_SIZE = 10;
     for (let i = 0; i < pending.length; i += BATCH_SIZE) {
       const batch = pending.slice(i, i + BATCH_SIZE);
       await Promise.allSettled(
         batch.map(async notification => {
           try {
-            await this.sendNotification(notification.id);
+            if (notification.sendViaJob) {
+              await jobQueue.enqueue(
+                'send-notification',
+                {notificationId: notification.id},
+                `send-notification:${notification.id}`,
+              );
+            } else {
+              await this.sendNotification(notification.id);
+            }
           } catch (error) {
             logger.error('Failed to process pending notification', {
               notificationId: notification.id,
@@ -786,13 +870,18 @@ export class NotificationService {
     switch (notificationType) {
       case 'document_uploaded':
         return this.mergeDocumentUploadedItems.bind(this);
+      case 'seller_earnings_retained':
+        return this.mergeSellerEarningsRetainedItems.bind(this);
       default:
         // Default merger: use the last item's metadata (simple replace strategy)
         return items => {
           const lastItem = items[items.length - 1];
+          const actions =
+            (lastItem.actions as NotificationAction[] | null | undefined) ??
+            null;
           return {
             metadata: lastItem.metadata,
-            actions: lastItem.actions as NotificationAction[] | null,
+            actions,
           };
         };
     }
@@ -837,6 +926,46 @@ export class NotificationService {
     };
 
     // Use actions from the first item (they should all point to the same order)
+    const actions = items[0].actions as NotificationAction[] | null;
+
+    return {
+      metadata: mergedMetadata as unknown as NotificationMetadata,
+      actions,
+    };
+  }
+
+  /**
+   * Merge seller_earnings_retained items by summing ticketCount
+   */
+  private mergeSellerEarningsRetainedItems(
+    items: Array<{metadata: NotificationMetadata; actions?: unknown}>,
+  ): {
+    metadata: NotificationMetadata;
+    actions: NotificationAction[] | null;
+  } {
+    const firstItem = items[0].metadata as {
+      type: 'seller_earnings_retained';
+      eventName: string;
+      ticketCount: number;
+      reason: string;
+      totalAmount?: string;
+      currency?: string;
+    };
+
+    const totalTicketCount = items.reduce((sum, item) => {
+      const meta = item.metadata as {ticketCount: number};
+      return sum + meta.ticketCount;
+    }, 0);
+
+    const mergedMetadata = {
+      type: 'seller_earnings_retained' as const,
+      eventName: firstItem.eventName,
+      ticketCount: totalTicketCount,
+      reason: firstItem.reason,
+      totalAmount: firstItem.totalAmount,
+      currency: firstItem.currency,
+    };
+
     const actions = items[0].actions as NotificationAction[] | null;
 
     return {

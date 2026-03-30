@@ -1,12 +1,25 @@
+import {useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {getCurrentUserQuery} from '~/lib';
 import {VerificationLoading} from './VerificationLoading';
 import {VerificationSuccess} from './VerificationSuccess';
 import {VerificationFailed} from './VerificationFailed';
 import {VerificationPending} from './VerificationPending';
+import {usePostHog} from 'posthog-js/react';
 
 export function VerificationPage() {
   const {data: user, isLoading, refetch} = useQuery(getCurrentUserQuery());
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    if (!isLoading && user && !user.documentVerified) {
+      posthog.capture('identity_verification_started', {
+        verification_status: user.verificationStatus,
+        can_retry: user.canRetryLiveness,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   const handleVerificationComplete = () => {
     refetch();

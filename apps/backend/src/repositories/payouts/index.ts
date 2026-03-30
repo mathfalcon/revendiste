@@ -2,7 +2,7 @@ import {Kysely, sql} from 'kysely';
 import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
 import {DB, EventTicketCurrency, Json} from '@revendiste/shared';
 import {BaseRepository} from '../base';
-import {mapToPaginatedResponse} from '~/middleware';
+import {mapToPaginatedResponse} from '~/middleware/pagination';
 import type {PaginationOptions} from '~/types/pagination';
 
 export class PayoutsRepository extends BaseRepository<PayoutsRepository> {

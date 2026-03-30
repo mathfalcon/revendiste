@@ -1,0 +1,22 @@
+---
+description: Backend middleware—rate limiting (IPv6-safe key), request ID, webhook validation
+globs: apps/backend/src/middleware/**/*.ts
+alwaysApply: false
+---
+
+# Backend middleware
+
+## Rate limiting
+
+- When using a custom store with `express-rate-limit`, set `keyGenerator` to the library’s **`ipKeyGenerator`** (import from `express-rate-limit`).
+- Do not build a custom IP-based key: the library handles IPv6 and `X-Forwarded-For` correctly; custom logic often fails validation (e.g. IPv6 format).
+
+## Request ID
+
+- Request ID middleware adds a correlation ID per request.
+- Error responses include this ID in the JSON body for log correlation and debugging.
+
+## Webhooks
+
+- Validate signatures in middleware before running handler logic.
+- Return immediately (fire-and-forget); process the webhook asynchronously so the caller does not time out and retry.

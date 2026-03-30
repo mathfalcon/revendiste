@@ -1,15 +1,29 @@
 import cron from 'node-cron';
 import {db} from '~/db';
 import {SellerEarningsService} from '~/services/seller-earnings';
+import {TicketReportsService} from '~/services/ticket-reports';
 import {NotificationService} from '~/services/notifications';
+import {DLocalService} from '~/services/dlocal';
 import {
   SellerEarningsRepository,
   OrderTicketReservationsRepository,
+  OrdersRepository,
   NotificationsRepository,
   NotificationBatchesRepository,
   UsersRepository,
+  TicketReportsRepository,
+  TicketReportActionsRepository,
+  TicketReportRefundsRepository,
+  TicketReportAttachmentsRepository,
+  PaymentsRepository,
+  TicketDocumentsRepository,
 } from '~/repositories';
+import {
+  SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
+  SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
+} from '~/constants/limits';
 import {logger} from '~/utils';
+import {getStorageProvider} from '~/services/storage/StorageFactory';
 
 /**
  * Runs the check payout hold periods job logic once
@@ -33,10 +47,25 @@ export async function runCheckPayoutHoldPeriods() {
     notificationBatchesRepository,
   );
 
+  const ticketReportsService = new TicketReportsService(
+    new TicketReportsRepository(db),
+    new TicketReportActionsRepository(db),
+    new TicketReportRefundsRepository(db),
+    new TicketReportAttachmentsRepository(db),
+    orderTicketReservationsRepository,
+    new OrdersRepository(db),
+    new PaymentsRepository(db),
+    new TicketDocumentsRepository(db),
+    notificationService,
+    new DLocalService(),
+    getStorageProvider(),
+  );
+
   const sellerEarningsService = new SellerEarningsService(
     sellerEarningsRepository,
     orderTicketReservationsRepository,
     notificationService,
+    ticketReportsService,
   );
 
   try {
@@ -45,7 +74,9 @@ export async function runCheckPayoutHoldPeriods() {
     // Check 1: Handle missing documents immediately at event end
     // This MUST run before checkHoldPeriods() so retained earnings are skipped
     const missingDocsResult =
-      await sellerEarningsService.checkMissingDocumentsAfterEventEnd(100);
+      await sellerEarningsService.checkMissingDocumentsAfterEventEnd(
+      SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
+    );
 
     if (missingDocsResult.processed > 0) {
       logger.info('Processed missing documents after event end', {
@@ -54,7 +85,10 @@ export async function runCheckPayoutHoldPeriods() {
     }
 
     // Check 2: Release hold periods (existing logic)
-    const holdPeriodsResult = await sellerEarningsService.checkHoldPeriods(100);
+    const holdPeriodsResult =
+      await sellerEarningsService.checkHoldPeriods(
+        SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
+      );
 
     logger.info('Payout hold periods check completed', {
       missingDocsCancelled: missingDocsResult.processed,

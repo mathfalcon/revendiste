@@ -60,6 +60,7 @@ export function Combobox<T extends ComboboxOption = ComboboxOption>({
   isLoading = false,
 }: ComboboxProps<T>) {
   const [open, setOpen] = useState(false);
+  const [selectedValue, setSelectedValue] = useState('');
 
   const selectedOption = value
     ? options.find(option => option.value === value)
@@ -96,7 +97,10 @@ export function Combobox<T extends ComboboxOption = ComboboxOption>({
           className='w-[var(--radix-popover-trigger-width)] p-0'
           align='start'
         >
-          <Command>
+          <Command
+            value={selectedValue}
+            onValueChange={setSelectedValue}
+          >
             <CommandInput
               placeholder={searchPlaceholder}
               className='h-9'
@@ -118,7 +122,8 @@ export function Combobox<T extends ComboboxOption = ComboboxOption>({
                     const isSelected = option.value === value;
                     return (
                       <CommandItem
-                        value={option.label}
+                        value={option.value}
+                        keywords={[option.label]}
                         key={option.value}
                         onSelect={() => {
                           onValueChange?.(option.value);

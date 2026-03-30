@@ -104,7 +104,6 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   async getUrl(filePath: string): Promise<string> {
-    console.log(filePath, 'filePath');
     // Normalize Windows backslashes to forward slashes first
     const normalizedFilePath = filePath.replace(/\\/g, '/');
 
@@ -120,7 +119,7 @@ export class LocalStorageProvider implements IStorageProvider {
 
     const url = `${normalizedBaseUrl}${normalizedPath}`;
 
-    logger.info('Generated URL from storage path', {
+    logger.debug('Generated URL from storage path', {
       originalPath: filePath,
       normalizedPath,
       baseUrl: this.baseUrl,

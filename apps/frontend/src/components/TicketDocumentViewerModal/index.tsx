@@ -22,8 +22,8 @@ import {
   Eye,
   X,
 } from 'lucide-react';
-import {cn} from '~/lib/utils';
 import {VITE_APP_API_URL} from '~/config/env';
+import {toast} from 'sonner';
 
 interface TicketDocumentViewerModalProps {
   ticketId: string;
@@ -69,6 +69,8 @@ export function TicketDocumentViewerModal({
       queryClient.invalidateQueries({queryKey: ['listings']});
       setIsReplacing(false);
       setSelectedFile(null);
+      onOpenChange(false);
+      toast.success('Documento reemplazado correctamente');
     },
   });
 
@@ -98,7 +100,7 @@ export function TicketDocumentViewerModal({
             {isReplacing ? 'Reemplazar documento' : 'Ver documento'}
           </DialogTitle>
           <DialogDescription>
-            Ticket #{ticketInfo?.ticketNumber} - {ticketInfo?.ticketWave?.name}
+            Entrada #{ticketInfo?.ticketNumber} - {ticketInfo?.ticketWave?.name}
           </DialogDescription>
         </DialogHeader>
 

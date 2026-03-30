@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {PaginationSchema} from '~/middleware';
+import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 
 // Query schema for listing verifications that need review
 export const AdminVerificationsQuerySchema = PaginationSchema.extend({
@@ -40,7 +41,7 @@ export type ApproveVerificationRouteBody = z.infer<
 // Schema for rejecting a verification
 export const RejectVerificationRouteSchema = z.object({
   body: z.object({
-    reason: z.string().min(1, 'Debe proporcionar un motivo de rechazo'),
+    reason: z.string().min(1, VALIDATION_MESSAGES.REJECTION_REASON_REQUIRED),
   }),
 });
 

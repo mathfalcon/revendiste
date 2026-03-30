@@ -1,4 +1,4 @@
-import {createFileRoute, Link} from '@tanstack/react-router';
+import {createFileRoute, Link, useNavigate} from '@tanstack/react-router';
 import {
   Accordion,
   AccordionContent,
@@ -8,21 +8,67 @@ import {
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
 import {Card, CardContent} from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
+import {z} from 'zod';
+import {useEffect, useRef} from 'react';
+import {cn} from '~/lib/utils';
+import {seo} from '~/utils/seo';
+import {getBaseUrl} from '~/config/env';
+
+const faqSections = [
+  'general',
+  'compradores',
+  'publicadores',
+  'pagos',
+] as const;
+type FAQSection = (typeof faqSections)[number];
+
+const faqSearchSchema = z.object({
+  seccion: z.enum(faqSections).optional().catch(undefined),
+  pregunta: z.coerce.number().int().min(0).optional().catch(undefined),
+});
 
 export const Route = createFileRoute('/preguntas-frecuentes')({
   component: FAQPage,
-  head: () => ({
-    meta: [
-      {
-        title: 'Preguntas Frecuentes | Revendiste',
-      },
-      {
-        name: 'description',
-        content:
-          'Encontrá respuestas a las preguntas más comunes sobre cómo comprar y vender entradas en Revendiste.',
-      },
-    ],
-  }),
+  validateSearch: faqSearchSchema,
+  head: () => {
+    const baseUrl = getBaseUrl();
+
+    const allFaqItems = [
+      ...faqGeneral,
+      ...faqCompradores,
+      ...faqVendedores,
+      ...faqPagos,
+    ];
+    const faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: allFaqItems.map(item => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
+    };
+
+    return {
+      meta: seo({
+        title:
+          'Preguntas Frecuentes | Revendiste - Compra y venta de entradas',
+        description:
+          'Dudas sobre cómo comprar o vender entradas en Revendiste? Acá te explicamos todo: comisiones, pagos, plazos de entrega, garantías y más.',
+        baseUrl,
+      }),
+      links: [{rel: 'canonical', href: `${baseUrl}/preguntas-frecuentes`}],
+      scripts: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(faqSchema),
+        },
+      ],
+    };
+  },
 });
 
 interface FAQItem {
@@ -39,22 +85,17 @@ const faqGeneral: FAQItem[] = [
   {
     question: '¿Es legal usar Revendiste?',
     answer:
-      'Sí, totalmente. Lo que está prohibido en Uruguay es la reventa con sobreprecio, y justamente eso es algo que no permitimos. En Revendiste nadie puede vender una entrada por más de lo que la pagó. Así que si compraste una entrada y no podés ir, podés recuperar tu plata (o parte de ella) sin problemas.',
+      'Sí, totalmente. Limitamos el precio máximo a un 15% sobre el valor original, así los publicadores pueden recuperar lo que pagaron de comisiones en la plataforma original (que suelen ser del 10-12%), pero sin pasarse de la raya con los compradores.',
   },
   {
     question: '¿Puedo vender mi entrada a un precio mayor al que la pagué?',
     answer:
-      'No, eso no está permitido. Es una regla que tenemos por cumplir con la normativa uruguaya y porque nos parece lo correcto. Si publicás a un precio mayor al original, te vamos a pedir el comprobante de compra y si no coincide, te bajamos la publicación. Si insistís, te suspendemos la cuenta.',
+      'Sí, hasta un 15% más del valor original. La idea es que puedas recuperar las comisiones que pagaste cuando compraste la entrada, sin especular con la misma. Por ejemplo, si pagaste $1.000 más $100 de comisión, podés publicarla hasta por $1.150.',
   },
   {
-    question: '¿Cómo sé que no me van a cagar?',
+    question: '¿Cómo sé que no me van a estafar?',
     answer:
       'Mirá, entendemos la desconfianza. Por eso nuestro sistema funciona así: cuando comprás, tu plata queda en custodia con nosotros. No se la damos al vendedor hasta que el evento termine y verifiquemos que todo salió bien. Si la entrada no era válida, te devolvemos la plata. Simple.',
-  },
-  {
-    question: '¿Qué tan seguros están mis datos personales?',
-    answer:
-      'La seguridad de tus datos es nuestra prioridad. Usamos cifrado AES-256 para proteger toda la información sensible, el mismo estándar que usan bancos y entidades financieras. Los datos de verificación de identidad se almacenan de forma segura con acceso restringido solo a personal autorizado. Todo cumple con la Ley de Protección de Datos Personales de Uruguay (Ley Nº 18.331).',
   },
   {
     question: '¿Qué tan seguros están mis datos personales?',
@@ -77,7 +118,7 @@ const faqCompradores: FAQItem[] = [
   {
     question: '¿Qué pasa si la entrada no funciona?',
     answer:
-      'Si llegás al evento y la entrada no te deja entrar por algún problema del vendedor (entrada inválida, duplicada, etc.), tenés 48 horas después de que termine el evento para hacer un reclamo. Nos mandás la evidencia (captura del rechazo, lo que sea) y lo investigamos. Si el vendedor la cagó, te devolvemos la plata.',
+      'Si llegás al evento y la entrada no te deja entrar por algún problema del vendedor (entrada inválida, duplicada, etc.), tenés 48 horas después de que termine el evento para hacer un reclamo. Nos mandás la evidencia (captura del rechazo, lo que sea) y lo investigamos. Si fue culpa del vendedor, te devolvemos la plata.',
   },
   {
     question: '¿Qué pasa si se cancela el evento?',
@@ -93,9 +134,9 @@ const faqCompradores: FAQItem[] = [
 
 const faqVendedores: FAQItem[] = [
   {
-    question: '¿Cómo vendo mi entrada?',
+    question: '¿Cómo publico mi entrada?',
     answer:
-      'Primero tenés que verificar tu identidad (es un proceso de dos pasos desde tu celular). Después publicás tu entrada con toda la info correcta: evento, fecha, sector, categoría/tanda, y el precio al que la querés vender (que no puede ser mayor a lo que la pagaste). Cuando alguien la compre, te avisamos y tenés que transferirla.',
+      'Primero verificás tu identidad (es un proceso de dos pasos desde el celu). Después publicás con toda la info: evento, fecha, sector, categoría/tanda, y el precio. Podés poner hasta un 15% más del valor original para recuperar las comisiones que pagaste. Cuando alguien la compre, te avisamos y tenés que transferirla.',
   },
   {
     question: '¿Por qué me piden verificar mi identidad?',
@@ -121,7 +162,7 @@ const faqVendedores: FAQItem[] = [
     question:
       '¿Qué pasa si todavía no tengo el QR porque la plataforma no lo liberó?',
     answer:
-      'Tranqui, podés publicar igual. Tenés hasta 3 horas antes del evento para cargar la entrada en la plataforma. Sabemos que algunas ticketeras no liberan los QR hasta último momento. Si se te complica por algún motivo de fuerza mayor, escribinos a ayuda@revendiste.com y vemos cómo lo solucionamos.',
+      'Tranqui, podés publicar igual. Tenés hasta la hora de finalización del evento para cargar la entrada en la plataforma. Sabemos que algunas ticketeras no liberan los QR hasta último momento. Si se te complica por algún motivo de fuerza mayor, escribinos a ayuda@revendiste.com y vemos cómo lo solucionamos.',
   },
   {
     question:
@@ -145,7 +186,7 @@ const faqPagos: FAQItem[] = [
   {
     question: '¿Qué es eso de "custodia de fondos"?',
     answer:
-      'Cuando un comprador paga, la plata no va directo al vendedor. Nosotros la guardamos hasta que se complete la operación exitosamente (o sea, que el comprador use la entrada sin problemas). Esto protege a ambas partes: el comprador sabe que si algo falla recupera su plata, y el vendedor sabe que cuando todo sale bien, cobra seguro.',
+      'Cuando un comprador paga, la plata no va directo al vendedor. Nosotros la guardamos hasta que se complete la operación sin problemas (o sea, que el comprador use la entrada sin problemas). Esto protege a ambas partes: el comprador sabe que si algo falla recupera su plata, y el vendedor sabe que cuando todo sale bien, cobra seguro.',
   },
   {
     question: '¿Me devuelven la comisión si hay un problema?',
@@ -154,15 +195,66 @@ const faqPagos: FAQItem[] = [
   },
 ];
 
-function FAQSection({items}: {items: FAQItem[]}) {
+interface FAQSectionProps {
+  items: FAQItem[];
+  openItem?: number;
+  highlightedItem?: number;
+  onOpenChange?: (index: number | undefined) => void;
+}
+
+function FAQSection({
+  items,
+  openItem,
+  highlightedItem,
+  onOpenChange,
+}: FAQSectionProps) {
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Scroll to highlighted item on mount
+  useEffect(() => {
+    if (highlightedItem !== undefined && itemRefs.current[highlightedItem]) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        itemRefs.current[highlightedItem]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 100);
+    }
+  }, [highlightedItem]);
+
   return (
-    <Accordion type='single' collapsible className='w-full'>
+    <Accordion
+      type='single'
+      collapsible
+      className='w-full'
+      value={openItem !== undefined ? `item-${openItem}` : undefined}
+      onValueChange={value => {
+        if (onOpenChange) {
+          const index = value
+            ? parseInt(value.replace('item-', ''), 10)
+            : undefined;
+          onOpenChange(index);
+        }
+      }}
+    >
       {items.map((item, index) => (
-        <AccordionItem key={index} value={`item-${index}`}>
-          <AccordionTrigger className='text-left'>
+        <AccordionItem
+          key={index}
+          value={`item-${index}`}
+          ref={el => {
+            itemRefs.current[index] = el;
+          }}
+          className={cn(
+            'transition-colors duration-500',
+            highlightedItem === index &&
+              'bg-primary/10 rounded-lg ring-2 ring-primary/20',
+          )}
+        >
+          <AccordionTrigger className='text-left px-2'>
             {item.question}
           </AccordionTrigger>
-          <AccordionContent className='text-muted-foreground leading-relaxed'>
+          <AccordionContent className='text-muted-foreground leading-relaxed px-2'>
             {item.answer}
           </AccordionContent>
         </AccordionItem>
@@ -171,7 +263,49 @@ function FAQSection({items}: {items: FAQItem[]}) {
   );
 }
 
+// Map section to its FAQ items
+const sectionItems: Record<FAQSection, FAQItem[]> = {
+  general: faqGeneral,
+  compradores: faqCompradores,
+  publicadores: faqVendedores,
+  pagos: faqPagos,
+};
+
 function FAQPage() {
+  const {seccion, pregunta} = Route.useSearch();
+  const navigate = useNavigate({from: Route.fullPath});
+
+  // Determine active tab - default to 'general'
+  const activeTab = seccion ?? 'general';
+
+  // Get the items for the active section to validate pregunta
+  const activeItems = sectionItems[activeTab];
+  const validPregunta =
+    pregunta !== undefined && pregunta >= 0 && pregunta < activeItems.length
+      ? pregunta
+      : undefined;
+
+  const handleTabChange = (value: string) => {
+    navigate({
+      search: prev => ({
+        ...prev,
+        seccion: value as FAQSection,
+        pregunta: undefined, // Clear question when changing tabs
+      }),
+      replace: true,
+    });
+  };
+
+  const handleQuestionChange = (index: number | undefined) => {
+    navigate({
+      search: prev => ({
+        ...prev,
+        pregunta: index,
+      }),
+      replace: true,
+    });
+  };
+
   return (
     <main className='min-h-screen bg-background-secondary'>
       <div className='container mx-auto max-w-4xl px-4 py-8 md:py-16'>
@@ -195,7 +329,11 @@ function FAQPage() {
         {/* FAQ Tabs */}
         <Card>
           <CardContent className='p-4 md:p-6'>
-            <Tabs defaultValue='general' className='w-full'>
+            <Tabs
+              value={activeTab}
+              onValueChange={handleTabChange}
+              className='w-full'
+            >
               <TabsList className='grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-1'>
                 <TabsTrigger value='general' className='text-xs md:text-sm'>
                   General
@@ -203,24 +341,59 @@ function FAQPage() {
                 <TabsTrigger value='compradores' className='text-xs md:text-sm'>
                   Compradores
                 </TabsTrigger>
-                <TabsTrigger value='vendedores' className='text-xs md:text-sm'>
-                  Vendedores
+                <TabsTrigger
+                  value='publicadores'
+                  className='text-xs md:text-sm'
+                >
+                  Publicadores
                 </TabsTrigger>
                 <TabsTrigger value='pagos' className='text-xs md:text-sm'>
                   Pagos
                 </TabsTrigger>
               </TabsList>
               <TabsContent value='general' className='mt-4'>
-                <FAQSection items={faqGeneral} />
+                <FAQSection
+                  items={faqGeneral}
+                  openItem={activeTab === 'general' ? validPregunta : undefined}
+                  highlightedItem={
+                    activeTab === 'general' ? validPregunta : undefined
+                  }
+                  onOpenChange={handleQuestionChange}
+                />
               </TabsContent>
               <TabsContent value='compradores' className='mt-4'>
-                <FAQSection items={faqCompradores} />
+                <FAQSection
+                  items={faqCompradores}
+                  openItem={
+                    activeTab === 'compradores' ? validPregunta : undefined
+                  }
+                  highlightedItem={
+                    activeTab === 'compradores' ? validPregunta : undefined
+                  }
+                  onOpenChange={handleQuestionChange}
+                />
               </TabsContent>
-              <TabsContent value='vendedores' className='mt-4'>
-                <FAQSection items={faqVendedores} />
+              <TabsContent value='publicadores' className='mt-4'>
+                <FAQSection
+                  items={faqVendedores}
+                  openItem={
+                    activeTab === 'publicadores' ? validPregunta : undefined
+                  }
+                  highlightedItem={
+                    activeTab === 'publicadores' ? validPregunta : undefined
+                  }
+                  onOpenChange={handleQuestionChange}
+                />
               </TabsContent>
               <TabsContent value='pagos' className='mt-4'>
-                <FAQSection items={faqPagos} />
+                <FAQSection
+                  items={faqPagos}
+                  openItem={activeTab === 'pagos' ? validPregunta : undefined}
+                  highlightedItem={
+                    activeTab === 'pagos' ? validPregunta : undefined
+                  }
+                  onOpenChange={handleQuestionChange}
+                />
               </TabsContent>
             </Tabs>
           </CardContent>

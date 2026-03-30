@@ -30,6 +30,12 @@ variable "domain_name" {
   type        = string
 }
 
+variable "additional_domains" {
+  description = "Additional domains to accept (e.g., for temporarily routing production domain to dev)"
+  type        = list(string)
+  default     = []
+}
+
 variable "backend_port" {
   description = "Backend container port"
   type        = number

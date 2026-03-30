@@ -1,5 +1,6 @@
 import {createFileRoute, Link} from '@tanstack/react-router';
-import {Mail, MessageCircle, Clock} from 'lucide-react';
+import posthog from 'posthog-js';
+import {Mail, MessageCircle, Clock, AlertTriangle} from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -8,21 +9,23 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
+import {seo} from '~/utils/seo';
+import {getBaseUrl} from '~/config/env';
 
 export const Route = createFileRoute('/contacto')({
   component: ContactPage,
-  head: () => ({
-    meta: [
-      {
-        title: 'Contacto | Revendiste',
-      },
-      {
-        name: 'description',
-        content:
-          'Contactá al equipo de Revendiste. Estamos para ayudarte con cualquier consulta sobre compra o venta de entradas.',
-      },
-    ],
-  }),
+  head: () => {
+    const baseUrl = getBaseUrl();
+    return {
+      meta: seo({
+        title: 'Contacto | Revendiste - Ayuda con entradas',
+        description:
+          'Escribinos si tenés alguna duda sobre tu compra o venta de entradas. El equipo de Revendiste está para ayudarte.',
+        baseUrl,
+      }),
+      links: [{rel: 'canonical', href: `${baseUrl}/contacto`}],
+    };
+  },
 });
 
 function ContactPage() {
@@ -40,8 +43,60 @@ function ContactPage() {
           </p>
         </div>
 
+        {/* Ticket Problem CTA — most common reason users visit this page */}
+        <Card className='mb-6 border-primary/30 bg-primary/5'>
+          <CardContent className='py-5 sm:py-6'>
+            <div className='flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left'>
+              <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10'>
+                <AlertTriangle className='h-6 w-6 text-primary' />
+              </div>
+              <div className='flex-1 min-w-0'>
+                <h2 className='font-semibold text-base mb-1'>
+                  ¿Tenés un problema con una entrada?
+                </h2>
+                <p className='text-sm text-muted-foreground'>
+                  Podés abrir un caso directamente desde tus entradas. Nuestro
+                  equipo lo revisa y te avisa cuando haya novedades.
+                </p>
+              </div>
+              <Button asChild size='sm' className='shrink-0'>
+                <Link to='/cuenta/entradas'>Ir a mis entradas</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Contact Cards */}
         <div className='grid gap-4 md:gap-6 md:grid-cols-2'>
+          {/* WhatsApp */}
+          <Card>
+            <CardHeader className='text-center pb-2'>
+              <div className='mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10'>
+                <MessageCircle className='h-6 w-6 text-green-600' />
+              </div>
+              <CardTitle className='text-lg'>WhatsApp</CardTitle>
+              <CardDescription>
+                Para consultas rápidas o urgentes
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='text-center space-y-3'>
+              <p className='text-sm text-muted-foreground'>+598 99 303 326</p>
+              <Button asChild variant='outline' size='sm'>
+                <a
+                  href='https://wa.me/59899303326'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  onClick={() =>
+                    posthog.capture('contact_whatsapp_clicked')
+                  }
+                >
+                  <MessageCircle className='h-4 w-4 mr-1.5' />
+                  Abrir chat
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Email */}
           <Card>
             <CardHeader className='text-center pb-2'>
@@ -62,24 +117,6 @@ function ContactPage() {
               </a>
             </CardContent>
           </Card>
-
-          {/* WhatsApp */}
-          <Card>
-            <CardHeader className='text-center pb-2'>
-              <div className='mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10'>
-                <MessageCircle className='h-6 w-6 text-green-600' />
-              </div>
-              <CardTitle className='text-lg'>WhatsApp</CardTitle>
-              <CardDescription>
-                Para consultas rápidas o urgentes
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='text-center'>
-              <span className='text-sm text-muted-foreground italic'>
-                Próximamente
-              </span>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Horarios */}
@@ -88,11 +125,11 @@ function ContactPage() {
             <div className='mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-muted'>
               <Clock className='h-6 w-6 text-muted-foreground' />
             </div>
-            <CardTitle className='text-lg'>Horario de Atención</CardTitle>
+            <CardTitle className='text-lg'>Horario de atención</CardTitle>
           </CardHeader>
           <CardContent className='text-center space-y-2'>
             <p className='text-sm'>
-              <span className='font-medium'>Lunes a Viernes:</span>{' '}
+              <span className='font-medium'>Lunes a viernes:</span>{' '}
               <span className='text-muted-foreground'>9:00 - 18:00 hs</span>
             </p>
             <p className='text-sm'>
@@ -116,7 +153,7 @@ function ContactPage() {
               preguntas frecuentes.
             </p>
             <Button asChild variant='outline'>
-              <Link to='/preguntas-frecuentes'>Ver Preguntas Frecuentes</Link>
+              <Link to='/preguntas-frecuentes'>Ver preguntas frecuentes</Link>
             </Button>
           </CardContent>
         </Card>

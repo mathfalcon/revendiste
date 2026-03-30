@@ -1,9 +1,9 @@
 import {Suspense} from 'react';
-import z from 'zod';
+import {z} from 'zod';
 import {FullScreenLoading} from '~/components';
 import {TicketListingForm} from '~/features/ticket-listing';
 import {createFileRoute, redirect, useSearch} from '@tanstack/react-router';
-import {beforeLoadRedirectToSignInIfNotAuthenticated} from '~/utils/auth';
+import {beforeLoadRequireAuth} from '~/utils/auth';
 import {getEventByIdQuery, getCurrentUserQuery} from '~/lib';
 import {seo} from '~/utils/seo';
 
@@ -14,8 +14,8 @@ const CreateTicketListingSearchSchema = z.object({
 export const Route = createFileRoute('/entradas/publicar')({
   component: RouteComponent,
   validateSearch: search => CreateTicketListingSearchSchema.parse(search),
-  beforeLoad: ({context, location}) => {
-    beforeLoadRedirectToSignInIfNotAuthenticated(context.userId, location);
+  beforeLoad: async ({location}) => {
+    return await beforeLoadRequireAuth(location);
   },
   loaderDeps: ({search: {eventoId}}) => ({eventoId}),
   loader: async ({context, deps: {eventoId}}) => {

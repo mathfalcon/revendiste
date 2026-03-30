@@ -56,6 +56,20 @@ resource "aws_ecs_cluster" "main" {
   })
 }
 
+# Capacity providers for the cluster (enables Fargate Spot)
+resource "aws_ecs_cluster_capacity_providers" "main" {
+  cluster_name = aws_ecs_cluster.main.name
+
+  capacity_providers = ["FARGATE", "FARGATE_SPOT"]
+
+  # Default to regular Fargate for services
+  default_capacity_provider_strategy {
+    base              = 1
+    weight            = 100
+    capacity_provider = "FARGATE"
+  }
+}
+
 # Backend Task Definition
 resource "aws_ecs_task_definition" "backend" {
   family                   = "${var.name_prefix}-backend"
@@ -65,6 +79,12 @@ resource "aws_ecs_task_definition" "backend" {
   memory                   = var.backend_memory
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
+
+  # Use ARM64 (Graviton) for ~20% cost savings
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
 
   container_definitions = jsonencode([
     {
@@ -125,6 +145,12 @@ resource "aws_ecs_task_definition" "frontend" {
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
+  # Use ARM64 (Graviton) for ~20% cost savings
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
+
   container_definitions = jsonencode([
     {
       name  = "frontend"
@@ -144,7 +170,7 @@ resource "aws_ecs_task_definition" "frontend" {
         },
         {
           name  = "VITE_API_URL"
-          value = "https://api.${var.domain_name}"
+          value = "https://${var.domain_name}/api"
         },
         {
           name  = "BACKEND_IP"
@@ -186,6 +212,12 @@ resource "aws_ecs_task_definition" "cronjob_sync_payments" {
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
+  # Use ARM64 (Graviton) for ~20% cost savings
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
+
   container_definitions = jsonencode([
     {
       name    = "cronjob"
@@ -225,6 +257,12 @@ resource "aws_ecs_task_definition" "cronjob_notify_upload" {
   memory                   = var.cronjob_memory
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
+
+  # Use ARM64 (Graviton) for ~20% cost savings
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
 
   container_definitions = jsonencode([
     {
@@ -266,6 +304,12 @@ resource "aws_ecs_task_definition" "cronjob_check_payout" {
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
+  # Use ARM64 (Graviton) for ~20% cost savings
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
+
   container_definitions = jsonencode([
     {
       name    = "cronjob"
@@ -297,6 +341,7 @@ resource "aws_ecs_task_definition" "cronjob_check_payout" {
   })
 }
 
+# Note: scrape-events stays on x86 (default) due to Chromium/Playwright compatibility
 resource "aws_ecs_task_definition" "cronjob_scrape_events" {
   family                   = "${var.name_prefix}-cronjob-scrape-events"
   network_mode             = "awsvpc"
@@ -316,6 +361,24 @@ resource "aws_ecs_task_definition" "cronjob_scrape_events" {
         {
           name  = "NODE_ENV"
           value = var.environment == "prod" ? "production" : "development"
+        },
+        # Scraper configuration - configurable per environment
+        # Lower concurrency in deployed env to avoid bot detection from AWS IPs
+        {
+          name  = "SCRAPER_MAX_CONCURRENCY"
+          value = tostring(var.scraper_max_concurrency)
+        },
+        {
+          name  = "SCRAPER_SAME_DOMAIN_DELAY_SECS"
+          value = tostring(var.scraper_same_domain_delay_secs)
+        },
+        {
+          name  = "SCRAPER_MAX_REQUESTS_PER_CRAWL"
+          value = tostring(var.scraper_max_requests_per_crawl)
+        },
+        {
+          name  = "SCRAPER_MAX_PAGES_PER_BROWSER"
+          value = tostring(var.scraper_max_pages_per_browser)
         }
       ]
 
@@ -346,6 +409,12 @@ resource "aws_ecs_task_definition" "cronjob_process_notifications" {
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
+  # Use ARM64 (Graviton) for ~20% cost savings
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
+
   container_definitions = jsonencode([
     {
       name    = "cronjob"
@@ -374,6 +443,51 @@ resource "aws_ecs_task_definition" "cronjob_process_notifications" {
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-cronjob-process-notifications"
+  })
+}
+
+resource "aws_ecs_task_definition" "cronjob_process_pending_jobs" {
+  family                   = "${var.name_prefix}-cronjob-process-pending-jobs"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.cronjob_cpu
+  memory                   = var.cronjob_memory
+  execution_role_arn       = var.ecs_task_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
+
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
+
+  container_definitions = jsonencode([
+    {
+      name    = "cronjob"
+      image   = "${var.backend_repository_url}:${var.backend_image_tag}"
+      command = ["node", "dist/src/scripts/run-job.js", "process-pending-jobs"]
+
+      environment = [
+        {
+          name  = "NODE_ENV"
+          value = var.environment == "prod" ? "production" : "development"
+        }
+      ]
+
+      secrets = local.backend_secrets
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.cronjob.name
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "process-pending-jobs"
+        }
+      }
+    }
+  ])
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-cronjob-process-pending-jobs"
   })
 }
 

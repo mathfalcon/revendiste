@@ -144,8 +144,7 @@ function FormTicketWaveCard({ticketWave, updateTicketCount}: FormModeProps) {
         {availablePriceGroups.map(priceGroup => {
           const priceGroupPrice = priceGroup.price;
           const availableTickets = Number(priceGroup.availableTickets);
-          const selectedCount =
-            form.watch(`${ticketWave.id}.${priceGroupPrice}`) || 0;
+          const selectedCount = Number(waveSelection[priceGroupPrice]) || 0;
           const isSelected = selectedCount > 0;
 
           return (

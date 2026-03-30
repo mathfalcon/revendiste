@@ -15,6 +15,7 @@ import {
   FORM_DATA_STORAGE_KEY,
   TicketWave,
 } from './types';
+import {usePostHog} from 'posthog-js/react';
 
 interface UseTicketSelectionProps {
   eventId: string;
@@ -28,6 +29,7 @@ export function useTicketSelection({
   const {isLoaded, isSignedIn} = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const form = useForm<TicketSelectionFormValues>({
     resolver: standardSchemaResolver(TicketSelectionSchema),
@@ -155,10 +157,17 @@ export function useTicketSelection({
       return;
     }
 
-    form.setValue(ticketWaveId, {
-      ...currentWaveData,
-      [priceGroupPrice]: newCount,
-    });
+    // Set the whole wave object: price keys can contain '.' or ',' (e.g. 379.50),
+    // so we must not use setValue(ticketWaveId + '.' + priceGroupPrice) as RHF
+    // treats dots as path separators and would corrupt the form state.
+    form.setValue(
+      ticketWaveId,
+      {
+        ...currentWaveData,
+        [priceGroupPrice]: newCount,
+      },
+      {shouldDirty: true, shouldValidate: true},
+    );
   };
 
   const onSubmit = async (data: TicketSelectionFormValues) => {
@@ -172,6 +181,14 @@ export function useTicketSelection({
       });
       return;
     }
+
+    const {subtotalAmount, currency} = calculateTotals();
+    posthog.capture('order_started', {
+      event_id: eventId,
+      ticket_count: totalSelectedTickets,
+      subtotal_amount: subtotalAmount,
+      currency,
+    });
 
     createOrderMutation.mutate({
       eventId: eventId,

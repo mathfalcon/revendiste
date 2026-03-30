@@ -47,6 +47,49 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .execute();
   }
 
+  /**
+   * Same as findAvailableTicketsByPriceGroup but locks selected rows with FOR UPDATE SKIP LOCKED.
+   * Must be called within a transaction. Use via withTransaction(trx) so this.db is the transaction.
+   * Skips tickets already locked by another transaction, so may return fewer than quantity;
+   * caller must check length and throw INSUFFICIENT_TICKETS if needed.
+   */
+  async findAvailableTicketsByPriceGroupForUpdate(
+    ticketWaveId: string,
+    price: number,
+    quantity: number,
+  ) {
+    return await this.db
+      .selectFrom('listingTickets')
+      .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
+      .leftJoin('orderTicketReservations', join =>
+        join
+          .onRef(
+            'orderTicketReservations.listingTicketId',
+            '=',
+            'listingTickets.id',
+          )
+          .on('orderTicketReservations.deletedAt', 'is', null)
+          .on('orderTicketReservations.reservedUntil', '>', new Date()),
+      )
+      .select([
+        'listingTickets.id',
+        'listingTickets.listingId',
+        'listingTickets.ticketNumber',
+        'listingTickets.price',
+      ])
+      .where('listings.ticketWaveId', '=', ticketWaveId)
+      .where('listingTickets.price', '=', price.toString())
+      .where('listingTickets.soldAt', 'is', null)
+      .where('listingTickets.deletedAt', 'is', null)
+      .where('listings.deletedAt', 'is', null)
+      .where('orderTicketReservations.id', 'is', null)
+      .orderBy('listingTickets.createdAt', 'asc')
+      .limit(quantity)
+      .forUpdate('listingTickets')
+      .skipLocked()
+      .execute();
+  }
+
   async markTicketsAsSold(ticketIds: string[]) {
     return await this.db
       .updateTable('listingTickets')
@@ -231,6 +274,7 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'eventTicketWaves.id',
       )
       .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
       .leftJoin('ticketDocuments', join =>
         join
           .onRef('ticketDocuments.ticketId', '=', 'listingTickets.id')
@@ -244,6 +288,7 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'events.name as eventName',
         'events.eventStartDate',
         'events.qrAvailabilityTiming',
+        'eventVenues.country as venueCountry',
       ])
       .where('listingTickets.soldAt', 'is not', null) // Sold tickets only
       .where('listingTickets.deletedAt', 'is', null)

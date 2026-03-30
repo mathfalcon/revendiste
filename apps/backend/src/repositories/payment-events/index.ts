@@ -1,5 +1,10 @@
 import {type Kysely, type Insertable} from 'kysely';
-import type {DB, PaymentEvents, PaymentEventType} from '@revendiste/shared';
+import type {
+  DB,
+  PaymentEvents,
+  PaymentEventType,
+  PaymentStatus,
+} from '@revendiste/shared';
 import type {PaymentEvent} from '~/types/models';
 import {BaseRepository} from '../base';
 
@@ -53,9 +58,9 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
    */
   async logStatusChange(
     paymentId: string,
-    fromStatus: string | null,
-    toStatus: string,
-    eventData?: Record<string, any>,
+    fromStatus: PaymentStatus | null,
+    toStatus: PaymentStatus,
+    eventData?: Record<string, unknown>,
     metadata?: {
       ipAddress?: string;
       userAgent?: string;
@@ -64,8 +69,8 @@ export class PaymentEventsRepository extends BaseRepository<PaymentEventsReposit
     return await this.create({
       paymentId,
       eventType: 'status_change' as PaymentEventType,
-      fromStatus: fromStatus as any,
-      toStatus: toStatus as any,
+      fromStatus,
+      toStatus,
       eventData: eventData ? JSON.stringify(eventData) : undefined,
       ipAddress: metadata?.ipAddress,
       userAgent: metadata?.userAgent,

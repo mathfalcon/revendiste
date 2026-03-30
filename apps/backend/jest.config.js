@@ -8,8 +8,7 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', '/__tests__/factories/'],
   moduleNameMapper: {
     '^~\\/(.*)$': '<rootDir>/src/$1',
-    '^@revendiste/shared$': '<rootDir>/../../packages/shared/src',
-    '^@revendiste/shared/(.*)$': '<rootDir>/../../packages/shared/src/$1',
+    // Use built dist for shared/transactional to avoid ts-jest outDir errors when transforming workspace packages
     '^@revendiste/transactional$': '<rootDir>/../../packages/transactional/src',
     '^@revendiste/transactional/(.*)$':
       '<rootDir>/../../packages/transactional/src/$1',

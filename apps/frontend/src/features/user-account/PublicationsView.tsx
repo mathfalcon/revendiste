@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from '~/components/ui/accordion';
 import {Button} from '~/components/ui/button';
+import {AccountEmptyState} from '~/features/user-account';
 import {Package, Archive, Upload, AlertCircle} from 'lucide-react';
 import {LoadingSpinner} from '~/components/LoadingScreen';
 import {Card, CardContent} from '~/components/ui/card';
@@ -41,14 +42,12 @@ export function PublicationsView() {
     [];
 
   // Collect all tickets needing upload across all listings
+  // Now includes unsold tickets within the upload window (canUploadDocument is true)
   const allTicketsNeedingUpload =
     listings
       ?.flatMap(listing =>
         listing.tickets
-          .filter(
-            ticket =>
-              ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
-          )
+          .filter(ticket => !ticket.hasDocument && ticket.canUploadDocument)
           .map(ticket => ({
             ...ticket,
             listing,
@@ -64,22 +63,30 @@ export function PublicationsView() {
   // Get tickets from specific listing that need upload
   const listingTicketsNeedingUpload = listingFromParam
     ? listingFromParam.tickets
-        .filter(
-          ticket =>
-            ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
-        )
+        .filter(ticket => !ticket.hasDocument && ticket.canUploadDocument)
         .map(ticket => ({
           ...ticket,
           listing: listingFromParam,
         }))
     : [];
 
-  // Auto-open carousel when subirPublicacion parameter is present and has tickets
+  // Auto-open carousel when subirPublicacion parameter is present and listing exists
   useEffect(() => {
-    if (search.subirPublicacion && listingTicketsNeedingUpload.length > 0) {
-      setCarouselOpen(true);
+    if (search.subirPublicacion && listingFromParam) {
+      // Only open if there are tickets needing upload
+      if (listingTicketsNeedingUpload.length > 0) {
+        setCarouselOpen(true);
+      } else {
+        // Clear the param if no tickets need upload (listing found but no pending uploads)
+        navigate({
+          search: prev => ({
+            ...prev,
+            subirPublicacion: undefined,
+          }),
+        });
+      }
     }
-  }, [search.subirPublicacion, listingTicketsNeedingUpload.length]);
+  }, [search.subirPublicacion, listingFromParam, listingTicketsNeedingUpload.length, navigate]);
 
   const handleCloseModal = () => {
     navigate({
@@ -102,13 +109,18 @@ export function PublicationsView() {
 
   if (!listings || listings.length === 0) {
     return (
-      <div className='flex h-96 items-center justify-center rounded-lg border bg-card p-6 text-card-foreground shadow-sm'>
-        <div className='text-center'>
-          <p className='text-lg font-semibold'>No hay publicaciones</p>
+      <div className='space-y-6'>
+        <div>
+          <h2 className='text-2xl font-semibold'>Mis publicaciones</h2>
           <p className='text-muted-foreground'>
-            Comienza creando tu primera publicación de entradas
+            Administra tus publicaciones de entradas
           </p>
         </div>
+        <AccountEmptyState
+          icon={<Package className='h-8 w-8 text-muted-foreground' />}
+          title='No hay publicaciones'
+          description='Comienza creando tu primera publicación de entradas'
+        />
       </div>
     );
   }
@@ -149,8 +161,8 @@ export function PublicationsView() {
           <AlertDescription className='flex-1 flex items-center'>
             Tenés {allTicketsNeedingUpload.length}{' '}
             {allTicketsNeedingUpload.length === 1
-              ? 'ticket pendiente por subir'
-              : 'tickets pendientes por subir'}
+              ? 'entrada pendiente por subir'
+              : 'entradas pendientes por subir'}
           </AlertDescription>
           {allTicketsNeedingUpload.length > 0 && (
             <Button
@@ -191,14 +203,14 @@ export function PublicationsView() {
           </AccordionTrigger>
           <AccordionContent className='pt-4'>
             {activeListings.length > 0 ? (
-              <div className='space-y-4'>
+              <div className='space-y-3'>
                 {activeListings.map(listing => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))}
               </div>
             ) : (
               <p className='py-8 text-center text-muted-foreground'>
-                No tienes publicaciones activas
+                No tenés publicaciones activas
               </p>
             )}
           </AccordionContent>
@@ -216,14 +228,14 @@ export function PublicationsView() {
           </AccordionTrigger>
           <AccordionContent className='pt-4'>
             {soldListings.length > 0 ? (
-              <div className='space-y-4'>
+              <div className='space-y-3'>
                 {soldListings.map(listing => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))}
               </div>
             ) : (
               <p className='py-8 text-center text-muted-foreground'>
-                No tienes publicaciones vendidas
+                No tenés publicaciones pasadas
               </p>
             )}
           </AccordionContent>

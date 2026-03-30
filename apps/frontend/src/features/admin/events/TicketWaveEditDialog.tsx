@@ -111,7 +111,7 @@ export function TicketWaveEditDialog({
     ...createTicketWaveMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'events', eventId]});
-      toast.success('Tanda de tickets creada exitosamente');
+      toast.success('Tanda de entradas creada');
       onOpenChange(false);
     },
     onError: (error: any) => {
@@ -125,7 +125,7 @@ export function TicketWaveEditDialog({
     ...updateTicketWaveMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'events', eventId]});
-      toast.success('Tanda de tickets actualizada exitosamente');
+      toast.success('Tanda de entradas actualizada');
       onOpenChange(false);
     },
     onError: (error: any) => {
@@ -172,12 +172,12 @@ export function TicketWaveEditDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isCreateMode ? 'Nueva Tanda de Tickets' : 'Editar Tanda de Tickets'}
+            {isCreateMode ? 'Nueva Tanda de Entradas' : 'Editar Tanda de Entradas'}
           </DialogTitle>
           <DialogDescription>
             {isCreateMode
-              ? 'Crea una nueva tanda de tickets para este evento'
-              : 'Actualiza la información de la tanda de tickets'}
+              ? 'Crea una nueva tanda de entradas para este evento'
+              : 'Actualiza la información de la tanda de entradas'}
           </DialogDescription>
         </DialogHeader>
 

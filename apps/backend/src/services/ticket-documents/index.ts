@@ -19,6 +19,14 @@ import {notifyDocumentUploaded} from '~/services/notifications/helpers';
  * Documents are stored using the configured storage provider (local or S3).
  * Supports document versioning and multiple documents per ticket.
  */
+export interface UploadedDocumentData {
+  storagePath: string;
+  fileName: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
 export class TicketDocumentService {
   private storageProvider = getStorageProvider();
 
@@ -63,9 +71,8 @@ export class TicketDocumentService {
       );
     }
 
-    if (!ticket.soldAt) {
-      throw new ValidationError(TICKET_DOCUMENT_ERROR_MESSAGES.UNSOLD_TICKET);
-    }
+    // Note: soldAt check removed - sellers can upload documents for unsold tickets
+    // when within the QR availability window to prepare for quick sales
 
     // Validate event hasn't ended
     if (ticket.eventEndDate && new Date(ticket.eventEndDate) < new Date()) {
@@ -116,29 +123,32 @@ export class TicketDocumentService {
     // Extract just the filename from the storage path (not the full URL)
     const fileName = uploadResult.path.split('/').pop() || uploadResult.path;
 
-    const newDocument = await this.ticketDocumentsRepository.create({
+    const documentData = {
       ticketId: ticketId,
       storagePath: uploadResult.path,
       fileName: fileName,
       originalName: file.originalName,
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
-      documentType: 'ticket',
+      documentType: 'ticket' as const,
       version: existingDocument
         ? (existingDocument.version as unknown as number) + 1
         : 1,
-      isPrimary: true,
-      status: 'verified',
+      status: 'verified' as const,
       uploadedAt: new Date(),
-    });
+    };
 
-    // If there was an existing document, replace it
+    const newDocument = existingDocument
+      ? await this.ticketDocumentsRepository.createReplacingPrimary(
+          ticketId,
+          documentData,
+        )
+      : await this.ticketDocumentsRepository.create({
+          ...documentData,
+          isPrimary: true,
+        });
+
     if (existingDocument) {
-      await this.ticketDocumentsRepository.replacePrimaryDocument(
-        ticketId,
-        newDocument!.id as unknown as string,
-      );
-
       // Optionally delete old file from storage
       try {
         await this.storageProvider.delete(existingDocument.storagePath);
@@ -411,6 +421,66 @@ export class TicketDocumentService {
         name: ticket.ticketWaveName,
       },
     };
+  }
+
+  /**
+   * Upload a file buffer to storage only — no DB writes.
+   * Use this when you need the storage path before you have a ticketId
+   * (e.g. uploading at listing creation time before the DB transaction).
+   *
+   * The eventId is used for directory organisation on storage.
+   */
+  async uploadToStorage(
+    eventId: string,
+    file: {
+      buffer: Buffer;
+      originalName: string;
+      mimeType: string;
+      sizeBytes: number;
+    },
+  ): Promise<UploadedDocumentData> {
+    this.validateFileType(file.mimeType);
+
+    const maxSizeBytes = 10 * 1024 * 1024;
+    if (file.sizeBytes > maxSizeBytes) {
+      throw new ValidationError(
+        TICKET_DOCUMENT_ERROR_MESSAGES.FILE_SIZE_EXCEEDED(
+          maxSizeBytes / 1024 / 1024,
+        ),
+      );
+    }
+
+    const uploadResult = await this.storageProvider.upload(file.buffer, {
+      originalName: file.originalName,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+      directory: `private/tickets/${eventId}`,
+      filename: `ticket-creation-${Date.now()}`,
+    });
+
+    const fileName = uploadResult.path.split('/').pop() || uploadResult.path;
+
+    return {
+      storagePath: uploadResult.path,
+      fileName,
+      originalName: file.originalName,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+    };
+  }
+
+  /**
+   * Delete a file from storage — used for cleanup after a failed DB transaction.
+   */
+  async deleteFromStorage(storagePath: string): Promise<void> {
+    try {
+      await this.storageProvider.delete(storagePath);
+    } catch (error) {
+      logger.warn('Failed to delete orphaned document from storage', {
+        storagePath,
+        error,
+      });
+    }
   }
 
   /**

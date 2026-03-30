@@ -57,9 +57,7 @@ export const validateDLocalWebhook = (
 
     if (!isValid) {
       logger.warn('dLocal webhook signature validation failed', {
-        receivedSignature,
-        expectedSignature,
-        payload,
+        paymentId: req.body?.payment_id ?? undefined,
       });
       throw new UnauthorizedError('Invalid webhook signature');
     }

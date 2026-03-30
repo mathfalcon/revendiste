@@ -3,6 +3,10 @@ import type {DB} from '@revendiste/shared';
 import type {EventImageType} from '@revendiste/shared';
 import {EventsRepository, EventTicketWavesRepository} from '~/repositories';
 import {NotFoundError, ValidationError, BadRequestError} from '~/errors';
+import {
+  ADMIN_EVENTS_ERROR_MESSAGES,
+  EVENT_ERROR_MESSAGES,
+} from '~/constants/error-messages';
 import {EventImageService} from '~/services/scraping/image-service';
 import {getStorageProvider} from '~/services';
 import {logger} from '~/utils';
@@ -19,8 +23,7 @@ interface UpdateEventData {
   description?: string | null;
   eventStartDate?: string;
   eventEndDate?: string;
-  venueName?: string | null;
-  venueAddress?: string | null;
+  // Note: Venue is now managed via eventVenues table
   externalUrl?: string | null;
   qrAvailabilityTiming?: '3h' | '6h' | '12h' | '24h' | '48h' | '72h' | null;
   status?: 'active' | 'inactive';
@@ -75,7 +78,11 @@ export class AdminEventsService {
   }
 
   async getEventDetails(eventId: string) {
-    return this.eventsRepository.getByIdForAdmin(eventId);
+    const event = await this.eventsRepository.getByIdForAdmin(eventId);
+    if (!event) {
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
+    return event;
   }
 
   async updateEvent(eventId: string, data: UpdateEventData) {
@@ -88,20 +95,30 @@ export class AdminEventsService {
       updateData.eventStartDate = new Date(data.eventStartDate);
     if (data.eventEndDate !== undefined)
       updateData.eventEndDate = new Date(data.eventEndDate);
-    if (data.venueName !== undefined) updateData.venueName = data.venueName;
-    if (data.venueAddress !== undefined)
-      updateData.venueAddress = data.venueAddress ?? undefined;
+    // Note: Venue is now managed via eventVenues table (venueId)
+    // Updating venue directly on events is no longer supported
     if (data.externalUrl !== undefined)
       updateData.externalUrl = data.externalUrl ?? undefined;
     if (data.qrAvailabilityTiming !== undefined)
       updateData.qrAvailabilityTiming = data.qrAvailabilityTiming;
     if (data.status !== undefined) updateData.status = data.status;
 
-    return this.eventsRepository.updateEvent(eventId, updateData);
+    const updated = await this.eventsRepository.updateEvent(
+      eventId,
+      updateData,
+    );
+    if (!updated) {
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
+    return updated;
   }
 
   async deleteEvent(eventId: string) {
-    return this.eventsRepository.softDeleteEvent(eventId);
+    const deleted = await this.eventsRepository.softDeleteEvent(eventId);
+    if (!deleted) {
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
+    return deleted;
   }
 
   // ============================================================================
@@ -110,7 +127,10 @@ export class AdminEventsService {
 
   async createTicketWave(eventId: string, data: CreateTicketWaveData) {
     // Verify event exists
-    await this.eventsRepository.getByIdForAdmin(eventId);
+    const event = await this.eventsRepository.getByIdForAdmin(eventId);
+    if (!event) {
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
 
     return this.ticketWavesRepository.create(eventId, {
       name: data.name,
@@ -131,7 +151,7 @@ export class AdminEventsService {
     // Verify the ticket wave belongs to the event
     const wave = await this.ticketWavesRepository.getById(waveId);
     if (!wave || wave.eventId !== eventId) {
-      throw new NotFoundError('Tanda de tickets no encontrada');
+      throw new NotFoundError(ADMIN_EVENTS_ERROR_MESSAGES.TICKET_WAVE_NOT_FOUND);
     }
 
     return this.ticketWavesRepository.update(waveId, data);
@@ -141,7 +161,7 @@ export class AdminEventsService {
     // Verify the ticket wave belongs to the event
     const wave = await this.ticketWavesRepository.getById(waveId);
     if (!wave || wave.eventId !== eventId) {
-      throw new NotFoundError('Tanda de tickets no encontrada');
+      throw new NotFoundError(ADMIN_EVENTS_ERROR_MESSAGES.TICKET_WAVE_NOT_FOUND);
     }
 
     return this.ticketWavesRepository.softDelete(waveId);
@@ -157,11 +177,14 @@ export class AdminEventsService {
     imageType: 'flyer' | 'hero',
   ) {
     if (!file) {
-      throw new BadRequestError('No se subió ningún archivo');
+      throw new BadRequestError(ADMIN_EVENTS_ERROR_MESSAGES.NO_FILE_UPLOADED);
     }
 
     // Verify event exists
-    await this.eventsRepository.getByIdForAdmin(eventId);
+    const existingEvent = await this.eventsRepository.getByIdForAdmin(eventId);
+    if (!existingEvent) {
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
 
     // Validate image type
     const allowedMimeTypes = [
@@ -172,7 +195,7 @@ export class AdminEventsService {
     ];
     if (!allowedMimeTypes.includes(file.mimetype)) {
       throw new ValidationError(
-        'Tipo de archivo no válido. Use JPEG, PNG, WebP o GIF.',
+        ADMIN_EVENTS_ERROR_MESSAGES.INVALID_IMAGE_FILE_TYPE,
       );
     }
 
@@ -195,7 +218,11 @@ export class AdminEventsService {
       ]);
 
       // Get the updated event to return the image with its ID
-      const updatedEvent = await this.eventsRepository.getByIdForAdmin(eventId);
+      const updatedEvent =
+        await this.eventsRepository.getByIdForAdmin(eventId);
+      if (!updatedEvent) {
+        throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+      }
       const uploadedImage = updatedEvent.images.find(
         img => img.imageType === imageType,
       );
@@ -207,17 +234,20 @@ export class AdminEventsService {
       };
     } catch (error) {
       logger.error('Failed to upload event image', {error, eventId, imageType});
-      throw new BadRequestError('Error al subir la imagen');
+      throw new BadRequestError(ADMIN_EVENTS_ERROR_MESSAGES.IMAGE_UPLOAD_ERROR);
     }
   }
 
   async deleteEventImage(eventId: string, imageId: string) {
     // Get the image to verify it belongs to the event
     const event = await this.eventsRepository.getByIdForAdmin(eventId);
+    if (!event) {
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
     const image = event.images.find(img => img.id === imageId);
 
     if (!image) {
-      throw new NotFoundError('Imagen no encontrada');
+      throw new NotFoundError(ADMIN_EVENTS_ERROR_MESSAGES.IMAGE_NOT_FOUND);
     }
 
     // Soft delete the image

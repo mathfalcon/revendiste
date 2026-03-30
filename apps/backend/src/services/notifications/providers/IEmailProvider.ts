@@ -1,3 +1,9 @@
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer | string;
+  contentType?: string;
+}
+
 /**
  * Email Provider Interface
  *
@@ -18,5 +24,6 @@ export interface IEmailProvider {
     html: string; // HTML string (rendered from React Email templates in transactional package)
     text?: string; // Plain text version
     from?: string;
+    attachments?: EmailAttachment[];
   }): Promise<void>;
 }

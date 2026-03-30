@@ -1,6 +1,7 @@
 import {Kysely} from 'kysely';
 import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
 import {DB, EventTicketCurrency} from '@revendiste/shared';
+import type {PaginationOptions} from '~/types/pagination';
 import {BaseRepository} from '../base';
 
 export class OrdersRepository extends BaseRepository<OrdersRepository> {
@@ -24,6 +25,15 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       .values(orderData)
       .returningAll()
       .executeTakeFirstOrThrow();
+  }
+
+  async getById(orderId: string) {
+    return await this.db
+      .selectFrom('orders')
+      .selectAll()
+      .where('id', '=', orderId)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
   }
 
   async getByIdWithItems(orderId: string) {
@@ -54,14 +64,16 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
         jsonObjectFrom(
           eb
             .selectFrom('events')
+            .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
             .select([
               'events.id',
               'events.name',
               'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',
-              'events.venueName',
-              'events.venueAddress',
+              'eventVenues.name as venueName',
+              'eventVenues.address as venueAddress',
+              'eventVenues.country as venueCountry',
               'events.qrAvailabilityTiming',
               jsonArrayFrom(
                 eb
@@ -165,8 +177,18 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       .executeTakeFirstOrThrow();
   }
 
-  async getByUserId(userId: string) {
-    return await this.db
+  async getByUserIdCount(userId: string) {
+    const row = await this.db
+      .selectFrom('orders')
+      .select(this.db.fn.count('orders.id').as('count'))
+      .where('orders.userId', '=', userId)
+      .where('orders.deletedAt', 'is', null)
+      .executeTakeFirst();
+    return Number(row?.count ?? 0);
+  }
+
+  async getByUserId(userId: string, options?: PaginationOptions) {
+    let query = this.db
       .selectFrom('orders')
       .leftJoin('events', 'orders.eventId', 'events.id')
       .select(eb => [
@@ -187,14 +209,16 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
         jsonObjectFrom(
           eb
             .selectFrom('events')
+            .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
             .select([
               'events.id',
               'events.name',
               'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',
-              'events.venueName',
-              'events.venueAddress',
+              'eventVenues.name as venueName',
+              'eventVenues.address as venueAddress',
+              'eventVenues.country as venueCountry',
               jsonArrayFrom(
                 eb
                   .selectFrom('eventImages')
@@ -229,7 +253,11 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       ])
       .where('orders.userId', '=', userId)
       .where('orders.deletedAt', 'is', null)
-      .orderBy('orders.createdAt', 'desc')
-      .execute();
+      .orderBy('orders.createdAt', 'desc');
+
+    if (options) {
+      query = query.limit(options.limit).offset(options.offset);
+    }
+    return await query.execute();
   }
 }

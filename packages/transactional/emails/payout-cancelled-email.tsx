@@ -35,12 +35,11 @@ export const PayoutCancelledEmail = ({
 }: PayoutCancelledEmailProps) => (
   <BaseEmail
     title="Retiro cancelado"
-    preview={`Tu retiro de ${formatPrice(amount, currency)} ha sido cancelado`}
+    preview={`Tu retiro de ${formatPrice(amount, currency)} fue cancelado`}
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      Tu solicitud de retiro ha sido cancelada. Por favor, revisá los detalles a
-      continuación.
+      Tu retiro fue cancelado. Revisá los detalles a continuación.
     </Text>
 
     {/* CTA Button */}

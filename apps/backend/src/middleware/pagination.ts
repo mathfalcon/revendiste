@@ -37,8 +37,8 @@ export const paginationMiddleware = (defaultLimit = 25, maxLimit = 100) => {
         return next(err);
       }
 
-      // Now process the validated query parameters
-      const query = req.query as any;
+      // Now process the validated query parameters (validated by PaginationSchema)
+      const query = req.query as unknown as PaginationQuery;
 
       // Parse and validate page
       const page = Math.max(1, query.page || 1);

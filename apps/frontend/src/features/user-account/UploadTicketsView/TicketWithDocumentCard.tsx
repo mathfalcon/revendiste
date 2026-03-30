@@ -12,8 +12,8 @@ import {formatEventDate} from '~/utils/string';
 import type {GetUserListingsResponse} from '~/lib/api/generated';
 
 interface TicketWithDocumentCardProps {
-  ticket: GetUserListingsResponse[number]['tickets'][number] & {
-    listing: GetUserListingsResponse[number];
+  ticket: GetUserListingsResponse['data'][number]['tickets'][number] & {
+    listing: GetUserListingsResponse['data'][number];
   };
   onEditClick: (ticketId: string) => void;
 }
@@ -33,7 +33,7 @@ export function TicketWithDocumentCard({
           <div className='space-y-1 flex-1'>
             <CardTitle className='text-lg'>{event.name}</CardTitle>
             <CardDescription>
-              {ticketWave.name} - Ticket #{ticket.ticketNumber}
+              {ticketWave.name} - Entrada #{ticket.ticketNumber}
             </CardDescription>
             <div className='flex items-center gap-4 text-sm text-muted-foreground mt-2'>
               <div className='flex items-center gap-1'>

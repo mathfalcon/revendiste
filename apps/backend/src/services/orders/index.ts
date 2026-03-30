@@ -9,10 +9,18 @@ import {
 import {logger} from '~/utils';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateOrderRouteBody} from '~/controllers/orders/validation';
-import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
+import type {EventTicketCurrency} from '@revendiste/shared';
+import {
+  ORDER_ERROR_MESSAGES,
+  EVENT_ERROR_MESSAGES,
+} from '~/constants/error-messages';
+import {MAX_TICKETS_PER_ORDER} from '~/constants/orders';
+import {RESERVATION_WINDOW_MINUTES} from '~/constants/reservation';
 import {calculateOrderFees} from '~/utils/fees';
 import {getStorageProvider} from '~/services/storage';
 import type {PaymentSyncService} from '~/services/payments/sync';
+import type {PaginationOptions} from '~/types/pagination';
+import {createPaginatedResponse} from '~/middleware/pagination';
 
 export class OrdersService {
   private readonly storageProvider = getStorageProvider();
@@ -65,154 +73,154 @@ export class OrdersService {
     // Validate that the event exists and hasn't finished
     const event = await this.eventsRepository.getById(data.eventId);
     if (!event) {
-      throw new NotFoundError(ORDER_ERROR_MESSAGES.EVENT_NOT_FOUND);
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
     }
 
     if (new Date() > event.eventEndDate) {
       throw new ValidationError(ORDER_ERROR_MESSAGES.EVENT_FINISHED);
     }
 
-    // Calculate total quantities and validate ticket availability
+    // First pass: validate ticket waves, collect metadata, compute totals (no ticket selection yet)
     let totalTickets = 0;
     let subtotalAmount = 0;
-    const orderItems: Array<{
-      ticketWaveId: string;
-      pricePerTicket: number;
-      quantity: number;
-      subtotal: number;
-    }> = [];
-    const ticketsToReserve: Array<{
-      ticketWaveId: string;
-      price: number;
-      quantity: number;
-      ticketIds: string[];
-    }> = [];
-    const ticketWaveCurrencies: Set<string> = new Set();
+    const ticketWaveCurrencies = new Set<string>();
+    const ticketWaveInfo = new Map<
+      string,
+      { name: string; currency: EventTicketCurrency }
+    >();
 
-    // Process each ticket wave selection
     for (const [ticketWaveId, priceGroups] of Object.entries(
       data.ticketSelections,
     )) {
-      // Validate ticket wave exists and belongs to event
-      const ticketWave = await this.eventTicketWavesRepository.getById(
-        ticketWaveId,
-      );
+      const ticketWave =
+        await this.eventTicketWavesRepository.getById(ticketWaveId);
       if (!ticketWave) {
         throw new NotFoundError(
           ORDER_ERROR_MESSAGES.TICKET_WAVE_NOT_FOUND(ticketWaveId),
         );
       }
-
       if (ticketWave.eventId !== data.eventId) {
         throw new ValidationError(
           ORDER_ERROR_MESSAGES.TICKET_WAVE_INVALID_EVENT(ticketWaveId),
         );
       }
 
-      // Track currency for validation
       ticketWaveCurrencies.add(ticketWave.currency);
+      ticketWaveInfo.set(ticketWaveId, {
+        name: ticketWave.name,
+        currency: ticketWave.currency,
+      });
 
-      // Process each price group within the ticket wave
       for (const [priceStr, quantity] of Object.entries(priceGroups)) {
-        if (quantity <= 0) continue; // Skip zero quantities
-
+        if (quantity <= 0) continue;
         const price = parseFloat(priceStr);
         totalTickets += quantity;
         subtotalAmount += price * quantity;
-
-        // Find available tickets for this price group
-        const availableTickets =
-          await this.listingTicketsRepository.findAvailableTicketsByPriceGroup(
-            ticketWaveId,
-            price,
-            quantity,
-          );
-
-        if (availableTickets.length < quantity) {
-          throw new ValidationError(
-            ORDER_ERROR_MESSAGES.INSUFFICIENT_TICKETS(
-              availableTickets.length,
-              price,
-              ticketWave.name,
-              quantity,
-              ticketWave.currency,
-            ),
-          );
-        }
-
-        // Check that user is not trying to buy their own tickets
-        // We need to check the listing's userId, not the ticket's userId
-        const listingIds = [
-          ...new Set(availableTickets.map(ticket => ticket.listingId)),
-        ];
-        const listings = await this.listingTicketsRepository.getListingsByIds(
-          listingIds,
-        );
-        const userOwnedListings = listings.filter(
-          listing => listing.publisherUserId === userId,
-        );
-
-        if (userOwnedListings.length > 0) {
-          throw new ValidationError(
-            ORDER_ERROR_MESSAGES.CANNOT_BUY_OWN_TICKETS,
-          );
-        }
-
-        // Store order item data
-        orderItems.push({
-          ticketWaveId,
-          pricePerTicket: price,
-          quantity,
-          subtotal: price * quantity,
-        });
-
-        // Store ticket reservation data
-        ticketsToReserve.push({
-          ticketWaveId,
-          price,
-          quantity,
-          ticketIds: availableTickets
-            .map(ticket => ticket.id)
-            .filter((id): id is string => id !== null),
-        });
       }
     }
 
-    // Validate that all ticket waves have the same currency
     if (ticketWaveCurrencies.size > 1) {
-      const currencies = Array.from(ticketWaveCurrencies).join(', ');
       throw new ValidationError(
-        ORDER_ERROR_MESSAGES.MIXED_CURRENCIES(currencies),
+        ORDER_ERROR_MESSAGES.MIXED_CURRENCIES(
+          Array.from(ticketWaveCurrencies).join(', '),
+        ),
       );
     }
-
-    // Validate total ticket limit
-    if (totalTickets > 10) {
+    if (totalTickets > MAX_TICKETS_PER_ORDER) {
       throw new ValidationError(ORDER_ERROR_MESSAGES.TOO_MANY_TICKETS);
     }
-
     if (totalTickets === 0) {
       throw new ValidationError(ORDER_ERROR_MESSAGES.NO_TICKETS_SELECTED);
     }
 
-    // Calculate fees using centralized utility
     const feeCalculation = calculateOrderFees(subtotalAmount);
+    const firstTicketWaveId = Object.keys(data.ticketSelections)[0];
+    const currency: EventTicketCurrency =
+      ticketWaveInfo.get(firstTicketWaveId)?.currency ?? 'UYU';
 
-    // Get currency from first ticket wave (all currencies are the same after validation)
-    const firstTicketWave = await this.eventTicketWavesRepository.getById(
-      Object.keys(data.ticketSelections)[0],
-    );
-    const currency = firstTicketWave?.currency || 'UYU';
-
-    // Create order and reserve tickets in a single transaction
+    // Create order and reserve tickets in a single transaction.
+    // Ticket selection and locking happen inside the transaction (FOR UPDATE SKIP LOCKED)
+    // so we avoid TOCTOU: no one else can reserve the same tickets until we commit or rollback.
     return await this.ordersRepository.executeTransaction(async trx => {
-      // Create transaction-aware repository instances
       const ordersRepo = this.ordersRepository.withTransaction(trx);
       const orderItemsRepo = this.orderItemsRepository.withTransaction(trx);
       const reservationsRepo =
         this.orderTicketReservationsRepository.withTransaction(trx);
+      const listingTicketsRepo =
+        this.listingTicketsRepository.withTransaction(trx);
 
-      // Create order
+      const orderItems: Array<{
+        ticketWaveId: string;
+        pricePerTicket: number;
+        quantity: number;
+        subtotal: number;
+      }> = [];
+      const ticketsToReserve: Array<{
+        ticketWaveId: string;
+        price: number;
+        quantity: number;
+        ticketIds: string[];
+      }> = [];
+
+      // Select and lock available tickets inside the transaction (SKIP LOCKED = skip rows locked by others)
+      for (const [ticketWaveId, priceGroups] of Object.entries(
+        data.ticketSelections,
+      )) {
+        for (const [priceStr, quantity] of Object.entries(priceGroups)) {
+          if (quantity <= 0) continue;
+
+          const price = parseFloat(priceStr);
+          const availableTickets =
+            await listingTicketsRepo.findAvailableTicketsByPriceGroupForUpdate(
+              ticketWaveId,
+              price,
+              quantity,
+            );
+
+          if (availableTickets.length < quantity) {
+            const wave = ticketWaveInfo.get(ticketWaveId);
+            throw new ValidationError(
+              ORDER_ERROR_MESSAGES.INSUFFICIENT_TICKETS(
+                availableTickets.length,
+                price,
+                wave?.name ?? 'Entrada',
+                quantity,
+                wave?.currency ?? 'UYU',
+              ),
+            );
+          }
+
+          const listingIds = [
+            ...new Set(availableTickets.map(t => t.listingId)),
+          ];
+          const listings =
+            await listingTicketsRepo.getListingsByIds(listingIds);
+          const userOwnedListings = listings.filter(
+            listing => listing.publisherUserId === userId,
+          );
+          if (userOwnedListings.length > 0) {
+            throw new ValidationError(
+              ORDER_ERROR_MESSAGES.CANNOT_BUY_OWN_TICKETS,
+            );
+          }
+
+          orderItems.push({
+            ticketWaveId,
+            pricePerTicket: price,
+            quantity,
+            subtotal: price * quantity,
+          });
+          ticketsToReserve.push({
+            ticketWaveId,
+            price,
+            quantity,
+            ticketIds: availableTickets
+              .map(t => t.id)
+              .filter((id): id is string => id !== null),
+          });
+        }
+      }
+
       const order = await ordersRepo.create({
         userId,
         eventId: data.eventId,
@@ -222,25 +230,21 @@ export class OrdersService {
         platformCommission: feeCalculation.platformCommission,
         vatOnCommission: feeCalculation.vatOnCommission,
         currency,
-        reservationExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+        reservationExpiresAt: new Date(
+          Date.now() + RESERVATION_WINDOW_MINUTES * 60 * 1000,
+        ),
       });
 
-      // Create order items
       await orderItemsRepo.createBatch(
-        orderItems.map(item => ({
-          ...item,
-          orderId: order.id,
-        })),
+        orderItems.map(item => ({ ...item, orderId: order.id })),
       );
 
-      // Clean up expired reservations for the tickets we're trying to reserve
-      // This ensures expired reservations don't block new ones (soft-deleted for history)
-      // This is a safety net - we also have a scheduled job, but this ensures immediate cleanup
       const allTicketIds = ticketsToReserve.flatMap(r => r.ticketIds);
       await reservationsRepo.cleanupExpiredReservationsForTickets(allTicketIds);
 
-      // Create ticket reservations with error handling for race conditions
-      const reservedUntil = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+      const reservedUntil = new Date(
+        Date.now() + RESERVATION_WINDOW_MINUTES * 60 * 1000,
+      );
 
       try {
         await reservationsRepo.createReservations(
@@ -248,20 +252,16 @@ export class OrdersService {
           allTicketIds,
           reservedUntil,
         );
-      } catch (error: any) {
-        // Handle unique constraint violation (race condition with another user)
-        if (
-          error.code === '23505' &&
-          error.constraint ===
-            'order_ticket_reservations_unique_active_reservation'
-        ) {
-          // This means another user just reserved these tickets
-          // Expired reservations have been cleaned up, so this is a real conflict
+      } catch (error: unknown) {
+        // PostgreSQL unique violation (23505). We're in createReservations, so this is our index.
+        // Some drivers report constraint name, others don't for unique indexes; 23505 is sufficient.
+        const code = (error as { code?: string })?.code;
+        if (code === '23505') {
           throw new ValidationError(
             ORDER_ERROR_MESSAGES.TICKETS_NO_LONGER_AVAILABLE,
           );
         }
-        throw error; // Re-throw other errors
+        throw error;
       }
 
       logger.info(
@@ -292,9 +292,12 @@ export class OrdersService {
     return order;
   }
 
-  async getUserOrders(userId: string) {
-    const orders = await this.ordersRepository.getByUserId(userId);
-    return orders;
+  async getUserOrders(userId: string, pagination: PaginationOptions) {
+    const [orders, total] = await Promise.all([
+      this.ordersRepository.getByUserId(userId, pagination),
+      this.ordersRepository.getByUserIdCount(userId),
+    ]);
+    return createPaginatedResponse(orders, total, pagination);
   }
 
   async cancelOrder(orderId: string, userId: string) {

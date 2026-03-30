@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import {Card, CardContent} from '~/components/ui/card';
 import {EventTicketCurrency} from '~/lib';
-import {formatPrice, formatEventDate} from '~/utils';
+import {formatPrice, formatEventDate, getEventDisplayImage} from '~/utils';
 import {TicketViewModal, CancelOrderDialog} from '~/components';
 import {useState} from 'react';
 import {Button} from '~/components/ui/button';
@@ -116,10 +116,8 @@ export function OrderCard({order}: OrderCardProps) {
   const status = STATUS_CONFIG[order.status];
   const StatusIcon = status.icon;
 
-  const flyerImage = order.event?.images?.find(
-    img => img.imageType === 'flyer',
-  );
-  const imageSrc = flyerImage?.url ?? CDN_ASSETS.DEFAULT_OG_IMAGE;
+  const displayImage = getEventDisplayImage(order.event?.images);
+  const imageSrc = displayImage?.url ?? CDN_ASSETS.DEFAULT_OG_IMAGE;
 
   const totalTickets =
     order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
@@ -143,7 +141,7 @@ export function OrderCard({order}: OrderCardProps) {
                 <img
                   src={imageSrc}
                   alt={order.event?.name || 'Event'}
-                  className='h-16 w-16 rounded-lg object-cover sm:h-20 sm:w-20'
+                  className='h-16 w-16 rounded-lg object-cover object-center sm:h-20 sm:w-20'
                 />
               </Link>
 
@@ -282,6 +280,7 @@ export function OrderCard({order}: OrderCardProps) {
         open={showCancelDialog}
         onOpenChange={setShowCancelDialog}
       />
+
     </Card>
   );
 }

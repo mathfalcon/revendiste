@@ -188,3 +188,6 @@ terraform.rc
 # Turborepo cache
 .turbo
 
+# Claude Code worktrees (local working directories)
+.claude/worktrees/
+

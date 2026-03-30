@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import sharp from 'sharp';
 import {getStorageProvider} from '../storage';
 import {logger} from '~/utils';
-import type {ScrapedImageType} from './base/types';
+import {ScrapedImageType} from './base/types';
 
 interface ImageDownloadResult {
   buffer: Buffer;
@@ -15,6 +15,19 @@ interface ProcessedImage {
   url: string;
   externalUrl: string;
 }
+
+const OG_IMAGE_WIDTH = 1200;
+const OG_IMAGE_HEIGHT = 630;
+const OG_WATERMARK_WIDTH = 180;
+const OG_BAR_HEIGHT = 96;
+const OG_BAR_ALPHA = 0.9;
+const OG_BLUR_SIGMA = 30;
+
+const OG_WATERMARK_SVG = `<svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376.55 61.8">
+  <path d="M80.26 6.56v30.71c.46.01.77.35.77.84s-.3.82-.77.84v8.59c1.7 0 3.07 1.37 3.07 3.07h15.99c0-1.7 1.37-3.07 3.07-3.07v-8.61c-.4-.06-.66-.39-.66-.82s.27-.75.66-.82V6.56a3.07 3.07 0 0 1-3.07-3.07H83.33a3.07 3.07 0 0 1-3.07 3.07m20.28 31.55c0 .48-.31.85-.81.85-.47 0-.8-.36-.8-.85s.34-.85.81-.85.79.35.79.85Zm-2.79 0c0 .48-.31.85-.81.85-.47 0-.79-.36-.79-.85s.34-.85.81-.85.79.35.79.85m-2.79 0c0 .48-.31.85-.81.85-.47 0-.79-.36-.79-.85s.34-.85.81-.85.79.35.79.85m-2.79 0c0 .48-.31.85-.81.85-.47 0-.79-.36-.79-.85s.34-.85.81-.85.79.35.79.85m-2.79 0c0 .48-.31.85-.81.85-.47 0-.79-.36-.79-.85s.34-.85.81-.85.79.35.79.85m-2.79 0c0 .48-.31.85-.81.85-.47 0-.79-.36-.79-.85s.34-.85.81-.85.79.35.79.85m-2.79 0c0 .48-.31.85-.81.85-.47 0-.79-.36-.79-.85s.34-.85.81-.85.79.35.79.85M96.43 8.64v9.57h-.74V8.64zm-1.45 0v9.57h-.76V8.64zm-1.47 0v9.57H91.3V8.64zm-2.97 0v9.57h-.71V8.64zm-1.45 0v9.57h-1.47V8.64zm-2.23 0v9.57h-.71V8.64z" fill="#ffffff" fill-rule="evenodd"/>
+  <path d="m125.21 13.65-14.4-6.95a3.066 3.066 0 0 1-4.1 1.43l-2.16 4.47v37.12h-2.17c-.5 0-.9.4-.9.9v2.17h-3.6l6.83 3.3a3.066 3.066 0 0 1 4.1-1.43l3.74-7.75c-.33-.23-.43-.64-.24-1.03.19-.4.57-.56.96-.45l13.37-27.67a3.074 3.074 0 0 1-1.43-4.1Zm-18.98 29.28c-.21.44-.65.63-1.1.41-.43-.2-.56-.67-.35-1.11.22-.45.67-.62 1.1-.41.42.21.56.66.35 1.11m8.85-28.45-4.16 8.62-.64-.31 4.16-8.62zm-3.96-1.91.64.31-4.16 8.62-.64-.31zm-2.39 31.57c-.21.44-.65.63-1.1.41-.43-.21-.56-.67-.35-1.11.22-.45.67-.62 1.1-.41.43.2.56.66.35 1.11m-.45-22.31 4.16-8.62 1.33.64-4.16 8.62zm2.96 23.52c-.21.44-.65.63-1.1.41-.43-.21-.56-.67-.35-1.11.22-.45.67-.62 1.1-.41.42.21.56.66.35 1.11m.35-21.92 4.16-8.62 1.99.96-4.16 8.62zm2.63 1.27 4.16-8.62.68.33-4.16 8.62zm1.99.96-.66-.32 4.16-8.62.66.32z" fill-rule="evenodd" fill="#a6165c"/>
+  <path d="M14.28 34.95H12.5l-1.72 12.5H.72l5.5-39.33h15.72c8.11 0 13.89 4.33 12.78 13.56-1 7.28-4.11 9.72-9.5 12.28l9.44 13.5H22.27l-8-12.5Zm5.28-8.56c3.06 0 4.83-2.28 5.11-4.56.28-2.39-.89-4.44-3.83-4.44h-5.83l-1.28 9zm34.45-3.05h15.95l-1.22 8.83H52.79l-.83 5.89h17.33l-1.28 9.39H40.62l5.5-39.33h27.39l-1.33 9.39H54.85l-.83 5.83Zm88.78.23h15.95l-1.22 8.83h-15.94l-.83 5.89h17.33l-1.28 9.39h-27.39l5.5-39.33h27.39l-1.33 9.39h-17.33l-.83 5.83Zm28.96-15.22h9.44l7.17 16.78 2.22 7.89.22-.06-.11-6.78 2.5-17.83h9.89l-5.5 39.33h-10.06l-6.72-15.5-2.33-7.89-.22.06.11 7.61-2.17 15.72h-9.94zm56.45 0c7.89 0 14.72 4 13.44 13.17l-1.89 13.22c-1.28 9.06-9.17 12.95-17.06 12.95h-14.72l5.5-39.33h14.72Zm-3.89 30c2.72 0 5.17-1.5 5.45-3.61l1.89-13.22c.28-2.17-1.67-3.89-4.39-3.89h-5.06l-2.95 20.72zm33.06 9.33h-9.94l5.5-39.33h9.94zm16.22-12.44c1.72 2.5 5 3.78 7.94 3.78 2.67 0 5-.94 5.39-3 .44-2.44-3-3.5-6.17-3.94-6.17-1-11.72-5.95-10.33-13.39 1.5-8.06 8.61-10.89 15.83-10.89 4.78 0 9.22 1.33 12.61 6.28l-7.22 5c-1.67-1.89-4.28-2.78-6.56-2.83-2.5-.06-4.61.89-4.83 2.89-.28 2.28 1.72 3.28 4.72 3.94 6.83 1.28 13.5 3.89 11.67 13.67-1.44 7.67-8.11 11.5-16.61 11.5-4.72 0-10.56-2.39-13.56-7.11l7.11-5.89Zm52.4-17.84-4.17 30.28h-10.06l4.17-30.28h-10.61l1.33-9.11h31.28l-1.33 9.11zm27.84 6.17h15.95l-1.22 8.83h-15.94l-.83 5.89h17.33l-1.28 9.39h-27.39l5.5-39.33h27.39l-1.33 9.39h-17.33l-.83 5.83Z" fill="#ffffff"/>
+</svg>`;
 
 export class EventImageService {
   private readonly storageProvider = getStorageProvider();
@@ -36,7 +49,7 @@ export class EventImageService {
           image.type,
           eventId,
         );
-        processedImages.push(processed);
+        processedImages.push(...processed);
       } catch (error) {
         logger.error('Failed to process event image', {
           error,
@@ -53,12 +66,15 @@ export class EventImageService {
     externalUrl: string,
     imageType: ScrapedImageType,
     eventId: string,
-  ): Promise<ProcessedImage> {
+  ): Promise<ProcessedImage[]> {
     const imageHash = this.generateImageHash(externalUrl);
     const directory = `public/assets/events/${eventId}`;
     const filename = `${imageType}-${imageHash}`;
     const storagePath = `${directory}/${filename}.webp`;
 
+    const results: ProcessedImage[] = [];
+
+    // Check if original image already exists
     const existingImage = await this.checkExistingImage(storagePath);
     if (existingImage) {
       logger.debug('Image already exists in storage, skipping upload', {
@@ -66,11 +82,25 @@ export class EventImageService {
         externalUrl,
         eventId,
       });
-      return {
+      results.push({
         type: imageType,
         url: existingImage,
         externalUrl,
-      };
+      });
+
+      // Still check if OG version needs to be generated for hero images
+      if (imageType === ScrapedImageType.Hero) {
+        const ogResult = await this.ensureOgImage(
+          existingImage,
+          imageHash,
+          directory,
+          eventId,
+          externalUrl,
+        );
+        if (ogResult) results.push(ogResult);
+      }
+
+      return results;
     }
 
     const {buffer: originalBuffer} = await this.downloadImage(externalUrl);
@@ -80,7 +110,7 @@ export class EventImageService {
       (1 - compressedBuffer.length / originalBuffer.length) *
       100
     ).toFixed(1);
-    logger.info('Compressed event image', {
+    logger.debug('Compressed event image', {
       originalSize: originalBuffer.length,
       compressedSize: compressedBuffer.length,
       compressionRatio: `${compressionRatio}%`,
@@ -95,20 +125,227 @@ export class EventImageService {
       filename,
     });
 
-    logger.info('Uploaded event image to storage', {
+    logger.debug('Uploaded event image to storage', {
       storagePath: uploadResult.path,
       eventId,
     });
 
-    // Use the URL from uploadResult directly (it's already correctly formatted)
-    // Only call getUrl if we need to regenerate it (e.g., for existing images)
     const imageUrl = uploadResult.url;
 
-    return {
+    results.push({
       type: imageType,
       url: imageUrl,
       externalUrl,
+    });
+
+    // Generate OG version for hero images
+    if (imageType === ScrapedImageType.Hero) {
+      try {
+        const ogImage = await this.generateAndUploadOgImage(
+          originalBuffer,
+          imageHash,
+          directory,
+          eventId,
+          externalUrl,
+        );
+        if (ogImage) results.push(ogImage);
+      } catch (error) {
+        logger.error('Failed to generate OG image, continuing without it', {
+          error,
+          eventId,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Ensures an OG version exists for an already-stored hero image.
+   * Downloads the existing image from storage if needed.
+   */
+  private async ensureOgImage(
+    existingImageUrl: string,
+    imageHash: string,
+    directory: string,
+    eventId: string,
+    externalUrl: string,
+  ): Promise<ProcessedImage | null> {
+    const ogFilename = `og_hero-${imageHash}`;
+    const ogStoragePath = `${directory}/${ogFilename}.jpg`;
+
+    const existingOg = await this.checkExistingImage(ogStoragePath);
+    if (existingOg) {
+      return {
+        type: ScrapedImageType.OgHero,
+        url: existingOg,
+        externalUrl,
+      };
+    }
+
+    // OG version doesn't exist — download the original to generate it
+    try {
+      const {buffer} = await this.downloadImage(existingImageUrl);
+      return await this.generateAndUploadOgImage(
+        buffer,
+        imageHash,
+        directory,
+        eventId,
+        externalUrl,
+      );
+    } catch (error) {
+      logger.error('Failed to generate OG image from existing hero', {
+        error,
+        eventId,
+      });
+      return null;
+    }
+  }
+
+  private async generateAndUploadOgImage(
+    sourceBuffer: Buffer,
+    imageHash: string,
+    directory: string,
+    eventId: string,
+    externalUrl: string,
+  ): Promise<ProcessedImage | null> {
+    const ogFilename = `og_hero-${imageHash}`;
+    const ogStoragePath = `${directory}/${ogFilename}.jpg`;
+
+    // Check if OG version already exists
+    const existingOg = await this.checkExistingImage(ogStoragePath);
+    if (existingOg) {
+      return {
+        type: ScrapedImageType.OgHero,
+        url: existingOg,
+        externalUrl,
+      };
+    }
+
+    const ogBuffer = await this.createOgImage(sourceBuffer);
+
+    const ogUploadResult = await this.storageProvider.upload(ogBuffer, {
+      originalName: 'og_hero.jpg',
+      mimeType: 'image/jpeg',
+      sizeBytes: ogBuffer.length,
+      directory,
+      filename: ogFilename,
+    });
+
+    logger.debug('Uploaded OG image to storage', {
+      storagePath: ogUploadResult.path,
+      eventId,
+    });
+
+    return {
+      type: ScrapedImageType.OgHero,
+      url: ogUploadResult.url,
+      externalUrl,
     };
+  }
+
+  private async createOgImage(sourceBuffer: Buffer): Promise<Buffer> {
+    // Step 1: Create blurred background that fills the full OG canvas
+    const blurredBg = await sharp(sourceBuffer)
+      .resize(OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT, {
+        fit: 'cover',
+        position: 'centre',
+      })
+      .blur(OG_BLUR_SIGMA)
+      // Darken the blurred bg slightly so the foreground pops
+      .modulate({brightness: 0.6})
+      .toBuffer();
+
+    // Step 2: Resize source image to fit within the canvas (contain, no crop)
+    const fittedImage = await sharp(sourceBuffer)
+      .resize(OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT, {
+        fit: 'inside',
+        withoutEnlargement: false,
+      })
+      .toBuffer();
+
+    const fittedMeta = await sharp(fittedImage).metadata();
+    const fittedWidth = fittedMeta.width || OG_IMAGE_WIDTH;
+    const fittedHeight = fittedMeta.height || OG_IMAGE_HEIGHT;
+
+    // Center the fitted image on the canvas
+    const leftOffset = Math.round((OG_IMAGE_WIDTH - fittedWidth) / 2);
+    const topOffset = Math.round((OG_IMAGE_HEIGHT - fittedHeight) / 2);
+
+    // Step 3: Extract dominant color from source image for the bar
+    const {dominant} = await sharp(sourceBuffer).stats();
+    // Darken the dominant color so logo text is readable
+    const barR = Math.round(dominant.r * 0.4);
+    const barG = Math.round(dominant.g * 0.4);
+    const barB = Math.round(dominant.b * 0.4);
+
+    const barSvg = Buffer.from(
+      `<svg width="${OG_IMAGE_WIDTH}" height="${OG_BAR_HEIGHT}">
+        <defs>
+          <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgb(${barR},${barG},${barB})" stop-opacity="0" />
+            <stop offset="30%" stop-color="rgb(${barR},${barG},${barB})" stop-opacity="0.4" />
+            <stop offset="50%" stop-color="rgb(${barR},${barG},${barB})" stop-opacity="${OG_BAR_ALPHA}" />
+            <stop offset="100%" stop-color="rgb(${barR},${barG},${barB})" stop-opacity="1" />
+          </linearGradient>
+        </defs>
+        <rect width="${OG_IMAGE_WIDTH}" height="${OG_BAR_HEIGHT}" fill="url(#fade)" />
+      </svg>`,
+    );
+
+    // Step 4: Resize watermark logo — pick light/dark variant based on bar brightness
+    const barLuminance = 0.299 * barR + 0.587 * barG + 0.114 * barB;
+    const watermark = this.getWatermarkSvg(barLuminance > 120);
+    const resizedWatermark = await sharp(watermark)
+      .resize(OG_WATERMARK_WIDTH, OG_BAR_HEIGHT - 16, {fit: 'inside'})
+      .toBuffer();
+
+    const wmMeta = await sharp(resizedWatermark).metadata();
+    const wmWidth = wmMeta.width || OG_WATERMARK_WIDTH;
+    const wmHeight = wmMeta.height || OG_BAR_HEIGHT - 16;
+
+    // Center watermark horizontally, anchor to bottom of image with fixed padding
+    const wmLeft = Math.round((OG_IMAGE_WIDTH - wmWidth) / 2);
+    const wmBottomPadding = 12;
+    const wmTop = OG_IMAGE_HEIGHT - wmHeight - wmBottomPadding;
+
+    // Step 5: Compose everything together
+    const result = await sharp(blurredBg)
+      .composite([
+        // Fitted source image centered on blurred bg
+        {
+          input: fittedImage,
+          left: leftOffset,
+          top: topOffset,
+        },
+        // Solid bar at the bottom
+        {
+          input: barSvg,
+          left: 0,
+          top: OG_IMAGE_HEIGHT - OG_BAR_HEIGHT,
+        },
+        // Watermark centered in the bar
+        {
+          input: resizedWatermark,
+          left: wmLeft,
+          top: wmTop,
+        },
+      ])
+      .jpeg({quality: 85})
+      .toBuffer();
+
+    return result;
+  }
+
+  /**
+   * Returns the watermark SVG buffer with the correct text color.
+   * @param dark - If true, renders black text (for bright backgrounds). Otherwise white.
+   */
+  private getWatermarkSvg(dark: boolean): Buffer {
+    if (!dark) return Buffer.from(OG_WATERMARK_SVG);
+
+    // Swap white (#ffffff) text to black (#000000) for bright backgrounds
+    return Buffer.from(OG_WATERMARK_SVG.replace(/#ffffff/gi, '#000000'));
   }
 
   private async checkExistingImage(

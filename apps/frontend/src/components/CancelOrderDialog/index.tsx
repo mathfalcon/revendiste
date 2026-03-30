@@ -1,5 +1,6 @@
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {useNavigate} from '@tanstack/react-router';
+import posthog from 'posthog-js';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,10 @@ export function CancelOrderDialog({
   const mutation = useMutation({
     ...cancelOrderMutation(orderId),
     onSuccess: () => {
+      posthog.capture('checkout_abandoned', {
+        order_id: orderId,
+        event_id: eventId,
+      });
       // Invalidate related queries
       queryClient.invalidateQueries({queryKey: ['orders']});
 

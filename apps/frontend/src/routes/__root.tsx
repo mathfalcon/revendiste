@@ -6,8 +6,6 @@ import {
   createRootRouteWithContext,
   useLocation,
 } from '@tanstack/react-router';
-import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
-import {TanStackRouterDevtools} from '@tanstack/react-router-devtools';
 import * as React from 'react';
 import type {QueryClient} from '@tanstack/react-query';
 import {DefaultCatchBoundary} from '~/components/DefaultCatchBoundary';
@@ -15,20 +13,25 @@ import {NotFound} from '~/components/NotFound';
 import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
-import {ClerkVariables, Navbar, Footer} from '~/components';
-import {ThemeProvider} from '~/components/ThemeProvider';
+import {ClerkVariables, Navbar, Footer, FullScreenLoading} from '~/components';
+import {ThemeProvider, useTheme} from '~/components/ThemeProvider';
 import {ClerkProvider} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
 import {Toaster} from '~/components/ui/sonner';
 import {StickyBarProvider} from '~/contexts';
 import {createServerFn} from '@tanstack/react-start';
 import {auth} from '@clerk/tanstack-react-start/server';
+import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
+import {PostHogProvider} from 'posthog-js/react';
+import {useUser} from '@clerk/tanstack-react-start';
+import posthog from 'posthog-js';
 
-const fetchClerkAuth = createServerFn({method: 'GET'}).handler(async () => {
-  const {isAuthenticated, userId} = await auth();
-
-  return {isAuthenticated, userId};
-});
+export const fetchClerkAuth = createServerFn({method: 'GET'}).handler(
+  async () => {
+    const {userId} = await auth();
+    return {userId};
+  },
+);
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -43,8 +46,10 @@ export const Route = createRootRouteWithContext<{
         content: 'width=device-width, initial-scale=1',
       },
       ...seo({
-        title: 'Revendiste | Transferí tus entradas de forma fácil y segura',
-        description: `Revendiste es una plataforma de venta de entradas de forma fácil y segura. `,
+        title:
+          'Revendiste | Comprá y vendé entradas de forma segura en Uruguay',
+        description:
+          'Revendiste es la plataforma más segura de Uruguay para comprar y vender entradas a conciertos, fiestas y eventos. Custodia de fondos, vendedores verificados y garantía de compra.',
         baseUrl: getBaseUrl(),
       }),
     ],
@@ -93,6 +98,19 @@ export const Route = createRootRouteWithContext<{
       },
     ],
     scripts: [
+      // Sync theme-color meta tag with app theme before hydration to avoid flash
+      {
+        children: `
+          (function() {
+            var t = localStorage.getItem('vite-ui-theme');
+            var dark = t === 'dark' || ((t === null || t === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            var meta = document.createElement('meta');
+            meta.name = 'theme-color';
+            meta.content = dark ? '#181819' : '#ffffff';
+            document.head.appendChild(meta);
+          })();
+        `,
+      },
       // Convert print media stylesheet to all media after load (async font loading)
       {
         children: `
@@ -113,6 +131,7 @@ export const Route = createRootRouteWithContext<{
       },
     ],
   }),
+  pendingComponent: FullScreenLoading,
   errorComponent: props => {
     return (
       <RootDocument>
@@ -122,14 +141,22 @@ export const Route = createRootRouteWithContext<{
   },
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
-  beforeLoad: async () => {
-    const {userId} = await fetchClerkAuth();
-
-    return {
-      userId,
-    };
-  },
 });
+
+const THEME_COLORS = {light: '#ffffff', dark: '#181819'} as const;
+
+function ThemeColorSync() {
+  const {resolvedTheme} = useTheme();
+
+  React.useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute('content', THEME_COLORS[resolvedTheme]);
+    }
+  }, [resolvedTheme]);
+
+  return null;
+}
 
 function RootComponent() {
   return (
@@ -137,6 +164,24 @@ function RootComponent() {
       <Outlet />
     </RootDocument>
   );
+}
+
+function PostHogIdentify() {
+  const {user, isLoaded, isSignedIn} = useUser();
+
+  React.useEffect(() => {
+    if (!isLoaded) return;
+    if (isSignedIn && user) {
+      posthog.identify(user.id, {
+        email: user.primaryEmailAddress?.emailAddress,
+        name: user.fullName,
+      });
+    } else {
+      posthog.reset();
+    }
+  }, [isLoaded, isSignedIn, user]);
+
+  return null;
 }
 
 function RootDocument({children}: {children: React.ReactNode}) {
@@ -149,39 +194,57 @@ function RootDocument({children}: {children: React.ReactNode}) {
   );
 
   return (
-    <ClerkProvider
-      localization={esUY}
-      appearance={{
-        cssLayerName: 'clerk',
-        elements: {
-          formButtonPrimary: {
-            background: '#de2486',
-            boxShadow: 'none',
-          },
-        },
-        variables: ClerkVariables,
-      }}
-    >
-      <html lang='es'>
-        <head>
-          <HeadContent />
-        </head>
-        <body>
-          <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
-            <StickyBarProvider>
-              <div className='flex flex-col h-screen bg-background-secondary'>
-                {!shouldHideNavbar && <Navbar />}
-                <main className='flex-1'>{children}</main>
-                {!shouldHideNavbar && <Footer />}
-                {/* <TanStackRouterDevtools position='bottom-right' />
-                <ReactQueryDevtools buttonPosition='bottom-left' /> */}
-                <Scripts />
-                <Toaster position='top-center' />
-              </div>
-            </StickyBarProvider>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang='es'>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <PostHogProvider
+          apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN}
+          options={{
+            api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+            ui_host: 'https://us.posthog.com',
+            defaults: '2026-01-30',
+            capture_exceptions: true,
+          }}
+        >
+          <ClerkProvider
+            localization={esUY}
+            appearance={{
+              cssLayerName: 'clerk',
+              elements: {
+                formButtonPrimary: {
+                  background: '#de2486',
+                  boxShadow: 'none',
+                },
+                modalBackdrop: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                },
+                modalContent: {
+                  backgroundColor: 'hsl(var(--background))',
+                },
+              },
+              variables: ClerkVariables,
+            }}
+          >
+            <PostHogIdentify />
+            <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
+              <ThemeColorSync />
+              <StickyBarProvider>
+                <div className='flex flex-col h-screen bg-background-secondary'>
+                  {!shouldHideNavbar && <Navbar />}
+                  <main className='flex-1'>{children}</main>
+                  {!shouldHideNavbar && <Footer />}
+                  {/* <TanStackRouterDevtools position='bottom-right' /> */}
+                  <ReactQueryDevtools buttonPosition='bottom-left' />
+                  <Scripts />
+                  <Toaster position='top-center' />
+                </div>
+              </StickyBarProvider>
+            </ThemeProvider>
+          </ClerkProvider>
+        </PostHogProvider>
+      </body>
+    </html>
   );
 }

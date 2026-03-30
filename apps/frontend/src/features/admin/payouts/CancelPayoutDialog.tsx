@@ -69,7 +69,7 @@ export function CancelPayoutDialog({
     ...cancelPayoutMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
-      toast.success('Pago cancelado exitosamente');
+      toast.success('Pago cancelado');
       form.reset();
       onOpenChange(false);
     },

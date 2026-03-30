@@ -1,9 +1,9 @@
 # Cloudflare DNS Module
 # Creates DNS records and page rules for Cloudflare
 
-# Get Cloudflare zone
+# Get Cloudflare zone (always the root zone, e.g., revendiste.com)
 data "cloudflare_zones" "main" {
-  name = var.domain_name
+  name = var.zone_name
 }
 
 locals {
@@ -21,7 +21,9 @@ resource "cloudflare_dns_record" "main" {
 }
 
 # A record for www subdomain (points to ALB)
+# Skipped for dev environments to avoid nested subdomain SSL issues (www.dev.revendiste.com)
 resource "cloudflare_dns_record" "www" {
+  count   = var.create_www_record ? 1 : 0
   zone_id = local.zone_id
   name    = "www.${var.domain_name}"
   type    = "CNAME"
@@ -41,7 +43,7 @@ resource "cloudflare_dns_record" "acm_validation" {
   }
 
   zone_id = local.zone_id
-  name    = trimsuffix(each.value.name, ".${var.domain_name}.")
+  name    = trimsuffix(each.value.name, ".${var.zone_name}.")
   type    = each.value.type
   content = each.value.record
   ttl     = 60

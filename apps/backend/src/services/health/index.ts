@@ -17,7 +17,7 @@ export interface HealthCheckResult {
   status: 'healthy' | 'unhealthy' | 'degraded';
   message?: string;
   responseTime?: number;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 export class HealthService {

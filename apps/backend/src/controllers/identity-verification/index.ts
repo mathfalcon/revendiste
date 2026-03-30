@@ -22,6 +22,7 @@ import {
 import {db} from '~/db';
 import {requireAuthMiddleware} from '~/middleware';
 import {BadRequestError, ApiErrorResponse} from '~/errors';
+import {IDENTITY_VERIFICATION_ERROR_MESSAGES} from '~/constants/error-messages';
 import {Body, ValidateBody} from '~/decorators';
 import {
   InitiateVerificationRouteBody,
@@ -35,6 +36,7 @@ import {
   FACE_LIVENESS_ROLE_ARN,
 } from '~/config/env';
 import {logger} from '~/utils';
+import {getPostHog} from '~/lib/posthog';
 
 // Rekognition region for Face Liveness
 const REKOGNITION_REGION = 'us-east-1';
@@ -101,12 +103,21 @@ export class IdentityVerificationController {
     @Body() body: InitiateVerificationRouteBody,
     @Request() request: express.Request,
   ): Promise<InitiateVerificationResponse> {
-    return this.service.initiateVerification(
+    const result = await this.service.initiateVerification(
       request.user.id,
       body.documentType,
       body.documentNumber,
       body.documentCountry,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'identity_verification_initiated',
+      properties: {
+        document_type: body.documentType,
+        document_country: body.documentCountry,
+      },
+    });
+    return result;
   }
 
   /**
@@ -134,22 +145,36 @@ export class IdentityVerificationController {
     @Request() request: express.Request,
   ): Promise<ProcessDocumentResponse> {
     if (!file) {
-      throw new BadRequestError('Documento es requerido');
+      throw new BadRequestError(
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.DOCUMENT_REQUIRED,
+      );
     }
 
     if (
       !documentType ||
       !['ci_uy', 'dni_ar', 'passport'].includes(documentType)
     ) {
-      throw new BadRequestError('Tipo de documento inválido o faltante');
+      throw new BadRequestError(
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.DOCUMENT_TYPE_INVALID_OR_MISSING,
+      );
     }
 
-    return this.service.processDocument(
+    const result = await this.service.processDocument(
       request.user.id,
       file.buffer,
       documentType,
       file.mimetype,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'identity_verification_document_processed',
+      properties: {
+        document_type: documentType,
+        file_type: file.mimetype,
+        file_size_bytes: file.size,
+      },
+    });
+    return result;
   }
 
   /**
@@ -192,7 +217,18 @@ export class IdentityVerificationController {
     @Body() body: VerifyLivenessRouteBody,
     @Request() request: express.Request,
   ): Promise<VerifyLivenessResultsResponse> {
-    return this.service.verifyLivenessResults(request.user.id, body.sessionId);
+    const result = await this.service.verifyLivenessResults(
+      request.user.id,
+      body.sessionId,
+    );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'identity_verification_liveness_completed',
+      properties: {
+        session_id: body.sessionId,
+      },
+    });
+    return result;
   }
 
   /**
@@ -218,7 +254,7 @@ export class IdentityVerificationController {
     if (!FACE_LIVENESS_ROLE_ARN) {
       logger.error('FACE_LIVENESS_ROLE_ARN not configured');
       throw new BadRequestError(
-        'Face Liveness no está configurado. Contactá a soporte.',
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.FACE_LIVENESS_NOT_CONFIGURED,
       );
     }
 
@@ -270,7 +306,7 @@ export class IdentityVerificationController {
     } catch (error) {
       logger.error('Failed to assume Face Liveness role', {error});
       throw new BadRequestError(
-        'No se pudieron obtener credenciales para la verificación facial.',
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.FACE_LIVENESS_CREDENTIALS_FAILED,
       );
     }
   }

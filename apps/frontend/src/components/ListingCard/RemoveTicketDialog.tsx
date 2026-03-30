@@ -48,11 +48,11 @@ export function RemoveTicketDialog({
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <AlertTriangle className='h-5 w-5 text-destructive' />
-            Retirar ticket
+            Retirar entrada
           </DialogTitle>
           <DialogDescription>
-            ¿Estás seguro de que deseas retirar el ticket #{ticketNumber}? Esta
-            acción no se puede deshacer y el ticket ya no estará disponible
+            ¿Estás seguro de que querés retirar la entrada #{ticketNumber}? Esta
+            acción no se puede deshacer y la entrada ya no va a estar disponible
             para la venta.
           </DialogDescription>
         </DialogHeader>
@@ -73,7 +73,7 @@ export function RemoveTicketDialog({
           >
             {deleteTicketMutationHook.isPending
               ? 'Retirando...'
-              : 'Retirar ticket'}
+              : 'Retirar entrada'}
           </Button>
         </DialogFooter>
       </DialogContent>

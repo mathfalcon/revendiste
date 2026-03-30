@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {
   Link,
   useRouter,
@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router';
 import type {ErrorComponentProps} from '@tanstack/react-router';
 import {isAxiosError} from 'axios';
+import posthog from 'posthog-js';
 import {Button} from '~/components/ui/button';
 import {
   Card,
@@ -60,6 +61,13 @@ export function DefaultCatchBoundary({error, reset}: ErrorComponentProps) {
 
     return false;
   })();
+
+  // Report non-404 errors to PostHog
+  useEffect(() => {
+    if (!is404Error) {
+      posthog.captureException(error);
+    }
+  }, [error, is404Error]);
 
   // If it's a 404 error, render the NotFound component
   if (is404Error) {

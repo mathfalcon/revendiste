@@ -110,7 +110,7 @@ export function ProcessPayoutDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts', payoutId]});
-      toast.success('Pago procesado exitosamente');
+      toast.success('Pago procesado');
       // Reset form
       form.reset();
       setSelectedFile(null);
@@ -125,7 +125,7 @@ export function ProcessPayoutDialog({
     ...uploadPayoutDocumentMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts', payoutId]});
-      toast.success('Comprobante subido exitosamente');
+      toast.success('Comprobante subido');
       setSelectedFile(null);
     },
     onError: (error: any) => {
@@ -139,7 +139,7 @@ export function ProcessPayoutDialog({
     ...deletePayoutDocumentMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts', payoutId]});
-      toast.success('Comprobante eliminado exitosamente');
+      toast.success('Comprobante eliminado');
     },
     onError: (error: any) => {
       toast.error(

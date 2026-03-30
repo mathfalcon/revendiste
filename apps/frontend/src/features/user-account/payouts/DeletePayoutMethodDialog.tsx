@@ -10,8 +10,11 @@ import {Button} from '~/components/ui/button';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {deletePayoutMethodMutation} from '~/lib/api/payouts';
 import {AlertTriangle} from 'lucide-react';
+import posthog from 'posthog-js';
 import {getPayoutMethodDisplayName} from './payout-method-utils';
-import type {PayoutMethod} from '~/lib/api/generated';
+import type {GetPayoutMethodsResponse} from '~/lib/api/generated';
+
+type PayoutMethod = GetPayoutMethodsResponse[number];
 
 interface DeletePayoutMethodDialogProps {
   open: boolean;
@@ -28,6 +31,10 @@ export function DeletePayoutMethodDialog({
   const deleteMethod = useMutation({
     ...deletePayoutMethodMutation(),
     onSuccess: () => {
+      posthog.capture('payout_method_deleted', {
+        payout_type: method.payoutType,
+        currency: method.currency,
+      });
       queryClient.invalidateQueries({queryKey: ['payouts', 'payout-methods']});
       onOpenChange(false);
     },

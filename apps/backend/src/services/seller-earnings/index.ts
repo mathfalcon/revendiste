@@ -4,6 +4,10 @@ import {
 } from '~/repositories';
 import {calculateSellerAmount} from '~/utils/fees';
 import {PAYOUT_HOLD_PERIOD_HOURS} from '~/config/env';
+import {
+  SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
+  SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
+} from '~/constants/limits';
 import {logger} from '~/utils';
 import {roundOrderAmount} from '@revendiste/shared';
 import type {EventTicketCurrency} from '@revendiste/shared';
@@ -12,6 +16,9 @@ import {
   notifySellerEarningsRetained,
   notifyBuyerTicketCancelled,
 } from '~/services/notifications/helpers';
+import type {Kysely} from 'kysely';
+import type {DB} from '@revendiste/shared';
+import type {TicketReportsService} from '~/services/ticket-reports';
 
 interface BalanceByCurrency {
   currency: EventTicketCurrency;
@@ -52,17 +59,42 @@ export class SellerEarningsService {
     private readonly sellerEarningsRepository: SellerEarningsRepository,
     private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
     private readonly notificationService?: NotificationService,
+    private readonly ticketReportsService?: TicketReportsService,
   ) {}
 
   /**
-   * Creates a single seller earning from a sold ticket
+   * Creates a single seller earning from a sold ticket.
+   * When trx is provided, uses the transaction (e.g. from payment webhook flow).
+   * Idempotent: skips if an active earning already exists for this listing_ticket_id
+   * (allows clone flow where original is failed_payout and clone is available).
    */
-  async createEarningFromSale(listingTicketId: string): Promise<void> {
+  async createEarningFromSale(
+    listingTicketId: string,
+    trx?: Kysely<DB>,
+  ): Promise<void> {
+    const earningsRepo = trx
+      ? this.sellerEarningsRepository.withTransaction(trx)
+      : this.sellerEarningsRepository;
+    const reservationsRepo = trx
+      ? this.orderTicketReservationsRepository.withTransaction(trx)
+      : this.orderTicketReservationsRepository;
+
+    // Idempotency: skip if an active earning already exists for this ticket
+    // (e.g. duplicate webhook; clone flow uses failed_payout so not considered "active")
+    const existing = await earningsRepo.getEarningsByListingTicketIds([
+      listingTicketId,
+    ]);
+    const hasActiveEarning = existing.some(e => e.status !== 'failed_payout');
+    if (hasActiveEarning) {
+      logger.debug('Earning already exists for ticket, skipping', {
+        listingTicketId,
+      });
+      return;
+    }
+
     // Get listing ticket with price and event end date via repository
     const ticketData =
-      await this.sellerEarningsRepository.getTicketDataForEarnings(
-        listingTicketId,
-      );
+      await earningsRepo.getTicketDataForEarnings(listingTicketId);
 
     if (!ticketData) {
       logger.error('Ticket not found for earnings creation', {
@@ -73,9 +105,7 @@ export class SellerEarningsService {
 
     // Get seller user ID from listing via repository
     const listing =
-      await this.sellerEarningsRepository.getListingPublisherUserId(
-        ticketData.listingId,
-      );
+      await earningsRepo.getListingPublisherUserId(ticketData.listingId);
 
     if (!listing) {
       logger.error('Listing not found for earnings creation', {
@@ -93,7 +123,7 @@ export class SellerEarningsService {
     holdUntil.setHours(holdUntil.getHours() + PAYOUT_HOLD_PERIOD_HOURS);
 
     // Create earnings record
-    await this.sellerEarningsRepository.create({
+    await earningsRepo.create({
       sellerUserId: listing.publisherUserId,
       listingTicketId,
       sellerAmount,
@@ -113,12 +143,19 @@ export class SellerEarningsService {
 
   /**
    * Batch creates seller earnings for all sold tickets in an order
-   * Called from PaymentWebhookAdapter after marking tickets as sold
+   * Called from PaymentWebhookAdapter after marking tickets as sold.
+   * When trx is provided, all DB operations use the transaction.
    */
-  async createEarningsForSoldTickets(orderId: string): Promise<void> {
+  async createEarningsForSoldTickets(
+    orderId: string,
+    trx?: Kysely<DB>,
+  ): Promise<void> {
+    const reservationsRepo = trx
+      ? this.orderTicketReservationsRepository.withTransaction(trx)
+      : this.orderTicketReservationsRepository;
+
     // Get all sold tickets from order (via order_ticket_reservations)
-    const reservations =
-      await this.orderTicketReservationsRepository.getByOrderId(orderId);
+    const reservations = await reservationsRepo.getByOrderId(orderId);
 
     if (reservations.length === 0) {
       logger.warn('No reservations found for order', {orderId});
@@ -128,7 +165,7 @@ export class SellerEarningsService {
     // Create earnings for each sold ticket
     await Promise.all(
       reservations.map(reservation =>
-        this.createEarningFromSale(reservation.listingTicketId),
+        this.createEarningFromSale(reservation.listingTicketId, trx),
       ),
     );
 
@@ -195,7 +232,9 @@ export class SellerEarningsService {
    * Updates to 'available' if no reports, 'retained' if reports exist
    * Processes in batches to avoid transactional issues
    */
-  async checkHoldPeriods(limit: number = 100): Promise<{
+  async checkHoldPeriods(
+    limit: number = SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
+  ): Promise<{
     released: number;
     retained: number;
   }> {
@@ -207,8 +246,7 @@ export class SellerEarningsService {
       return {released: 0, retained: 0};
     }
 
-    // TODO: Check for open reports/disputes (future: query reports table)
-    // For now, assume no reports exist and release all
+    // Repository query already excludes earnings with open ticket reports
     const earningsToRelease = earningsReady.map(e => e.id);
 
     // Process in batches to avoid transactional issues
@@ -233,7 +271,7 @@ export class SellerEarningsService {
 
     return {
       released: totalReleased,
-      retained: 0, // TODO: Update when reports system is implemented
+      retained: 0, // Earnings with open reports are excluded by the repository query
     };
   }
 
@@ -249,7 +287,9 @@ export class SellerEarningsService {
    * This runs BEFORE checkHoldPeriods() in the cronjob so that retained earnings
    * are skipped by the hold period release logic.
    */
-  async checkMissingDocumentsAfterEventEnd(limit: number = 100): Promise<{
+  async checkMissingDocumentsAfterEventEnd(
+    limit: number = SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
+  ): Promise<{
     processed: number;
   }> {
     const ticketsWithMissingDocs =
@@ -321,6 +361,30 @@ export class SellerEarningsService {
           ticketId: item.ticketId,
         });
         // Continue processing other tickets
+      }
+    }
+
+    // Create one auto-case per reservation (not per order) for finer control —
+    // an order may have multiple tickets where only some are missing docs.
+    // Runs outside transactions per revendiste patterns.
+    if (this.ticketReportsService) {
+      for (const item of ticketsWithMissingDocs) {
+        try {
+          await this.ticketReportsService.createAutoCase({
+            caseType: 'ticket_not_received',
+            entityType: 'order_ticket_reservation',
+            entityId: item.reservationId,
+            source: 'auto_missing_document',
+            reservationIds: [item.reservationId],
+            reportedByUserId: item.buyerUserId ?? null,
+            eventName: item.eventName,
+          });
+        } catch (err) {
+          logger.error('Failed to create auto-case for reservation', {
+            reservationId: item.reservationId,
+            error: err,
+          });
+        }
       }
     }
 

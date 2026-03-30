@@ -2,12 +2,76 @@ import {createFileRoute, redirect} from '@tanstack/react-router';
 import {Suspense} from 'react';
 import {FullScreenLoading} from '~/components';
 import {EventPage} from '~/features/event';
-import {getEventByIdQuery, EventImageType} from '~/lib';
+import {
+  getEventByIdQuery,
+  EventImageType,
+  getApiBaseURL,
+  GetEventByIdResponse,
+} from '~/lib';
 import {isAxiosError} from 'axios';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {EventEnded} from '~/components/EventEnded';
 import type {ErrorComponentProps} from '@tanstack/react-router';
+import {createServerFn} from '@tanstack/react-start';
+import {auth} from '@clerk/tanstack-react-start/server';
+
+/**
+ * Server-only function to fetch event data and track views.
+ * This runs exclusively on the server, hiding the API endpoint from clients.
+ */
+export const fetchEventServer = createServerFn({method: 'GET'})
+  .inputValidator((data: {eventId: string; trackView: boolean}) => data)
+  .handler(async ({data}) => {
+    const apiUrl = getApiBaseURL();
+
+    // Get auth token to forward to backend (needed to filter out user's own listings)
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    try {
+      const {getToken} = await auth();
+      const token = await getToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch {
+      // Auth not available — request proceeds as anonymous
+    }
+
+    // Fetch event data on the server
+    const response = await fetch(`${apiUrl}/events/${data.eventId}`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('404: Event not found');
+      }
+      if (response.status === 401) {
+        throw new Error('401: Unauthorized');
+      }
+      throw new Error(`Failed to fetch event: ${response.status}`);
+    }
+
+    const eventData: GetEventByIdResponse = await response.json();
+
+    // Track view only on actual navigation (fire-and-forget)
+    if (data.trackView) {
+      console.log('Tracking event view for eventId:', data.eventId);
+      fetch(`${apiUrl}/events/${data.eventId}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).catch(() => {
+        // Silently ignore errors - view tracking is not critical
+      });
+    }
+
+    return eventData;
+  });
 
 export const Route = createFileRoute('/eventos/$eventId')({
   component: RouteComponent,
@@ -28,12 +92,34 @@ export const Route = createFileRoute('/eventos/$eventId')({
     }
     throw error;
   },
-  loader: async ({context, params}) => {
+  loader: async ({context, params, cause}) => {
     try {
-      return await context.queryClient.ensureQueryData(
-        getEventByIdQuery(params.eventId),
+      // Fetch event data on the server (hides API endpoint from client)
+      const eventData = await fetchEventServer({
+        data: {
+          eventId: params.eventId,
+          trackView: cause === 'enter', // Only track view on actual navigation
+        },
+      });
+
+      // Seed the React Query cache with the server-fetched data
+      context.queryClient.setQueryData(
+        getEventByIdQuery(params.eventId).queryKey,
+        eventData,
       );
+
+      return eventData;
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          throw redirect({
+            to: '/ingresar/$',
+          });
+        }
+        if (error.message.includes('404')) {
+          throw error;
+        }
+      }
       if (isAxiosError(error) && error.response?.status === 401) {
         throw redirect({
           to: '/ingresar/$',
@@ -54,9 +140,14 @@ export const Route = createFileRoute('/eventos/$eventId')({
     }
 
     const event = loaderData;
+    // Prefer og_hero (watermarked) for meta tags, fall back to hero
+    const ogHeroImage = event.eventImages.find(
+      img => img.imageType === EventImageType.OgHero,
+    );
     const heroImage = event.eventImages.find(
       img => img.imageType === EventImageType.Hero,
     );
+    const metaImage = ogHeroImage || heroImage;
 
     // Get base URL for canonical and absolute URLs
     const baseUrl = getBaseUrl();
@@ -76,23 +167,26 @@ export const Route = createFileRoute('/eventos/$eventId')({
       ? `${event.description}${eventDate ? ` - ${eventDate}` : ''}${
           event.venueName ? ` en ${event.venueName}` : ''
         }`
-      : `Evento${eventDate ? ` el ${eventDate}` : ''}${
+      : `Comprá entradas para ${event.name}${eventDate ? ` el ${eventDate}` : ''}${
           event.venueName ? ` en ${event.venueName}` : ''
-        }. Encuentra entradas disponibles en Revendiste.`;
+        }. Compra segura con garantía en Revendiste.`;
 
     // Get absolute URL for image (required for Open Graph)
-    const imageUrl = heroImage?.url
-      ? heroImage.url.startsWith('http')
-        ? heroImage.url
-        : `${baseUrl}${heroImage.url.startsWith('/') ? '' : '/'}${heroImage.url}`
+    const imageUrl = metaImage?.url
+      ? metaImage.url.startsWith('http')
+        ? metaImage.url
+        : `${baseUrl}${metaImage.url.startsWith('/') ? '' : '/'}${metaImage.url}`
       : undefined;
 
     // Build keywords from event data
     const keywords = [
+      `entradas ${event.name}`,
+      `comprar entradas ${event.name}`,
+      event.venueName ? `entradas ${event.venueName}` : null,
       event.name,
       event.venueName,
-      'entradas',
-      'eventos',
+      'comprar entradas Uruguay',
+      'entradas eventos',
       'revendiste',
       eventDate?.split(' ')[2], // Year
     ]
@@ -134,6 +228,15 @@ export const Route = createFileRoute('/eventos/$eventId')({
           streetAddress: event.venueAddress,
           addressLocality: event.venueName,
         },
+        ...(event.venueLatitude && event.venueLongitude
+          ? {
+              geo: {
+                '@type': 'GeoCoordinates',
+                latitude: parseFloat(event.venueLatitude),
+                longitude: parseFloat(event.venueLongitude),
+              },
+            }
+          : {}),
       },
       image: imageUrl ? [imageUrl] : undefined,
       offers: {
@@ -200,6 +303,33 @@ export const Route = createFileRoute('/eventos/$eventId')({
         {
           type: 'application/ld+json',
           children: JSON.stringify(structuredData, null, 2),
+        },
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Inicio',
+                item: baseUrl,
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Eventos',
+                item: `${baseUrl}/eventos`,
+              },
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: event.name,
+                item: canonicalUrl,
+              },
+            ],
+          }),
         },
       ],
     };

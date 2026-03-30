@@ -5,16 +5,27 @@ import {EventTicketCurrency} from '~/lib';
 import {getCurrencySymbol} from '~/utils';
 
 interface PriceInputProps
-  extends Omit<React.ComponentProps<'input'>, 'onChange' | 'value'> {
+  extends Omit<React.ComponentProps<'input'>, 'onChange' | 'value' | 'max'> {
   value?: number;
   onChange?: (value: number) => void;
   locale?: string;
   currency?: EventTicketCurrency;
+  max?: number;
+  onMaxExceeded?: () => void;
 }
 
 const PriceInput = React.forwardRef<HTMLInputElement, PriceInputProps>(
   (
-    {value = 0, onChange, locale = 'es-ES', currency, className, ...props},
+    {
+      value = 0,
+      onChange,
+      locale = 'es-ES',
+      currency,
+      max,
+      onMaxExceeded,
+      className,
+      ...props
+    },
     ref,
   ) => {
     const [displayValue, setDisplayValue] = React.useState(
@@ -28,13 +39,19 @@ const PriceInput = React.forwardRef<HTMLInputElement, PriceInputProps>(
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       // strip everything that's not a digit
       const raw = e.target.value.replace(/\D/g, '');
-      const num = raw === '' ? 0 : Number(raw);
+      let num = raw === '' ? 0 : Number(raw);
+
+      // Clamp to max if specified
+      if (max !== undefined && num > max) {
+        num = max;
+        onMaxExceeded?.();
+      }
 
       // update parent component
       onChange?.(num);
 
-      // update display with separators
-      setDisplayValue(raw === '' ? '' : num.toLocaleString(locale));
+      // update display with separators (use clamped value)
+      setDisplayValue(num === 0 && raw === '' ? '' : num.toLocaleString(locale));
     };
 
     const handleBlur = () => {

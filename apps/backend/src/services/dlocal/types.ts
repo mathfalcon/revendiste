@@ -50,14 +50,15 @@ export type DLocalPaymentType =
   | 'VOUCHER';
 
 /**
- * Parameters for creating a dLocal payment
+ * Parameters for creating a dLocal payment.
+ * @see https://docs.dlocalgo.com/integration-api/welcome-to-dlocal-go-api/payments/create-a-payment
  */
 export interface CreatePaymentParams {
   /** Three-letter ISO-4217 currency code (uppercase) */
   currency: 'USD' | 'UYU';
   /** Transaction amount in the specified currency */
   amount: number;
-  /** User's country code (ISO 3166-1 alpha-2). Optional - checkout will prompt if not provided */
+  /** User's country code (ISO 3166-1 alpha-2). If not provided, checkout will prompt the payer. Send e.g. UY to lock checkout to Uruguay. */
   country?: string;
   /** Merchant-side payment identifier (max 128 chars). Auto-generated if not provided */
   orderId?: string;
@@ -181,4 +182,34 @@ export interface DLocalPaymentResponse {
 export interface DLocalWebhookPayload {
   /** Payment ID that changed status */
   payment_id: string;
+}
+
+/**
+ * dLocal refund status
+ */
+export type DLocalRefundStatus = 'PENDING' | 'PAID' | 'REJECTED' | 'CANCELLED';
+
+/**
+ * Response from dLocal refund creation and retrieval
+ * @see https://docs.dlocalgo.com/integration-api/welcome-to-dlocal-go-api/refunds
+ */
+export interface DLocalRefundResponse {
+  /** Refund ID */
+  id: string;
+  /** Payment ID being refunded */
+  payment_id: string;
+  /** Refund amount */
+  amount: number;
+  /** Three-letter ISO-4217 currency code */
+  currency: string;
+  /** Refund status */
+  status: DLocalRefundStatus;
+  /** Reason for refund */
+  reason?: string;
+  /** Merchant refund ID */
+  merchant_refund_id?: string;
+  /** Refund creation date (ISO 8601) */
+  created_date: string;
+  /** Refund approval date (ISO 8601) */
+  approved_date?: string;
 }

@@ -45,15 +45,11 @@ export const PayoutCompletedEmail = ({
 }: PayoutCompletedEmailProps) => (
   <BaseEmail
     title="¡Retiro completado!"
-    preview={`Tu retiro de ${formatPrice(
-      amount,
-      currency,
-    )} ha sido completado exitosamente`}
+    preview={`Tu retiro de ${formatPrice(amount, currency)} se completó`}
     appBaseUrl={appBaseUrl}
   >
     <Text className="text-foreground mb-4">
-      ¡Excelente noticia! Tu retiro ha sido completado exitosamente y el dinero
-      debería estar disponible en tu cuenta bancaria.
+      Tu retiro se completó y el dinero ya debería estar en tu cuenta bancaria.
     </Text>
 
     {/* CTA Button */}

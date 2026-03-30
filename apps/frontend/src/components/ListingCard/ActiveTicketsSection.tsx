@@ -6,6 +6,10 @@ import {
   Minus,
   Clock,
   ChevronDown,
+  Upload,
+  CheckCircle,
+  AlertCircle,
+  Eye,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -26,15 +30,17 @@ import type {
 } from '~/lib/api/generated';
 import {EditTicketPriceDialog} from './EditTicketPriceDialog';
 import {RemoveTicketDialog} from './RemoveTicketDialog';
+import {TicketDocumentViewerModal} from '~/components';
 import {CopyableText} from '~/components/ui/copyable-text';
 import {cn} from '~/lib/utils';
 
 interface ActiveTicketsSectionProps {
-  tickets: GetUserListingsResponse[number]['tickets'];
+  tickets: GetUserListingsResponse['data'][number]['tickets'];
   ticketWaveName: string;
   ticketWaveCurrency: EventTicketCurrency;
   ticketWaveFaceValue: number;
   isEventPast?: boolean;
+  onUploadClick?: (ticketId: string) => void;
 }
 
 export function ActiveTicketsSection({
@@ -43,9 +49,11 @@ export function ActiveTicketsSection({
   ticketWaveCurrency,
   ticketWaveFaceValue,
   isEventPast = false,
+  onUploadClick,
 }: ActiveTicketsSectionProps) {
   const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
   const [removingTicketId, setRemovingTicketId] = useState<string | null>(null);
+  const [viewingTicketId, setViewingTicketId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const editingTicket = tickets.find(t => t.id === editingTicketId);
@@ -55,8 +63,13 @@ export function ActiveTicketsSection({
     return null;
   }
 
+  // Count tickets that can upload and need documents
+  const ticketsNeedingDocument = tickets.filter(
+    ticket => ticket.canUploadDocument && !ticket.hasDocument,
+  ).length;
+
   // Different styling for expired vs active tickets
-  const sectionLabel = isEventPast ? 'Tickets expirados' : 'Tickets activos';
+  const sectionLabel = isEventPast ? 'Entradas expiradas' : 'Entradas activas';
   const iconColorClass = isEventPast
     ? 'text-muted-foreground'
     : 'text-blue-600';
@@ -92,6 +105,13 @@ export function ActiveTicketsSection({
               >
                 {tickets.length}
               </span>
+              {/* Alert indicator for tickets needing document upload */}
+              {ticketsNeedingDocument > 0 && (
+                <span className='flex items-center gap-1 text-xs text-orange-600 bg-orange-500/10 px-2 py-0.5 rounded-full'>
+                  <AlertCircle className='h-3 w-3' />
+                  <span>{ticketsNeedingDocument}</span>
+                </span>
+              )}
             </div>
             <ChevronDown
               className={cn(
@@ -137,7 +157,7 @@ export function ActiveTicketsSection({
                               : 'text-foreground',
                           )}
                         >
-                          Ticket #{ticket.ticketNumber} - {ticketWaveName}
+                          Entrada #{ticket.ticketNumber} - {ticketWaveName}
                         </p>
                       </div>
                       <div className='flex items-center gap-1.5 mt-0.5'>
@@ -168,35 +188,61 @@ export function ActiveTicketsSection({
                     </div>
                   </div>
 
-                  {/* Right side: Actions - only show for active events */}
-                  {!isEventPast && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant='ghost'
-                          size='icon'
-                          className='h-8 w-8 shrink-0'
-                        >
-                          <MoreVertical className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuItem
-                          onClick={() => setEditingTicketId(ticket.id)}
-                        >
-                          <Edit className='mr-2 h-4 w-4' />
-                          Editar precio
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className='text-destructive focus:text-destructive'
-                          onClick={() => setRemovingTicketId(ticket.id)}
-                        >
-                          <Minus className='mr-2 h-4 w-4' />
-                          Retirar de venta
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
+                  {/* Right side: Document status & Actions */}
+                  <div className='flex items-center gap-2 shrink-0'>
+                    {/* Document status indicator */}
+                    {ticket.hasDocument ? (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='h-7 text-xs text-green-600 border-green-500/30 hover:bg-green-500/10'
+                        onClick={() => setViewingTicketId(ticket.id)}
+                      >
+                        <Eye className='mr-1.5 h-3 w-3' />
+                        Ver documento
+                      </Button>
+                    ) : ticket.canUploadDocument ? (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='h-7 text-xs'
+                        onClick={() => onUploadClick?.(ticket.id)}
+                      >
+                        <Upload className='mr-1.5 h-3 w-3' />
+                        Subir entrada
+                      </Button>
+                    ) : null}
+
+                    {/* Actions dropdown - only show for active events */}
+                    {!isEventPast && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8 shrink-0'
+                          >
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            onClick={() => setEditingTicketId(ticket.id)}
+                          >
+                            <Edit className='mr-2 h-4 w-4' />
+                            Editar precio
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className='text-destructive focus:text-destructive'
+                            onClick={() => setRemovingTicketId(ticket.id)}
+                          >
+                            <Minus className='mr-2 h-4 w-4' />
+                            Retirar de venta
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -227,6 +273,18 @@ export function ActiveTicketsSection({
           }}
           ticketId={removingTicket.id}
           ticketNumber={removingTicket.ticketNumber}
+        />
+      )}
+
+      {/* Document Viewer Modal */}
+      {viewingTicketId && (
+        <TicketDocumentViewerModal
+          ticketId={viewingTicketId}
+          open={!!viewingTicketId}
+          onOpenChange={open => {
+            if (!open) setViewingTicketId(null);
+          }}
+          isEventPast={isEventPast}
         />
       )}
     </>

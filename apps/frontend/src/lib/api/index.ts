@@ -24,7 +24,7 @@ export interface PendingOrderErrorResponse extends StandardizedErrorResponse {
 
 // During SSR, use Cloud Map DNS for direct backend access
 // On client-side, use the normal API URL (through Cloudflare)
-const getApiBaseURL = () => {
+export const getApiBaseURL = () => {
   if (typeof window === 'undefined' && process.env.BACKEND_IP) {
     // Server-side: use Cloud Map DNS for direct VPC communication
     // BACKEND_IP = "backend.revendiste.local:3001"
@@ -107,4 +107,6 @@ export * from './payments';
 export * from './payouts';
 export * from './users';
 export * from './identity-verification';
+export * from './ticket-reports';
+export * from './profile';
 export * from './generated';

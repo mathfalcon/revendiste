@@ -3,7 +3,10 @@ import {PayoutsRepository, PayoutDocumentsRepository} from '~/repositories';
 import {getStorageProvider} from '~/services/storage';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {logger} from '~/utils';
-import {PAYOUT_ERROR_MESSAGES} from '~/constants/error-messages';
+import {
+  PAYOUT_ERROR_MESSAGES,
+  PAYOUT_DOCUMENT_ERROR_MESSAGES,
+} from '~/constants/error-messages';
 
 /**
  * Payout Document Service
@@ -79,7 +82,9 @@ export class PayoutDocumentsService {
     });
 
     if (!newDocument) {
-      throw new ValidationError('Error al crear el registro del documento');
+      throw new ValidationError(
+        PAYOUT_DOCUMENT_ERROR_MESSAGES.DOCUMENT_CREATE_FAILED,
+      );
     }
 
     logger.info('Payout document uploaded', {
@@ -147,7 +152,7 @@ export class PayoutDocumentsService {
     const document = await this.payoutDocumentsRepository.getById(documentId);
 
     if (!document) {
-      throw new NotFoundError('Documento no encontrado');
+      throw new NotFoundError(PAYOUT_DOCUMENT_ERROR_MESSAGES.DOCUMENT_NOT_FOUND);
     }
 
     // Verify payout exists
@@ -161,7 +166,9 @@ export class PayoutDocumentsService {
     const deleted = await this.payoutDocumentsRepository.softDelete(documentId);
 
     if (!deleted) {
-      throw new ValidationError('Error al eliminar el documento');
+      throw new ValidationError(
+        PAYOUT_DOCUMENT_ERROR_MESSAGES.DOCUMENT_DELETE_FAILED,
+      );
     }
 
     logger.info('Payout document deleted', {

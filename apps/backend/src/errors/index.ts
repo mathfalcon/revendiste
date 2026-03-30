@@ -77,8 +77,11 @@ export class NotFoundError extends AppError {
 }
 
 export class ConflictError extends AppError {
-  constructor(message = 'Conflict') {
+  public readonly metadata?: Record<string, any>;
+
+  constructor(message = 'Conflict', metadata?: Record<string, any>) {
     super(message, 409);
+    this.metadata = metadata;
   }
 }
 

@@ -74,6 +74,9 @@ if (NODE_ENV !== 'production') {
   startSyncPaymentsAndExpireOrdersJob();
   startNotifyUploadAvailabilityJob();
   startCheckPayoutHoldPeriodsJob();
+  startProcessPendingNotificationsJob();
+  startProcessPendingJobsJob();
+  startScrapeEventsJob();
   startMyNewJob(); // Add your new job here
 }
 ```
@@ -98,14 +101,18 @@ logger.info('  - sync-payments-and-expire-orders');
 logger.info('  - notify-upload-availability');
 logger.info('  - check-payout-hold-periods');
 logger.info('  - process-pending-notifications');
+logger.info('  - process-pending-jobs');
+logger.info('  - scrape-events');
 logger.info('  - my-new-job'); // Add your new job
 ```
 
 ### 4. Add to Terraform (Production Infrastructure)
 
+Production uses **modules**: ECS task definitions live in `infrastructure/modules/ecs/main.tf`, EventBridge rules in `infrastructure/modules/cronjobs/main.tf`, and the production environment wires them in `infrastructure/environments/production/main.tf`. When adding a new cronjob you must add the task definition, the cronjob module variable + rule + target, and pass the task ARN and schedule from the production main.
+
 #### 4a. Create ECS Task Definition
 
-Add to `infrastructure/production/ecs.tf`:
+Add to `infrastructure/modules/ecs/main.tf` (after existing cronjob task definitions):
 
 ```hcl
 # Task definition for my-new-job
@@ -156,9 +163,11 @@ resource "aws_ecs_task_definition" "cronjob_my_new_job" {
 }
 ```
 
-#### 4b. Create EventBridge Rule
+Add the new task to the `cronjob_task_definition_arns` list and add a dedicated output (e.g. `cronjob_my_new_job_task_arn`) in `infrastructure/modules/ecs/outputs.tf`.
 
-Add to `infrastructure/production/cronjobs.tf`:
+#### 4b. Create EventBridge Rule and Variable
+
+Add a variable in `infrastructure/modules/cronjobs/variables.tf` for the task ARN and schedule, then add the rule and target in `infrastructure/modules/cronjobs/main.tf`:
 
 ```hcl
 # EventBridge Rule for my-new-job
@@ -193,25 +202,28 @@ resource "aws_cloudwatch_event_target" "my_new_job" {
 }
 ```
 
-#### 4c. Update IAM Permissions
+#### 4c. Update Production Environment
 
-Update `infrastructure/production/iam.tf` to include the new task definition:
-
-```hcl
-Resource = [
-  aws_ecs_task_definition.cronjob_sync_payments.arn,
-  aws_ecs_task_definition.cronjob_notify_upload.arn,
-  aws_ecs_task_definition.cronjob_check_payout.arn,
-  aws_ecs_task_definition.cronjob_process_notifications.arn,
-  aws_ecs_task_definition.cronjob_my_new_job.arn, # Add your new job
-]
-```
+In `infrastructure/environments/production/main.tf`, pass the new task ARN and schedule into the `module "cronjobs"` block (e.g. `process_pending_jobs_task_arn = module.ecs.cronjob_process_pending_jobs_task_arn`, `process_pending_jobs_schedule = "cron(*/5 * * * ? *)"`). IAM is already set up to allow EventBridge to run any task in `module.ecs.cronjob_task_definition_arns`; adding the new task to that list in ECS outputs is enough.
 
 ### 5. Deploy
 
 1. **Backend Code**: Deploy your backend changes (the new cronjob file and script updates)
 2. **Terraform**: Run `terraform plan` and `terraform apply` to create the new infrastructure
 3. **Verify**: Check CloudWatch Logs to ensure the job runs on schedule
+
+## Current Cronjobs and Recurrence
+
+| Job | Purpose | Default recurrence (prod) |
+|-----|---------|---------------------------|
+| sync-payments-and-expire-orders | Sync payment status, expire pending orders | Every 5 minutes |
+| notify-upload-availability | Document upload reminders | Every hour |
+| check-payout-hold-periods | Release earnings from hold | Every hour |
+| process-pending-notifications | Retry sending pending notifications (send_via_job) | Every 5 minutes |
+| process-pending-jobs | Process job queue (notify-order-confirmed, send-notification, etc.) | Every 2 minutes |
+| scrape-events | Scrape event data from sources | Every 30 minutes |
+
+**Choosing recurrence:** For queue processors (e.g. `process-pending-jobs`), avoid running every minute in production—each run starts an ECS task and costs money. Every 5 minutes is a good default: it keeps email/order confirmation latency low while limiting cost. You can increase to every 2–3 minutes later if needed.
 
 ## Schedule Expressions
 
@@ -260,9 +272,9 @@ When adding a new cronjob:
 - [ ] Create cronjob file with `runXxx()` and `startXxx()` functions
 - [ ] Add to `server.ts` (dev/local only)
 - [ ] Add to `scripts/run-job.ts` (production)
-- [ ] Create ECS task definition in `ecs.tf`
-- [ ] Create EventBridge rule in `cronjobs.tf`
-- [ ] Update IAM permissions in `iam.tf`
+- [ ] Create ECS task definition in `infrastructure/modules/ecs/main.tf` and add output
+- [ ] Add variable, EventBridge rule and target in `infrastructure/modules/cronjobs/`
+- [ ] Pass task ARN and schedule from `infrastructure/environments/production/main.tf` into the cronjobs module
 - [ ] Test locally
 - [ ] Deploy and verify in production
 
@@ -270,15 +282,12 @@ When adding a new cronjob:
 
 To change a job's schedule:
 
-1. **Development**: Update the cron expression in the `startXxx()` function
-2. **Production**: Update the `schedule_expression` in the EventBridge rule in `cronjobs.tf`
-3. **Apply**: Run `terraform apply` to update the schedule
+1. **Development**: Update the cron expression in the `startXxx()` function in the cronjob file
+2. **Production**: Update the schedule variable passed to the cronjobs module in `infrastructure/environments/production/main.tf` (e.g. `process_pending_jobs_schedule`)
+3. **Apply**: Run `terraform apply` to update the EventBridge rule
 
-## Example: Complete New Job
+## Examples
 
-See `apps/backend/src/cronjobs/process-pending-notifications.ts` for a complete example of a job that:
-- Has both run-once and cron scheduler functions
-- Handles errors properly
-- Uses proper logging
-- Works in both dev and production
+- **Queue / notifications:** `apps/backend/src/cronjobs/process-pending-notifications.ts` — run-once + cron scheduler, error handling, logging.
+- **Job queue processor:** `apps/backend/src/cronjobs/process-pending-jobs.ts` — processes the PostgreSQL job queue (notify-order-confirmed, send-notification, etc.); runs every 2 minutes in dev and prod so buyer confirmation emails are sent soon after payment.
 

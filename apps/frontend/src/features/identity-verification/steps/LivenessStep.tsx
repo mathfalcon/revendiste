@@ -65,7 +65,6 @@ export function LivenessStep({
     typeof navigator !== 'undefined' && !!navigator.mediaDevices;
 
   const handleAnalysisComplete = useCallback(async () => {
-    console.log('[Liveness] Analysis complete, calling backend to verify');
     closeDialog();
     onComplete();
   }, [closeDialog, onComplete]);

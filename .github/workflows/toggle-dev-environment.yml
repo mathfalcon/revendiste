@@ -1,0 +1,116 @@
+name: Toggle Dev Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Start or Stop the dev environment'
+        required: true
+        type: choice
+        options:
+          - Start
+          - Stop
+
+env:
+  AWS_REGION: sa-east-1
+  ECS_CLUSTER: revendiste-dev-cluster
+  BACKEND_SERVICE: revendiste-dev-backend
+  FRONTEND_SERVICE: revendiste-dev-frontend
+  RDS_INSTANCE: revendiste-dev-postgres
+  EVENTBRIDGE_RULES: >-
+    revendiste-dev-sync-payments
+    revendiste-dev-notify-upload
+    revendiste-dev-check-payout
+    revendiste-dev-scrape-events
+    revendiste-dev-process-notifications
+    revendiste-dev-process-pending-jobs
+
+jobs:
+  toggle:
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Stop dev environment
+        if: github.event.inputs.action == 'Stop'
+        run: |
+          echo "=== Stopping dev environment ==="
+
+          echo "Scaling ECS services to 0..."
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $BACKEND_SERVICE \
+            --desired-count 0 \
+            --region $AWS_REGION \
+            --no-cli-pager
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $FRONTEND_SERVICE \
+            --desired-count 0 \
+            --region $AWS_REGION \
+            --no-cli-pager
+
+          echo "Stopping RDS instance..."
+          aws rds stop-db-instance \
+            --db-instance-identifier $RDS_INSTANCE \
+            --region $AWS_REGION \
+            --no-cli-pager || echo "RDS may already be stopped"
+
+          echo "Disabling EventBridge cronjob rules..."
+          for RULE in $EVENTBRIDGE_RULES; do
+            aws events disable-rule --name "$RULE" --region $AWS_REGION
+            echo "  Disabled: $RULE"
+          done
+
+          echo "=== Dev environment stopped ==="
+
+      - name: Start dev environment
+        if: github.event.inputs.action == 'Start'
+        run: |
+          echo "=== Starting dev environment ==="
+
+          echo "Starting RDS instance..."
+          aws rds start-db-instance \
+            --db-instance-identifier $RDS_INSTANCE \
+            --region $AWS_REGION \
+            --no-cli-pager || echo "RDS may already be running"
+
+          echo "Waiting for RDS to become available (this takes ~5-10 minutes)..."
+          aws rds wait db-instance-available \
+            --db-instance-identifier $RDS_INSTANCE \
+            --region $AWS_REGION
+          echo "RDS is available!"
+
+          echo "Enabling EventBridge cronjob rules..."
+          for RULE in $EVENTBRIDGE_RULES; do
+            aws events enable-rule --name "$RULE" --region $AWS_REGION
+            echo "  Enabled: $RULE"
+          done
+
+          echo "Scaling ECS services to 1..."
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $BACKEND_SERVICE \
+            --desired-count 1 \
+            --region $AWS_REGION \
+            --no-cli-pager
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $FRONTEND_SERVICE \
+            --desired-count 1 \
+            --region $AWS_REGION \
+            --no-cli-pager
+
+          echo "Waiting for ECS services to stabilize..."
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services $BACKEND_SERVICE $FRONTEND_SERVICE \
+            --region $AWS_REGION
+
+          echo "=== Dev environment started ==="

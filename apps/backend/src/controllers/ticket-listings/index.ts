@@ -11,11 +11,17 @@ import {
   Response,
   Path,
   UploadedFile,
+  UploadedFiles,
+  FormField,
 } from '@mathfalcon/tsoa-runtime';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {TicketDocumentService} from '~/services/ticket-documents';
 import {NotificationService} from '~/services/notifications';
-import {requireAuthMiddleware} from '~/middleware';
+import {
+  requireAuthMiddleware,
+  paginationMiddleware,
+  ensurePagination,
+} from '~/middleware';
 import {
   TicketListingsRepository,
   EventsRepository,
@@ -35,13 +41,15 @@ import {
   UnauthorizedError,
   BadRequestError,
 } from '~/errors';
+import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 import {
-  CreateTicketListingRouteBody,
   CreateTicketListingRouteSchema,
   UpdateTicketPriceRouteBody,
   UpdateTicketPriceRouteSchema,
 } from './validation';
 import {Body, ValidateBody} from '~/decorators';
+import {TICKET_LISTING_ERROR_MESSAGES} from '~/constants/error-messages';
+import {getPostHog} from '~/lib/posthog';
 
 type CreateTicketListingResponse = ReturnType<
   TicketListingsService['createTicketListing']
@@ -95,6 +103,13 @@ export class TicketListingsController {
     ordersRepository,
     usersRepository,
     notificationService,
+    new TicketDocumentService(
+      listingTicketsRepository,
+      ticketDocumentsRepository,
+      orderTicketReservationsRepository,
+      ordersRepository,
+      notificationService,
+    ),
   );
   private documentService = new TicketDocumentService(
     listingTicketsRepository,
@@ -113,29 +128,73 @@ export class TicketListingsController {
   @Response<NotFoundError>(404, 'Event not found or ticket wave not found')
   @Response<ValidationError>(
     422,
-    'Validation failed: Cannot create listing for finished event, ticket wave does not belong to event, price exceeds face value, or quantity must be greater than 0',
+    'Validation failed: Cannot create listing for finished event, ticket wave does not belong to event, price exceeds face value, quantity must be greater than 0, or ticket limit exceeded',
   )
   @Middlewares(requireAuthMiddleware)
-  @ValidateBody(CreateTicketListingRouteSchema)
   public async create(
-    @Body() body: CreateTicketListingRouteBody,
+    @FormField() eventId: string,
+    @FormField() ticketWaveId: string,
+    @FormField() price: number,
+    @FormField() quantity: number,
     @Request() request: express.Request,
+    @UploadedFiles('documents') documents?: Express.Multer.File[],
   ): Promise<CreateTicketListingResponse> {
-    return this.service.createTicketListing(
-      {
-        ...body,
+    // Validate form fields using the Zod schema (FormField sends strings)
+    const parsed = CreateTicketListingRouteSchema.safeParse({
+      body: {
+        eventId,
+        ticketWaveId,
+        price: Number(price),
+        quantity: Number(quantity),
       },
+    });
+
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0];
+      throw new BadRequestError(firstError?.message ?? 'Datos inválidos');
+    }
+
+    const body = parsed.data.body;
+    const documentFiles = documents?.map(f => ({
+      buffer: f.buffer,
+      originalName: f.originalname,
+      mimeType: f.mimetype,
+      sizeBytes: f.size,
+    }));
+
+    const result = await this.service.createTicketListing(
+      body,
       request.user.id,
+      documentFiles,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_listing_created',
+      properties: {
+        event_id: body.eventId,
+        ticket_wave_id: body.ticketWaveId,
+        quantity: body.quantity,
+        price: body.price,
+        has_documents: !!documents?.length,
+      },
+    });
+    return result;
   }
 
   @Get('/my-listings')
+  @Middlewares(
+    requireAuthMiddleware,
+    paginationMiddleware(10, 100),
+    ensurePagination,
+  )
   @Response<UnauthorizedError>(401, 'Authentication required')
-  @Middlewares(requireAuthMiddleware)
   public async getMyListings(
     @Request() request: express.Request,
   ): Promise<GetUserListingsResponse> {
-    return this.service.getUserListingsWithTickets(request.user.id);
+    return this.service.getUserListingsWithTickets(
+      request.user.id,
+      request.pagination!,
+    );
   }
 
   /**
@@ -165,10 +224,10 @@ export class TicketListingsController {
     @Request() request: express.Request,
   ): Promise<UploadDocumentResponse> {
     if (!file) {
-      throw new BadRequestError('No file uploaded');
+      throw new BadRequestError(VALIDATION_MESSAGES.NO_FILE_UPLOADED);
     }
 
-    return this.documentService.uploadTicketDocument(
+    const result = await this.documentService.uploadTicketDocument(
       ticketId,
       request.user.id,
       {
@@ -178,6 +237,16 @@ export class TicketListingsController {
         sizeBytes: file.size,
       },
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_document_uploaded',
+      properties: {
+        ticket_id: ticketId,
+        file_type: file.mimetype,
+        file_size_bytes: file.size,
+      },
+    });
+    return result;
   }
 
   /**
@@ -207,11 +276,11 @@ export class TicketListingsController {
     @Request() request: express.Request,
   ): Promise<UploadDocumentResponse> {
     if (!file) {
-      throw new BadRequestError('No file uploaded');
+      throw new BadRequestError(VALIDATION_MESSAGES.NO_FILE_UPLOADED);
     }
 
     // Uses the same service method - it handles versioning automatically
-    return this.documentService.uploadTicketDocument(
+    const result = await this.documentService.uploadTicketDocument(
       ticketId,
       request.user.id,
       {
@@ -221,6 +290,17 @@ export class TicketListingsController {
         sizeBytes: file.size,
       },
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_document_uploaded',
+      properties: {
+        ticket_id: ticketId,
+        file_type: file.mimetype,
+        file_size_bytes: file.size,
+        is_update: true,
+      },
+    });
+    return result;
   }
 
   /**
@@ -249,11 +329,20 @@ export class TicketListingsController {
     @Body() body: UpdateTicketPriceRouteBody,
     @Request() request: express.Request,
   ): Promise<UpdateTicketPriceResponse> {
-    return this.service.updateTicketPrice(
+    const result = await this.service.updateTicketPrice(
       ticketId,
       body.price,
       request.user.id,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_price_updated',
+      properties: {
+        ticket_id: ticketId,
+        new_price: body.price,
+      },
+    });
+    return result;
   }
 
   /**
@@ -279,7 +368,15 @@ export class TicketListingsController {
     @Path() ticketId: string,
     @Request() request: express.Request,
   ): Promise<RemoveTicketResponse> {
-    return this.service.removeTicket(ticketId, request.user.id);
+    const result = await this.service.removeTicket(ticketId, request.user.id);
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'ticket_removed',
+      properties: {
+        ticket_id: ticketId,
+      },
+    });
+    return result;
   }
 
   /**

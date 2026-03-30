@@ -18,11 +18,26 @@ if (!jobName) {
   logger.info('  - notify-upload-availability');
   logger.info('  - check-payout-hold-periods');
   logger.info('  - process-pending-notifications');
+  logger.info('  - process-pending-jobs');
   logger.info('  - scrape-events');
   process.exit(1);
 }
 
+/**
+ * Format duration in a human-readable way
+ */
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds}s`;
+}
+
 async function runJob() {
+  const startTime = Date.now();
+
   try {
     logger.info(`Starting job: ${jobName}`);
 
@@ -59,6 +74,16 @@ async function runJob() {
         break;
       }
 
+      case 'process-pending-jobs': {
+        const {
+          initializeJobQueue,
+          runProcessPendingJobs,
+        } = await import('~/cronjobs/process-pending-jobs');
+        initializeJobQueue();
+        await runProcessPendingJobs();
+        break;
+      }
+
       case 'scrape-events': {
         const {runScrapeEvents} = await import('~/cronjobs/scrape-events');
         await runScrapeEvents();
@@ -70,10 +95,19 @@ async function runJob() {
         process.exit(1);
     }
 
-    logger.info(`Job completed successfully: ${jobName}`);
+    const duration = Date.now() - startTime;
+    logger.info(`Job completed successfully: ${jobName}`, {
+      durationMs: duration,
+      duration: formatDuration(duration),
+    });
     process.exit(0);
   } catch (error) {
-    logger.error(`Job failed: ${jobName}`, error);
+    const duration = Date.now() - startTime;
+    logger.error(`Job failed: ${jobName}`, {
+      error,
+      durationMs: duration,
+      duration: formatDuration(duration),
+    });
     process.exit(1);
   }
 }

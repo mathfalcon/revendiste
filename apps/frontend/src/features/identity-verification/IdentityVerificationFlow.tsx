@@ -261,7 +261,7 @@ export function IdentityVerificationFlow({
       if (data.status === 'completed') {
         setLivenessVerificationFailed(false);
         setStep('complete');
-        toast.success('Verificación completada exitosamente');
+        toast.success('Verificación completada');
         setTimeout(() => onComplete(), 2000);
       } else if (data.status === 'requires_manual_review') {
         setLivenessVerificationFailed(false);

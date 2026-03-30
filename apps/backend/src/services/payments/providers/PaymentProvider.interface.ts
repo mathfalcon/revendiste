@@ -28,7 +28,7 @@ export interface CreatePaymentParams {
   notificationUrl?: string;
   expirationMinutes: number;
   payer?: {
-    id: string;
+    id?: string; // Optional: omit for dLocal to avoid persisting a client locked to one country
     name?: string;
     email: string;
     [key: string]: any; // Allow provider-specific payer fields

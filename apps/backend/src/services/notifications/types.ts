@@ -69,9 +69,26 @@ export function validateNotification(
 }
 
 /**
+ * Strip internal fields (attachmentRefs, postSendActions) from metadata so they are not exposed in API responses.
+ */
+function stripInternalMetadataFromApi(
+  metadata: NotificationMetadata | null,
+): NotificationMetadata | null {
+  if (!metadata || typeof metadata !== 'object') return metadata;
+  const m = metadata as NotificationMetadata & {
+    attachmentRefs?: unknown;
+    postSendActions?: unknown;
+  };
+  if (!('attachmentRefs' in m) && !('postSendActions' in m)) return metadata;
+  const {attachmentRefs: _a, postSendActions: _p, ...rest} = m;
+  return rest as NotificationMetadata;
+}
+
+/**
  * Helper function to parse and type a notification from the database
  * Accepts the actual return type from Kysely (with Date objects, not ColumnType)
  * Uses the discriminated union to validate and type the notification
+ * Strips attachmentRefs from metadata so they are not exposed in API responses.
  */
 export function parseNotification(
   notification: Notification,
@@ -89,6 +106,9 @@ export function parseNotification(
       console.error('Failed to parse notification metadata', error);
     }
   }
+
+  // Do not expose attachmentRefs or postSendActions in API responses
+  parsedMetadata = stripInternalMetadataFromApi(parsedMetadata);
 
   let parsedActions: NotificationAction[] | null = null;
   if (notification.actions) {

@@ -1,9 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import multer from 'multer';
 import path from 'path';
 import {PORT, STORAGE_LOCAL_PATH, APP_BASE_URL, NODE_ENV} from './config/env';
-import {errorHandler, optionalAuthMiddleware} from './middleware';
+import {shutdownPostHog} from './lib/posthog';
+import {initOtel, shutdownOtel} from './lib/otel';
+import {apiRateLimitMiddleware} from './middleware/rateLimit';
+import {
+  errorHandler,
+  optionalAuthMiddleware,
+  requestIdMiddleware,
+} from './middleware';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
 import {logger} from './utils';
@@ -11,8 +19,19 @@ import {clerkMiddleware} from '@clerk/express';
 import {startSyncPaymentsAndExpireOrdersJob} from './cronjobs/sync-payments-and-expire-orders';
 import {startNotifyUploadAvailabilityJob} from './cronjobs/notify-upload-availability';
 import {startCheckPayoutHoldPeriodsJob} from './cronjobs/check-payout-hold-periods';
-import {startScrapeEventsJob} from './cronjobs/scrape-events';
 import {startProcessPendingNotificationsJob} from './cronjobs/process-pending-notifications';
+import {
+  initializeJobQueue,
+  startProcessPendingJobsJob,
+} from './cronjobs/process-pending-jobs';
+import {ValidationService} from '@mathfalcon/tsoa-runtime';
+
+// Initialize OpenTelemetry before any logging so the OTel transport is active
+initOtel();
+
+// Initialize job queue early so getJobQueueService() is available when controllers load
+initializeJobQueue();
+logger.info('Job queue initialized');
 
 const app: express.Application = express();
 
@@ -27,6 +46,7 @@ app.use(
       'http://192.168.0.127:3000',
       'https://192.168.0.127:3000',
       'https://192.168.68.115:3000',
+      'https://192.168.56.1:3000',
       APP_BASE_URL,
       'https://revendiste.com',
     ].filter(Boolean), // Remove any undefined values
@@ -37,6 +57,8 @@ app.use(
 );
 
 app.use(express.json());
+
+app.use(requestIdMiddleware);
 
 // Preserve original body before TSOA processes it
 // TSOA's getValidatedArgs may strip nested Record types, so we store the original
@@ -76,8 +98,35 @@ app.use(
 
 const router = express.Router();
 
+if (NODE_ENV !== 'test') {
+  router.use(apiRateLimitMiddleware);
+}
+
+ValidationService.prototype.ValidateParam = (
+  property,
+  rawValue,
+  name = '',
+  fieldErrors,
+  parent = false,
+  minimalSwaggerConfig,
+) => {
+  return rawValue;
+};
+
+RegisterRoutes.prototype.getValidatedArgs = (
+  args: any,
+  request: any,
+  response: any,
+) => Object.keys(args);
+
+// Custom multer with 50MB limit for all file uploads (supports video uploads in ticket reports)
+const uploadConfig = multer({
+  storage: multer.memoryStorage(),
+  limits: {fileSize: 50 * 1024 * 1024}, // 50 MB
+});
+
 registerSwaggerRoutes(router);
-RegisterRoutes(router);
+RegisterRoutes(router, {multer: uploadConfig});
 
 app.use('/api', router);
 
@@ -127,11 +176,22 @@ app.listen(PORT, '0.0.0.0', () => {
     startNotifyUploadAvailabilityJob();
     startCheckPayoutHoldPeriodsJob();
     startProcessPendingNotificationsJob();
+    startProcessPendingJobsJob();
   } else {
     logger.info(
       'Cronjobs disabled in production (using EventBridge + ECS RunTask)',
     );
   }
+});
+
+process.on('SIGINT', async () => {
+  await Promise.all([shutdownPostHog(), shutdownOtel()]);
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await Promise.all([shutdownPostHog(), shutdownOtel()]);
+  process.exit(0);
 });
 
 export default app;

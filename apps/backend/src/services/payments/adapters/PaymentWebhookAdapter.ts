@@ -1,4 +1,4 @@
-import {compareAmounts} from '@revendiste/shared';
+import {compareAmounts, getTimezoneForCountry} from '@revendiste/shared';
 import {
   OrdersRepository,
   OrderTicketReservationsRepository,
@@ -17,6 +17,7 @@ import {
   ORDER_ERROR_MESSAGES,
   PAYMENT_ERROR_MESSAGES,
 } from '~/constants/error-messages';
+import type {PaymentStatus, PaymentMethod} from '@revendiste/shared';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {SellerEarningsService} from '~/services/seller-earnings';
 import {NotificationService} from '~/services/notifications';
@@ -24,7 +25,11 @@ import {
   notifyOrderConfirmed,
   notifyOrderExpired,
   notifyPaymentFailed,
+  notifySellerTicketSold,
 } from '~/services/notifications/helpers';
+import type { JobQueueService } from '~/services/job-queue';
+import type { SellerNotificationData } from '~/services/ticket-listings';
+import {getPostHog} from '~/lib/posthog';
 
 /**
  * Normalized payment data in our system's format
@@ -48,7 +53,7 @@ export interface NormalizedPaymentData {
     document?: string;
     country?: string;
   };
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 export interface WebhookMetadata {
@@ -62,7 +67,7 @@ export interface WebhookMetadata {
 interface PaymentUpdateResult {
   paymentId: string;
   status: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 /**
@@ -75,6 +80,10 @@ interface PaymentUpdateResult {
  * - Normalize provider data to our format
  * - Handle all business logic (database operations, order management)
  * - Provide consistent webhook processing across all providers
+ *
+ * Idempotency: Duplicate "paid" webhooks are safe. handleSuccessfulPayment returns
+ * early when the order is already confirmed, so provider retries do not re-run the
+ * confirm flow.
  */
 export class PaymentWebhookAdapter {
   constructor(
@@ -88,7 +97,14 @@ export class PaymentWebhookAdapter {
     private readonly ticketListingsService: TicketListingsService,
     private readonly sellerEarningsService: SellerEarningsService,
     private readonly notificationService: NotificationService,
+    private readonly jobQueueService: JobQueueService | (() => JobQueueService),
   ) {}
+
+  private getJobQueue(): JobQueueService {
+    return typeof this.jobQueueService === 'function'
+      ? this.jobQueueService()
+      : this.jobQueueService;
+  }
 
   /**
    * Process a webhook callback from the payment provider
@@ -319,7 +335,7 @@ export class PaymentWebhookAdapter {
     paymentRecord = await this.paymentsRepository.update(
       String(paymentRecord.id),
       {
-        status: newStatus as any,
+        status: newStatus as PaymentStatus,
         balanceAmount: paymentData.balanceAmount
           ? String(paymentData.balanceAmount)
           : undefined,
@@ -329,7 +345,7 @@ export class PaymentWebhookAdapter {
         balanceCurrency: paymentData.balanceCurrency,
         // Store exchange rate if currencies differ (dLocal settles in UYU even for USD orders)
         exchangeRate,
-        paymentMethod: paymentData.paymentMethod as any,
+        paymentMethod: (paymentData.paymentMethod as PaymentMethod) ?? undefined,
         payerEmail: paymentData.payer?.email,
         payerFirstName: paymentData.payer?.firstName,
         payerLastName: paymentData.payer?.lastName,
@@ -349,8 +365,8 @@ export class PaymentWebhookAdapter {
     if (String(oldStatus) !== String(newStatus)) {
       await this.paymentEventsRepository.logStatusChange(
         String(paymentRecord.id),
-        String(oldStatus),
-        String(newStatus),
+        oldStatus as PaymentStatus | null,
+        newStatus as PaymentStatus,
         paymentData.metadata,
       );
     }
@@ -408,45 +424,58 @@ export class PaymentWebhookAdapter {
   }
 
   /**
-   * Handles successful payment - confirms order and reservations
+   * Handles successful payment - confirms order, marks tickets sold, creates earnings, then confirms reservations.
+   * Idempotent: returns early if order is already confirmed (e.g. duplicate webhook).
    */
   private async handleSuccessfulPayment(
     orderId: string,
     paymentData: NormalizedPaymentData,
   ): Promise<void> {
+    // Idempotency: skip if order already confirmed (duplicate webhook or retry)
+    const existingOrder =
+      await this.ordersRepository.getByIdWithItems(orderId);
+    if (existingOrder?.status === 'confirmed') {
+      logger.info('Order already confirmed, skipping successful payment flow', {
+        orderId,
+        paymentId: paymentData.providerPaymentId,
+      });
+      return;
+    }
+
+    let sellerNotifications: SellerNotificationData[] = [];
     let soldTickets: Array<{listingId: string}> = [];
-    let uniqueListingIds: string[] = [];
 
     await this.ordersRepository.executeTransaction(async trx => {
       const ordersRepo = this.ordersRepository.withTransaction(trx);
       const reservationsRepo =
         this.orderTicketReservationsRepository.withTransaction(trx);
+      const ticketListingsRepo =
+        this.ticketListingsRepository.withTransaction(trx);
 
-      // Step 1: Update order status to confirmed
       await ordersRepo.updateStatus(orderId, 'confirmed', {
         confirmedAt: new Date(),
       });
 
-      // Step 2: Confirm order reservations (marks them as deleted)
+      const result =
+        await this.ticketListingsService.markTicketsAsSoldAndReturnSellerData(
+          orderId,
+          trx,
+        );
+      soldTickets = result.soldTickets;
+      sellerNotifications = result.sellerNotifications;
+
+      await this.sellerEarningsService.createEarningsForSoldTickets(
+        orderId,
+        trx,
+      );
+
       await reservationsRepo.confirmOrderReservations(orderId);
 
-      // Step 3: Mark tickets as sold (notifications sent outside transaction by service)
-      soldTickets =
-        await this.ticketListingsService.markTicketsAsSoldAndNotifySeller(
-          orderId,
-        );
-
-      // Step 3.5: Create seller earnings for sold tickets
-      await this.sellerEarningsService.createEarningsForSoldTickets(orderId);
-
-      // Step 4: Get unique listing IDs from sold tickets
-      uniqueListingIds = [
+      const uniqueListingIds = [
         ...new Set(soldTickets.map(ticket => ticket.listingId)),
       ];
-
-      // Step 5: Check if all tickets from each listing are sold and mark listings as sold
       const soldListings =
-        await this.ticketListingsRepository.checkAndMarkListingsAsSold(
+        await ticketListingsRepo.checkAndMarkListingsAsSold(
           uniqueListingIds,
         );
 
@@ -460,32 +489,148 @@ export class PaymentWebhookAdapter {
       });
     });
 
-    // Send notification to buyer (outside transaction - fire-and-forget)
-    // Get full order data with items for notification
     const orderWithItems = await this.ordersRepository.getByIdWithItems(
       orderId,
     );
+    if (!orderWithItems?.event) return;
 
-    if (orderWithItems && orderWithItems.event) {
-      // Fire-and-forget notification (don't await to avoid blocking)
-      notifyOrderConfirmed(this.notificationService, {
-        buyerUserId: orderWithItems.userId,
-        orderId: orderWithItems.id,
-        eventName: orderWithItems.event.name || 'el evento',
-        eventStartDate: orderWithItems.event.eventStartDate
-          ? new Date(orderWithItems.event.eventStartDate)
+    getPostHog()?.capture({
+      distinctId: orderWithItems.userId,
+      event: 'payment_confirmed',
+      properties: {
+        order_id: orderId,
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        payment_method: paymentData.paymentMethod,
+        provider: this.provider.name,
+        event_name: orderWithItems.event?.name,
+        event_id: orderWithItems.eventId,
+      },
+    });
+
+    await this.sendInAppNotifications(orderWithItems, sellerNotifications);
+    await this.sendInstantConfirmationEmails(
+      orderWithItems,
+      sellerNotifications,
+    );
+    await this.enqueueEmailNotificationJobs(
+      orderWithItems,
+      sellerNotifications,
+    );
+  }
+
+  /**
+   * Sends immediate order-confirmed email to buyer and ticket-sold emails to sellers (no invoice).
+   * Invoice emails are deferred via jobs.
+   */
+  private async sendInstantConfirmationEmails(
+    order: NonNullable<
+      Awaited<ReturnType<OrdersRepository['getByIdWithItems']>>
+    >,
+    sellerNotifications: SellerNotificationData[],
+  ): Promise<void> {
+    const ev = order.event!;
+    const buyerParams = {
+      buyerUserId: order.userId,
+      orderId: order.id,
+      eventName: ev.name || 'el evento',
+      eventStartDate: ev.eventStartDate
+        ? new Date(ev.eventStartDate as unknown as Date)
+        : undefined,
+      eventEndDate: ev.eventEndDate
+        ? new Date(ev.eventEndDate as unknown as Date)
+        : undefined,
+      venueName: ev.venueName || undefined,
+      venueAddress: ev.venueAddress || undefined,
+      eventTimezone: getTimezoneForCountry(ev.venueCountry),
+      totalAmount: String(order.totalAmount),
+      subtotalAmount: String(order.subtotalAmount),
+      platformCommission: String(order.platformCommission),
+      vatOnCommission: String(order.vatOnCommission),
+      currency: order.currency,
+      items: (order.items || [])
+        .filter(item => item.id && item.quantity !== null)
+        .map(item => ({
+          id: item.id!,
+          ticketWaveName: item.ticketWaveName || 'Entrada',
+          quantity: item.quantity!,
+          pricePerTicket: String(item.pricePerTicket),
+          subtotal: String(item.subtotal),
+          currency: item.currency || undefined,
+        })),
+    };
+
+    await Promise.allSettled([
+      notifyOrderConfirmed(this.notificationService, buyerParams, {
+        channels: ['email'],
+        deferSendToJob: false,
+      }),
+      ...sellerNotifications.map(seller =>
+        notifySellerTicketSold(this.notificationService, {
+          sellerUserId: seller.sellerUserId,
+          listingId: seller.listingId,
+          eventName: seller.eventName,
+          eventStartDate: seller.eventStartDate,
+          eventEndDate: seller.eventEndDate,
+          eventTimezone: seller.eventTimezone,
+          platform: seller.platform,
+          qrAvailabilityTiming: seller.qrAvailabilityTiming,
+          ticketCount: seller.ticketCount,
+          allDocumentsUploaded: seller.allDocumentsUploaded,
+        }, { channels: ['email'], deferSendToJob: false }),
+      ),
+    ]).then(results => {
+      results.forEach((result, i) => {
+        if (result.status === 'rejected') {
+          logger.error('Instant confirmation email failed', {
+            orderId: order.id,
+            index: i,
+            error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+          });
+        }
+      });
+    });
+  }
+
+  private async sendInAppNotifications(
+    order: NonNullable<
+      Awaited<ReturnType<OrdersRepository['getByIdWithItems']>>
+    >,
+    sellerNotifications: SellerNotificationData[],
+  ): Promise<void> {
+    // Avoid duplicate order_confirmed in-app when webhook and sync-on-order-access both run
+    const alreadySent = await this.notificationService.hasOrderConfirmedInAppForOrder(
+      order.userId,
+      order.id,
+    );
+    if (alreadySent) {
+      logger.debug('Skipping duplicate order_confirmed in_app', {
+        orderId: order.id,
+        userId: order.userId,
+      });
+      return;
+    }
+    notifyOrderConfirmed(
+      this.notificationService,
+      {
+        buyerUserId: order.userId,
+        orderId: order.id,
+        eventName: order.event!.name || 'el evento',
+        eventStartDate: order.event?.eventStartDate
+          ? new Date(order.event.eventStartDate as unknown as Date)
           : undefined,
-        eventEndDate: orderWithItems.event.eventEndDate
-          ? new Date(orderWithItems.event.eventEndDate)
+        eventEndDate: order.event?.eventEndDate
+          ? new Date(order.event.eventEndDate as unknown as Date)
           : undefined,
-        venueName: orderWithItems.event.venueName || undefined,
-        venueAddress: orderWithItems.event.venueAddress || undefined,
-        totalAmount: String(orderWithItems.totalAmount),
-        subtotalAmount: String(orderWithItems.subtotalAmount),
-        platformCommission: String(orderWithItems.platformCommission),
-        vatOnCommission: String(orderWithItems.vatOnCommission),
-        currency: orderWithItems.currency,
-        items: (orderWithItems.items || [])
+        venueName: order.event!.venueName || undefined,
+        venueAddress: order.event!.venueAddress || undefined,
+        eventTimezone: getTimezoneForCountry(order.event!.venueCountry),
+        totalAmount: String(order.totalAmount),
+        subtotalAmount: String(order.subtotalAmount),
+        platformCommission: String(order.platformCommission),
+        vatOnCommission: String(order.vatOnCommission),
+        currency: order.currency,
+        items: (order.items || [])
           .filter(item => item.id && item.quantity !== null)
           .map(item => ({
             id: item.id!,
@@ -495,11 +640,110 @@ export class PaymentWebhookAdapter {
             subtotal: String(item.subtotal),
             currency: item.currency || undefined,
           })),
-      }).catch(error => {
-        logger.error('Failed to send order confirmed notification', {
-          orderId,
-          error: error instanceof Error ? error.message : String(error),
+      },
+      { channels: ['in_app'] },
+    ).catch(err => {
+      logger.error('Failed to send buyer in_app notification', {
+        orderId: order.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
+
+    for (const seller of sellerNotifications) {
+      notifySellerTicketSold(
+        this.notificationService,
+        {
+          sellerUserId: seller.sellerUserId,
+          listingId: seller.listingId,
+          eventName: seller.eventName,
+          eventStartDate: seller.eventStartDate,
+          eventEndDate: seller.eventEndDate,
+          eventTimezone: seller.eventTimezone,
+          platform: seller.platform,
+          qrAvailabilityTiming: seller.qrAvailabilityTiming,
+          ticketCount: seller.ticketCount,
+          allDocumentsUploaded: seller.allDocumentsUploaded,
+        },
+        { channels: ['in_app'] },
+      ).catch(err => {
+        logger.error('Failed to send seller in_app notification', {
+          orderId: order.id,
+          sellerUserId: seller.sellerUserId,
+          error: err instanceof Error ? err.message : String(err),
         });
+      });
+    }
+  }
+
+  private async enqueueEmailNotificationJobs(
+    order: NonNullable<
+      Awaited<ReturnType<OrdersRepository['getByIdWithItems']>>
+    >,
+    sellerNotifications: SellerNotificationData[],
+  ): Promise<void> {
+    const ev = order.event;
+    if (!ev) return;
+
+    const jobQueue = this.getJobQueue();
+    try {
+      await jobQueue.enqueue(
+        'notify-order-confirmed',
+        {
+          orderId: order.id,
+          buyerUserId: order.userId,
+          eventName: ev.name || 'el evento',
+          eventStartDate:
+            ev.eventStartDate != null
+              ? new Date(ev.eventStartDate as string | Date).toISOString()
+              : undefined,
+          eventEndDate:
+            ev.eventEndDate != null
+              ? new Date(ev.eventEndDate as string | Date).toISOString()
+              : undefined,
+          venueName: ev.venueName,
+          venueAddress: ev.venueAddress,
+          totalAmount: String(order.totalAmount),
+          subtotalAmount: String(order.subtotalAmount),
+          platformCommission: String(order.platformCommission),
+          vatOnCommission: String(order.vatOnCommission),
+          currency: order.currency,
+          items: (order.items || [])
+            .filter(item => item.id && item.quantity !== null)
+            .map(item => ({
+              id: item.id!,
+              ticketWaveName: item.ticketWaveName || 'Entrada',
+              quantity: item.quantity!,
+              pricePerTicket: String(item.pricePerTicket),
+              subtotal: String(item.subtotal),
+              currency: item.currency,
+            })),
+        },
+        `notify-order-confirmed:${order.id}`,
+      );
+
+      for (const seller of sellerNotifications) {
+        await jobQueue.enqueue(
+          'notify-seller-ticket-sold',
+          {
+            orderId: order.id,
+            sellerUserId: seller.sellerUserId,
+            listingId: seller.listingId,
+            eventName: seller.eventName,
+            eventStartDate: seller.eventStartDate.toISOString(),
+            eventEndDate: seller.eventEndDate.toISOString(),
+            platform: seller.platform,
+            qrAvailabilityTiming: seller.qrAvailabilityTiming,
+            ticketCount: seller.ticketCount,
+          },
+          `notify-seller-ticket-sold:${order.id}:${seller.sellerUserId}`,
+        );
+      }
+
+      logger.info('Email notification jobs enqueued', { orderId: order.id });
+    } catch (error) {
+      logger.error('Failed to enqueue email notification jobs', {
+        orderId: order.id,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -539,6 +783,20 @@ export class PaymentWebhookAdapter {
     );
 
     if (orderWithItems && orderWithItems.event) {
+      getPostHog()?.capture({
+        distinctId: orderWithItems.userId,
+        event: 'payment_failed',
+        properties: {
+          order_id: orderId,
+          rejected_reason: paymentData.rejectedReason,
+          provider: this.provider.name,
+          event_name: orderWithItems.event?.name,
+          event_id: orderWithItems.eventId,
+          amount: orderWithItems.totalAmount,
+          currency: orderWithItems.currency,
+        },
+      });
+
       // Fire-and-forget notification (don't await to avoid blocking)
       notifyPaymentFailed(this.notificationService, {
         buyerUserId: orderWithItems.userId,
@@ -588,6 +846,19 @@ export class PaymentWebhookAdapter {
     );
 
     if (orderWithItems && orderWithItems.event) {
+      getPostHog()?.capture({
+        distinctId: orderWithItems.userId,
+        event: 'payment_expired',
+        properties: {
+          order_id: orderId,
+          provider: this.provider.name,
+          event_name: orderWithItems.event?.name,
+          event_id: orderWithItems.eventId,
+          amount: orderWithItems.totalAmount,
+          currency: orderWithItems.currency,
+        },
+      });
+
       // Fire-and-forget notification (don't await to avoid blocking)
       notifyOrderExpired(this.notificationService, {
         buyerUserId: orderWithItems.userId,

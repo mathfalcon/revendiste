@@ -5,9 +5,11 @@ import {
   ZodValidationError,
   InternalServerError,
   ValidationError,
+  ConflictError,
 } from '~/errors';
 import {ValidateError} from '@mathfalcon/tsoa-runtime';
 import {logger} from '~/utils';
+import {getPostHog} from '~/lib/posthog';
 
 interface ErrorResponse {
   error: string;
@@ -16,6 +18,7 @@ interface ErrorResponse {
   timestamp: string;
   path: string;
   method: string;
+  requestId?: string;
   stack?: string;
 }
 
@@ -31,6 +34,7 @@ export const errorHandler = (
     return res.status(422).json({
       message: 'Validation Failed',
       details: err?.fields,
+      ...(req.id && {requestId: req.id}),
     });
   }
 
@@ -52,10 +56,11 @@ export const errorHandler = (
         timestamp: new Date().toISOString(),
         path: req.path,
         method: req.method,
+        ...(req.id && {requestId: req.id}),
       };
 
-    // Include metadata if available (e.g., orderId for duplicate order errors)
-    if (error instanceof ValidationError && error.metadata) {
+    // Include metadata if available (e.g., orderId for duplicate order errors, existingReportId for duplicate reports)
+    if ((error instanceof ValidationError || error instanceof ConflictError) && error.metadata) {
       errorResponse.metadata = error.metadata;
     }
 
@@ -88,6 +93,12 @@ export const errorHandler = (
   const isOperational = error instanceof AppError && error.isOperational;
   if (!isOperational) {
     logger.error('Non-operational error:', error);
+    const distinctId = (req as any).user?.id;
+    getPostHog()?.captureException(error, distinctId, {
+      path: req.path,
+      method: req.method,
+      request_id: req.id,
+    });
     error = new InternalServerError();
   }
 
@@ -98,6 +109,7 @@ export const errorHandler = (
     timestamp: new Date().toISOString(),
     path: req.path,
     method: req.method,
+    ...(req.id && {requestId: req.id}),
   };
 
   // Include stack trace in development

@@ -1,6 +1,6 @@
 # Política de Privacidad – Revendiste
 
-**Última actualización:** 8 de Enero de 2026
+**Última actualización:** 1 de Marzo de 2026
 
 ## 1. Introducción
 
@@ -12,8 +12,8 @@ Al utilizar nuestros servicios, el usuario acepta las prácticas descritas en es
 
 ## 2. Responsable del tratamiento de datos
 
-**Mathias Falcon, C.I. 5.104.254-0, persona física**  
-Cédula de Identidad: **5.104.254-0**  
+**FALCON GALLAZTEGUI MATHIAS, empresa unipersonal**  
+RUT: **218826920018**  
 Domicilio: **Avenida Ocho de Octubre 2487, Apartamento 801, Montevideo, Uruguay**  
 Correo electrónico para temas de datos personales: **mathiasfalcon@gmail.com**  
 Correo electrónico para consultas generales: **ayuda@revendiste.com**

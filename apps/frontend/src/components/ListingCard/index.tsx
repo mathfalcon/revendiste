@@ -10,13 +10,13 @@ import {EventInfoBadges} from '~/components/EventInfoBadges';
 import {ActiveTicketsSection} from './ActiveTicketsSection';
 import {SoldTicketsSection} from './SoldTicketsSection';
 import {CancelledTicketsSection} from './CancelledTicketsSection';
-import {formatEventDate} from '~/utils/string';
-import {Calendar, MapPin} from 'lucide-react';
+import {formatEventDate, formatPrice, calculateMaxResalePrice} from '~/utils';
+import {Calendar, MapPin, DollarSign} from 'lucide-react';
 import {CDN_ASSETS} from '~/assets';
 import {CopyableText} from '~/components/ui/copyable-text';
 
 interface ListingCardProps {
-  listing: GetUserListingsResponse[number];
+  listing: GetUserListingsResponse['data'][number];
 }
 
 export function ListingCard({listing}: ListingCardProps) {
@@ -27,10 +27,10 @@ export function ListingCard({listing}: ListingCardProps) {
   const endDate = new Date(event.eventEndDate);
   const isEventPast = endDate < new Date();
 
-  // Get flyer image
-  const flyerImage = event.eventImages?.find(
-    img => img.imageType === EventImageType.Flyer,
-  );
+  // Prefer flyer image, fall back to hero if not available
+  const flyerImage =
+    event.eventImages?.find(img => img.imageType === EventImageType.Flyer) ??
+    event.eventImages?.find(img => img.imageType === EventImageType.Hero);
   const imageSrc = flyerImage?.url ?? CDN_ASSETS.DEFAULT_OG_IMAGE;
 
   const handleUploadClick = (ticketId: string) => {
@@ -51,11 +51,29 @@ export function ListingCard({listing}: ListingCardProps) {
   const soldTickets = tickets.filter(ticket => ticket.soldAt && !ticket.deletedAt);
   const cancelledTickets = tickets.filter(ticket => ticket.deletedAt);
 
+  // Representative price for listing (first active ticket, or first ticket)
+  const representativeTicket =
+    activeTickets[0] ?? soldTickets[0] ?? tickets[0];
+  const pricePerTicket = representativeTicket
+    ? formatPrice(parseFloat(representativeTicket.price), ticketWave.currency)
+    : null;
+
+  const accentBarClass = isEventPast
+    ? 'w-1.5 bg-gradient-to-b from-muted-foreground/40 to-muted-foreground/60'
+    : 'w-1.5 bg-gradient-to-b from-blue-400 to-blue-500';
+  const cardBgClass = isEventPast
+    ? 'border-muted/50 bg-muted/20'
+    : 'border-blue-500/20 bg-blue-500/5';
+
   return (
-    <Card className='w-full overflow-hidden'>
-      <CardContent className='p-4 space-y-4'>
+    <Card className={`w-full overflow-hidden ${cardBgClass}`}>
+      <CardContent className='p-0'>
+        <div className='flex'>
+          {/* Left accent bar */}
+          <div className={accentBarClass} />
+          <div className='flex-1 p-4 space-y-4'>
         {/* Header with Event Image and Info */}
-        <div className='flex gap-4'>
+        <div className='flex gap-3'>
           {/* Event Flyer */}
           <Link
             to='/eventos/$eventId'
@@ -65,7 +83,7 @@ export function ListingCard({listing}: ListingCardProps) {
             <img
               src={imageSrc}
               alt={event.name}
-              className='w-20 h-20 sm:w-[100px] sm:h-[100px] object-cover rounded-lg'
+              className='h-16 w-16 sm:h-20 sm:w-20 object-cover rounded-lg'
             />
           </Link>
 
@@ -114,6 +132,16 @@ export function ListingCard({listing}: ListingCardProps) {
                 )}
               </div>
             </div>
+            {/* Precio por entrada */}
+            {pricePerTicket && (
+              <div className='flex items-center gap-1.5 mt-2 text-sm'>
+                <DollarSign className='h-3.5 w-3.5 text-muted-foreground' />
+                <span className='text-muted-foreground'>
+                  Precio por entrada:
+                </span>
+                <span className='font-medium'>{pricePerTicket}</span>
+              </div>
+            )}
             <EventInfoBadges
               qrAvailabilityTiming={event.qrAvailabilityTiming}
               className='mt-2'
@@ -145,8 +173,11 @@ export function ListingCard({listing}: ListingCardProps) {
             tickets={activeTickets}
             ticketWaveName={ticketWave.name}
             ticketWaveCurrency={ticketWave.currency}
-            ticketWaveFaceValue={Number(ticketWave.faceValue)}
+            ticketWaveFaceValue={calculateMaxResalePrice(
+              Number(ticketWave.faceValue),
+            )}
             isEventPast={isEventPast}
+            onUploadClick={handleUploadClick}
           />
 
           <SoldTicketsSection
@@ -171,6 +202,8 @@ export function ListingCard({listing}: ListingCardProps) {
             truncateOnMobile
             textClassName='text-xs text-muted-foreground'
           />
+        </div>
+          </div>
         </div>
       </CardContent>
     </Card>

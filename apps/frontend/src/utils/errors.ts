@@ -14,14 +14,14 @@ export function getUploadUnavailableMessage(
     case 'too_early':
       if (uploadAvailableAt) {
         const date = new Date(uploadAvailableAt);
-        return `Podrás subir el ticket a partir del ${date.toLocaleDateString('es-ES', {
+        return `Podrás subir la entrada a partir del ${date.toLocaleDateString('es-ES', {
           day: 'numeric',
           month: 'long',
           hour: '2-digit',
           minute: '2-digit',
         })}`;
       }
-      return 'Los tickets aún no están disponibles';
+      return 'Las entradas aún no están disponibles';
     default:
       return 'No se puede subir el documento en este momento';
   }

@@ -31,15 +31,28 @@ const TicketListingFormSchema = z
       .refine(val => val === true, {
         message: 'Debes aceptar los términos de servicio para continuar',
       }),
+    documents: z.array(z.instanceof(File)).optional(),
+    isUploadWindowActive: z.boolean().default(false),
   })
   .check(ctx => {
     if (ctx.value.price > ctx.value.maxPrice) {
       ctx.issues.push({
         code: 'custom',
-        message: `El precio no puede superar al precio original de la tanda ($${formatAmount(ctx.value.maxPrice)})`,
+        message: `El precio máximo es $${formatAmount(ctx.value.maxPrice)}`,
         input: ctx.value,
         path: ['price'],
       });
+    }
+    if (ctx.value.isUploadWindowActive) {
+      const docs = ctx.value.documents ?? [];
+      if (docs.length !== ctx.value.quantity) {
+        ctx.issues.push({
+          code: 'custom',
+          message: `Tenés que subir ${ctx.value.quantity} documento${ctx.value.quantity === 1 ? '' : 's'}`,
+          input: ctx.value,
+          path: ['documents'],
+        });
+      }
     }
   });
 
@@ -55,6 +68,8 @@ export const TicketListingForm = ({
       eventId: initialEventId ?? '',
       quantity: 1,
       acceptTerms: false,
+      documents: [],
+      isUploadWindowActive: false,
     },
   });
 
@@ -103,7 +118,7 @@ export const TicketListingForm = ({
             <TicketListingFormRight mode={mode} />
           </div>
         </div>
-        <div className='md:hidden mt-6'>
+        <div className='md:hidden'>
           <TicketListingFormLeft />
         </div>
       </div>

@@ -29,19 +29,66 @@ export class EntrasteScraper extends BaseScraper {
     super(Platform.Entraste);
   }
 
+  // Realistic User-Agents to rotate (modern browsers, updated 2025)
+  private userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  ];
+
+  private getRandomUserAgent(): string {
+    return this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
+  }
+
   async scrapeEvents(): Promise<ScrapedEventData[]> {
-    const userAgent =
-      this.config.headers?.['User-Agent'] ||
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+    const userAgent = this.getRandomUserAgent();
+    logger.debug('Using User-Agent:', {userAgent});
+
     const crawler = this.createCrawler({
       launchContext: {
         userAgent,
       },
+      // Pre-navigation hook: set up page to look more human
+      preNavigationHooks: [
+        async ({page}) => {
+          // Randomize viewport size (common desktop resolutions)
+          const viewports = [
+            {width: 1920, height: 1080},
+            {width: 1366, height: 768},
+            {width: 1536, height: 864},
+            {width: 1440, height: 900},
+            {width: 1280, height: 720},
+          ];
+          const viewport =
+            viewports[Math.floor(Math.random() * viewports.length)];
+          await page.setViewportSize(viewport);
+
+          // Override navigator.webdriver to false (anti-detection)
+          await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => false,
+            });
+          });
+        },
+      ],
       requestHandler: this.handleRequest,
-      failedRequestHandler({request, log}) {
+      failedRequestHandler({request, log, error}) {
         log.info(`Request ${request.url} failed too many times.`);
+        // Log detailed error info for debugging bot protection issues
+        const err = error as Error | undefined;
+        log.error(`Failed request details:`, {
+          url: request.url,
+          errorMessage: err?.message,
+          errorName: err?.name,
+          retryCount: request.retryCount,
+        });
       },
     });
+
+    // Hard timeout to prevent runaway tasks (5 minutes max)
+    const CRAWLER_TIMEOUT_MS = 5 * 60 * 1000;
 
     try {
       await crawler.addRequests([
@@ -52,19 +99,118 @@ export class EntrasteScraper extends BaseScraper {
           },
         },
       ]);
-      await crawler.run();
+
+      this.logMemory('before crawler.run()');
+
+      // Race between crawler and timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Crawler timeout: exceeded ${CRAWLER_TIMEOUT_MS / 1000}s limit`));
+        }, CRAWLER_TIMEOUT_MS);
+      });
+
+      await Promise.race([crawler.run(), timeoutPromise]);
+
+      this.logMemory('after crawler.run()');
 
       logger.info(`Scraped ${this.events.length} events from Entraste`);
       return this.events;
     } catch (error) {
+      // If timeout or other error, still return whatever events we managed to scrape
+      if (this.events.length > 0) {
+        logger.warn(`Crawler error but returning ${this.events.length} partial results:`, error);
+        return this.events;
+      }
       logger.error('Error scraping Entraste events:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Debug a specific URL using the exact same logic as the main scraper.
+   * This allows testing extraction logic on a single event without crawling the list.
+   *
+   * @param url - The detail page URL to scrape
+   * @returns The scraped event data, or null if scraping failed
+   */
+  async debugScrapeUrl(url: string): Promise<ScrapedEventData | null> {
+    // Reset events array for this debug run
+    this.events = [];
+
+    const userAgent = this.getRandomUserAgent();
+    logger.info('Debug scraping URL:', {url, userAgent});
+
+    const crawler = this.createCrawler({
+      launchContext: {
+        userAgent,
+      },
+      maxRequestsPerCrawl: 1,
+      maxConcurrency: 1,
+      preNavigationHooks: [
+        async ({page}) => {
+          const viewports = [
+            {width: 1920, height: 1080},
+            {width: 1366, height: 768},
+          ];
+          const viewport =
+            viewports[Math.floor(Math.random() * viewports.length)];
+          await page.setViewportSize(viewport);
+
+          await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => false,
+            });
+          });
+        },
+      ],
+      requestHandler: this.handleRequest,
+      failedRequestHandler({request, log, error}) {
+        const err = error as Error | undefined;
+        log.error(`Debug scrape failed:`, {
+          url: request.url,
+          errorMessage: err?.message,
+        });
+      },
+    });
+
+    try {
+      // Add the URL directly as a DETAIL request (skip list crawling)
+      await crawler.addRequests([
+        {
+          url,
+          userData: {
+            label: RequestLabel.DETAIL,
+          },
+        },
+      ]);
+
+      await crawler.run();
+
+      if (this.events.length > 0) {
+        logger.info('Debug scrape successful', {
+          eventName: this.events[0].name,
+          hasCoordinates: !!(
+            this.events[0].scrapedVenueLatitude &&
+            this.events[0].scrapedVenueLongitude
+          ),
+        });
+        return this.events[0];
+      }
+
+      logger.warn('Debug scrape completed but no event data was extracted');
+      return null;
+    } catch (error) {
+      logger.error('Debug scrape error:', error);
+      return this.events[0] || null;
     }
   }
 
   handleRequest: PlaywrightRequestHandler = async args => {
     const {request, log} = args;
     log.info(`▶️  ${request.userData.label}  ${request.url}`);
+
+    // Log memory before processing each request
+    this.logMemory(`before ${request.userData.label} ${request.url}`);
 
     switch (request.userData.label) {
       case RequestLabel.LIST:
@@ -76,6 +222,9 @@ export class EntrasteScraper extends BaseScraper {
       default:
         break;
     }
+
+    // Log memory after processing
+    this.logMemory(`after ${request.userData.label} ${request.url}`);
   };
 
   /**
@@ -118,6 +267,100 @@ export class EntrasteScraper extends BaseScraper {
       await page.textContent('.location-section p'),
     );
     return {venueName, venueAddress};
+  }
+
+  /**
+   * Extract coordinates from the embedded Google Maps
+   * Looks for the ll= parameter in Google Maps links
+   * The map is lazy-loaded - we need to click the placeholder to trigger loading
+   *
+   * Uses retry logic to handle slow-loading maps during aggressive scraping
+   */
+  /**
+   * Extract coordinates from the page's JavaScript initMap() function.
+   *
+   * Entraste embeds coordinates directly in their JavaScript like:
+   *   function initMap() {
+   *     const lat = -34.82866;
+   *     const lng = -55.25167;
+   *     ...
+   *   }
+   *
+   * This is faster and more reliable than waiting for Google Maps to load,
+   * and allows us to detect when coordinates are missing (lat=0, lng=0).
+   */
+  private async extractCoordinates(
+    page: Page,
+  ): Promise<{latitude: number; longitude: number} | null> {
+    const pageUrl = page.url();
+    const eventSlug = pageUrl.split('/').pop() || 'unknown';
+
+    try {
+      // Extract coordinates from the JavaScript on the page
+      // The initMap() function contains: const lat = X; const lng = Y;
+      const coords = await page.evaluate(() => {
+        // Get all script tags and find the one with initMap
+        const scripts = Array.from(document.querySelectorAll('script'));
+        for (const script of scripts) {
+          const content = script.textContent || '';
+          if (content.includes('function initMap()')) {
+            // Extract lat and lng values from the script
+            // Pattern: const lat = -34.82866; or const lat = 0;
+            const latMatch = content.match(/const\s+lat\s*=\s*(-?\d+\.?\d*)/);
+            const lngMatch = content.match(/const\s+lng\s*=\s*(-?\d+\.?\d*)/);
+
+            if (latMatch && lngMatch) {
+              return {
+                lat: parseFloat(latMatch[1]),
+                lng: parseFloat(lngMatch[1]),
+              };
+            }
+          }
+        }
+        return null;
+      });
+
+      if (!coords) {
+        logger.debug('No initMap() function with coordinates found in page scripts', {eventSlug});
+        return null;
+      }
+
+      const {lat, lng} = coords;
+
+      // Check if coordinates are valid (not 0,0 which means "no location")
+      // Using a small epsilon to handle floating point comparison
+      const isZeroCoords = Math.abs(lat) < 0.001 && Math.abs(lng) < 0.001;
+
+      if (isZeroCoords) {
+        logger.debug('Event has no location data (coordinates are 0,0)', {eventSlug});
+        return null;
+      }
+
+      // Validate coordinates are within reasonable bounds
+      // Latitude: -90 to 90, Longitude: -180 to 180
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        logger.debug('Coordinates are outside valid bounds', {
+          eventSlug,
+          lat,
+          lng,
+        });
+        return null;
+      }
+
+      logger.debug('Extracted coordinates from initMap() script', {
+        latitude: lat,
+        longitude: lng,
+        eventSlug,
+      });
+
+      return {latitude: lat, longitude: lng};
+    } catch (error) {
+      logger.debug('Could not extract coordinates from page scripts', {
+        eventSlug,
+        error: error instanceof Error ? error.message : error,
+      });
+      return null;
+    }
   }
 
   /**
@@ -371,11 +614,15 @@ export class EntrasteScraper extends BaseScraper {
     const url = page.url();
 
     try {
+      // Wait for DOM to be ready (coordinates are extracted from inline JS, no need for full load)
+      await page.waitForLoadState('domcontentloaded');
+
       // Extract all event data using single-responsibility methods
       const {name, description} = await this.extractBasicEventInfo(page);
       const {venueName, venueAddress} = await this.extractVenueInfo(page);
       const {startDate, endDate} = await this.extractDateTimeInfo(page);
       const {flyerImgSrc, heroImgSrc} = await this.extractImageUrls(page);
+      const coordinates = await this.extractCoordinates(page);
       const ticketWaves = await this.scrapeTicketWaves(page);
 
       const eventData: Partial<ScrapedEventData> = {
@@ -383,8 +630,10 @@ export class EntrasteScraper extends BaseScraper {
         platform: Platform.Entraste,
         name,
         description,
-        venueName,
-        venueAddress,
+        scrapedVenueName: venueName,
+        scrapedVenueAddress: venueAddress,
+        scrapedVenueLatitude: coordinates?.latitude,
+        scrapedVenueLongitude: coordinates?.longitude,
         eventStartDate: startDate,
         eventEndDate: endDate,
         externalUrl: url,

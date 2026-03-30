@@ -13,6 +13,7 @@ import {
   ORDER_ERROR_MESSAGES,
   PAYMENT_ERROR_MESSAGES,
 } from '~/constants/error-messages';
+import {PAYMENT_EXTENSION_WINDOW_MINUTES} from '~/constants/reservation';
 
 interface CreatePaymentLinkParams {
   orderId: string;
@@ -20,6 +21,8 @@ interface CreatePaymentLinkParams {
   userEmail: string;
   userFirstName: string | null;
   userLastName: string | null;
+  /** Payer country (ISO 3166-1 alpha-2). Defaults to UY if not provided. */
+  country?: string;
 }
 
 interface CreatePaymentLinkResult {
@@ -44,7 +47,14 @@ export class PaymentsService {
   async createPaymentLink(
     params: CreatePaymentLinkParams,
   ): Promise<CreatePaymentLinkResult> {
-    const {orderId, userId, userEmail, userFirstName, userLastName} = params;
+    const {
+      orderId,
+      userId,
+      userEmail,
+      userFirstName,
+      userLastName,
+      country: payerCountry,
+    } = params;
 
     logger.debug('Creating payment link', {orderId, userId});
 
@@ -69,14 +79,15 @@ export class PaymentsService {
       throw new ValidationError(PAYMENT_ERROR_MESSAGES.ORDER_EXPIRED);
     }
 
-    // Check if order is still pending
+    // Check if order is still pending (we only reuse or create payment for pending orders)
     if (order.status !== 'pending') {
       throw new ValidationError(
         PAYMENT_ERROR_MESSAGES.ORDER_NOT_PENDING(order.status),
       );
     }
 
-    // Check if there's already an existing pending payment for this order
+    // Reuse existing payment link only when there is already a pending payment for this order
+    // (avoids creating duplicate payment records when user refreshes or returns to checkout)
     const existingPayment = await this.paymentsRepository.getByOrderId(orderId);
     if (
       existingPayment &&
@@ -99,10 +110,9 @@ export class PaymentsService {
     }
 
     // Extend reservation time to give user enough time to complete payment
-    // Set expiration to 10 minutes from now
-    const PAYMENT_WINDOW_MINUTES = 10;
     const newReservationExpiresAt = new Date(
-      now.getTime() + PAYMENT_WINDOW_MINUTES * 60 * 1000,
+      now.getTime() +
+        PAYMENT_EXTENSION_WINDOW_MINUTES * 60 * 1000,
     );
 
     // Extend order and ticket reservations in a single transaction
@@ -126,7 +136,7 @@ export class PaymentsService {
       logger.info('Extended reservation time for payment window', {
         orderId,
         newExpiresAt: newReservationExpiresAt,
-        windowMinutes: PAYMENT_WINDOW_MINUTES,
+        windowMinutes: PAYMENT_EXTENSION_WINDOW_MINUTES,
       });
     });
 
@@ -137,13 +147,16 @@ export class PaymentsService {
         notificationUrl: `${API_BASE_URL}/api/webhooks/${this.paymentProvider.name}`,
       };
 
-      // Build payer data for dLocal (only if provider supports it)
-      // dLocal uses payer object with id, name, and email
+      // Build payer data for dLocal (only if provider supports it).
+      // Do NOT send payer.id: dLocal persists a "client" by that id and locks it to a country;
+      // once set, that client cannot change country, causing "Client is not from checkout's country"
+      // (5000) when the same user pays from a different country. Omitting id avoids client reuse.
+      // We still send name and email to prefill checkout. Country from selector (or default UY).
       const payerData =
         this.paymentProvider.name === 'dlocal'
           ? {
+              country: payerCountry ?? 'UY',
               payer: {
-                id: userId,
                 name:
                   [userFirstName, userLastName]
                     .filter(Boolean)
@@ -160,7 +173,7 @@ export class PaymentsService {
         amount: Number(order.totalAmount),
         currency: order.currency,
         description: `${order.event?.name || 'Tickets'} - (ID: ${order.id})`,
-        expirationMinutes: PAYMENT_WINDOW_MINUTES,
+        expirationMinutes: PAYMENT_EXTENSION_WINDOW_MINUTES,
         ...urls,
         ...payerData, // Include payer data if provider supports it
       });

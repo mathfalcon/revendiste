@@ -1,6 +1,7 @@
 import {type Kysely, type Insertable, type Updateable} from 'kysely';
-import type {DB, Payments} from '@revendiste/shared';
+import type {DB, Payments, PaymentProvider} from '@revendiste/shared';
 import type {Payment} from '~/types/models';
+import {PAYMENT_SYNC_BATCH_SIZE} from '~/constants/limits';
 import {BaseRepository} from '../base';
 
 export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
@@ -67,12 +68,15 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   /**
    * Finds a payment by provider and provider payment ID
    */
-  async getByProviderPaymentId(provider: string, providerPaymentId: string) {
+  async getByProviderPaymentId(
+    provider: PaymentProvider,
+    providerPaymentId: string,
+  ) {
     return (
       (await this.db
         .selectFrom('payments')
         .selectAll()
-        .where('provider', '=', provider as any)
+        .where('provider', '=', provider)
         .where('providerPaymentId', '=', providerPaymentId)
         .where('deletedAt', 'is', null)
         .executeTakeFirst()) || null
@@ -151,7 +155,8 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
   }) {
     const now = new Date();
     const minAge = options?.minAgeMinutes || 5; // Default: only check payments older than 5 minutes
-    const limit = options?.limit || 100; // Default: process up to 100 payments per run
+    const limit =
+      options?.limit ?? PAYMENT_SYNC_BATCH_SIZE;
 
     const minAgeDate = new Date(now.getTime() - minAge * 60 * 1000);
 

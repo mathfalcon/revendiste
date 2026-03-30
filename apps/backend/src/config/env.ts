@@ -2,7 +2,9 @@ import {z} from 'zod';
 import 'dotenv/config';
 
 const EnvSchema = z.object({
-  NODE_ENV: z.enum(['local', 'development', 'production']).default('local'),
+  NODE_ENV: z
+    .enum(['local', 'development', 'production', 'test'])
+    .default('local'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   PORT: z.coerce.number().default(3001),
   // Database connection - either use DATABASE_URL or individual POSTGRES_* variables
@@ -64,6 +66,23 @@ const EnvSchema = z.object({
     .optional()
     .default(0.0247), // ~40.5 UYU = 1 USD
   EXCHANGE_RATE_CACHE_TTL_HOURS: z.coerce.number().default(1),
+  GOOGLE_PLACES_API_KEY: z.string().optional(),
+  // PostHog analytics
+  POSTHOG_KEY: z.string().optional(),
+  POSTHOG_HOST: z.string().optional().default('https://e-proxy.revendiste.com'),
+  // Rate limiting (Postgres-backed; optional, defaults apply to /api)
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().optional().default(60_000), // 1 minute
+  RATE_LIMIT_MAX: z.coerce.number().optional().default(100), // max requests per window per IP
+  // FEU Electronic Invoicing (optional; required for invoice generation)
+  FEU_ENV: z.enum(['test', 'prod']).optional().default('test'),
+  FEU_AUTH_URL: z.url().optional(),
+  FEU_API_BASE_URL: z.url().optional(),
+  FEU_USERNAME: z.string().optional(),
+  FEU_PASSWORD: z.string().optional(),
+  FEU_REFRESH_TOKEN: z.string().optional(), // Long-lived (e.g. 365 days); update in secrets yearly
+  FEU_EMISOR_RUT: z.string().optional(),
+  FEU_SUCURSAL: z.coerce.number().optional().default(1),
+  FEU_REQUEST_TIMEOUT_MS: z.coerce.number().optional().default(30_000),
 });
 
 export const env = EnvSchema.safeParse(process.env);
@@ -121,4 +140,18 @@ export const {
   EXCHANGE_RATE_API_URL,
   EXCHANGE_RATE_FALLBACK_UYU_TO_USD,
   EXCHANGE_RATE_CACHE_TTL_HOURS,
+  GOOGLE_PLACES_API_KEY,
+  POSTHOG_KEY,
+  POSTHOG_HOST,
+  RATE_LIMIT_WINDOW_MS,
+  RATE_LIMIT_MAX,
+  FEU_ENV,
+  FEU_AUTH_URL,
+  FEU_API_BASE_URL,
+  FEU_USERNAME,
+  FEU_PASSWORD,
+  FEU_REFRESH_TOKEN,
+  FEU_EMISOR_RUT,
+  FEU_SUCURSAL,
+  FEU_REQUEST_TIMEOUT_MS,
 } = env.data;

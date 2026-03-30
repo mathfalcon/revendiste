@@ -27,3 +27,12 @@ export type {
   CreateBatchData,
   CreateBatchItemData,
 } from './notification-batches';
+export {VenuesRepository} from './venues';
+export {EventViewsRepository} from './event-views';
+export {InvoicesRepository} from './invoices';
+export {JobsRepository} from './jobs';
+export type {EnqueueJobData} from './jobs';
+export {TicketReportsRepository} from './ticket-reports';
+export {TicketReportActionsRepository} from './ticket-report-actions';
+export {TicketReportRefundsRepository} from './ticket-report-refunds';
+export {TicketReportAttachmentsRepository} from './ticket-report-attachments';

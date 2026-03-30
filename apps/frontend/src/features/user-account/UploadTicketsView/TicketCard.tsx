@@ -1,12 +1,15 @@
+import {Link} from '@tanstack/react-router';
 import {Card, CardContent} from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
 import {Calendar, MapPin, Upload, Ticket, AlertCircle} from 'lucide-react';
 import {formatEventDate, formatPrice} from '~/utils/string';
+import {EventImageType} from '~/lib/api/generated';
 import type {GetUserListingsResponse} from '~/lib/api/generated';
+import {CDN_ASSETS} from '~/assets';
 
 interface TicketCardProps {
-  ticket: GetUserListingsResponse[number]['tickets'][number] & {
-    listing: GetUserListingsResponse[number];
+  ticket: GetUserListingsResponse['data'][number]['tickets'][number] & {
+    listing: GetUserListingsResponse['data'][number];
   };
   onUploadClick: (ticketId: string) => void;
 }
@@ -19,6 +22,11 @@ export function TicketNeedingUploadCard({
   const ticketWave = ticket.listing.ticketWave;
   const eventStartDate = new Date(event.eventStartDate);
 
+  const flyerImage =
+    event.eventImages?.find(img => img.imageType === EventImageType.Flyer) ??
+    event.eventImages?.find(img => img.imageType === EventImageType.Hero);
+  const imageSrc = flyerImage?.url ?? CDN_ASSETS.DEFAULT_OG_IMAGE;
+
   return (
     <Card className='overflow-hidden border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10 transition-colors'>
       <CardContent className='p-0'>
@@ -27,38 +35,50 @@ export function TicketNeedingUploadCard({
           <div className='w-1.5 bg-gradient-to-b from-orange-400 to-orange-500' />
 
           <div className='flex-1 p-4'>
-            {/* Header with event info */}
-            <div className='flex items-start justify-between gap-3'>
+            {/* Header with event image and info */}
+            <div className='flex gap-3'>
+              <Link
+                to='/eventos/$eventId'
+                params={{eventId: event.id}}
+                className='shrink-0'
+              >
+                <img
+                  src={imageSrc}
+                  alt={event.name}
+                  className='h-16 w-16 rounded-lg object-cover object-center sm:h-20 sm:w-20'
+                />
+              </Link>
+
               <div className='min-w-0 flex-1'>
-                <h3 className='font-semibold text-foreground truncate'>
-                  {event.name}
-                </h3>
+                <div className='flex items-start justify-between gap-2'>
+                  <h3 className='font-semibold text-base leading-tight line-clamp-2 text-foreground'>
+                    {event.name}
+                  </h3>
+                  <div className='flex items-center gap-1.5 rounded-full bg-orange-500/10 px-2 py-1 text-xs font-medium text-orange-500 shrink-0'>
+                    <Ticket className='h-3 w-3' />
+                    <span>#{ticket.ticketNumber}</span>
+                  </div>
+                </div>
                 <p className='text-sm text-muted-foreground mt-0.5'>
                   {ticketWave.name}
                 </p>
-              </div>
 
-              {/* Ticket badge */}
-              <div className='flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5 text-sm font-medium text-orange-500'>
-                <Ticket className='h-4 w-4' />
-                <span>#{ticket.ticketNumber}</span>
-              </div>
-            </div>
-
-            {/* Event details */}
-            <div className='flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground'>
-              <div className='flex items-center gap-1.5'>
-                <Calendar className='h-4 w-4' />
-                <span>{formatEventDate(eventStartDate)}</span>
-              </div>
-              {event.venueName && (
-                <div className='flex items-center gap-1.5'>
-                  <MapPin className='h-4 w-4' />
-                  <span className='truncate max-w-[200px]'>
-                    {event.venueName}
-                  </span>
+                {/* Event details */}
+                <div className='flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-sm text-muted-foreground'>
+                  <div className='flex items-center gap-1'>
+                    <Calendar className='h-3.5 w-3.5' />
+                    <span>{formatEventDate(eventStartDate)}</span>
+                  </div>
+                  {event.venueName && (
+                    <div className='hidden sm:flex items-center gap-1'>
+                      <MapPin className='h-3.5 w-3.5' />
+                      <span className='truncate max-w-[150px]'>
+                        {event.venueName}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Action section */}
@@ -97,3 +117,4 @@ export function TicketNeedingUploadCard({
     </Card>
   );
 }
+

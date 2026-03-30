@@ -1,6 +1,56 @@
 @layer theme, base, clerk, components, utilities;
 @import 'tailwindcss';
-@config "../../tailwind.config.js";
+@import 'tw-animate-css';
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-background-secondary: hsl(var(--background-secondary));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-50: #fdf2f9;
+  --color-primary-100: #fce7f5;
+  --color-primary-200: #fcceec;
+  --color-primary-300: #faa7db;
+  --color-primary-400: #f670c1;
+  --color-primary-500: #ee46a7;
+  --color-primary-600: #de2486;
+  --color-primary-700: #c0166b;
+  --color-primary-800: #a6165c;
+  --color-primary-900: #85164c;
+  --color-primary-950: #51062a;
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+}
 
 @layer base {
   html {
@@ -134,5 +184,46 @@
 
   *::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  /* Lighter toast backgrounds + darker text/icons in light mode for better contrast */
+  html:not(.dark) [data-sonner-toast] {
+    background: hsl(0 0% 100%) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+  html:not(.dark) [data-sonner-toast][data-type='success'] {
+    background: hsl(142 76% 97%) !important;
+    border-color: hsl(142 76% 91%) !important;
+    color: hsl(142 72% 22%) !important;
+  }
+  html:not(.dark) [data-sonner-toast][data-type='error'] {
+    background: hsl(0 86% 97%) !important;
+    border-color: hsl(0 86% 91%) !important;
+    color: hsl(0 72% 42%) !important;
+  }
+  html:not(.dark) [data-sonner-toast][data-type='info'] {
+    background: hsl(214 95% 97%) !important;
+    border-color: hsl(214 95% 91%) !important;
+    color: hsl(214 95% 35%) !important;
+  }
+  html:not(.dark) [data-sonner-toast][data-type='warning'] {
+    background: hsl(48 96% 97%) !important;
+    border-color: hsl(48 96% 91%) !important;
+    color: hsl(38 92% 35%) !important;
+  }
+  html:not(.dark) [data-sonner-toast] [data-description] {
+    color: inherit;
+    opacity: 0.9;
+  }
+  html:not(.dark) [data-sonner-toast] [data-icon] svg,
+  html:not(.dark) [data-sonner-toast] [data-close-button] {
+    color: inherit;
+  }
+  .maplibregl-popup-content {
+    @apply bg-transparent! shadow-none! p-0! rounded-none!;
+  }
+  .maplibregl-popup-tip {
+    @apply hidden!;
   }
 }

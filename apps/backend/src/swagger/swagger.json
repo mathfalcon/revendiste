@@ -11,7 +11,8 @@
 				"type": "string",
 				"enum": [
 					"flyer",
-					"hero"
+					"hero",
+					"og_hero"
 				]
 			},
 			"PaginationMeta": {
@@ -50,7 +51,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
+			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -82,12 +83,17 @@
 									"format": "double",
 									"nullable": true
 								},
-								"venueName": {
+								"venueCity": {
 									"type": "string",
 									"nullable": true
 								},
 								"venueAddress": {
-									"type": "string"
+									"type": "string",
+									"nullable": true
+								},
+								"venueName": {
+									"type": "string",
+									"nullable": true
 								},
 								"updatedAt": {
 									"type": "string",
@@ -126,8 +132,9 @@
 								"images",
 								"lowestAvailableTicketCurrency",
 								"lowestAvailableTicketPrice",
-								"venueName",
+								"venueCity",
 								"venueAddress",
+								"venueName",
 								"updatedAt",
 								"status",
 								"name",
@@ -154,7 +161,7 @@
 				"additionalProperties": false
 			},
 			"GetEventsPaginatedResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__"
 			},
 			"infer_typeofPaginationSchema_": {
 				"properties": {
@@ -183,8 +190,73 @@
 				],
 				"type": "object"
 			},
-			"PaginationQuery": {
-				"$ref": "#/components/schemas/infer_typeofPaginationSchema_"
+			"EventsPaginatedQuery": {
+				"properties": {
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
+					},
+					"sortBy": {
+						"type": "string"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"city": {
+						"type": "string",
+						"description": "Filter by city name"
+					},
+					"region": {
+						"type": "string",
+						"description": "Filter by region/state/departamento name"
+					},
+					"lat": {
+						"type": "number",
+						"format": "double",
+						"description": "Latitude for proximity search (requires lng)"
+					},
+					"lng": {
+						"type": "number",
+						"format": "double",
+						"description": "Longitude for proximity search (requires lat)"
+					},
+					"radiusKm": {
+						"type": "number",
+						"format": "double",
+						"description": "Radius in km for proximity search (default: 30)"
+					},
+					"dateFrom": {
+						"type": "string",
+						"description": "Filter events starting from this date (ISO format)"
+					},
+					"dateTo": {
+						"type": "string",
+						"description": "Filter events ending before this date (ISO format)"
+					},
+					"hasTickets": {
+						"type": "boolean",
+						"description": "Only show events with at least one available ticket"
+					},
+					"tzOffset": {
+						"type": "number",
+						"format": "double",
+						"description": "User timezone offset in minutes from UTC (e.g. 180 for UTC-3)"
+					}
+				},
+				"required": [
+					"limit",
+					"page"
+				],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"SearchEventsResponse": {
 				"items": {
@@ -207,12 +279,17 @@
 							},
 							"type": "array"
 						},
-						"venueName": {
+						"venueCity": {
 							"type": "string",
 							"nullable": true
 						},
 						"venueAddress": {
-							"type": "string"
+							"type": "string",
+							"nullable": true
+						},
+						"venueName": {
+							"type": "string",
+							"nullable": true
 						},
 						"updatedAt": {
 							"type": "string",
@@ -249,8 +326,9 @@
 					},
 					"required": [
 						"eventImages",
-						"venueName",
+						"venueCity",
 						"venueAddress",
+						"venueName",
 						"updatedAt",
 						"status",
 						"name",
@@ -260,6 +338,141 @@
 						"eventEndDate",
 						"description",
 						"createdAt"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"GetTrendingEventsResponse": {
+				"items": {
+					"properties": {
+						"venue": {
+							"properties": {
+								"city": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"city",
+								"name"
+							],
+							"type": "object",
+							"nullable": true
+						},
+						"totalViews": {
+							"type": "number",
+							"format": "double"
+						},
+						"eventImages": {
+							"items": {
+								"properties": {
+									"imageType": {
+										"$ref": "#/components/schemas/EventImageType"
+									},
+									"url": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"imageType",
+									"url"
+								],
+								"type": "object"
+							},
+							"type": "array"
+						},
+						"lowestAvailableTicketCurrency": {
+							"type": "string",
+							"nullable": true
+						},
+						"lowestAvailableTicketPrice": {
+							"type": "number",
+							"format": "double",
+							"nullable": true
+						},
+						"updatedAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"status": {
+							"type": "string"
+						},
+						"name": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						},
+						"externalUrl": {
+							"type": "string"
+						},
+						"eventStartDate": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"eventEndDate": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"description": {
+							"type": "string",
+							"nullable": true
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"venueId": {
+							"type": "string",
+							"nullable": true
+						}
+					},
+					"required": [
+						"venue",
+						"totalViews",
+						"eventImages",
+						"lowestAvailableTicketCurrency",
+						"lowestAvailableTicketPrice",
+						"updatedAt",
+						"status",
+						"name",
+						"id",
+						"externalUrl",
+						"eventStartDate",
+						"eventEndDate",
+						"description",
+						"createdAt",
+						"venueId"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"GetDistinctCitiesResponse": {
+				"items": {
+					"type": "string"
+				},
+				"type": "array"
+			},
+			"GetDistinctRegionsResponse": {
+				"items": {
+					"properties": {
+						"regions": {
+							"items": {
+								"type": "string"
+							},
+							"type": "array"
+						},
+						"country": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"regions",
+						"country"
 					],
 					"type": "object"
 				},
@@ -343,9 +556,25 @@
 						},
 						"type": "array"
 					},
+					"userActiveTicketCount": {
+						"type": "number",
+						"format": "double"
+					},
 					"userListingsCount": {
 						"type": "number",
 						"format": "double"
+					},
+					"venueLongitude": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueLatitude": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueCountry": {
+						"type": "string",
+						"nullable": true
 					},
 					"eventImages": {
 						"items": {
@@ -365,12 +594,17 @@
 						},
 						"type": "array"
 					},
-					"venueName": {
+					"venueCity": {
 						"type": "string",
 						"nullable": true
 					},
 					"venueAddress": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
+					},
+					"venueName": {
+						"type": "string",
+						"nullable": true
 					},
 					"updatedAt": {
 						"type": "string",
@@ -415,10 +649,15 @@
 				},
 				"required": [
 					"ticketWaves",
+					"userActiveTicketCount",
 					"userListingsCount",
+					"venueLongitude",
+					"venueLatitude",
+					"venueCountry",
 					"eventImages",
-					"venueName",
+					"venueCity",
 					"venueAddress",
+					"venueName",
 					"updatedAt",
 					"status",
 					"qrAvailabilityTiming",
@@ -432,7 +671,18 @@
 				],
 				"type": "object"
 			},
-			"Record_string.any_": {
+			"TrackViewResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"Record_string.unknown_": {
 				"properties": {},
 				"additionalProperties": {},
 				"type": "object",
@@ -456,7 +706,7 @@
 						"format": "double"
 					},
 					"details": {
-						"$ref": "#/components/schemas/Record_string.any_"
+						"$ref": "#/components/schemas/Record_string.unknown_"
 					}
 				},
 				"required": [
@@ -517,14 +767,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ListingTicketRefundStatus": {
-				"type": "string",
-				"enum": [
-					"refund_failed",
-					"refund_pending",
-					"refunded"
-				]
-			},
 			"CreateTicketListingResponse": {
 				"properties": {
 					"ticketWaveId": {
@@ -561,14 +803,6 @@
 									"type": "number",
 									"format": "double"
 								},
-								"refundStatus": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/ListingTicketRefundStatus"
-										}
-									],
-									"nullable": true
-								},
 								"price": {
 									"type": "string"
 								},
@@ -599,7 +833,6 @@
 							},
 							"required": [
 								"ticketNumber",
-								"refundStatus",
 								"price",
 								"listingId",
 								"soldAt",
@@ -709,6 +942,12 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Record_string.any_": {
+				"properties": {},
+				"additionalProperties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
 			"ValidationError": {
 				"properties": {
 					"name": {
@@ -740,31 +979,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"CreateTicketListingRouteBody": {
-				"properties": {
-					"quantity": {
-						"type": "number",
-						"format": "double"
-					},
-					"price": {
-						"type": "number",
-						"format": "double"
-					},
-					"ticketWaveId": {
-						"type": "string"
-					},
-					"eventId": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"quantity",
-					"price",
-					"ticketWaveId",
-					"eventId"
-				],
-				"type": "object"
-			},
 			"UploadAvailabilityReason": {
 				"type": "string",
 				"enum": [
@@ -773,206 +987,223 @@
 					"unknown"
 				]
 			},
-			"GetUserListingsResponse": {
-				"items": {
-					"properties": {
-						"event": {
+			"PaginatedResponse__tickets_58__hasDocument-boolean--canUploadDocument-boolean--uploadUnavailableReason-UploadAvailabilityReason-or-undefined--uploadAvailableAt-string-or-undefined--createdAt-string--deletedAt-string-or-null--id-string--updatedAt-string--soldAt-string-or-null--price-string--ticketNumber-number--document_58__id-string--status-string--uploadedAt-string_-or-null_-Array--createdAt-Date--id-string--updatedAt-Date--soldAt-Date-or-null--ticketWave_58__id-string--name-string--currency-EventTicketCurrency--faceValue-string_--event_58__description-string-or-null--eventEndDate-string--eventStartDate-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--venueName-string-or-null--venueAddress-string-or-null--eventImages_58__url-string--imageType-EventImageType_-Array___": {
+				"properties": {
+					"data": {
+						"items": {
 							"properties": {
-								"eventImages": {
+								"event": {
+									"properties": {
+										"eventImages": {
+											"items": {
+												"properties": {
+													"imageType": {
+														"$ref": "#/components/schemas/EventImageType"
+													},
+													"url": {
+														"type": "string"
+													}
+												},
+												"required": [
+													"imageType",
+													"url"
+												],
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"venueAddress": {
+											"type": "string",
+											"nullable": true
+										},
+										"venueName": {
+											"type": "string",
+											"nullable": true
+										},
+										"qrAvailabilityTiming": {
+											"allOf": [
+												{
+													"$ref": "#/components/schemas/QrAvailabilityTiming"
+												}
+											],
+											"nullable": true
+										},
+										"platform": {
+											"type": "string"
+										},
+										"name": {
+											"type": "string"
+										},
+										"id": {
+											"type": "string"
+										},
+										"eventStartDate": {
+											"type": "string"
+										},
+										"eventEndDate": {
+											"type": "string"
+										},
+										"description": {
+											"type": "string",
+											"nullable": true
+										}
+									},
+									"required": [
+										"eventImages",
+										"venueAddress",
+										"venueName",
+										"qrAvailabilityTiming",
+										"platform",
+										"name",
+										"id",
+										"eventStartDate",
+										"eventEndDate",
+										"description"
+									],
+									"type": "object"
+								},
+								"ticketWave": {
+									"properties": {
+										"faceValue": {
+											"type": "string"
+										},
+										"currency": {
+											"$ref": "#/components/schemas/EventTicketCurrency"
+										},
+										"name": {
+											"type": "string"
+										},
+										"id": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"faceValue",
+										"currency",
+										"name",
+										"id"
+									],
+									"type": "object"
+								},
+								"soldAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"id": {
+									"type": "string"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"tickets": {
 									"items": {
 										"properties": {
-											"imageType": {
-												"$ref": "#/components/schemas/EventImageType"
+											"document": {
+												"properties": {
+													"uploadedAt": {
+														"type": "string"
+													},
+													"status": {
+														"type": "string"
+													},
+													"id": {
+														"type": "string"
+													}
+												},
+												"required": [
+													"uploadedAt",
+													"status",
+													"id"
+												],
+												"type": "object",
+												"nullable": true
 											},
-											"url": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"imageType",
-											"url"
-										],
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"venueName": {
-									"type": "string",
-									"nullable": true
-								},
-								"venueAddress": {
-									"type": "string"
-								},
-								"qrAvailabilityTiming": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/QrAvailabilityTiming"
-										}
-									],
-									"nullable": true
-								},
-								"platform": {
-									"type": "string"
-								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								},
-								"eventStartDate": {
-									"type": "string"
-								},
-								"eventEndDate": {
-									"type": "string"
-								},
-								"description": {
-									"type": "string",
-									"nullable": true
-								}
-							},
-							"required": [
-								"eventImages",
-								"venueName",
-								"venueAddress",
-								"qrAvailabilityTiming",
-								"platform",
-								"name",
-								"id",
-								"eventStartDate",
-								"eventEndDate",
-								"description"
-							],
-							"type": "object"
-						},
-						"ticketWave": {
-							"properties": {
-								"faceValue": {
-									"type": "string"
-								},
-								"currency": {
-									"$ref": "#/components/schemas/EventTicketCurrency"
-								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								}
-							},
-							"required": [
-								"faceValue",
-								"currency",
-								"name",
-								"id"
-							],
-							"type": "object"
-						},
-						"soldAt": {
-							"type": "string",
-							"format": "date-time",
-							"nullable": true
-						},
-						"updatedAt": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"id": {
-							"type": "string"
-						},
-						"createdAt": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"tickets": {
-							"items": {
-								"properties": {
-									"document": {
-										"properties": {
-											"uploadedAt": {
+											"ticketNumber": {
+												"type": "number",
+												"format": "double"
+											},
+											"price": {
 												"type": "string"
 											},
-											"status": {
+											"soldAt": {
+												"type": "string",
+												"nullable": true
+											},
+											"updatedAt": {
 												"type": "string"
 											},
 											"id": {
 												"type": "string"
+											},
+											"deletedAt": {
+												"type": "string",
+												"nullable": true
+											},
+											"createdAt": {
+												"type": "string"
+											},
+											"uploadAvailableAt": {
+												"type": "string"
+											},
+											"uploadUnavailableReason": {
+												"$ref": "#/components/schemas/UploadAvailabilityReason"
+											},
+											"canUploadDocument": {
+												"type": "boolean"
+											},
+											"hasDocument": {
+												"type": "boolean"
 											}
 										},
 										"required": [
-											"uploadedAt",
-											"status",
-											"id"
+											"document",
+											"ticketNumber",
+											"price",
+											"soldAt",
+											"updatedAt",
+											"id",
+											"deletedAt",
+											"createdAt",
+											"canUploadDocument",
+											"hasDocument"
 										],
-										"type": "object",
-										"nullable": true
+										"type": "object"
 									},
-									"ticketNumber": {
-										"type": "number",
-										"format": "double"
-									},
-									"price": {
-										"type": "string"
-									},
-									"soldAt": {
-										"type": "string",
-										"nullable": true
-									},
-									"updatedAt": {
-										"type": "string"
-									},
-									"id": {
-										"type": "string"
-									},
-									"deletedAt": {
-										"type": "string",
-										"nullable": true
-									},
-									"createdAt": {
-										"type": "string"
-									},
-									"uploadAvailableAt": {
-										"type": "string"
-									},
-									"uploadUnavailableReason": {
-										"$ref": "#/components/schemas/UploadAvailabilityReason"
-									},
-									"canUploadDocument": {
-										"type": "boolean"
-									},
-									"hasDocument": {
-										"type": "boolean"
-									}
-								},
-								"required": [
-									"document",
-									"ticketNumber",
-									"price",
-									"soldAt",
-									"updatedAt",
-									"id",
-									"deletedAt",
-									"createdAt",
-									"canUploadDocument",
-									"hasDocument"
-								],
-								"type": "object"
+									"type": "array"
+								}
 							},
-							"type": "array"
-						}
+							"required": [
+								"event",
+								"ticketWave",
+								"soldAt",
+								"updatedAt",
+								"id",
+								"createdAt",
+								"tickets"
+							],
+							"type": "object"
+						},
+						"type": "array"
 					},
-					"required": [
-						"event",
-						"ticketWave",
-						"soldAt",
-						"updatedAt",
-						"id",
-						"createdAt",
-						"tickets"
-					],
-					"type": "object"
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
 				},
-				"type": "array"
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetUserListingsResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse__tickets_58__hasDocument-boolean--canUploadDocument-boolean--uploadUnavailableReason-UploadAvailabilityReason-or-undefined--uploadAvailableAt-string-or-undefined--createdAt-string--deletedAt-string-or-null--id-string--updatedAt-string--soldAt-string-or-null--price-string--ticketNumber-number--document_58__id-string--status-string--uploadedAt-string_-or-null_-Array--createdAt-Date--id-string--updatedAt-Date--soldAt-Date-or-null--ticketWave_58__id-string--name-string--currency-EventTicketCurrency--faceValue-string_--event_58__description-string-or-null--eventEndDate-string--eventStartDate-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--venueName-string-or-null--venueAddress-string-or-null--eventImages_58__url-string--imageType-EventImageType_-Array___"
 			},
 			"UploadDocumentResponse": {
 				"properties": {
@@ -1076,14 +1307,6 @@
 						"type": "number",
 						"format": "double"
 					},
-					"refundStatus": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/ListingTicketRefundStatus"
-							}
-						],
-						"nullable": true
-					},
 					"price": {
 						"type": "string"
 					},
@@ -1114,7 +1337,6 @@
 				},
 				"required": [
 					"ticketNumber",
-					"refundStatus",
 					"price",
 					"listingId",
 					"soldAt",
@@ -1143,14 +1365,6 @@
 						"type": "number",
 						"format": "double"
 					},
-					"refundStatus": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/ListingTicketRefundStatus"
-							}
-						],
-						"nullable": true
-					},
 					"price": {
 						"type": "string"
 					},
@@ -1181,7 +1395,6 @@
 				},
 				"required": [
 					"ticketNumber",
-					"refundStatus",
 					"price",
 					"listingId",
 					"soldAt",
@@ -1341,9 +1554,6 @@
 					"vatOnCommission": {
 						"type": "string"
 					},
-					"totalAmount": {
-						"type": "string"
-					},
 					"subtotalAmount": {
 						"type": "string"
 					},
@@ -1365,6 +1575,9 @@
 						"nullable": true
 					},
 					"userId": {
+						"type": "string"
+					},
+					"totalAmount": {
 						"type": "string"
 					},
 					"currency": {
@@ -1401,13 +1614,13 @@
 				},
 				"required": [
 					"vatOnCommission",
-					"totalAmount",
 					"subtotalAmount",
 					"reservationExpiresAt",
 					"platformCommission",
 					"confirmedAt",
 					"cancelledAt",
 					"userId",
+					"totalAmount",
 					"currency",
 					"eventId",
 					"updatedAt",
@@ -1510,11 +1723,15 @@
 								},
 								"type": "array"
 							},
-							"venueName": {
+							"venueCountry": {
 								"type": "string",
 								"nullable": true
 							},
 							"venueAddress": {
+								"type": "string",
+								"nullable": true
+							},
+							"venueName": {
 								"type": "string",
 								"nullable": true
 							},
@@ -1549,8 +1766,9 @@
 						},
 						"required": [
 							"images",
-							"venueName",
+							"venueCountry",
 							"venueAddress",
+							"venueName",
 							"qrAvailabilityTiming",
 							"platform",
 							"name",
@@ -1562,9 +1780,6 @@
 						"nullable": true
 					},
 					"vatOnCommission": {
-						"type": "string"
-					},
-					"totalAmount": {
 						"type": "string"
 					},
 					"subtotalAmount": {
@@ -1588,6 +1803,9 @@
 						"nullable": true
 					},
 					"userId": {
+						"type": "string"
+					},
+					"totalAmount": {
 						"type": "string"
 					},
 					"currency": {
@@ -1621,13 +1839,13 @@
 					"items",
 					"event",
 					"vatOnCommission",
-					"totalAmount",
 					"subtotalAmount",
 					"reservationExpiresAt",
 					"platformCommission",
 					"confirmedAt",
 					"cancelledAt",
 					"userId",
+					"totalAmount",
 					"currency",
 					"eventId",
 					"updatedAt",
@@ -1637,193 +1855,214 @@
 				],
 				"type": "object"
 			},
-			"GetUserOrdersResponse": {
-				"items": {
-					"properties": {
+			"PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--venueName-string-or-null--venueAddress-string-or-null--venueCountry-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__": {
+				"properties": {
+					"data": {
 						"items": {
-							"items": {
-								"properties": {
-									"ticketWaveName": {
-										"type": "string",
-										"nullable": true
-									},
-									"subtotal": {
-										"type": "string"
-									},
-									"quantity": {
-										"type": "number",
-										"format": "double"
-									},
-									"pricePerTicket": {
-										"type": "string"
-									},
-									"ticketWaveId": {
-										"type": "string"
-									},
-									"id": {
-										"type": "string"
-									},
-									"currency": {
-										"allOf": [
-											{
-												"$ref": "#/components/schemas/EventTicketCurrency"
-											}
-										],
-										"nullable": true
-									}
-								},
-								"required": [
-									"ticketWaveName",
-									"subtotal",
-									"quantity",
-									"pricePerTicket",
-									"ticketWaveId",
-									"id",
-									"currency"
-								],
-								"type": "object"
-							},
-							"type": "array"
-						},
-						"event": {
 							"properties": {
-								"images": {
+								"items": {
 									"items": {
 										"properties": {
-											"imageType": {
-												"$ref": "#/components/schemas/EventImageType"
+											"ticketWaveName": {
+												"type": "string",
+												"nullable": true
 											},
-											"url": {
+											"subtotal": {
 												"type": "string"
+											},
+											"quantity": {
+												"type": "number",
+												"format": "double"
+											},
+											"pricePerTicket": {
+												"type": "string"
+											},
+											"ticketWaveId": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											},
+											"currency": {
+												"allOf": [
+													{
+														"$ref": "#/components/schemas/EventTicketCurrency"
+													}
+												],
+												"nullable": true
 											}
 										},
 										"required": [
-											"imageType",
-											"url"
+											"ticketWaveName",
+											"subtotal",
+											"quantity",
+											"pricePerTicket",
+											"ticketWaveId",
+											"id",
+											"currency"
 										],
 										"type": "object"
 									},
 									"type": "array"
 								},
-								"venueName": {
-									"type": "string",
+								"event": {
+									"properties": {
+										"images": {
+											"items": {
+												"properties": {
+													"imageType": {
+														"$ref": "#/components/schemas/EventImageType"
+													},
+													"url": {
+														"type": "string"
+													}
+												},
+												"required": [
+													"imageType",
+													"url"
+												],
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"venueCountry": {
+											"type": "string",
+											"nullable": true
+										},
+										"venueAddress": {
+											"type": "string",
+											"nullable": true
+										},
+										"venueName": {
+											"type": "string",
+											"nullable": true
+										},
+										"platform": {
+											"type": "string",
+											"nullable": true
+										},
+										"name": {
+											"type": "string",
+											"nullable": true
+										},
+										"id": {
+											"type": "string",
+											"nullable": true
+										},
+										"eventStartDate": {
+											"type": "string",
+											"nullable": true
+										},
+										"eventEndDate": {
+											"type": "string",
+											"nullable": true
+										}
+									},
+									"required": [
+										"images",
+										"venueCountry",
+										"venueAddress",
+										"venueName",
+										"platform",
+										"name",
+										"id",
+										"eventStartDate",
+										"eventEndDate"
+									],
+									"type": "object",
 									"nullable": true
 								},
-								"venueAddress": {
+								"vatOnCommission": {
+									"type": "string"
+								},
+								"subtotalAmount": {
+									"type": "string"
+								},
+								"reservationExpiresAt": {
 									"type": "string",
+									"format": "date-time"
+								},
+								"platformCommission": {
+									"type": "string"
+								},
+								"confirmedAt": {
+									"type": "string",
+									"format": "date-time",
 									"nullable": true
 								},
-								"platform": {
+								"cancelledAt": {
 									"type": "string",
+									"format": "date-time",
 									"nullable": true
 								},
-								"name": {
+								"userId": {
+									"type": "string"
+								},
+								"totalAmount": {
+									"type": "string"
+								},
+								"currency": {
+									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"eventId": {
+									"type": "string"
+								},
+								"updatedAt": {
 									"type": "string",
-									"nullable": true
+									"format": "date-time"
+								},
+								"status": {
+									"type": "string",
+									"enum": [
+										"cancelled",
+										"confirmed",
+										"expired",
+										"pending"
+									]
 								},
 								"id": {
-									"type": "string",
-									"nullable": true
+									"type": "string"
 								},
-								"eventStartDate": {
+								"createdAt": {
 									"type": "string",
-									"nullable": true
-								},
-								"eventEndDate": {
-									"type": "string",
-									"nullable": true
+									"format": "date-time"
 								}
 							},
 							"required": [
-								"images",
-								"venueName",
-								"venueAddress",
-								"platform",
-								"name",
+								"items",
+								"event",
+								"vatOnCommission",
+								"subtotalAmount",
+								"reservationExpiresAt",
+								"platformCommission",
+								"confirmedAt",
+								"cancelledAt",
+								"userId",
+								"totalAmount",
+								"currency",
+								"eventId",
+								"updatedAt",
+								"status",
 								"id",
-								"eventStartDate",
-								"eventEndDate"
+								"createdAt"
 							],
-							"type": "object",
-							"nullable": true
+							"type": "object"
 						},
-						"vatOnCommission": {
-							"type": "string"
-						},
-						"totalAmount": {
-							"type": "string"
-						},
-						"subtotalAmount": {
-							"type": "string"
-						},
-						"reservationExpiresAt": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"platformCommission": {
-							"type": "string"
-						},
-						"confirmedAt": {
-							"type": "string",
-							"format": "date-time",
-							"nullable": true
-						},
-						"cancelledAt": {
-							"type": "string",
-							"format": "date-time",
-							"nullable": true
-						},
-						"userId": {
-							"type": "string"
-						},
-						"currency": {
-							"$ref": "#/components/schemas/EventTicketCurrency"
-						},
-						"eventId": {
-							"type": "string"
-						},
-						"updatedAt": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"status": {
-							"type": "string",
-							"enum": [
-								"cancelled",
-								"confirmed",
-								"expired",
-								"pending"
-							]
-						},
-						"id": {
-							"type": "string"
-						},
-						"createdAt": {
-							"type": "string",
-							"format": "date-time"
-						}
+						"type": "array"
 					},
-					"required": [
-						"items",
-						"event",
-						"vatOnCommission",
-						"totalAmount",
-						"subtotalAmount",
-						"reservationExpiresAt",
-						"platformCommission",
-						"confirmedAt",
-						"cancelledAt",
-						"userId",
-						"currency",
-						"eventId",
-						"updatedAt",
-						"status",
-						"id",
-						"createdAt"
-					],
-					"type": "object"
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
 				},
-				"type": "array"
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetUserOrdersResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--venueName-string-or-null--venueAddress-string-or-null--venueCountry-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__"
 			},
 			"GetOrderTicketsResponse": {
 				"properties": {
@@ -1878,9 +2117,9 @@
 									"type": "string",
 									"enum": [
 										"active",
+										"cancelled",
 										"refund_pending",
-										"refunded",
-										"cancelled"
+										"refunded"
 									]
 								},
 								"hasDocument": {
@@ -2237,6 +2476,9 @@
 				],
 				"type": "object"
 			},
+			"PaginationQuery": {
+				"$ref": "#/components/schemas/infer_typeofPaginationSchema_"
+			},
 			"JsonArray": {
 				"items": {
 					"$ref": "#/components/schemas/JsonValue"
@@ -2284,9 +2526,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"sellerUserId": {
-						"type": "string"
-					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -2311,11 +2550,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -2326,6 +2560,14 @@
 						"nullable": true
 					},
 					"amount": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"sellerUserId": {
 						"type": "string"
 					},
 					"currency": {
@@ -2381,17 +2623,17 @@
 				},
 				"required": [
 					"transactionReference",
-					"sellerUserId",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
 					"amount",
+					"completedAt",
+					"sellerUserId",
 					"currency",
 					"updatedAt",
 					"status",
@@ -3176,9 +3418,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"sellerUserId": {
-						"type": "string"
-					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -3203,11 +3442,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -3218,6 +3452,14 @@
 						"nullable": true
 					},
 					"amount": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"sellerUserId": {
 						"type": "string"
 					},
 					"currency": {
@@ -3502,17 +3744,17 @@
 				"required": [
 					"linkedEarnings",
 					"transactionReference",
-					"sellerUserId",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
 					"amount",
+					"completedAt",
+					"sellerUserId",
 					"currency",
 					"updatedAt",
 					"status",
@@ -3525,7 +3767,7 @@
 				],
 				"type": "object"
 			},
-			"PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--amount-string--failedAt-Date-or-null--failureReason-string-or-null--completedAt-Date-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--sellerUserId-string--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
+			"PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--amount-string--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -3614,9 +3856,6 @@
 									"type": "string",
 									"nullable": true
 								},
-								"sellerUserId": {
-									"type": "string"
-								},
 								"requestedAt": {
 									"type": "string",
 									"format": "date-time"
@@ -3641,11 +3880,6 @@
 									"type": "string",
 									"nullable": true
 								},
-								"completedAt": {
-									"type": "string",
-									"format": "date-time",
-									"nullable": true
-								},
 								"failureReason": {
 									"type": "string",
 									"nullable": true
@@ -3656,6 +3890,14 @@
 									"nullable": true
 								},
 								"amount": {
+									"type": "string"
+								},
+								"completedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"sellerUserId": {
 									"type": "string"
 								},
 								"currency": {
@@ -3709,17 +3951,17 @@
 								"seller",
 								"linkedEarnings",
 								"transactionReference",
-								"sellerUserId",
 								"requestedAt",
 								"processingFee",
 								"processedBy",
 								"processedAt",
 								"payoutMethodId",
 								"notes",
-								"completedAt",
 								"failureReason",
 								"failedAt",
 								"amount",
+								"completedAt",
+								"sellerUserId",
 								"currency",
 								"updatedAt",
 								"status",
@@ -3743,7 +3985,7 @@
 				"additionalProperties": false
 			},
 			"GetPayoutsResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--amount-string--failedAt-Date-or-null--failureReason-string-or-null--completedAt-Date-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--sellerUserId-string--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--amount-string--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
 			},
 			"infer_typeofAdminPayoutsQuerySchema_": {
 				"properties": {
@@ -3820,9 +4062,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"sellerUserId": {
-						"type": "string"
-					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -3847,11 +4086,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -3862,6 +4096,14 @@
 						"nullable": true
 					},
 					"amount": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"sellerUserId": {
 						"type": "string"
 					},
 					"currency": {
@@ -4141,17 +4383,17 @@
 				"required": [
 					"linkedEarnings",
 					"transactionReference",
-					"sellerUserId",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
 					"amount",
+					"completedAt",
+					"sellerUserId",
 					"currency",
 					"updatedAt",
 					"status",
@@ -4169,9 +4411,6 @@
 					"transactionReference": {
 						"type": "string",
 						"nullable": true
-					},
-					"sellerUserId": {
-						"type": "string"
 					},
 					"requestedAt": {
 						"type": "string",
@@ -4197,11 +4436,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4212,6 +4446,14 @@
 						"nullable": true
 					},
 					"amount": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"sellerUserId": {
 						"type": "string"
 					},
 					"currency": {
@@ -4267,17 +4509,17 @@
 				},
 				"required": [
 					"transactionReference",
-					"sellerUserId",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
 					"amount",
+					"completedAt",
+					"sellerUserId",
 					"currency",
 					"updatedAt",
 					"status",
@@ -4312,9 +4554,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"sellerUserId": {
-						"type": "string"
-					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -4339,11 +4578,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4354,6 +4588,14 @@
 						"nullable": true
 					},
 					"amount": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"sellerUserId": {
 						"type": "string"
 					},
 					"currency": {
@@ -4409,17 +4651,17 @@
 				},
 				"required": [
 					"transactionReference",
-					"sellerUserId",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
 					"amount",
+					"completedAt",
+					"sellerUserId",
 					"currency",
 					"updatedAt",
 					"status",
@@ -4447,9 +4689,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"sellerUserId": {
-						"type": "string"
-					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -4474,11 +4713,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4489,6 +4723,14 @@
 						"nullable": true
 					},
 					"amount": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"sellerUserId": {
 						"type": "string"
 					},
 					"currency": {
@@ -4544,17 +4786,17 @@
 				},
 				"required": [
 					"transactionReference",
-					"sellerUserId",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
 					"amount",
+					"completedAt",
+					"sellerUserId",
 					"currency",
 					"updatedAt",
 					"status",
@@ -4582,9 +4824,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"sellerUserId": {
-						"type": "string"
-					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -4609,11 +4848,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4624,6 +4858,14 @@
 						"nullable": true
 					},
 					"amount": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"sellerUserId": {
 						"type": "string"
 					},
 					"currency": {
@@ -4679,17 +4921,17 @@
 				},
 				"required": [
 					"transactionReference",
-					"sellerUserId",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
 					"amount",
+					"completedAt",
+					"sellerUserId",
 					"currency",
 					"updatedAt",
 					"status",
@@ -4733,9 +4975,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"sellerUserId": {
-						"type": "string"
-					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -4760,11 +4999,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
 					"failureReason": {
 						"type": "string",
 						"nullable": true
@@ -4775,6 +5009,14 @@
 						"nullable": true
 					},
 					"amount": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"sellerUserId": {
 						"type": "string"
 					},
 					"currency": {
@@ -4830,17 +5072,17 @@
 				},
 				"required": [
 					"transactionReference",
-					"sellerUserId",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
 					"processedAt",
 					"payoutMethodId",
 					"notes",
-					"completedAt",
 					"failureReason",
 					"failedAt",
 					"amount",
+					"completedAt",
+					"sellerUserId",
 					"currency",
 					"updatedAt",
 					"status",
@@ -5153,10 +5395,26 @@
 					},
 					"metadata": {
 						"properties": {
-							"failedAt": {},
-							"failureReason": {},
-							"processedAt": {},
-							"livenessSessionId": {}
+							"failedAt": {
+								"properties": {},
+								"type": "object",
+								"nullable": true
+							},
+							"failureReason": {
+								"properties": {},
+								"type": "object",
+								"nullable": true
+							},
+							"processedAt": {
+								"properties": {},
+								"type": "object",
+								"nullable": true
+							},
+							"livenessSessionId": {
+								"properties": {},
+								"type": "object",
+								"nullable": true
+							}
 						},
 						"required": [
 							"failedAt",
@@ -5168,7 +5426,10 @@
 					},
 					"images": {
 						"properties": {
-							"auditImagesCount": {},
+							"auditImagesCount": {
+								"type": "number",
+								"format": "double"
+							},
 							"hasReferenceImage": {
 								"type": "boolean"
 							},
@@ -5185,9 +5446,21 @@
 					},
 					"confidenceScores": {
 						"properties": {
-							"liveness": {},
-							"faceMatch": {},
-							"textDetection": {}
+							"liveness": {
+								"type": "number",
+								"format": "double",
+								"nullable": true
+							},
+							"faceMatch": {
+								"type": "number",
+								"format": "double",
+								"nullable": true
+							},
+							"textDetection": {
+								"type": "number",
+								"format": "double",
+								"nullable": true
+							}
 						},
 						"required": [
 							"liveness",
@@ -5297,7 +5570,11 @@
 			"ApproveVerificationResponse": {
 				"properties": {
 					"message": {
-						"type": "string"
+						"type": "string",
+						"enum": [
+							"Verificación aprobada"
+						],
+						"nullable": false
 					},
 					"success": {
 						"type": "boolean"
@@ -5320,7 +5597,11 @@
 			"RejectVerificationResponse": {
 				"properties": {
 					"message": {
-						"type": "string"
+						"type": "string",
+						"enum": [
+							"Verificación rechazada"
+						],
+						"nullable": false
 					},
 					"success": {
 						"type": "boolean"
@@ -5419,163 +5700,243 @@
 				],
 				"type": "object"
 			},
-			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalId-string--externalUrl-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--images_58__url-string--id-string--displayOrder-number--imageType-EventImageType_-Array--ticketWaves_58__description-string-or-null--externalId-string--id-string--name-string--status-string--currency-EventTicketCurrency--faceValue-string--isAvailable-boolean--isSoldOut-boolean_-Array__": {
+			"AdminEventImage": {
+				"description": "Explicit response types for the Admin Events controller\nThese are needed because Kysely's inferred types are too complex for TSOA",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"url": {
+						"type": "string"
+					},
+					"imageType": {
+						"type": "string"
+					},
+					"displayOrder": {
+						"type": "number",
+						"format": "double"
+					},
+					"createdAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					}
+				},
+				"required": [
+					"id",
+					"url",
+					"imageType",
+					"displayOrder"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AdminTicketWave": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"createdAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"updatedAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"faceValue",
+					"currency",
+					"isSoldOut",
+					"isAvailable",
+					"externalId",
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AdminEvent": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"eventStartDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"venueName": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueAddress": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueCity": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"platform": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"images": {
+						"items": {
+							"$ref": "#/components/schemas/AdminEventImage"
+						},
+						"type": "array"
+					},
+					"ticketWaves": {
+						"items": {
+							"$ref": "#/components/schemas/AdminTicketWave"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"eventStartDate",
+					"eventEndDate",
+					"venueName",
+					"venueAddress",
+					"venueCity",
+					"externalUrl",
+					"externalId",
+					"platform",
+					"qrAvailabilityTiming",
+					"status",
+					"createdAt",
+					"updatedAt",
+					"images",
+					"ticketWaves"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PaginatedAdminEventsResponse": {
 				"properties": {
 					"data": {
 						"items": {
-							"properties": {
-								"ticketWaves": {
-									"items": {
-										"properties": {
-											"isSoldOut": {
-												"type": "boolean"
-											},
-											"isAvailable": {
-												"type": "boolean"
-											},
-											"faceValue": {
-												"type": "string"
-											},
-											"currency": {
-												"$ref": "#/components/schemas/EventTicketCurrency"
-											},
-											"status": {
-												"type": "string"
-											},
-											"name": {
-												"type": "string"
-											},
-											"id": {
-												"type": "string"
-											},
-											"externalId": {
-												"type": "string"
-											},
-											"description": {
-												"type": "string",
-												"nullable": true
-											}
-										},
-										"required": [
-											"isSoldOut",
-											"isAvailable",
-											"faceValue",
-											"currency",
-											"status",
-											"name",
-											"id",
-											"externalId",
-											"description"
-										],
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"images": {
-									"items": {
-										"properties": {
-											"imageType": {
-												"$ref": "#/components/schemas/EventImageType"
-											},
-											"displayOrder": {
-												"type": "number",
-												"format": "double"
-											},
-											"id": {
-												"type": "string"
-											},
-											"url": {
-												"type": "string"
-											}
-										},
-										"required": [
-											"imageType",
-											"displayOrder",
-											"id",
-											"url"
-										],
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"venueName": {
-									"type": "string",
-									"nullable": true
-								},
-								"venueAddress": {
-									"type": "string"
-								},
-								"updatedAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"status": {
-									"type": "string"
-								},
-								"qrAvailabilityTiming": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/QrAvailabilityTiming"
-										}
-									],
-									"nullable": true
-								},
-								"platform": {
-									"type": "string"
-								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								},
-								"externalUrl": {
-									"type": "string"
-								},
-								"externalId": {
-									"type": "string"
-								},
-								"eventStartDate": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"eventEndDate": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"description": {
-									"type": "string",
-									"nullable": true
-								},
-								"createdAt": {
-									"type": "string",
-									"format": "date-time"
-								}
-							},
-							"required": [
-								"ticketWaves",
-								"images",
-								"venueName",
-								"venueAddress",
-								"updatedAt",
-								"status",
-								"qrAvailabilityTiming",
-								"platform",
-								"name",
-								"id",
-								"externalUrl",
-								"externalId",
-								"eventStartDate",
-								"eventEndDate",
-								"description",
-								"createdAt"
-							],
-							"type": "object"
+							"$ref": "#/components/schemas/AdminEvent"
 						},
 						"type": "array"
 					},
 					"pagination": {
-						"$ref": "#/components/schemas/PaginationMeta"
+						"properties": {
+							"hasPrev": {
+								"type": "boolean"
+							},
+							"hasNext": {
+								"type": "boolean"
+							},
+							"totalPages": {
+								"type": "number",
+								"format": "double"
+							},
+							"total": {
+								"type": "number",
+								"format": "double"
+							},
+							"limit": {
+								"type": "number",
+								"format": "double"
+							},
+							"page": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"hasPrev",
+							"hasNext",
+							"totalPages",
+							"total",
+							"limit",
+							"page"
+						],
+						"type": "object"
 					}
 				},
 				"required": [
@@ -5586,7 +5947,7 @@
 				"additionalProperties": false
 			},
 			"GetEventsResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalId-string--externalUrl-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--status-string--updatedAt-Date--venueAddress-string--venueName-string-or-null--images_58__url-string--id-string--displayOrder-number--imageType-EventImageType_-Array--ticketWaves_58__description-string-or-null--externalId-string--id-string--name-string--status-string--currency-EventTicketCurrency--faceValue-string--isAvailable-boolean--isSoldOut-boolean_-Array__"
+				"$ref": "#/components/schemas/PaginatedAdminEventsResponse"
 			},
 			"infer_typeofAdminEventsQuerySchema_": {
 				"properties": {
@@ -5632,137 +5993,17 @@
 			"AdminEventsQuery": {
 				"$ref": "#/components/schemas/infer_typeofAdminEventsQuerySchema_"
 			},
-			"GetEventDetailsResponse": {
+			"AdminEventDetail": {
 				"properties": {
-					"ticketWaves": {
-						"items": {
-							"properties": {
-								"isSoldOut": {
-									"type": "boolean"
-								},
-								"isAvailable": {
-									"type": "boolean"
-								},
-								"faceValue": {
-									"type": "string"
-								},
-								"currency": {
-									"$ref": "#/components/schemas/EventTicketCurrency"
-								},
-								"updatedAt": {
-									"type": "string"
-								},
-								"status": {
-									"type": "string"
-								},
-								"name": {
-									"type": "string"
-								},
-								"id": {
-									"type": "string"
-								},
-								"externalId": {
-									"type": "string"
-								},
-								"description": {
-									"type": "string",
-									"nullable": true
-								},
-								"createdAt": {
-									"type": "string"
-								}
-							},
-							"required": [
-								"isSoldOut",
-								"isAvailable",
-								"faceValue",
-								"currency",
-								"updatedAt",
-								"status",
-								"name",
-								"id",
-								"externalId",
-								"description",
-								"createdAt"
-							],
-							"type": "object"
-						},
-						"type": "array"
-					},
-					"images": {
-						"items": {
-							"properties": {
-								"imageType": {
-									"$ref": "#/components/schemas/EventImageType"
-								},
-								"displayOrder": {
-									"type": "number",
-									"format": "double"
-								},
-								"id": {
-									"type": "string"
-								},
-								"createdAt": {
-									"type": "string"
-								},
-								"url": {
-									"type": "string"
-								}
-							},
-							"required": [
-								"imageType",
-								"displayOrder",
-								"id",
-								"createdAt",
-								"url"
-							],
-							"type": "object"
-						},
-						"type": "array"
-					},
-					"venueName": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueAddress": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"qrAvailabilityTiming": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/QrAvailabilityTiming"
-							}
-						],
-						"nullable": true
-					},
-					"platform": {
+					"id": {
 						"type": "string"
 					},
 					"name": {
 						"type": "string"
 					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"lastScrapedAt": {
+					"description": {
 						"type": "string",
-						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalUrl": {
-						"type": "string"
-					},
-					"externalId": {
-						"type": "string"
+						"nullable": true
 					},
 					"eventStartDate": {
 						"type": "string",
@@ -5772,82 +6013,98 @@
 						"type": "string",
 						"format": "date-time"
 					},
-					"description": {
+					"venueName": {
 						"type": "string",
 						"nullable": true
 					},
+					"venueAddress": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueCity": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"platform": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string"
+					},
 					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"images": {
+						"items": {
+							"$ref": "#/components/schemas/AdminEventImage"
+						},
+						"type": "array"
+					},
+					"ticketWaves": {
+						"items": {
+							"$ref": "#/components/schemas/AdminTicketWave"
+						},
+						"type": "array"
+					},
+					"metadata": {},
+					"lastScrapedAt": {
 						"type": "string",
 						"format": "date-time"
 					}
 				},
 				"required": [
-					"ticketWaves",
-					"images",
-					"venueName",
-					"venueAddress",
-					"updatedAt",
-					"status",
-					"qrAvailabilityTiming",
-					"platform",
-					"name",
-					"metadata",
-					"lastScrapedAt",
 					"id",
-					"externalUrl",
-					"externalId",
+					"name",
+					"description",
 					"eventStartDate",
 					"eventEndDate",
-					"description",
-					"createdAt"
+					"venueName",
+					"venueAddress",
+					"venueCity",
+					"externalUrl",
+					"externalId",
+					"platform",
+					"qrAvailabilityTiming",
+					"status",
+					"createdAt",
+					"updatedAt",
+					"images",
+					"ticketWaves",
+					"metadata",
+					"lastScrapedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
 			},
-			"UpdateEventResponse": {
+			"GetEventDetailsResponse": {
+				"$ref": "#/components/schemas/AdminEventDetail"
+			},
+			"UpdatedEvent": {
 				"properties": {
-					"venueName": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueAddress": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"qrAvailabilityTiming": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/QrAvailabilityTiming"
-							}
-						],
-						"nullable": true
-					},
-					"platform": {
+					"id": {
 						"type": "string"
 					},
 					"name": {
 						"type": "string"
 					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"lastScrapedAt": {
+					"description": {
 						"type": "string",
-						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalUrl": {
-						"type": "string"
-					},
-					"externalId": {
-						"type": "string"
+						"nullable": true
 					},
 					"eventStartDate": {
 						"type": "string",
@@ -5857,40 +6114,68 @@
 						"type": "string",
 						"format": "date-time"
 					},
-					"description": {
+					"venueId": {
 						"type": "string",
 						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"platform": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string"
+					},
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"venueName",
-					"venueAddress",
-					"updatedAt",
-					"status",
-					"qrAvailabilityTiming",
-					"platform",
-					"name",
-					"metadata",
-					"lastScrapedAt",
 					"id",
-					"externalUrl",
-					"externalId",
+					"name",
+					"description",
 					"eventStartDate",
 					"eventEndDate",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"venueId",
+					"externalUrl",
+					"externalId",
+					"platform",
+					"qrAvailabilityTiming",
+					"status",
+					"metadata",
+					"createdAt",
+					"updatedAt",
+					"lastScrapedAt",
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateEventResponse": {
+				"$ref": "#/components/schemas/UpdatedEvent"
 			},
 			"UpdateEventRouteBody": {
 				"properties": {
@@ -5917,13 +6202,6 @@
 					"externalUrl": {
 						"type": "string"
 					},
-					"venueAddress": {
-						"type": "string"
-					},
-					"venueName": {
-						"type": "string",
-						"nullable": true
-					},
 					"eventEndDate": {
 						"type": "string"
 					},
@@ -5940,45 +6218,29 @@
 				},
 				"type": "object"
 			},
-			"DeleteEventResponse": {
+			"DeletedEvent": {
 				"properties": {
-					"venueName": {
-						"type": "string",
-						"nullable": true
-					},
-					"venueAddress": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"qrAvailabilityTiming": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/QrAvailabilityTiming"
-							}
-						],
-						"nullable": true
-					},
-					"platform": {
+					"id": {
 						"type": "string"
 					},
 					"name": {
 						"type": "string"
 					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
+					"description": {
+						"type": "string",
+						"nullable": true
 					},
-					"lastScrapedAt": {
+					"eventStartDate": {
 						"type": "string",
 						"format": "date-time"
 					},
-					"id": {
-						"type": "string"
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"venueId": {
+						"type": "string",
+						"nullable": true
 					},
 					"externalUrl": {
 						"type": "string"
@@ -5986,121 +6248,133 @@
 					"externalId": {
 						"type": "string"
 					},
-					"eventStartDate": {
-						"type": "string",
-						"format": "date-time"
+					"platform": {
+						"type": "string"
 					},
-					"eventEndDate": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"description": {
+					"qrAvailabilityTiming": {
 						"type": "string",
 						"nullable": true
+					},
+					"status": {
+						"type": "string"
+					},
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"venueName",
-					"venueAddress",
-					"updatedAt",
-					"status",
-					"qrAvailabilityTiming",
-					"platform",
-					"name",
-					"metadata",
-					"lastScrapedAt",
 					"id",
-					"externalUrl",
-					"externalId",
+					"name",
+					"description",
 					"eventStartDate",
 					"eventEndDate",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"venueId",
+					"externalUrl",
+					"externalId",
+					"platform",
+					"qrAvailabilityTiming",
+					"status",
+					"metadata",
+					"createdAt",
+					"updatedAt",
+					"lastScrapedAt",
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
 			},
-			"CreateTicketWaveResponse": {
+			"DeleteEventResponse": {
+				"$ref": "#/components/schemas/DeletedEvent"
+			},
+			"CreatedTicketWave": {
 				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"type": "string"
+					},
 					"isSoldOut": {
 						"type": "boolean"
 					},
 					"isAvailable": {
 						"type": "boolean"
 					},
-					"faceValue": {
+					"status": {
 						"type": "string"
 					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"eventId": {
-						"type": "string"
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
 					},
 					"updatedAt": {
 						"type": "string",
 						"format": "date-time"
 					},
-					"status": {
-						"type": "string"
-					},
-					"name": {
-						"type": "string"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
 					"lastScrapedAt": {
 						"type": "string",
 						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalId": {
-						"type": "string"
-					},
-					"description": {
-						"type": "string",
-						"nullable": true
 					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"isSoldOut",
-					"isAvailable",
+					"id",
+					"eventId",
+					"externalId",
+					"name",
+					"description",
 					"faceValue",
 					"currency",
-					"eventId",
-					"updatedAt",
+					"isSoldOut",
+					"isAvailable",
 					"status",
-					"name",
 					"metadata",
+					"createdAt",
+					"updatedAt",
 					"lastScrapedAt",
-					"id",
-					"externalId",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateTicketWaveResponse": {
+				"$ref": "#/components/schemas/CreatedTicketWave"
 			},
 			"CreateTicketWaveRouteBody": {
 				"properties": {
@@ -6141,78 +6415,80 @@
 				],
 				"type": "object"
 			},
-			"UpdateTicketWaveResponse": {
+			"UpdatedTicketWave": {
 				"properties": {
-					"isSoldOut": {
-						"type": "boolean"
-					},
-					"isAvailable": {
-						"type": "boolean"
-					},
-					"faceValue": {
+					"id": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
 					},
 					"eventId": {
 						"type": "string"
 					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
+					"externalId": {
 						"type": "string"
 					},
 					"name": {
-						"type": "string"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"lastScrapedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalId": {
 						"type": "string"
 					},
 					"description": {
 						"type": "string",
 						"nullable": true
 					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"status": {
+						"type": "string"
+					},
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"isSoldOut",
-					"isAvailable",
+					"id",
+					"eventId",
+					"externalId",
+					"name",
+					"description",
 					"faceValue",
 					"currency",
-					"eventId",
-					"updatedAt",
+					"isSoldOut",
+					"isAvailable",
 					"status",
-					"name",
 					"metadata",
+					"createdAt",
+					"updatedAt",
 					"lastScrapedAt",
-					"id",
-					"externalId",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateTicketWaveResponse": {
+				"$ref": "#/components/schemas/UpdatedTicketWave"
 			},
 			"UpdateTicketWaveRouteBody": {
 				"properties": {
@@ -6243,103 +6519,105 @@
 				},
 				"type": "object"
 			},
-			"DeleteTicketWaveResponse": {
+			"DeletedTicketWave": {
 				"properties": {
-					"isSoldOut": {
-						"type": "boolean"
-					},
-					"isAvailable": {
-						"type": "boolean"
-					},
-					"faceValue": {
+					"id": {
 						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
 					},
 					"eventId": {
 						"type": "string"
 					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
+					"externalId": {
 						"type": "string"
 					},
 					"name": {
-						"type": "string"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"lastScrapedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"id": {
-						"type": "string"
-					},
-					"externalId": {
 						"type": "string"
 					},
 					"description": {
 						"type": "string",
 						"nullable": true
 					},
+					"faceValue": {
+						"type": "string"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"isSoldOut": {
+						"type": "boolean"
+					},
+					"isAvailable": {
+						"type": "boolean"
+					},
+					"status": {
+						"type": "string"
+					},
+					"metadata": {},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastScrapedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"isSoldOut",
-					"isAvailable",
+					"id",
+					"eventId",
+					"externalId",
+					"name",
+					"description",
 					"faceValue",
 					"currency",
-					"eventId",
-					"updatedAt",
+					"isSoldOut",
+					"isAvailable",
 					"status",
-					"name",
 					"metadata",
+					"createdAt",
+					"updatedAt",
 					"lastScrapedAt",
-					"id",
-					"externalId",
-					"description",
-					"deletedAt",
-					"createdAt"
+					"deletedAt"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
 			},
-			"UploadEventImageResponse": {
+			"DeleteTicketWaveResponse": {
+				"$ref": "#/components/schemas/DeletedTicketWave"
+			},
+			"UploadImageResponse": {
 				"properties": {
-					"imageType": {
-						"type": "string",
-						"enum": [
-							"flyer",
-							"hero"
-						]
+					"id": {
+						"type": "string"
 					},
 					"url": {
 						"type": "string"
 					},
-					"id": {
+					"imageType": {
 						"type": "string"
 					}
 				},
 				"required": [
-					"imageType",
+					"id",
 					"url",
-					"id"
+					"imageType"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
 			},
-			"DeleteEventImageResponse": {
+			"UploadEventImageResponse": {
+				"$ref": "#/components/schemas/UploadImageResponse"
+			},
+			"DeleteImageResponse": {
 				"properties": {
 					"success": {
 						"type": "boolean"
@@ -6348,7 +6626,11 @@
 				"required": [
 					"success"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DeleteEventImageResponse": {
+				"$ref": "#/components/schemas/DeleteImageResponse"
 			},
 			"GetCurrentUserResponse": {
 				"properties": {
@@ -6470,11 +6752,6 @@
 					"payment_id"
 				],
 				"type": "object"
-			},
-			"Record_string.unknown_": {
-				"properties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
 			},
 			"ClerkWebhookRouteBody": {
 				"properties": {
@@ -6759,6 +7036,1311 @@
 				],
 				"type": "object"
 			},
+			"TicketReportCaseType": {
+				"type": "string",
+				"enum": [
+					"invalid_ticket",
+					"other",
+					"problem_with_seller",
+					"ticket_not_received"
+				]
+			},
+			"TicketReportEntityType": {
+				"type": "string",
+				"enum": [
+					"listing",
+					"listing_ticket",
+					"order",
+					"order_ticket_reservation"
+				]
+			},
+			"UserCreateCaseResponse": {
+				"properties": {
+					"source": {
+						"type": "string",
+						"enum": [
+							"auto_missing_document",
+							"user_report"
+						]
+					},
+					"reportedByUserId": {
+						"type": "string",
+						"nullable": true
+					},
+					"entityType": {
+						"$ref": "#/components/schemas/TicketReportEntityType"
+					},
+					"entityId": {
+						"type": "string"
+					},
+					"closedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"caseType": {
+						"$ref": "#/components/schemas/TicketReportCaseType"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"awaiting_customer",
+							"awaiting_support",
+							"closed"
+						]
+					},
+					"id": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"source",
+					"reportedByUserId",
+					"entityType",
+					"entityId",
+					"closedAt",
+					"caseType",
+					"updatedAt",
+					"status",
+					"id",
+					"description",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"ConflictError": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double"
+					},
+					"isOperational": {
+						"type": "boolean"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.any_"
+					}
+				},
+				"required": [
+					"name",
+					"message",
+					"statusCode",
+					"isOperational"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateTicketReportBody": {
+				"properties": {
+					"description": {
+						"type": "string"
+					},
+					"entityId": {
+						"type": "string"
+					},
+					"entityType": {
+						"type": "string",
+						"enum": [
+							"listing",
+							"listing_ticket",
+							"order",
+							"order_ticket_reservation"
+						]
+					},
+					"caseType": {
+						"type": "string",
+						"enum": [
+							"other",
+							"invalid_ticket",
+							"problem_with_seller",
+							"ticket_not_received"
+						]
+					}
+				},
+				"required": [
+					"entityId",
+					"entityType",
+					"caseType"
+				],
+				"type": "object"
+			},
+			"PaginatedResponse__createdAt-Date--description-string-or-null--id-string--status-awaiting_customer-or-awaiting_support-or-closed--updatedAt-Date--caseType-TicketReportCaseType--closedAt-Date-or-null--entityId-string--entityType-TicketReportEntityType--reportedByUserId-string-or-null--source-auto_missing_document-or-user_report__": {
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"source": {
+									"type": "string",
+									"enum": [
+										"auto_missing_document",
+										"user_report"
+									]
+								},
+								"reportedByUserId": {
+									"type": "string",
+									"nullable": true
+								},
+								"entityType": {
+									"$ref": "#/components/schemas/TicketReportEntityType"
+								},
+								"entityId": {
+									"type": "string"
+								},
+								"closedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"caseType": {
+									"$ref": "#/components/schemas/TicketReportCaseType"
+								},
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"status": {
+									"type": "string",
+									"enum": [
+										"awaiting_customer",
+										"awaiting_support",
+										"closed"
+									]
+								},
+								"id": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string",
+									"nullable": true
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								}
+							},
+							"required": [
+								"source",
+								"reportedByUserId",
+								"entityType",
+								"entityId",
+								"closedAt",
+								"caseType",
+								"updatedAt",
+								"status",
+								"id",
+								"description",
+								"createdAt"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UserListMyCasesResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--id-string--status-awaiting_customer-or-awaiting_support-or-closed--updatedAt-Date--caseType-TicketReportCaseType--closedAt-Date-or-null--entityId-string--entityType-TicketReportEntityType--reportedByUserId-string-or-null--source-auto_missing_document-or-user_report__"
+			},
+			"CheckExistingReportResponse": {
+				"anyOf": [
+					{
+						"properties": {
+							"status": {
+								"type": "string",
+								"enum": [
+									"awaiting_customer",
+									"awaiting_support",
+									"closed"
+								]
+							},
+							"reportId": {
+								"type": "string"
+							},
+							"exists": {
+								"type": "boolean",
+								"enum": [
+									true
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"status",
+							"reportId",
+							"exists"
+						],
+						"type": "object"
+					},
+					{
+						"properties": {
+							"status": {},
+							"reportId": {},
+							"exists": {
+								"type": "boolean",
+								"enum": [
+									false
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"exists"
+						],
+						"type": "object"
+					}
+				]
+			},
+			"TicketReportStatus": {
+				"type": "string",
+				"enum": [
+					"awaiting_customer",
+					"awaiting_support",
+					"closed"
+				]
+			},
+			"TicketReportSource": {
+				"type": "string",
+				"enum": [
+					"auto_missing_document",
+					"user_report"
+				]
+			},
+			"TicketReportActionType": {
+				"type": "string",
+				"enum": [
+					"close",
+					"comment",
+					"refund_full",
+					"refund_partial",
+					"reject"
+				]
+			},
+			"UserGetCaseDetailsResponse": {
+				"properties": {
+					"entityDetails": {},
+					"initialAttachments": {
+						"items": {
+							"properties": {
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"sizeBytes": {
+									"type": "number",
+									"format": "double"
+								},
+								"mimeType": {
+									"type": "string"
+								},
+								"originalName": {
+									"type": "string"
+								},
+								"fileName": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"createdAt",
+								"sizeBytes",
+								"mimeType",
+								"originalName",
+								"fileName",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"actions": {
+						"items": {
+							"properties": {
+								"attachments": {
+									"items": {
+										"properties": {
+											"createdAt": {
+												"type": "string",
+												"format": "date-time"
+											},
+											"sizeBytes": {
+												"type": "number",
+												"format": "double"
+											},
+											"mimeType": {
+												"type": "string"
+											},
+											"originalName": {
+												"type": "string"
+											},
+											"fileName": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"createdAt",
+											"sizeBytes",
+											"mimeType",
+											"originalName",
+											"fileName",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"metadata": {},
+								"comment": {
+									"type": "string",
+									"nullable": true
+								},
+								"actionType": {
+									"$ref": "#/components/schemas/TicketReportActionType"
+								},
+								"performedByAdmin": {
+									"type": "boolean"
+								},
+								"performedByUserId": {
+									"type": "string"
+								},
+								"ticketReportId": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"attachments",
+								"createdAt",
+								"metadata",
+								"comment",
+								"actionType",
+								"performedByAdmin",
+								"performedByUserId",
+								"ticketReportId",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"reporter": {
+						"properties": {
+							"email": {
+								"type": "string"
+							},
+							"lastName": {
+								"type": "string",
+								"nullable": true
+							},
+							"firstName": {
+								"type": "string",
+								"nullable": true
+							}
+						},
+						"required": [
+							"email",
+							"lastName",
+							"firstName"
+						],
+						"type": "object",
+						"nullable": true
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"closedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"source": {
+						"$ref": "#/components/schemas/TicketReportSource"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"reportedByUserId": {
+						"type": "string",
+						"nullable": true
+					},
+					"entityId": {
+						"type": "string"
+					},
+					"entityType": {
+						"$ref": "#/components/schemas/TicketReportEntityType"
+					},
+					"caseType": {
+						"$ref": "#/components/schemas/TicketReportCaseType"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TicketReportStatus"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"entityDetails",
+					"initialAttachments",
+					"actions",
+					"reporter",
+					"updatedAt",
+					"createdAt",
+					"closedAt",
+					"source",
+					"description",
+					"reportedByUserId",
+					"entityId",
+					"entityType",
+					"caseType",
+					"status",
+					"id"
+				],
+				"type": "object"
+			},
+			"UserAddActionResponse": {
+				"properties": {
+					"action": {
+						"properties": {
+							"ticketReportId": {
+								"type": "string"
+							},
+							"performedByUserId": {
+								"type": "string"
+							},
+							"performedByAdmin": {
+								"type": "boolean"
+							},
+							"comment": {
+								"type": "string",
+								"nullable": true
+							},
+							"actionType": {
+								"$ref": "#/components/schemas/TicketReportActionType"
+							},
+							"metadata": {
+								"$ref": "#/components/schemas/JsonValue"
+							},
+							"id": {
+								"type": "string"
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"ticketReportId",
+							"performedByUserId",
+							"performedByAdmin",
+							"comment",
+							"actionType",
+							"metadata",
+							"id",
+							"createdAt"
+						],
+						"type": "object"
+					},
+					"report": {
+						"properties": {
+							"source": {
+								"type": "string",
+								"enum": [
+									"auto_missing_document",
+									"user_report"
+								]
+							},
+							"reportedByUserId": {
+								"type": "string",
+								"nullable": true
+							},
+							"entityType": {
+								"$ref": "#/components/schemas/TicketReportEntityType"
+							},
+							"entityId": {
+								"type": "string"
+							},
+							"closedAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"caseType": {
+								"$ref": "#/components/schemas/TicketReportCaseType"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"status": {
+								"type": "string",
+								"enum": [
+									"awaiting_customer",
+									"awaiting_support",
+									"closed"
+								]
+							},
+							"id": {
+								"type": "string"
+							},
+							"description": {
+								"type": "string",
+								"nullable": true
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"source",
+							"reportedByUserId",
+							"entityType",
+							"entityId",
+							"closedAt",
+							"caseType",
+							"updatedAt",
+							"status",
+							"id",
+							"description",
+							"createdAt"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"action",
+					"report"
+				],
+				"type": "object"
+			},
+			"AddUserActionBody": {
+				"properties": {
+					"comment": {
+						"type": "string"
+					},
+					"actionType": {
+						"type": "string",
+						"enum": [
+							"comment",
+							"close"
+						]
+					}
+				},
+				"required": [
+					"actionType"
+				],
+				"type": "object"
+			},
+			"UserCloseCaseResponse": {
+				"properties": {
+					"action": {
+						"properties": {
+							"ticketReportId": {
+								"type": "string"
+							},
+							"performedByUserId": {
+								"type": "string"
+							},
+							"performedByAdmin": {
+								"type": "boolean"
+							},
+							"comment": {
+								"type": "string",
+								"nullable": true
+							},
+							"actionType": {
+								"$ref": "#/components/schemas/TicketReportActionType"
+							},
+							"metadata": {
+								"$ref": "#/components/schemas/JsonValue"
+							},
+							"id": {
+								"type": "string"
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"ticketReportId",
+							"performedByUserId",
+							"performedByAdmin",
+							"comment",
+							"actionType",
+							"metadata",
+							"id",
+							"createdAt"
+						],
+						"type": "object"
+					},
+					"report": {
+						"properties": {
+							"source": {
+								"type": "string",
+								"enum": [
+									"auto_missing_document",
+									"user_report"
+								]
+							},
+							"reportedByUserId": {
+								"type": "string",
+								"nullable": true
+							},
+							"entityType": {
+								"$ref": "#/components/schemas/TicketReportEntityType"
+							},
+							"entityId": {
+								"type": "string"
+							},
+							"closedAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"caseType": {
+								"$ref": "#/components/schemas/TicketReportCaseType"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"status": {
+								"type": "string",
+								"enum": [
+									"awaiting_customer",
+									"awaiting_support",
+									"closed"
+								]
+							},
+							"id": {
+								"type": "string"
+							},
+							"description": {
+								"type": "string",
+								"nullable": true
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"source",
+							"reportedByUserId",
+							"entityType",
+							"entityId",
+							"closedAt",
+							"caseType",
+							"updatedAt",
+							"status",
+							"id",
+							"description",
+							"createdAt"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"action",
+					"report"
+				],
+				"type": "object"
+			},
+			"UploadAttachmentResponse": {
+				"properties": {
+					"uploadedByUserId": {
+						"type": "string"
+					},
+					"ticketReportActionId": {
+						"type": "string",
+						"nullable": true
+					},
+					"ticketReportId": {
+						"type": "string"
+					},
+					"storagePath": {
+						"type": "string"
+					},
+					"sizeBytes": {
+						"type": "number",
+						"format": "double"
+					},
+					"originalName": {
+						"type": "string"
+					},
+					"mimeType": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"uploadedByUserId",
+					"ticketReportActionId",
+					"ticketReportId",
+					"storagePath",
+					"sizeBytes",
+					"originalName",
+					"mimeType",
+					"fileName",
+					"id",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"ListAttachmentsResponse": {
+				"items": {
+					"properties": {
+						"uploadedByUserId": {
+							"type": "string"
+						},
+						"ticketReportActionId": {
+							"type": "string",
+							"nullable": true
+						},
+						"ticketReportId": {
+							"type": "string"
+						},
+						"storagePath": {
+							"type": "string"
+						},
+						"sizeBytes": {
+							"type": "number",
+							"format": "double"
+						},
+						"originalName": {
+							"type": "string"
+						},
+						"mimeType": {
+							"type": "string"
+						},
+						"fileName": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"url": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"uploadedByUserId",
+						"ticketReportActionId",
+						"ticketReportId",
+						"storagePath",
+						"sizeBytes",
+						"originalName",
+						"mimeType",
+						"fileName",
+						"id",
+						"createdAt",
+						"url"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"GetAttachmentUrlResponse": {
+				"properties": {
+					"url": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"url"
+				],
+				"type": "object"
+			},
+			"UpdateProfileResponse": {
+				"properties": {
+					"lastName": {
+						"type": "string",
+						"nullable": true
+					},
+					"firstName": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"lastName",
+					"firstName"
+				],
+				"type": "object"
+			},
+			"ErrorClassName": {
+				"type": "string",
+				"enum": [
+					"AppError",
+					"BadRequestError",
+					"UnauthorizedError",
+					"ForbiddenError",
+					"NotFoundError",
+					"ConflictError",
+					"ValidationError",
+					"TooManyRequestsError",
+					"MaxAttemptsExceededError",
+					"InternalServerError",
+					"ServiceUnavailableError",
+					"DatabaseError",
+					"ZodValidationError"
+				],
+				"description": "Union type of all error class names that can be returned by the API.\nUsed for type-safe error handling on the frontend."
+			},
+			"ApiErrorResponse": {
+				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\nUse this type in",
+				"properties": {
+					"error": {
+						"$ref": "#/components/schemas/ErrorClassName",
+						"description": "The error class name (e.g., 'ValidationError', 'UnauthorizedError')"
+					},
+					"message": {
+						"type": "string",
+						"description": "Human-readable error message"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double",
+						"description": "HTTP status code"
+					},
+					"timestamp": {
+						"type": "string",
+						"description": "ISO timestamp of when the error occurred"
+					},
+					"path": {
+						"type": "string",
+						"description": "Request path that caused the error"
+					},
+					"method": {
+						"type": "string",
+						"description": "HTTP method of the request"
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "Additional metadata (e.g., for validation errors)"
+					}
+				},
+				"required": [
+					"error",
+					"message",
+					"statusCode",
+					"timestamp",
+					"path",
+					"method"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateProfileRouteBody": {
+				"properties": {
+					"lastName": {
+						"type": "string"
+					},
+					"firstName": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"lastName",
+					"firstName"
+				],
+				"type": "object"
+			},
+			"UploadProfileImageResponse": {
+				"properties": {
+					"imageUrl": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"imageUrl"
+				],
+				"type": "object"
+			},
+			"DeleteProfileImageResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"GetEmailsResponse": {
+				"items": {
+					"properties": {
+						"verification": {
+							"properties": {
+								"status": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"status"
+							],
+							"type": "object",
+							"nullable": true
+						},
+						"isPrimary": {
+							"type": "boolean"
+						},
+						"emailAddress": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"verification",
+						"isPrimary",
+						"emailAddress",
+						"id"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"AddEmailResponse": {
+				"properties": {
+					"emailAddress": {
+						"type": "string"
+					},
+					"emailAddressId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"emailAddress",
+					"emailAddressId"
+				],
+				"type": "object"
+			},
+			"AddEmailRouteBody": {
+				"properties": {
+					"emailAddress": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"emailAddress"
+				],
+				"type": "object"
+			},
+			"VerifyEmailResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"VerifyEmailRouteBody": {
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"emailAddressId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"code",
+					"emailAddressId"
+				],
+				"type": "object"
+			},
+			"SetPrimaryEmailResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"SetPrimaryEmailRouteBody": {
+				"properties": {
+					"emailAddressId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"emailAddressId"
+				],
+				"type": "object"
+			},
+			"DeleteEmailResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"GetExternalAccountsResponse": {
+				"items": {
+					"properties": {
+						"imageUrl": {
+							"type": "string"
+						},
+						"lastName": {
+							"type": "string"
+						},
+						"firstName": {
+							"type": "string"
+						},
+						"emailAddress": {
+							"type": "string"
+						},
+						"provider": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"imageUrl",
+						"lastName",
+						"firstName",
+						"emailAddress",
+						"provider",
+						"id"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"GetPasswordStatusResponse": {
+				"properties": {
+					"hasPassword": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"hasPassword"
+				],
+				"type": "object"
+			},
+			"SetPasswordResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"SetPasswordRouteBody": {
+				"properties": {
+					"newPassword": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"newPassword"
+				],
+				"type": "object"
+			},
+			"ChangePasswordResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"ChangePasswordRouteBody": {
+				"properties": {
+					"newPassword": {
+						"type": "string"
+					},
+					"currentPassword": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"newPassword",
+					"currentPassword"
+				],
+				"type": "object"
+			},
+			"GetSessionsResponse": {
+				"items": {
+					"properties": {
+						"latestActivity": {
+							"properties": {
+								"isMobile": {
+									"type": "boolean"
+								},
+								"country": {
+									"type": "string"
+								},
+								"city": {
+									"type": "string"
+								},
+								"ipAddress": {
+									"type": "string"
+								},
+								"deviceType": {
+									"type": "string"
+								},
+								"browserVersion": {
+									"type": "string"
+								},
+								"browserName": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"isMobile"
+							],
+							"type": "object",
+							"nullable": true
+						},
+						"status": {
+							"type": "string"
+						},
+						"expireAt": {
+							"type": "number",
+							"format": "double"
+						},
+						"lastActiveAt": {
+							"type": "number",
+							"format": "double"
+						},
+						"clientId": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"latestActivity",
+						"status",
+						"expireAt",
+						"lastActiveAt",
+						"clientId",
+						"id"
+					],
+					"type": "object"
+				},
+				"type": "array"
+			},
+			"RevokeSessionResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"DeleteAccountResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"DeleteAccountRouteBody": {
+				"properties": {
+					"confirmation": {
+						"type": "string",
+						"enum": [
+							"ELIMINAR"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"confirmation"
+				],
+				"type": "object"
+			},
 			"CreatePaymentLinkResponse": {
 				"properties": {
 					"redirectUrl": {
@@ -6774,6 +8356,14 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"CreatePaymentLinkRouteBody": {
+				"properties": {
+					"country": {
+						"type": "string"
+					}
+				},
+				"type": "object"
 			},
 			"Pick_Notification.Exclude_keyofNotification.metadata-or-actions-or-type-or-title-or-description__": {
 				"properties": {
@@ -6845,6 +8435,9 @@
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
+					},
+					"sendViaJob": {
+						"type": "boolean"
 					}
 				},
 				"required": [
@@ -6857,7 +8450,8 @@
 					"userId",
 					"channelStatus",
 					"retryCount",
-					"seenAt"
+					"seenAt",
+					"sendViaJob"
 				],
 				"type": "object",
 				"description": "From T, pick a set of properties whose keys are in the union K"
@@ -6886,6 +8480,7 @@
 					"identity_verification_rejected",
 					"order_confirmed",
 					"order_expired",
+					"order_invoice",
 					"payment_failed",
 					"payment_succeeded",
 					"payout_cancelled",
@@ -6893,6 +8488,10 @@
 					"payout_failed",
 					"payout_processing",
 					"seller_earnings_retained",
+					"ticket_report_action_added",
+					"ticket_report_closed",
+					"ticket_report_created",
+					"ticket_report_status_changed",
 					"ticket_sold_seller"
 				]
 			},
@@ -6932,7 +8531,8 @@
 							"view_payout",
 							"start_verification",
 							"publish_tickets",
-							"view_earnings"
+							"view_earnings",
+							"view_report"
 						]
 					}
 				},
@@ -7071,7 +8671,11 @@
 			"InitiateVerificationResponse": {
 				"properties": {
 					"message": {
-						"type": "string"
+						"type": "string",
+						"enum": [
+							"Verificación iniciada"
+						],
+						"nullable": false
 					},
 					"success": {
 						"type": "boolean"
@@ -7082,69 +8686,6 @@
 					"success"
 				],
 				"type": "object"
-			},
-			"ErrorClassName": {
-				"type": "string",
-				"enum": [
-					"AppError",
-					"BadRequestError",
-					"UnauthorizedError",
-					"ForbiddenError",
-					"NotFoundError",
-					"ConflictError",
-					"ValidationError",
-					"TooManyRequestsError",
-					"MaxAttemptsExceededError",
-					"InternalServerError",
-					"ServiceUnavailableError",
-					"DatabaseError",
-					"ZodValidationError"
-				],
-				"description": "Union type of all error class names that can be returned by the API.\nUsed for type-safe error handling on the frontend."
-			},
-			"ApiErrorResponse": {
-				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\nUse this type in",
-				"properties": {
-					"error": {
-						"$ref": "#/components/schemas/ErrorClassName",
-						"description": "The error class name (e.g., 'ValidationError', 'UnauthorizedError')"
-					},
-					"message": {
-						"type": "string",
-						"description": "Human-readable error message"
-					},
-					"statusCode": {
-						"type": "number",
-						"format": "double",
-						"description": "HTTP status code"
-					},
-					"timestamp": {
-						"type": "string",
-						"description": "ISO timestamp of when the error occurred"
-					},
-					"path": {
-						"type": "string",
-						"description": "Request path that caused the error"
-					},
-					"method": {
-						"type": "string",
-						"description": "HTTP method of the request"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/Record_string.unknown_",
-						"description": "Additional metadata (e.g., for validation errors)"
-					}
-				},
-				"required": [
-					"error",
-					"message",
-					"statusCode",
-					"timestamp",
-					"path",
-					"method"
-				],
-				"type": "object",
-				"additionalProperties": false
 			},
 			"InitiateVerificationRouteBody": {
 				"properties": {
@@ -7220,7 +8761,7 @@
 				],
 				"type": "object"
 			},
-			"VerificationStatus": {
+			"IdentityVerificationStatus": {
 				"type": "string",
 				"enum": [
 					"pending",
@@ -7242,7 +8783,7 @@
 						"type": "string"
 					},
 					"status": {
-						"$ref": "#/components/schemas/VerificationStatus"
+						"$ref": "#/components/schemas/IdentityVerificationStatus"
 					},
 					"verified": {
 						"type": "boolean"
@@ -7264,6 +8805,614 @@
 					"sessionId"
 				],
 				"type": "object"
+			},
+			"PaginatedResponse__createdAt-Date--description-string-or-null--id-string--status-awaiting_customer-or-awaiting_support-or-closed--updatedAt-Date--caseType-TicketReportCaseType--closedAt-Date-or-null--entityId-string--entityType-TicketReportEntityType--reportedByUserId-string-or-null--source-auto_missing_document-or-user_report--reporterEmail-string-or-null--reporterFirstName-string-or-null--reporterLastName-string-or-null__": {
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"reporterLastName": {
+									"type": "string",
+									"nullable": true
+								},
+								"reporterFirstName": {
+									"type": "string",
+									"nullable": true
+								},
+								"reporterEmail": {
+									"type": "string",
+									"nullable": true
+								},
+								"source": {
+									"type": "string",
+									"enum": [
+										"auto_missing_document",
+										"user_report"
+									]
+								},
+								"reportedByUserId": {
+									"type": "string",
+									"nullable": true
+								},
+								"entityType": {
+									"$ref": "#/components/schemas/TicketReportEntityType"
+								},
+								"entityId": {
+									"type": "string"
+								},
+								"closedAt": {
+									"type": "string",
+									"format": "date-time",
+									"nullable": true
+								},
+								"caseType": {
+									"$ref": "#/components/schemas/TicketReportCaseType"
+								},
+								"updatedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"status": {
+									"type": "string",
+									"enum": [
+										"awaiting_customer",
+										"awaiting_support",
+										"closed"
+									]
+								},
+								"id": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string",
+									"nullable": true
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								}
+							},
+							"required": [
+								"reporterLastName",
+								"reporterFirstName",
+								"reporterEmail",
+								"source",
+								"reportedByUserId",
+								"entityType",
+								"entityId",
+								"closedAt",
+								"caseType",
+								"updatedAt",
+								"status",
+								"id",
+								"description",
+								"createdAt"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AdminListCasesResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--id-string--status-awaiting_customer-or-awaiting_support-or-closed--updatedAt-Date--caseType-TicketReportCaseType--closedAt-Date-or-null--entityId-string--entityType-TicketReportEntityType--reportedByUserId-string-or-null--source-auto_missing_document-or-user_report--reporterEmail-string-or-null--reporterFirstName-string-or-null--reporterLastName-string-or-null__"
+			},
+			"infer_typeofAdminListTicketReportsQuerySchema_": {
+				"properties": {
+					"caseType": {
+						"type": "string",
+						"enum": [
+							"other",
+							"invalid_ticket",
+							"problem_with_seller",
+							"ticket_not_received"
+						]
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"awaiting_customer",
+							"awaiting_support",
+							"closed"
+						]
+					},
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
+					},
+					"sortBy": {
+						"type": "string"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"limit",
+					"page"
+				],
+				"type": "object"
+			},
+			"AdminListTicketReportsQuery": {
+				"$ref": "#/components/schemas/infer_typeofAdminListTicketReportsQuerySchema_"
+			},
+			"AdminGetCaseDetailsResponse": {
+				"properties": {
+					"entityDetails": {},
+					"initialAttachments": {
+						"items": {
+							"properties": {
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"sizeBytes": {
+									"type": "number",
+									"format": "double"
+								},
+								"mimeType": {
+									"type": "string"
+								},
+								"originalName": {
+									"type": "string"
+								},
+								"fileName": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"createdAt",
+								"sizeBytes",
+								"mimeType",
+								"originalName",
+								"fileName",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"actions": {
+						"items": {
+							"properties": {
+								"attachments": {
+									"items": {
+										"properties": {
+											"createdAt": {
+												"type": "string",
+												"format": "date-time"
+											},
+											"sizeBytes": {
+												"type": "number",
+												"format": "double"
+											},
+											"mimeType": {
+												"type": "string"
+											},
+											"originalName": {
+												"type": "string"
+											},
+											"fileName": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"createdAt",
+											"sizeBytes",
+											"mimeType",
+											"originalName",
+											"fileName",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"createdAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"metadata": {},
+								"comment": {
+									"type": "string",
+									"nullable": true
+								},
+								"actionType": {
+									"$ref": "#/components/schemas/TicketReportActionType"
+								},
+								"performedByAdmin": {
+									"type": "boolean"
+								},
+								"performedByUserId": {
+									"type": "string"
+								},
+								"ticketReportId": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"attachments",
+								"createdAt",
+								"metadata",
+								"comment",
+								"actionType",
+								"performedByAdmin",
+								"performedByUserId",
+								"ticketReportId",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"reporter": {
+						"properties": {
+							"email": {
+								"type": "string"
+							},
+							"lastName": {
+								"type": "string",
+								"nullable": true
+							},
+							"firstName": {
+								"type": "string",
+								"nullable": true
+							}
+						},
+						"required": [
+							"email",
+							"lastName",
+							"firstName"
+						],
+						"type": "object",
+						"nullable": true
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"closedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"source": {
+						"$ref": "#/components/schemas/TicketReportSource"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"reportedByUserId": {
+						"type": "string",
+						"nullable": true
+					},
+					"entityId": {
+						"type": "string"
+					},
+					"entityType": {
+						"$ref": "#/components/schemas/TicketReportEntityType"
+					},
+					"caseType": {
+						"$ref": "#/components/schemas/TicketReportCaseType"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TicketReportStatus"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"entityDetails",
+					"initialAttachments",
+					"actions",
+					"reporter",
+					"updatedAt",
+					"createdAt",
+					"closedAt",
+					"source",
+					"description",
+					"reportedByUserId",
+					"entityId",
+					"entityType",
+					"caseType",
+					"status",
+					"id"
+				],
+				"type": "object"
+			},
+			"AdminAddActionResponse": {
+				"properties": {
+					"action": {
+						"properties": {
+							"ticketReportId": {
+								"type": "string"
+							},
+							"performedByUserId": {
+								"type": "string"
+							},
+							"performedByAdmin": {
+								"type": "boolean"
+							},
+							"comment": {
+								"type": "string",
+								"nullable": true
+							},
+							"actionType": {
+								"$ref": "#/components/schemas/TicketReportActionType"
+							},
+							"metadata": {
+								"$ref": "#/components/schemas/JsonValue"
+							},
+							"id": {
+								"type": "string"
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"ticketReportId",
+							"performedByUserId",
+							"performedByAdmin",
+							"comment",
+							"actionType",
+							"metadata",
+							"id",
+							"createdAt"
+						],
+						"type": "object"
+					},
+					"report": {
+						"properties": {
+							"source": {
+								"type": "string",
+								"enum": [
+									"auto_missing_document",
+									"user_report"
+								]
+							},
+							"reportedByUserId": {
+								"type": "string",
+								"nullable": true
+							},
+							"entityType": {
+								"$ref": "#/components/schemas/TicketReportEntityType"
+							},
+							"entityId": {
+								"type": "string"
+							},
+							"closedAt": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"caseType": {
+								"$ref": "#/components/schemas/TicketReportCaseType"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"status": {
+								"type": "string",
+								"enum": [
+									"awaiting_customer",
+									"awaiting_support",
+									"closed"
+								]
+							},
+							"id": {
+								"type": "string"
+							},
+							"description": {
+								"type": "string",
+								"nullable": true
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"source",
+							"reportedByUserId",
+							"entityType",
+							"entityId",
+							"closedAt",
+							"caseType",
+							"updatedAt",
+							"status",
+							"id",
+							"description",
+							"createdAt"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"action",
+					"report"
+				],
+				"type": "object"
+			},
+			"AddAdminActionBody": {
+				"properties": {
+					"metadata": {
+						"properties": {
+							"reservationIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"refundReason": {
+								"type": "string"
+							},
+							"refundAmount": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"type": "object"
+					},
+					"comment": {
+						"type": "string"
+					},
+					"actionType": {
+						"type": "string",
+						"enum": [
+							"comment",
+							"close",
+							"refund_full",
+							"refund_partial",
+							"reject"
+						]
+					}
+				},
+				"required": [
+					"actionType"
+				],
+				"type": "object"
+			},
+			"AdminUploadAttachmentResponse": {
+				"properties": {
+					"uploadedByUserId": {
+						"type": "string"
+					},
+					"ticketReportActionId": {
+						"type": "string",
+						"nullable": true
+					},
+					"ticketReportId": {
+						"type": "string"
+					},
+					"storagePath": {
+						"type": "string"
+					},
+					"sizeBytes": {
+						"type": "number",
+						"format": "double"
+					},
+					"originalName": {
+						"type": "string"
+					},
+					"mimeType": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"uploadedByUserId",
+					"ticketReportActionId",
+					"ticketReportId",
+					"storagePath",
+					"sizeBytes",
+					"originalName",
+					"mimeType",
+					"fileName",
+					"id",
+					"createdAt"
+				],
+				"type": "object"
+			},
+			"AdminListAttachmentsResponse": {
+				"items": {
+					"properties": {
+						"uploadedByUserId": {
+							"type": "string"
+						},
+						"ticketReportActionId": {
+							"type": "string",
+							"nullable": true
+						},
+						"ticketReportId": {
+							"type": "string"
+						},
+						"storagePath": {
+							"type": "string"
+						},
+						"sizeBytes": {
+							"type": "number",
+							"format": "double"
+						},
+						"originalName": {
+							"type": "string"
+						},
+						"mimeType": {
+							"type": "string"
+						},
+						"fileName": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						},
+						"createdAt": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"url": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"uploadedByUserId",
+						"ticketReportActionId",
+						"ticketReportId",
+						"storagePath",
+						"sizeBytes",
+						"originalName",
+						"mimeType",
+						"fileName",
+						"id",
+						"createdAt",
+						"url"
+					],
+					"type": "object"
+				},
+				"type": "array"
 			}
 		},
 		"securitySchemes": {}
@@ -7334,6 +9483,91 @@
 							"format": "double",
 							"type": "number"
 						}
+					},
+					{
+						"description": "Filter by city name",
+						"in": "query",
+						"name": "city",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter by region/state/departamento name",
+						"in": "query",
+						"name": "region",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Latitude for proximity search (requires lng)",
+						"in": "query",
+						"name": "lat",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Longitude for proximity search (requires lat)",
+						"in": "query",
+						"name": "lng",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Radius in km for proximity search (default: 30)",
+						"in": "query",
+						"name": "radiusKm",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "Filter events starting from this date (ISO format)",
+						"in": "query",
+						"name": "dateFrom",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter events ending before this date (ISO format)",
+						"in": "query",
+						"name": "dateTo",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Only show events with at least one available ticket",
+						"in": "query",
+						"name": "hasTickets",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"description": "User timezone offset in minutes from UTC (e.g. 180 for UTC-3)",
+						"in": "query",
+						"name": "tzOffset",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
 					}
 				]
 			}
@@ -7378,6 +9612,129 @@
 				]
 			}
 		},
+		"/events/trending": {
+			"get": {
+				"operationId": "GetTrendingEvents",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetTrendingEventsResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get trending events based on view count in the last N days",
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "days",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "region",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "lat",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "lng",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "radiusKm",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/events/cities": {
+			"get": {
+				"operationId": "GetDistinctCities",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDistinctCitiesResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get list of distinct cities for filter dropdown",
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/events/regions": {
+			"get": {
+				"operationId": "GetDistinctRegions",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDistinctRegionsResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get distinct regions with active events, grouped by country",
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
 		"/events/{eventId}": {
 			"get": {
 				"operationId": "GetById",
@@ -7393,6 +9750,38 @@
 						}
 					}
 				},
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "eventId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/events/{eventId}/view": {
+			"post": {
+				"operationId": "TrackView",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TrackViewResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Track a view for an event (called from route loader on actual navigation, not prefetch)",
 				"tags": [
 					"Events"
 				],
@@ -7703,7 +10092,7 @@
 						}
 					},
 					"422": {
-						"description": "Validation failed: Cannot create listing for finished event, ticket wave does not belong to event, price exceeds face value, or quantity must be greater than 0",
+						"description": "Validation failed: Cannot create listing for finished event, ticket wave does not belong to event, price exceeds face value, quantity must be greater than 0, or ticket limit exceeded",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7721,9 +10110,38 @@
 				"requestBody": {
 					"required": true,
 					"content": {
-						"application/json": {
+						"multipart/form-data": {
 							"schema": {
-								"$ref": "#/components/schemas/CreateTicketListingRouteBody"
+								"type": "object",
+								"properties": {
+									"eventId": {
+										"type": "string"
+									},
+									"ticketWaveId": {
+										"type": "string"
+									},
+									"price": {
+										"type": "number",
+										"format": "double"
+									},
+									"quantity": {
+										"type": "number",
+										"format": "double"
+									},
+									"documents": {
+										"items": {
+											"type": "string",
+											"format": "binary"
+										},
+										"type": "array"
+									}
+								},
+								"required": [
+									"eventId",
+									"ticketWaveId",
+									"price",
+									"quantity"
+								]
 							}
 						}
 					}
@@ -10886,6 +13304,1187 @@
 				}
 			}
 		},
+		"/ticket-reports": {
+			"post": {
+				"operationId": "CreateCase",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserCreateCaseResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Ya existe un reporte abierto para esta entidad",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConflictError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTicketReportBody"
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "ListMyCases",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserListMyCasesResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/ticket-reports/check-existing": {
+			"get": {
+				"operationId": "CheckExistingReport",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CheckExistingReportResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "entityType",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "entityId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/ticket-reports/{reportId}": {
+			"get": {
+				"operationId": "GetCaseDetails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserGetCaseDetailsResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/ticket-reports/{reportId}/actions": {
+			"post": {
+				"operationId": "AddAction",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserAddActionResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddUserActionBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/ticket-reports/{reportId}/close": {
+			"post": {
+				"operationId": "CloseCase",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserCloseCaseResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Case already closed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/ticket-reports/{reportId}/attachments": {
+			"post": {
+				"operationId": "UploadAttachment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UploadAttachmentResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "actionId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "ListAttachments",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ListAttachmentsResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/ticket-reports/{reportId}/attachments/{attachmentId}/url": {
+			"get": {
+				"operationId": "GetAttachmentUrl",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetAttachmentUrlResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Attachment not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "attachmentId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/profile": {
+			"put": {
+				"operationId": "UpdateProfile",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UpdateProfileResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateProfileRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/image": {
+			"put": {
+				"operationId": "UploadProfileImage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UploadProfileImageResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Image upload failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteProfileImage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteProfileImageResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/profile/emails": {
+			"get": {
+				"operationId": "GetEmails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetEmailsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			},
+			"post": {
+				"operationId": "AddEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AddEmailResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Failed to add email",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddEmailRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/emails/verify": {
+			"post": {
+				"operationId": "VerifyEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifyEmailResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Verification failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Email does not belong to user",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifyEmailRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/emails/primary": {
+			"put": {
+				"operationId": "SetPrimaryEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SetPrimaryEmailResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Email does not belong to user",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SetPrimaryEmailRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/emails/{emailAddressId}": {
+			"delete": {
+				"operationId": "DeleteEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteEmailResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Cannot delete primary email",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Email does not belong to user",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "emailAddressId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/profile/external-accounts": {
+			"get": {
+				"operationId": "GetExternalAccounts",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetExternalAccountsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/profile/password-status": {
+			"get": {
+				"operationId": "GetPasswordStatus",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetPasswordStatusResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/profile/password": {
+			"post": {
+				"operationId": "SetPassword",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SetPasswordResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Already has password",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SetPasswordRouteBody"
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"operationId": "ChangePassword",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ChangePasswordResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Current password incorrect",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ChangePasswordRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/sessions": {
+			"get": {
+				"operationId": "GetSessions",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetSessionsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/profile/sessions/{sessionId}": {
+			"delete": {
+				"operationId": "RevokeSession",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RevokeSessionResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Session does not belong to user",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/profile/account": {
+			"delete": {
+				"operationId": "DeleteAccount",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeleteAccountResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Invalid confirmation",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/DeleteAccountRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/payments/create-link/{orderId}": {
 			"post": {
 				"operationId": "CreatePaymentLink",
@@ -10944,7 +14543,17 @@
 							"type": "string"
 						}
 					}
-				]
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreatePaymentLinkRouteBody"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/notifications": {
@@ -11497,6 +15106,403 @@
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/admin/ticket-reports": {
+			"get": {
+				"operationId": "ListCases",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminListCasesResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "caseType",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"other",
+								"invalid_ticket",
+								"problem_with_seller",
+								"ticket_not_received"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"awaiting_customer",
+								"awaiting_support",
+								"closed"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/admin/ticket-reports/{reportId}": {
+			"get": {
+				"operationId": "GetCaseDetails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminGetCaseDetailsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/ticket-reports/{reportId}/actions": {
+			"post": {
+				"operationId": "AddAction",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminAddActionResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddAdminActionBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/ticket-reports/{reportId}/attachments": {
+			"post": {
+				"operationId": "UploadAttachment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminUploadAttachmentResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "actionId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "ListAttachments",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminListAttachmentsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Report not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Ticket Reports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "reportId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},

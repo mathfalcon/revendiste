@@ -25,7 +25,7 @@ interface QrAvailabilityDialogProps {
   viewMode?: 'buyer' | 'seller';
 }
 
-const QR_TIMING_LABELS: Record<QrAvailabilityTiming, string> = {
+export const QR_TIMING_LABELS: Record<QrAvailabilityTiming, string> = {
   '3h': '3 horas',
   '6h': '6 horas',
   '12h': '12 horas',

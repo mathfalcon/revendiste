@@ -10,11 +10,44 @@
  * ---------------------------------------------------------------
  */
 
-export enum VerificationStatus {
+export enum IdentityVerificationStatus {
   Pending = "pending",
   RequiresManualReview = "requires_manual_review",
   Completed = "completed",
   Failed = "failed",
+}
+
+export enum NotificationType {
+  AuthInvitation = "auth_invitation",
+  AuthNewDeviceSignIn = "auth_new_device_sign_in",
+  AuthPasswordChanged = "auth_password_changed",
+  AuthPasswordRemoved = "auth_password_removed",
+  AuthPrimaryEmailChanged = "auth_primary_email_changed",
+  AuthResetPasswordCode = "auth_reset_password_code",
+  AuthVerificationCode = "auth_verification_code",
+  BuyerTicketCancelled = "buyer_ticket_cancelled",
+  DocumentReminder = "document_reminder",
+  DocumentUploaded = "document_uploaded",
+  DocumentUploadedBatch = "document_uploaded_batch",
+  IdentityVerificationCompleted = "identity_verification_completed",
+  IdentityVerificationFailed = "identity_verification_failed",
+  IdentityVerificationManualReview = "identity_verification_manual_review",
+  IdentityVerificationRejected = "identity_verification_rejected",
+  OrderConfirmed = "order_confirmed",
+  OrderExpired = "order_expired",
+  OrderInvoice = "order_invoice",
+  PaymentFailed = "payment_failed",
+  PaymentSucceeded = "payment_succeeded",
+  PayoutCancelled = "payout_cancelled",
+  PayoutCompleted = "payout_completed",
+  PayoutFailed = "payout_failed",
+  PayoutProcessing = "payout_processing",
+  SellerEarningsRetained = "seller_earnings_retained",
+  TicketReportActionAdded = "ticket_report_action_added",
+  TicketReportClosed = "ticket_report_closed",
+  TicketReportCreated = "ticket_report_created",
+  TicketReportStatusChanged = "ticket_report_status_changed",
+  TicketSoldSeller = "ticket_sold_seller",
 }
 
 /**
@@ -37,32 +70,37 @@ export enum ErrorClassName {
   ZodValidationError = "ZodValidationError",
 }
 
-export enum NotificationType {
-  AuthInvitation = "auth_invitation",
-  AuthNewDeviceSignIn = "auth_new_device_sign_in",
-  AuthPasswordChanged = "auth_password_changed",
-  AuthPasswordRemoved = "auth_password_removed",
-  AuthPrimaryEmailChanged = "auth_primary_email_changed",
-  AuthResetPasswordCode = "auth_reset_password_code",
-  AuthVerificationCode = "auth_verification_code",
-  BuyerTicketCancelled = "buyer_ticket_cancelled",
-  DocumentReminder = "document_reminder",
-  DocumentUploaded = "document_uploaded",
-  DocumentUploadedBatch = "document_uploaded_batch",
-  IdentityVerificationCompleted = "identity_verification_completed",
-  IdentityVerificationFailed = "identity_verification_failed",
-  IdentityVerificationManualReview = "identity_verification_manual_review",
-  IdentityVerificationRejected = "identity_verification_rejected",
-  OrderConfirmed = "order_confirmed",
-  OrderExpired = "order_expired",
-  PaymentFailed = "payment_failed",
-  PaymentSucceeded = "payment_succeeded",
-  PayoutCancelled = "payout_cancelled",
-  PayoutCompleted = "payout_completed",
-  PayoutFailed = "payout_failed",
-  PayoutProcessing = "payout_processing",
-  SellerEarningsRetained = "seller_earnings_retained",
-  TicketSoldSeller = "ticket_sold_seller",
+export enum TicketReportActionType {
+  Close = "close",
+  Comment = "comment",
+  RefundFull = "refund_full",
+  RefundPartial = "refund_partial",
+  Reject = "reject",
+}
+
+export enum TicketReportSource {
+  AutoMissingDocument = "auto_missing_document",
+  UserReport = "user_report",
+}
+
+export enum TicketReportStatus {
+  AwaitingCustomer = "awaiting_customer",
+  AwaitingSupport = "awaiting_support",
+  Closed = "closed",
+}
+
+export enum TicketReportEntityType {
+  Listing = "listing",
+  ListingTicket = "listing_ticket",
+  Order = "order",
+  OrderTicketReservation = "order_ticket_reservation",
+}
+
+export enum TicketReportCaseType {
+  InvalidTicket = "invalid_ticket",
+  Other = "other",
+  ProblemWithSeller = "problem_with_seller",
+  TicketNotReceived = "ticket_not_received",
 }
 
 export enum DocumentTypeEnum {
@@ -100,12 +138,6 @@ export enum UploadAvailabilityReason {
   Unknown = "unknown",
 }
 
-export enum ListingTicketRefundStatus {
-  RefundFailed = "refund_failed",
-  RefundPending = "refund_pending",
-  Refunded = "refunded",
-}
-
 export enum EventTicketCurrency {
   USD = "USD",
   UYU = "UYU",
@@ -123,6 +155,7 @@ export enum QrAvailabilityTiming {
 export enum EventImageType {
   Flyer = "flyer",
   Hero = "hero",
+  OgHero = "og_hero",
 }
 
 export interface PaginationMeta {
@@ -138,7 +171,7 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
   data: {
     images: {
       imageType: EventImageType;
@@ -147,8 +180,9 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
     lowestAvailableTicketCurrency: string | null;
     /** @format double */
     lowestAvailableTicketPrice: number | null;
+    venueCity: string | null;
+    venueAddress: string | null;
     venueName: string | null;
-    venueAddress: string;
     /** @format date-time */
     updatedAt: string;
     status: string;
@@ -167,7 +201,7 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
 }
 
 export type GetEventsPaginatedResponse =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
 
 export interface InferTypeofPaginationSchema {
   sortOrder?: "asc" | "desc";
@@ -178,15 +212,53 @@ export interface InferTypeofPaginationSchema {
   page: number;
 }
 
-export type PaginationQuery = InferTypeofPaginationSchema;
+export interface EventsPaginatedQuery {
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+  /** Filter by city name */
+  city?: string;
+  /** Filter by region/state/departamento name */
+  region?: string;
+  /**
+   * Latitude for proximity search (requires lng)
+   * @format double
+   */
+  lat?: number;
+  /**
+   * Longitude for proximity search (requires lat)
+   * @format double
+   */
+  lng?: number;
+  /**
+   * Radius in km for proximity search (default: 30)
+   * @format double
+   */
+  radiusKm?: number;
+  /** Filter events starting from this date (ISO format) */
+  dateFrom?: string;
+  /** Filter events ending before this date (ISO format) */
+  dateTo?: string;
+  /** Only show events with at least one available ticket */
+  hasTickets?: boolean;
+  /**
+   * User timezone offset in minutes from UTC (e.g. 180 for UTC-3)
+   * @format double
+   */
+  tzOffset?: number;
+}
 
 export type SearchEventsResponse = {
   eventImages: {
     imageType: EventImageType;
     url: string;
   }[];
+  venueCity: string | null;
+  venueAddress: string | null;
   venueName: string | null;
-  venueAddress: string;
   /** @format date-time */
   updatedAt: string;
   status: string;
@@ -202,6 +274,43 @@ export type SearchEventsResponse = {
   createdAt: string;
 }[];
 
+export type GetTrendingEventsResponse = {
+  venue: {
+    city: string;
+    name: string;
+  } | null;
+  /** @format double */
+  totalViews: number;
+  eventImages: {
+    imageType: EventImageType;
+    url: string;
+  }[];
+  lowestAvailableTicketCurrency: string | null;
+  /** @format double */
+  lowestAvailableTicketPrice: number | null;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  name: string;
+  id: string;
+  externalUrl: string;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  description: string | null;
+  /** @format date-time */
+  createdAt: string;
+  venueId: string | null;
+}[];
+
+export type GetDistinctCitiesResponse = string[];
+
+export type GetDistinctRegionsResponse = {
+  regions: string[];
+  country: string;
+}[];
+
 export interface GetEventByIdResponse {
   ticketWaves: {
     priceGroups: {
@@ -215,13 +324,19 @@ export interface GetEventByIdResponse {
     description: string | null;
   }[];
   /** @format double */
+  userActiveTicketCount: number;
+  /** @format double */
   userListingsCount: number;
+  venueLongitude: string | null;
+  venueLatitude: string | null;
+  venueCountry: string | null;
   eventImages: {
     imageType: EventImageType;
     url: string;
   }[];
+  venueCity: string | null;
+  venueAddress: string | null;
   venueName: string | null;
-  venueAddress: string;
   /** @format date-time */
   updatedAt: string;
   status: string;
@@ -238,8 +353,12 @@ export interface GetEventByIdResponse {
   createdAt: string;
 }
 
+export interface TrackViewResponse {
+  success: boolean;
+}
+
 /** Construct a type with a set of properties K of type T */
-export type RecordStringAny = Record<string, any>;
+export type RecordStringUnknown = Record<string, any>;
 
 export interface HealthCheckResult {
   status: "healthy" | "unhealthy" | "degraded";
@@ -247,7 +366,7 @@ export interface HealthCheckResult {
   /** @format double */
   responseTime?: number;
   /** Construct a type with a set of properties K of type T */
-  details?: RecordStringAny;
+  details?: RecordStringUnknown;
 }
 
 export interface HealthCheck {
@@ -279,7 +398,6 @@ export interface CreateTicketListingResponse {
   listingTickets: {
     /** @format double */
     ticketNumber: number;
-    refundStatus: ListingTicketRefundStatus | null;
     price: string;
     listingId: string;
     /** @format date-time */
@@ -321,6 +439,9 @@ export interface NotFoundError {
   isOperational: boolean;
 }
 
+/** Construct a type with a set of properties K of type T */
+export type RecordStringAny = Record<string, any>;
+
 export interface ValidationError {
   name: string;
   message: string;
@@ -332,64 +453,61 @@ export interface ValidationError {
   metadata?: RecordStringAny;
 }
 
-export interface CreateTicketListingRouteBody {
-  /** @format double */
-  quantity: number;
-  /** @format double */
-  price: number;
-  ticketWaveId: string;
-  eventId: string;
-}
-
-export type GetUserListingsResponse = {
-  event: {
-    eventImages: {
-      imageType: EventImageType;
-      url: string;
-    }[];
-    venueName: string | null;
-    venueAddress: string;
-    qrAvailabilityTiming: QrAvailabilityTiming | null;
-    platform: string;
-    name: string;
-    id: string;
-    eventStartDate: string;
-    eventEndDate: string;
-    description: string | null;
-  };
-  ticketWave: {
-    faceValue: string;
-    currency: EventTicketCurrency;
-    name: string;
-    id: string;
-  };
-  /** @format date-time */
-  soldAt: string | null;
-  /** @format date-time */
-  updatedAt: string;
-  id: string;
-  /** @format date-time */
-  createdAt: string;
-  tickets: {
-    document: {
-      uploadedAt: string;
-      status: string;
+export interface PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray {
+  data: {
+    event: {
+      eventImages: {
+        imageType: EventImageType;
+        url: string;
+      }[];
+      venueAddress: string | null;
+      venueName: string | null;
+      qrAvailabilityTiming: QrAvailabilityTiming | null;
+      platform: string;
+      name: string;
       id: string;
-    } | null;
-    /** @format double */
-    ticketNumber: number;
-    price: string;
+      eventStartDate: string;
+      eventEndDate: string;
+      description: string | null;
+    };
+    ticketWave: {
+      faceValue: string;
+      currency: EventTicketCurrency;
+      name: string;
+      id: string;
+    };
+    /** @format date-time */
     soldAt: string | null;
+    /** @format date-time */
     updatedAt: string;
     id: string;
-    deletedAt: string | null;
+    /** @format date-time */
     createdAt: string;
-    uploadAvailableAt?: string;
-    uploadUnavailableReason?: UploadAvailabilityReason;
-    canUploadDocument: boolean;
-    hasDocument: boolean;
+    tickets: {
+      document: {
+        uploadedAt: string;
+        status: string;
+        id: string;
+      } | null;
+      /** @format double */
+      ticketNumber: number;
+      price: string;
+      soldAt: string | null;
+      updatedAt: string;
+      id: string;
+      deletedAt: string | null;
+      createdAt: string;
+      uploadAvailableAt?: string;
+      uploadUnavailableReason?: UploadAvailabilityReason;
+      canUploadDocument: boolean;
+      hasDocument: boolean;
+    }[];
   }[];
-}[];
+  pagination: PaginationMeta;
+}
+
+export type GetUserListingsResponse =
+  PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray;
 
 export interface UploadDocumentResponse {
   documentUrl: string;
@@ -424,7 +542,6 @@ export interface UploadDocumentResponse {
 export interface UpdateTicketPriceResponse {
   /** @format double */
   ticketNumber: number;
-  refundStatus: ListingTicketRefundStatus | null;
   price: string;
   listingId: string;
   /** @format date-time */
@@ -446,7 +563,6 @@ export interface UpdateTicketPriceRouteBody {
 export interface RemoveTicketResponse {
   /** @format double */
   ticketNumber: number;
-  refundStatus: ListingTicketRefundStatus | null;
   price: string;
   listingId: string;
   /** @format date-time */
@@ -504,7 +620,6 @@ export interface GetTicketInfoResponse {
 
 export interface CreateOrderResponse {
   vatOnCommission: string;
-  totalAmount: string;
   subtotalAmount: string;
   /** @format date-time */
   reservationExpiresAt: string;
@@ -514,6 +629,7 @@ export interface CreateOrderResponse {
   /** @format date-time */
   cancelledAt: string | null;
   userId: string;
+  totalAmount: string;
   currency: EventTicketCurrency;
   eventId: string;
   /** @format date-time */
@@ -551,8 +667,9 @@ export interface GetOrderByIdResponse {
       imageType: EventImageType;
       url: string;
     }[];
-    venueName: string | null;
+    venueCountry: string | null;
     venueAddress: string | null;
+    venueName: string | null;
     qrAvailabilityTiming: QrAvailabilityTiming | null;
     platform: string | null;
     name: string | null;
@@ -561,7 +678,6 @@ export interface GetOrderByIdResponse {
     eventEndDate: string | null;
   };
   vatOnCommission: string;
-  totalAmount: string;
   subtotalAmount: string;
   /** @format date-time */
   reservationExpiresAt: string;
@@ -571,6 +687,7 @@ export interface GetOrderByIdResponse {
   /** @format date-time */
   cancelledAt: string | null;
   userId: string;
+  totalAmount: string;
   currency: EventTicketCurrency;
   eventId: string;
   /** @format date-time */
@@ -581,50 +698,57 @@ export interface GetOrderByIdResponse {
   createdAt: string;
 }
 
-export type GetUserOrdersResponse = {
-  items: {
-    ticketWaveName: string | null;
-    subtotal: string;
-    /** @format double */
-    quantity: number;
-    pricePerTicket: string;
-    ticketWaveId: string;
-    id: string;
-    currency: EventTicketCurrency | null;
-  }[];
-  event: {
-    images: {
-      imageType: EventImageType;
-      url: string;
+export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray {
+  data: {
+    items: {
+      ticketWaveName: string | null;
+      subtotal: string;
+      /** @format double */
+      quantity: number;
+      pricePerTicket: string;
+      ticketWaveId: string;
+      id: string;
+      currency: EventTicketCurrency | null;
     }[];
-    venueName: string | null;
-    venueAddress: string | null;
-    platform: string | null;
-    name: string | null;
-    id: string | null;
-    eventStartDate: string | null;
-    eventEndDate: string | null;
-  };
-  vatOnCommission: string;
-  totalAmount: string;
-  subtotalAmount: string;
-  /** @format date-time */
-  reservationExpiresAt: string;
-  platformCommission: string;
-  /** @format date-time */
-  confirmedAt: string | null;
-  /** @format date-time */
-  cancelledAt: string | null;
-  userId: string;
-  currency: EventTicketCurrency;
-  eventId: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: "cancelled" | "confirmed" | "expired" | "pending";
-  id: string;
-  /** @format date-time */
-  createdAt: string;
-}[];
+    event: {
+      images: {
+        imageType: EventImageType;
+        url: string;
+      }[];
+      venueCountry: string | null;
+      venueAddress: string | null;
+      venueName: string | null;
+      platform: string | null;
+      name: string | null;
+      id: string | null;
+      eventStartDate: string | null;
+      eventEndDate: string | null;
+    };
+    vatOnCommission: string;
+    subtotalAmount: string;
+    /** @format date-time */
+    reservationExpiresAt: string;
+    platformCommission: string;
+    /** @format date-time */
+    confirmedAt: string | null;
+    /** @format date-time */
+    cancelledAt: string | null;
+    userId: string;
+    totalAmount: string;
+    currency: EventTicketCurrency;
+    eventId: string;
+    /** @format date-time */
+    updatedAt: string;
+    status: "cancelled" | "confirmed" | "expired" | "pending";
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  pagination: PaginationMeta;
+}
+
+export type GetUserOrdersResponse =
+  PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray;
 
 export interface GetOrderTicketsResponse {
   tickets: {
@@ -638,7 +762,7 @@ export interface GetOrderTicketsResponse {
     ticketWave: {
       name: string;
     } | null;
-    reservationStatus: "active" | "refund_pending" | "refunded" | "cancelled";
+    reservationStatus: "active" | "cancelled" | "refund_pending" | "refunded";
     hasDocument: boolean;
     /** @format date-time */
     soldAt: string | null;
@@ -728,6 +852,8 @@ export interface GetPayoutHistoryResponse {
   }[];
 }
 
+export type PaginationQuery = InferTypeofPaginationSchema;
+
 export type JsonArray = JsonValue[];
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
@@ -738,7 +864,6 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export interface RequestPayoutResponse {
   transactionReference: string | null;
-  sellerUserId: string;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -747,12 +872,13 @@ export interface RequestPayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
   amount: string;
+  /** @format date-time */
+  completedAt: string | null;
+  sellerUserId: string;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -933,7 +1059,6 @@ export interface GetUserPayoutDetailsResponse {
     createdAt: string;
   }[];
   transactionReference: string | null;
-  sellerUserId: string;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -942,12 +1067,13 @@ export interface GetUserPayoutDetailsResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
   amount: string;
+  /** @format date-time */
+  completedAt: string | null;
+  sellerUserId: string;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1012,7 +1138,7 @@ export interface GetUserPayoutDetailsResponse {
   } | null;
 }
 
-export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencyAmountStringFailedAtDateOrNullFailureReasonStringOrNullCompletedAtDateOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateSellerUserIdStringTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
+export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullAmountStringFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
   data: {
     payoutMethod: {
       payoutType: PayoutType;
@@ -1034,7 +1160,6 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
       createdAt: string;
     }[];
     transactionReference: string | null;
-    sellerUserId: string;
     /** @format date-time */
     requestedAt: string;
     processingFee: string | null;
@@ -1043,12 +1168,13 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
     processedAt: string | null;
     payoutMethodId: string;
     notes: string | null;
-    /** @format date-time */
-    completedAt: string | null;
     failureReason: string | null;
     /** @format date-time */
     failedAt: string | null;
     amount: string;
+    /** @format date-time */
+    completedAt: string | null;
+    sellerUserId: string;
     currency: EventTicketCurrency;
     /** @format date-time */
     updatedAt: string;
@@ -1062,7 +1188,7 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
 }
 
 export type GetPayoutsResponse =
-  PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencyAmountStringFailedAtDateOrNullFailureReasonStringOrNullCompletedAtDateOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateSellerUserIdStringTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
+  PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullAmountStringFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
 
 export interface InferTypeofAdminPayoutsQuerySchema {
   status?: "cancelled" | "pending" | "completed" | "failed";
@@ -1085,7 +1211,6 @@ export interface GetPayoutDetailsResponse {
     createdAt: string;
   }[];
   transactionReference: string | null;
-  sellerUserId: string;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1094,12 +1219,13 @@ export interface GetPayoutDetailsResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
   amount: string;
+  /** @format date-time */
+  completedAt: string | null;
+  sellerUserId: string;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1174,7 +1300,6 @@ export interface GetPayoutDetailsResponse {
 
 export interface ProcessPayoutResponse {
   transactionReference: string | null;
-  sellerUserId: string;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1183,12 +1308,13 @@ export interface ProcessPayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
   amount: string;
+  /** @format date-time */
+  completedAt: string | null;
+  sellerUserId: string;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1211,7 +1337,6 @@ export interface ProcessPayoutRouteBody {
 
 export interface CompletePayoutResponse {
   transactionReference: string | null;
-  sellerUserId: string;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1220,12 +1345,13 @@ export interface CompletePayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
   amount: string;
+  /** @format date-time */
+  completedAt: string | null;
+  sellerUserId: string;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1245,7 +1371,6 @@ export interface CompletePayoutRouteBody {
 
 export interface FailPayoutResponse {
   transactionReference: string | null;
-  sellerUserId: string;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1254,12 +1379,13 @@ export interface FailPayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
   amount: string;
+  /** @format date-time */
+  completedAt: string | null;
+  sellerUserId: string;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1278,7 +1404,6 @@ export interface FailPayoutRouteBody {
 
 export interface UpdatePayoutResponse {
   transactionReference: string | null;
-  sellerUserId: string;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1287,12 +1412,13 @@ export interface UpdatePayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
   amount: string;
+  /** @format date-time */
+  completedAt: string | null;
+  sellerUserId: string;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1316,7 +1442,6 @@ export interface UpdatePayoutRouteBody {
 
 export interface CancelPayoutResponse {
   transactionReference: string | null;
-  sellerUserId: string;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1325,12 +1450,13 @@ export interface CancelPayoutResponse {
   processedAt: string | null;
   payoutMethodId: string;
   notes: string | null;
-  /** @format date-time */
-  completedAt: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
   amount: string;
+  /** @format date-time */
+  completedAt: string | null;
+  sellerUserId: string;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1438,20 +1564,24 @@ export interface GetVerificationDetailsResponse {
   /** @format date-time */
   createdAt: string;
   metadata: {
-    failedAt: any;
-    failureReason: any;
-    processedAt: any;
-    livenessSessionId: any;
+    failedAt: object | null;
+    failureReason: object | null;
+    processedAt: object | null;
+    livenessSessionId: object | null;
   };
   images: {
-    auditImagesCount: any;
+    /** @format double */
+    auditImagesCount: number;
     hasReferenceImage: boolean;
     hasDocumentImage: boolean;
   };
   confidenceScores: {
-    liveness: any;
-    faceMatch: any;
-    textDetection: any;
+    /** @format double */
+    liveness: number | null;
+    /** @format double */
+    faceMatch: number | null;
+    /** @format double */
+    textDetection: number | null;
   };
   /** @format date-time */
   documentVerifiedAt: string | null;
@@ -1482,7 +1612,7 @@ export interface GetVerificationImageUrlResponse {
 }
 
 export interface ApproveVerificationResponse {
-  message: string;
+  message: "Verificación aprobada";
   success: boolean;
 }
 
@@ -1491,7 +1621,7 @@ export interface ApproveVerificationRouteBody {
 }
 
 export interface RejectVerificationResponse {
-  message: string;
+  message: "Verificación rechazada";
   success: boolean;
 }
 
@@ -1521,50 +1651,74 @@ export interface GetVerificationAuditHistoryResponse {
   }[];
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray {
-  data: {
-    ticketWaves: {
-      isSoldOut: boolean;
-      isAvailable: boolean;
-      faceValue: string;
-      currency: EventTicketCurrency;
-      status: string;
-      name: string;
-      id: string;
-      externalId: string;
-      description: string | null;
-    }[];
-    images: {
-      imageType: EventImageType;
-      /** @format double */
-      displayOrder: number;
-      id: string;
-      url: string;
-    }[];
-    venueName: string | null;
-    venueAddress: string;
-    /** @format date-time */
-    updatedAt: string;
-    status: string;
-    qrAvailabilityTiming: QrAvailabilityTiming | null;
-    platform: string;
-    name: string;
-    id: string;
-    externalUrl: string;
-    externalId: string;
-    /** @format date-time */
-    eventStartDate: string;
-    /** @format date-time */
-    eventEndDate: string;
-    description: string | null;
-    /** @format date-time */
-    createdAt: string;
-  }[];
-  pagination: PaginationMeta;
+/**
+ * Explicit response types for the Admin Events controller
+ * These are needed because Kysely's inferred types are too complex for TSOA
+ */
+export interface AdminEventImage {
+  id: string;
+  url: string;
+  imageType: string;
+  /** @format double */
+  displayOrder: number;
+  createdAt?: string;
 }
 
-export type GetEventsResponse =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullStatusStringUpdatedAtDateVenueAddressStringVenueNameStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray;
+export interface AdminTicketWave {
+  id: string;
+  name: string;
+  description: string | null;
+  faceValue: string;
+  currency: string;
+  isSoldOut: boolean;
+  isAvailable: boolean;
+  externalId: string;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdminEvent {
+  id: string;
+  name: string;
+  description: string | null;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  venueName: string | null;
+  venueAddress: string | null;
+  venueCity: string | null;
+  externalUrl: string;
+  externalId: string;
+  platform: string;
+  qrAvailabilityTiming: string | null;
+  status: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  images: AdminEventImage[];
+  ticketWaves: AdminTicketWave[];
+}
+
+export interface PaginatedAdminEventsResponse {
+  data: AdminEvent[];
+  pagination: {
+    hasPrev: boolean;
+    hasNext: boolean;
+    /** @format double */
+    totalPages: number;
+    /** @format double */
+    total: number;
+    /** @format double */
+    limit: number;
+    /** @format double */
+    page: number;
+  };
+}
+
+export type GetEventsResponse = PaginatedAdminEventsResponse;
 
 export interface InferTypeofAdminEventsQuerySchema {
   status?: "active" | "inactive";
@@ -1580,136 +1734,122 @@ export interface InferTypeofAdminEventsQuerySchema {
 
 export type AdminEventsQuery = InferTypeofAdminEventsQuerySchema;
 
-export interface GetEventDetailsResponse {
-  ticketWaves: {
-    isSoldOut: boolean;
-    isAvailable: boolean;
-    faceValue: string;
-    currency: EventTicketCurrency;
-    updatedAt: string;
-    status: string;
-    name: string;
-    id: string;
-    externalId: string;
-    description: string | null;
-    createdAt: string;
-  }[];
-  images: {
-    imageType: EventImageType;
-    /** @format double */
-    displayOrder: number;
-    id: string;
-    createdAt: string;
-    url: string;
-  }[];
-  venueName: string | null;
-  venueAddress: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: string;
-  qrAvailabilityTiming: QrAvailabilityTiming | null;
-  platform: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
+export interface AdminEventDetail {
   id: string;
-  externalUrl: string;
-  externalId: string;
+  name: string;
+  description: string | null;
   /** @format date-time */
   eventStartDate: string;
   /** @format date-time */
   eventEndDate: string;
-  description: string | null;
+  venueName: string | null;
+  venueAddress: string | null;
+  venueCity: string | null;
+  externalUrl: string;
+  externalId: string;
+  platform: string;
+  qrAvailabilityTiming: string | null;
+  status: string;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  images: AdminEventImage[];
+  ticketWaves: AdminTicketWave[];
+  metadata: any;
+  /** @format date-time */
+  lastScrapedAt: string;
 }
 
-export interface UpdateEventResponse {
-  venueName: string | null;
-  venueAddress: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: string;
-  qrAvailabilityTiming: QrAvailabilityTiming | null;
-  platform: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
+export type GetEventDetailsResponse = AdminEventDetail;
+
+export interface UpdatedEvent {
   id: string;
-  externalUrl: string;
-  externalId: string;
+  name: string;
+  description: string | null;
   /** @format date-time */
   eventStartDate: string;
   /** @format date-time */
   eventEndDate: string;
-  description: string | null;
-  /** @format date-time */
-  deletedAt: string | null;
+  venueId: string | null;
+  externalUrl: string;
+  externalId: string;
+  platform: string;
+  qrAvailabilityTiming: string | null;
+  status: string;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  lastScrapedAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
 }
+
+export type UpdateEventResponse = UpdatedEvent;
 
 export interface UpdateEventRouteBody {
   status?: "active" | "inactive";
   qrAvailabilityTiming?: "12h" | "24h" | "3h" | "48h" | "6h" | "72h" | null;
   externalUrl?: string;
-  venueAddress?: string;
-  venueName?: string | null;
   eventEndDate?: string;
   eventStartDate?: string;
   description?: string | null;
   name?: string;
 }
 
-export interface DeleteEventResponse {
-  venueName: string | null;
-  venueAddress: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: string;
-  qrAvailabilityTiming: QrAvailabilityTiming | null;
-  platform: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
+export interface DeletedEvent {
   id: string;
-  externalUrl: string;
-  externalId: string;
+  name: string;
+  description: string | null;
   /** @format date-time */
   eventStartDate: string;
   /** @format date-time */
   eventEndDate: string;
-  description: string | null;
-  /** @format date-time */
-  deletedAt: string | null;
+  venueId: string | null;
+  externalUrl: string;
+  externalId: string;
+  platform: string;
+  qrAvailabilityTiming: string | null;
+  status: string;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
-}
-
-export interface CreateTicketWaveResponse {
-  isSoldOut: boolean;
-  isAvailable: boolean;
-  faceValue: string;
-  currency: EventTicketCurrency;
-  eventId: string;
   /** @format date-time */
   updatedAt: string;
-  status: string;
-  name: string;
-  metadata: JsonValue;
   /** @format date-time */
   lastScrapedAt: string;
-  id: string;
-  externalId: string;
-  description: string | null;
   /** @format date-time */
   deletedAt: string | null;
+}
+
+export type DeleteEventResponse = DeletedEvent;
+
+export interface CreatedTicketWave {
+  id: string;
+  eventId: string;
+  externalId: string;
+  name: string;
+  description: string | null;
+  faceValue: string;
+  currency: string;
+  isSoldOut: boolean;
+  isAvailable: boolean;
+  status: string;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  lastScrapedAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
 }
+
+export type CreateTicketWaveResponse = CreatedTicketWave;
 
 export interface CreateTicketWaveRouteBody {
   externalId?: string;
@@ -1722,27 +1862,29 @@ export interface CreateTicketWaveRouteBody {
   name: string;
 }
 
-export interface UpdateTicketWaveResponse {
+export interface UpdatedTicketWave {
+  id: string;
+  eventId: string;
+  externalId: string;
+  name: string;
+  description: string | null;
+  faceValue: string;
+  currency: string;
   isSoldOut: boolean;
   isAvailable: boolean;
-  faceValue: string;
-  currency: EventTicketCurrency;
-  eventId: string;
-  /** @format date-time */
-  updatedAt: string;
   status: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
-  id: string;
-  externalId: string;
-  description: string | null;
-  /** @format date-time */
-  deletedAt: string | null;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  lastScrapedAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
 }
+
+export type UpdateTicketWaveResponse = UpdatedTicketWave;
 
 export interface UpdateTicketWaveRouteBody {
   isAvailable?: boolean;
@@ -1754,37 +1896,43 @@ export interface UpdateTicketWaveRouteBody {
   name?: string;
 }
 
-export interface DeleteTicketWaveResponse {
+export interface DeletedTicketWave {
+  id: string;
+  eventId: string;
+  externalId: string;
+  name: string;
+  description: string | null;
+  faceValue: string;
+  currency: string;
   isSoldOut: boolean;
   isAvailable: boolean;
-  faceValue: string;
-  currency: EventTicketCurrency;
-  eventId: string;
-  /** @format date-time */
-  updatedAt: string;
   status: string;
-  name: string;
-  metadata: JsonValue;
-  /** @format date-time */
-  lastScrapedAt: string;
-  id: string;
-  externalId: string;
-  description: string | null;
-  /** @format date-time */
-  deletedAt: string | null;
+  metadata: any;
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  lastScrapedAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
 }
 
-export interface UploadEventImageResponse {
-  imageType: "flyer" | "hero";
-  url: string;
+export type DeleteTicketWaveResponse = DeletedTicketWave;
+
+export interface UploadImageResponse {
   id: string;
+  url: string;
+  imageType: string;
 }
 
-export interface DeleteEventImageResponse {
+export type UploadEventImageResponse = UploadImageResponse;
+
+export interface DeleteImageResponse {
   success: boolean;
 }
+
+export type DeleteEventImageResponse = DeleteImageResponse;
 
 export interface GetCurrentUserResponse {
   /** Reason for manual review rejection (if rejected by admin) */
@@ -1824,9 +1972,6 @@ export interface GetCurrentUserResponse {
 export interface DLocalWebhookrRouteBody {
   payment_id: string;
 }
-
-/** Construct a type with a set of properties K of type T */
-export type RecordStringUnknown = object;
 
 export interface ClerkWebhookRouteBody {
   event_attributes?: {
@@ -1900,9 +2045,387 @@ export interface ClerkWebhookRouteBody {
   object: "event";
 }
 
+export interface UserCreateCaseResponse {
+  source: "auto_missing_document" | "user_report";
+  reportedByUserId: string | null;
+  entityType: TicketReportEntityType;
+  entityId: string;
+  /** @format date-time */
+  closedAt: string | null;
+  caseType: TicketReportCaseType;
+  /** @format date-time */
+  updatedAt: string;
+  status: "awaiting_customer" | "awaiting_support" | "closed";
+  id: string;
+  description: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface ConflictError {
+  name: string;
+  message: string;
+  stack?: string;
+  /** @format double */
+  statusCode: number;
+  isOperational: boolean;
+  /** Construct a type with a set of properties K of type T */
+  metadata?: RecordStringAny;
+}
+
+export interface CreateTicketReportBody {
+  description?: string;
+  entityId: string;
+  entityType:
+    | "listing"
+    | "listing_ticket"
+    | "order"
+    | "order_ticket_reservation";
+  caseType:
+    | "other"
+    | "invalid_ticket"
+    | "problem_with_seller"
+    | "ticket_not_received";
+}
+
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReport {
+  data: {
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  pagination: PaginationMeta;
+}
+
+export type UserListMyCasesResponse =
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReport;
+
+export type CheckExistingReportResponse =
+  | {
+      status: "awaiting_customer" | "awaiting_support" | "closed";
+      reportId: string;
+      exists: true;
+    }
+  | {
+      status?: any;
+      reportId?: any;
+      exists: false;
+    };
+
+export interface UserGetCaseDetailsResponse {
+  entityDetails: any;
+  initialAttachments: {
+    /** @format date-time */
+    createdAt: string;
+    /** @format double */
+    sizeBytes: number;
+    mimeType: string;
+    originalName: string;
+    fileName: string;
+    id: string;
+  }[];
+  actions: {
+    attachments: {
+      /** @format date-time */
+      createdAt: string;
+      /** @format double */
+      sizeBytes: number;
+      mimeType: string;
+      originalName: string;
+      fileName: string;
+      id: string;
+    }[];
+    /** @format date-time */
+    createdAt: string;
+    metadata: any;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    performedByAdmin: boolean;
+    performedByUserId: string;
+    ticketReportId: string;
+    id: string;
+  }[];
+  reporter: {
+    email: string;
+    lastName: string | null;
+    firstName: string | null;
+  };
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  closedAt: string | null;
+  source: TicketReportSource;
+  description: string | null;
+  reportedByUserId: string | null;
+  entityId: string;
+  entityType: TicketReportEntityType;
+  caseType: TicketReportCaseType;
+  status: TicketReportStatus;
+  id: string;
+}
+
+export interface UserAddActionResponse {
+  action: {
+    ticketReportId: string;
+    performedByUserId: string;
+    performedByAdmin: boolean;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    metadata: JsonValue;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  };
+  report: {
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  };
+}
+
+export interface AddUserActionBody {
+  comment?: string;
+  actionType: "comment" | "close";
+}
+
+export interface UserCloseCaseResponse {
+  action: {
+    ticketReportId: string;
+    performedByUserId: string;
+    performedByAdmin: boolean;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    metadata: JsonValue;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  };
+  report: {
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  };
+}
+
+export interface UploadAttachmentResponse {
+  uploadedByUserId: string;
+  ticketReportActionId: string | null;
+  ticketReportId: string;
+  storagePath: string;
+  /** @format double */
+  sizeBytes: number;
+  originalName: string;
+  mimeType: string;
+  fileName: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export type ListAttachmentsResponse = {
+  uploadedByUserId: string;
+  ticketReportActionId: string | null;
+  ticketReportId: string;
+  storagePath: string;
+  /** @format double */
+  sizeBytes: number;
+  originalName: string;
+  mimeType: string;
+  fileName: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+  url: string;
+}[];
+
+export interface GetAttachmentUrlResponse {
+  url: string;
+}
+
+export interface UpdateProfileResponse {
+  lastName: string | null;
+  firstName: string | null;
+}
+
+/**
+ * API Error Response - This is the actual shape returned by the error handler middleware.
+ * Use this type in
+ */
+export interface ApiErrorResponse {
+  /** The error class name (e.g., 'ValidationError', 'UnauthorizedError') */
+  error: ErrorClassName;
+  /** Human-readable error message */
+  message: string;
+  /**
+   * HTTP status code
+   * @format double
+   */
+  statusCode: number;
+  /** ISO timestamp of when the error occurred */
+  timestamp: string;
+  /** Request path that caused the error */
+  path: string;
+  /** HTTP method of the request */
+  method: string;
+  /** Additional metadata (e.g., for validation errors) */
+  metadata?: RecordStringUnknown;
+}
+
+export interface UpdateProfileRouteBody {
+  lastName: string;
+  firstName: string;
+}
+
+export interface UploadProfileImageResponse {
+  imageUrl: string;
+}
+
+export interface DeleteProfileImageResponse {
+  success: boolean;
+}
+
+export type GetEmailsResponse = {
+  verification: {
+    status: string;
+  } | null;
+  isPrimary: boolean;
+  emailAddress: string;
+  id: string;
+}[];
+
+export interface AddEmailResponse {
+  emailAddress: string;
+  emailAddressId: string;
+}
+
+export interface AddEmailRouteBody {
+  emailAddress: string;
+}
+
+export interface VerifyEmailResponse {
+  success: boolean;
+}
+
+export interface VerifyEmailRouteBody {
+  code: string;
+  emailAddressId: string;
+}
+
+export interface SetPrimaryEmailResponse {
+  success: boolean;
+}
+
+export interface SetPrimaryEmailRouteBody {
+  emailAddressId: string;
+}
+
+export interface DeleteEmailResponse {
+  success: boolean;
+}
+
+export type GetExternalAccountsResponse = {
+  imageUrl: string;
+  lastName: string;
+  firstName: string;
+  emailAddress: string;
+  provider: string;
+  id: string;
+}[];
+
+export interface GetPasswordStatusResponse {
+  hasPassword: boolean;
+}
+
+export interface SetPasswordResponse {
+  success: boolean;
+}
+
+export interface SetPasswordRouteBody {
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+}
+
+export interface ChangePasswordRouteBody {
+  newPassword: string;
+  currentPassword: string;
+}
+
+export type GetSessionsResponse = {
+  latestActivity: {
+    isMobile: boolean;
+    country?: string;
+    city?: string;
+    ipAddress?: string;
+    deviceType?: string;
+    browserVersion?: string;
+    browserName?: string;
+  } | null;
+  status: string;
+  /** @format double */
+  expireAt: number;
+  /** @format double */
+  lastActiveAt: number;
+  clientId: string;
+  id: string;
+}[];
+
+export interface RevokeSessionResponse {
+  success: boolean;
+}
+
+export interface DeleteAccountResponse {
+  success: boolean;
+}
+
+export interface DeleteAccountRouteBody {
+  confirmation: "ELIMINAR";
+}
+
 export interface CreatePaymentLinkResponse {
   redirectUrl: string;
   paymentId: string;
+}
+
+export interface CreatePaymentLinkRouteBody {
+  country?: string;
 }
 
 /** From T, pick a set of properties whose keys are in the union K */
@@ -1922,6 +2445,7 @@ export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDesc
   retryCount: number;
   /** @format date-time */
   seenAt: string | null;
+  sendViaJob: boolean;
 }
 
 /** Construct a type with the properties of T except for those in type K. */
@@ -1962,7 +2486,8 @@ export interface InferTypeofBaseActionSchema {
     | "view_payout"
     | "start_verification"
     | "publish_tickets"
-    | "view_earnings";
+    | "view_earnings"
+    | "view_report";
 }
 
 export type NotificationAction = InferTypeofBaseActionSchema;
@@ -2009,32 +2534,8 @@ export type MarkAllAsSeenResponse = TypedNotification[];
 export type DeleteNotificationResponse = TypedNotification | null;
 
 export interface InitiateVerificationResponse {
-  message: string;
+  message: "Verificación iniciada";
   success: boolean;
-}
-
-/**
- * API Error Response - This is the actual shape returned by the error handler middleware.
- * Use this type in
- */
-export interface ApiErrorResponse {
-  /** The error class name (e.g., 'ValidationError', 'UnauthorizedError') */
-  error: ErrorClassName;
-  /** Human-readable error message */
-  message: string;
-  /**
-   * HTTP status code
-   * @format double
-   */
-  statusCode: number;
-  /** ISO timestamp of when the error occurred */
-  timestamp: string;
-  /** Request path that caused the error */
-  path: string;
-  /** HTTP method of the request */
-  method: string;
-  /** Additional metadata (e.g., for validation errors) */
-  metadata?: RecordStringUnknown;
 }
 
 export interface InitiateVerificationRouteBody {
@@ -2064,13 +2565,183 @@ export interface VerifyLivenessResultsResponse {
   retriesRemaining?: number;
   canRetry?: boolean;
   message?: string;
-  status: VerificationStatus;
+  status: IdentityVerificationStatus;
   verified: boolean;
 }
 
 export interface VerifyLivenessRouteBody {
   sessionId: string;
 }
+
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReportReporterEmailStringOrNullReporterFirstNameStringOrNullReporterLastNameStringOrNull {
+  data: {
+    reporterLastName: string | null;
+    reporterFirstName: string | null;
+    reporterEmail: string | null;
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  pagination: PaginationMeta;
+}
+
+export type AdminListCasesResponse =
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReportReporterEmailStringOrNullReporterFirstNameStringOrNullReporterLastNameStringOrNull;
+
+export interface InferTypeofAdminListTicketReportsQuerySchema {
+  caseType?:
+    | "other"
+    | "invalid_ticket"
+    | "problem_with_seller"
+    | "ticket_not_received";
+  status?: "awaiting_customer" | "awaiting_support" | "closed";
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+}
+
+export type AdminListTicketReportsQuery =
+  InferTypeofAdminListTicketReportsQuerySchema;
+
+export interface AdminGetCaseDetailsResponse {
+  entityDetails: any;
+  initialAttachments: {
+    /** @format date-time */
+    createdAt: string;
+    /** @format double */
+    sizeBytes: number;
+    mimeType: string;
+    originalName: string;
+    fileName: string;
+    id: string;
+  }[];
+  actions: {
+    attachments: {
+      /** @format date-time */
+      createdAt: string;
+      /** @format double */
+      sizeBytes: number;
+      mimeType: string;
+      originalName: string;
+      fileName: string;
+      id: string;
+    }[];
+    /** @format date-time */
+    createdAt: string;
+    metadata: any;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    performedByAdmin: boolean;
+    performedByUserId: string;
+    ticketReportId: string;
+    id: string;
+  }[];
+  reporter: {
+    email: string;
+    lastName: string | null;
+    firstName: string | null;
+  };
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  closedAt: string | null;
+  source: TicketReportSource;
+  description: string | null;
+  reportedByUserId: string | null;
+  entityId: string;
+  entityType: TicketReportEntityType;
+  caseType: TicketReportCaseType;
+  status: TicketReportStatus;
+  id: string;
+}
+
+export interface AdminAddActionResponse {
+  action: {
+    ticketReportId: string;
+    performedByUserId: string;
+    performedByAdmin: boolean;
+    comment: string | null;
+    actionType: TicketReportActionType;
+    metadata: JsonValue;
+    id: string;
+    /** @format date-time */
+    createdAt: string;
+  };
+  report: {
+    source: "auto_missing_document" | "user_report";
+    reportedByUserId: string | null;
+    entityType: TicketReportEntityType;
+    entityId: string;
+    /** @format date-time */
+    closedAt: string | null;
+    caseType: TicketReportCaseType;
+    /** @format date-time */
+    updatedAt: string;
+    status: "awaiting_customer" | "awaiting_support" | "closed";
+    id: string;
+    description: string | null;
+    /** @format date-time */
+    createdAt: string;
+  };
+}
+
+export interface AddAdminActionBody {
+  metadata?: {
+    reservationIds?: string[];
+    refundReason?: string;
+    /** @format double */
+    refundAmount?: number;
+  };
+  comment?: string;
+  actionType: "comment" | "close" | "refund_full" | "refund_partial" | "reject";
+}
+
+export interface AdminUploadAttachmentResponse {
+  uploadedByUserId: string;
+  ticketReportActionId: string | null;
+  ticketReportId: string;
+  storagePath: string;
+  /** @format double */
+  sizeBytes: number;
+  originalName: string;
+  mimeType: string;
+  fileName: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export type AdminListAttachmentsResponse = {
+  uploadedByUserId: string;
+  ticketReportActionId: string | null;
+  ticketReportId: string;
+  storagePath: string;
+  /** @format double */
+  sizeBytes: number;
+  originalName: string;
+  mimeType: string;
+  fileName: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+  url: string;
+}[];
 
 import type {
   AxiosInstance,
@@ -2273,6 +2944,36 @@ export class Api<
         limit: number;
         /** @format double */
         page: number;
+        /** Filter by city name */
+        city?: string;
+        /** Filter by region/state/departamento name */
+        region?: string;
+        /**
+         * Latitude for proximity search (requires lng)
+         * @format double
+         */
+        lat?: number;
+        /**
+         * Longitude for proximity search (requires lat)
+         * @format double
+         */
+        lng?: number;
+        /**
+         * Radius in km for proximity search (default: 30)
+         * @format double
+         */
+        radiusKm?: number;
+        /** Filter events starting from this date (ISO format) */
+        dateFrom?: string;
+        /** Filter events ending before this date (ISO format) */
+        dateTo?: string;
+        /** Only show events with at least one available ticket */
+        hasTickets?: boolean;
+        /**
+         * User timezone offset in minutes from UTC (e.g. 180 for UTC-3)
+         * @format double
+         */
+        tzOffset?: number;
       },
       params: RequestParams = {},
     ) =>
@@ -2308,6 +3009,67 @@ export class Api<
       }),
 
     /**
+     * @description Get trending events based on view count in the last N days
+     *
+     * @tags Events
+     * @name GetTrendingEvents
+     * @request GET:/events/trending
+     */
+    getTrendingEvents: (
+      query?: {
+        /** @format double */
+        days?: number;
+        /** @format double */
+        limit?: number;
+        region?: string;
+        /** @format double */
+        lat?: number;
+        /** @format double */
+        lng?: number;
+        /** @format double */
+        radiusKm?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetTrendingEventsResponse, any>({
+        path: `/events/trending`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Get list of distinct cities for filter dropdown
+     *
+     * @tags Events
+     * @name GetDistinctCities
+     * @request GET:/events/cities
+     */
+    getDistinctCities: (params: RequestParams = {}) =>
+      this.request<GetDistinctCitiesResponse, any>({
+        path: `/events/cities`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Get distinct regions with active events, grouped by country
+     *
+     * @tags Events
+     * @name GetDistinctRegions
+     * @request GET:/events/regions
+     */
+    getDistinctRegions: (params: RequestParams = {}) =>
+      this.request<GetDistinctRegionsResponse, any>({
+        path: `/events/regions`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
      * No description
      *
      * @tags Events
@@ -2318,6 +3080,21 @@ export class Api<
       this.request<GetEventByIdResponse, any>({
         path: `/events/${eventId}`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Track a view for an event (called from route loader on actual navigation, not prefetch)
+     *
+     * @tags Events
+     * @name TrackView
+     * @request POST:/events/{eventId}/view
+     */
+    trackView: (eventId: string, params: RequestParams = {}) =>
+      this.request<TrackViewResponse, any>({
+        path: `/events/${eventId}/view`,
+        method: "POST",
         format: "json",
         ...params,
       }),
@@ -2463,7 +3240,18 @@ export class Api<
      * @name Create
      * @request POST:/ticket-listings
      */
-    create: (data: CreateTicketListingRouteBody, params: RequestParams = {}) =>
+    create: (
+      data: {
+        eventId: string;
+        ticketWaveId: string;
+        /** @format double */
+        price: number;
+        /** @format double */
+        quantity: number;
+        documents?: File[];
+      },
+      params: RequestParams = {},
+    ) =>
       this.request<
         CreateTicketListingResponse,
         BadRequestError | UnauthorizedError | NotFoundError | ValidationError
@@ -2471,7 +3259,7 @@ export class Api<
         path: `/ticket-listings`,
         method: "POST",
         body: data,
-        type: ContentType.Json,
+        type: ContentType.FormData,
         format: "json",
         ...params,
       }),
@@ -3421,6 +4209,129 @@ export class Api<
           ...params,
         },
       ),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name ListCases
+     * @request GET:/admin/ticket-reports
+     */
+    listCases: (
+      query: {
+        caseType?:
+          | "other"
+          | "invalid_ticket"
+          | "problem_with_seller"
+          | "ticket_not_received";
+        status?: "awaiting_customer" | "awaiting_support" | "closed";
+        sortOrder?: "asc" | "desc";
+        sortBy?: string;
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<AdminListCasesResponse, UnauthorizedError>({
+        path: `/admin/ticket-reports`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name GetCaseDetails
+     * @request GET:/admin/ticket-reports/{reportId}
+     */
+    getCaseDetails: (reportId: string, params: RequestParams = {}) =>
+      this.request<
+        AdminGetCaseDetailsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/ticket-reports/${reportId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name AddAction
+     * @request POST:/admin/ticket-reports/{reportId}/actions
+     */
+    addAction: (
+      reportId: string,
+      data: AddAdminActionBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AdminAddActionResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/ticket-reports/${reportId}/actions`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name UploadAttachment
+     * @request POST:/admin/ticket-reports/{reportId}/attachments
+     */
+    uploadAttachment: (
+      reportId: string,
+      data: {
+        /** @format binary */
+        file: File;
+      },
+      query?: {
+        actionId?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AdminUploadAttachmentResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/ticket-reports/${reportId}/attachments`,
+        method: "POST",
+        query: query,
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Ticket Reports
+     * @name ListAttachments
+     * @request GET:/admin/ticket-reports/{reportId}/attachments
+     */
+    listAttachments: (reportId: string, params: RequestParams = {}) =>
+      this.request<
+        AdminListAttachmentsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/ticket-reports/${reportId}/attachments`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
   };
   users = {
     /**
@@ -3491,6 +4402,442 @@ export class Api<
         ...params,
       }),
   };
+  ticketReports = {
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name CreateCase
+     * @request POST:/ticket-reports
+     */
+    createCase: (data: CreateTicketReportBody, params: RequestParams = {}) =>
+      this.request<UserCreateCaseResponse, ConflictError | ValidationError>({
+        path: `/ticket-reports`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name ListMyCases
+     * @request GET:/ticket-reports
+     */
+    listMyCases: (params: RequestParams = {}) =>
+      this.request<UserListMyCasesResponse, any>({
+        path: `/ticket-reports`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name CheckExistingReport
+     * @request GET:/ticket-reports/check-existing
+     */
+    checkExistingReport: (
+      query: {
+        entityType: string;
+        entityId: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<CheckExistingReportResponse, any>({
+        path: `/ticket-reports/check-existing`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name GetCaseDetails
+     * @request GET:/ticket-reports/{reportId}
+     */
+    getCaseDetails: (reportId: string, params: RequestParams = {}) =>
+      this.request<
+        UserGetCaseDetailsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/ticket-reports/${reportId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name AddAction
+     * @request POST:/ticket-reports/{reportId}/actions
+     */
+    addAction: (
+      reportId: string,
+      data: AddUserActionBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UserAddActionResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-reports/${reportId}/actions`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name CloseCase
+     * @request POST:/ticket-reports/{reportId}/close
+     */
+    closeCase: (reportId: string, params: RequestParams = {}) =>
+      this.request<
+        UserCloseCaseResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-reports/${reportId}/close`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name UploadAttachment
+     * @request POST:/ticket-reports/{reportId}/attachments
+     */
+    uploadAttachment: (
+      reportId: string,
+      data: {
+        /** @format binary */
+        file: File;
+      },
+      query?: {
+        actionId?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UploadAttachmentResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/ticket-reports/${reportId}/attachments`,
+        method: "POST",
+        query: query,
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name ListAttachments
+     * @request GET:/ticket-reports/{reportId}/attachments
+     */
+    listAttachments: (reportId: string, params: RequestParams = {}) =>
+      this.request<ListAttachmentsResponse, UnauthorizedError | NotFoundError>({
+        path: `/ticket-reports/${reportId}/attachments`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Ticket Reports
+     * @name GetAttachmentUrl
+     * @request GET:/ticket-reports/{reportId}/attachments/{attachmentId}/url
+     */
+    getAttachmentUrl: (
+      reportId: string,
+      attachmentId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<GetAttachmentUrlResponse, UnauthorizedError | NotFoundError>(
+        {
+          path: `/ticket-reports/${reportId}/attachments/${attachmentId}/url`,
+          method: "GET",
+          format: "json",
+          ...params,
+        },
+      ),
+  };
+  profile = {
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name UpdateProfile
+     * @request PUT:/profile
+     */
+    updateProfile: (data: UpdateProfileRouteBody, params: RequestParams = {}) =>
+      this.request<UpdateProfileResponse, ApiErrorResponse>({
+        path: `/profile`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name UploadProfileImage
+     * @request PUT:/profile/image
+     */
+    uploadProfileImage: (
+      data: {
+        /** @format binary */
+        file: File;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<UploadProfileImageResponse, ApiErrorResponse>({
+        path: `/profile/image`,
+        method: "PUT",
+        body: data,
+        type: ContentType.FormData,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name DeleteProfileImage
+     * @request DELETE:/profile/image
+     */
+    deleteProfileImage: (params: RequestParams = {}) =>
+      this.request<DeleteProfileImageResponse, ApiErrorResponse>({
+        path: `/profile/image`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name GetEmails
+     * @request GET:/profile/emails
+     */
+    getEmails: (params: RequestParams = {}) =>
+      this.request<GetEmailsResponse, ApiErrorResponse>({
+        path: `/profile/emails`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name AddEmail
+     * @request POST:/profile/emails
+     */
+    addEmail: (data: AddEmailRouteBody, params: RequestParams = {}) =>
+      this.request<AddEmailResponse, ApiErrorResponse>({
+        path: `/profile/emails`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name VerifyEmail
+     * @request POST:/profile/emails/verify
+     */
+    verifyEmail: (data: VerifyEmailRouteBody, params: RequestParams = {}) =>
+      this.request<VerifyEmailResponse, ApiErrorResponse>({
+        path: `/profile/emails/verify`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name SetPrimaryEmail
+     * @request PUT:/profile/emails/primary
+     */
+    setPrimaryEmail: (
+      data: SetPrimaryEmailRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<SetPrimaryEmailResponse, ApiErrorResponse>({
+        path: `/profile/emails/primary`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name DeleteEmail
+     * @request DELETE:/profile/emails/{emailAddressId}
+     */
+    deleteEmail: (emailAddressId: string, params: RequestParams = {}) =>
+      this.request<DeleteEmailResponse, ApiErrorResponse>({
+        path: `/profile/emails/${emailAddressId}`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name GetExternalAccounts
+     * @request GET:/profile/external-accounts
+     */
+    getExternalAccounts: (params: RequestParams = {}) =>
+      this.request<GetExternalAccountsResponse, ApiErrorResponse>({
+        path: `/profile/external-accounts`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name GetPasswordStatus
+     * @request GET:/profile/password-status
+     */
+    getPasswordStatus: (params: RequestParams = {}) =>
+      this.request<GetPasswordStatusResponse, ApiErrorResponse>({
+        path: `/profile/password-status`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name SetPassword
+     * @request POST:/profile/password
+     */
+    setPassword: (data: SetPasswordRouteBody, params: RequestParams = {}) =>
+      this.request<SetPasswordResponse, ApiErrorResponse>({
+        path: `/profile/password`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name ChangePassword
+     * @request PUT:/profile/password
+     */
+    changePassword: (
+      data: ChangePasswordRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<ChangePasswordResponse, ApiErrorResponse>({
+        path: `/profile/password`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name GetSessions
+     * @request GET:/profile/sessions
+     */
+    getSessions: (params: RequestParams = {}) =>
+      this.request<GetSessionsResponse, ApiErrorResponse>({
+        path: `/profile/sessions`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name RevokeSession
+     * @request DELETE:/profile/sessions/{sessionId}
+     */
+    revokeSession: (sessionId: string, params: RequestParams = {}) =>
+      this.request<RevokeSessionResponse, ApiErrorResponse>({
+        path: `/profile/sessions/${sessionId}`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name DeleteAccount
+     * @request DELETE:/profile/account
+     */
+    deleteAccount: (data: DeleteAccountRouteBody, params: RequestParams = {}) =>
+      this.request<DeleteAccountResponse, ApiErrorResponse>({
+        path: `/profile/account`,
+        method: "DELETE",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
   payments = {
     /**
      * No description
@@ -3499,13 +4846,19 @@ export class Api<
      * @name CreatePaymentLink
      * @request POST:/payments/create-link/{orderId}
      */
-    createPaymentLink: (orderId: string, params: RequestParams = {}) =>
+    createPaymentLink: (
+      orderId: string,
+      data: CreatePaymentLinkRouteBody,
+      params: RequestParams = {},
+    ) =>
       this.request<
         CreatePaymentLinkResponse,
         UnauthorizedError | NotFoundError | ValidationError
       >({
         path: `/payments/create-link/${orderId}`,
         method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

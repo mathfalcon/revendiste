@@ -1,5 +1,6 @@
 import {useState, useEffect, useCallback, useRef} from 'react';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {usePostHog} from 'posthog-js/react';
 import {
   Dialog,
   DialogContent,
@@ -29,9 +30,10 @@ import {toast} from 'sonner';
 import {formatEventDate} from '~/utils/string';
 import {cn} from '~/lib/utils';
 
-type TicketWithListing = GetUserListingsResponse[number]['tickets'][number] & {
-  listing: GetUserListingsResponse[number];
-};
+type TicketWithListing =
+  GetUserListingsResponse['data'][number]['tickets'][number] & {
+    listing: GetUserListingsResponse['data'][number];
+  };
 
 interface TicketUploadModalProps {
   /** Single ticket or array of tickets to upload */
@@ -61,6 +63,7 @@ export function TicketUploadModal({
   );
   const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   // Use captured tickets for the session (stable reference)
   const uploadableTickets = capturedTickets;
@@ -119,6 +122,13 @@ export function TicketUploadModal({
   const handleMutationSuccess = useCallback(() => {
     if (!currentTicket) return;
 
+    posthog.capture('ticket_document_uploaded', {
+      ticket_id: currentTicket.id,
+      is_update: currentTicket.hasDocument,
+      is_batch: isBatchMode,
+      batch_total: initialTotal,
+    });
+
     // Calculate new state
     const newCompletedIds = new Set(completedIds).add(currentTicket.id);
     const newCompletedCount = newCompletedIds.size;
@@ -129,7 +139,7 @@ export function TicketUploadModal({
 
     if (isBatchMode) {
       // Show success toast with position in queue (not database ticket number)
-      toast.success(`Ticket subido (${newCompletedCount}/${initialTotal})`);
+      toast.success(`Entrada subida (${newCompletedCount}/${initialTotal})`);
 
       if (isAllDone) {
         // All done! Set allComplete FIRST, then completedIds
@@ -141,8 +151,8 @@ export function TicketUploadModal({
         // Auto-close after 3 seconds
         autoCloseTimerRef.current = setTimeout(() => {
           onOpenChange(false);
-          toast.success('¡Todos los tickets subidos!', {
-            description: `${initialTotal} tickets procesados correctamente`,
+          toast.success('¡Todas las entradas subidas!', {
+            description: `${initialTotal} entradas procesadas correctamente`,
           });
         }, 3000);
         return;
@@ -172,7 +182,7 @@ export function TicketUploadModal({
       // Single mode - close immediately with toast
       setCompletedIds(newCompletedIds);
       setSelectedFile(null);
-      toast.success('Ticket subido correctamente');
+      toast.success('Entrada subida correctamente');
       onOpenChange(false);
     }
   }, [
@@ -184,13 +194,14 @@ export function TicketUploadModal({
     currentIndex,
     queryClient,
     onOpenChange,
+    posthog,
   ]);
 
   const uploadMutation = useMutation({
     ...uploadTicketDocumentMutation(currentTicket?.id || ''),
     onSuccess: handleMutationSuccess,
     onError: (error: Error) => {
-      toast.error('Error al subir el ticket', {
+      toast.error('Error al subir la entrada', {
         description: error.message,
       });
     },
@@ -200,7 +211,7 @@ export function TicketUploadModal({
     ...updateTicketDocumentMutation(currentTicket?.id || ''),
     onSuccess: handleMutationSuccess,
     onError: (error: Error) => {
-      toast.error('Error al actualizar el ticket', {
+      toast.error('Error al actualizar la entrada', {
         description: error.message,
       });
     },
@@ -240,7 +251,9 @@ export function TicketUploadModal({
   // Get current ticket data for upload state
   const event = currentTicket?.listing?.event;
   const ticketWave = currentTicket?.listing?.ticketWave;
-  const isCompleted = currentTicket ? completedIds.has(currentTicket.id) : false;
+  const isCompleted = currentTicket
+    ? completedIds.has(currentTicket.id)
+    : false;
 
   // Single Dialog - content changes based on state
   return (
@@ -257,14 +270,14 @@ export function TicketUploadModal({
         {showEmptyState && (
           <>
             <DialogHeader>
-              <DialogTitle>No hay tickets pendientes</DialogTitle>
+              <DialogTitle>No hay entradas pendientes</DialogTitle>
             </DialogHeader>
             <div className='flex flex-col items-center gap-4 py-6 text-center'>
               <div className='flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30'>
                 <CheckCircle2 className='h-6 w-6 text-green-600 dark:text-green-400' />
               </div>
               <p className='text-muted-foreground'>
-                Todos los tickets ya tienen documentos subidos.
+                Todas las entradas ya tienen documentos subidos.
               </p>
             </div>
             <div className='flex justify-end'>
@@ -285,10 +298,10 @@ export function TicketUploadModal({
               </div>
               <div>
                 <p className='text-lg font-semibold text-green-600 dark:text-green-400'>
-                  ¡Todos los tickets subidos!
+                  ¡Todas las entradas subidas!
                 </p>
                 <p className='text-sm text-muted-foreground mt-1'>
-                  {initialTotal} tickets procesados correctamente
+                  {initialTotal} entradas procesadas correctamente
                 </p>
               </div>
             </div>
@@ -303,7 +316,7 @@ export function TicketUploadModal({
           <>
             <DialogHeader>
               <DialogTitle>
-                {isBatchMode ? 'Subir tickets' : 'Subir ticket'}
+                {isBatchMode ? 'Subir entradas' : 'Subir entrada'}
               </DialogTitle>
               {isBatchMode && (
                 <DialogDescription>
@@ -391,7 +404,7 @@ export function TicketUploadModal({
                     <Check className='h-8 w-8 text-green-600 dark:text-green-400' />
                   </div>
                   <p className='font-medium text-green-600 dark:text-green-400'>
-                    ¡Ticket subido correctamente!
+                    ¡Entrada subida correctamente!
                   </p>
                 </div>
               ) : (
@@ -413,7 +426,7 @@ export function TicketUploadModal({
                   helperText={
                     currentTicket.hasDocument
                       ? 'Esto reemplazará el documento existente'
-                      : 'Sube una captura del código QR o PDF del ticket'
+                      : 'Subí una captura del código QR o PDF de la entrada'
                   }
                   error={
                     mutation.isError
@@ -478,7 +491,7 @@ export function TicketUploadModal({
               {/* Continue/Close button for completed tickets in batch mode */}
               {isCompleted && isBatchMode && !isLast && (
                 <Button onClick={() => handleNavigate('next')}>
-                  Siguiente ticket
+                  Siguiente entrada
                   <ChevronRight className='h-4 w-4 ml-1' />
                 </Button>
               )}

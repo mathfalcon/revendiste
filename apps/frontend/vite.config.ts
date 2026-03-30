@@ -11,14 +11,15 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 // Nitro is disabled in this mode due to HTTP/2 header conflicts
 const useHttpsLocal = process.env.HTTPS_LOCAL === '1';
 
-export default defineConfig({
+const config = defineConfig(({mode}) => {
+  return {
   server: {
     port: 3000,
     allowedHosts: ['chaotically-suppling-elvira.ngrok-free.dev'],
     host: '0.0.0.0',
     // Proxy API requests to HTTP backend when running HTTPS
     // This avoids mixed content blocking
-    proxy: useHttpsLocal
+      proxy: useHttpsLocal
       ? {
           '/api': {
             target: 'http://localhost:3001',
@@ -30,7 +31,7 @@ export default defineConfig({
   },
   plugins: [
     // HTTPS plugin (only when HTTPS_LOCAL=1)
-    ...(useHttpsLocal ? [basicSsl()] : []),
+      ...(useHttpsLocal ? [basicSsl()] : []),
     tsConfigPaths({
       projects: ['./tsconfig.json'],
     }) as PluginOption,
@@ -47,9 +48,12 @@ export default defineConfig({
     }),
     // Nitro conflicts with HTTPS (HTTP/2 header issues), so disable it in HTTPS mode
     // SSR won't work in HTTPS mode, but camera APIs will work for testing
-    ...(useHttpsLocal ? [] : [nitro()]),
+      ...(useHttpsLocal ? [] : [nitro()]),
     tanstackStart(),
     viteReact(),
     tailwindcss() as PluginOption,
   ],
+  };
 });
+
+export default config;

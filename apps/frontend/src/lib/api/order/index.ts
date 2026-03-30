@@ -1,6 +1,6 @@
 import {mutationOptions, queryOptions} from '@tanstack/react-query';
 import {AxiosError, isAxiosError} from 'axios';
-import {api, CreateOrderRouteBody, PendingOrderErrorResponse} from '..';
+import {api, type CreateOrderRouteBody, type PendingOrderErrorResponse} from '..';
 import {toast} from 'sonner';
 
 export interface PostOrderMutationOptions {
@@ -43,10 +43,14 @@ export const getOrderByIdQuery = (orderId: string) =>
     enabled: !!orderId && orderId.length > 0,
   });
 
+/**
+ * My orders list. Backend returns paginated { data, pagination }; we unwrap to the array for the list UI.
+ * Default pagination (page 1, limit 10) is applied by the backend.
+ */
 export const getMyOrdersQuery = () =>
   queryOptions({
     queryKey: ['orders', 'my-orders'],
-    queryFn: () => api.orders.getMyOrders().then(res => res.data),
+    queryFn: () => api.orders.getMyOrders().then(res => res.data.data),
   });
 
 export const getOrderTicketsQuery = (orderId: string) =>
@@ -61,9 +65,9 @@ export const cancelOrderMutation = (orderId: string) =>
     mutationKey: ['cancel-order', orderId],
     mutationFn: () => api.orders.cancelOrder(orderId).then(res => res.data),
     onSuccess: () => {
-      toast.success('Orden cancelada exitosamente');
+      toast.success('Orden cancelada');
     },
     onError: () => {
-      toast.error('Error al cancelar la orden. Por favor intenta nuevamente.');
+      toast.error('No pudimos cancelar la orden. Intentá de nuevo.');
     },
   });

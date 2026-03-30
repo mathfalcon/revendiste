@@ -21,6 +21,7 @@ import {SellerEarningsService} from '~/services/seller-earnings';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
 import {logger} from '~/utils';
 import {Payment} from '~/types';
+import {getJobQueueService} from '~/services/job-queue';
 
 // Create shared repositories
 const ordersRepository = new OrdersRepository(db);
@@ -74,6 +75,7 @@ const createPaymentWebhookAdapter = (
     ticketListingsService,
     sellerEarningsService,
     notificationService,
+    () => getJobQueueService(),
   );
 };
 
@@ -107,25 +109,47 @@ async function processPaymentSync(
 }
 
 /**
- * Expires a single order and releases its reservations
- * Only called when we've confirmed all payments are in terminal failure states
+ * Expires a single order and releases its reservations.
+ * Only runs if the order is still pending (skips if user already cancelled).
  */
 async function expireOrder(
   orderId: string,
   reason: 'all_payments_failed' | 'no_payment_created',
 ): Promise<void> {
+  let didExpire = false;
+
   await ordersRepository.executeTransaction(async trx => {
     const ordersRepo = ordersRepository.withTransaction(trx);
     const reservationsRepo =
       orderTicketReservationsRepository.withTransaction(trx);
+
+    // Only expire if still pending (user may have cancelled via UI)
+    const order = await trx
+      .selectFrom('orders')
+      .select(['id', 'status'])
+      .where('id', '=', orderId)
+      .where('status', '=', 'pending')
+      .where('deletedAt', 'is', null)
+      .forUpdate()
+      .executeTakeFirst();
+
+    if (!order) {
+      logger.debug('Order no longer pending (e.g. already cancelled), skipping expiration', {
+        orderId,
+      });
+      return;
+    }
 
     await ordersRepo.updateStatus(orderId, 'expired', {
       cancelledAt: new Date(),
     });
     await reservationsRepo.releaseByOrderId(orderId);
 
+    didExpire = true;
     logger.info('Order expired successfully', {orderId, reason});
   });
+
+  if (!didExpire) return;
 
   const orderWithItems = await ordersRepository.getByIdWithItems(orderId);
 

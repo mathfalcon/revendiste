@@ -23,12 +23,12 @@ function getReasonText(
 ): string {
   switch (reason) {
     case 'seller_failed_to_upload':
-      return 'El vendedor no subió los documentos de los tickets a tiempo.';
+      return 'El vendedor no subió los documentos de las entradas a tiempo.';
     case 'seller_fraud':
       return 'Se detectó un problema con el vendedor.';
     case 'other':
     default:
-      return 'Hubo un problema con los tickets.';
+      return 'Hubo un problema con las entradas.';
   }
 }
 
@@ -42,18 +42,18 @@ export const BuyerTicketCancelledEmail = ({
 }: BuyerTicketCancelledEmailProps) => {
   const ticketText =
     ticketCount === 1
-      ? 'Tu entrada ha sido cancelada'
-      : `Tus ${ticketCount} entradas han sido canceladas`;
+      ? 'Tu entrada fue cancelada'
+      : `Tus ${ticketCount} entradas fueron canceladas`;
   const reasonText = getReasonText(reason);
 
   return (
     <BaseEmail
-      title="Entrada cancelada - Reembolso en proceso"
-      preview={`${ticketText} para ${eventName}. Tu reembolso está en proceso.`}
+      title="Entrada cancelada"
+      preview={`${ticketText} para ${eventName}. Ya estamos procesando tu reembolso.`}
       appBaseUrl={appBaseUrl}
     >
       <Text className="text-foreground mb-4">
-        Lamentamos informarte que {ticketText.toLowerCase()} para{' '}
+        Lamentablemente, {ticketText.toLowerCase()} para{' '}
         <strong>{eventName}</strong>.
       </Text>
 
@@ -68,16 +68,16 @@ export const BuyerTicketCancelledEmail = ({
       {/* What happens next */}
       <Section className="bg-muted/30 p-4 rounded-md mb-4">
         <Text className="text-lg font-semibold text-foreground m-0 mb-2">
-          Tu reembolso está en proceso
+          Ya estamos procesando tu reembolso
         </Text>
         <Text className="text-sm text-muted-foreground m-0 mb-2">
-          • Nuestro equipo procesará tu reembolso lo antes posible.
+          • Nuestro equipo va a procesar tu reembolso lo antes posible.
         </Text>
         <Text className="text-sm text-muted-foreground m-0 mb-2">
-          • El dinero volverá al método de pago original.
+          • El dinero vuelve a tu medio de pago original.
         </Text>
         <Text className="text-sm text-muted-foreground m-0">
-          • Te notificaremos cuando el reembolso sea completado.
+          • Te avisamos cuando el reembolso esté listo.
         </Text>
       </Section>
 
@@ -92,8 +92,8 @@ export const BuyerTicketCancelledEmail = ({
       </Section>
 
       <Text className="text-sm text-muted-foreground mb-0">
-        Si tenés alguna pregunta, no dudes en contactarnos desde tu cuenta.
-        Pedimos disculpas por los inconvenientes causados.
+        Si tenés alguna duda, escribinos desde tu cuenta. Disculpá las
+        molestias.
       </Text>
     </BaseEmail>
   );

@@ -10,7 +10,11 @@ import {
   Path,
 } from '@mathfalcon/tsoa-runtime';
 import {OrdersService} from '~/services/orders';
-import {requireAuthMiddleware} from '~/middleware';
+import {
+  requireAuthMiddleware,
+  paginationMiddleware,
+  ensurePagination,
+} from '~/middleware';
 import {
   OrdersRepository,
   OrderItemsRepository,
@@ -40,6 +44,8 @@ import {
 } from '~/errors';
 import {CreateOrderRouteBody, CreateOrderRouteSchema} from './validation';
 import {ValidateBody, Body} from '~/decorators';
+import {getJobQueueService} from '~/services/job-queue';
+import {getPostHog} from '~/lib/posthog';
 
 type CreateOrderResponse = ReturnType<OrdersService['createOrder']>;
 type GetOrderByIdResponse = ReturnType<OrdersService['getOrderById']>;
@@ -100,6 +106,7 @@ const createPaymentWebhookAdapter = (
     ticketListingsService,
     sellerEarningsService,
     notificationService,
+    () => getJobQueueService(),
   );
 };
 
@@ -142,12 +149,23 @@ export class OrdersController {
     @Body() body: CreateOrderRouteBody,
     @Request() request: express.Request,
   ): Promise<CreateOrderResponse> {
-    return this.service.createOrder(
+    const result = await this.service.createOrder(
       {
         ...body,
       },
       request.user.id,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'order_created',
+      properties: {
+        order_id: result.id,
+        event_id: body.eventId,
+        total_amount: result.totalAmount,
+        currency: result.currency,
+      },
+    });
+    return result;
   }
 
   @Get('/{orderId}')
@@ -161,11 +179,18 @@ export class OrdersController {
   }
 
   @Get('/')
+  @Middlewares(
+    paginationMiddleware(10, 100),
+    ensurePagination,
+  )
   @Response<UnauthorizedError>(401, 'Authentication required')
   public async getMyOrders(
     @Request() request: express.Request,
   ): Promise<GetUserOrdersResponse> {
-    return this.service.getUserOrders(request.user.id);
+    return this.service.getUserOrders(
+      request.user.id,
+      request.pagination!,
+    );
   }
 
   @Get('/{orderId}/tickets')
@@ -190,6 +215,14 @@ export class OrdersController {
     @Path() orderId: string,
     @Request() request: express.Request,
   ): Promise<CancelOrderResponse> {
-    return this.service.cancelOrder(orderId, request.user.id);
+    const result = await this.service.cancelOrder(orderId, request.user.id);
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'order_cancelled',
+      properties: {
+        order_id: orderId,
+      },
+    });
+    return result;
   }
 }

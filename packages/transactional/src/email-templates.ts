@@ -17,6 +17,10 @@ import {
   type OrderExpiredEmailProps,
 } from '../emails/order-expired-email';
 import {
+  OrderInvoiceEmail as OrderInvoiceEmailComponent,
+  type OrderInvoiceEmailProps,
+} from '../emails/order-invoice-email';
+import {
   PaymentFailedEmail as PaymentFailedEmailComponent,
   type PaymentFailedEmailProps,
 } from '../emails/payment-failed-email';
@@ -91,10 +95,24 @@ import {
   BuyerTicketCancelledEmail as BuyerTicketCancelledEmailComponent,
   type BuyerTicketCancelledEmailProps,
 } from '../emails/buyer-ticket-cancelled-email';
+// Ticket report email templates
+import {
+  TicketReportCreatedEmail as TicketReportCreatedEmailComponent,
+  type TicketReportCreatedEmailProps,
+} from '../emails/ticket-report-created-email';
+import {
+  TicketReportActionEmail as TicketReportActionEmailComponent,
+  type TicketReportActionEmailProps,
+} from '../emails/ticket-report-action-email';
+import {
+  TicketReportClosedEmail as TicketReportClosedEmailComponent,
+  type TicketReportClosedEmailProps,
+} from '../emails/ticket-report-closed-email';
 import type {
   NotificationType,
   TypedNotificationMetadata,
 } from '@revendiste/shared';
+import {CASE_TYPE_LABELS} from '@revendiste/shared';
 
 export type {NotificationType};
 
@@ -134,6 +152,7 @@ export function getEmailTemplate<T extends NotificationType>(
         props: {
           eventName: meta?.eventName || 'el evento',
           eventStartDate: meta?.eventStartDate || new Date().toISOString(),
+          eventTimezone: meta?.eventTimezone,
           ticketCount: meta?.ticketCount || 1,
           hoursUntilEvent: meta?.hoursUntilEvent || 24,
           uploadUrl:
@@ -154,6 +173,7 @@ export function getEmailTemplate<T extends NotificationType>(
           eventName: meta?.eventName || 'el evento',
           eventStartDate: meta?.eventStartDate,
           eventEndDate: meta?.eventEndDate,
+          eventTimezone: meta?.eventTimezone,
           venueName: meta?.venueName,
           venueAddress: meta?.venueAddress,
           flyerImageUrl,
@@ -183,6 +203,29 @@ export function getEmailTemplate<T extends NotificationType>(
       };
     }
 
+    case 'order_invoice': {
+      const meta = metadata as TypedNotificationMetadata<'order_invoice'>;
+      return {
+        Component: OrderInvoiceEmailComponent,
+        props: {
+          orderId: meta?.orderId || '',
+          party: meta?.party || 'buyer',
+          eventName: meta?.eventName,
+          appBaseUrl,
+          currency: meta?.currency,
+          subtotalAmount: meta?.subtotalAmount,
+          platformCommission: meta?.platformCommission,
+          vatOnCommission: meta?.vatOnCommission,
+          totalAmount: meta?.totalAmount,
+          items: meta?.items,
+          sellerSubtotal: meta?.sellerSubtotal,
+          sellerCommission: meta?.sellerCommission,
+          sellerVat: meta?.sellerVat,
+          sellerAmount: meta?.sellerAmount,
+        },
+      };
+    }
+
     case 'payment_failed': {
       const meta = metadata as TypedNotificationMetadata<'payment_failed'>;
       return {
@@ -203,6 +246,7 @@ export function getEmailTemplate<T extends NotificationType>(
         props: {
           eventName: meta?.eventName || 'el evento',
           eventStartDate: meta?.eventStartDate || new Date().toISOString(),
+          eventTimezone: meta?.eventTimezone,
           ticketCount: meta?.ticketCount || 1,
           uploadUrl: meta?.shouldPromptUpload
             ? uploadUrl ||
@@ -446,6 +490,7 @@ export function getEmailTemplate<T extends NotificationType>(
     // In-app only notification types (no email template needed)
     case 'identity_verification_failed':
     case 'identity_verification_manual_review':
+    case 'ticket_report_status_changed':
       throw new Error(
         `Notification type ${notificationType} is in_app only and does not have an email template`,
       );
@@ -480,6 +525,61 @@ export function getEmailTemplate<T extends NotificationType>(
           orderUrl: orderUrl || `${appBaseUrl}/cuenta/tickets`,
           appBaseUrl,
         } as BuyerTicketCancelledEmailProps,
+      };
+    }
+
+    // Ticket report notification types
+    case 'ticket_report_created': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_created'>;
+      const reportUrl =
+        actions?.find(a => a.type === 'view_report')?.url ||
+        `${appBaseUrl}/cuenta/reportes/${meta?.ticketReportId}`;
+      return {
+        Component: TicketReportCreatedEmailComponent,
+        props: {
+          caseTypeLabel:
+            CASE_TYPE_LABELS[meta?.caseType] || meta?.caseType || 'Otro',
+          reportUrl,
+          appBaseUrl,
+          isAutoCase: meta?.isAutoCase,
+          eventName: meta?.eventName,
+        } as TicketReportCreatedEmailProps,
+      };
+    }
+
+    case 'ticket_report_action_added': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_action_added'>;
+      const reportUrl =
+        actions?.find(a => a.type === 'view_report')?.url ||
+        `${appBaseUrl}/cuenta/reportes/${meta?.ticketReportId}`;
+      const who =
+        meta?.performedByRole === 'admin' ? 'Soporte' : 'El usuario';
+      return {
+        Component: TicketReportActionEmailComponent,
+        props: {
+          actionDescription: `${who} agregó una actualización a tu caso.`,
+          comment: meta?.comment,
+          reportUrl,
+          appBaseUrl,
+        } as TicketReportActionEmailProps,
+      };
+    }
+
+    case 'ticket_report_closed': {
+      const meta =
+        metadata as TypedNotificationMetadata<'ticket_report_closed'>;
+      const reportUrl =
+        actions?.find(a => a.type === 'view_report')?.url ||
+        `${appBaseUrl}/cuenta/reportes/${meta?.ticketReportId}`;
+      return {
+        Component: TicketReportClosedEmailComponent,
+        props: {
+          refundIssued: meta?.refundIssued,
+          reportUrl,
+          appBaseUrl,
+        } as TicketReportClosedEmailProps,
       };
     }
 

@@ -20,3 +20,9 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "additional_face_liveness_principals" {
+  description = "Additional IAM ARNs allowed to assume the face liveness frontend role (e.g., local dev users)"
+  type        = list(string)
+  default     = []
+}

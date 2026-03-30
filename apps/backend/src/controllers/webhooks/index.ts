@@ -29,6 +29,7 @@ import {
   NotificationsRepository,
 } from '~/repositories';
 import {db} from '~/db';
+import {getJobQueueService} from '~/services/job-queue';
 import {ValidateBody, Body} from '~/decorators';
 import {logger} from '~/utils';
 import {
@@ -37,64 +38,80 @@ import {
   ClerkWebhookRouteBody,
   ClerkWebhookValidationSchema,
 } from './validation';
+import type {Kysely} from 'kysely';
+import type {DB} from '@revendiste/shared';
 
-// Create shared repositories
-const ordersRepository = new OrdersRepository(db);
-const orderTicketReservationsRepository = new OrderTicketReservationsRepository(
-  db,
-);
-const paymentsRepository = new PaymentsRepository(db);
-const paymentEventsRepository = new PaymentEventsRepository(db);
-const listingTicketsRepository = new ListingTicketsRepository(db);
-const ticketListingsRepository = new TicketListingsRepository(db);
-const eventsRepository = new EventsRepository(db);
-const eventTicketWavesRepository = new EventTicketWavesRepository(db);
-const usersRepository = new UsersRepository(db);
-const notificationsRepository = new NotificationsRepository(db);
-const sellerEarningsRepository = new SellerEarningsRepository(db);
+/**
+ * Factory for webhook dependencies. Used by WebhooksController; in tests
+ * you can call this with a test db or mock the returned adapter.
+ */
+export function createWebhookDependencies(database: Kysely<DB> = db) {
+  const ordersRepository = new OrdersRepository(database);
+  const orderTicketReservationsRepository =
+    new OrderTicketReservationsRepository(database);
+  const paymentsRepository = new PaymentsRepository(database);
+  const paymentEventsRepository = new PaymentEventsRepository(database);
+  const listingTicketsRepository = new ListingTicketsRepository(database);
+  const ticketListingsRepository = new TicketListingsRepository(database);
+  const eventsRepository = new EventsRepository(database);
+  const eventTicketWavesRepository = new EventTicketWavesRepository(database);
+  const usersRepository = new UsersRepository(database);
+  const notificationsRepository = new NotificationsRepository(database);
+  const sellerEarningsRepository = new SellerEarningsRepository(database);
 
-// Create shared services
-const notificationService = new NotificationService(
-  notificationsRepository,
-  usersRepository,
-);
+  const notificationService = new NotificationService(
+    notificationsRepository,
+    usersRepository,
+  );
 
-const ticketListingsService = new TicketListingsService(
-  ticketListingsRepository,
-  eventsRepository,
-  eventTicketWavesRepository,
-  listingTicketsRepository,
-  ordersRepository,
-  usersRepository,
-  notificationService,
-);
+  const ticketListingsService = new TicketListingsService(
+    ticketListingsRepository,
+    eventsRepository,
+    eventTicketWavesRepository,
+    listingTicketsRepository,
+    ordersRepository,
+    usersRepository,
+    notificationService,
+  );
 
-const sellerEarningsService = new SellerEarningsService(
-  sellerEarningsRepository,
-  orderTicketReservationsRepository,
-);
+  const sellerEarningsService = new SellerEarningsService(
+    sellerEarningsRepository,
+    orderTicketReservationsRepository,
+  );
 
-// Create dLocal adapter with all dependencies
-const dlocalAdapter = new PaymentWebhookAdapter(
-  new DLocalService(),
-  ordersRepository,
-  orderTicketReservationsRepository,
-  paymentsRepository,
-  paymentEventsRepository,
-  listingTicketsRepository,
-  ticketListingsRepository,
-  ticketListingsService,
-  sellerEarningsService,
-  notificationService,
-);
+  const dlocalAdapter = new PaymentWebhookAdapter(
+    new DLocalService(),
+    ordersRepository,
+    orderTicketReservationsRepository,
+    paymentsRepository,
+    paymentEventsRepository,
+    listingTicketsRepository,
+    ticketListingsRepository,
+    ticketListingsService,
+    sellerEarningsService,
+    notificationService,
+    () => getJobQueueService(),
+  );
 
-@Route('webhooks')
-@Tags('Webhooks')
-export class WebhooksController {
-  private webhooksService = new WebhooksService(
+  const webhooksService = new WebhooksService(
     dlocalAdapter,
     new ClerkWebhookService(),
   );
+
+  return {webhooksService, dlocalAdapter};
+}
+
+const webhookDeps = createWebhookDependencies();
+
+/**
+ * Webhook endpoints for dLocal and Clerk.
+ * Providers expect 200 within a short time or they treat the request as timed out and may retry.
+ * We return 200 immediately and process the payload asynchronously (fire-and-forget).
+ */
+@Route('webhooks')
+@Tags('Webhooks')
+export class WebhooksController {
+  private webhooksService = webhookDeps.webhooksService;
 
   /**
    * Receives payment status notifications from dLocal

@@ -6,16 +6,51 @@ import {
   OrdersRepository,
   UsersRepository,
 } from '~/repositories';
-import {logger} from '~/utils';
-import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
-import {CreateTicketListingRouteBody} from '~/controllers/ticket-listings/validation';
-import {canUploadDocumentForPlatform} from './platform-helpers';
+import { logger } from '~/utils';
+import { NotFoundError, ValidationError, UnauthorizedError } from '~/errors';
+import { CreateTicketListingRouteBody } from '~/controllers/ticket-listings/validation';
+import { canUploadDocumentForPlatform } from './platform-helpers';
 import {
   TICKET_LISTING_ERROR_MESSAGES,
   IDENTITY_VERIFICATION_ERROR_MESSAGES,
 } from '~/constants/error-messages';
-import {NotificationService} from '~/services/notifications';
-import {notifySellerTicketSold} from '~/services/notifications/helpers';
+import { NotificationService } from '~/services/notifications';
+import {
+  notifySellerTicketSold,
+  notifyDocumentReminder,
+} from '~/services/notifications/helpers';
+import { TicketDocumentService } from '~/services/ticket-documents';
+import {
+  parseQrAvailabilityTiming,
+  calculateHoursUntilEvent,
+  isWithinUploadWindow,
+  calculateMaxResalePrice,
+  getTimezoneForCountry,
+} from '@revendiste/shared';
+import type {Kysely} from 'kysely';
+import type {DB, QrAvailabilityTiming} from '@revendiste/shared';
+
+export interface SellerNotificationData {
+  sellerUserId: string;
+  listingId: string;
+  eventName: string;
+  eventStartDate: Date;
+  eventEndDate: Date;
+  eventTimezone?: string;
+  platform: string;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  ticketCount: number;
+  allDocumentsUploaded?: boolean;
+}
+import type {PaginationOptions} from '~/types/pagination';
+import {createPaginatedResponse} from '~/middleware/pagination';
+
+export interface DocumentFileInput {
+  buffer: Buffer;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+}
 
 export class TicketListingsService {
   constructor(
@@ -26,11 +61,13 @@ export class TicketListingsService {
     private readonly ordersRepository: OrdersRepository,
     private readonly usersRepository: UsersRepository,
     private readonly notificationService: NotificationService,
-  ) {}
+    private readonly ticketDocumentService?: TicketDocumentService,
+  ) { }
 
   async createTicketListing(
     data: CreateTicketListingRouteBody,
     publisherUserId: string,
+    documents?: DocumentFileInput[],
   ) {
     // Check if user is verified
     const user = await this.usersRepository.getById(publisherUserId);
@@ -83,11 +120,12 @@ export class TicketListingsService {
       );
     }
 
-    // Validate price doesn't exceed face value
-    if (data.price > Number(ticketWave.faceValue)) {
+    // Validate price doesn't exceed max resale price (115% of face value)
+    const maxResalePrice = calculateMaxResalePrice(Number(ticketWave.faceValue));
+    if (data.price > maxResalePrice) {
       throw new ValidationError(
-        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_FACE_VALUE(
-          String(ticketWave.faceValue),
+        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_MAX_RESALE(
+          maxResalePrice,
           ticketWave.currency,
         ),
       );
@@ -98,24 +136,135 @@ export class TicketListingsService {
       throw new ValidationError(TICKET_LISTING_ERROR_MESSAGES.INVALID_QUANTITY);
     }
 
-    // Create multiple listings in a single batch operation (already atomic)
-    const createdListings = await this.ticketListingsRepository.createBatch({
-      publisherUserId: publisherUserId,
-      ...data,
-    });
+    // Validate 5-ticket-per-event limit
+    const existingTicketCount =
+      await this.ticketListingsRepository.countActiveTicketsByUserAndEvent(
+        publisherUserId,
+        data.eventId,
+      );
+    const maxTicketsPerEvent = 5;
+    const remaining = maxTicketsPerEvent - existingTicketCount;
+
+    if (remaining <= 0) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_LIMIT_REACHED,
+      );
+    }
+
+    if (data.quantity > remaining) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.TICKET_LIMIT_EXCEEDED(remaining),
+      );
+    }
+
+    // Validate documents match quantity when provided
+    if (documents && documents.length > 0 && documents.length !== data.quantity) {
+      throw new ValidationError(
+        TICKET_LISTING_ERROR_MESSAGES.DOCUMENTS_COUNT_MISMATCH(
+          data.quantity,
+          documents.length,
+        ),
+      );
+    }
+
+    // If documents provided: upload to storage FIRST (outside DB transaction),
+    // then pass the storage metadata into createBatch so the DB transaction
+    // covers listing + tickets + ticketDocuments atomically.
+    // This follows CLAUDE.md: "External API calls MUST be outside DB transactions."
+    const hasDocumentsUploaded =
+      documents && documents.length > 0 && !!this.ticketDocumentService;
+
+    let uploadedDocuments: import('~/services/ticket-documents').UploadedDocumentData[] =
+      [];
+
+    if (hasDocumentsUploaded) {
+      uploadedDocuments = await Promise.all(
+        documents!.map(doc =>
+          this.ticketDocumentService!.uploadToStorage(data.eventId, doc),
+        ),
+      );
+    }
+
+    // Single DB transaction: listing + tickets + ticketDocument records
+    let createdListings: Awaited<
+      ReturnType<typeof this.ticketListingsRepository.createBatch>
+    >;
+
+    try {
+      createdListings = await this.ticketListingsRepository.createBatch(
+        {publisherUserId, ...data},
+        uploadedDocuments.length > 0 ? uploadedDocuments : undefined,
+      );
+    } catch (dbError) {
+      // DB transaction failed — clean up any S3 objects we already uploaded
+      if (uploadedDocuments.length > 0) {
+        await Promise.allSettled(
+          uploadedDocuments.map(doc =>
+            this.ticketDocumentService!.deleteFromStorage(doc.storagePath),
+          ),
+        );
+      }
+      throw dbError;
+    }
 
     logger.info(
-      `Created ${data.quantity} ticket listings for user ${publisherUserId} on event ${data.eventId}`,
+      `Created ${data.quantity} ticket listing(s) for user ${publisherUserId} on event ${data.eventId}`,
+      {hasDocuments: uploadedDocuments.length > 0},
     );
+
+    // Check if we should send immediate document upload reminder
+    // Uses shared utility to determine if within upload window
+    // Skip reminder if documents were uploaded at creation time
+    const shouldSendImmediateReminder =
+      !hasDocumentsUploaded &&
+      isWithinUploadWindow(
+        event.eventStartDate,
+        event.eventEndDate,
+        event.qrAvailabilityTiming,
+      );
+
+    if (shouldSendImmediateReminder) {
+      const ticketCount = createdListings.listingTickets.length;
+      const hoursUntilEvent = calculateHoursUntilEvent(event.eventStartDate);
+
+      // Send notification (fire-and-forget, don't block the response)
+      notifyDocumentReminder(this.notificationService, {
+        sellerUserId: publisherUserId,
+        listingId: createdListings.id,
+        eventName: event.name,
+        eventStartDate: event.eventStartDate,
+        eventTimezone: getTimezoneForCountry(event.venueCountry),
+        ticketCount,
+        hoursUntilEvent: Math.max(0, Math.ceil(hoursUntilEvent)),
+      }).catch(error => {
+        logger.error('Failed to send immediate document reminder notification', {
+          publisherUserId,
+          listingId: createdListings.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+
+      logger.info('Sent immediate document upload reminder', {
+        publisherUserId,
+        listingId: createdListings.id,
+        hoursUntilEvent: Math.round(hoursUntilEvent),
+      });
+    }
 
     return createdListings;
   }
 
-  async getUserListingsWithTickets(userId: string) {
-    const listings =
-      await this.ticketListingsRepository.getListingsWithTicketsByUserId(
-        userId,
-      );
+  async getUserListingsWithTickets(
+    userId: string,
+    pagination: PaginationOptions,
+  ) {
+    const [listings, total] = await Promise.all([
+      this.ticketListingsRepository.getListingsWithTicketsByUserId(userId, {
+        limit: pagination.limit,
+        offset: pagination.offset,
+      }),
+      this.ticketListingsRepository.getListingsWithTicketsByUserIdCount(userId),
+    ]);
 
     logger.info(`Retrieved ${listings.length} listings for user ${userId}`);
 
@@ -151,7 +300,7 @@ export class TicketListingsService {
       };
     });
 
-    return enrichedListings;
+    return createPaginatedResponse(enrichedListings, total, pagination);
   }
 
   /**
@@ -221,11 +370,12 @@ export class TicketListingsService {
       );
     }
 
-    // Validate price doesn't exceed face value
-    if (price > Number(ticket.faceValue)) {
+    // Validate price doesn't exceed max resale price (115% of face value)
+    const maxResalePrice = calculateMaxResalePrice(Number(ticket.faceValue));
+    if (price > maxResalePrice) {
       throw new ValidationError(
-        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_FACE_VALUE(
-          String(ticket.faceValue),
+        TICKET_LISTING_ERROR_MESSAGES.PRICE_EXCEEDS_MAX_RESALE(
+          maxResalePrice,
           ticket.currency,
         ),
       );
@@ -317,95 +467,154 @@ export class TicketListingsService {
   }
 
   /**
-   * Mark tickets as sold for an order and send notifications to sellers
-   * This orchestrates the repository call and notification side effects
+   * Mark tickets as sold and return seller notification data.
+   * Caller is responsible for sending in_app notifications and enqueueing email jobs.
+   * When trx is provided, all DB operations use the transaction.
    */
-  async markTicketsAsSoldAndNotifySeller(orderId: string) {
-    // Mark tickets as sold (repository operation)
+  async markTicketsAsSoldAndReturnSellerData(
+    orderId: string,
+    trx?: Kysely<DB>,
+  ): Promise<{
+    soldTickets: Array<{id: string; listingId: string}>;
+    sellerNotifications: SellerNotificationData[];
+  }> {
+    const listingTicketsRepo = trx
+      ? this.listingTicketsRepository.withTransaction(trx)
+      : this.listingTicketsRepository;
+    const ordersRepo = trx
+      ? this.ordersRepository.withTransaction(trx)
+      : this.ordersRepository;
+
     const soldTickets =
-      await this.listingTicketsRepository.markTicketsAsSoldByOrderId(orderId);
+      await listingTicketsRepo.markTicketsAsSoldByOrderId(orderId);
 
     if (soldTickets.length === 0) {
-      logger.warn('No tickets found to mark as sold', {orderId});
-      return soldTickets;
+      logger.warn('No tickets found to mark as sold', { orderId });
+      return { soldTickets, sellerNotifications: [] };
     }
 
-    // Get unique listing IDs from sold tickets
     const uniqueListingIds = [
       ...new Set(soldTickets.map(ticket => ticket.listingId)),
     ];
 
-    // Get order with event info for notifications (outside transaction)
-    const order = await this.ordersRepository.getByIdWithItems(orderId);
+    const order = await ordersRepo.getByIdWithItems(orderId);
     if (!order || !order.event) {
       logger.warn('Order or event not found for seller notifications', {
         orderId,
       });
-      return soldTickets;
+      return { soldTickets, sellerNotifications: [] };
     }
 
-    // Get listings with seller info
-    const listings = await this.listingTicketsRepository.getListingsByIds(
+    const listings = await listingTicketsRepo.getListingsByIds(
       uniqueListingIds,
     );
 
-    // Group tickets by listing to count per listing
     const ticketsByListing = new Map<string, number>();
+    const ticketIdsByListing = new Map<string, string[]>();
     for (const ticket of soldTickets) {
       ticketsByListing.set(
         ticket.listingId,
         (ticketsByListing.get(ticket.listingId) || 0) + 1,
       );
+      const ids = ticketIdsByListing.get(ticket.listingId) || [];
+      ids.push(ticket.id);
+      ticketIdsByListing.set(ticket.listingId, ids);
     }
 
-    // Send notification to each seller (grouped by listing)
-    const sellerNotifications = new Map<string, number>(); // sellerId -> total tickets sold
-
+    const sellerCountMap = new Map<string, number>();
+    const sellerTicketIds = new Map<string, string[]>();
     for (const listing of listings) {
       const ticketCount = ticketsByListing.get(listing.id) || 0;
       if (ticketCount === 0) continue;
-
-      const currentCount =
-        sellerNotifications.get(listing.publisherUserId) || 0;
-      sellerNotifications.set(
-        listing.publisherUserId,
-        currentCount + ticketCount,
-      );
+      const current = sellerCountMap.get(listing.publisherUserId) || 0;
+      sellerCountMap.set(listing.publisherUserId, current + ticketCount);
+      const existingIds = sellerTicketIds.get(listing.publisherUserId) || [];
+      existingIds.push(...(ticketIdsByListing.get(listing.id) || []));
+      sellerTicketIds.set(listing.publisherUserId, existingIds);
     }
 
-    // Get qrAvailabilityTiming from the event (now stored at event level)
-    const qrAvailabilityTiming = order.event.qrAvailabilityTiming || null;
+    // Check which sold tickets already have documents uploaded
+    const allSoldTicketIds = soldTickets.map(t => t.id);
+    let ticketIdsWithDocs = new Set<string>();
+    if (allSoldTicketIds.length > 0) {
+      // Query ticket documents directly via the db connection
+      const docRows = await (trx || this.listingTicketsRepository['db'])
+        .selectFrom('ticketDocuments')
+        .select('ticketId')
+        .where('ticketId', 'in', allSoldTicketIds)
+        .where('isPrimary', '=', true)
+        .where('deletedAt', 'is', null)
+        .execute();
+      ticketIdsWithDocs = new Set(docRows.map(r => r.ticketId));
+    }
 
-    for (const [sellerUserId, totalTicketCount] of sellerNotifications) {
-      // Use the first listing ID for the upload link (they're all from the same seller)
-      const firstListingId = listings.find(
+    const qrAvailabilityTiming = order.event.qrAvailabilityTiming ?? null;
+    const sellerNotifications: SellerNotificationData[] = [];
+
+    for (const [sellerUserId, totalTicketCount] of sellerCountMap) {
+      const firstListing = listings.find(
         l => l.publisherUserId === sellerUserId,
-      )?.id;
-
+      );
       if (
-        firstListingId &&
+        firstListing &&
         order.event.name &&
         order.event.eventStartDate &&
         order.event.eventEndDate
       ) {
-        notifySellerTicketSold(this.notificationService, {
+        // Check if ALL sold tickets for this seller have documents
+        const thisSellerTicketIds = sellerTicketIds.get(sellerUserId) || [];
+        const allDocsUploaded =
+          thisSellerTicketIds.length > 0 &&
+          thisSellerTicketIds.every(id => ticketIdsWithDocs.has(id));
+
+        sellerNotifications.push({
           sellerUserId,
-          listingId: firstListingId,
+          listingId: firstListing.id,
           eventName: order.event.name,
           eventStartDate: new Date(order.event.eventStartDate),
           eventEndDate: new Date(order.event.eventEndDate),
-          platform: order.event.platform || 'unknown',
+          eventTimezone: getTimezoneForCountry(order.event.venueCountry),
+          platform: order.event.platform ?? 'unknown',
           qrAvailabilityTiming,
           ticketCount: totalTicketCount,
-        }).catch((error: unknown) => {
-          console.error('Failed to send seller notification', error);
-          logger.error('Failed to send seller notification', {
-            sellerUserId,
-            orderId,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          allDocumentsUploaded: allDocsUploaded,
         });
       }
+    }
+
+    return { soldTickets, sellerNotifications };
+  }
+
+  /**
+   * Mark tickets as sold and send notifications to sellers (legacy).
+   * Prefer markTicketsAsSoldAndReturnSellerData + caller sending in_app and enqueueing emails.
+   */
+  async markTicketsAsSoldAndNotifySeller(
+    orderId: string,
+    trx?: Kysely<DB>,
+  ) {
+    const { soldTickets, sellerNotifications } =
+      await this.markTicketsAsSoldAndReturnSellerData(orderId, trx);
+
+    for (const seller of sellerNotifications) {
+      notifySellerTicketSold(this.notificationService, {
+        sellerUserId: seller.sellerUserId,
+        listingId: seller.listingId,
+        eventName: seller.eventName,
+        eventStartDate: seller.eventStartDate,
+        eventEndDate: seller.eventEndDate,
+        eventTimezone: seller.eventTimezone,
+        platform: seller.platform,
+        qrAvailabilityTiming: seller.qrAvailabilityTiming,
+        ticketCount: seller.ticketCount,
+        allDocumentsUploaded: seller.allDocumentsUploaded,
+      }).catch((error: unknown) => {
+        logger.error('Failed to send seller notification', {
+          sellerUserId: seller.sellerUserId,
+          orderId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
     }
 
     return soldTickets;

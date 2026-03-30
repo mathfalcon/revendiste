@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
@@ -6,33 +6,29 @@ import {TicketUploadModal} from '~/components';
 import {Card, CardContent} from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
 import {LoadingSpinner} from '~/components/LoadingScreen';
-import {Upload, Timer, XCircle} from 'lucide-react';
-import {EmptyState} from './EmptyState';
+import {AccountSectionHeader, AccountEmptyState} from '~/features/user-account';
+import {Upload, Timer, XCircle, UploadCloud} from 'lucide-react';
 import {TicketNeedingUploadCard} from './TicketCard';
 import {TicketWaitingCard} from './TicketWaitingCard';
 import {TicketExpiredCard} from './TicketExpiredCard';
-import {SectionHeader} from './SectionHeader';
 
 export function UploadTicketsView() {
   const {data: listings, isPending} = useQuery(getMyListingsQuery());
-  const search = useSearch({from: '/cuenta/subir-tickets'});
-  const navigate = useNavigate({from: '/cuenta/subir-tickets'});
+  const search = useSearch({from: '/cuenta/subir-entradas'});
+  const navigate = useNavigate({from: '/cuenta/subir-entradas'});
   const [carouselOpen, setCarouselOpen] = useState(false);
 
   const now = new Date();
   const threeDaysAgo = new Date(now);
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-  // Find all sold tickets that need documents
-  // Backend already checks event end date via canUploadDocument
+  // Find all tickets that need documents and can upload now
+  // Includes both sold and unsold tickets within the upload window
   const ticketsNeedingUpload =
     listings
       ?.flatMap(listing =>
         listing.tickets
-          .filter(
-            ticket =>
-              ticket.soldAt && !ticket.hasDocument && ticket.canUploadDocument,
-          )
+          .filter(ticket => !ticket.hasDocument && ticket.canUploadDocument)
           .map(ticket => ({
             ...ticket,
             listing,
@@ -41,6 +37,7 @@ export function UploadTicketsView() {
       .filter(Boolean) || [];
 
   // Find tickets that can't upload yet (too early)
+  // Only shows unsold tickets - sold tickets should always be uploadable
   // Exclude tickets with event_ended reason (they go to expired section)
   const ticketsWaiting =
     listings
@@ -48,7 +45,7 @@ export function UploadTicketsView() {
         listing.tickets
           .filter(
             ticket =>
-              ticket.soldAt &&
+              !ticket.soldAt &&
               !ticket.hasDocument &&
               !ticket.canUploadDocument &&
               ticket.uploadUnavailableReason !== 'event_ended',
@@ -68,7 +65,6 @@ export function UploadTicketsView() {
         listing.tickets
           .filter(
             ticket =>
-              ticket.soldAt &&
               !ticket.hasDocument &&
               !ticket.canUploadDocument &&
               ticket.uploadUnavailableReason === 'event_ended',
@@ -90,6 +86,38 @@ export function UploadTicketsView() {
     ? ticketsNeedingUpload.find(ticket => ticket.id === search.subirTicket)
     : null;
 
+  // Find listing by ID from query parameter
+  const listingFromParam = search.subirPublicacion
+    ? listings?.find(listing => listing.id === search.subirPublicacion)
+    : null;
+
+  // Get tickets from specific listing that need upload
+  const listingTicketsNeedingUpload = listingFromParam
+    ? listingFromParam.tickets
+        .filter(ticket => !ticket.hasDocument && ticket.canUploadDocument)
+        .map(ticket => ({
+          ...ticket,
+          listing: listingFromParam,
+        }))
+    : [];
+
+  // Auto-open carousel when subirPublicacion parameter is present and listing exists
+  useEffect(() => {
+    if (search.subirPublicacion && listingFromParam) {
+      if (listingTicketsNeedingUpload.length > 0) {
+        setCarouselOpen(true);
+      } else {
+        // Clear the param if no tickets need upload
+        navigate({
+          search: prev => ({
+            ...prev,
+            subirPublicacion: undefined,
+          }),
+        });
+      }
+    }
+  }, [search.subirPublicacion, listingFromParam, listingTicketsNeedingUpload.length, navigate]);
+
   const handleCloseModal = () => {
     navigate({
       search: prev => ({
@@ -98,6 +126,26 @@ export function UploadTicketsView() {
       }),
     });
   };
+
+  const handleCarouselClose = (open: boolean) => {
+    setCarouselOpen(open);
+    // Clear subirPublicacion param when closing carousel
+    if (!open && search.subirPublicacion) {
+      navigate({
+        search: prev => ({
+          ...prev,
+          subirPublicacion: undefined,
+        }),
+      });
+    }
+  };
+
+  // Determine which tickets to show in carousel
+  // If subirPublicacion param is present, show only that listing's tickets
+  // Otherwise, show all tickets needing upload
+  const ticketsForCarousel = search.subirPublicacion
+    ? listingTicketsNeedingUpload
+    : ticketsNeedingUpload;
 
   const handleUploadClick = (ticketId: string) => {
     navigate({
@@ -126,9 +174,9 @@ export function UploadTicketsView() {
   return (
     <div className='space-y-6'>
       <div>
-        <h2 className='text-2xl font-semibold'>Subir tickets</h2>
+        <h2 className='text-2xl font-semibold'>Subir entradas</h2>
         <p className='text-muted-foreground'>
-          Sube los documentos de tus tickets vendidos
+          Subí los documentos de tus entradas
         </p>
       </div>
 
@@ -136,9 +184,9 @@ export function UploadTicketsView() {
       {ticketsNeedingUpload.length > 0 && (
         <div className='space-y-4'>
           <div className='flex items-center justify-between gap-4'>
-            <SectionHeader
+            <AccountSectionHeader
               icon={Upload}
-              title='Tickets pendientes'
+              title='Entradas pendientes'
               count={ticketsNeedingUpload.length}
               variant='pending'
             />
@@ -164,7 +212,7 @@ export function UploadTicketsView() {
       {/* Tickets Waiting (too early) */}
       {ticketsWaiting.length > 0 && (
         <div className='space-y-4'>
-          <SectionHeader
+          <AccountSectionHeader
             icon={Timer}
             title='Próximamente'
             count={ticketsWaiting.length}
@@ -181,7 +229,7 @@ export function UploadTicketsView() {
       {/* Tickets Expired (event ended, visible for 3 days) */}
       {ticketsExpired.length > 0 && (
         <div className='space-y-4'>
-          <SectionHeader
+          <AccountSectionHeader
             icon={XCircle}
             title='Expirados'
             count={ticketsExpired.length}
@@ -196,7 +244,13 @@ export function UploadTicketsView() {
       )}
 
       {/* Empty State */}
-      {hasNoTickets && <EmptyState />}
+      {hasNoTickets && (
+        <AccountEmptyState
+          icon={<UploadCloud className='h-8 w-8 text-muted-foreground' />}
+          title='No hay entradas para subir'
+          description='Cuando tus publicaciones sean vendidas, aparecerán aquí para que puedas subir sus documentos'
+        />
+      )}
 
       {/* Single Ticket Upload Modal (from URL param) */}
       {ticketToUpload && (
@@ -210,11 +264,11 @@ export function UploadTicketsView() {
       )}
 
       {/* Batch Upload Modal */}
-      {ticketsNeedingUpload.length > 0 && (
+      {(carouselOpen || ticketsForCarousel.length > 0) && (
         <TicketUploadModal
-          tickets={ticketsNeedingUpload}
+          tickets={ticketsForCarousel}
           open={carouselOpen}
-          onOpenChange={setCarouselOpen}
+          onOpenChange={handleCarouselClose}
           initialTicketId={search.subirTicket}
         />
       )}

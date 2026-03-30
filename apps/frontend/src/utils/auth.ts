@@ -4,10 +4,33 @@ import {
   NavigateOptions,
 } from '@tanstack/react-router';
 import {toast} from 'sonner';
+import {fetchClerkAuth} from '~/routes/__root';
 
 /**
- * Server-side utility to redirect to sign-in if user is not authenticated.
- * Used in route loaders and beforeLoad functions.
+ * Server-side utility to check auth and redirect to sign-in if user is not authenticated.
+ * Used in route beforeLoad functions for protected routes.
+ *
+ * This function calls the server to verify auth state, so it should only be used
+ * in protected routes to avoid adding latency to public routes.
+ */
+export const beforeLoadRequireAuth = async (location: ParsedLocation) => {
+  const {userId} = await fetchClerkAuth();
+
+  if (!userId) {
+    throw redirect({
+      to: '/ingresar/$',
+      search: {
+        redirectUrl: location.href,
+      },
+      replace: true,
+    });
+  }
+
+  return {userId};
+};
+
+/**
+ * @deprecated Use beforeLoadRequireAuth instead - it handles fetching auth internally
  */
 export const beforeLoadRedirectToSignInIfNotAuthenticated = (
   userId: string | null,

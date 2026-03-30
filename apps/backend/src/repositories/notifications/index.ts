@@ -1,7 +1,7 @@
-import {Kysely, sql} from 'kysely';
+import {Kysely, sql, type SqlBool} from 'kysely';
 import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
-import {mapToPaginatedResponse} from '~/middleware';
+import {mapToPaginatedResponse} from '~/middleware/pagination';
 import type {
   NotificationChannel,
   NotificationMetadata,
@@ -20,6 +20,8 @@ export interface CreateNotificationData {
     data?: Record<string, unknown>;
   }> | null;
   metadata?: NotificationMetadata;
+  /** When true, delivery must go through send-notification job; when false, can call sendNotification directly. */
+  sendViaJob?: boolean;
 }
 
 const channelsAsJsonb = sql<NotificationChannel[]>`to_jsonb(channels)`.as(
@@ -46,6 +48,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
             : undefined,
         metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
         status: 'pending',
+        sendViaJob: data.sendViaJob === true,
       })
       .returningAll()
       .executeTakeFirstOrThrow();
@@ -61,6 +64,23 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .executeTakeFirst();
   }
 
+  /** Used to avoid duplicate order_confirmed in-app when webhook and sync-on-order-access both run. */
+  async existsOrderConfirmedForUserAndOrder(
+    userId: string,
+    orderId: string,
+  ): Promise<boolean> {
+    const row = await this.db
+      .selectFrom('notifications')
+      .select('id')
+      .where('userId', '=', userId)
+      .where('type', '=', 'order_confirmed')
+      .where(sql`metadata->>'orderId'`, '=', orderId)
+      .where('deletedAt', 'is', null)
+      .limit(1)
+      .executeTakeFirst();
+    return !!row;
+  }
+
   async getByUserId(
     userId: string,
     options?: {
@@ -73,7 +93,9 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .selectFrom('notifications')
       .selectAll()
       .where('userId', '=', userId)
-      .where('deletedAt', 'is', null);
+      .where('deletedAt', 'is', null)
+      // Only show notifications intended for in-app display
+      .where(sql<SqlBool>`'in_app' = ANY(channels)`);
 
     if (options?.includeSeen === false) {
       query = query.where('seenAt', 'is', null);
@@ -105,7 +127,9 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
     let baseQuery = this.db
       .selectFrom('notifications')
       .where('userId', '=', userId)
-      .where('deletedAt', 'is', null);
+      .where('deletedAt', 'is', null)
+      // Only show notifications intended for in-app display
+      .where(sql<SqlBool>`'in_app' = ANY(channels)`);
 
     if (options?.includeSeen === false) {
       baseQuery = baseQuery.where('seenAt', 'is', null);
@@ -149,6 +173,8 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('userId', '=', userId)
       .where('seenAt', 'is', null)
       .where('deletedAt', 'is', null)
+      // Only count notifications intended for in-app display
+      .where(sql<SqlBool>`'in_app' = ANY(channels)`)
       .executeTakeFirst();
 
     return Number(result?.count || 0);
@@ -172,7 +198,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
   }
 
   async markAllAsSeen(userId: string) {
-    // Update all notifications
+    // Update all in-app notifications
     const updated = await this.db
       .updateTable('notifications')
       .set({
@@ -182,6 +208,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
       .where('userId', '=', userId)
       .where('seenAt', 'is', null)
       .where('deletedAt', 'is', null)
+      .where(sql<SqlBool>`'in_app' = ANY(channels)`)
       .returning('id')
       .execute();
 
@@ -236,7 +263,7 @@ export class NotificationsRepository extends BaseRepository<NotificationsReposit
         // Filter by exponential backoff in application code
         // This is a temporary solution until we can use proper SQL with the new column
         return notifications.filter(notification => {
-          const retryCount = (notification as any).retryCount ?? 0;
+          const retryCount = notification.retryCount ?? 0;
           const baseDelay = 5 * 60 * 1000; // 5 minutes
           const backoffDelay = baseDelay * Math.pow(2, retryCount);
           const retryAfter = new Date(now.getTime() - backoffDelay);
