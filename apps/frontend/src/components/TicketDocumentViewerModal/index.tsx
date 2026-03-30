@@ -100,7 +100,7 @@ export function TicketDocumentViewerModal({
             {isReplacing ? 'Reemplazar documento' : 'Ver documento'}
           </DialogTitle>
           <DialogDescription>
-            Ticket #{ticketInfo?.ticketNumber} - {ticketInfo?.ticketWave?.name}
+            Entrada #{ticketInfo?.ticketNumber} - {ticketInfo?.ticketWave?.name}
           </DialogDescription>
         </DialogHeader>
 

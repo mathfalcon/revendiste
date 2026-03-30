@@ -7,13 +7,13 @@ const ticketsSearchSchema = z.object({
   orden: z.string().uuid().optional(),
 });
 
-export const Route = createFileRoute('/cuenta/tickets')({
+export const Route = createFileRoute('/cuenta/entradas')({
   component: MyTicketsView,
   validateSearch: ticketsSearchSchema,
   head: () => ({
     meta: [
       ...seo({
-        title: 'Mis Tickets | Revendiste',
+        title: 'Mis Entradas | Revendiste',
         noIndex: true,
       }),
     ],

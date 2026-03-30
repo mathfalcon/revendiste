@@ -14,8 +14,8 @@ import {TicketExpiredCard} from './TicketExpiredCard';
 
 export function UploadTicketsView() {
   const {data: listings, isPending} = useQuery(getMyListingsQuery());
-  const search = useSearch({from: '/cuenta/subir-tickets'});
-  const navigate = useNavigate({from: '/cuenta/subir-tickets'});
+  const search = useSearch({from: '/cuenta/subir-entradas'});
+  const navigate = useNavigate({from: '/cuenta/subir-entradas'});
   const [carouselOpen, setCarouselOpen] = useState(false);
 
   const now = new Date();
@@ -174,9 +174,9 @@ export function UploadTicketsView() {
   return (
     <div className='space-y-6'>
       <div>
-        <h2 className='text-2xl font-semibold'>Subir tickets</h2>
+        <h2 className='text-2xl font-semibold'>Subir entradas</h2>
         <p className='text-muted-foreground'>
-          Sube los documentos de tus tickets
+          Subí los documentos de tus entradas
         </p>
       </div>
 
@@ -186,7 +186,7 @@ export function UploadTicketsView() {
           <div className='flex items-center justify-between gap-4'>
             <AccountSectionHeader
               icon={Upload}
-              title='Tickets pendientes'
+              title='Entradas pendientes'
               count={ticketsNeedingUpload.length}
               variant='pending'
             />
@@ -247,7 +247,7 @@ export function UploadTicketsView() {
       {hasNoTickets && (
         <AccountEmptyState
           icon={<UploadCloud className='h-8 w-8 text-muted-foreground' />}
-          title='No hay tickets para subir'
+          title='No hay entradas para subir'
           description='Cuando tus publicaciones sean vendidas, aparecerán aquí para que puedas subir sus documentos'
         />
       )}

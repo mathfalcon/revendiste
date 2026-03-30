@@ -57,7 +57,7 @@ export function SoldTicketsSection({
             <div className='flex h-6 w-6 items-center justify-center rounded-full bg-green-500/10'>
               <TicketCheck className='h-3.5 w-3.5 text-green-600' />
             </div>
-            <span>Tickets vendidos</span>
+            <span>Entradas vendidas</span>
             <span className='text-xs text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full'>
               {tickets.length}
             </span>

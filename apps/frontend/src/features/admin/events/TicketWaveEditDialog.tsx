@@ -172,12 +172,12 @@ export function TicketWaveEditDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isCreateMode ? 'Nueva Tanda de Tickets' : 'Editar Tanda de Tickets'}
+            {isCreateMode ? 'Nueva Tanda de Entradas' : 'Editar Tanda de Entradas'}
           </DialogTitle>
           <DialogDescription>
             {isCreateMode
-              ? 'Crea una nueva tanda de tickets para este evento'
-              : 'Actualiza la información de la tanda de tickets'}
+              ? 'Crea una nueva tanda de entradas para este evento'
+              : 'Actualiza la información de la tanda de entradas'}
           </DialogDescription>
         </DialogHeader>
 

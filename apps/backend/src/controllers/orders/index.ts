@@ -45,6 +45,7 @@ import {
 import {CreateOrderRouteBody, CreateOrderRouteSchema} from './validation';
 import {ValidateBody, Body} from '~/decorators';
 import {getJobQueueService} from '~/services/job-queue';
+import {getPostHog} from '~/lib/posthog';
 
 type CreateOrderResponse = ReturnType<OrdersService['createOrder']>;
 type GetOrderByIdResponse = ReturnType<OrdersService['getOrderById']>;
@@ -148,12 +149,23 @@ export class OrdersController {
     @Body() body: CreateOrderRouteBody,
     @Request() request: express.Request,
   ): Promise<CreateOrderResponse> {
-    return this.service.createOrder(
+    const result = await this.service.createOrder(
       {
         ...body,
       },
       request.user.id,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'order_created',
+      properties: {
+        order_id: result.id,
+        event_id: body.eventId,
+        total_amount: result.totalAmount,
+        currency: result.currency,
+      },
+    });
+    return result;
   }
 
   @Get('/{orderId}')
@@ -203,6 +215,14 @@ export class OrdersController {
     @Path() orderId: string,
     @Request() request: express.Request,
   ): Promise<CancelOrderResponse> {
-    return this.service.cancelOrder(orderId, request.user.id);
+    const result = await this.service.cancelOrder(orderId, request.user.id);
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'order_cancelled',
+      properties: {
+        order_id: orderId,
+      },
+    });
+    return result;
   }
 }

@@ -1,4 +1,6 @@
 import winston from 'winston';
+import TransportStream from 'winston-transport';
+import {logs, SeverityNumber} from '@opentelemetry/api-logs';
 import {getLoggingConfig} from '../config/logging';
 
 /**
@@ -24,6 +26,61 @@ function safeStringify(obj: unknown): string {
     }
     return value;
   });
+}
+
+/**
+ * Maps Winston log levels to OpenTelemetry severity numbers.
+ */
+const WINSTON_TO_OTEL_SEVERITY: Record<string, SeverityNumber> = {
+  error: SeverityNumber.ERROR,
+  warn: SeverityNumber.WARN,
+  info: SeverityNumber.INFO,
+  http: SeverityNumber.DEBUG2,
+  debug: SeverityNumber.DEBUG,
+};
+
+/**
+ * Winston transport that forwards log records to OpenTelemetry,
+ * which then exports them to PostHog via OTLP.
+ */
+class OTelTransport extends TransportStream {
+  private otelLogger = logs.getLogger('revendiste-backend');
+
+  log(info: any, callback: () => void) {
+    const {level, message, timestamp: _ts, ...metadata} = info;
+
+    // Filter out Winston internal properties
+    const attributes: Record<string, string | number | boolean> = {};
+    for (const [key, value] of Object.entries(metadata)) {
+      if (
+        key.startsWith('Symbol(') ||
+        key === 'splat' ||
+        key === 'level' ||
+        key === 'message' ||
+        key === 'timestamp'
+      ) {
+        continue;
+      }
+      if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean'
+      ) {
+        attributes[key] = value;
+      } else if (value !== undefined && value !== null) {
+        attributes[key] = safeStringify(value);
+      }
+    }
+
+    this.otelLogger.emit({
+      severityNumber: WINSTON_TO_OTEL_SEVERITY[level] ?? SeverityNumber.INFO,
+      severityText: level,
+      body: message,
+      attributes,
+    });
+
+    callback();
+  }
 }
 
 // Define log levels
@@ -118,6 +175,10 @@ if (config.logToFile) {
     new winston.transports.File({filename: `${config.logDirectory}/all.log`}),
   );
 }
+
+// Add OpenTelemetry transport (forwards logs to PostHog via OTLP)
+// Only active when OTel SDK is initialized (i.e. POSTHOG_KEY is set)
+transports.push(new OTelTransport());
 
 // Create the logger
 const logger = winston.createLogger({

@@ -315,6 +315,17 @@ module "identity_verification" {
   common_tags       = local.common_tags
 }
 
+# EC2 Instance Connect Endpoint for secure database access (FREE - no EC2 needed)
+module "ec2_instance_connect_endpoint" {
+  source = "../../modules/ec2-instance-connect-endpoint"
+
+  name_prefix           = local.name_prefix
+  vpc_id                = module.vpc.vpc_id
+  subnet_id             = module.vpc.private_subnet_ids[0]
+  rds_security_group_id = module.security_groups.rds_security_group_id
+  common_tags           = local.common_tags
+}
+
 # CloudWatch Alarms - ENABLED IN PRODUCTION
 module "cloudwatch_alarms" {
   source = "../../modules/cloudwatch-alarms"

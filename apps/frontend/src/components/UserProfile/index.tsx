@@ -43,7 +43,7 @@ const getActiveThemeIcon = (theme: string | undefined) => {
 const MENU_ITEMS = [
   {to: '/entradas/publicar', icon: TicketPlus, label: 'Publicar entradas'},
   {to: '/cuenta/publicaciones', icon: Ticket, label: 'Publicaciones'},
-  {to: '/cuenta/tickets', icon: QrCode, label: 'Mis tickets'},
+  {to: '/cuenta/entradas', icon: QrCode, label: 'Mis entradas'},
   {to: '/cuenta/retiro', icon: Wallet, label: 'Retiros'},
 ] as const;
 

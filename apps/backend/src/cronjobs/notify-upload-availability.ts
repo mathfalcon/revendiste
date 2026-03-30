@@ -9,6 +9,7 @@ import {
 import {notifyDocumentReminder} from '~/services/notifications/helpers';
 import {logger} from '~/utils';
 import {getNotificationMilestone} from '~/utils/document-reminder';
+import {getTimezoneForCountry} from '@revendiste/shared';
 
 // Create shared repositories and services
 const listingTicketsRepository = new ListingTicketsRepository(db);
@@ -50,6 +51,7 @@ export async function runNotifyUploadAvailability() {
       {
         sellerUserId: string;
         listingId: string;
+        venueCountry: string | null;
         tickets: Array<{
           ticketId: string;
           eventName: string;
@@ -64,6 +66,7 @@ export async function runNotifyUploadAvailability() {
         ticketsBySellerAndListing.set(key, {
           sellerUserId: ticket.sellerUserId,
           listingId: ticket.listingId,
+          venueCountry: ticket.venueCountry,
           tickets: [],
         });
       }
@@ -118,6 +121,7 @@ export async function runNotifyUploadAvailability() {
         listingId,
         eventName: firstTicket.eventName,
         eventStartDate: firstTicket.eventStartDate,
+        eventTimezone: getTimezoneForCountry(group.venueCountry),
         ticketCount: ticketGroup.length,
         hoursUntilEvent: milestone,
       }).catch(error => {

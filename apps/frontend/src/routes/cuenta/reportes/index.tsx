@@ -72,7 +72,7 @@ function MisReportesPage() {
             Si tuviste un problema con una entrada, podés reportarla
             directamente desde{' '}
             <Link
-              to='/cuenta/tickets'
+              to='/cuenta/entradas'
               className='underline underline-offset-2 hover:text-foreground transition-colors'
             >
               <Ticket className='inline h-3.5 w-3.5 mr-0.5 -mt-0.5' />

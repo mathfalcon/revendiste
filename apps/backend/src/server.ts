@@ -4,6 +4,8 @@ import morgan from 'morgan';
 import multer from 'multer';
 import path from 'path';
 import {PORT, STORAGE_LOCAL_PATH, APP_BASE_URL, NODE_ENV} from './config/env';
+import {shutdownPostHog} from './lib/posthog';
+import {initOtel, shutdownOtel} from './lib/otel';
 import {apiRateLimitMiddleware} from './middleware/rateLimit';
 import {
   errorHandler,
@@ -23,6 +25,9 @@ import {
   startProcessPendingJobsJob,
 } from './cronjobs/process-pending-jobs';
 import {ValidationService} from '@mathfalcon/tsoa-runtime';
+
+// Initialize OpenTelemetry before any logging so the OTel transport is active
+initOtel();
 
 // Initialize job queue early so getJobQueueService() is available when controllers load
 initializeJobQueue();
@@ -177,6 +182,16 @@ app.listen(PORT, '0.0.0.0', () => {
       'Cronjobs disabled in production (using EventBridge + ECS RunTask)',
     );
   }
+});
+
+process.on('SIGINT', async () => {
+  await Promise.all([shutdownPostHog(), shutdownOtel()]);
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await Promise.all([shutdownPostHog(), shutdownOtel()]);
+  process.exit(0);
 });
 
 export default app;

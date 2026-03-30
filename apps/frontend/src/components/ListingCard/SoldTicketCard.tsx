@@ -76,7 +76,7 @@ export function SoldTicketCard({
           <div className='min-w-0'>
             <div className='flex items-center gap-2 flex-wrap'>
               <p className='font-semibold text-foreground'>
-                Ticket #{ticket.ticketNumber} - {ticketWaveName}
+                Entrada #{ticket.ticketNumber} - {ticketWaveName}
               </p>
               {config.statusText && (
                 <StatusBadge

@@ -3,6 +3,7 @@ import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {z} from 'zod';
 import {useEffect} from 'react';
 import {toast} from 'sonner';
+import {usePostHog} from 'posthog-js/react';
 import {
   Form,
   FormControl,
@@ -70,6 +71,7 @@ export function RequestPayoutForm({
   onSuccess,
 }: RequestPayoutFormProps) {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const {data: payoutMethods} = useQuery(getPayoutMethodsQuery());
   const requestPayout = useMutation({
     ...requestPayoutMutation(),
@@ -155,6 +157,13 @@ export function RequestPayoutForm({
         data.listingIds && data.listingIds.length > 0
           ? data.listingIds
           : undefined,
+    });
+    posthog.capture('payout_requested', {
+      payout_method_id: data.payoutMethodId,
+      payout_type: selectedPayoutMethod?.payoutType,
+      payout_currency: selectedPayoutMethod?.currency,
+      listing_count: selectedListingIds.length,
+      ticket_count: selectedTicketIds.length,
     });
     // Only reset form on success
     form.reset({

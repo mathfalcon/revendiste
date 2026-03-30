@@ -33,7 +33,7 @@ export function CancelledTicketsSection({
             <div className='flex h-6 w-6 items-center justify-center rounded-full bg-destructive/10'>
               <XCircle className='h-3.5 w-3.5 text-destructive' />
             </div>
-            <span>Tickets cancelados</span>
+            <span>Entradas canceladas</span>
             <span className='text-xs text-destructive bg-destructive/10 px-2 py-0.5 rounded-full'>
               {tickets.length}
             </span>
@@ -61,7 +61,7 @@ export function CancelledTicketsSection({
                 <div className='min-w-0'>
                   <div className='flex items-center gap-2 flex-wrap'>
                     <TextEllipsis className='font-semibold text-foreground'>
-                      Ticket #{ticket.ticketNumber} - {ticketWaveName}
+                      Entrada #{ticket.ticketNumber} - {ticketWaveName}
                     </TextEllipsis>
                   </div>
                   {ticket.deletedAt && (

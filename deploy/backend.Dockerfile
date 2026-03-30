@@ -63,9 +63,6 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @revendiste/
 # Copy built application
 COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/dist ./apps/backend/dist
 
-# Copy non-TypeScript assets needed at runtime (e.g. OG watermark SVG)
-COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/src/assets ./apps/backend/dist/assets
-
 # Copy kysely config and required source files for migrations
 # kysely-ctl loads TypeScript config which imports src/db/index.ts -> src/config/env.ts
 COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/kysely.config.ts ./apps/backend/

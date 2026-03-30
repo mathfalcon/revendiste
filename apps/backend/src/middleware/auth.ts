@@ -5,6 +5,7 @@ import {UnauthorizedError} from '~/errors';
 import {UsersRepository} from '~/repositories';
 import {UsersService} from '~/services';
 import {logger} from '~/utils';
+import {getPostHog} from '~/lib/posthog';
 const defaultUsersService = new UsersService(new UsersRepository(db));
 
 /**
@@ -36,6 +37,15 @@ export function createOptionalAuthMiddleware(
         });
 
         req.user = user;
+
+        getPostHog()?.identify({
+          distinctId: user.id,
+          properties: {
+            email: user.email,
+            name: [user.firstName, user.lastName].filter(Boolean).join(' ') || undefined,
+            role: user.role,
+          },
+        });
       } catch (error) {
         logger.warn('Failed to populate user from auth', {error});
       }

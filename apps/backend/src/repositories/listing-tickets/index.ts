@@ -274,6 +274,7 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'eventTicketWaves.id',
       )
       .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
       .leftJoin('ticketDocuments', join =>
         join
           .onRef('ticketDocuments.ticketId', '=', 'listingTickets.id')
@@ -287,6 +288,7 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'events.name as eventName',
         'events.eventStartDate',
         'events.qrAvailabilityTiming',
+        'eventVenues.country as venueCountry',
       ])
       .where('listingTickets.soldAt', 'is not', null) // Sold tickets only
       .where('listingTickets.deletedAt', 'is', null)

@@ -410,13 +410,13 @@ export function ReportDetailPage({reportId, isAdmin}: ReportDetailPageProps) {
   );
   const backTo = isAdmin ? '/admin/reportes' : '/cuenta/reportes';
 
-  // Entity link — uses correct `orden` query param for /cuenta/tickets
+  // Entity link — uses correct `orden` query param for /cuenta/entradas
   const entityLink = (() => {
     if (!entityDetails) return null;
     if ('orderId' in entityDetails && entityDetails.orderId) {
       return isAdmin
         ? `/admin/orders?orderId=${entityDetails.orderId}`
-        : `/cuenta/tickets?orden=${entityDetails.orderId}`;
+        : `/cuenta/entradas?orden=${entityDetails.orderId}`;
     }
     if ('listingId' in entityDetails && entityDetails.listingId) {
       return isAdmin

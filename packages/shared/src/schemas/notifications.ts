@@ -66,6 +66,7 @@ export const TicketSoldSellerMetadataSchema = z.object({
   listingId: z.uuid(),
   eventName: z.string(),
   eventStartDate: z.string(), // ISO string
+  eventTimezone: z.string().optional(), // IANA timezone (e.g. 'America/Montevideo')
   ticketCount: z.number().int().positive(),
   platform: z.string(),
   qrAvailabilityTiming: z.custom<QrAvailabilityTiming>().nullable().optional(),
@@ -77,6 +78,7 @@ export const DocumentReminderMetadataSchema = z.object({
   listingId: z.uuid(),
   eventName: z.string(),
   eventStartDate: z.string(), // ISO string
+  eventTimezone: z.string().optional(), // IANA timezone (e.g. 'America/Montevideo')
   ticketCount: z.number().int().positive(),
   hoursUntilEvent: z.number().int().nonnegative(), // 0 means event already started
 });
@@ -87,6 +89,7 @@ export const OrderConfirmedMetadataSchema = z.object({
   eventName: z.string(),
   eventStartDate: z.string().optional(), // ISO string
   eventEndDate: z.string().optional(), // ISO string
+  eventTimezone: z.string().optional(), // IANA timezone (e.g. 'America/Montevideo')
   venueName: z.string().optional(),
   venueAddress: z.string().optional(),
   totalAmount: z.string(),

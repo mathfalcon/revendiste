@@ -1,4 +1,4 @@
-import {compareAmounts} from '@revendiste/shared';
+import {compareAmounts, getTimezoneForCountry} from '@revendiste/shared';
 import {
   OrdersRepository,
   OrderTicketReservationsRepository,
@@ -29,6 +29,7 @@ import {
 } from '~/services/notifications/helpers';
 import type { JobQueueService } from '~/services/job-queue';
 import type { SellerNotificationData } from '~/services/ticket-listings';
+import {getPostHog} from '~/lib/posthog';
 
 /**
  * Normalized payment data in our system's format
@@ -493,6 +494,20 @@ export class PaymentWebhookAdapter {
     );
     if (!orderWithItems?.event) return;
 
+    getPostHog()?.capture({
+      distinctId: orderWithItems.userId,
+      event: 'payment_confirmed',
+      properties: {
+        order_id: orderId,
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        payment_method: paymentData.paymentMethod,
+        provider: this.provider.name,
+        event_name: orderWithItems.event?.name,
+        event_id: orderWithItems.eventId,
+      },
+    });
+
     await this.sendInAppNotifications(orderWithItems, sellerNotifications);
     await this.sendInstantConfirmationEmails(
       orderWithItems,
@@ -527,6 +542,7 @@ export class PaymentWebhookAdapter {
         : undefined,
       venueName: ev.venueName || undefined,
       venueAddress: ev.venueAddress || undefined,
+      eventTimezone: getTimezoneForCountry(ev.venueCountry),
       totalAmount: String(order.totalAmount),
       subtotalAmount: String(order.subtotalAmount),
       platformCommission: String(order.platformCommission),
@@ -556,6 +572,7 @@ export class PaymentWebhookAdapter {
           eventName: seller.eventName,
           eventStartDate: seller.eventStartDate,
           eventEndDate: seller.eventEndDate,
+          eventTimezone: seller.eventTimezone,
           platform: seller.platform,
           qrAvailabilityTiming: seller.qrAvailabilityTiming,
           ticketCount: seller.ticketCount,
@@ -607,6 +624,7 @@ export class PaymentWebhookAdapter {
           : undefined,
         venueName: order.event!.venueName || undefined,
         venueAddress: order.event!.venueAddress || undefined,
+        eventTimezone: getTimezoneForCountry(order.event!.venueCountry),
         totalAmount: String(order.totalAmount),
         subtotalAmount: String(order.subtotalAmount),
         platformCommission: String(order.platformCommission),
@@ -640,6 +658,7 @@ export class PaymentWebhookAdapter {
           eventName: seller.eventName,
           eventStartDate: seller.eventStartDate,
           eventEndDate: seller.eventEndDate,
+          eventTimezone: seller.eventTimezone,
           platform: seller.platform,
           qrAvailabilityTiming: seller.qrAvailabilityTiming,
           ticketCount: seller.ticketCount,
@@ -764,6 +783,20 @@ export class PaymentWebhookAdapter {
     );
 
     if (orderWithItems && orderWithItems.event) {
+      getPostHog()?.capture({
+        distinctId: orderWithItems.userId,
+        event: 'payment_failed',
+        properties: {
+          order_id: orderId,
+          rejected_reason: paymentData.rejectedReason,
+          provider: this.provider.name,
+          event_name: orderWithItems.event?.name,
+          event_id: orderWithItems.eventId,
+          amount: orderWithItems.totalAmount,
+          currency: orderWithItems.currency,
+        },
+      });
+
       // Fire-and-forget notification (don't await to avoid blocking)
       notifyPaymentFailed(this.notificationService, {
         buyerUserId: orderWithItems.userId,
@@ -813,6 +846,19 @@ export class PaymentWebhookAdapter {
     );
 
     if (orderWithItems && orderWithItems.event) {
+      getPostHog()?.capture({
+        distinctId: orderWithItems.userId,
+        event: 'payment_expired',
+        properties: {
+          order_id: orderId,
+          provider: this.provider.name,
+          event_name: orderWithItems.event?.name,
+          event_id: orderWithItems.eventId,
+          amount: orderWithItems.totalAmount,
+          currency: orderWithItems.currency,
+        },
+      });
+
       // Fire-and-forget notification (don't await to avoid blocking)
       notifyOrderExpired(this.notificationService, {
         buyerUserId: orderWithItems.userId,

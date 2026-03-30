@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {getRegionsQuery} from '~/lib';
+import posthog from 'posthog-js';
 import {useGeolocation} from '~/hooks';
 import {
   Navigation,
@@ -122,6 +123,7 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
       return;
     }
     if (coords) {
+      posthog.capture('filter_applied', {filter_type: 'nearby', value: true});
       onChange({...value, type: 'nearby', lat: coords.lat, lng: coords.lng});
       setRegionOpen(false);
       scrollIntoView();
@@ -141,9 +143,13 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
 
   const handleRegionToggle = (region: string) => {
     const current = value.regions ?? [];
-    const updated = current.includes(region)
-      ? current.filter(r => r !== region)
-      : [...current, region];
+    const isAdding = !current.includes(region);
+    const updated = isAdding
+      ? [...current, region]
+      : current.filter(r => r !== region);
+    if (isAdding) {
+      posthog.capture('filter_applied', {filter_type: 'region', value: region});
+    }
     if (updated.length === 0) {
       onChange({...value, type: 'all', regions: undefined});
     } else {
@@ -152,9 +158,11 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
   };
 
   const handleDatePreset = (preset: DatePreset) => {
-    if (value.dateFrom === preset.from && value.dateTo === preset.to) {
+    const isRemoving = value.dateFrom === preset.from && value.dateTo === preset.to;
+    if (isRemoving) {
       onChange({...value, dateFrom: undefined, dateTo: undefined});
     } else {
+      posthog.capture('filter_applied', {filter_type: 'date', value: preset.label});
       onChange({...value, dateFrom: preset.from, dateTo: preset.to});
     }
     setDateOpen(false);
@@ -167,6 +175,9 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
   };
 
   const handleToggleHasTickets = () => {
+    if (!value.hasTickets) {
+      posthog.capture('filter_applied', {filter_type: 'has_tickets', value: true});
+    }
     onChange({...value, hasTickets: value.hasTickets ? undefined : true});
     scrollIntoView();
   };

@@ -36,6 +36,7 @@ import {
   FACE_LIVENESS_ROLE_ARN,
 } from '~/config/env';
 import {logger} from '~/utils';
+import {getPostHog} from '~/lib/posthog';
 
 // Rekognition region for Face Liveness
 const REKOGNITION_REGION = 'us-east-1';
@@ -102,12 +103,21 @@ export class IdentityVerificationController {
     @Body() body: InitiateVerificationRouteBody,
     @Request() request: express.Request,
   ): Promise<InitiateVerificationResponse> {
-    return this.service.initiateVerification(
+    const result = await this.service.initiateVerification(
       request.user.id,
       body.documentType,
       body.documentNumber,
       body.documentCountry,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'identity_verification_initiated',
+      properties: {
+        document_type: body.documentType,
+        document_country: body.documentCountry,
+      },
+    });
+    return result;
   }
 
   /**
@@ -149,12 +159,22 @@ export class IdentityVerificationController {
       );
     }
 
-    return this.service.processDocument(
+    const result = await this.service.processDocument(
       request.user.id,
       file.buffer,
       documentType,
       file.mimetype,
     );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'identity_verification_document_processed',
+      properties: {
+        document_type: documentType,
+        file_type: file.mimetype,
+        file_size_bytes: file.size,
+      },
+    });
+    return result;
   }
 
   /**
@@ -197,7 +217,18 @@ export class IdentityVerificationController {
     @Body() body: VerifyLivenessRouteBody,
     @Request() request: express.Request,
   ): Promise<VerifyLivenessResultsResponse> {
-    return this.service.verifyLivenessResults(request.user.id, body.sessionId);
+    const result = await this.service.verifyLivenessResults(
+      request.user.id,
+      body.sessionId,
+    );
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'identity_verification_liveness_completed',
+      properties: {
+        session_id: body.sessionId,
+      },
+    });
+    return result;
   }
 
   /**

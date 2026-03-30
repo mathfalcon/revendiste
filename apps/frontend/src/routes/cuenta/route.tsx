@@ -26,10 +26,10 @@ import {cn} from '~/lib/utils';
 
 const TAB_CONFIG = [
   {
-    value: 'tickets',
-    label: 'Mis tickets',
+    value: 'entradas',
+    label: 'Mis entradas',
     icon: QrCode,
-    to: '/cuenta/tickets',
+    to: '/cuenta/entradas',
   },
   {
     value: 'publicaciones',
@@ -38,10 +38,10 @@ const TAB_CONFIG = [
     to: '/cuenta/publicaciones',
   },
   {
-    value: 'subir-tickets',
-    label: 'Subir tickets',
+    value: 'subir-entradas',
+    label: 'Subir entradas',
     icon: Upload,
-    to: '/cuenta/subir-tickets',
+    to: '/cuenta/subir-entradas',
     badge: (count: number) =>
       count > 0 ? (
         <Badge

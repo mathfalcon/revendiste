@@ -25,6 +25,7 @@ import {
   calculateHoursUntilEvent,
   isWithinUploadWindow,
   calculateMaxResalePrice,
+  getTimezoneForCountry,
 } from '@revendiste/shared';
 import type {Kysely} from 'kysely';
 import type {DB, QrAvailabilityTiming} from '@revendiste/shared';
@@ -35,6 +36,7 @@ export interface SellerNotificationData {
   eventName: string;
   eventStartDate: Date;
   eventEndDate: Date;
+  eventTimezone?: string;
   platform: string;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
   ticketCount: number;
@@ -231,6 +233,7 @@ export class TicketListingsService {
         listingId: createdListings.id,
         eventName: event.name,
         eventStartDate: event.eventStartDate,
+        eventTimezone: getTimezoneForCountry(event.venueCountry),
         ticketCount,
         hoursUntilEvent: Math.max(0, Math.ceil(hoursUntilEvent)),
       }).catch(error => {
@@ -570,6 +573,7 @@ export class TicketListingsService {
           eventName: order.event.name,
           eventStartDate: new Date(order.event.eventStartDate),
           eventEndDate: new Date(order.event.eventEndDate),
+          eventTimezone: getTimezoneForCountry(order.event.venueCountry),
           platform: order.event.platform ?? 'unknown',
           qrAvailabilityTiming,
           ticketCount: totalTicketCount,
@@ -599,6 +603,7 @@ export class TicketListingsService {
         eventName: seller.eventName,
         eventStartDate: seller.eventStartDate,
         eventEndDate: seller.eventEndDate,
+        eventTimezone: seller.eventTimezone,
         platform: seller.platform,
         qrAvailabilityTiming: seller.qrAvailabilityTiming,
         ticketCount: seller.ticketCount,

@@ -44,6 +44,7 @@ import {
   UpdatePayoutMethodRouteSchema,
 } from './validation';
 import {ValidateBody, Body} from '~/decorators';
+import {getPostHog} from '~/lib/posthog';
 
 type GetBalanceResponse = ReturnType<SellerEarningsService['getSellerBalance']>;
 type GetAvailableEarningsResponse = ReturnType<
@@ -145,12 +146,22 @@ export class PayoutsController {
     @Body() body: RequestPayoutRouteBody,
     @Request() request: express.Request,
   ): Promise<RequestPayoutResponse> {
-    return this.payoutsService.requestPayout({
+    const result = await this.payoutsService.requestPayout({
       sellerUserId: request.user.id,
       payoutMethodId: body.payoutMethodId,
       listingTicketIds: body.listingTicketIds,
       listingIds: body.listingIds,
     });
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'payout_requested',
+      properties: {
+        payout_method_id: body.payoutMethodId,
+        listing_ticket_count: body.listingTicketIds?.length ?? 0,
+        listing_count: body.listingIds?.length ?? 0,
+      },
+    });
+    return result;
   }
 
   @Get('/payout-methods')
@@ -172,10 +183,18 @@ export class PayoutsController {
     @Body() body: AddPayoutMethodRouteBody,
     @Request() request: express.Request,
   ): Promise<AddPayoutMethodResponse> {
-    return this.payoutMethodsService.addPayoutMethod({
+    const result = await this.payoutMethodsService.addPayoutMethod({
       userId: request.user.id,
       ...body,
     });
+    getPostHog()?.capture({
+      distinctId: request.user.id,
+      event: 'payout_method_added',
+      properties: {
+        payout_type: body.payoutType,
+      },
+    });
+    return result;
   }
 
   @Put('/payout-methods/{payoutMethodId}')
