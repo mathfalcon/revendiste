@@ -163,8 +163,14 @@ export const Route = createFileRoute('/eventos/$eventId')({
       : null;
 
     // Build description with event details
-    const description = event.description
-      ? `${event.description}${eventDate ? ` - ${eventDate}` : ''}${
+    const rawDesc = event.description
+      ? event.description.replace(/\s+/g, ' ').trim()
+      : null;
+    const truncatedDesc = rawDesc && rawDesc.length > 120
+      ? rawDesc.slice(0, 120) + '…'
+      : rawDesc;
+    const description = truncatedDesc
+      ? `${truncatedDesc}${eventDate ? ` - ${eventDate}` : ''}${
           event.venueName ? ` en ${event.venueName}` : ''
         }`
       : `Comprá entradas para ${event.name}${eventDate ? ` el ${eventDate}` : ''}${
@@ -215,7 +221,7 @@ export const Route = createFileRoute('/eventos/$eventId')({
       '@context': 'https://schema.org',
       '@type': 'Event',
       name: event.name,
-      description: event.description || description,
+      description: (event.description ?? description).replace(/\s+/g, ' ').trim(),
       startDate: event.eventStartDate,
       endDate: event.eventEndDate || event.eventStartDate,
       eventStatus: 'https://schema.org/EventScheduled',
