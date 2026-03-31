@@ -70,3 +70,15 @@ export const ScrapedEventDataSchema = z.object({
 });
 
 export type ScrapedEventData = z.infer<typeof ScrapedEventDataSchema>;
+
+export interface ScraperResult {
+  platform: Platform;
+  events: ScrapedEventData[];
+  status: 'complete' | 'partial' | 'failed';
+  stats: {
+    urlsProcessed: number;
+    urlsFailed: number;
+  };
+  durationMs: number;
+  partialReason?: string;
+}

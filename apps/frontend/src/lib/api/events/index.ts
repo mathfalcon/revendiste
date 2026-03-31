@@ -50,6 +50,13 @@ export const getEventByIdQuery = (eventId: string) =>
     enabled: !!eventId && eventId.length > 0,
   });
 
+export const getEventBySlugQuery = (slug: string) =>
+  queryOptions({
+    queryKey: ['events', 'slug', slug],
+    queryFn: () => api.events.getBySlug(slug).then(res => res.data),
+    enabled: !!slug && slug.length > 0,
+  });
+
 export const getEventBySearchQuery = (searchQuery: string) =>
   queryOptions({
     queryKey: ['events', 'search', searchQuery],

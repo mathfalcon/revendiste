@@ -46,6 +46,7 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
       .select(eb => [
         'events.id',
         'events.name',
+        'events.slug',
         'events.description',
         'events.eventStartDate',
         'events.eventEndDate',

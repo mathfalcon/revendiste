@@ -4,7 +4,7 @@ import {EVENT_ERROR_MESSAGES} from '~/constants/error-messages';
 import {WithPagination} from '~/types';
 import {ScrapedEventData} from '../scraping';
 import {EventImageService} from '../scraping/image-service';
-import {logger} from '~/utils';
+import {logger, generateUniqueSlug} from '~/utils';
 import {VenuesService} from '../venues';
 import {GooglePlacesService} from '../google-places';
 
@@ -81,7 +81,10 @@ export class EventsService {
     // Process venues for all events first (in parallel batches)
     const eventsWithVenues = await this.processVenuesForEvents(eventsWithPaidWaves);
 
-    const eventsWithoutImages = eventsWithVenues.map(event => ({
+    // Generate slugs for events
+    const eventsWithSlugs = await this.generateSlugsForEvents(eventsWithVenues);
+
+    const eventsWithoutImages = eventsWithSlugs.map(event => ({
       ...event,
       images: [],
     }));
@@ -139,6 +142,26 @@ export class EventsService {
   }
 
   /**
+   * Generate unique slugs for events that don't already have one in the DB.
+   * Existing events (matched by externalId) keep their current slug on upsert.
+   */
+  private async generateSlugsForEvents(
+    events: ScrapedEventData[],
+  ): Promise<(ScrapedEventData & { slug: string })[]> {
+    const results: (ScrapedEventData & { slug: string })[] = [];
+
+    for (const event of events) {
+      const slug = await generateUniqueSlug(
+        event.name,
+        (candidate) => this.eventsRepository.slugExists(candidate),
+      );
+      results.push({ ...event, slug });
+    }
+
+    return results;
+  }
+
+  /**
    * Process venues for all events in parallel batches
    * Creates venues if they don't exist and returns events with venueId populated
    */
@@ -183,25 +206,46 @@ export class EventsService {
     return results;
   }
 
-  async cleanupStaleEvents(scrapedEvents: ScrapedEventData[]) {
+  /**
+   * Cleanup stale events for a specific platform.
+   * Only deletes events from this platform that are no longer in scraped results.
+   * Includes a ratio safety check to prevent mass deletion from partial scrapes.
+   */
+  async cleanupStaleEventsForPlatform(
+    platform: string,
+    scrapedEvents: ScrapedEventData[],
+  ) {
     const now = new Date();
-    let totalDeleted = 0;
-    const allDeletedEvents = [];
-    const batchSize = 100; // Process in batches to avoid large IN clauses
+    const scrapedExternalIds = scrapedEvents.map(event => event.externalId);
 
-    try {
-      // Get external IDs from scraped events
-      const scrapedExternalIds = scrapedEvents.map(event => event.externalId);
+    // Safety check: don't proceed if no scraped events
+    if (scrapedExternalIds.length === 0) {
+      logger.warn(
+        `No scraped events for ${platform} - skipping cleanup to prevent data loss`,
+      );
+      return [];
+    }
 
-      // Safety check: don't proceed if no scraped events (scraping may have failed)
-      if (scrapedExternalIds.length === 0) {
+    // Ratio safety check: compare scraped count against active DB count
+    const activeCount =
+      await this.eventsRepository.getActiveEventCountByPlatform(platform);
+
+    if (activeCount > 0) {
+      const ratio = scrapedExternalIds.length / activeCount;
+      const minRatio = parseFloat(
+        process.env.SCRAPER_CLEANUP_MIN_RATIO || '0.5',
+      );
+
+      if (ratio < minRatio) {
         logger.warn(
-          'No scraped events found - skipping cleanup to prevent data loss',
+          `Ratio check failed for ${platform}: scraped ${scrapedExternalIds.length} vs ${activeCount} active (ratio=${ratio.toFixed(2)}, threshold=${minRatio}). Skipping cleanup.`,
         );
         return [];
       }
+    }
 
-      // Choose approach based on dataset size
+    try {
+      const batchSize = 100;
       let deletedNotInScraped: Array<{
         id: string;
         externalId: string;
@@ -209,24 +253,22 @@ export class EventsService {
       }> = [];
 
       if (scrapedExternalIds.length > 1000) {
-        // Large dataset: use batching to avoid overwhelming the database
-        logger.info('Large dataset detected, using batched deletion approach');
-
+        // Large dataset: use batching
         const existingExternalIds =
-          await this.eventsRepository.getAllActiveEventExternalIds();
+          await this.eventsRepository.getAllActiveEventExternalIdsForPlatform(
+            platform,
+          );
         const eventsToDelete = existingExternalIds.filter(
           existingId => !scrapedExternalIds.includes(existingId),
         );
 
         if (eventsToDelete.length > 0) {
           logger.info(
-            `Found ${eventsToDelete.length} events to delete (not in scraped results)`,
+            `Found ${eventsToDelete.length} ${platform} events to delete (not in scraped results)`,
           );
 
-          // Process deletions in batches to avoid large IN clauses
           for (let i = 0; i < eventsToDelete.length; i += batchSize) {
             const batch = eventsToDelete.slice(i, i + batchSize);
-
             const batchResult =
               await this.eventsRepository.softDeleteEventsByExternalIds(
                 batch,
@@ -236,51 +278,58 @@ export class EventsService {
           }
         }
       } else {
-        // Small to medium dataset: use efficient database-side comparison
-        // No batching needed for small datasets - single query is faster
-        logger.info(
-          'Small dataset detected, using efficient database-side comparison',
-        );
+        // Small to medium dataset: efficient database-side comparison
         deletedNotInScraped =
-          await this.eventsRepository.softDeleteEventsNotInScrapedResults(
+          await this.eventsRepository.softDeleteEventsNotInScrapedResultsForPlatform(
+            platform,
             scrapedExternalIds,
             now,
           );
       }
 
-      allDeletedEvents.push(...deletedNotInScraped);
-      totalDeleted += deletedNotInScraped.length;
-
       if (deletedNotInScraped.length > 0) {
         logger.info(
-          `Soft deleted ${deletedNotInScraped.length} events no longer in scraped results`,
+          `Soft deleted ${deletedNotInScraped.length} ${platform} events no longer in scraped results`,
+        );
+
+        // Soft delete related ticket waves
+        await this.softDeleteRelatedTicketWaves(
+          deletedNotInScraped.map(event => event.id),
+          now,
         );
       }
 
-      // Soft delete events with past end dates
+      return deletedNotInScraped;
+    } catch (error) {
+      logger.error(`Error during ${platform} cleanup:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cleanup events with past end dates (platform-independent, always runs).
+   */
+  async cleanupPastEvents() {
+    const now = new Date();
+
+    try {
       const deletedPastEvents =
         await this.eventsRepository.softDeleteEventsWithPastEndDates(now);
-      allDeletedEvents.push(...deletedPastEvents);
-      totalDeleted += deletedPastEvents.length;
 
       if (deletedPastEvents.length > 0) {
         logger.info(
           `Soft deleted ${deletedPastEvents.length} events with past end dates`,
         );
-      }
 
-      // Soft delete related ticket waves for all deleted events
-      if (allDeletedEvents.length > 0) {
         await this.softDeleteRelatedTicketWaves(
-          allDeletedEvents.map(event => event.id),
+          deletedPastEvents.map(event => event.id),
           now,
         );
       }
 
-      logger.info(`Total events soft deleted: ${totalDeleted}`);
-      return allDeletedEvents;
+      return deletedPastEvents;
     } catch (error) {
-      logger.error('Error during soft deletion process:', error);
+      logger.error('Error during past events cleanup:', error);
       throw error;
     }
   }
@@ -307,6 +356,14 @@ export class EventsService {
 
   async getEventById(eventId: string, userId?: string) {
     const event = await this.eventsRepository.getById(eventId, userId);
+    if (!event) {
+      throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
+    return event;
+  }
+
+  async getEventBySlug(slug: string, userId?: string) {
+    const event = await this.eventsRepository.findBySlug(slug, userId);
     if (!event) {
       throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
     }

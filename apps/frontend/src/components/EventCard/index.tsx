@@ -8,6 +8,7 @@ import {EventTicketCurrency} from '~/lib';
 
 type EventCardProps = {
   id: string;
+  slug: string;
   imageUrl?: string;
   name: string;
   date: string;
@@ -20,6 +21,7 @@ type EventCardProps = {
 export const EventCard = (props: EventCardProps) => {
   const {
     id,
+    slug,
     imageUrl,
     name,
     date,
@@ -46,8 +48,8 @@ export const EventCard = (props: EventCardProps) => {
   return (
     <article className='w-full sm:w-[300px] sm:h-[524px] p-2 sm:p-2.5 bg-background shadow-sm rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer'>
       <Link
-        to='/eventos/$eventId'
-        params={{eventId: id}}
+        to='/eventos/$slug'
+        params={{slug}}
         className='flex flex-col h-full sm:justify-between sm:gap-3'
       >
         {/* Mobile: Image and Info side by side | Desktop: Image on top */}

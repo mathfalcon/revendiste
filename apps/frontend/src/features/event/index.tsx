@@ -4,7 +4,7 @@ import {EventDescription} from './EventDescription';
 import {TicketSelection} from './tickets';
 import {EventInfoCards} from './EventInfoCards';
 import {VenueMapLazy} from './VenueMapLazy';
-import {EventImageType, getEventByIdQuery} from '~/lib';
+import {EventImageType, getEventBySlugQuery} from '~/lib';
 import {useParams} from '@tanstack/react-router';
 import {useEffect, useRef, useState} from 'react';
 import {FullScreenLoading, TextEllipsis} from '~/components';
@@ -15,8 +15,8 @@ export const EventPage = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
-  const params = useParams({from: '/eventos/$eventId'});
-  const response = useSuspenseQuery(getEventByIdQuery(params.eventId));
+  const params = useParams({from: '/eventos/$slug'});
+  const response = useSuspenseQuery(getEventBySlugQuery(params.slug));
 
   const event = response.data;
   const heroImage = event.eventImages.find(
@@ -39,13 +39,14 @@ export const EventPage = () => {
 
   useEffect(() => {
     posthog.capture('event_page_viewed', {
-      event_id: params.eventId,
+      event_id: event.id,
+      event_slug: params.slug,
       event_name: event.name,
       venue_name: event.venueName,
       has_tickets: (event.ticketWaves?.length ?? 0) > 0,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.eventId]);
+  }, [params.slug]);
 
   return (
     <>
@@ -144,7 +145,7 @@ export const EventPage = () => {
             <div className='order-3 flex flex-col gap-4'>
               <TicketSelection
                 ticketWaves={event.ticketWaves}
-                eventId={params.eventId}
+                eventId={event.id}
                 userListingsCount={event.userListingsCount}
               />
             </div>

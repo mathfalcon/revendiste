@@ -140,6 +140,7 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
             .select(eb2 => [
               'events.id',
               'events.name',
+              'events.slug',
               'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',

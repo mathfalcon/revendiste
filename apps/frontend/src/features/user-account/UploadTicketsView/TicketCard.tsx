@@ -38,8 +38,8 @@ export function TicketNeedingUploadCard({
             {/* Header with event image and info */}
             <div className='flex gap-3'>
               <Link
-                to='/eventos/$eventId'
-                params={{eventId: event.id}}
+                to='/eventos/$slug'
+                params={{slug: event.slug}}
                 className='shrink-0'
               >
                 <img
