@@ -45,7 +45,7 @@ export const Route = createFileRoute('/sitemap')({
 
             for (const event of events) {
               urls.push({
-                loc: `${baseUrl}/eventos/${event.id}`,
+                loc: `${baseUrl}/eventos/${event.slug}`,
                 lastmod: event.updatedAt
                   ? new Date(event.updatedAt).toISOString().split('T')[0]
                   : undefined,

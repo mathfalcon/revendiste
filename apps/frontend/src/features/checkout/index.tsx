@@ -110,17 +110,17 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       clearTimeout(redirectTimeoutRef.current);
       redirectTimeoutRef.current = null;
     }
-    if (order.eventId) {
+    if (order.event?.slug) {
       navigate({
-        to: '/eventos/$eventId',
-        params: {eventId: order.eventId},
+        to: '/eventos/$slug',
+        params: {slug: order.event.slug},
       });
     }
   };
 
   // Redirect to event page if booking is expired (with toast notification)
   useEffect(() => {
-    if (countdown.isExpired && order.eventId && !hasShownToastRef.current) {
+    if (countdown.isExpired && order.event?.slug && !hasShownToastRef.current) {
       hasShownToastRef.current = true;
 
       // Show toast notification with action button
@@ -136,8 +136,8 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       // Redirect after 7 seconds (middle of 5-10 seconds range)
       redirectTimeoutRef.current = setTimeout(() => {
         navigate({
-          to: '/eventos/$eventId',
-          params: {eventId: order.eventId},
+          to: '/eventos/$slug',
+          params: {slug: order.event!.slug!},
         });
       }, 7000);
     }
@@ -552,7 +552,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       {/* Cancel Order Dialog */}
       <CancelOrderDialog
         orderId={orderId}
-        eventId={order.eventId}
+        eventSlug={order.event?.slug ?? undefined}
         open={showCancelDialog}
         onOpenChange={setShowCancelDialog}
       />

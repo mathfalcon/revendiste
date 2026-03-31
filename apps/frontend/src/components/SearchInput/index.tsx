@@ -50,8 +50,8 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
 
               const handleSelect = () => {
                 void navigate({
-                  to: '/eventos/$eventId',
-                  params: {eventId: event.id},
+                  to: '/eventos/$slug',
+                  params: {slug: event.slug},
                 });
                 setIsFocused(false);
               };
@@ -64,8 +64,8 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
                   onSelect={handleSelect}
                 >
                   <Link
-                    to='/eventos/$eventId'
-                    params={{eventId: event.id}}
+                    to='/eventos/$slug'
+                    params={{slug: event.slug}}
                     key={event.id}
                     className='flex w-full gap-3 h-[32px] items-center'
                   >

@@ -6,14 +6,14 @@ import {POSTHOG_KEY, POSTHOG_HOST, NODE_ENV} from '~/config/env';
 
 let sdk: NodeSDK | null = null;
 
-export function initOtel(): void {
+export function initOtel(serviceName = 'revendiste-backend'): void {
   if (!POSTHOG_KEY) return;
 
   const logsUrl = `${POSTHOG_HOST}/i/v1/logs`;
 
   sdk = new NodeSDK({
     resource: resourceFromAttributes({
-      'service.name': 'revendiste-backend',
+      'service.name': serviceName,
       'deployment.environment': NODE_ENV,
     }),
     logRecordProcessor: new BatchLogRecordProcessor(

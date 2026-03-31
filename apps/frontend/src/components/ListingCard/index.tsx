@@ -76,8 +76,8 @@ export function ListingCard({listing}: ListingCardProps) {
         <div className='flex gap-3'>
           {/* Event Flyer */}
           <Link
-            to='/eventos/$eventId'
-            params={{eventId: event.id}}
+            to='/eventos/$slug'
+            params={{slug: event.slug}}
             className='shrink-0'
           >
             <img
@@ -92,8 +92,8 @@ export function ListingCard({listing}: ListingCardProps) {
             <div className='flex items-start justify-between gap-1'>
               <div className='min-w-0 flex-1'>
                 <Link
-                  to='/eventos/$eventId'
-                  params={{eventId: event.id}}
+                  to='/eventos/$slug'
+                  params={{slug: event.slug}}
                   className='hover:text-primary transition-colors'
                 >
                   <h3 className='font-semibold text-base sm:text-lg leading-tight line-clamp-2'>

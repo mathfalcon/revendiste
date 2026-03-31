@@ -51,7 +51,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
+			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--slug-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -102,6 +102,9 @@
 								"status": {
 									"type": "string"
 								},
+								"slug": {
+									"type": "string"
+								},
 								"name": {
 									"type": "string"
 								},
@@ -137,6 +140,7 @@
 								"venueName",
 								"updatedAt",
 								"status",
+								"slug",
 								"name",
 								"id",
 								"externalUrl",
@@ -161,7 +165,7 @@
 				"additionalProperties": false
 			},
 			"GetEventsPaginatedResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--slug-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__"
 			},
 			"infer_typeofPaginationSchema_": {
 				"properties": {
@@ -298,6 +302,9 @@
 						"status": {
 							"type": "string"
 						},
+						"slug": {
+							"type": "string"
+						},
 						"name": {
 							"type": "string"
 						},
@@ -331,6 +338,7 @@
 						"venueName",
 						"updatedAt",
 						"status",
+						"slug",
 						"name",
 						"id",
 						"externalUrl",
@@ -400,6 +408,9 @@
 						"status": {
 							"type": "string"
 						},
+						"slug": {
+							"type": "string"
+						},
 						"name": {
 							"type": "string"
 						},
@@ -438,6 +449,7 @@
 						"lowestAvailableTicketPrice",
 						"updatedAt",
 						"status",
+						"slug",
 						"name",
 						"id",
 						"externalUrl",
@@ -613,6 +625,9 @@
 					"status": {
 						"type": "string"
 					},
+					"slug": {
+						"type": "string"
+					},
 					"qrAvailabilityTiming": {
 						"allOf": [
 							{
@@ -660,6 +675,7 @@
 					"venueName",
 					"updatedAt",
 					"status",
+					"slug",
 					"qrAvailabilityTiming",
 					"name",
 					"id",
@@ -670,6 +686,9 @@
 					"createdAt"
 				],
 				"type": "object"
+			},
+			"GetEventBySlugResponse": {
+				"$ref": "#/components/schemas/GetEventByIdResponse"
 			},
 			"TrackViewResponse": {
 				"properties": {
@@ -987,7 +1006,7 @@
 					"unknown"
 				]
 			},
-			"PaginatedResponse__tickets_58__hasDocument-boolean--canUploadDocument-boolean--uploadUnavailableReason-UploadAvailabilityReason-or-undefined--uploadAvailableAt-string-or-undefined--createdAt-string--deletedAt-string-or-null--id-string--updatedAt-string--soldAt-string-or-null--price-string--ticketNumber-number--document_58__id-string--status-string--uploadedAt-string_-or-null_-Array--createdAt-Date--id-string--updatedAt-Date--soldAt-Date-or-null--ticketWave_58__id-string--name-string--currency-EventTicketCurrency--faceValue-string_--event_58__description-string-or-null--eventEndDate-string--eventStartDate-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--venueName-string-or-null--venueAddress-string-or-null--eventImages_58__url-string--imageType-EventImageType_-Array___": {
+			"PaginatedResponse__tickets_58__hasDocument-boolean--canUploadDocument-boolean--uploadUnavailableReason-UploadAvailabilityReason-or-undefined--uploadAvailableAt-string-or-undefined--createdAt-string--deletedAt-string-or-null--id-string--updatedAt-string--soldAt-string-or-null--price-string--ticketNumber-number--document_58__id-string--status-string--uploadedAt-string_-or-null_-Array--createdAt-Date--id-string--updatedAt-Date--soldAt-Date-or-null--ticketWave_58__id-string--name-string--currency-EventTicketCurrency--faceValue-string_--event_58__description-string-or-null--eventEndDate-string--eventStartDate-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--slug-string--venueName-string-or-null--venueAddress-string-or-null--eventImages_58__url-string--imageType-EventImageType_-Array___": {
 				"properties": {
 					"data": {
 						"items": {
@@ -1019,6 +1038,9 @@
 										"venueName": {
 											"type": "string",
 											"nullable": true
+										},
+										"slug": {
+											"type": "string"
 										},
 										"qrAvailabilityTiming": {
 											"allOf": [
@@ -1052,6 +1074,7 @@
 										"eventImages",
 										"venueAddress",
 										"venueName",
+										"slug",
 										"qrAvailabilityTiming",
 										"platform",
 										"name",
@@ -1203,7 +1226,7 @@
 				"additionalProperties": false
 			},
 			"GetUserListingsResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__tickets_58__hasDocument-boolean--canUploadDocument-boolean--uploadUnavailableReason-UploadAvailabilityReason-or-undefined--uploadAvailableAt-string-or-undefined--createdAt-string--deletedAt-string-or-null--id-string--updatedAt-string--soldAt-string-or-null--price-string--ticketNumber-number--document_58__id-string--status-string--uploadedAt-string_-or-null_-Array--createdAt-Date--id-string--updatedAt-Date--soldAt-Date-or-null--ticketWave_58__id-string--name-string--currency-EventTicketCurrency--faceValue-string_--event_58__description-string-or-null--eventEndDate-string--eventStartDate-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--venueName-string-or-null--venueAddress-string-or-null--eventImages_58__url-string--imageType-EventImageType_-Array___"
+				"$ref": "#/components/schemas/PaginatedResponse__tickets_58__hasDocument-boolean--canUploadDocument-boolean--uploadUnavailableReason-UploadAvailabilityReason-or-undefined--uploadAvailableAt-string-or-undefined--createdAt-string--deletedAt-string-or-null--id-string--updatedAt-string--soldAt-string-or-null--price-string--ticketNumber-number--document_58__id-string--status-string--uploadedAt-string_-or-null_-Array--createdAt-Date--id-string--updatedAt-Date--soldAt-Date-or-null--ticketWave_58__id-string--name-string--currency-EventTicketCurrency--faceValue-string_--event_58__description-string-or-null--eventEndDate-string--eventStartDate-string--id-string--name-string--platform-string--qrAvailabilityTiming-QrAvailabilityTiming-or-null--slug-string--venueName-string-or-null--venueAddress-string-or-null--eventImages_58__url-string--imageType-EventImageType_-Array___"
 			},
 			"UploadDocumentResponse": {
 				"properties": {
@@ -1735,6 +1758,10 @@
 								"type": "string",
 								"nullable": true
 							},
+							"slug": {
+								"type": "string",
+								"nullable": true
+							},
 							"qrAvailabilityTiming": {
 								"allOf": [
 									{
@@ -1769,6 +1796,7 @@
 							"venueCountry",
 							"venueAddress",
 							"venueName",
+							"slug",
 							"qrAvailabilityTiming",
 							"platform",
 							"name",
@@ -1855,7 +1883,7 @@
 				],
 				"type": "object"
 			},
-			"PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--venueName-string-or-null--venueAddress-string-or-null--venueCountry-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__": {
+			"PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--slug-string-or-null--venueName-string-or-null--venueAddress-string-or-null--venueCountry-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -1937,6 +1965,10 @@
 											"type": "string",
 											"nullable": true
 										},
+										"slug": {
+											"type": "string",
+											"nullable": true
+										},
 										"platform": {
 											"type": "string",
 											"nullable": true
@@ -1963,6 +1995,7 @@
 										"venueCountry",
 										"venueAddress",
 										"venueName",
+										"slug",
 										"platform",
 										"name",
 										"id",
@@ -2062,7 +2095,7 @@
 				"additionalProperties": false
 			},
 			"GetUserOrdersResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--venueName-string-or-null--venueAddress-string-or-null--venueCountry-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--status-cancelled-or-confirmed-or-expired-or-pending--updatedAt-Date--eventId-string--currency-EventTicketCurrency--totalAmount-string--userId-string--cancelledAt-Date-or-null--confirmedAt-Date-or-null--platformCommission-string--reservationExpiresAt-Date--subtotalAmount-string--vatOnCommission-string--event_58__eventEndDate-string-or-null--eventStartDate-string-or-null--id-string-or-null--name-string-or-null--platform-string-or-null--slug-string-or-null--venueName-string-or-null--venueAddress-string-or-null--venueCountry-string-or-null--images_58__url-string--imageType-EventImageType_-Array_-or-null--items_58__currency-EventTicketCurrency-or-null--id-string--ticketWaveId-string--pricePerTicket-string--quantity-number--subtotal-string--ticketWaveName-string-or-null_-Array__"
 			},
 			"GetOrderTicketsResponse": {
 				"properties": {
@@ -9733,6 +9766,70 @@
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/events/by-slug/{slug}": {
+			"get": {
+				"operationId": "GetBySlug",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetEventBySlugResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get event details by slug (public, used by frontend)",
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "slug",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/events/by-slug/{slug}/view": {
+			"post": {
+				"operationId": "TrackViewBySlug",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TrackViewResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Track a view for an event by slug (called from route loader on actual navigation)",
+				"tags": [
+					"Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "slug",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/events/{eventId}": {

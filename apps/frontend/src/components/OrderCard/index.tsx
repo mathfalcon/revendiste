@@ -33,6 +33,7 @@ interface OrderCardProps {
     createdAt: string;
     event?: {
       name?: string | null;
+      slug?: string | null;
       eventStartDate?: string | null;
       venueName?: string | null;
       images?: Array<{
@@ -134,8 +135,8 @@ export function OrderCard({order}: OrderCardProps) {
             <div className='flex gap-3'>
               {/* Event Flyer */}
               <Link
-                to='/eventos/$eventId'
-                params={{eventId: order.eventId}}
+                to='/eventos/$slug'
+                params={{slug: order.event?.slug!}}
                 className='shrink-0'
               >
                 <img
@@ -149,8 +150,8 @@ export function OrderCard({order}: OrderCardProps) {
               <div className='min-w-0 flex-1'>
                 <div className='flex items-start justify-between gap-2'>
                   <Link
-                    to='/eventos/$eventId'
-                    params={{eventId: order.eventId}}
+                    to='/eventos/$slug'
+                    params={{slug: order.event?.slug!}}
                     className='hover:text-primary transition-colors'
                   >
                     <h3 className='font-semibold text-base leading-tight line-clamp-2'>
@@ -276,7 +277,7 @@ export function OrderCard({order}: OrderCardProps) {
 
       <CancelOrderDialog
         orderId={order.id}
-        eventId={order.eventId}
+        eventSlug={order.event?.slug ?? undefined}
         open={showCancelDialog}
         onOpenChange={setShowCancelDialog}
       />

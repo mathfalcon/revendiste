@@ -68,6 +68,7 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
             .select([
               'events.id',
               'events.name',
+              'events.slug',
               'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',
@@ -213,6 +214,7 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
             .select([
               'events.id',
               'events.name',
+              'events.slug',
               'events.platform',
               'events.eventStartDate',
               'events.eventEndDate',

@@ -20,6 +20,7 @@ import {cn} from '~/lib/utils';
 
 type TrendingEvent = {
   id: string;
+  slug: string;
   name: string;
   eventStartDate: string;
   eventImages: {url: string; imageType: string}[];
@@ -53,8 +54,8 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
 
   return (
     <Link
-      to='/eventos/$eventId'
-      params={{eventId: event.id}}
+      to='/eventos/$slug'
+      params={{slug: event.slug}}
       className='group flex h-28 sm:h-36 overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md'
     >
       {/* Image - Left side */}

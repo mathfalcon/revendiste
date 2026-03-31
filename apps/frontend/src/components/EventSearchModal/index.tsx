@@ -83,16 +83,16 @@ export const EventSearchModal = ({
     }
   });
 
-  const handleEventSelect = async (eventId: string) => {
+  const handleEventSelect = async (eventSlug: string) => {
     isSelectingRef.current = true;
     posthog.capture('search_result_clicked', {
       query: debouncedSearchValue,
-      event_id: eventId,
+      event_slug: eventSlug,
       result_count: events.length,
     });
     await navigate({
-      to: '/eventos/$eventId',
-      params: {eventId},
+      to: '/eventos/$slug',
+      params: {slug: eventSlug},
     });
     onOpenChange(false);
   };
@@ -165,11 +165,11 @@ export const EventSearchModal = ({
                       key={event.id}
                       value={event.id}
                       className='flex p-0'
-                      onSelect={() => handleEventSelect(event.id)}
+                      onSelect={() => handleEventSelect(event.slug)}
                     >
                         <Link
-                          to='/eventos/$eventId'
-                          params={{eventId: event.id}}
+                          to='/eventos/$slug'
+                          params={{slug: event.slug}}
                           className='flex w-full gap-3 p-3 items-center hover:bg-accent rounded-md'
                           onMouseDown={handleResultInteractionStart}
                           onTouchStart={handleResultInteractionStart}

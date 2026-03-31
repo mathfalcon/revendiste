@@ -7,6 +7,7 @@ import {
   Platform,
   PlatformConfig,
   ScrapedEventData,
+  ScraperResult,
 } from './types';
 import {PLATFORM_CONFIGS} from './config';
 import {logger} from '~/utils';
@@ -73,11 +74,32 @@ export abstract class BaseScraper {
   protected platform: Platform;
   protected config: PlatformConfig;
   protected scraperConfig: ReturnType<typeof getScraperConfig>;
+  protected urlsProcessed = 0;
+  protected urlsFailed = 0;
 
   constructor(platform: Platform) {
     this.platform = platform;
     this.config = PLATFORM_CONFIGS[platform];
     this.scraperConfig = getScraperConfig();
+  }
+
+  protected buildResult(
+    events: ScrapedEventData[],
+    status: ScraperResult['status'],
+    durationMs: number,
+    partialReason?: string,
+  ): ScraperResult {
+    return {
+      platform: this.platform,
+      events,
+      status,
+      stats: {
+        urlsProcessed: this.urlsProcessed,
+        urlsFailed: this.urlsFailed,
+      },
+      durationMs,
+      partialReason,
+    };
   }
 
   protected getCrawlerOptions(): PlaywrightCrawlerOptions {
@@ -118,6 +140,20 @@ export abstract class BaseScraper {
       browserPoolOptions: {
         useFingerprints: true, // Enable fingerprint randomization
         maxOpenPagesPerBrowser: this.scraperConfig.maxPagesPerBrowser,
+      },
+      // Short-circuit retries for timeout errors: allow 1 retry (2 attempts total)
+      // instead of 3 retries (4 attempts = 180s wasted per hopeless URL)
+      errorHandler: async ({request}, error) => {
+        const isTimeout =
+          error.message?.includes('timeout') ||
+          error.message?.includes('Timeout');
+
+        if (isTimeout && request.retryCount >= 1) {
+          logger.warn(
+            `Skipping further retries for timeout on ${request.url} (retryCount=${request.retryCount})`,
+          );
+          request.noRetry = true;
+        }
       },
     };
   }
@@ -212,7 +248,7 @@ export abstract class BaseScraper {
     );
   }
 
-  abstract scrapeEvents(): Promise<ScrapedEventData[]>;
+  abstract scrapeEvents(): Promise<ScraperResult>;
 
   getPlatformName(): Platform {
     return this.platform;
