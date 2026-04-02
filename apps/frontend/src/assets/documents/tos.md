@@ -1,6 +1,6 @@
 # Términos y Condiciones de Uso – Revendiste
 
-**Última actualización:** 1 de Marzo de 2026
+**Última actualización:** 1 de Abril de 2026
 
 ---
 
@@ -292,6 +292,7 @@ El Comprador se obliga a mantener indemne a Revendiste, sus socios, empleados, c
 
 - El correo electrónico registrado en la cuenta.
 - El número de teléfono registrado (si aplica).
+- Mensajes de WhatsApp al número registrado (cuando el usuario haya activado este canal).
 - Notificaciones dentro de la Plataforma (in-app).
 
 ### 16.2. Todas las comunicaciones del Comprador a Revendiste deberán dirigirse a: **ayuda@revendiste.com**
@@ -677,6 +678,7 @@ El Vendedor se obliga a mantener indemne a Revendiste, sus socios, empleados, co
 
 - El correo electrónico registrado en la cuenta.
 - El número de teléfono registrado (si aplica).
+- Mensajes de WhatsApp al número registrado (cuando el usuario haya activado este canal).
 - Notificaciones dentro de la Plataforma (in-app).
 
   17.2. Todas las comunicaciones del Vendedor a Revendiste deberán dirigirse a: **ayuda@revendiste.com**

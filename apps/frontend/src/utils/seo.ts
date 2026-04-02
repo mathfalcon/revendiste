@@ -53,6 +53,7 @@ export const seo = ({
     {name: 'twitter:creator', content: '@revendiste'},
     {name: 'twitter:site', content: '@revendiste'},
     {name: 'twitter:image', content: ogImage},
+    {name: 'twitter:image:alt', content: title},
     {name: 'twitter:card', content: 'summary_large_image'},
     // Open Graph (uses property attribute)
     {property: 'og:type', content: 'website'},

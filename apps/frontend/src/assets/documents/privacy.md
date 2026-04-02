@@ -1,6 +1,6 @@
 # Política de Privacidad – Revendiste
 
-**Última actualización:** 1 de Marzo de 2026
+**Última actualización:** 1 de Abril de 2026
 
 ## 1. Introducción
 
@@ -25,7 +25,8 @@ Correo electrónico para consultas generales: **ayuda@revendiste.com**
 Podemos recopilar los siguientes datos personales:
 
 - **Datos de identificación:** nombre y apellido.
-- **Datos de contacto:** correo electrónico y, opcionalmente, número de teléfono.
+- **Datos de contacto:** correo electrónico y, opcionalmente, número de teléfono (formato internacional con código de país).
+- **Preferencias de comunicación:** canal de notificación preferido por el usuario (correo electrónico, WhatsApp), incluyendo el consentimiento explícito para recibir mensajes por WhatsApp.
 - **Datos de cuenta:** información necesaria para la creación y administración de la cuenta de usuario.
 - **Datos de autenticación de terceros:** información básica proporcionada por proveedores de identidad como Google, únicamente cuando el usuario opta por iniciar sesión mediante dichos servicios.
 - **Datos de transacciones:** información relacionada con operaciones de intermediación de entradas realizadas dentro de la plataforma, incluyendo detalles de las entradas, precios y estados de las transacciones.
@@ -56,7 +57,8 @@ Los datos personales serán utilizados para:
 - Gestionar pagos, comisiones y transferencias asociadas al servicio de intermediación.
 - Cumplir con obligaciones legales, fiscales y regulatorias aplicables en Uruguay.
 - Mejorar la seguridad, el funcionamiento y la experiencia de la plataforma.
-- Enviar comunicaciones operativas relacionadas con el servicio (notificaciones de transacciones, actualizaciones de estado, etc.).
+- Enviar comunicaciones operativas relacionadas con el servicio (notificaciones de transacciones, actualizaciones de estado, etc.) a través de correo electrónico, notificaciones dentro de la plataforma y, cuando el usuario lo autorice, mensajes de WhatsApp.
+- Verificar la titularidad del número de teléfono del usuario mediante el envío de un código de verificación (OTP) por WhatsApp, cuando el usuario opte voluntariamente por activar este canal de comunicación.
 - Verificar la identidad de los usuarios y prevenir fraudes, suplantación de identidad y publicación de entradas inválidas o falsas.
 - Gestionar reclamos, disputas y contracargos relacionados con las transacciones.
 - Responder a consultas y solicitudes de soporte.
@@ -136,6 +138,7 @@ Revendiste podrá compartir datos personales únicamente cuando sea necesario pa
 - **Prevención de fraudes:** para detectar y prevenir actividades fraudulentas o ilícitas.
 - **Servicios tecnológicos:** con proveedores de infraestructura, hosting, almacenamiento en la nube y seguridad necesarios para operar la plataforma.
 - **Autenticación:** con proveedores de identidad como Google, cuando el usuario opta por utilizar estos servicios.
+- **Mensajería:** con Meta Platforms, Inc. (WhatsApp Business API), cuando el usuario opta por recibir notificaciones por WhatsApp. Se comparte únicamente el número de teléfono del usuario y el contenido de las notificaciones operativas. El usuario puede desactivar este canal en cualquier momento desde la configuración de su cuenta.
 
 En todos los casos, se adoptan medidas contractuales y técnicas razonables para garantizar la confidencialidad y seguridad de la información compartida. Los terceros están obligados a utilizar los datos únicamente para los fines especificados y conforme a esta política.
 

@@ -53,12 +53,14 @@ export const HomePage = () => {
   return (
     <div className='flex flex-col'>
       <HomeHero />
-      <TrendingEvents />
-      <HomeEvents
-        locationFilter={locationFilter}
-        onLocationChange={handleLocationChange}
-      />
-      <HomeAbout />
+      <main>
+        <TrendingEvents />
+        <HomeEvents
+          locationFilter={locationFilter}
+          onLocationChange={handleLocationChange}
+        />
+        <HomeAbout />
+      </main>
     </div>
   );
 };

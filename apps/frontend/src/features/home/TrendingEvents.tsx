@@ -110,7 +110,7 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
           )}
           <Button
             variant={hasTickets ? 'default' : 'outline'}
-            className={hasTickets ? 'bg-primary-gradient' : ''}
+            className={cn('cursor-pointer', hasTickets ? 'bg-primary-gradient' : '')}
             size='sm'
             onClick={handleButtonClick}
           >
@@ -231,7 +231,7 @@ export const TrendingEvents = () => {
                 key={index}
                 onClick={() => api?.scrollTo(index)}
                 className={cn(
-                  'h-1.5 rounded-full transition-all duration-300',
+                  'h-1.5 rounded-full transition-all duration-300 cursor-pointer',
                   current === index
                     ? 'w-8 bg-primary'
                     : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50',
