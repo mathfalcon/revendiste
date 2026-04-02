@@ -102,6 +102,7 @@ export const HomeEvents = ({
                 <EventCard
                   key={event.id}
                   id={event.id}
+                  slug={event.slug}
                   name={event.name}
                   imageUrl={flyerImage?.url ?? CDN_ASSETS.SQUARE_LOGO}
                   date={event.eventStartDate}

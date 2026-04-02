@@ -1,4 +1,5 @@
 import {BaseScraper} from './base';
+import {ScraperResult} from './base/types';
 import {EventsService} from '../events';
 import {VenuesService} from '../venues';
 import {logger} from '~/utils';
@@ -13,13 +14,25 @@ export class ScrapingService {
   async scrapeEvents() {
     const totalStart = Date.now();
 
-    // Phase 1: Scraping
+    // Phase 1: Scraping — returns ScraperResult[] with status metadata
     const scrapeStart = Date.now();
-    const eventsArrays = await Promise.all(
+    const results: ScraperResult[] = await Promise.all(
       this.scrapers.map(scraper => scraper.scrapeEvents()),
     );
-    const allEvents = eventsArrays.flat();
+    const allEvents = results.flatMap(r => r.events);
     const scrapeTime = Date.now() - scrapeStart;
+
+    for (const result of results) {
+      logger.info(`Scraper result: ${result.platform}`, {
+        status: result.status,
+        events: result.events.length,
+        urlsProcessed: result.stats.urlsProcessed,
+        urlsFailed: result.stats.urlsFailed,
+        durationMs: result.durationMs,
+        partialReason: result.partialReason,
+      });
+    }
+
     logger.info(`Phase 1: Scraping completed`, {
       eventCount: allEvents.length,
       durationMs: scrapeTime,
@@ -101,9 +114,29 @@ export class ScrapingService {
       durationMs: storeTime,
     });
 
-    // Phase 4: Cleanup
+    // Phase 4: Per-platform cleanup — only cleanup platforms whose scrapers completed
     const cleanupStart = Date.now();
-    await this.eventsService.cleanupStaleEvents(eventsForCleanup);
+
+    for (const result of results) {
+      if (result.status !== 'complete') {
+        logger.warn(
+          `Skipping cleanup for ${result.platform}: status=${result.status}, reason=${result.partialReason}`,
+        );
+        continue;
+      }
+
+      const platformCleanupEvents = eventsForCleanup.filter(
+        e => e.platform === result.platform,
+      );
+      await this.eventsService.cleanupStaleEventsForPlatform(
+        result.platform,
+        platformCleanupEvents,
+      );
+    }
+
+    // Always cleanup past-end-date events (independent of scraper status)
+    await this.eventsService.cleanupPastEvents();
+
     const cleanupTime = Date.now() - cleanupStart;
     logger.info(`Phase 4: Cleanup completed`, {
       durationMs: cleanupTime,

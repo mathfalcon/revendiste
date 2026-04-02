@@ -14,8 +14,17 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     return new EventsRepository(trx);
   }
 
+  async slugExists(slug: string): Promise<boolean> {
+    const result = await this.db
+      .selectFrom('events')
+      .select('id')
+      .where('slug', '=', slug)
+      .executeTakeFirst();
+    return !!result;
+  }
+
   // Upsert event with all related data in a single transaction
-  async upsertScrapedEvent(event: ScrapedEventData) {
+  async upsertScrapedEvent(event: ScrapedEventData & { slug: string }) {
     return await this.db.transaction().execute(async trx => {
       const now = new Date();
 
@@ -35,6 +44,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
           externalId: event.externalId,
           platform: event.platform,
           name: event.name,
+          slug: event.slug,
           description: event.description || null,
           eventStartDate: event.eventStartDate,
           eventEndDate: event.eventEndDate,
@@ -144,7 +154,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
   }
 
   // Batch process events - each event in its own transaction
-  async upsertEventsBatch(events: ScrapedEventData[]) {
+  async upsertEventsBatch(events: (ScrapedEventData & { slug: string })[]) {
     if (events.length === 0) {
       return [];
     }
@@ -297,6 +307,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .select(eb => [
         'events.id',
         'events.name',
+        'events.slug',
         'events.description',
         'events.eventStartDate',
         'events.eventEndDate',
@@ -549,6 +560,64 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     return result;
   }
 
+  // Get count of active events for a specific platform (for ratio-based safety check)
+  async getActiveEventCountByPlatform(platform: string) {
+    const result = await this.db
+      .selectFrom('events')
+      .select(this.db.fn.count('id').as('total'))
+      .where('deletedAt', 'is', null)
+      .where('status', '=', 'active')
+      .where('platform', '=', platform)
+      .executeTakeFirst();
+
+    return Number(result?.total || 0);
+  }
+
+  // Get all active event external IDs for a specific platform
+  async getAllActiveEventExternalIdsForPlatform(platform: string) {
+    const result = await this.db
+      .selectFrom('events')
+      .select('externalId')
+      .where('deletedAt', 'is', null)
+      .where('status', '=', 'active')
+      .where('platform', '=', platform)
+      .execute();
+
+    return result.map(row => row.externalId);
+  }
+
+  // Soft delete events not in scraped results, scoped to a specific platform
+  async softDeleteEventsNotInScrapedResultsForPlatform(
+    platform: string,
+    scrapedExternalIds: string[],
+    deletedAt: Date,
+  ) {
+    const result = await this.db
+      .updateTable('events')
+      .set({
+        deletedAt: deletedAt,
+        status: 'inactive',
+        updatedAt: deletedAt,
+      })
+      .where('deletedAt', 'is', null)
+      .where('platform', '=', platform)
+      .where(eb =>
+        eb.not(
+          eb.exists(
+            eb
+              .selectFrom('events as e2')
+              .select('e2.externalId')
+              .whereRef('e2.externalId', '=', 'events.externalId')
+              .where('e2.externalId', 'in', scrapedExternalIds),
+          ),
+        ),
+      )
+      .returning(['id', 'externalId', 'name'])
+      .execute();
+
+    return result;
+  }
+
   // Helper method to soft delete related ticket waves
   async softDeleteRelatedTicketWaves(eventIds: string[], deletedAt: Date) {
     if (eventIds.length === 0) return;
@@ -580,6 +649,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .select(eb => [
         'events.id',
         'events.name',
+        'events.slug',
         'events.description',
         'events.eventStartDate',
         'events.eventEndDate',
@@ -689,6 +759,18 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     return event ?? null;
   }
 
+  async findBySlug(slug: string, userId?: string) {
+    const event = await this.db
+      .selectFrom('events')
+      .select('id')
+      .where('slug', '=', slug)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
+
+    if (!event) return null;
+    return this.getById(event.id, userId);
+  }
+
   // Get upcoming events ordered by start date (includes in-progress events)
   async getUpcomingEvents(limit: number = 8) {
     const now = new Date();
@@ -699,6 +781,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .select(eb => [
         'events.id',
         'events.name',
+        'events.slug',
         'events.description',
         'events.eventStartDate',
         'events.eventEndDate',
@@ -742,6 +825,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .select(eb => [
         'events.id',
         'events.name',
+        'events.slug',
         'events.description',
         'events.eventStartDate',
         'events.eventEndDate',
@@ -836,6 +920,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .select(eb => [
         'events.id',
         'events.name',
+        'events.slug',
         'events.description',
         'events.eventStartDate',
         'events.eventEndDate',
@@ -926,6 +1011,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .select(eb => [
         'events.id',
         'events.name',
+        'events.slug',
         'events.description',
         'events.eventStartDate',
         'events.eventEndDate',

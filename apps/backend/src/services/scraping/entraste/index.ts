@@ -6,6 +6,7 @@ import {
   ScrapedEventDataSchema,
   ScrapedImageType,
   ScrapedTicketWave,
+  ScraperResult,
 } from '../base/types';
 import {
   DateUtils,
@@ -42,7 +43,8 @@ export class EntrasteScraper extends BaseScraper {
     return this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
   }
 
-  async scrapeEvents(): Promise<ScrapedEventData[]> {
+  async scrapeEvents(): Promise<ScraperResult> {
+    const startTime = Date.now();
     const userAgent = this.getRandomUserAgent();
     logger.debug('Using User-Agent:', {userAgent});
 
@@ -74,7 +76,8 @@ export class EntrasteScraper extends BaseScraper {
         },
       ],
       requestHandler: this.handleRequest,
-      failedRequestHandler({request, log, error}) {
+      failedRequestHandler: ({request, log, error}) => {
+        this.urlsFailed++;
         log.info(`Request ${request.url} failed too many times.`);
         // Log detailed error info for debugging bot protection issues
         const err = error as Error | undefined;
@@ -113,16 +116,18 @@ export class EntrasteScraper extends BaseScraper {
 
       this.logMemory('after crawler.run()');
 
+      const durationMs = Date.now() - startTime;
       logger.info(`Scraped ${this.events.length} events from Entraste`);
-      return this.events;
+      return this.buildResult(this.events, 'complete', durationMs);
     } catch (error) {
+      const durationMs = Date.now() - startTime;
       // If timeout or other error, still return whatever events we managed to scrape
       if (this.events.length > 0) {
         logger.warn(`Crawler error but returning ${this.events.length} partial results:`, error);
-        return this.events;
+        return this.buildResult(this.events, 'partial', durationMs, 'timeout');
       }
       logger.error('Error scraping Entraste events:', error);
-      throw error;
+      return this.buildResult([], 'failed', durationMs, error instanceof Error ? error.message : 'unknown');
     }
   }
 
@@ -652,6 +657,7 @@ export class EntrasteScraper extends BaseScraper {
       };
 
       this.validateAndAddEvent(eventData);
+      this.urlsProcessed++;
     } catch (error) {
       log.error(`Error extracting event details: ${getStringFromError(error)}`);
       throw error;

@@ -117,6 +117,7 @@ export interface Events {
   name: string;
   platform: string;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
+  slug: string;
   status: Generated<string>;
   updatedAt: Generated<Timestamp>;
   venueId: string | null;

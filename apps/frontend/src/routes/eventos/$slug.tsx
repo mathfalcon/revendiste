@@ -3,10 +3,10 @@ import {Suspense} from 'react';
 import {FullScreenLoading} from '~/components';
 import {EventPage} from '~/features/event';
 import {
-  getEventByIdQuery,
+  getEventBySlugQuery,
   EventImageType,
   getApiBaseURL,
-  GetEventByIdResponse,
+  GetEventBySlugResponse,
 } from '~/lib';
 import {isAxiosError} from 'axios';
 import {seo} from '~/utils/seo';
@@ -21,7 +21,7 @@ import {auth} from '@clerk/tanstack-react-start/server';
  * This runs exclusively on the server, hiding the API endpoint from clients.
  */
 export const fetchEventServer = createServerFn({method: 'GET'})
-  .inputValidator((data: {eventId: string; trackView: boolean}) => data)
+  .inputValidator((data: {slug: string; trackView: boolean}) => data)
   .handler(async ({data}) => {
     const apiUrl = getApiBaseURL();
 
@@ -39,11 +39,14 @@ export const fetchEventServer = createServerFn({method: 'GET'})
       // Auth not available — request proceeds as anonymous
     }
 
-    // Fetch event data on the server
-    const response = await fetch(`${apiUrl}/events/${data.eventId}`, {
-      method: 'GET',
-      headers,
-    });
+    // Fetch event data on the server by slug
+    const response = await fetch(
+      `${apiUrl}/events/by-slug/${data.slug}`,
+      {
+        method: 'GET',
+        headers,
+      },
+    );
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -55,12 +58,11 @@ export const fetchEventServer = createServerFn({method: 'GET'})
       throw new Error(`Failed to fetch event: ${response.status}`);
     }
 
-    const eventData: GetEventByIdResponse = await response.json();
+    const eventData: GetEventBySlugResponse = await response.json();
 
     // Track view only on actual navigation (fire-and-forget)
     if (data.trackView) {
-      console.log('Tracking event view for eventId:', data.eventId);
-      fetch(`${apiUrl}/events/${data.eventId}/view`, {
+      fetch(`${apiUrl}/events/by-slug/${data.slug}/view`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +75,7 @@ export const fetchEventServer = createServerFn({method: 'GET'})
     return eventData;
   });
 
-export const Route = createFileRoute('/eventos/$eventId')({
+export const Route = createFileRoute('/eventos/$slug')({
   component: RouteComponent,
   notFoundComponent: () => <EventEnded />,
   errorComponent: ({error}: ErrorComponentProps) => {
@@ -97,14 +99,14 @@ export const Route = createFileRoute('/eventos/$eventId')({
       // Fetch event data on the server (hides API endpoint from client)
       const eventData = await fetchEventServer({
         data: {
-          eventId: params.eventId,
+          slug: params.slug,
           trackView: cause === 'enter', // Only track view on actual navigation
         },
       });
 
       // Seed the React Query cache with the server-fetched data
       context.queryClient.setQueryData(
-        getEventByIdQuery(params.eventId).queryKey,
+        getEventBySlugQuery(params.slug).queryKey,
         eventData,
       );
 
