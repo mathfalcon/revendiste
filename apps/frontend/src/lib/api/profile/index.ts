@@ -119,6 +119,30 @@ export const revokeSessionMutation = () =>
     },
   });
 
+export const updatePhoneSettingsMutation = () =>
+  mutationOptions({
+    mutationKey: ['update-phone-settings'],
+    mutationFn: (data: {phoneNumber: string | null; whatsappOptedIn: boolean}) =>
+      api.profile.updatePhoneSettings(data).then(res => res.data),
+    onSuccess: () => {
+      toast.success('Teléfono actualizado');
+    },
+  });
+
+export const sendWhatsappOtpMutation = () =>
+  mutationOptions({
+    mutationKey: ['send-whatsapp-otp'],
+    mutationFn: (data: {phoneNumber: string}) =>
+      api.profile.sendOtp(data).then(res => res.data),
+  });
+
+export const verifyWhatsappOtpMutation = () =>
+  mutationOptions({
+    mutationKey: ['verify-whatsapp-otp'],
+    mutationFn: (data: {code: string}) =>
+      api.profile.verifyOtp(data).then(res => res.data),
+  });
+
 export const deleteAccountMutation = () =>
   mutationOptions({
     mutationKey: ['delete-account'],

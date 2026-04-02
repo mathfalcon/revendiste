@@ -119,7 +119,6 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
         <div className='divide-y'>
           {notifications.map(notification => {
             const isUnseen = !notification.seenAt;
-            const actionUrl = notification.actions?.[0]?.url;
             const Icon = getNotificationIcon(notification.type);
             const iconColor = getNotificationIconColor(notification.type);
 
@@ -133,9 +132,6 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
                 onClick={() => {
                   if (isUnseen) {
                     onNotificationClick(notification.id);
-                  }
-                  if (actionUrl) {
-                    window.location.href = actionUrl;
                   }
                 }}
               >
@@ -164,6 +160,24 @@ export const NotificationDropdown: FC<NotificationDropdownProps> = ({
                         locale: es,
                       })}
                     </p>
+                    {notification.actions?.[0] && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='mt-2 h-7 text-xs'
+                        onClick={e => {
+                          e.stopPropagation();
+                          if (isUnseen) {
+                            onNotificationClick(notification.id);
+                          }
+                          if (notification.actions![0]!.url) {
+                            window.location.href = notification.actions![0]!.url;
+                          }
+                        }}
+                      >
+                        {notification.actions[0].label}
+                      </Button>
+                    )}
                   </div>
                   {isUnseen && (
                     <div className='h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5' />

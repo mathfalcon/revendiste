@@ -69,7 +69,12 @@ export function Combobox<T extends ComboboxOption = ComboboxOption>({
   return (
     <FormItem className={cn('flex flex-col', className)}>
       <FormLabel>{label}</FormLabel>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={(isOpen) => {
+          setOpen(isOpen);
+          if (!isOpen) {
+            onSearchValueChange?.('');
+          }
+        }}>
         <PopoverTrigger asChild>
           <FormControl>
             <Button

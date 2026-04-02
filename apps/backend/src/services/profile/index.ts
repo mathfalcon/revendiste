@@ -23,6 +23,20 @@ export class ProfileService {
     };
   }
 
+  async updatePhoneSettings(
+    clerkId: string,
+    data: {phoneNumber: string | null; whatsappOptedIn: boolean},
+  ) {
+    const user = await this.usersService.updatePhoneSettings(clerkId, data);
+    if (!user) {
+      throw new NotFoundError('Usuario no encontrado');
+    }
+    return {
+      phoneNumber: user.phoneNumber,
+      whatsappOptedIn: user.whatsappOptedIn,
+    };
+  }
+
   async uploadProfileImage(clerkId: string, file: Express.Multer.File) {
     try {
       // Upload to our CDN (R2 public bucket) for fast delivery

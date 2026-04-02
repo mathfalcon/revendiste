@@ -1944,6 +1944,10 @@ export interface DeleteImageResponse {
 export type DeleteEventImageResponse = DeleteImageResponse;
 
 export interface GetCurrentUserResponse {
+  /** Whether user has opted in to WhatsApp notifications */
+  whatsappOptedIn: boolean;
+  /** User's phone number in E.164 format */
+  phoneNumber: string | null;
   /** Reason for manual review rejection (if rejected by admin) */
   rejectionReason: string | null;
   /** Whether user can retry liveness (has attempts remaining and is in a retryable state) */
@@ -2320,6 +2324,32 @@ export interface UpdateProfileRouteBody {
   firstName: string;
 }
 
+export interface UpdatePhoneSettingsResponse {
+  whatsappOptedIn: boolean;
+  phoneNumber: string | null;
+}
+
+export interface UpdatePhoneSettingsRouteBody {
+  whatsappOptedIn: boolean;
+  phoneNumber: string | null;
+}
+
+export interface SendOtpResponse {
+  expiresAt: string;
+}
+
+export interface SendOtpRouteBody {
+  phoneNumber: string;
+}
+
+export interface VerifyOtpResponse {
+  success: true;
+}
+
+export interface VerifyOtpRouteBody {
+  code: string;
+}
+
 export interface UploadProfileImageResponse {
   imageUrl: string;
 }
@@ -2447,7 +2477,7 @@ export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDesc
   status: "pending" | "failed" | "seen" | "sent";
   /** @format date-time */
   updatedAt: string;
-  channels: ("email" | "in_app" | "sms")[];
+  channels: ("email" | "in_app" | "sms" | "whatsapp")[];
   userId: string;
   channelStatus: string | number | boolean | JsonArray | JsonObject | null;
   /** @format double */
@@ -4635,6 +4665,60 @@ export class Api<
       this.request<UpdateProfileResponse, ApiErrorResponse>({
         path: `/profile`,
         method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name UpdatePhoneSettings
+     * @request PUT:/profile/phone
+     */
+    updatePhoneSettings: (
+      data: UpdatePhoneSettingsRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<UpdatePhoneSettingsResponse, ApiErrorResponse>({
+        path: `/profile/phone`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name SendOtp
+     * @request POST:/profile/phone/send-otp
+     */
+    sendOtp: (data: SendOtpRouteBody, params: RequestParams = {}) =>
+      this.request<SendOtpResponse, ApiErrorResponse>({
+        path: `/profile/phone/send-otp`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name VerifyOtp
+     * @request POST:/profile/phone/verify-otp
+     */
+    verifyOtp: (data: VerifyOtpRouteBody, params: RequestParams = {}) =>
+      this.request<VerifyOtpResponse, ApiErrorResponse>({
+        path: `/profile/phone/verify-otp`,
+        method: "POST",
         body: data,
         type: ContentType.Json,
         format: "json",

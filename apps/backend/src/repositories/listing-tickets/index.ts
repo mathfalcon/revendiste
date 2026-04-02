@@ -42,7 +42,7 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
       .where('orderTicketReservations.id', 'is', null) // Not reserved
-      .orderBy('listingTickets.createdAt', 'asc')
+      .orderBy('listingTickets.updatedAt', 'asc')
       .limit(quantity)
       .execute();
   }
@@ -83,7 +83,7 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
       .where('orderTicketReservations.id', 'is', null)
-      .orderBy('listingTickets.createdAt', 'asc')
+      .orderBy('listingTickets.updatedAt', 'asc')
       .limit(quantity)
       .forUpdate('listingTickets')
       .skipLocked()

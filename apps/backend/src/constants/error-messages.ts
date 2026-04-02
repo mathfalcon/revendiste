@@ -375,6 +375,16 @@ export const PROFILE_ERROR_MESSAGES = {
     `Error al eliminar la cuenta: ${error}`,
 } as const;
 
+export const OTP_ERROR_MESSAGES = {
+  RATE_LIMITED:
+    'Demasiados intentos. Esperá unos minutos antes de pedir otro código.',
+  EXPIRED: 'El código expiró o no existe. Pedí uno nuevo.',
+  INVALID: 'El código ingresado es incorrecto.',
+  TOO_MANY_ATTEMPTS: 'Demasiados intentos fallidos. Pedí un nuevo código.',
+  SEND_FAILED: (error: string) =>
+    `Error al enviar el código de verificación: ${error}`,
+} as const;
+
 // Validation error messages for forms
 export const VALIDATION_MESSAGES = {
   // Generic validation

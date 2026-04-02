@@ -8,11 +8,22 @@ import {
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
 import {Card, CardContent} from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
+import {Input} from '~/components/ui/input';
 import {z} from 'zod';
-import {useEffect, useRef} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {cn} from '~/lib/utils';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
+import {
+  HelpCircle,
+  ShoppingCart,
+  Tag,
+  CreditCard,
+  Search,
+  Mail,
+  ArrowRight,
+  MessageCircle,
+} from 'lucide-react';
 
 const faqSections = [
   'general',
@@ -80,27 +91,27 @@ const faqGeneral: FAQItem[] = [
   {
     question: '¿Qué es Revendiste?',
     answer:
-      'Revendiste es una plataforma que conecta personas que quieren vender sus entradas con personas que las quieren comprar. Nosotros no somos revendedores, somos intermediarios. Nos encargamos de verificar que las entradas sean válidas, de custodiar la plata hasta que todo salga bien, y de garantizar que la transferencia se haga de forma segura. Básicamente, te sacamos el miedo de comprarle a un desconocido.',
+      'Revendiste es una plataforma que conecta a personas que quieren vender sus entradas con quienes las quieren comprar. No somos revendedores: somos intermediarios. Nos encargamos de verificar que las entradas sean válidas, de custodiar el dinero hasta que la operación se complete correctamente y de garantizar una transferencia segura. Nuestro objetivo es que puedas comprar o vender con total tranquilidad.',
   },
   {
     question: '¿Es legal usar Revendiste?',
     answer:
-      'Sí, totalmente. Limitamos el precio máximo a un 15% sobre el valor original, así los publicadores pueden recuperar lo que pagaron de comisiones en la plataforma original (que suelen ser del 10-12%), pero sin pasarse de la raya con los compradores.',
+      'Sí, completamente. Limitamos el precio máximo de reventa a un 15% sobre el valor original. Esto permite que los vendedores puedan recuperar las comisiones que pagaron en la plataforma original (que suelen ser del 10-12%), manteniendo al mismo tiempo precios justos para los compradores.',
   },
   {
     question: '¿Puedo vender mi entrada a un precio mayor al que la pagué?',
     answer:
-      'Sí, hasta un 15% más del valor original. La idea es que puedas recuperar las comisiones que pagaste cuando compraste la entrada, sin especular con la misma. Por ejemplo, si pagaste $1.000 más $100 de comisión, podés publicarla hasta por $1.150.',
+      'Sí, podés publicarla hasta un 15% por encima del valor original. El objetivo es que puedas recuperar las comisiones que pagaste al comprar la entrada, sin que se genere especulación. Por ejemplo, si pagaste $1.000 más $100 de comisión, podés publicarla hasta por $1.150.',
   },
   {
     question: '¿Cómo sé que no me van a estafar?',
     answer:
-      'Mirá, entendemos la desconfianza. Por eso nuestro sistema funciona así: cuando comprás, tu plata queda en custodia con nosotros. No se la damos al vendedor hasta que el evento termine y verifiquemos que todo salió bien. Si la entrada no era válida, te devolvemos la plata. Simple.',
+      'Entendemos la preocupación, y por eso diseñamos un sistema de custodia. Cuando comprás una entrada, tu dinero queda retenido con nosotros y no se libera al vendedor hasta que el evento finalice y se confirme que todo estuvo en orden. Si la entrada resultó no ser válida, podés abrir un reporte directamente desde la sección "Mis Entradas" en tu cuenta, adjuntando la evidencia correspondiente. Nuestro equipo lo revisa y, si se confirma el problema, te devolvemos el dinero. También podés contactarnos desde nuestra página de contacto.',
   },
   {
     question: '¿Qué tan seguros están mis datos personales?',
     answer:
-      'La seguridad de tus datos es nuestra prioridad. Usamos cifrado AES-256 para proteger toda la información sensible, el mismo estándar que usan bancos y entidades financieras. Los datos de verificación de identidad se almacenan de forma segura con acceso restringido solo a personal autorizado. Todo cumple con la Ley de Protección de Datos Personales de Uruguay (Ley Nº 18.331).',
+      'La seguridad de tus datos es nuestra prioridad. Utilizamos cifrado AES-256 para proteger toda la información sensible, el mismo estándar que aplican bancos y entidades financieras. Los datos de verificación de identidad se almacenan de forma segura con acceso restringido exclusivamente a personal autorizado. Todo cumple con la Ley de Protección de Datos Personales de Uruguay (Ley N.o 18.331).',
   },
 ];
 
@@ -108,27 +119,27 @@ const faqCompradores: FAQItem[] = [
   {
     question: '¿Cómo compro una entrada?',
     answer:
-      'Es re fácil: buscás el evento que te interesa, elegís la entrada que querés, pagás con tarjeta o el medio que tengas disponible, y listo. Te llega la entrada por email o te aparece en tu cuenta para descargarla. Todo digital, nada de juntarse con nadie.',
+      'Es muy sencillo: buscás el evento que te interesa, elegís la entrada que querés, pagás con el medio de pago disponible y listo. Recibís la entrada por email o podés descargarla desde tu cuenta. Todo el proceso es digital, sin necesidad de coordinación presencial.',
   },
   {
     question: '¿Cuánto me cobran de comisión?',
     answer:
-      'Te cobramos un 6% sobre el precio de la entrada, más el IVA de esa comisión. Por ejemplo, si la entrada sale $1.000, la comisión es $60 + IVA ($13,20) = $73,20. Total a pagar: $1.073,20. Todo esto lo ves desglosado antes de confirmar la compra, sin sorpresas.',
+      'La comisión es del 6% sobre el precio de la entrada, más el IVA correspondiente. Por ejemplo, si la entrada cuesta $1.000, la comisión es $60 + IVA ($13,20) = $73,20. Total a pagar: $1.073,20. Siempre vas a ver el desglose completo antes de confirmar la compra, sin costos ocultos.',
   },
   {
     question: '¿Qué pasa si la entrada no funciona?',
     answer:
-      'Si llegás al evento y la entrada no te deja entrar por algún problema del vendedor (entrada inválida, duplicada, etc.), tenés 48 horas después de que termine el evento para hacer un reclamo. Nos mandás la evidencia (captura del rechazo, lo que sea) y lo investigamos. Si fue culpa del vendedor, te devolvemos la plata.',
+      'Si al llegar al evento la entrada no te permite ingresar por un problema atribuible al vendedor (entrada inválida, duplicada, etc.), tenés 48 horas después de la finalización del evento para abrir un reporte. Podés hacerlo desde la sección "Mis Entradas" en tu cuenta: seleccionás la entrada con problemas, elegís el motivo del reporte y adjuntás la evidencia (captura del rechazo en puerta, por ejemplo). Nuestro equipo revisa cada caso y, si se confirma que fue responsabilidad del vendedor, te devolvemos el dinero. Podés seguir el estado de tu reporte en todo momento desde tu cuenta.',
   },
   {
     question: '¿Qué pasa si se cancela el evento?',
     answer:
-      'Si el evento se cancela, la cosa depende de lo que haga el organizador oficial. Nosotros te comunicamos lo que sabemos y, cuando corresponde, procesamos los reembolsos según las reglas que apliquen. No es algo que manejemos nosotros directamente porque no somos los organizadores.',
+      'En caso de cancelación, el proceso de reembolso depende de lo que determine el organizador oficial del evento. Desde Revendiste te mantenemos informado y, cuando corresponde, procesamos las devoluciones según las condiciones aplicables. Si tenés dudas sobre un evento cancelado, podés abrir un reporte desde "Mis Entradas" o escribirnos desde nuestra página de contacto.',
   },
   {
     question: '¿Cuándo me llega la entrada?',
     answer:
-      'Depende. Algunas entradas te llegan al toque después de pagar. Otras, especialmente cuando el vendedor todavía no tiene el QR porque la plataforma original no lo liberó, pueden tardar más. Te avisamos siempre por email cuando tu entrada está lista.',
+      'Depende del caso. Algunas entradas se entregan de forma inmediata después del pago. Otras, especialmente cuando la plataforma original aún no liberó el QR, pueden demorar un poco más. En todos los casos, te notificamos por email en cuanto tu entrada esté lista para descargar. Si se acerca la fecha del evento y aún no recibiste tu entrada, podés abrir un reporte desde "Mis Entradas" en tu cuenta o contactarnos desde nuestra página de contacto para que lo revisemos.',
   },
 ];
 
@@ -136,39 +147,39 @@ const faqVendedores: FAQItem[] = [
   {
     question: '¿Cómo publico mi entrada?',
     answer:
-      'Primero verificás tu identidad (es un proceso de dos pasos desde el celu). Después publicás con toda la info: evento, fecha, sector, categoría/tanda, y el precio. Podés poner hasta un 15% más del valor original para recuperar las comisiones que pagaste. Cuando alguien la compre, te avisamos y tenés que transferirla.',
+      'Primero completás la verificación de identidad (es un proceso rápido desde tu celular). Después, publicás tu entrada con la información correspondiente: evento, fecha, sector, categoría/tanda y precio. Podés fijar un precio de hasta un 15% sobre el valor original para recuperar las comisiones que pagaste. Cuando alguien la compre, te avisamos para que realices la transferencia.',
   },
   {
     question: '¿Por qué me piden verificar mi identidad?',
     answer:
-      'Para prevenir fraudes. Si alguien vende una entrada inválida, necesitamos poder identificarlo. El proceso tiene dos pasos: primero subís una foto de tu documento, y después hacés una verificación de vida (liveness) desde tu celular para confirmar que sos vos. Esto protege a los compradores y también te protege a vos, generando confianza en la plataforma.',
+      'La verificación de identidad es una medida clave para prevenir fraudes. El proceso consta de dos pasos: primero subís una foto de tu documento y luego realizás una verificación de vida (liveness) desde tu celular para confirmar que sos vos. Esto protege a los compradores y también te beneficia a vos, ya que genera mayor confianza en la plataforma.',
   },
   {
     question: '¿Mis datos de verificación están seguros?',
     answer:
-      'Absolutamente. Las imágenes de tu documento y verificación facial se almacenan con cifrado AES-256, el mismo estándar que usan bancos y entidades financieras. Solo personal autorizado puede acceder a estas imágenes en casos excepcionales de revisión de seguridad. Conservamos las imágenes de forma segura para prevenir fraudes, cumplir con obligaciones legales y permitir auditorías de seguridad.',
+      'Sí. Las imágenes de tu documento y verificación facial se almacenan con cifrado AES-256, el mismo estándar que utilizan bancos y entidades financieras. Solo personal autorizado puede acceder a esta información en casos excepcionales de revisión de seguridad. Conservamos los datos de forma segura para la prevención de fraudes, el cumplimiento de obligaciones legales y la realización de auditorías de seguridad.',
   },
   {
     question: '¿Cuándo me pagan?',
     answer:
-      'La plata te la liberamos hasta 10 días hábiles después del evento. ¿Por qué? Porque le damos tiempo al comprador de reclamar si algo salió mal. Si no hay reclamos ni problemas, te transferimos a tu cuenta bancaria o PayPal.',
+      'El pago se libera hasta 10 días hábiles después de la fecha del evento. Este plazo existe para dar tiempo al comprador a presentar un reclamo si hubo algún inconveniente. Si no se registran reclamos ni problemas, te transferimos el dinero a tu cuenta bancaria o PayPal.',
   },
   {
     question: '¿Cuánto me cobran de comisión como vendedor?',
     answer:
-      'También es el 6% más IVA, igual que al comprador. Entonces si vendés una entrada de $1.000, te descontamos $73,20 y te quedan $926,80. Ese descuento se hace automáticamente cuando te liquidamos.',
+      'La comisión es del 6% más IVA, igual que para los compradores. Si vendés una entrada de $1.000, se te descuentan $73,20 y recibís $926,80. El descuento se aplica automáticamente al momento de la liquidación.',
   },
   {
     question:
       '¿Qué pasa si todavía no tengo el QR porque la plataforma no lo liberó?',
     answer:
-      'Tranqui, podés publicar igual. Tenés hasta la hora de finalización del evento para cargar la entrada en la plataforma. Sabemos que algunas ticketeras no liberan los QR hasta último momento. Si se te complica por algún motivo de fuerza mayor, escribinos a ayuda@revendiste.com y vemos cómo lo solucionamos.',
+      'Podés publicar tu entrada de todas formas. Tenés plazo hasta la hora de finalización del evento para cargar la entrada en la plataforma. Sabemos que algunas ticketeras liberan los QR con poco tiempo de anticipación. Si tenés algún inconveniente de fuerza mayor, contactanos desde nuestra página de contacto o escribinos a ayuda@revendiste.com y buscamos una solución.',
   },
   {
     question:
       '¿Qué pasa si selecciono mal la categoría de la entrada a propósito?',
     answer:
-      'Eso es fraude y nos lo tomamos muy en serio. Si publicás una entrada de "Preventa" como "Tanda General" para poder venderla más cara, te suspendemos la cuenta y te retenemos toda la plata. Además, podemos tomar acciones legales. No vale la pena, en serio.',
+      'Declarar información incorrecta de forma deliberada, como publicar una entrada de "Preventa" como "Tanda General" para obtener un precio mayor, constituye fraude. En estos casos, Revendiste procede a la suspensión de la cuenta, la retención de los fondos asociados y, cuando corresponda, el inicio de las acciones legales pertinentes. La transparencia en la información es fundamental para mantener una plataforma segura para todos.',
   },
 ];
 
@@ -176,24 +187,34 @@ const faqPagos: FAQItem[] = [
   {
     question: '¿Qué métodos de pago aceptan?',
     answer:
-      'Aceptamos los medios de pago que aparecen habilitados al momento del checkout. Generalmente tarjetas de crédito y débito. Estamos trabajando en agregar más opciones.',
+      'Aceptamos los medios de pago que se muestran habilitados al momento del checkout, generalmente tarjetas de crédito y débito. Estamos trabajando para incorporar más opciones de pago próximamente.',
   },
   {
     question: '¿Cómo recibo mi plata si soy vendedor?',
     answer:
-      'Podés elegir entre transferencia bancaria o PayPal. Lo configurás en tu perfil y cuando te toque cobrar, te mandamos la plata ahí.',
+      'Podés elegir entre transferencia bancaria o PayPal. Configurás tu método de cobro preferido desde tu perfil y, al momento de la liquidación, te enviamos el dinero al medio que hayas seleccionado.',
   },
   {
-    question: '¿Qué es eso de "custodia de fondos"?',
+    question: '¿Qué es la custodia de fondos?',
     answer:
-      'Cuando un comprador paga, la plata no va directo al vendedor. Nosotros la guardamos hasta que se complete la operación sin problemas (o sea, que el comprador use la entrada sin problemas). Esto protege a ambas partes: el comprador sabe que si algo falla recupera su plata, y el vendedor sabe que cuando todo sale bien, cobra seguro.',
+      'Cuando un comprador realiza un pago, el dinero no va directamente al vendedor. Revendiste lo retiene en custodia hasta que la operación se complete sin inconvenientes, es decir, hasta que el comprador utilice la entrada sin problemas. Si surge algún inconveniente, el comprador puede abrir un reporte desde su cuenta y nuestro equipo revisa el caso antes de liberar los fondos. Este mecanismo protege a ambas partes: el comprador tiene la garantía de que puede recuperar su dinero si algo falla, y el vendedor tiene la certeza de que cobra cuando la transacción se concreta correctamente.',
   },
   {
     question: '¿Me devuelven la comisión si hay un problema?',
     answer:
-      'La comisión de Revendiste es por el servicio de intermediación que ya prestamos (verificar, custodiar, transferir, etc.), así que no es reembolsable. Lo que sí te devolvemos es el precio de la entrada si hay un problema válido.',
+      'La comisión de Revendiste corresponde al servicio de intermediación ya prestado (verificación, custodia, transferencia, etc.), por lo que no es reembolsable. Lo que sí se reembolsa es el precio de la entrada en caso de que exista un reclamo válido. Para iniciar un reclamo, abrí un reporte desde la sección "Mis Entradas" en tu cuenta. Si tenés dudas sobre el proceso, visitá nuestra página de contacto.',
   },
 ];
+
+const sectionConfig: Record<
+  FAQSection,
+  {label: string; icon: typeof HelpCircle; items: FAQItem[]}
+> = {
+  general: {label: 'General', icon: HelpCircle, items: faqGeneral},
+  compradores: {label: 'Compradores', icon: ShoppingCart, items: faqCompradores},
+  publicadores: {label: 'Publicadores', icon: Tag, items: faqVendedores},
+  pagos: {label: 'Pagos', icon: CreditCard, items: faqPagos},
+};
 
 interface FAQSectionProps {
   items: FAQItem[];
@@ -202,7 +223,7 @@ interface FAQSectionProps {
   onOpenChange?: (index: number | undefined) => void;
 }
 
-function FAQSection({
+function FAQSectionAccordion({
   items,
   openItem,
   highlightedItem,
@@ -213,7 +234,6 @@ function FAQSection({
   // Scroll to highlighted item on mount
   useEffect(() => {
     if (highlightedItem !== undefined && itemRefs.current[highlightedItem]) {
-      // Small delay to ensure DOM is ready
       setTimeout(() => {
         itemRefs.current[highlightedItem]?.scrollIntoView({
           behavior: 'smooth',
@@ -227,7 +247,7 @@ function FAQSection({
     <Accordion
       type='single'
       collapsible
-      className='w-full'
+      className='w-full space-y-2'
       value={openItem !== undefined ? `item-${openItem}` : undefined}
       onValueChange={value => {
         if (onOpenChange) {
@@ -246,15 +266,17 @@ function FAQSection({
             itemRefs.current[index] = el;
           }}
           className={cn(
-            'transition-colors duration-500',
+            'rounded-lg border bg-card px-4 transition-all duration-300',
+            'hover:shadow-sm hover:border-primary/20',
+            'data-[state=open]:shadow-sm data-[state=open]:border-primary/30',
             highlightedItem === index &&
-              'bg-primary/10 rounded-lg ring-2 ring-primary/20',
+              'bg-primary/5 ring-2 ring-primary/20 border-primary/30',
           )}
         >
-          <AccordionTrigger className='text-left px-2'>
+          <AccordionTrigger className='text-left py-4 text-[15px] font-medium hover:no-underline'>
             {item.question}
           </AccordionTrigger>
-          <AccordionContent className='text-muted-foreground leading-relaxed px-2'>
+          <AccordionContent className='text-muted-foreground leading-relaxed pb-4 text-sm'>
             {item.answer}
           </AccordionContent>
         </AccordionItem>
@@ -263,40 +285,70 @@ function FAQSection({
   );
 }
 
-// Map section to its FAQ items
-const sectionItems: Record<FAQSection, FAQItem[]> = {
-  general: faqGeneral,
-  compradores: faqCompradores,
-  publicadores: faqVendedores,
-  pagos: faqPagos,
-};
-
 function FAQPage() {
   const {seccion, pregunta} = Route.useSearch();
   const navigate = useNavigate({from: Route.fullPath});
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Determine active tab - default to 'general'
   const activeTab = seccion ?? 'general';
 
   // Get the items for the active section to validate pregunta
-  const activeItems = sectionItems[activeTab];
+  const activeItems = sectionConfig[activeTab].items;
   const validPregunta =
     pregunta !== undefined && pregunta >= 0 && pregunta < activeItems.length
       ? pregunta
       : undefined;
 
+  // Local state for the open accordion item, synced from URL on mount/change
+  const [openItem, setOpenItem] = useState<number | undefined>(validPregunta);
+
+  // Sync from URL -> local state when URL params change (e.g. direct navigation)
+  useEffect(() => {
+    setOpenItem(validPregunta);
+  }, [validPregunta]);
+
+  // Filter items based on search query
+  const filteredResults = useMemo(() => {
+    if (!searchQuery.trim()) return null;
+
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    const query = normalize(searchQuery);
+    const results: {section: FAQSection; items: FAQItem[]}[] = [];
+
+    for (const [key, config] of Object.entries(sectionConfig)) {
+      const matched = config.items.filter(
+        item =>
+          normalize(item.question).includes(query) ||
+          normalize(item.answer).includes(query),
+      );
+      if (matched.length > 0) {
+        results.push({section: key as FAQSection, items: matched});
+      }
+    }
+
+    return results;
+  }, [searchQuery]);
+
   const handleTabChange = (value: string) => {
+    setSearchQuery('');
+    setOpenItem(undefined);
     navigate({
       search: prev => ({
         ...prev,
         seccion: value as FAQSection,
-        pregunta: undefined, // Clear question when changing tabs
+        pregunta: undefined,
       }),
       replace: true,
     });
   };
 
   const handleQuestionChange = (index: number | undefined) => {
+    setOpenItem(index);
     navigate({
       search: prev => ({
         ...prev,
@@ -306,111 +358,158 @@ function FAQPage() {
     });
   };
 
+  const isSearching = searchQuery.trim().length > 0;
+
   return (
     <main className='min-h-screen bg-background-secondary'>
       <div className='container mx-auto max-w-4xl px-4 py-8 md:py-16'>
         {/* Header */}
         <div className='text-center mb-8 md:mb-12'>
+          <div className='inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4'>
+            <MessageCircle className='w-7 h-7 text-primary' />
+          </div>
           <h1 className='text-3xl md:text-4xl font-bold tracking-tight mb-3'>
             Preguntas Frecuentes
           </h1>
-          <p className='text-muted-foreground max-w-xl mx-auto'>
-            Acá te respondemos las dudas más comunes. Si no encontrás lo que
-            buscás, escribinos a{' '}
+          <p className='text-muted-foreground max-w-xl mx-auto text-balance'>
+            Encontrá respuestas a las dudas más comunes sobre Revendiste. Si
+            necesitás ayuda adicional, escribinos a{' '}
             <a
               href='mailto:ayuda@revendiste.com'
-              className='text-primary hover:underline'
+              className='text-primary hover:underline font-medium'
             >
               ayuda@revendiste.com
             </a>
           </p>
         </div>
 
-        {/* FAQ Tabs */}
-        <Card>
-          <CardContent className='p-4 md:p-6'>
-            <Tabs
-              value={activeTab}
-              onValueChange={handleTabChange}
-              className='w-full'
-            >
-              <TabsList className='grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-1'>
-                <TabsTrigger value='general' className='text-xs md:text-sm'>
-                  General
-                </TabsTrigger>
-                <TabsTrigger value='compradores' className='text-xs md:text-sm'>
-                  Compradores
-                </TabsTrigger>
-                <TabsTrigger
-                  value='publicadores'
-                  className='text-xs md:text-sm'
-                >
-                  Publicadores
-                </TabsTrigger>
-                <TabsTrigger value='pagos' className='text-xs md:text-sm'>
-                  Pagos
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value='general' className='mt-4'>
-                <FAQSection
-                  items={faqGeneral}
-                  openItem={activeTab === 'general' ? validPregunta : undefined}
-                  highlightedItem={
-                    activeTab === 'general' ? validPregunta : undefined
-                  }
-                  onOpenChange={handleQuestionChange}
-                />
-              </TabsContent>
-              <TabsContent value='compradores' className='mt-4'>
-                <FAQSection
-                  items={faqCompradores}
-                  openItem={
-                    activeTab === 'compradores' ? validPregunta : undefined
-                  }
-                  highlightedItem={
-                    activeTab === 'compradores' ? validPregunta : undefined
-                  }
-                  onOpenChange={handleQuestionChange}
-                />
-              </TabsContent>
-              <TabsContent value='publicadores' className='mt-4'>
-                <FAQSection
-                  items={faqVendedores}
-                  openItem={
-                    activeTab === 'publicadores' ? validPregunta : undefined
-                  }
-                  highlightedItem={
-                    activeTab === 'publicadores' ? validPregunta : undefined
-                  }
-                  onOpenChange={handleQuestionChange}
-                />
-              </TabsContent>
-              <TabsContent value='pagos' className='mt-4'>
-                <FAQSection
-                  items={faqPagos}
-                  openItem={activeTab === 'pagos' ? validPregunta : undefined}
-                  highlightedItem={
-                    activeTab === 'pagos' ? validPregunta : undefined
-                  }
-                  onOpenChange={handleQuestionChange}
-                />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+        {/* Search */}
+        <div className='relative mb-6'>
+          <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground' />
+          <Input
+            type='text'
+            placeholder='Buscá tu pregunta...'
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className='pl-10 h-11 bg-card'
+          />
+        </div>
+
+        {/* Search Results */}
+        {isSearching ? (
+          <div className='space-y-6'>
+            {filteredResults && filteredResults.length > 0 ? (
+              filteredResults.map(({section, items}) => {
+                const config = sectionConfig[section];
+                const Icon = config.icon;
+                return (
+                  <div key={section}>
+                    <div className='flex items-center gap-2 mb-3'>
+                      <Icon className='w-4 h-4 text-muted-foreground' />
+                      <h3 className='text-sm font-medium text-muted-foreground'>
+                        {config.label}
+                      </h3>
+                    </div>
+                    <FAQSectionAccordion items={items} />
+                  </div>
+                );
+              })
+            ) : (
+              <Card>
+                <CardContent className='py-12 text-center'>
+                  <Search className='w-10 h-10 text-muted-foreground/40 mx-auto mb-3' />
+                  <p className='text-muted-foreground font-medium'>
+                    No encontramos resultados para &ldquo;{searchQuery}&rdquo;
+                  </p>
+                  <p className='text-muted-foreground/70 text-sm mt-1'>
+                    Probá con otras palabras o escribinos a{' '}
+                    <a
+                      href='mailto:ayuda@revendiste.com'
+                      className='text-primary hover:underline'
+                    >
+                      ayuda@revendiste.com
+                    </a>
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          /* FAQ Tabs */
+          <Card className='overflow-hidden'>
+            <CardContent className='p-0'>
+              <Tabs
+                value={activeTab}
+                onValueChange={handleTabChange}
+                className='w-full'
+              >
+                <div className='border-b bg-muted/30 p-2 md:p-3'>
+                  <TabsList className='grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-1.5 bg-transparent'>
+                    {faqSections.map(section => {
+                      const config = sectionConfig[section];
+                      const Icon = config.icon;
+                      return (
+                        <TabsTrigger
+                          key={section}
+                          value={section}
+                          className={cn(
+                            'flex items-center gap-1.5 py-2.5 px-3 text-xs md:text-sm rounded-lg transition-all',
+                            'data-[state=active]:bg-card data-[state=active]:shadow-sm data-[state=active]:text-foreground',
+                            'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-card/50',
+                          )}
+                        >
+                          <Icon className='w-4 h-4 shrink-0' />
+                          <span>{config.label}</span>
+                        </TabsTrigger>
+                      );
+                    })}
+                  </TabsList>
+                </div>
+
+                <div className='p-4 md:p-6'>
+                  {faqSections.map(section => (
+                    <TabsContent key={section} value={section} className='mt-0'>
+                      <FAQSectionAccordion
+                        items={sectionConfig[section].items}
+                        openItem={
+                          activeTab === section ? openItem : undefined
+                        }
+                        highlightedItem={
+                          activeTab === section ? validPregunta : undefined
+                        }
+                        onOpenChange={handleQuestionChange}
+                      />
+                    </TabsContent>
+                  ))}
+                </div>
+              </Tabs>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Contact CTA */}
-        <Card className='mt-6 bg-muted/50'>
-          <CardContent className='py-6 text-center'>
-            <h2 className='font-semibold mb-2'>
-              ¿No encontraste lo que buscabas?
-            </h2>
-            <p className='text-muted-foreground text-sm mb-4'>
-              No hay drama, escribinos y te ayudamos.
-            </p>
-            <Button asChild>
-              <Link to='/contacto'>Ir a Contacto</Link>
-            </Button>
+        <Card className='mt-8 border-primary/10 bg-linear-to-br from-primary/5 via-card to-card overflow-hidden'>
+          <CardContent className='py-8 px-6 md:px-8'>
+            <div className='flex flex-col md:flex-row items-center gap-6 md:gap-8'>
+              <div className='flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 shrink-0'>
+                <Mail className='w-6 h-6 text-primary' />
+              </div>
+              <div className='text-center md:text-left flex-1'>
+                <h2 className='font-semibold text-lg mb-1'>
+                  ¿No encontraste lo que buscabas?
+                </h2>
+                <p className='text-muted-foreground text-sm'>
+                  Escribinos y te respondemos a la brevedad. Estamos para
+                  ayudarte.
+                </p>
+              </div>
+              <Button asChild size='lg' className='shrink-0 group'>
+                <Link to='/contacto'>
+                  Contactanos
+                  <ArrowRight className='w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5' />
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

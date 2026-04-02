@@ -6667,6 +6667,15 @@
 			},
 			"GetCurrentUserResponse": {
 				"properties": {
+					"whatsappOptedIn": {
+						"type": "boolean",
+						"description": "Whether user has opted in to WhatsApp notifications"
+					},
+					"phoneNumber": {
+						"type": "string",
+						"nullable": true,
+						"description": "User's phone number in E.164 format"
+					},
 					"rejectionReason": {
 						"type": "string",
 						"nullable": true,
@@ -6755,6 +6764,8 @@
 					}
 				},
 				"required": [
+					"whatsappOptedIn",
+					"phoneNumber",
 					"rejectionReason",
 					"canRetryLiveness",
 					"verificationAttempts",
@@ -8039,6 +8050,86 @@
 				],
 				"type": "object"
 			},
+			"UpdatePhoneSettingsResponse": {
+				"properties": {
+					"whatsappOptedIn": {
+						"type": "boolean"
+					},
+					"phoneNumber": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"whatsappOptedIn",
+					"phoneNumber"
+				],
+				"type": "object"
+			},
+			"UpdatePhoneSettingsRouteBody": {
+				"properties": {
+					"whatsappOptedIn": {
+						"type": "boolean"
+					},
+					"phoneNumber": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"whatsappOptedIn",
+					"phoneNumber"
+				],
+				"type": "object"
+			},
+			"SendOtpResponse": {
+				"properties": {
+					"expiresAt": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"expiresAt"
+				],
+				"type": "object"
+			},
+			"SendOtpRouteBody": {
+				"properties": {
+					"phoneNumber": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"phoneNumber"
+				],
+				"type": "object"
+			},
+			"VerifyOtpResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"enum": [
+							true
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"VerifyOtpRouteBody": {
+				"properties": {
+					"code": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"code"
+				],
+				"type": "object"
+			},
 			"UploadProfileImageResponse": {
 				"properties": {
 					"imageUrl": {
@@ -8431,7 +8522,8 @@
 							"enum": [
 								"email",
 								"in_app",
-								"sms"
+								"sms",
+								"whatsapp"
 							]
 						},
 						"type": "array"
@@ -13927,6 +14019,152 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/UpdateProfileRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/phone": {
+			"put": {
+				"operationId": "UpdatePhoneSettings",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UpdatePhoneSettingsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdatePhoneSettingsRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/phone/send-otp": {
+			"post": {
+				"operationId": "SendOtp",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SendOtpResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"429": {
+						"description": "Too many OTP requests",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SendOtpRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/profile/phone/verify-otp": {
+			"post": {
+				"operationId": "VerifyOtp",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifyOtpResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid or expired OTP",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifyOtpRouteBody"
 							}
 						}
 					}

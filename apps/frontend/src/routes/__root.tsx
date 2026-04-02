@@ -15,9 +15,10 @@ import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {ClerkVariables, Navbar, Footer, FullScreenLoading} from '~/components';
 import {ThemeProvider, useTheme} from '~/components/ThemeProvider';
-import {ClerkProvider} from '@clerk/tanstack-react-start';
+import {ClerkProvider, Show} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
 import {Toaster} from '~/components/ui/sonner';
+import {WhatsAppOptInModal} from '~/components/WhatsAppOptInModal';
 import {StickyBarProvider} from '~/contexts';
 import {createServerFn} from '@tanstack/react-start';
 import {auth} from '@clerk/tanstack-react-start/server';
@@ -239,6 +240,9 @@ function RootDocument({children}: {children: React.ReactNode}) {
                   <ReactQueryDevtools buttonPosition='bottom-left' />
                   <Scripts />
                   <Toaster position='top-center' />
+                  <Show when='signed-in'>
+                    <WhatsAppOptInModal />
+                  </Show>
                 </div>
               </StickyBarProvider>
             </ThemeProvider>
