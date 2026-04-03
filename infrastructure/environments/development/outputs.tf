@@ -113,4 +113,5 @@ output "bastion_instance_id" {
 output "db_tunnel_command" {
   description = "Command to create a tunnel to the RDS database via SSM"
   value       = "aws ssm start-session --target ${module.bastion.instance_id} --document-name AWS-StartPortForwardingSessionToRemoteHost --parameters '{\"host\":[\"${module.rds.db_address}\"],\"portNumber\":[\"5432\"],\"localPortNumber\":[\"5432\"]}' --region ${var.aws_region}"
+  sensitive   = true
 }
