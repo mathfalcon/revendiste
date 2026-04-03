@@ -104,13 +104,13 @@ output "face_liveness_role_arn" {
   value       = module.identity_verification.face_liveness_role_arn
 }
 
-# EC2 Instance Connect Endpoint outputs for database access
-output "ec2_instance_connect_endpoint_id" {
-  description = "EC2 Instance Connect Endpoint ID for database tunneling"
-  value       = module.ec2_instance_connect_endpoint.endpoint_id
+# Bastion host outputs for database access
+output "bastion_instance_id" {
+  description = "Bastion host instance ID for SSM port forwarding"
+  value       = module.bastion.instance_id
 }
 
 output "db_tunnel_command" {
-  description = "Command to create a tunnel to the RDS database"
-  value       = "aws ec2-instance-connect open-tunnel --instance-connect-endpoint-id ${module.ec2_instance_connect_endpoint.endpoint_id} --private-ip-address <RDS_IP> --local-port 5432 --remote-port 5432"
+  description = "Command to create a tunnel to the RDS database via SSM"
+  value       = "aws ssm start-session --target ${module.bastion.instance_id} --document-name AWS-StartPortForwardingSessionToRemoteHost --parameters '{\"host\":[\"${module.rds.db_address}\"],\"portNumber\":[\"5432\"],\"localPortNumber\":[\"5432\"]}' --region ${var.aws_region}"
 }
