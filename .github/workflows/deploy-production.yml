@@ -11,9 +11,9 @@ env:
   BACKEND_IMAGE_NAME: revendiste/backend-prod
   FRONTEND_IMAGE_NAME: revendiste/frontend-prod
   FRONTEND_DIR: apps/frontend
-  ECS_CLUSTER: revendiste-production-cluster
-  BACKEND_SERVICE: revendiste-production-backend
-  FRONTEND_SERVICE: revendiste-production-frontend
+  ECS_CLUSTER: revendiste-prod-cluster
+  BACKEND_SERVICE: revendiste-prod-backend
+  FRONTEND_SERVICE: revendiste-prod-frontend
 
 jobs:
   # Build backend for each architecture natively (no QEMU emulation)
