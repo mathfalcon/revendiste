@@ -44,6 +44,8 @@ type GetCurrentUserResponse = {
   phoneNumber: string | null;
   /** Whether user has opted in to WhatsApp notifications */
   whatsappOptedIn: boolean;
+  /** Whether user dismissed the WhatsApp opt-in prompt */
+  whatsappPromptDismissed: boolean;
 };
 
 @Route('users')
@@ -60,9 +62,10 @@ export class UsersController {
     const verificationStatus = request.user.verificationStatus || null;
 
     // Extract rejection reason from metadata if admin rejected
-    const metadata = (request.user.verificationMetadata as {
-      manualReview?: {action?: string; reason?: string};
-    }) || {};
+    const metadata =
+      (request.user.verificationMetadata as {
+        manualReview?: {action?: string; reason?: string};
+      }) || {};
     const rejectionReason =
       verificationStatus === 'rejected' && metadata.manualReview?.reason
         ? metadata.manualReview.reason
@@ -108,6 +111,7 @@ export class UsersController {
       rejectionReason,
       phoneNumber: request.user.phoneNumber ?? null,
       whatsappOptedIn: request.user.whatsappOptedIn ?? false,
+      whatsappPromptDismissed: request.user.whatsappPromptDismissed ?? false,
     };
   }
 }

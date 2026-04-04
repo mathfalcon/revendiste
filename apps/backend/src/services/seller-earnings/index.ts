@@ -42,6 +42,8 @@ interface EarningsForSelection {
     totalAmount: string;
     ticketCount: number;
     currency: EventTicketCurrency;
+    eventName: string;
+    eventStartDate: Date;
   }>;
   byTicket: Array<{
     id: string;
@@ -51,6 +53,8 @@ interface EarningsForSelection {
     holdUntil: Date;
     listingId: string;
     publisherUserId: string;
+    eventName: string;
+    eventStartDate: Date;
   }>;
 }
 
@@ -222,6 +226,8 @@ export class SellerEarningsService {
         holdUntil: ticket.holdUntil,
         listingId: ticket.listingId,
         publisherUserId: ticket.publisherUserId,
+        eventName: ticket.eventName,
+        eventStartDate: ticket.eventStartDate,
       })),
     };
   }

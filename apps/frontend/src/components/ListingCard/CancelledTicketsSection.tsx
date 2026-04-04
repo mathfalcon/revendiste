@@ -4,20 +4,25 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '~/components/ui/collapsible';
-import {Ticket, XCircle, ChevronDown} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu';
+import {Button} from '~/components/ui/button';
+import {Ticket, XCircle, ChevronDown, MoreVertical, Copy} from 'lucide-react';
 import {cn} from '~/lib/utils';
 import type {GetUserListingsResponse} from '~/lib/api/generated';
-import {TextEllipsis} from '../ui/text-ellipsis';
-import {CopyableText} from '~/components/ui/copyable-text';
+import {copyToClipboard} from '~/utils/clipboard';
+import {toast} from 'sonner';
 
 interface CancelledTicketsSectionProps {
   tickets: GetUserListingsResponse['data'][number]['tickets'];
-  ticketWaveName: string;
 }
 
 export function CancelledTicketsSection({
   tickets,
-  ticketWaveName,
 }: CancelledTicketsSectionProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -53,37 +58,53 @@ export function CancelledTicketsSection({
               key={ticket.id}
               className='rounded-xl border border-destructive/20 bg-destructive/5 p-3 transition-all'
             >
-              <div className='flex items-center gap-3'>
-                <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10'>
-                  <Ticket className='h-5 w-5 text-destructive' />
+              <div className='flex items-center justify-between gap-2'>
+                <div className='flex items-center gap-3 min-w-0 flex-1'>
+                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10'>
+                    <Ticket className='h-5 w-5 text-destructive' />
+                  </div>
+
+                  <div className='min-w-0'>
+                    <p className='font-semibold text-foreground'>
+                      Entrada #{ticket.ticketNumber}
+                    </p>
+                    {ticket.deletedAt && (
+                      <p className='text-sm text-muted-foreground mt-0.5'>
+                        Cancelado el{' '}
+                        {new Date(ticket.deletedAt).toLocaleDateString('es-ES', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                <div className='min-w-0'>
-                  <div className='flex items-center gap-2 flex-wrap'>
-                    <TextEllipsis className='font-semibold text-foreground'>
-                      Entrada #{ticket.ticketNumber} - {ticketWaveName}
-                    </TextEllipsis>
-                  </div>
-                  {ticket.deletedAt && (
-                    <p className='text-sm text-muted-foreground mt-0.5'>
-                      Cancelado el{' '}
-                      {new Date(ticket.deletedAt).toLocaleDateString('es-ES', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  )}
-                  <CopyableText
-                    text={ticket.id}
-                    label='ID:'
-                    truncateOnMobile
-                    className='mt-1'
-                    textClassName='text-xs text-muted-foreground'
-                  />
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='h-8 w-8 shrink-0'
+                    >
+                      <MoreVertical className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end'>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        const success = await copyToClipboard(ticket.id);
+                        if (success) toast.success('ID copiado');
+                      }}
+                    >
+                      <Copy className='mr-2 h-4 w-4' />
+                      Copiar ID
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           ))}

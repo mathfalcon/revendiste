@@ -1,21 +1,34 @@
 import {Button} from '~/components/ui/button';
 import {FullLogo} from '~/assets';
 import {EventSearchInput} from '../SearchInput';
-import {Link} from '@tanstack/react-router';
+import {Link, useMatch} from '@tanstack/react-router';
 import {Show, SignInButton} from '@clerk/tanstack-react-start';
 import {cn} from '~/lib/utils';
 import {UserProfile} from '../UserProfile';
 import {SignInAppearance} from '../SignInModal';
 import {NotificationBell} from '../NotificationBell';
 import {Search, TicketPlus} from 'lucide-react';
-import {useState, useEffect, useRef} from 'react';
+import {useState, useEffect, useRef, useMemo} from 'react';
 import {EventSearchModal} from '../EventSearchModal';
+import {useQueryClient} from '@tanstack/react-query';
+import {getEventBySlugQuery} from '~/lib';
 
 export const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
   const scrollThreshold = 10; // Minimum scroll distance to trigger hide/show
+
+  // Detect if we're on an event page and get the event ID from query cache
+  const eventMatch = useMatch({from: '/eventos/$slug', shouldThrow: false});
+  const queryClient = useQueryClient();
+  const publishSearch = useMemo(() => {
+    if (!eventMatch?.params.slug) return {};
+    const eventData = queryClient.getQueryData(
+      getEventBySlugQuery(eventMatch.params.slug).queryKey,
+    ) as {id: string} | undefined;
+    return eventData?.id ? {eventoId: eventData.id} : {};
+  }, [eventMatch?.params.slug, queryClient]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,7 +105,7 @@ export const Navbar = () => {
               className='md:hidden p-2 h-9 w-9'
               asChild
             >
-              <Link to='/entradas/publicar'>
+              <Link to='/entradas/publicar' search={publishSearch}>
                 <TicketPlus className='h-5 w-5' />
                 <span className='sr-only'>Publicá tus entradas</span>
               </Link>
@@ -117,7 +130,7 @@ export const Navbar = () => {
                 e.preventDefault();
               }}
             >
-              <Link to='/entradas/publicar'>Publicá tus entradas</Link>
+              <Link to='/entradas/publicar' search={publishSearch}>Publicá tus entradas</Link>
             </Button>
             <Show when='signed-in'>
               <NotificationBell />

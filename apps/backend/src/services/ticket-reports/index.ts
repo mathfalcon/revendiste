@@ -79,14 +79,27 @@ export class TicketReportsService {
 
   async createCase(data: CreateCaseData, userId: string) {
     // Check for existing active report on the same entity
-    const existingReport = await this.ticketReportsRepository.findActiveByEntity(
-      data.entityType,
-      data.entityId,
-    );
+    const existingReport =
+      await this.ticketReportsRepository.findActiveByEntity(
+        data.entityType,
+        data.entityId,
+      );
     if (existingReport) {
       throw new ConflictError(
         TICKET_REPORT_ERROR_MESSAGES.DUPLICATE_ACTIVE_REPORT,
         {existingReportId: existingReport.id},
+      );
+    }
+
+    // If admin already resolved a previous report for this entity, block new ones
+    const adminResolved =
+      await this.ticketReportsRepository.hasAdminResolvedReport(
+        data.entityType,
+        data.entityId,
+      );
+    if (adminResolved) {
+      throw new ValidationError(
+        TICKET_REPORT_ERROR_MESSAGES.ENTITY_ALREADY_RESOLVED,
       );
     }
 
@@ -123,10 +136,9 @@ export class TicketReportsService {
 
       // "invalid_ticket" only makes sense if the ticket actually has a document
       if (data.caseType === 'invalid_ticket') {
-        const doc =
-          await this.ticketDocumentsRepository.getPrimaryDocument(
-            data.entityId,
-          );
+        const doc = await this.ticketDocumentsRepository.getPrimaryDocument(
+          data.entityId,
+        );
         if (!doc) {
           throw new ValidationError(
             TICKET_REPORT_ERROR_MESSAGES.INVALID_TICKET_NO_DOCUMENT,
@@ -167,10 +179,11 @@ export class TicketReportsService {
    */
   async createAutoCase(data: CreateAutoCaseData) {
     // Check if an active report already exists for this entity
-    const existingReport = await this.ticketReportsRepository.findActiveByEntity(
-      data.entityType,
-      data.entityId,
-    );
+    const existingReport =
+      await this.ticketReportsRepository.findActiveByEntity(
+        data.entityType,
+        data.entityId,
+      );
     if (existingReport) {
       return existingReport;
     }
@@ -207,7 +220,9 @@ export class TicketReportsService {
         isAutoCase: true,
         eventName: data.eventName,
       }).catch(err =>
-        logger.error('Failed to send auto-case created notification to buyer', {err}),
+        logger.error('Failed to send auto-case created notification to buyer', {
+          err,
+        }),
       );
     }
 
@@ -222,13 +237,20 @@ export class TicketReportsService {
     return report;
   }
 
-  async checkExistingReport(entityType: TicketReportEntityType, entityId: string) {
+  async checkExistingReport(
+    entityType: TicketReportEntityType,
+    entityId: string,
+  ) {
     const existing = await this.ticketReportsRepository.findActiveByEntity(
       entityType,
       entityId,
     );
     if (existing) {
-      return {exists: true as const, reportId: existing.id, status: existing.status};
+      return {
+        exists: true as const,
+        reportId: existing.id,
+        status: existing.status,
+      };
     }
     return {exists: false as const};
   }
@@ -282,8 +304,7 @@ export class TicketReportsService {
     }
 
     const isRefund =
-      data.actionType === 'refund_partial' ||
-      data.actionType === 'refund_full';
+      data.actionType === 'refund_partial' || data.actionType === 'refund_full';
 
     // Phase 1: DB transaction — create records, mark reservations as refund_pending
     let pendingRefunds: Array<{
@@ -357,7 +378,10 @@ export class TicketReportsService {
         oldStatus: prevStatus,
         newStatus,
       }).catch(err =>
-        logger.error('Failed to send ticket_report_status_changed notification', {err}),
+        logger.error(
+          'Failed to send ticket_report_status_changed notification',
+          {err},
+        ),
       );
     }
 
@@ -383,7 +407,9 @@ export class TicketReportsService {
         performedByRole,
         comment: data.comment,
       }).catch(err =>
-        logger.error('Failed to send ticket_report_action_added notification', {err}),
+        logger.error('Failed to send ticket_report_action_added notification', {
+          err,
+        }),
       );
     }
 
@@ -403,12 +429,7 @@ export class TicketReportsService {
     if (report.status === 'closed') {
       throw new ValidationError(TICKET_REPORT_ERROR_MESSAGES.ALREADY_CLOSED);
     }
-    return this.addAction(
-      reportId,
-      {actionType: 'close'},
-      userId,
-      false,
-    );
+    return this.addAction(reportId, {actionType: 'close'}, userId, false);
   }
 
   async listCasesForAdmin(
@@ -540,7 +561,8 @@ export class TicketReportsService {
       };
 
       if (att.ticketReportActionId) {
-        const existing = attachmentsByAction.get(att.ticketReportActionId) || [];
+        const existing =
+          attachmentsByAction.get(att.ticketReportActionId) || [];
         existing.push(attachmentData);
         attachmentsByAction.set(att.ticketReportActionId, existing);
       } else {
@@ -613,7 +635,9 @@ export class TicketReportsService {
     if (data.actionType === 'refund_full') {
       if (report.entityType === 'order') {
         // Refund all active reservations in the order — each at their ticket price
-        const reservations = await repos.reservationsRepo.getByOrderId(report.entityId);
+        const reservations = await repos.reservationsRepo.getByOrderId(
+          report.entityId,
+        );
         for (const r of reservations) {
           if ((r as {status?: string}).status !== 'active') continue;
           // Get ticket price
@@ -629,10 +653,19 @@ export class TicketReportsService {
         }
       } else if (report.entityType === 'order_ticket_reservation') {
         // entityId is listing ticket ID
-        const reservation = await repos.reservationsRepo.getByListingTicketId(report.entityId);
-        if (reservation && (reservation as {status?: string}).status === 'active') {
-          const ticketPrice = await this.getTicketPrice(reservation.listingTicketId);
-          const order = await this.ordersRepository.getById(reservation.orderId);
+        const reservation = await repos.reservationsRepo.getByListingTicketId(
+          report.entityId,
+        );
+        if (
+          reservation &&
+          (reservation as {status?: string}).status === 'active'
+        ) {
+          const ticketPrice = await this.getTicketPrice(
+            reservation.listingTicketId,
+          );
+          const order = await this.ordersRepository.getById(
+            reservation.orderId,
+          );
           reservationsToRefund.push({
             reservationId: reservation.id,
             orderId: reservation.orderId,
@@ -645,14 +678,25 @@ export class TicketReportsService {
     } else if (data.actionType === 'refund_partial') {
       // For partial refund on order_ticket_reservation, refund the single ticket
       if (report.entityType === 'order_ticket_reservation') {
-        const reservation = await repos.reservationsRepo.getByListingTicketId(report.entityId);
-        if (reservation && (reservation as {status?: string}).status === 'active') {
-          const ticketPrice = await this.getTicketPrice(reservation.listingTicketId);
-          const order = await this.ordersRepository.getById(reservation.orderId);
+        const reservation = await repos.reservationsRepo.getByListingTicketId(
+          report.entityId,
+        );
+        if (
+          reservation &&
+          (reservation as {status?: string}).status === 'active'
+        ) {
+          const ticketPrice = await this.getTicketPrice(
+            reservation.listingTicketId,
+          );
+          const order = await this.ordersRepository.getById(
+            reservation.orderId,
+          );
 
           const refundAmount = data.metadata?.refundAmount;
           if (!refundAmount || refundAmount <= 0) {
-            throw new ValidationError('El monto del reembolso debe ser mayor a 0');
+            throw new ValidationError(
+              'El monto del reembolso debe ser mayor a 0',
+            );
           }
           if (refundAmount > ticketPrice) {
             throw new ValidationError(
@@ -671,15 +715,21 @@ export class TicketReportsService {
       } else if (report.entityType === 'order') {
         // Partial refund on an order — admin specifies the amount
         // We pick the first active reservation to link the refund record
-        const reservations = await repos.reservationsRepo.getByOrderId(report.entityId);
+        const reservations = await repos.reservationsRepo.getByOrderId(
+          report.entityId,
+        );
         const activeReservation = reservations.find(
           r => (r as {status?: string}).status === 'active',
         );
         if (activeReservation) {
-          const order = await this.ordersRepository.getById(activeReservation.orderId);
+          const order = await this.ordersRepository.getById(
+            activeReservation.orderId,
+          );
           const refundAmount = data.metadata?.refundAmount;
           if (!refundAmount || refundAmount <= 0) {
-            throw new ValidationError('El monto del reembolso debe ser mayor a 0');
+            throw new ValidationError(
+              'El monto del reembolso debe ser mayor a 0',
+            );
           }
           // For order-level partial, validate against subtotal (sum of ticket prices)
           const subtotal = order ? Number(order.subtotalAmount) : 0;
@@ -701,7 +751,10 @@ export class TicketReportsService {
 
     // Create DB records inside the transaction
     for (const info of reservationsToRefund) {
-      await repos.reservationsRepo.updateStatus(info.reservationId, 'refund_pending');
+      await repos.reservationsRepo.updateStatus(
+        info.reservationId,
+        'refund_pending',
+      );
 
       const refundRecord = await repos.refundsRepo.create({
         ticketReportId: report.id,
@@ -737,7 +790,9 @@ export class TicketReportsService {
   ) {
     for (const refund of pendingRefunds) {
       try {
-        const payment = await this.paymentsRepository.getByOrderId(refund.orderId);
+        const payment = await this.paymentsRepository.getByOrderId(
+          refund.orderId,
+        );
 
         if (!payment?.providerPaymentId) {
           logger.warn('No payment found for reservation during refund', {
@@ -782,22 +837,24 @@ export class TicketReportsService {
           orderId: refund.orderId,
           error: err,
         });
-        await this.ticketReportRefundsRepository.updateStatus(
-          refund.refundRecordId,
-          'skipped',
-          new Date(),
-        ).catch(updateErr =>
-          logger.error('Failed to update refund record after dLocal failure', {
-            refundRecordId: refund.refundRecordId,
-            error: updateErr,
-          }),
-        );
+        await this.ticketReportRefundsRepository
+          .updateStatus(refund.refundRecordId, 'skipped', new Date())
+          .catch(updateErr =>
+            logger.error(
+              'Failed to update refund record after dLocal failure',
+              {
+                refundRecordId: refund.refundRecordId,
+                error: updateErr,
+              },
+            ),
+          );
       }
     }
   }
 
   private async getTicketPrice(listingTicketId: string): Promise<number> {
-    const result = await this.ticketReportsRepository.getTicketPrice(listingTicketId);
+    const result =
+      await this.ticketReportsRepository.getTicketPrice(listingTicketId);
     return result ? Number(result.price) : 0;
   }
 }

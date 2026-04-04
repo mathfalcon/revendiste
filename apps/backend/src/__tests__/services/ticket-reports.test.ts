@@ -14,7 +14,13 @@ import type {NotificationService} from '~/services/notifications';
 import type {DLocalService} from '~/services/dlocal';
 import type {IStorageProvider} from '~/services/storage/IStorageProvider';
 import {NotFoundError, UnauthorizedError, ValidationError} from '~/errors';
-import type {Orders, Payments, OrderTicketReservations, ListingTickets, DB} from '@revendiste/shared';
+import type {
+  Orders,
+  Payments,
+  OrderTicketReservations,
+  ListingTickets,
+  DB,
+} from '@revendiste/shared';
 import type {Selectable, Kysely} from 'kysely';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import {
@@ -46,6 +52,7 @@ describe('TicketReportsService', () => {
       getForAdmin: jest.fn(),
       updateStatus: jest.fn(),
       findActiveByEntity: jest.fn().mockResolvedValue(null),
+      hasAdminResolvedReport: jest.fn().mockResolvedValue(false),
       getEntityDetails: jest.fn().mockResolvedValue(null),
       getReporterInfo: jest.fn().mockResolvedValue(null),
       getTicketPrice: jest.fn().mockResolvedValue(null),
@@ -159,7 +166,10 @@ describe('TicketReportsService', () => {
   describe('createCase', () => {
     it('creates a report with status awaiting_support and source user_report', async () => {
       const mockReport = createMockTicketReport({reportedByUserId: 'user-1'});
-      mockOrdersRepo.getById.mockResolvedValue({id: 'entity-1', userId: 'user-1'} as unknown as Selectable<Orders>);
+      mockOrdersRepo.getById.mockResolvedValue({
+        id: 'entity-1',
+        userId: 'user-1',
+      } as unknown as Selectable<Orders>);
       mockReportsRepo.create.mockResolvedValue(mockReport);
 
       const result = await service.createCase(
@@ -180,7 +190,10 @@ describe('TicketReportsService', () => {
 
     it('fires a notification after creating the case', async () => {
       const mockReport = createMockTicketReport();
-      mockOrdersRepo.getById.mockResolvedValue({id: 'entity-1', userId: 'user-1'} as unknown as Selectable<Orders>);
+      mockOrdersRepo.getById.mockResolvedValue({
+        id: 'entity-1',
+        userId: 'user-1',
+      } as unknown as Selectable<Orders>);
       mockReportsRepo.create.mockResolvedValue(mockReport);
 
       await service.createCase(
@@ -207,7 +220,10 @@ describe('TicketReportsService', () => {
     });
 
     it('throws UnauthorizedError when user does not own the order', async () => {
-      mockOrdersRepo.getById.mockResolvedValue({id: 'entity-1', userId: 'other-user'} as unknown as Selectable<Orders>);
+      mockOrdersRepo.getById.mockResolvedValue({
+        id: 'entity-1',
+        userId: 'other-user',
+      } as unknown as Selectable<Orders>);
 
       await expect(
         service.createCase(
@@ -222,19 +238,33 @@ describe('TicketReportsService', () => {
 
       await expect(
         service.createCase(
-          {caseType: 'other', entityType: 'order_ticket_reservation', entityId: 'nonexistent'},
+          {
+            caseType: 'other',
+            entityType: 'order_ticket_reservation',
+            entityId: 'nonexistent',
+          },
           'user-1',
         ),
       ).rejects.toThrow(NotFoundError);
     });
 
     it('throws UnauthorizedError when user does not own the reservation', async () => {
-      mockReservationsRepo.getByListingTicketId.mockResolvedValue({id: 'res-1', orderId: 'order-1'} as unknown as Selectable<OrderTicketReservations>);
-      mockOrdersRepo.getById.mockResolvedValue({id: 'order-1', userId: 'other-user'} as unknown as Selectable<Orders>);
+      mockReservationsRepo.getByListingTicketId.mockResolvedValue({
+        id: 'res-1',
+        orderId: 'order-1',
+      } as unknown as Selectable<OrderTicketReservations>);
+      mockOrdersRepo.getById.mockResolvedValue({
+        id: 'order-1',
+        userId: 'other-user',
+      } as unknown as Selectable<Orders>);
 
       await expect(
         service.createCase(
-          {caseType: 'other', entityType: 'order_ticket_reservation', entityId: 'res-1'},
+          {
+            caseType: 'other',
+            entityType: 'order_ticket_reservation',
+            entityId: 'res-1',
+          },
           'user-1',
         ),
       ).rejects.toThrow(UnauthorizedError);
@@ -250,10 +280,18 @@ describe('TicketReportsService', () => {
         reportedByUserId: 'user-1',
       });
       mockReportsRepo.getById.mockResolvedValue(report);
-      mockReportsRepo.updateStatus.mockResolvedValue({...report, status: 'awaiting_support'});
+      mockReportsRepo.updateStatus.mockResolvedValue({
+        ...report,
+        status: 'awaiting_support',
+      });
       mockActionsRepo.create.mockResolvedValue(createMockTicketReportAction());
 
-      await service.addAction(report.id, {actionType: 'comment', comment: 'hola'}, 'user-1', false);
+      await service.addAction(
+        report.id,
+        {actionType: 'comment', comment: 'hola'},
+        'user-1',
+        false,
+      );
 
       expect(mockReportsRepo.updateStatus).toHaveBeenCalledWith(
         report.id,
@@ -267,7 +305,12 @@ describe('TicketReportsService', () => {
       mockReportsRepo.getById.mockResolvedValue(report);
 
       await expect(
-        service.addAction(report.id, {actionType: 'comment'}, 'other-user', false),
+        service.addAction(
+          report.id,
+          {actionType: 'comment'},
+          'other-user',
+          false,
+        ),
       ).rejects.toThrow(UnauthorizedError);
     });
 
@@ -276,7 +319,12 @@ describe('TicketReportsService', () => {
       mockReportsRepo.getById.mockResolvedValue(report);
 
       await expect(
-        service.addAction(report.id, {actionType: 'refund_full'}, 'user-1', false),
+        service.addAction(
+          report.id,
+          {actionType: 'refund_full'},
+          'user-1',
+          false,
+        ),
       ).rejects.toThrow(ValidationError);
     });
   });
@@ -287,10 +335,18 @@ describe('TicketReportsService', () => {
     it('sets status to awaiting_customer when admin comments', async () => {
       const report = createMockTicketReport({status: 'awaiting_support'});
       mockReportsRepo.getById.mockResolvedValue(report);
-      mockReportsRepo.updateStatus.mockResolvedValue({...report, status: 'awaiting_customer'});
+      mockReportsRepo.updateStatus.mockResolvedValue({
+        ...report,
+        status: 'awaiting_customer',
+      });
       mockActionsRepo.create.mockResolvedValue(createMockTicketReportAction());
 
-      await service.addAction(report.id, {actionType: 'comment', comment: 'info'}, 'admin-1', true);
+      await service.addAction(
+        report.id,
+        {actionType: 'comment', comment: 'info'},
+        'admin-1',
+        true,
+      );
 
       expect(mockReportsRepo.updateStatus).toHaveBeenCalledWith(
         report.id,
@@ -308,8 +364,14 @@ describe('TicketReportsService', () => {
       async actionType => {
         const report = createMockTicketReport({status: 'awaiting_support'});
         mockReportsRepo.getById.mockResolvedValue(report);
-        mockReportsRepo.updateStatus.mockResolvedValue({...report, status: 'closed', closedAt: new Date()});
-        mockActionsRepo.create.mockResolvedValue(createMockTicketReportAction({actionType}));
+        mockReportsRepo.updateStatus.mockResolvedValue({
+          ...report,
+          status: 'closed',
+          closedAt: new Date(),
+        });
+        mockActionsRepo.create.mockResolvedValue(
+          createMockTicketReportAction({actionType}),
+        );
 
         await service.addAction(report.id, {actionType}, 'admin-1', true);
 
@@ -344,14 +406,31 @@ describe('TicketReportsService', () => {
         entityId: 'order-1',
       });
       mockReportsRepo.getById.mockResolvedValue(report);
-      mockReportsRepo.updateStatus.mockResolvedValue({...report, status: 'closed'});
-      mockActionsRepo.create.mockResolvedValue(createMockTicketReportAction({actionType: 'refund_full'}));
+      mockReportsRepo.updateStatus.mockResolvedValue({
+        ...report,
+        status: 'closed',
+      });
+      mockActionsRepo.create.mockResolvedValue(
+        createMockTicketReportAction({actionType: 'refund_full'}),
+      );
 
       mockReservationsRepo.getByOrderId.mockResolvedValue([
-        {id: 'res-1', status: 'active', orderId: 'order-1', listingTicketId: 'lt-1'} as unknown as Awaited<ReturnType<OrderTicketReservationsRepository['getByOrderId']>>[number],
+        {
+          id: 'res-1',
+          status: 'active',
+          orderId: 'order-1',
+          listingTicketId: 'lt-1',
+        } as unknown as Awaited<
+          ReturnType<OrderTicketReservationsRepository['getByOrderId']>
+        >[number],
       ]);
-      mockReportsRepo.getTicketPrice.mockResolvedValue({price: '575'} as unknown as Pick<Selectable<ListingTickets>, 'price'>);
-      mockOrdersRepo.getById.mockResolvedValue({id: 'order-1', currency: 'UYU'} as unknown as Selectable<Orders>);
+      mockReportsRepo.getTicketPrice.mockResolvedValue({
+        price: '575',
+      } as unknown as Pick<Selectable<ListingTickets>, 'price'>);
+      mockOrdersRepo.getById.mockResolvedValue({
+        id: 'order-1',
+        currency: 'UYU',
+      } as unknown as Selectable<Orders>);
       mockRefundsRepo.create.mockResolvedValue(createMockTicketReportRefund());
       mockPaymentsRepo.getByOrderId.mockResolvedValue({
         id: 'payment-1',
@@ -362,9 +441,16 @@ describe('TicketReportsService', () => {
         id: 'refund-1',
         status: 'PAID',
       } as unknown as Awaited<ReturnType<DLocalService['createRefund']>>);
-      mockRefundsRepo.updateStatus.mockResolvedValue(createMockTicketReportRefund({refundStatus: 'refunded'}));
+      mockRefundsRepo.updateStatus.mockResolvedValue(
+        createMockTicketReportRefund({refundStatus: 'refunded'}),
+      );
 
-      await service.addAction(report.id, {actionType: 'refund_full'}, 'admin-1', true);
+      await service.addAction(
+        report.id,
+        {actionType: 'refund_full'},
+        'admin-1',
+        true,
+      );
       // executeDLocalRefunds is fire-and-forget — flush microtasks/promises to let it complete
       await new Promise(r => setTimeout(r, 10));
 
@@ -372,14 +458,20 @@ describe('TicketReportsService', () => {
         expect.objectContaining({paymentId: 'dlocal-123'}),
       );
       expect(mockRefundsRepo.create).toHaveBeenCalled();
-      expect(mockReservationsRepo.updateStatus).toHaveBeenCalledWith('res-1', 'refund_pending');
+      expect(mockReservationsRepo.updateStatus).toHaveBeenCalledWith(
+        'res-1',
+        'refund_pending',
+      );
       expect(mockRefundsRepo.updateStatus).toHaveBeenCalledWith(
         expect.any(String),
         'refunded',
         expect.any(Date),
         expect.any(Number), // refundAmount (ticket price)
       );
-      expect(mockReservationsRepo.updateStatus).toHaveBeenCalledWith('res-1', 'refunded');
+      expect(mockReservationsRepo.updateStatus).toHaveBeenCalledWith(
+        'res-1',
+        'refunded',
+      );
       expect(mockReportsRepo.updateStatus).toHaveBeenCalledWith(
         report.id,
         'closed',
@@ -394,25 +486,49 @@ describe('TicketReportsService', () => {
         status: 'awaiting_support',
       });
       mockReportsRepo.getById.mockResolvedValue(report);
-      mockReportsRepo.updateStatus.mockResolvedValue({...report, status: 'closed'});
+      mockReportsRepo.updateStatus.mockResolvedValue({
+        ...report,
+        status: 'closed',
+      });
       mockActionsRepo.create.mockResolvedValue(createMockTicketReportAction());
 
       mockReservationsRepo.getByOrderId.mockResolvedValue([
-        {id: 'res-1', status: 'active', orderId: 'order-1', listingTicketId: 'lt-1'} as unknown as Awaited<ReturnType<OrderTicketReservationsRepository['getByOrderId']>>[number],
+        {
+          id: 'res-1',
+          status: 'active',
+          orderId: 'order-1',
+          listingTicketId: 'lt-1',
+        } as unknown as Awaited<
+          ReturnType<OrderTicketReservationsRepository['getByOrderId']>
+        >[number],
       ]);
-      mockReportsRepo.getTicketPrice.mockResolvedValue({price: '575'} as unknown as Pick<Selectable<ListingTickets>, 'price'>);
-      mockOrdersRepo.getById.mockResolvedValue({id: 'order-1', currency: 'UYU'} as unknown as Selectable<Orders>);
+      mockReportsRepo.getTicketPrice.mockResolvedValue({
+        price: '575',
+      } as unknown as Pick<Selectable<ListingTickets>, 'price'>);
+      mockOrdersRepo.getById.mockResolvedValue({
+        id: 'order-1',
+        currency: 'UYU',
+      } as unknown as Selectable<Orders>);
       mockRefundsRepo.create.mockResolvedValue(createMockTicketReportRefund());
       mockPaymentsRepo.getByOrderId.mockResolvedValue({
         providerPaymentId: 'dlocal-123',
         currency: 'UYU',
       } as unknown as Selectable<Payments>);
-      mockDLocalService.createRefund.mockRejectedValue(new Error('dLocal unavailable'));
-      mockRefundsRepo.updateStatus.mockResolvedValue(createMockTicketReportRefund({refundStatus: 'skipped'}));
+      mockDLocalService.createRefund.mockRejectedValue(
+        new Error('dLocal unavailable'),
+      );
+      mockRefundsRepo.updateStatus.mockResolvedValue(
+        createMockTicketReportRefund({refundStatus: 'skipped'}),
+      );
 
       // Should NOT throw
       await expect(
-        service.addAction(report.id, {actionType: 'refund_full'}, 'admin-1', true),
+        service.addAction(
+          report.id,
+          {actionType: 'refund_full'},
+          'admin-1',
+          true,
+        ),
       ).resolves.not.toThrow();
 
       expect(mockRefundsRepo.updateStatus).toHaveBeenCalledWith(
@@ -427,9 +543,15 @@ describe('TicketReportsService', () => {
 
   describe('closeCase', () => {
     it('closes the case when user owns it', async () => {
-      const report = createMockTicketReport({reportedByUserId: 'user-1', status: 'awaiting_support'});
+      const report = createMockTicketReport({
+        reportedByUserId: 'user-1',
+        status: 'awaiting_support',
+      });
       mockReportsRepo.getById.mockResolvedValue(report);
-      mockReportsRepo.updateStatus.mockResolvedValue({...report, status: 'closed'});
+      mockReportsRepo.updateStatus.mockResolvedValue({
+        ...report,
+        status: 'closed',
+      });
       mockActionsRepo.create.mockResolvedValue(createMockTicketReportAction());
 
       await service.closeCase(report.id, 'user-1');
@@ -451,7 +573,10 @@ describe('TicketReportsService', () => {
     });
 
     it('throws ValidationError when case is already closed', async () => {
-      const report = createMockTicketReport({reportedByUserId: 'user-1', status: 'closed'});
+      const report = createMockTicketReport({
+        reportedByUserId: 'user-1',
+        status: 'closed',
+      });
       mockReportsRepo.getById.mockResolvedValue(report);
 
       await expect(service.closeCase(report.id, 'user-1')).rejects.toThrow(

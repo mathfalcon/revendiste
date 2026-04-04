@@ -19,6 +19,8 @@ interface EarningsByListing {
   totalAmount: string;
   ticketCount: number;
   currency: EventTicketCurrency;
+  eventName: string;
+  eventStartDate: Date;
 }
 
 export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepository> {
@@ -123,12 +125,20 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'listingTickets.id',
       )
       .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
+      .innerJoin(
+        'eventTicketWaves',
+        'listings.ticketWaveId',
+        'eventTicketWaves.id',
+      )
+      .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
       .select(eb => [
         'listings.id as listingId',
         'listings.publisherUserId',
         sql<string>`SUM(seller_earnings.seller_amount)`.as('totalAmount'),
         sql<number>`COUNT(seller_earnings.id)`.as('ticketCount'),
         'sellerEarnings.currency',
+        'events.name as eventName',
+        'events.eventStartDate',
       ])
       .where('sellerEarnings.sellerUserId', '=', sellerUserId)
       .where('sellerEarnings.status', '=', 'available')
@@ -138,6 +148,8 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'listings.id',
         'listings.publisherUserId',
         'sellerEarnings.currency',
+        'events.name',
+        'events.eventStartDate',
       ])
       .execute();
   }
@@ -151,6 +163,12 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'listingTickets.id',
       )
       .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
+      .innerJoin(
+        'eventTicketWaves',
+        'listings.ticketWaveId',
+        'eventTicketWaves.id',
+      )
+      .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
       .select([
         'sellerEarnings.id',
         'sellerEarnings.listingTicketId',
@@ -159,6 +177,8 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'sellerEarnings.holdUntil',
         'listings.id as listingId',
         'listings.publisherUserId',
+        'events.name as eventName',
+        'events.eventStartDate',
       ])
       .where('sellerEarnings.sellerUserId', '=', sellerUserId)
       .where('sellerEarnings.status', '=', 'available')

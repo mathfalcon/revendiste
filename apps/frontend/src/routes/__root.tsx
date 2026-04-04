@@ -10,15 +10,13 @@ import * as React from 'react';
 import type {QueryClient} from '@tanstack/react-query';
 import {DefaultCatchBoundary} from '~/components/DefaultCatchBoundary';
 import {NotFound} from '~/components/NotFound';
-import appCss from '~/styles/app.css?url';
-import {seo} from '~/utils/seo';
-import {getBaseUrl} from '~/config/env';
 import {ClerkVariables, Navbar, Footer, FullScreenLoading} from '~/components';
 import {ThemeProvider, useTheme} from '~/components/ThemeProvider';
 import {ClerkProvider, Show} from '@clerk/tanstack-react-start';
 import {esUY} from '@clerk/localizations';
 import {Toaster} from '~/components/ui/sonner';
 import {WhatsAppOptInModal} from '~/components/WhatsAppOptInModal';
+import {PwaInstallBanner} from '~/components/PwaInstallBanner';
 import {StickyBarProvider} from '~/contexts';
 import {createServerFn} from '@tanstack/react-start';
 import {auth} from '@clerk/tanstack-react-start/server';
@@ -26,6 +24,7 @@ import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
 import {PostHogProvider} from 'posthog-js/react';
 import {useUser} from '@clerk/tanstack-react-start';
 import posthog from 'posthog-js';
+import {getRootHead} from '~/utils/root-head';
 
 export const fetchClerkAuth = createServerFn({method: 'GET'}).handler(
   async () => {
@@ -37,101 +36,7 @@ export const fetchClerkAuth = createServerFn({method: 'GET'}).handler(
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
-  head: () => ({
-    meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      ...seo({
-        title:
-          'Revendiste | Comprá y vendé entradas de forma segura en Uruguay',
-        description:
-          'Revendiste es la plataforma más segura de Uruguay para comprar y vender entradas a conciertos, fiestas y eventos. Custodia de fondos, vendedores verificados y garantía de compra.',
-        baseUrl: getBaseUrl(),
-      }),
-    ],
-    links: [
-      {rel: 'stylesheet', href: appCss},
-      {
-        rel: 'apple-touch-icon',
-        sizes: '180x180',
-        href: '/apple-touch-icon.png',
-      },
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '32x32',
-        href: '/favicon-32x32.png',
-      },
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '16x16',
-        href: '/favicon-16x16.png',
-      },
-      {rel: 'manifest', href: '/site.webmanifest', color: '#fffff'},
-      {rel: 'icon', href: '/favicon.ico'},
-      {
-        rel: 'preconnect',
-        href: 'https://fonts.googleapis.com',
-        crossOrigin: 'anonymous',
-      },
-      {
-        rel: 'preconnect',
-        href: 'https://fonts.gstatic.com',
-        crossOrigin: 'anonymous',
-      },
-      // Preload font CSS asynchronously to avoid blocking render
-      {
-        rel: 'preload',
-        href: 'https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap',
-        as: 'style',
-      },
-      // Load stylesheet asynchronously using media="print" trick
-      {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap',
-        media: 'print',
-      },
-    ],
-    scripts: [
-      // Sync theme-color meta tag with app theme before hydration to avoid flash
-      {
-        children: `
-          (function() {
-            var t = localStorage.getItem('vite-ui-theme');
-            var dark = t === 'dark' || ((t === null || t === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            var meta = document.createElement('meta');
-            meta.name = 'theme-color';
-            meta.content = dark ? '#181819' : '#ffffff';
-            document.head.appendChild(meta);
-          })();
-        `,
-      },
-      // Convert print media stylesheet to all media after load (async font loading)
-      {
-        children: `
-          (function() {
-            const fontStylesheet = document.querySelector('link[href*="fonts.googleapis.com/css2"][media="print"]');
-            if (fontStylesheet) {
-              // If already loaded, apply immediately
-              if (fontStylesheet.sheet) {
-                fontStylesheet.media = 'all';
-              } else {
-                // Otherwise wait for load
-                fontStylesheet.onload = function() { this.media = 'all'; };
-                fontStylesheet.onerror = function() { this.media = 'all'; };
-              }
-            }
-          })();
-        `,
-      },
-    ],
-  }),
+  head: getRootHead,
   pendingComponent: FullScreenLoading,
   errorComponent: props => {
     return (
@@ -207,6 +112,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
             ui_host: 'https://us.posthog.com',
             defaults: '2026-01-30',
             capture_exceptions: true,
+            disable_surveys: true,
           }}
         >
           <ClerkProvider
@@ -242,6 +148,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
                   <Toaster position='top-center' />
                   <Show when='signed-in'>
                     <WhatsAppOptInModal />
+                    <PwaInstallBanner />
                   </Show>
                 </div>
               </StickyBarProvider>

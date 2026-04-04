@@ -4,6 +4,7 @@ import {HomeAbout} from './HomeAbout';
 import {HomeEvents} from './HomeEvents';
 import {HomeHero} from './HomeHero';
 import {TrendingEvents} from './TrendingEvents';
+import {ExploreByLocation} from './ExploreByLocation';
 import type {LocationFilter} from './LocationFilter';
 
 export const HomePage = () => {
@@ -18,7 +19,12 @@ export const HomePage = () => {
     };
 
     if (search.ubicacion === 'cerca' && search.lat && search.lng) {
-      return {type: 'nearby' as const, lat: search.lat, lng: search.lng, ...base};
+      return {
+        type: 'nearby' as const,
+        lat: search.lat,
+        lng: search.lng,
+        ...base,
+      };
     }
     if (search.ubicacion) {
       const regions = search.ubicacion.split(',');
@@ -59,6 +65,7 @@ export const HomePage = () => {
           locationFilter={locationFilter}
           onLocationChange={handleLocationChange}
         />
+        <ExploreByLocation />
         <HomeAbout />
       </main>
     </div>

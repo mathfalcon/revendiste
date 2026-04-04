@@ -3,6 +3,7 @@ import {z} from 'zod';
 import {HomePage} from '~/features';
 import {seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
+import {getEventsInfiniteQuery, getTrendingEventsQuery} from '~/lib';
 
 const homeSearchSchema = z.object({
   ubicacion: z.string().optional().catch(undefined),
@@ -16,6 +17,32 @@ const homeSearchSchema = z.object({
 export const Route = createFileRoute('/')({
   component: Home,
   validateSearch: homeSearchSchema,
+  loaderDeps: ({search}) => ({search}),
+  loader: async ({context, deps: {search}}) => {
+    const filters: Record<string, string | number | boolean> = {};
+
+    if (search.ubicacion === 'cerca' && search.lat && search.lng) {
+      filters.lat = search.lat;
+      filters.lng = search.lng;
+    } else if (search.ubicacion) {
+      filters.region = search.ubicacion;
+    }
+
+    if (search.desde) filters.dateFrom = search.desde;
+    if (search.hasta) filters.dateTo = search.hasta;
+    if (search.conEntradas) filters.hasTickets = true;
+    if (search.desde || search.hasta) {
+      filters.tzOffset = new Date().getTimezoneOffset();
+    }
+
+    // Prefetch both queries in parallel — server is in the same VPC as the backend
+    await Promise.all([
+      context.queryClient.ensureQueryData(getTrendingEventsQuery(7, 6)),
+      context.queryClient.ensureInfiniteQueryData(
+        getEventsInfiniteQuery(20, filters),
+      ),
+    ]);
+  },
   head: () => {
     const baseUrl = getBaseUrl();
 

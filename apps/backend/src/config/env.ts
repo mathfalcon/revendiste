@@ -54,8 +54,8 @@ const EnvSchema = z.object({
   WHATSAPP_PROVIDER: z
     .enum(['console', 'whatsapp_business'])
     .default('console'),
-  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
-  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().min(1),
+  WHATSAPP_ACCESS_TOKEN: z.string().min(1),
   WHATSAPP_API_VERSION: z.string().default('v21.0'),
   // Payout configuration
   PAYOUT_MINIMUM_UYU: z.coerce.number().default(1000), // $1,000 UYU
@@ -82,14 +82,18 @@ const EnvSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().optional().default(100), // max requests per window per IP
   // FEU Electronic Invoicing (optional; required for invoice generation)
   FEU_ENV: z.enum(['test', 'prod']).optional().default('test'),
-  FEU_AUTH_URL: z.url().optional(),
-  FEU_API_BASE_URL: z.url().optional(),
+  FEU_AUTH_URL: z.url().nonempty(),
+  FEU_API_BASE_URL: z.url().nonempty(),
   FEU_USERNAME: z.string().optional(),
   FEU_PASSWORD: z.string().optional(),
-  FEU_REFRESH_TOKEN: z.string().optional(), // Long-lived (e.g. 365 days); update in secrets yearly
-  FEU_EMISOR_RUT: z.string().optional(),
-  FEU_SUCURSAL: z.coerce.number().optional().default(1),
+  FEU_REFRESH_TOKEN: z.string().nonempty(), // Long-lived (e.g. 365 days); update in secrets yearly
+  FEU_EMISOR_RUT: z.string().nonempty(),
+  FEU_SUCURSAL: z.coerce.number().default(1),
   FEU_REQUEST_TIMEOUT_MS: z.coerce.number().optional().default(30_000),
+  // Web Push (VAPID) — generate with `npx web-push generate-vapid-keys`
+  VAPID_PUBLIC_KEY: z.string().nonempty(),
+  VAPID_PRIVATE_KEY: z.string().nonempty(),
+  VAPID_SUBJECT: z.string().optional().default('mailto:ayuda@revendiste.com'),
 });
 
 export const env = EnvSchema.safeParse(process.env);
@@ -165,4 +169,7 @@ export const {
   FEU_EMISOR_RUT,
   FEU_SUCURSAL,
   FEU_REQUEST_TIMEOUT_MS,
+  VAPID_PUBLIC_KEY,
+  VAPID_PRIVATE_KEY,
+  VAPID_SUBJECT,
 } = env.data;

@@ -6,8 +6,7 @@ import {EventTicketCurrency, formatPrice} from '@revendiste/shared';
 export const ORDER_ERROR_MESSAGES = {
   // Event related errors
   EVENT_NOT_FOUND: 'Evento no encontrado',
-  EVENT_FINISHED:
-    'No podés crear una orden para un evento que ya terminó',
+  EVENT_FINISHED: 'No podés crear una orden para un evento que ya terminó',
 
   // Ticket wave related errors
   TICKET_WAVE_NOT_FOUND: (ticketWaveId: string) =>
@@ -63,8 +62,7 @@ export const ORDER_ERROR_MESSAGES = {
 // Error messages for ticket listings
 export const TICKET_LISTING_ERROR_MESSAGES = {
   EVENT_NOT_FOUND: 'Evento no encontrado',
-  EVENT_FINISHED:
-    'No podés publicar entradas de un evento que ya terminó',
+  EVENT_FINISHED: 'No podés publicar entradas de un evento que ya terminó',
   TICKET_WAVE_NOT_FOUND: 'Tanda de entradas no encontrada',
   TICKET_WAVE_INVALID_EVENT:
     'La tanda de entradas no pertenece al evento especificado',
@@ -80,8 +78,7 @@ export const TICKET_LISTING_ERROR_MESSAGES = {
     )} (115% del valor nominal)`,
   INVALID_QUANTITY: 'La cantidad debe ser mayor que 0',
   TICKET_NOT_FOUND: 'Entrada no encontrada',
-  UNAUTHORIZED_TICKET_ACCESS:
-    'No estás autorizado para modificar esta entrada',
+  UNAUTHORIZED_TICKET_ACCESS: 'No estás autorizado para modificar esta entrada',
   TICKET_SOLD: 'No podés modificar una entrada que ya se vendió',
   TICKET_CANCELLED: 'No podés modificar una entrada que fue cancelada',
   TICKET_RESERVED:
@@ -105,12 +102,10 @@ export const TICKET_DOCUMENT_ERROR_MESSAGES = {
   UNAUTHORIZED_UPLOAD:
     'No estás autorizado para subir documentos para esta entrada',
   UNAUTHORIZED_ACCESS: 'No estás autorizado para acceder a esta entrada',
-  UNAUTHORIZED_DELETE:
-    'No estás autorizado para eliminar este documento',
+  UNAUTHORIZED_DELETE: 'No estás autorizado para eliminar este documento',
   UNAUTHORIZED_VIEW: 'No estás autorizado para ver esta entrada',
   UNSOLD_TICKET: 'No podés subir un documento para una entrada no vendida',
-  EVENT_ENDED:
-    'No podés subir un documento después de que terminó el evento',
+  EVENT_ENDED: 'No podés subir un documento después de que terminó el evento',
   UPLOAD_TOO_EARLY: (availableAt: Date) =>
     `Todavía no podés subir el documento. Vas a poder hacerlo a partir del ${availableAt.toLocaleDateString(
       'es-ES',
@@ -159,10 +154,10 @@ export const PAYOUT_ERROR_MESSAGES = {
   INSUFFICIENT_BALANCE: 'No tenés saldo suficiente para este retiro',
   BELOW_MINIMUM_THRESHOLD: (currency: string, minimum: number) =>
     `El monto mínimo para retirar es ${minimum} ${currency}`,
-  NO_EARNINGS_SELECTED: 'Tenés que seleccionar al menos una ganancia para retirar',
+  NO_EARNINGS_SELECTED:
+    'Tenés que seleccionar al menos una ganancia para retirar',
   EARNINGS_NOT_AVAILABLE: 'Las ganancias seleccionadas no están disponibles',
-  MIXED_CURRENCIES:
-    'No podés mezclar diferentes monedas en un mismo retiro',
+  MIXED_CURRENCIES: 'No podés mezclar diferentes monedas en un mismo retiro',
   INVALID_PAYOUT_METHOD: 'Método de retiro inválido',
   PAYOUT_ALREADY_PROCESSED: 'Este retiro ya fue procesado',
   PAYOUT_NOT_PENDING: (status: string) =>
@@ -280,8 +275,7 @@ export const IDENTITY_VERIFICATION_ERROR_MESSAGES = {
   // Retry and attempt errors
   MAX_ATTEMPTS_EXCEEDED:
     'Llegaste al límite de intentos. Por favor, contactá a soporte',
-  RETRY_AFTER_FAILURE:
-    'La verificación falló. Intentá de nuevo.',
+  RETRY_AFTER_FAILURE: 'La verificación falló. Intentá de nuevo.',
 
   // Manual review reasons (for internal use)
   MANUAL_REVIEW_FACE_SIMILARITY: (similarity: number) =>
@@ -321,6 +315,8 @@ export const TICKET_REPORT_ERROR_MESSAGES = {
   ATTACHMENT_VIDEO_TOO_LARGE: 'El video debe ser menor a 50 MB',
   ATTACHMENT_CASE_CLOSED: 'No se pueden agregar adjuntos a un caso cerrado',
   DUPLICATE_ACTIVE_REPORT: 'Ya existe un reporte abierto para esta entidad.',
+  ENTITY_ALREADY_RESOLVED:
+    'Este ticket ya fue revisado y resuelto por nuestro equipo de soporte. No se pueden crear más reportes.',
 } as const;
 
 // Error messages for profile management
@@ -342,8 +338,7 @@ export const PROFILE_ERROR_MESSAGES = {
   EMAIL_IS_PRIMARY: 'No se puede eliminar el email principal',
   EMAIL_ADDRESS_ID_REQUIRED: 'El ID del email es requerido',
   EMAIL_ADDRESS_REQUIRED: 'La dirección de email es requerida',
-  EMAIL_ADD_FAILED: (error: string) =>
-    `Error al agregar el email: ${error}`,
+  EMAIL_ADD_FAILED: (error: string) => `Error al agregar el email: ${error}`,
   EMAIL_VERIFICATION_CODE_REQUIRED: 'El código de verificación es requerido',
   EMAIL_VERIFICATION_FAILED: (error: string) =>
     `Error al verificar el email: ${error}`,
@@ -396,7 +391,8 @@ export const VALIDATION_MESSAGES = {
 
   // Admin payouts
   FAILURE_REASON_REQUIRED: 'Debe proporcionar una razón para el fallo',
-  CANCELLATION_REASON_REQUIRED: 'Debe proporcionar una razón para la cancelación',
+  CANCELLATION_REASON_REQUIRED:
+    'Debe proporcionar una razón para la cancelación',
 
   // Admin events
   NAME_REQUIRED: 'El nombre es requerido',
@@ -434,8 +430,10 @@ export const USER_MESSAGES = {
 
   // Failure reasons for user display
   LIVENESS_FAILED_USER: 'No pudimos verificar que sos una persona real',
-  FACE_MISMATCH_USER: 'La foto de tu documento no coincide con la verificación facial',
-  VERIFICATION_FAILED_RETRY: 'La verificación falló. Podés intentarlo de nuevo asegurándote de tener buena iluminación.',
+  FACE_MISMATCH_USER:
+    'La foto de tu documento no coincide con la verificación facial',
+  VERIFICATION_FAILED_RETRY:
+    'La verificación falló. Podés intentarlo de nuevo asegurándote de tener buena iluminación.',
 } as const;
 
 // Internal failure reasons for identity verification (not shown to users)
@@ -456,7 +454,8 @@ export const CLERK_AUTH_NOTIFICATION_TITLES = {
   INVITATION: 'Tenés una invitación a Revendiste',
   PASSWORD_CHANGED: 'Tu contraseña de Revendiste fue cambiada',
   PASSWORD_REMOVED: 'Se eliminó la contraseña de tu cuenta en Revendiste',
-  PRIMARY_EMAIL_CHANGED: 'Se actualizó el email principal de tu cuenta en Revendiste',
+  PRIMARY_EMAIL_CHANGED:
+    'Se actualizó el email principal de tu cuenta en Revendiste',
   NEW_DEVICE_SIGN_IN: 'Nuevo inicio de sesión en tu cuenta de Revendiste',
 } as const;
 
@@ -468,7 +467,10 @@ export type IdentityVerificationErrorKey =
   keyof typeof IDENTITY_VERIFICATION_ERROR_MESSAGES;
 export type TicketReportErrorKey = keyof typeof TICKET_REPORT_ERROR_MESSAGES;
 export type ValidationMessageKey = keyof typeof VALIDATION_MESSAGES;
-export type NotificationButtonLabelKey = keyof typeof NOTIFICATION_BUTTON_LABELS;
+export type NotificationButtonLabelKey =
+  keyof typeof NOTIFICATION_BUTTON_LABELS;
 export type UserMessageKey = keyof typeof USER_MESSAGES;
-export type InternalVerificationReasonKey = keyof typeof INTERNAL_VERIFICATION_REASONS;
-export type ClerkAuthNotificationTitleKey = keyof typeof CLERK_AUTH_NOTIFICATION_TITLES;
+export type InternalVerificationReasonKey =
+  keyof typeof INTERNAL_VERIFICATION_REASONS;
+export type ClerkAuthNotificationTitleKey =
+  keyof typeof CLERK_AUTH_NOTIFICATION_TITLES;

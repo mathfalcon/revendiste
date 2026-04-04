@@ -1,4 +1,4 @@
-import {Ticket} from 'lucide-react';
+import {Ticket, TicketPlus} from 'lucide-react';
 import {Form} from '~/components/ui/form';
 import type {GetEventByIdResponse} from '~/lib';
 import {useTicketSelection} from './useTicketSelection';
@@ -6,6 +6,7 @@ import {TicketWaveCard} from './TicketWaveCard';
 import {DesktopSummaryCard} from './DesktopSummaryCard';
 import {MobilePurchaseBar} from './MobilePurchaseBar';
 import {NoTicketsAvailable} from './NoTicketsAvailable';
+import {Link} from '@tanstack/react-router';
 
 interface TicketSelectionProps {
   ticketWaves: GetEventByIdResponse['ticketWaves'];
@@ -40,6 +41,7 @@ export function TicketSelection({
   }
 
   return (
+    <>
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
@@ -84,5 +86,16 @@ export function TicketSelection({
         )}
       </form>
     </Form>
+
+    {/* Sell CTA */}
+    <Link
+      to='/entradas/publicar'
+      search={{eventoId: eventId}}
+      className='flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors py-2'
+    >
+      <TicketPlus className='w-4 h-4' />
+      <span>¿Tenés entradas? Publicalas acá</span>
+    </Link>
+    </>
   );
 }

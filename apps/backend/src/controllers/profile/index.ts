@@ -69,6 +69,7 @@ type ChangePasswordResponse = ReturnType<ProfileService['changePassword']>;
 type GetSessionsResponse = ReturnType<ProfileService['getSessions']>;
 type RevokeSessionResponse = ReturnType<ProfileService['revokeSession']>;
 type DeleteAccountResponse = ReturnType<ProfileService['deleteAccount']>;
+type DismissWhatsappPromptResponse = {success: true};
 type SendOtpResponse = ReturnType<OtpService['sendOtp']>;
 type VerifyOtpResponse = ReturnType<OtpService['verifyOtp']>;
 
@@ -101,6 +102,15 @@ export class ProfileController {
     @Request() request: express.Request,
   ): Promise<UpdatePhoneSettingsResponse> {
     return this.service.updatePhoneSettings(request.user.clerkId, body);
+  }
+
+  @Post('/whatsapp-dismiss')
+  @Response<ApiErrorResponse>(401, 'Authentication required')
+  public async dismissWhatsappPrompt(
+    @Request() request: express.Request,
+  ): Promise<DismissWhatsappPromptResponse> {
+    await usersService.dismissWhatsappPrompt(request.user.clerkId);
+    return {success: true};
   }
 
   @Post('/phone/send-otp')

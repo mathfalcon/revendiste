@@ -4,11 +4,17 @@ import {
   NotificationsRepository,
   UsersRepository,
   NotificationBatchesRepository,
+  PushSubscriptionsRepository,
 } from '~/repositories';
 import type {IEmailProvider} from './providers/IEmailProvider';
 import {getEmailProvider} from './providers/EmailProviderFactory';
 import type {IWhatsAppProvider} from './providers/IWhatsAppProvider';
 import {getWhatsAppProvider} from './providers/WhatsAppProviderFactory';
+import type {
+  IWebPushProvider,
+  WebPushPayload,
+} from './providers/IWebPushProvider';
+import {getWebPushProvider} from './providers/WebPushProviderFactory';
 import {EMAIL_FROM} from '~/config/env';
 import {CreateNotificationData} from '~/repositories/notifications';
 import {
@@ -78,6 +84,8 @@ export type MetadataMerger = (
 export class NotificationService {
   private emailProvider: IEmailProvider;
   private whatsappProvider: IWhatsAppProvider;
+  private webPushProvider: IWebPushProvider;
+  private pushSubscriptionsRepository: PushSubscriptionsRepository;
 
   constructor(
     private readonly notificationsRepository: NotificationsRepository,
@@ -85,10 +93,16 @@ export class NotificationService {
     private readonly notificationBatchesRepository?: NotificationBatchesRepository,
     emailProvider?: IEmailProvider,
     whatsappProvider?: IWhatsAppProvider,
+    webPushProvider?: IWebPushProvider,
+    pushSubscriptionsRepository?: PushSubscriptionsRepository,
   ) {
     // Use provided provider or get from factory based on configuration
     this.emailProvider = emailProvider || getEmailProvider();
     this.whatsappProvider = whatsappProvider || getWhatsAppProvider();
+    this.webPushProvider = webPushProvider || getWebPushProvider();
+    this.pushSubscriptionsRepository =
+      pushSubscriptionsRepository ||
+      new PushSubscriptionsRepository(notificationsRepository.getDb());
   }
 
   /**
@@ -259,9 +273,8 @@ export class NotificationService {
     notificationId: string,
     attachments?: EmailAttachmentParam[],
   ) {
-    const notification = await this.notificationsRepository.getById(
-      notificationId,
-    );
+    const notification =
+      await this.notificationsRepository.getById(notificationId);
     if (!notification) {
       logger.error('Notification not found', {notificationId});
       return;
@@ -436,6 +449,13 @@ export class NotificationService {
               status: 'sent',
               sentAt: new Date().toISOString(),
             };
+            // Fire-and-forget push to subscribed devices
+            this.sendWebPush(notification).catch(err =>
+              logger.error('Web push dispatch failed', {
+                notificationId: notification.id,
+                error: err instanceof Error ? err.message : String(err),
+              }),
+            );
           } else if (channel === 'whatsapp') {
             // Having a phone number IS the opt-in (providing it is voluntary)
             if (!contactInfo.phoneNumber) {
@@ -583,7 +603,10 @@ export class NotificationService {
       );
     }
 
-    const templateData = buildWhatsAppTemplate(notificationType, parsedMetadata);
+    const templateData = buildWhatsAppTemplate(
+      notificationType,
+      parsedMetadata,
+    );
 
     if (!templateData) {
       logger.debug('No WhatsApp template for notification type, skipping', {
@@ -598,6 +621,72 @@ export class NotificationService {
       templateLanguage: templateData.templateLanguage,
       components: templateData.components,
     });
+  }
+
+  /**
+   * Send web push notifications to all user's subscribed devices.
+   * Fire-and-forget — failures never affect in_app channel status.
+   * Stale subscriptions (410 Gone) are automatically cleaned up.
+   */
+  private async sendWebPush(
+    notification: NonNullable<
+      Awaited<ReturnType<NotificationsRepository['getById']>>
+    >,
+  ) {
+    const subscriptions = await this.pushSubscriptionsRepository.getByUserId(
+      notification.userId,
+    );
+    if (subscriptions.length === 0) return;
+
+    // Generate title/description from metadata (not stored in DB)
+    const {title, description} = generateNotificationText(
+      notification.type as NotificationType,
+      notification.metadata as NotificationMetadata,
+    );
+
+    // Extract first action URL if available
+    let url: string | undefined;
+    if (
+      Array.isArray(notification.actions) &&
+      notification.actions.length > 0
+    ) {
+      url = (notification.actions[0] as {url?: string})?.url;
+    }
+
+    const payload: WebPushPayload = {
+      title,
+      body: description,
+      icon: '/android-chrome-192x192.png',
+      url,
+      tag: notification.type,
+    };
+
+    const results = await Promise.allSettled(
+      subscriptions.map(sub =>
+        this.webPushProvider.sendPush(
+          {endpoint: sub.endpoint, keys: {p256dh: sub.p256dh, auth: sub.auth}},
+          payload,
+        ),
+      ),
+    );
+
+    // Clean up stale subscriptions
+    const staleEndpoints: string[] = [];
+    results.forEach((result, i) => {
+      if (result.status === 'fulfilled' && result.value.stale) {
+        staleEndpoints.push(subscriptions[i].endpoint);
+      }
+    });
+
+    if (staleEndpoints.length > 0) {
+      await this.pushSubscriptionsRepository
+        .deleteByEndpoints(staleEndpoints)
+        .catch(err =>
+          logger.error('Failed to clean stale push subscriptions', {
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
+    }
   }
 
   /**
@@ -648,9 +737,8 @@ export class NotificationService {
    * Mark all notifications as seen for a user
    */
   async markAllAsSeen(userId: string): Promise<TypedNotification[]> {
-    const notifications = await this.notificationsRepository.markAllAsSeen(
-      userId,
-    );
+    const notifications =
+      await this.notificationsRepository.markAllAsSeen(userId);
     return notifications.map(parseNotification);
   }
 
@@ -674,9 +762,8 @@ export class NotificationService {
    * Called by cron to retry failed or never-delivered notifications.
    */
   async processPendingNotifications(limit: number = 100) {
-    const pending = await this.notificationsRepository.getPendingNotifications(
-      limit,
-    );
+    const pending =
+      await this.notificationsRepository.getPendingNotifications(limit);
 
     const jobQueue = getJobQueueService();
 
@@ -934,7 +1021,9 @@ export class NotificationService {
    * Get the metadata merger function for a notification type
    * Each notification type can have its own merge strategy
    */
-  private getMetadataMerger(notificationType: NotificationType): MetadataMerger {
+  private getMetadataMerger(
+    notificationType: NotificationType,
+  ): MetadataMerger {
     switch (notificationType) {
       case 'document_uploaded':
         return this.mergeDocumentUploadedItems.bind(this);

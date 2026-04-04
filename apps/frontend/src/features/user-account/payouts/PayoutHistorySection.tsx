@@ -1,18 +1,78 @@
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate} from '@tanstack/react-router';
 import {getPayoutHistoryQuery} from '~/lib/api/payouts';
-import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
 import {Badge} from '~/components/ui/badge';
 import {Button} from '~/components/ui/button';
-import {formatCurrency, formatDate} from '~/utils';
+import {Skeleton} from '~/components/ui/skeleton';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '~/components/ui/accordion';
-import {LoadingSpinner} from '~/components/LoadingScreen';
-import {CheckCircle, Clock, XCircle, AlertCircle, Eye} from 'lucide-react';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '~/components/ui/table';
+import {formatCurrency, formatDate} from '~/utils';
+import {CheckCircle, Clock, XCircle, AlertCircle, Eye, Ban} from 'lucide-react';
+
+function HistorySkeleton() {
+  return (
+    <div className='space-y-3'>
+      {[1, 2, 3].map(i => (
+        <div key={i} className='flex items-center gap-4 p-3'>
+          <Skeleton className='h-5 w-20' />
+          <Skeleton className='h-5 w-24 flex-1' />
+          <Skeleton className='h-5 w-20' />
+          <Skeleton className='h-8 w-8' />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const STATUS_CONFIG = {
+  pending: {
+    label: 'Pendiente',
+    icon: Clock,
+    className:
+      'border-yellow-500/50 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
+  },
+  processing: {
+    label: 'Procesando',
+    icon: AlertCircle,
+    className:
+      'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  },
+  completed: {
+    label: 'Completado',
+    icon: CheckCircle,
+    className:
+      'border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400',
+  },
+  failed: {
+    label: 'Fallido',
+    icon: XCircle,
+    className: 'border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-400',
+  },
+  cancelled: {
+    label: 'Cancelado',
+    icon: Ban,
+    className:
+      'border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400',
+  },
+} as const;
+
+function StatusBadge({status}: {status: string}) {
+  const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+  if (!config) return <Badge variant='outline'>{status}</Badge>;
+  const Icon = config.icon;
+  return (
+    <Badge variant='outline' className={config.className}>
+      <Icon className='h-3 w-3 mr-1' />
+      {config.label}
+    </Badge>
+  );
+}
 
 export function PayoutHistorySection() {
   const {data: history, isPending} = useQuery(getPayoutHistoryQuery(1, 20));
@@ -26,203 +86,82 @@ export function PayoutHistorySection() {
   };
 
   if (isPending) {
-    return (
-      <Card className='w-full'>
-        <CardContent className='flex h-96 items-center justify-center'>
-          <LoadingSpinner size={96} />
-        </CardContent>
-      </Card>
-    );
+    return <HistorySkeleton />;
   }
 
   if (!history || history.data.length === 0) {
     return (
-      <div className='rounded-lg border bg-card p-6 text-center'>
-        <p className='text-lg font-semibold mb-2'>No hay historial de pagos</p>
+      <div className='rounded-lg border border-dashed p-8 text-center'>
         <p className='text-muted-foreground'>
-          Aún no has solicitado ningún pago
+          Todavía no solicitaste ningún retiro
         </p>
       </div>
     );
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return (
-          <Badge variant='outline' className='bg-yellow-50 text-yellow-700'>
-            <Clock className='h-3 w-3 mr-1' />
-            Pendiente
-          </Badge>
-        );
-      case 'processing':
-        return (
-          <Badge variant='outline' className='bg-blue-50 text-blue-700'>
-            <AlertCircle className='h-3 w-3 mr-1' />
-            Procesando
-          </Badge>
-        );
-      case 'completed':
-        return (
-          <Badge variant='outline' className='bg-green-50 text-green-700'>
-            <CheckCircle className='h-3 w-3 mr-1' />
-            Completado
-          </Badge>
-        );
-      case 'failed':
-        return (
-          <Badge variant='outline' className='bg-red-50 text-red-700'>
-            <XCircle className='h-3 w-3 mr-1' />
-            Fallido
-          </Badge>
-        );
-      default:
-        return <Badge variant='outline'>{status}</Badge>;
-    }
-  };
-
   return (
-    <div className='space-y-4'>
-      <div>
-        <h3 className='text-lg font-semibold mb-2'>Historial de Pagos</h3>
-        <p className='text-sm text-muted-foreground'>
-          Historial de tus solicitudes de pago
-        </p>
+    <>
+      {/* Desktop table */}
+      <div className='hidden md:block rounded-lg border'>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Estado</TableHead>
+              <TableHead>Monto</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead className='w-[50px]' />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {history.data.map(payout => (
+              <TableRow key={payout.id}>
+                <TableCell>
+                  <StatusBadge status={payout.status} />
+                </TableCell>
+                <TableCell className='font-medium'>
+                  {formatCurrency(payout.amount, payout.currency)}
+                </TableCell>
+                <TableCell className='text-muted-foreground'>
+                  {formatDate(payout.requestedAt)}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    onClick={() => handleViewDetails(payout.id)}
+                    className='h-8 w-8'
+                  >
+                    <Eye className='h-4 w-4' />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
-      <div className='space-y-3'>
+      {/* Mobile stacked list */}
+      <div className='md:hidden space-y-2'>
         {history.data.map(payout => (
-          <Card key={payout.id}>
-            <CardHeader>
-              <div className='flex items-center justify-between'>
-                <CardTitle className='text-base'>
-                  Pago #{payout.id.slice(0, 8)}
-                </CardTitle>
-                {getStatusBadge(payout.status)}
-              </div>
-            </CardHeader>
-            <CardContent className='space-y-3'>
-              <div className='flex justify-between items-center'>
-                <span className='text-sm text-muted-foreground'>Monto:</span>
-                <span className='font-semibold'>
+          <button
+            key={payout.id}
+            onClick={() => handleViewDetails(payout.id)}
+            className='w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left'
+          >
+            <div className='flex-1 min-w-0 space-y-1'>
+              <div className='flex items-center justify-between gap-2'>
+                <span className='font-medium'>
                   {formatCurrency(payout.amount, payout.currency)}
                 </span>
+                <StatusBadge status={payout.status} />
               </div>
-              {(() => {
-                const payoutWithMetadata = payout as unknown as {
-                  metadata?: {
-                    currencyConversion?: {
-                      originalAmount: number;
-                      originalCurrency: 'UYU' | 'USD';
-                      exchangeRate: number;
-                    };
-                  };
-                };
-                const conversion =
-                  payoutWithMetadata.metadata?.currencyConversion;
-                if (conversion) {
-                  return (
-                    <div className='text-sm text-muted-foreground border-t pt-2 mt-2'>
-                      <div className='flex justify-between items-center mb-1'>
-                        <span>Monto original:</span>
-                        <span>
-                          {formatCurrency(
-                            String(conversion.originalAmount),
-                            conversion.originalCurrency,
-                          )}
-                        </span>
-                      </div>
-                      <div className='flex justify-between items-center mb-1'>
-                        <span>Monto convertido:</span>
-                        <span className='font-medium'>
-                          {formatCurrency(payout.amount, payout.currency)}
-                        </span>
-                      </div>
-                      <div className='flex justify-between items-center'>
-                        <span>Tipo de cambio:</span>
-                        <span>
-                          {(conversion.exchangeRate * 100).toFixed(4)}%
-                        </span>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-              <div className='flex justify-between items-center'>
-                <span className='text-sm text-muted-foreground'>
-                  Solicitado:
-                </span>
-                <span className='text-sm'>
-                  {formatDate(payout.requestedAt)}
-                </span>
-              </div>
-              {payout.processedAt && (
-                <div className='flex justify-between items-center'>
-                  <span className='text-sm text-muted-foreground'>
-                    Procesado:
-                  </span>
-                  <span className='text-sm'>
-                    {formatDate(payout.processedAt)}
-                  </span>
-                </div>
-              )}
-              {payout.completedAt && (
-                <div className='flex justify-between items-center'>
-                  <span className='text-sm text-muted-foreground'>
-                    Completado:
-                  </span>
-                  <span className='text-sm'>
-                    {formatDate(payout.completedAt)}
-                  </span>
-                </div>
-              )}
-
-              {payout.linkedEarnings && payout.linkedEarnings.length > 0 && (
-                <Accordion type='single' collapsible className='mt-3'>
-                  <AccordionItem value='earnings' className='border-none'>
-                    <AccordionTrigger className='text-sm py-2'>
-                      Ver ganancias ({payout.linkedEarnings.length})
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className='space-y-2 pt-2'>
-                        {payout.linkedEarnings.map(earning => (
-                          <div
-                            key={earning.id}
-                            className='flex justify-between items-center text-sm border-b pb-2'
-                          >
-                            <span className='text-muted-foreground'>
-                              Ticket {earning.listingTicketId.slice(0, 8)}
-                            </span>
-                            <span className='font-medium'>
-                              {formatCurrency(
-                                earning.sellerAmount,
-                                earning.currency,
-                              )}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              )}
-
-              <div className='pt-3 border-t'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='w-full'
-                  onClick={() => handleViewDetails(payout.id)}
-                >
-                  <Eye className='mr-2 h-4 w-4' />
-                  Ver detalles
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              <p className='text-xs text-muted-foreground'>
+                {formatDate(payout.requestedAt)}
+              </p>
+            </div>
+          </button>
         ))}
       </div>
-    </div>
+    </>
   );
 }

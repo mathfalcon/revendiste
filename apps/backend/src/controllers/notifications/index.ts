@@ -2,6 +2,7 @@ import express from 'express';
 import {
   Route,
   Get,
+  Post,
   Patch,
   Delete,
   Tags,
@@ -27,7 +28,17 @@ import {
   UsersRepository,
   NotificationsRepository,
   NotificationBatchesRepository,
+  PushSubscriptionsRepository,
 } from '~/repositories';
+import {getWebPushProvider} from '~/services/notifications/providers/WebPushProviderFactory';
+import {NODE_ENV} from '~/config/env';
+import {ValidateBody, Body} from '~/decorators';
+import {
+  SubscribePushRouteSchema,
+  type SubscribePushRouteBody,
+  UnsubscribePushRouteSchema,
+  type UnsubscribePushRouteBody,
+} from './validation';
 
 interface GetNotificationsQuery extends PaginationQuery {
   includeSeen?: boolean;
@@ -38,6 +49,8 @@ type GetUnseenCountResponse = number;
 type MarkAsSeenResponse = TypedNotification | null;
 type MarkAllAsSeenResponse = TypedNotification[];
 type DeleteNotificationResponse = TypedNotification | null;
+type SubscribePushResponse = {success: boolean};
+type UnsubscribePushResponse = {success: boolean};
 
 @Route('notifications')
 @Middlewares(requireAuthMiddleware)
@@ -48,6 +61,7 @@ export class NotificationsController {
     new UsersRepository(db),
     new NotificationBatchesRepository(db),
   );
+  private pushSubscriptionsRepository = new PushSubscriptionsRepository(db);
 
   @Get('/')
   @Middlewares(paginationMiddleware(10, 100), ensurePagination)
@@ -118,5 +132,75 @@ export class NotificationsController {
     }
 
     return notification;
+  }
+
+  @Post('/push-subscriptions')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @ValidateBody(SubscribePushRouteSchema)
+  public async subscribePush(
+    @Body() body: SubscribePushRouteBody,
+    @Request() request: express.Request,
+  ): Promise<SubscribePushResponse> {
+    await this.pushSubscriptionsRepository.upsert({
+      userId: request.user.id,
+      endpoint: body.endpoint,
+      p256dh: body.keys.p256dh,
+      auth: body.keys.auth,
+      userAgent: body.userAgent,
+    });
+    return {success: true};
+  }
+
+  @Delete('/push-subscriptions')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @ValidateBody(UnsubscribePushRouteSchema)
+  public async unsubscribePush(
+    @Body() body: UnsubscribePushRouteBody,
+    @Request() request: express.Request,
+  ): Promise<UnsubscribePushResponse> {
+    await this.pushSubscriptionsRepository.deleteByUserIdAndEndpoint(
+      request.user.id,
+      body.endpoint,
+    );
+    return {success: true};
+  }
+
+  /**
+   * DEV ONLY — Send a test push notification to all user's subscribed devices.
+   * Removed before production deployment.
+   */
+  @Post('/test-push')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  public async testPush(
+    @Request() request: express.Request,
+  ): Promise<{sent: number; failed: number}> {
+    if (NODE_ENV === 'production') {
+      throw new UnauthorizedError('Not available in production');
+    }
+
+    const subs = await this.pushSubscriptionsRepository.getByUserId(
+      request.user.id,
+    );
+
+    const provider = getWebPushProvider();
+    const results = await Promise.allSettled(
+      subs.map(sub =>
+        provider.sendPush(
+          {endpoint: sub.endpoint, keys: {p256dh: sub.p256dh, auth: sub.auth}},
+          {
+            title: 'Revendiste - Test',
+            body: 'Si ves esto, las notificaciones push funcionan correctamente.',
+            icon: '/android-chrome-192x192.png',
+            url: '/',
+            tag: 'test',
+          },
+        ),
+      ),
+    );
+
+    const sent = results.filter(
+      r => r.status === 'fulfilled' && r.value.success,
+    ).length;
+    return {sent, failed: subs.length - sent};
   }
 }

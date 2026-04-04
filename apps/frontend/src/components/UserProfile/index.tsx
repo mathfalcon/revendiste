@@ -25,6 +25,7 @@ import {
   Moon,
   Monitor,
   ChevronRight,
+  Flag,
 } from 'lucide-react';
 import {useTheme} from '../ThemeProvider';
 
@@ -47,6 +48,11 @@ const MENU_ITEMS = [
   {to: '/cuenta/retiro', icon: Wallet, label: 'Retiros'},
 ] as const;
 
+const MENU_ITEMS_USER = [
+  {to: '/cuenta/configuracion', icon: Settings, label: 'Configuración'},
+  {to: '/cuenta/reportes', icon: Flag, label: 'Reportes'},
+] as const;
+
 export const UserProfile = () => {
   const {user} = useUser();
   const {data: currentUser} = useQuery(getCurrentUserQuery());
@@ -58,8 +64,7 @@ export const UserProfile = () => {
   const {theme, setTheme} = useTheme();
   const ActiveThemeIcon = getActiveThemeIcon(theme);
   const avatarUrl = currentUser?.imageUrl || user?.imageUrl;
-  const initials =
-    (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '');
+  const initials = (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '');
 
   const avatarButton = (
     <button className='rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer'>
@@ -97,9 +102,7 @@ export const UserProfile = () => {
               <AvatarFallback className='text-xs'>{initials}</AvatarFallback>
             </Avatar>
             <div className='flex flex-col min-w-0'>
-              <p className='text-sm font-semibold truncate'>
-                {user?.fullName}
-              </p>
+              <p className='text-sm font-semibold truncate'>{user?.fullName}</p>
               <p className='text-xs text-muted-foreground truncate'>
                 {user?.primaryEmailAddress?.emailAddress}
               </p>
@@ -109,14 +112,19 @@ export const UserProfile = () => {
           <div className='divide-y'>
             <div>{menuContent}</div>
 
-            <Link
-              to='/cuenta/configuracion'
-              onClick={() => setOpen(false)}
-              className='flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
-            >
-              <Settings className='h-4 w-4 text-muted-foreground' />
-              Configuración
-            </Link>
+            <div>
+              {MENU_ITEMS_USER.map(item => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className='flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
+                >
+                  <item.icon className='h-4 w-4 text-muted-foreground' />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
 
             <div>
               <button
@@ -125,7 +133,9 @@ export const UserProfile = () => {
               >
                 <ActiveThemeIcon className='h-4 w-4 text-muted-foreground' />
                 Tema
-                <ChevronRight className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${themeOpen ? 'rotate-90' : ''}`} />
+                <ChevronRight
+                  className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${themeOpen ? 'rotate-90' : ''}`}
+                />
               </button>
               {themeOpen && (
                 <div className='flex flex-col gap-0.5 pl-7 pr-4 pb-2'>
@@ -193,14 +203,17 @@ export const UserProfile = () => {
 
           <Separator className='my-2' />
 
-          <Link
-            to='/cuenta/configuracion'
-            onClick={() => setOpen(false)}
-            className='flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent'
-          >
-            <Settings className='h-5 w-5' />
-            Configuración
-          </Link>
+          {MENU_ITEMS_USER.map(item => (
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => setOpen(false)}
+              className='flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent'
+            >
+              <item.icon className='h-5 w-5' />
+              {item.label}
+            </Link>
+          ))}
 
           <Separator className='my-2' />
 
@@ -210,7 +223,9 @@ export const UserProfile = () => {
           >
             <ActiveThemeIcon className='h-5 w-5' />
             Tema
-            <ChevronRight className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${themeOpen ? 'rotate-90' : ''}`} />
+            <ChevronRight
+              className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${themeOpen ? 'rotate-90' : ''}`}
+            />
           </button>
           {themeOpen && (
             <div className='flex flex-col gap-0.5 pl-6 pr-3 pb-2'>

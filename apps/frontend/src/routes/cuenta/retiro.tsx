@@ -12,7 +12,7 @@ export const Route = createFileRoute('/cuenta/retiro')({
   head: () => ({
     meta: [
       {
-        title: 'Payouts | Revendiste',
+        title: 'Retiros | Revendiste',
       },
     ],
   }),

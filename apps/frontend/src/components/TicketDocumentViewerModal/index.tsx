@@ -3,7 +3,6 @@ import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog';
@@ -12,39 +11,18 @@ import {
   getTicketInfoQuery,
   updateTicketDocumentMutation,
 } from '~/lib/api/ticket-listings';
-import {ImageWithLoading} from '~/components';
 import {FileDropzone} from '~/components/FileDropzone';
-import {
-  FileCheck,
-  Upload,
-  ExternalLink,
-  RefreshCw,
-  Eye,
-  X,
-} from 'lucide-react';
-import {VITE_APP_API_URL} from '~/config/env';
+import {Ticket, Upload, FileCheck, Clock, RefreshCw} from 'lucide-react';
 import {toast} from 'sonner';
+import {TextEllipsis} from '~/components/ui/text-ellipsis';
+import {TicketIdHero} from '~/components/TicketViewModal/TicketIds';
+import {DocumentPreview} from '~/components/TicketViewModal/DocumentPreview';
 
 interface TicketDocumentViewerModalProps {
   ticketId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isEventPast?: boolean;
-}
-
-// Helper function to check if a file is an image based on MIME type
-function isImageFile(mimeType: string | null | undefined): boolean {
-  if (!mimeType) return false;
-  return mimeType.startsWith('image/');
-}
-
-// Helper function to construct full file URL
-function getFullFileUrl(url: string): string {
-  if (url.startsWith('/')) {
-    const apiBase = VITE_APP_API_URL.replace('/api', '');
-    return `${apiBase}${url}`;
-  }
-  return url;
 }
 
 export function TicketDocumentViewerModal({
@@ -87,176 +65,132 @@ export function TicketDocumentViewerModal({
 
   const document = ticketInfo?.document;
   const hasDocument = !!document;
-  const documentUrl = document?.url ? getFullFileUrl(document.url) : null;
-  const isImage = isImageFile(document?.mimeType);
-  const isPdf = document?.mimeType === 'application/pdf';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[600px] max-h-[90vh] overflow-y-auto'>
-        <DialogHeader>
+      <DialogContent className='sm:max-w-[600px] max-h-[calc(100dvh-2rem)] overflow-y-auto'>
+        <DialogHeader className='text-left'>
           <DialogTitle className='flex items-center gap-2'>
-            <Eye className='h-5 w-5' />
-            {isReplacing ? 'Reemplazar documento' : 'Ver documento'}
+            <Ticket className='h-5 w-5 shrink-0' />
+            {ticketInfo?.event?.name ? (
+              <TextEllipsis maxLines={1} className='text-lg font-semibold'>
+                {ticketInfo.event.name}
+              </TextEllipsis>
+            ) : (
+              'Documento de entrada'
+            )}
           </DialogTitle>
-          <DialogDescription>
-            Entrada #{ticketInfo?.ticketNumber} - {ticketInfo?.ticketWave?.name}
-          </DialogDescription>
         </DialogHeader>
 
         {isPending ? (
           <div className='flex items-center justify-center py-12'>
             <div className='h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent' />
           </div>
-        ) : !hasDocument ? (
-          <div className='flex flex-col items-center justify-center py-12 text-muted-foreground'>
-            <FileCheck className='h-12 w-12 mb-4 opacity-50' />
-            <p>No hay documento subido</p>
-          </div>
-        ) : isReplacing ? (
-          // Replace mode
-          <div className='space-y-4'>
-            <FileDropzone
-              onFileSelect={setSelectedFile}
-              selectedFile={selectedFile}
-              onClear={() => setSelectedFile(null)}
-              accept='.pdf,.png,.jpg,.jpeg,.heic,.heif'
-              acceptedMimeTypes={[
-                'application/pdf',
-                'image/png',
-                'image/jpeg',
-                'image/jpg',
-                'image/heic',
-                'image/heif',
-              ]}
-              maxFileSize={5 * 1024 * 1024}
-              helperText='Esto reemplazará el documento existente. La versión anterior se mantendrá en el historial.'
-              error={
-                updateMutation.isError
-                  ? updateMutation.error instanceof Error
-                    ? updateMutation.error.message
-                    : 'Error al procesar el archivo'
-                  : null
-              }
+        ) : (
+          <div className='space-y-3'>
+            <TicketIdHero
+              ticketId={ticketId}
+              waveName={ticketInfo?.ticketWave?.name}
             />
 
-            <div className='flex justify-end gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={handleCancelReplace}
-                disabled={updateMutation.isPending}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type='button'
-                onClick={handleUpload}
-                disabled={!selectedFile || updateMutation.isPending}
-              >
-                {updateMutation.isPending ? (
-                  <>
-                    <div className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                    Subiendo...
-                  </>
-                ) : (
-                  <>
-                    <Upload className='h-4 w-4' />
-                    Reemplazar
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          // View mode
-          <div className='space-y-4'>
-            {/* Document info */}
-            <div className='flex items-center justify-between text-sm text-muted-foreground'>
-              <div className='flex items-center gap-2'>
-                <FileCheck className='h-4 w-4 text-green-500' />
-                <span>{document.originalName}</span>
-              </div>
-              {document.uploadedAt && (
-                <span>
-                  Subido el{' '}
-                  {new Date(document.uploadedAt).toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              )}
-            </div>
-
-            {/* Document preview */}
-            {isImage && documentUrl && (
-              <div className='rounded-lg border overflow-hidden bg-muted/30'>
-                <ImageWithLoading
-                  src={documentUrl}
-                  alt={`Ticket ${ticketInfo?.ticketNumber}`}
-                  className='w-full object-contain max-h-[400px]'
-                  containerClassName='rounded-lg'
-                  loadingOverlayClassName='rounded-lg'
-                  minHeight={200}
+            {isReplacing ? (
+              <div className='space-y-4'>
+                <FileDropzone
+                  onFileSelect={setSelectedFile}
+                  selectedFile={selectedFile}
+                  onClear={() => setSelectedFile(null)}
+                  accept='.pdf,.png,.jpg,.jpeg,.heic,.heif'
+                  acceptedMimeTypes={[
+                    'application/pdf',
+                    'image/png',
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/heic',
+                    'image/heif',
+                  ]}
+                  maxFileSize={5 * 1024 * 1024}
+                  helperText='Esto reemplazará el documento existente. La versión anterior se mantendrá en el historial.'
+                  error={
+                    updateMutation.isError
+                      ? updateMutation.error instanceof Error
+                        ? updateMutation.error.message
+                        : 'Error al procesar el archivo'
+                      : null
+                  }
                 />
-              </div>
-            )}
 
-            {isPdf && documentUrl && (
-              <div className='rounded-lg border overflow-hidden bg-muted/30 p-8'>
-                <div className='flex flex-col items-center justify-center gap-4'>
-                  <FileCheck className='h-16 w-16 text-muted-foreground' />
-                  <p className='text-sm text-muted-foreground'>
-                    Archivo PDF: {document.originalName}
-                  </p>
-                  <Button variant='outline' asChild>
-                    <a
-                      href={documentUrl}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
-                      <ExternalLink className='h-4 w-4' />
-                      Abrir PDF en nueva pestaña
-                    </a>
+                <div className='flex justify-end gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={handleCancelReplace}
+                    disabled={updateMutation.isPending}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type='button'
+                    onClick={handleUpload}
+                    disabled={!selectedFile || updateMutation.isPending}
+                  >
+                    {updateMutation.isPending ? (
+                      <>
+                        <div className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className='h-4 w-4' />
+                        Reemplazar
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
-            )}
-
-            {/* Actions */}
-            <div className='flex justify-between pt-2'>
-              <div>
-                {documentUrl && (
-                  <Button variant='outline' size='sm' asChild>
-                    <a
-                      href={documentUrl}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
-                      <ExternalLink className='h-4 w-4' />
-                      Abrir en nueva pestaña
-                    </a>
-                  </Button>
-                )}
-              </div>
-
-              <div className='flex gap-2'>
-                <Button variant='outline' onClick={() => onOpenChange(false)}>
-                  Cerrar
-                </Button>
-
-                {/* Only show replace button for active events */}
+            ) : hasDocument && document?.url ? (
+              <div className='space-y-3'>
+                <div className='flex items-center gap-2 text-sm'>
+                  <FileCheck className='h-4 w-4 text-green-500' />
+                  <span className='text-green-600 font-medium'>
+                    Documento subido
+                  </span>
+                </div>
+                <DocumentPreview
+                  url={document.url}
+                  ticketId={ticketId}
+                  mimeType={document.mimeType}
+                  originalName={document.originalName}
+                />
                 {!isEventPast && (
-                  <Button onClick={() => setIsReplacing(true)}>
-                    <RefreshCw className='h-4 w-4' />
-                    Reemplazar
-                  </Button>
+                  <div className='flex justify-center'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setIsReplacing(true)}
+                    >
+                      <RefreshCw className='h-4 w-4' />
+                      Reemplazar documento
+                    </Button>
+                  </div>
                 )}
               </div>
-            </div>
+            ) : (
+              <div className='rounded-lg border border-dashed bg-muted/30 p-6 text-center space-y-3'>
+                <div className='flex justify-center'>
+                  <div className='flex h-12 w-12 items-center justify-center rounded-full bg-muted'>
+                    <Clock className='h-6 w-6 text-muted-foreground' />
+                  </div>
+                </div>
+                <div className='space-y-1'>
+                  <p className='font-medium text-foreground'>
+                    Sin documento
+                  </p>
+                  <p className='text-sm text-muted-foreground'>
+                    Todavía no subiste el documento para esta entrada.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </DialogContent>

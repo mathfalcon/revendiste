@@ -2102,6 +2102,27 @@
 					"tickets": {
 						"items": {
 							"properties": {
+								"report": {
+									"properties": {
+										"status": {
+											"type": "string",
+											"enum": [
+												"awaiting_customer",
+												"awaiting_support",
+												"closed"
+											]
+										},
+										"id": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"status",
+										"id"
+									],
+									"type": "object",
+									"nullable": true
+								},
 								"document": {
 									"properties": {
 										"url": {
@@ -2171,6 +2192,7 @@
 								}
 							},
 							"required": [
+								"report",
 								"document",
 								"ticketWave",
 								"reservationStatus",
@@ -2338,6 +2360,13 @@
 					"byListing": {
 						"items": {
 							"properties": {
+								"eventStartDate": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"eventName": {
+									"type": "string"
+								},
 								"currency": {
 									"$ref": "#/components/schemas/EventTicketCurrency"
 								},
@@ -2356,6 +2385,8 @@
 								}
 							},
 							"required": [
+								"eventStartDate",
+								"eventName",
 								"currency",
 								"ticketCount",
 								"totalAmount",
@@ -2369,6 +2400,13 @@
 					"byTicket": {
 						"items": {
 							"properties": {
+								"eventStartDate": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"eventName": {
+									"type": "string"
+								},
 								"publisherUserId": {
 									"type": "string"
 								},
@@ -2393,6 +2431,8 @@
 								}
 							},
 							"required": [
+								"eventStartDate",
+								"eventName",
 								"publisherUserId",
 								"listingId",
 								"holdUntil",
@@ -6667,6 +6707,10 @@
 			},
 			"GetCurrentUserResponse": {
 				"properties": {
+					"whatsappPromptDismissed": {
+						"type": "boolean",
+						"description": "Whether user dismissed the WhatsApp opt-in prompt"
+					},
 					"whatsappOptedIn": {
 						"type": "boolean",
 						"description": "Whether user has opted in to WhatsApp notifications"
@@ -6764,6 +6808,7 @@
 					}
 				},
 				"required": [
+					"whatsappPromptDismissed",
 					"whatsappOptedIn",
 					"phoneNumber",
 					"rejectionReason",
@@ -7206,17 +7251,17 @@
 					"entityType": {
 						"type": "string",
 						"enum": [
+							"order_ticket_reservation",
 							"listing",
 							"listing_ticket",
-							"order",
-							"order_ticket_reservation"
+							"order"
 						]
 					},
 					"caseType": {
 						"type": "string",
 						"enum": [
-							"other",
 							"invalid_ticket",
+							"other",
 							"problem_with_seller",
 							"ticket_not_received"
 						]
@@ -8082,6 +8127,21 @@
 				],
 				"type": "object"
 			},
+			"DismissWhatsappPromptResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"enum": [
+							true
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
 			"SendOtpResponse": {
 				"properties": {
 					"expiresAt": {
@@ -8793,6 +8853,69 @@
 				],
 				"nullable": true
 			},
+			"SubscribePushResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"SubscribePushRouteBody": {
+				"properties": {
+					"userAgent": {
+						"type": "string"
+					},
+					"keys": {
+						"properties": {
+							"auth": {
+								"type": "string"
+							},
+							"p256dh": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"auth",
+							"p256dh"
+						],
+						"type": "object"
+					},
+					"endpoint": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"keys",
+					"endpoint"
+				],
+				"type": "object"
+			},
+			"UnsubscribePushResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"UnsubscribePushRouteBody": {
+				"properties": {
+					"endpoint": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"endpoint"
+				],
+				"type": "object"
+			},
 			"InitiateVerificationResponse": {
 				"properties": {
 					"message": {
@@ -9036,8 +9159,8 @@
 					"caseType": {
 						"type": "string",
 						"enum": [
-							"other",
 							"invalid_ticket",
+							"other",
 							"problem_with_seller",
 							"ticket_not_received"
 						]
@@ -14067,6 +14190,38 @@
 				}
 			}
 		},
+		"/profile/whatsapp-dismiss": {
+			"post": {
+				"operationId": "DismissWhatsappPrompt",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DismissWhatsappPromptResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Profile"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
 		"/profile/phone/send-otp": {
 			"post": {
 				"operationId": "SendOtp",
@@ -15136,6 +15291,135 @@
 				]
 			}
 		},
+		"/notifications/push-subscriptions": {
+			"post": {
+				"operationId": "SubscribePush",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SubscribePushResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SubscribePushRouteBody"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "UnsubscribePush",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnsubscribePushResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UnsubscribePushRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/notifications/test-push": {
+			"post": {
+				"operationId": "TestPush",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"failed": {
+											"type": "number",
+											"format": "double"
+										},
+										"sent": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": [
+										"failed",
+										"sent"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"description": "DEV ONLY — Send a test push notification to all user's subscribed devices.\nRemoved before production deployment.",
+				"tags": [
+					"Notifications"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
 		"/identity-verification/initiate": {
 			"post": {
 				"operationId": "InitiateVerification",
@@ -15490,8 +15774,8 @@
 						"schema": {
 							"type": "string",
 							"enum": [
-								"other",
 								"invalid_ticket",
+								"other",
 								"problem_with_seller",
 								"ticket_not_received"
 							]

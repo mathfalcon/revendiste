@@ -225,6 +225,19 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
         ).as('document'),
         // Note: document is intentionally nullable (ticket may not have document yet)
         // We don't use $notNull() here because documents are optional
+        jsonObjectFrom(
+          eb
+            .selectFrom('ticketReports')
+            .select(['ticketReports.id', 'ticketReports.status'])
+            .whereRef(
+              'ticketReports.entityId',
+              '=',
+              'orderTicketReservations.id',
+            )
+            .where('ticketReports.entityType', '=', 'order_ticket_reservation')
+            .orderBy('ticketReports.createdAt', 'desc')
+            .limit(1),
+        ).as('report'),
       ])
       .where('orderTicketReservations.orderId', '=', orderId)
       // Include both active and soft-deleted reservations (for confirmed orders)

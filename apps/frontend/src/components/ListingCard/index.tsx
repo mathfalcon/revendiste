@@ -215,7 +215,6 @@ export function ListingCard({listing}: ListingCardProps) {
         <div className='space-y-2'>
           <ActiveTicketsSection
             tickets={activeTickets}
-            ticketWaveName={ticketWave.name}
             ticketWaveCurrency={ticketWave.currency}
             ticketWaveFaceValue={calculateMaxResalePrice(
               Number(ticketWave.faceValue),
@@ -226,7 +225,6 @@ export function ListingCard({listing}: ListingCardProps) {
 
           <SoldTicketsSection
             tickets={soldTickets}
-            ticketWaveName={ticketWave.name}
             ticketWaveCurrency={ticketWave.currency}
             onUploadClick={handleUploadClick}
             isEventPast={isEventPast}
@@ -234,7 +232,6 @@ export function ListingCard({listing}: ListingCardProps) {
 
           <CancelledTicketsSection
             tickets={cancelledTickets}
-            ticketWaveName={ticketWave.name}
           />
         </div>
 

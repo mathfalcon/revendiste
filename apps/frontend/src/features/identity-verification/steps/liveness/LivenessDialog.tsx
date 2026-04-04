@@ -371,6 +371,7 @@ export function LivenessDialog({
           {sessionId && credentials ? (
             <ThemeProvider theme={LIVENESS_THEME}>
               <FaceLivenessDetectorCore
+                key={sessionId}
                 sessionId={sessionId}
                 region={region}
                 onAnalysisComplete={onAnalysisComplete}

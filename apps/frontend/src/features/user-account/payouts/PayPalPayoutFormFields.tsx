@@ -8,34 +8,24 @@ import {
   FormDescription,
 } from '~/components/ui/form';
 import {Input} from '~/components/ui/input';
+import {Badge} from '~/components/ui/badge';
 import type {PayoutMethodFormValues} from './PayoutMethodForm';
 
 interface PayPalPayoutFormFieldsProps {
   form: UseFormReturn<PayoutMethodFormValues>;
 }
 
-export function PayPalPayoutFormFields({
-  form,
-}: PayPalPayoutFormFieldsProps) {
+export function PayPalPayoutFormFields({form}: PayPalPayoutFormFieldsProps) {
   return (
     <>
-      <FormField
-        control={form.control}
-        name='currency'
-        render={({field}) => (
-          <FormItem>
-            <FormLabel>Moneda</FormLabel>
-            <FormControl>
-              <Input value='USD' disabled />
-            </FormControl>
-            <FormDescription>
-              PayPal solo soporta pagos en USD. Si necesitas recibir en UYU,
-              usa un banco uruguayo.
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className='flex items-center justify-between rounded-lg border p-3'>
+        <span className='text-sm text-muted-foreground'>Moneda</span>
+        <Badge variant='outline'>USD</Badge>
+      </div>
+      <p className='text-xs text-muted-foreground -mt-3'>
+        PayPal solo opera en USD. Si necesitás recibir en UYU, usá un banco
+        uruguayo.
+      </p>
 
       <FormField
         control={form.control}
@@ -44,14 +34,10 @@ export function PayPalPayoutFormFields({
           <FormItem>
             <FormLabel>Email de PayPal</FormLabel>
             <FormControl>
-              <Input
-                type='email'
-                placeholder='usuario@example.com'
-                {...field}
-              />
+              <Input type='email' placeholder='tu@email.com' {...field} />
             </FormControl>
             <FormDescription>
-              Ingresa el email asociado a tu cuenta de PayPal
+              El email asociado a tu cuenta de PayPal
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -60,4 +46,3 @@ export function PayPalPayoutFormFields({
     </>
   );
 }
-

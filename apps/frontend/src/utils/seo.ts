@@ -13,9 +13,12 @@ const getImageType = (url: string): string => {
   return 'image/jpeg';
 };
 
+const DEFAULT_DESCRIPTION =
+  'Revendiste es la plataforma más segura de Uruguay para comprar y vender entradas a conciertos, fiestas y eventos.';
+
 export const seo = ({
   title,
-  description,
+  description = DEFAULT_DESCRIPTION,
   keywords,
   image,
   noIndex = false,

@@ -1,12 +1,10 @@
 import {useState, useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useSearch, useNavigate} from '@tanstack/react-router';
-import {toast} from 'sonner';
 import {getMyOrdersQuery} from '~/lib';
 import {OrderCard, TicketViewModal} from '~/components';
 import {AccountSectionHeader, AccountEmptyState} from '~/features/user-account';
 import {CheckCircle, XCircle, Clock, QrCode} from 'lucide-react';
-import {Button} from '~/components/ui/button';
 import {LoadingSpinner} from '~/components/LoadingScreen';
 import {Card, CardContent} from '~/components/ui/card';
 import {Link} from '@tanstack/react-router';

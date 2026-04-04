@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {useMutation} from '@tanstack/react-query';
 import {useForm, FormProvider} from 'react-hook-form';
 import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
@@ -202,6 +202,11 @@ export function IdentityVerificationFlow({
     existingSessionId ? 'us-west-2' : undefined,
   );
 
+  // Scroll to top when step changes (mobile users get lost at the bottom)
+  useEffect(() => {
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }, [step]);
+
   // Liveness verification state
   const [isVerifyingLiveness, setIsVerifyingLiveness] = useState(false);
   const [livenessVerificationFailed, setLivenessVerificationFailed] =
@@ -209,6 +214,21 @@ export function IdentityVerificationFlow({
   const [livenessFailureMessage, setLivenessFailureMessage] = useState<
     string | undefined
   >();
+
+  // Timeout for liveness verification — prevents users getting stuck on "verificando"
+  useEffect(() => {
+    if (!isVerifyingLiveness) return;
+    const timeout = setTimeout(() => {
+      setIsVerifyingLiveness(false);
+      setLivenessVerificationFailed(true);
+      setLivenessFailureMessage(
+        'La verificación está tardando demasiado. Por favor, intentá de nuevo.',
+      );
+      setSessionId(undefined);
+      setLivenessRegion(undefined);
+    }, 30_000);
+    return () => clearTimeout(timeout);
+  }, [isVerifyingLiveness]);
 
   // Shared form state for all steps
   const form = useForm<VerificationFormValues>({

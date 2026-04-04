@@ -61,3 +61,23 @@ export const deleteNotificationMutation = () =>
         .deleteNotification(notificationId)
         .then(res => res.data),
   });
+
+export const subscribePushMutation = () =>
+  mutationOptions({
+    mutationFn: (data: {
+      endpoint: string;
+      keys: {p256dh: string; auth: string};
+      userAgent?: string;
+    }) => api.notifications.subscribePush(data).then(res => res.data),
+  });
+
+export const unsubscribePushMutation = () =>
+  mutationOptions({
+    mutationFn: (data: {endpoint: string}) =>
+      api.notifications.unsubscribePush(data).then(res => res.data),
+  });
+
+export const testPushMutation = () =>
+  mutationOptions({
+    mutationFn: () => api.notifications.testPush().then(res => res.data),
+  });

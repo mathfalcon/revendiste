@@ -14,6 +14,8 @@ const EnvSchema = z.object({
   // Optional - if not set, will use VITE_APP_API_URL even during SSR
   BACKEND_IP: z.string().optional(),
   NODE_ENV: z.enum(['local', 'development', 'production']).default('local'),
+  // Web Push (VAPID public key — safe to expose)
+  VITE_VAPID_PUBLIC_KEY: z.string().min(1),
 });
 export const env = EnvSchema.safeParse(import.meta.env);
 
@@ -32,6 +34,7 @@ export const {
   VITE_PLATFORM_COMMISSION_RATE,
   VITE_VAT_RATE,
   NODE_ENV,
+  VITE_VAPID_PUBLIC_KEY,
 } = env.data;
 
 // Helper function to get base URL

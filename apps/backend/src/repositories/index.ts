@@ -37,3 +37,4 @@ export {TicketReportActionsRepository} from './ticket-report-actions';
 export {TicketReportRefundsRepository} from './ticket-report-refunds';
 export {TicketReportAttachmentsRepository} from './ticket-report-attachments';
 export {OtpVerificationsRepository} from './otp-verifications';
+export {PushSubscriptionsRepository} from './push-subscriptions';

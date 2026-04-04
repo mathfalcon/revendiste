@@ -21,6 +21,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as RegistrarseSplatRouteImport } from './routes/registrarse.$'
 import { Route as IngresarSplatRouteImport } from './routes/ingresar.$'
+import { Route as EventosHoyRouteImport } from './routes/eventos/hoy'
+import { Route as EventosEsteFinDeSemanaRouteImport } from './routes/eventos/este-fin-de-semana'
 import { Route as EventosSlugRouteImport } from './routes/eventos/$slug'
 import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar'
 import { Route as CuentaVerificarRouteImport } from './routes/cuenta/verificar'
@@ -36,6 +38,7 @@ import { Route as AdminEventosRouteImport } from './routes/admin/eventos'
 import { Route as CuentaReportesIndexRouteImport } from './routes/cuenta/reportes/index'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as AdminReportesIndexRouteImport } from './routes/admin/reportes/index'
+import { Route as EventosEnLocationRouteImport } from './routes/eventos/en.$location'
 import { Route as CuentaReportesReportIdRouteImport } from './routes/cuenta/reportes/$reportId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
 import { Route as AdminReportesReportIdRouteImport } from './routes/admin/reportes/$reportId'
@@ -98,6 +101,16 @@ const RegistrarseSplatRoute = RegistrarseSplatRouteImport.update({
 const IngresarSplatRoute = IngresarSplatRouteImport.update({
   id: '/ingresar/$',
   path: '/ingresar/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventosHoyRoute = EventosHoyRouteImport.update({
+  id: '/eventos/hoy',
+  path: '/eventos/hoy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventosEsteFinDeSemanaRoute = EventosEsteFinDeSemanaRouteImport.update({
+  id: '/eventos/este-fin-de-semana',
+  path: '/eventos/este-fin-de-semana',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventosSlugRoute = EventosSlugRouteImport.update({
@@ -176,6 +189,11 @@ const AdminReportesIndexRoute = AdminReportesIndexRouteImport.update({
   path: '/reportes/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const EventosEnLocationRoute = EventosEnLocationRouteImport.update({
+  id: '/eventos/en/$location',
+  path: '/eventos/en/$location',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CuentaReportesReportIdRoute = CuentaReportesReportIdRouteImport.update({
   id: '/reportes/$reportId',
   path: '/reportes/$reportId',
@@ -214,12 +232,15 @@ export interface FileRoutesByFullPath {
   '/cuenta/verificar': typeof CuentaVerificarRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$slug': typeof EventosSlugRoute
+  '/eventos/este-fin-de-semana': typeof EventosEsteFinDeSemanaRoute
+  '/eventos/hoy': typeof EventosHoyRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/reportes/$reportId': typeof AdminReportesReportIdRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/cuenta/reportes/$reportId': typeof CuentaReportesReportIdRoute
+  '/eventos/en/$location': typeof EventosEnLocationRoute
   '/admin/reportes/': typeof AdminReportesIndexRoute
   '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
   '/cuenta/reportes/': typeof CuentaReportesIndexRoute
@@ -245,12 +266,15 @@ export interface FileRoutesByTo {
   '/cuenta/verificar': typeof CuentaVerificarRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$slug': typeof EventosSlugRoute
+  '/eventos/este-fin-de-semana': typeof EventosEsteFinDeSemanaRoute
+  '/eventos/hoy': typeof EventosHoyRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin': typeof AdminIndexRoute
   '/admin/reportes/$reportId': typeof AdminReportesReportIdRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/cuenta/reportes/$reportId': typeof CuentaReportesReportIdRoute
+  '/eventos/en/$location': typeof EventosEnLocationRoute
   '/admin/reportes': typeof AdminReportesIndexRoute
   '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
   '/cuenta/reportes': typeof CuentaReportesIndexRoute
@@ -278,12 +302,15 @@ export interface FileRoutesById {
   '/cuenta/verificar': typeof CuentaVerificarRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
   '/eventos/$slug': typeof EventosSlugRoute
+  '/eventos/este-fin-de-semana': typeof EventosEsteFinDeSemanaRoute
+  '/eventos/hoy': typeof EventosHoyRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/reportes/$reportId': typeof AdminReportesReportIdRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/cuenta/reportes/$reportId': typeof CuentaReportesReportIdRoute
+  '/eventos/en/$location': typeof EventosEnLocationRoute
   '/admin/reportes/': typeof AdminReportesIndexRoute
   '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
   '/cuenta/reportes/': typeof CuentaReportesIndexRoute
@@ -312,12 +339,15 @@ export interface FileRouteTypes {
     | '/cuenta/verificar'
     | '/entradas/publicar'
     | '/eventos/$slug'
+    | '/eventos/este-fin-de-semana'
+    | '/eventos/hoy'
     | '/ingresar/$'
     | '/registrarse/$'
     | '/admin/'
     | '/admin/reportes/$reportId'
     | '/checkout/$orderId/success'
     | '/cuenta/reportes/$reportId'
+    | '/eventos/en/$location'
     | '/admin/reportes/'
     | '/checkout/$orderId/'
     | '/cuenta/reportes/'
@@ -343,12 +373,15 @@ export interface FileRouteTypes {
     | '/cuenta/verificar'
     | '/entradas/publicar'
     | '/eventos/$slug'
+    | '/eventos/este-fin-de-semana'
+    | '/eventos/hoy'
     | '/ingresar/$'
     | '/registrarse/$'
     | '/admin'
     | '/admin/reportes/$reportId'
     | '/checkout/$orderId/success'
     | '/cuenta/reportes/$reportId'
+    | '/eventos/en/$location'
     | '/admin/reportes'
     | '/checkout/$orderId'
     | '/cuenta/reportes'
@@ -375,12 +408,15 @@ export interface FileRouteTypes {
     | '/cuenta/verificar'
     | '/entradas/publicar'
     | '/eventos/$slug'
+    | '/eventos/este-fin-de-semana'
+    | '/eventos/hoy'
     | '/ingresar/$'
     | '/registrarse/$'
     | '/admin/'
     | '/admin/reportes/$reportId'
     | '/checkout/$orderId/success'
     | '/cuenta/reportes/$reportId'
+    | '/eventos/en/$location'
     | '/admin/reportes/'
     | '/checkout/$orderId/'
     | '/cuenta/reportes/'
@@ -398,9 +434,12 @@ export interface RootRouteChildren {
   TerminosYCondicionesRoute: typeof TerminosYCondicionesRoute
   EntradasPublicarRoute: typeof EntradasPublicarRoute
   EventosSlugRoute: typeof EventosSlugRoute
+  EventosEsteFinDeSemanaRoute: typeof EventosEsteFinDeSemanaRoute
+  EventosHoyRoute: typeof EventosHoyRoute
   IngresarSplatRoute: typeof IngresarSplatRoute
   RegistrarseSplatRoute: typeof RegistrarseSplatRoute
   CheckoutOrderIdSuccessRoute: typeof CheckoutOrderIdSuccessRoute
+  EventosEnLocationRoute: typeof EventosEnLocationRoute
   CheckoutOrderIdIndexRoute: typeof CheckoutOrderIdIndexRoute
 }
 
@@ -488,6 +527,20 @@ declare module '@tanstack/react-router' {
       path: '/ingresar/$'
       fullPath: '/ingresar/$'
       preLoaderRoute: typeof IngresarSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eventos/hoy': {
+      id: '/eventos/hoy'
+      path: '/eventos/hoy'
+      fullPath: '/eventos/hoy'
+      preLoaderRoute: typeof EventosHoyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eventos/este-fin-de-semana': {
+      id: '/eventos/este-fin-de-semana'
+      path: '/eventos/este-fin-de-semana'
+      fullPath: '/eventos/este-fin-de-semana'
+      preLoaderRoute: typeof EventosEsteFinDeSemanaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/eventos/$slug': {
@@ -595,6 +648,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReportesIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/eventos/en/$location': {
+      id: '/eventos/en/$location'
+      path: '/eventos/en/$location'
+      fullPath: '/eventos/en/$location'
+      preLoaderRoute: typeof EventosEnLocationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cuenta/reportes/$reportId': {
       id: '/cuenta/reportes/$reportId'
       path: '/reportes/$reportId'
@@ -681,9 +741,12 @@ const rootRouteChildren: RootRouteChildren = {
   TerminosYCondicionesRoute: TerminosYCondicionesRoute,
   EntradasPublicarRoute: EntradasPublicarRoute,
   EventosSlugRoute: EventosSlugRoute,
+  EventosEsteFinDeSemanaRoute: EventosEsteFinDeSemanaRoute,
+  EventosHoyRoute: EventosHoyRoute,
   IngresarSplatRoute: IngresarSplatRoute,
   RegistrarseSplatRoute: RegistrarseSplatRoute,
   CheckoutOrderIdSuccessRoute: CheckoutOrderIdSuccessRoute,
+  EventosEnLocationRoute: EventosEnLocationRoute,
   CheckoutOrderIdIndexRoute: CheckoutOrderIdIndexRoute,
 }
 export const routeTree = rootRouteImport
