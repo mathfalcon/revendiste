@@ -1,18 +1,15 @@
 name: Deploy to Production
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'  # Also triggers on version tags like v1.2.3
+  release:
+    types: [published]  # Triggers when Release Please creates a GitHub Release
   workflow_dispatch: # Allow manual triggering
 
 env:
   AWS_REGION: sa-east-1
   ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.sa-east-1.amazonaws.com
-  BACKEND_IMAGE_NAME: revendiste/backend-production
-  FRONTEND_IMAGE_NAME: revendiste/frontend-production
+  BACKEND_IMAGE_NAME: revendiste/backend-prod
+  FRONTEND_IMAGE_NAME: revendiste/frontend-prod
   FRONTEND_DIR: apps/frontend
   ECS_CLUSTER: revendiste-production-cluster
   BACKEND_SERVICE: revendiste-production-backend
