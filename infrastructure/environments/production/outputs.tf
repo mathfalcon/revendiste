@@ -124,3 +124,15 @@ output "sns_alarms_topic_arn" {
   description = "ARN of the SNS topic for RDS alarms"
   value       = module.cloudwatch_alarms.sns_topic_arn
 }
+
+# Bastion host outputs for database access
+output "bastion_instance_id" {
+  description = "Bastion host instance ID for SSM port forwarding"
+  value       = module.bastion.instance_id
+}
+
+output "db_tunnel_command" {
+  description = "Command to create a tunnel to the RDS database via SSM"
+  value       = "aws ssm start-session --target ${module.bastion.instance_id} --document-name AWS-StartPortForwardingSessionToRemoteHost --parameters '{\"host\":[\"${module.rds.db_address}\"],\"portNumber\":[\"5432\"],\"localPortNumber\":[\"5433\"]}' --region ${var.aws_region}"
+  sensitive   = true
+}
