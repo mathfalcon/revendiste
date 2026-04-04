@@ -43,7 +43,7 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type NotificationBatchStatus = "cancelled" | "pending" | "processed";
 
-export type NotificationChannel = "email" | "in_app" | "sms";
+export type NotificationChannel = "email" | "in_app" | "sms" | "whatsapp";
 
 export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
@@ -117,6 +117,7 @@ export interface Events {
   name: string;
   platform: string;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
+  slug: string;
   status: Generated<string>;
   updatedAt: Generated<Timestamp>;
   venueId: string | null;
@@ -298,6 +299,17 @@ export interface OrderTicketReservations {
   reservedUntil: Timestamp;
   status: Generated<OrderTicketReservationStatus>;
   updatedAt: Generated<Timestamp>;
+}
+
+export interface OtpVerifications {
+  attempts: Generated<number>;
+  codeHash: string;
+  createdAt: Generated<Timestamp>;
+  expiresAt: Timestamp;
+  id: Generated<string>;
+  phoneNumber: string;
+  userId: string;
+  verified: Generated<boolean>;
 }
 
 export interface PaymentEvents {
@@ -521,6 +533,7 @@ export interface Users {
   lastName: string | null;
   manualReviewReason: string | null;
   metadata: Json | null;
+  phoneNumber: string | null;
   role: Generated<UserRole>;
   selfieImagePath: string | null;
   updatedAt: Generated<Timestamp>;
@@ -530,6 +543,7 @@ export interface Users {
   verificationSessionCreatedAt: Timestamp | null;
   verificationSessionId: string | null;
   verificationStatus: Generated<VerificationStatusEnum | null>;
+  whatsappOptedIn: Generated<boolean>;
 }
 
 export interface VerificationAuditLogs {
@@ -559,6 +573,7 @@ export interface DB {
   orderItems: OrderItems;
   orders: Orders;
   orderTicketReservations: OrderTicketReservations;
+  otpVerifications: OtpVerifications;
   paymentEvents: PaymentEvents;
   payments: Payments;
   payoutDocuments: PayoutDocuments;

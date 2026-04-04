@@ -15,14 +15,14 @@ import {cancelOrderMutation} from '~/lib/api/order';
 
 interface CancelOrderDialogProps {
   orderId: string;
-  eventId?: string;
+  eventSlug?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function CancelOrderDialog({
   orderId,
-  eventId,
+  eventSlug,
   open,
   onOpenChange,
 }: CancelOrderDialogProps) {
@@ -34,23 +34,23 @@ export function CancelOrderDialog({
     onSuccess: () => {
       posthog.capture('checkout_abandoned', {
         order_id: orderId,
-        event_id: eventId,
+        event_slug: eventSlug,
       });
       // Invalidate related queries
       queryClient.invalidateQueries({queryKey: ['orders']});
 
-      // If we have an eventId, also invalidate the event query to refresh ticket availability
-      if (eventId) {
-        queryClient.invalidateQueries({queryKey: ['events', eventId]});
+      // If we have a slug, also invalidate the event query to refresh ticket availability
+      if (eventSlug) {
+        queryClient.invalidateQueries({queryKey: ['events', 'slug', eventSlug]});
       }
 
       onOpenChange(false);
 
-      // Navigate back to the event page if we have an eventId
-      if (eventId) {
+      // Navigate back to the event page if we have a slug
+      if (eventSlug) {
         navigate({
-          to: '/eventos/$eventId',
-          params: {eventId},
+          to: '/eventos/$slug',
+          params: {slug: eventSlug},
         });
       }
     },

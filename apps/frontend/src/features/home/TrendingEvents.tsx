@@ -20,6 +20,7 @@ import {cn} from '~/lib/utils';
 
 type TrendingEvent = {
   id: string;
+  slug: string;
   name: string;
   eventStartDate: string;
   eventImages: {url: string; imageType: string}[];
@@ -53,8 +54,8 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
 
   return (
     <Link
-      to='/eventos/$eventId'
-      params={{eventId: event.id}}
+      to='/eventos/$slug'
+      params={{slug: event.slug}}
       className='group flex h-28 sm:h-36 overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md'
     >
       {/* Image - Left side */}
@@ -109,7 +110,7 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
           )}
           <Button
             variant={hasTickets ? 'default' : 'outline'}
-            className={hasTickets ? 'bg-primary-gradient' : ''}
+            className={cn('cursor-pointer', hasTickets ? 'bg-primary-gradient' : '')}
             size='sm'
             onClick={handleButtonClick}
           >
@@ -230,7 +231,7 @@ export const TrendingEvents = () => {
                 key={index}
                 onClick={() => api?.scrollTo(index)}
                 className={cn(
-                  'h-1.5 rounded-full transition-all duration-300',
+                  'h-1.5 rounded-full transition-all duration-300 cursor-pointer',
                   current === index
                     ? 'w-8 bg-primary'
                     : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50',

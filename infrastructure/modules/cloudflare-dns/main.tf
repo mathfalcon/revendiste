@@ -49,28 +49,3 @@ resource "cloudflare_dns_record" "acm_validation" {
   ttl     = 60
   proxied = false
 }
-
-# Cloudflare Page Rules for Cache Control
-resource "cloudflare_page_rule" "cache_assets" {
-  zone_id  = local.zone_id
-  target   = "${var.domain_name}/assets/*"
-  priority = 1
-  status   = "active"
-
-  actions = {
-    cache_level       = "aggressive"
-    edge_cache_ttl    = 2419200  # 28 days
-    browser_cache_ttl = 31536000 # 1 year
-  }
-}
-
-resource "cloudflare_page_rule" "no_cache_html" {
-  zone_id  = local.zone_id
-  target   = "${var.domain_name}/*"
-  priority = 2
-  status   = "active"
-
-  actions = {
-    cache_level = "bypass"
-  }
-}

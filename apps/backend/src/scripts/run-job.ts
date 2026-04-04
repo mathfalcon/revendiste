@@ -7,6 +7,7 @@
  */
 
 import {logger} from '~/utils';
+import {initOtel, shutdownOtel} from '~/lib/otel';
 
 const jobName = process.argv[2];
 
@@ -36,6 +37,9 @@ function formatDuration(ms: number): string {
 }
 
 async function runJob() {
+  // Initialize OTel with job-specific service name so logs are distinguishable in PostHog
+  initOtel(`revendiste-cronjob-${jobName}`);
+
   const startTime = Date.now();
 
   try {
@@ -100,6 +104,7 @@ async function runJob() {
       durationMs: duration,
       duration: formatDuration(duration),
     });
+    await shutdownOtel();
     process.exit(0);
   } catch (error) {
     const duration = Date.now() - startTime;
@@ -108,6 +113,7 @@ async function runJob() {
       durationMs: duration,
       duration: formatDuration(duration),
     });
+    await shutdownOtel();
     process.exit(1);
   }
 }

@@ -50,6 +50,13 @@ const EnvSchema = z.object({
   EMAIL_FROM: z.string().default('noreply@revendiste.com'),
   // Resend configuration (when EMAIL_PROVIDER=resend)
   RESEND_API_KEY: z.string().optional(),
+  // WhatsApp configuration
+  WHATSAPP_PROVIDER: z
+    .enum(['console', 'whatsapp_business'])
+    .default('console'),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_API_VERSION: z.string().default('v21.0'),
   // Payout configuration
   PAYOUT_MINIMUM_UYU: z.coerce.number().default(1000), // $1,000 UYU
   PAYOUT_MINIMUM_USD: z.coerce.number().default(25), // $25 USD
@@ -132,6 +139,10 @@ export const {
   EMAIL_PROVIDER,
   EMAIL_FROM,
   RESEND_API_KEY,
+  WHATSAPP_PROVIDER,
+  WHATSAPP_PHONE_NUMBER_ID,
+  WHATSAPP_ACCESS_TOKEN,
+  WHATSAPP_API_VERSION,
   PAYOUT_MINIMUM_UYU,
   PAYOUT_MINIMUM_USD,
   PAYOUT_HOLD_PERIOD_HOURS,

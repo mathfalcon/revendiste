@@ -68,7 +68,7 @@ export const HomeEvents = ({
         />
       </div>
       <Separator />
-      <main className='grid w-full min-w-0 gap-3 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid w-full min-w-0 gap-3 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'>
         {isLoading
           ? Array.from({length: 6}).map((_, index) => (
               <SkeletonEventCard key={`event-card-skeleton-${index}`} />
@@ -102,6 +102,7 @@ export const HomeEvents = ({
                 <EventCard
                   key={event.id}
                   id={event.id}
+                  slug={event.slug}
                   name={event.name}
                   imageUrl={flyerImage?.url ?? CDN_ASSETS.SQUARE_LOGO}
                   date={event.eventStartDate}
@@ -142,7 +143,7 @@ export const HomeEvents = ({
         {hasNextPage && (
           <div ref={sentinelRef} className='col-span-full' aria-hidden='true' />
         )}
-      </main>
+      </div>
     </div>
   );
 };

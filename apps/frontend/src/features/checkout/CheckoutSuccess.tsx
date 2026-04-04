@@ -75,8 +75,8 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
               <div className='flex-1 min-w-0'>
                 {order.event?.name && (
                   <Link
-                    to='/eventos/$eventId'
-                    params={{eventId: order.eventId}}
+                    to='/eventos/$slug'
+                    params={{slug: order.event?.slug!}}
                     className='hover:underline'
                   >
                     <TextEllipsis
@@ -242,7 +242,7 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
               </Button>
             )}
             <Button asChild variant='ghost' size='lg'>
-              <Link to='/eventos/$eventId' params={{eventId: order.eventId}}>
+              <Link to='/eventos/$slug' params={{slug: order.event?.slug!}}>
                 Volver al evento
               </Link>
             </Button>

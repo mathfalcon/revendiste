@@ -171,7 +171,7 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
   data: {
     images: {
       imageType: EventImageType;
@@ -186,6 +186,7 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
     /** @format date-time */
     updatedAt: string;
     status: string;
+    slug: string;
     name: string;
     id: string;
     externalUrl: string;
@@ -201,7 +202,7 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
 }
 
 export type GetEventsPaginatedResponse =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
 
 export interface InferTypeofPaginationSchema {
   sortOrder?: "asc" | "desc";
@@ -262,6 +263,7 @@ export type SearchEventsResponse = {
   /** @format date-time */
   updatedAt: string;
   status: string;
+  slug: string;
   name: string;
   id: string;
   externalUrl: string;
@@ -291,6 +293,7 @@ export type GetTrendingEventsResponse = {
   /** @format date-time */
   updatedAt: string;
   status: string;
+  slug: string;
   name: string;
   id: string;
   externalUrl: string;
@@ -340,6 +343,7 @@ export interface GetEventByIdResponse {
   /** @format date-time */
   updatedAt: string;
   status: string;
+  slug: string;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
   name: string;
   id: string;
@@ -352,6 +356,8 @@ export interface GetEventByIdResponse {
   /** @format date-time */
   createdAt: string;
 }
+
+export type GetEventBySlugResponse = GetEventByIdResponse;
 
 export interface TrackViewResponse {
   success: boolean;
@@ -453,7 +459,7 @@ export interface ValidationError {
   metadata?: RecordStringAny;
 }
 
-export interface PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray {
+export interface PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray {
   data: {
     event: {
       eventImages: {
@@ -462,6 +468,7 @@ export interface PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBo
       }[];
       venueAddress: string | null;
       venueName: string | null;
+      slug: string;
       qrAvailabilityTiming: QrAvailabilityTiming | null;
       platform: string;
       name: string;
@@ -507,7 +514,7 @@ export interface PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBo
 }
 
 export type GetUserListingsResponse =
-  PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray;
+  PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray;
 
 export interface UploadDocumentResponse {
   documentUrl: string;
@@ -670,6 +677,7 @@ export interface GetOrderByIdResponse {
     venueCountry: string | null;
     venueAddress: string | null;
     venueName: string | null;
+    slug: string | null;
     qrAvailabilityTiming: QrAvailabilityTiming | null;
     platform: string | null;
     name: string | null;
@@ -698,7 +706,7 @@ export interface GetOrderByIdResponse {
   createdAt: string;
 }
 
-export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray {
+export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullSlugStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray {
   data: {
     items: {
       ticketWaveName: string | null;
@@ -718,6 +726,7 @@ export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirme
       venueCountry: string | null;
       venueAddress: string | null;
       venueName: string | null;
+      slug: string | null;
       platform: string | null;
       name: string | null;
       id: string | null;
@@ -748,7 +757,7 @@ export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirme
 }
 
 export type GetUserOrdersResponse =
-  PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray;
+  PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullSlugStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray;
 
 export interface GetOrderTicketsResponse {
   tickets: {
@@ -1935,6 +1944,10 @@ export interface DeleteImageResponse {
 export type DeleteEventImageResponse = DeleteImageResponse;
 
 export interface GetCurrentUserResponse {
+  /** Whether user has opted in to WhatsApp notifications */
+  whatsappOptedIn: boolean;
+  /** User's phone number in E.164 format */
+  phoneNumber: string | null;
   /** Reason for manual review rejection (if rejected by admin) */
   rejectionReason: string | null;
   /** Whether user can retry liveness (has attempts remaining and is in a retryable state) */
@@ -2311,6 +2324,32 @@ export interface UpdateProfileRouteBody {
   firstName: string;
 }
 
+export interface UpdatePhoneSettingsResponse {
+  whatsappOptedIn: boolean;
+  phoneNumber: string | null;
+}
+
+export interface UpdatePhoneSettingsRouteBody {
+  whatsappOptedIn: boolean;
+  phoneNumber: string | null;
+}
+
+export interface SendOtpResponse {
+  expiresAt: string;
+}
+
+export interface SendOtpRouteBody {
+  phoneNumber: string;
+}
+
+export interface VerifyOtpResponse {
+  success: true;
+}
+
+export interface VerifyOtpRouteBody {
+  code: string;
+}
+
 export interface UploadProfileImageResponse {
   imageUrl: string;
 }
@@ -2438,7 +2477,7 @@ export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDesc
   status: "pending" | "failed" | "seen" | "sent";
   /** @format date-time */
   updatedAt: string;
-  channels: ("email" | "in_app" | "sms")[];
+  channels: ("email" | "in_app" | "sms" | "whatsapp")[];
   userId: string;
   channelStatus: string | number | boolean | JsonArray | JsonObject | null;
   /** @format double */
@@ -3065,6 +3104,36 @@ export class Api<
       this.request<GetDistinctRegionsResponse, any>({
         path: `/events/regions`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Get event details by slug (public, used by frontend)
+     *
+     * @tags Events
+     * @name GetBySlug
+     * @request GET:/events/by-slug/{slug}
+     */
+    getBySlug: (slug: string, params: RequestParams = {}) =>
+      this.request<GetEventBySlugResponse, any>({
+        path: `/events/by-slug/${slug}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Track a view for an event by slug (called from route loader on actual navigation)
+     *
+     * @tags Events
+     * @name TrackViewBySlug
+     * @request POST:/events/by-slug/{slug}/view
+     */
+    trackViewBySlug: (slug: string, params: RequestParams = {}) =>
+      this.request<TrackViewResponse, any>({
+        path: `/events/by-slug/${slug}/view`,
+        method: "POST",
         format: "json",
         ...params,
       }),
@@ -4596,6 +4665,60 @@ export class Api<
       this.request<UpdateProfileResponse, ApiErrorResponse>({
         path: `/profile`,
         method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name UpdatePhoneSettings
+     * @request PUT:/profile/phone
+     */
+    updatePhoneSettings: (
+      data: UpdatePhoneSettingsRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<UpdatePhoneSettingsResponse, ApiErrorResponse>({
+        path: `/profile/phone`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name SendOtp
+     * @request POST:/profile/phone/send-otp
+     */
+    sendOtp: (data: SendOtpRouteBody, params: RequestParams = {}) =>
+      this.request<SendOtpResponse, ApiErrorResponse>({
+        path: `/profile/phone/send-otp`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
+     * @name VerifyOtp
+     * @request POST:/profile/phone/verify-otp
+     */
+    verifyOtp: (data: VerifyOtpRouteBody, params: RequestParams = {}) =>
+      this.request<VerifyOtpResponse, ApiErrorResponse>({
+        path: `/profile/phone/verify-otp`,
+        method: "POST",
         body: data,
         type: ContentType.Json,
         format: "json",

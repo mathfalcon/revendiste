@@ -11,7 +11,7 @@ export interface CreateBatchData {
   debounceKey: string;
   userId: string;
   notificationType: NotificationType;
-  channels: ('in_app' | 'email' | 'sms')[];
+  channels: ('in_app' | 'email' | 'sms' | 'whatsapp')[];
   windowEndsAt: Date;
 }
 

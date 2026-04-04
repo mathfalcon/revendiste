@@ -6,6 +6,7 @@ import {
   ScrapedEventDataSchema,
   ScrapedImageType,
   ScrapedTicketWave,
+  ScraperResult,
 } from '../base/types';
 import {getStringFromError, trimTextAndDefaultToEmpty, logger} from '~/utils';
 import {Page} from 'playwright';
@@ -62,7 +63,8 @@ export class RedTicketsScraper extends BaseScraper {
     return this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
   }
 
-  async scrapeEvents(): Promise<ScrapedEventData[]> {
+  async scrapeEvents(): Promise<ScraperResult> {
+    const startTime = Date.now();
     const userAgent = this.getRandomUserAgent();
     logger.debug('RedTickets scraper using User-Agent:', {userAgent});
 
@@ -94,7 +96,8 @@ export class RedTicketsScraper extends BaseScraper {
         },
       ],
       requestHandler: this.handleRequest,
-      failedRequestHandler({request, log, error}) {
+      failedRequestHandler: ({request, log, error}) => {
+        this.urlsFailed++;
         log.info(`Request ${request.url} failed too many times.`);
         const err = error as Error | undefined;
         log.error(`Failed request details:`, {
@@ -138,19 +141,21 @@ export class RedTicketsScraper extends BaseScraper {
 
       this.logMemory('after crawler.run()');
 
+      const durationMs = Date.now() - startTime;
       logger.info(`Scraped ${this.events.length} events from RedTickets`);
-      return this.events;
+      return this.buildResult(this.events, 'complete', durationMs);
     } catch (error) {
+      const durationMs = Date.now() - startTime;
       // If timeout or other error, still return whatever events we managed to scrape
       if (this.events.length > 0) {
         logger.warn(
           `Crawler error but returning ${this.events.length} partial results:`,
           error,
         );
-        return this.events;
+        return this.buildResult(this.events, 'partial', durationMs, 'timeout');
       }
       logger.error('Error scraping RedTickets events:', error);
-      throw error;
+      return this.buildResult([], 'failed', durationMs, error instanceof Error ? error.message : 'unknown');
     }
   }
 
@@ -355,6 +360,7 @@ export class RedTicketsScraper extends BaseScraper {
       for (const eventData of eventDataList) {
         this.validateAndAddEvent(eventData);
       }
+      this.urlsProcessed++;
     } catch (error) {
       log.error(
         `Error extracting event details for ${url}: ${getStringFromError(error)}`,

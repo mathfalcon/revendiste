@@ -18,6 +18,7 @@ import {
 import {NotificationDropdown} from '../NotificationDropdown';
 import {cn} from '~/lib/utils';
 import {toast} from 'sonner';
+import {useDesktopNotifications} from '~/hooks';
 
 const POLLING_INTERVAL = 15_000; // 15 seconds - industry standard for notification polling
 
@@ -29,6 +30,8 @@ export const NotificationBell = () => {
     ...getUnseenCountQuery(),
     refetchInterval: POLLING_INTERVAL,
   });
+
+  const {permission, requestPermission} = useDesktopNotifications(unseenCount);
 
   const {
     data: notifications,
@@ -108,6 +111,19 @@ export const NotificationBell = () => {
           onMarkAllAsSeen={handleMarkAllAsSeen}
           hasUnseen={unseenCount > 0}
         />
+        {permission === 'default' && (
+          <div className='border-t px-4 py-2 text-center'>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='h-7 text-xs text-muted-foreground'
+              onClick={requestPermission}
+            >
+              <Bell className='mr-1.5 h-3 w-3' />
+              Activar notificaciones de escritorio
+            </Button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );

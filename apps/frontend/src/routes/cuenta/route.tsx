@@ -9,7 +9,6 @@ import {
   Upload,
   Menu,
   Wallet,
-  ShieldCheck,
   QrCode,
   Flag,
   Settings,
@@ -19,58 +18,84 @@ import {getMyListingsQuery} from '~/lib';
 import {Badge} from '~/components/ui/badge';
 import {Button} from '~/components/ui/button';
 import {Sheet, SheetContent, SheetTrigger} from '~/components/ui/sheet';
+import {Separator} from '~/components/ui/separator';
 import {useState} from 'react';
 import {seo} from '~/utils/seo';
 import {beforeLoadRequireAuth} from '~/utils';
 import {cn} from '~/lib/utils';
 
-const TAB_CONFIG = [
+type TabItem = {
+  value: string;
+  label: string;
+  icon: React.ComponentType<{className?: string}>;
+  to: string;
+  badge?: (count: number) => React.ReactNode;
+};
+
+const SIDEBAR_SECTIONS: {label: string; items: TabItem[]}[] = [
   {
-    value: 'entradas',
-    label: 'Mis entradas',
-    icon: QrCode,
-    to: '/cuenta/entradas',
+    label: 'Entradas',
+    items: [
+      {
+        value: 'entradas',
+        label: 'Mis entradas',
+        icon: QrCode,
+        to: '/cuenta/entradas',
+      },
+      {
+        value: 'publicaciones',
+        label: 'Publicaciones',
+        icon: Ticket,
+        to: '/cuenta/publicaciones',
+      },
+      {
+        value: 'subir-entradas',
+        label: 'Subir entradas',
+        icon: Upload,
+        to: '/cuenta/subir-entradas',
+        badge: (count: number) =>
+          count > 0 ? (
+            <Badge
+              variant='destructive'
+              className='ml-auto h-5 min-w-5 flex items-center justify-center px-1.5 text-xs'
+            >
+              {count}
+            </Badge>
+          ) : null,
+      },
+    ],
   },
   {
-    value: 'publicaciones',
-    label: 'Publicaciones',
-    icon: Ticket,
-    to: '/cuenta/publicaciones',
+    label: 'Dinero',
+    items: [
+      {
+        value: 'retiro',
+        label: 'Retiros',
+        icon: Wallet,
+        to: '/cuenta/retiro',
+      },
+    ],
   },
   {
-    value: 'subir-entradas',
-    label: 'Subir entradas',
-    icon: Upload,
-    to: '/cuenta/subir-entradas',
-    badge: (count: number) =>
-      count > 0 ? (
-        <Badge
-          variant='destructive'
-          className='ml-auto h-5 min-w-5 flex items-center justify-center px-1.5 text-xs'
-        >
-          {count}
-        </Badge>
-      ) : null,
+    label: 'Cuenta',
+    items: [
+      {
+        value: 'configuracion',
+        label: 'Configuración',
+        icon: Settings,
+        to: '/cuenta/configuracion',
+      },
+      {
+        value: 'reportes',
+        label: 'Reportes',
+        icon: Flag,
+        to: '/cuenta/reportes',
+      },
+    ],
   },
-  {
-    value: 'retiro',
-    label: 'Retiros',
-    icon: Wallet,
-    to: '/cuenta/retiro',
-  },
-  {
-    value: 'configuracion',
-    label: 'Configuración',
-    icon: Settings,
-    to: '/cuenta/configuracion',
-  },
-  {
-    value: 'reportes',
-    label: 'Reportes',
-    icon: Flag,
-    to: '/cuenta/reportes',
-  },
-] as const;
+];
+
+const ALL_TABS = SIDEBAR_SECTIONS.flatMap(section => section.items);
 
 export const Route = createFileRoute('/cuenta')({
   component: RouteComponent,
@@ -93,7 +118,7 @@ function RouteComponent() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Match the active tab by pathname prefix (handles sub-routes like /cuenta/reportes/$reportId)
-  const activeTab = TAB_CONFIG.find(
+  const activeTab = ALL_TABS.find(
     tab => pathname === tab.to || pathname.startsWith(tab.to + '/'),
   );
   const activeTabValue = activeTab?.value;
@@ -137,58 +162,70 @@ function RouteComponent() {
               </Button>
             </SheetTrigger>
             <SheetContent side='right' className='w-[85vw] sm:max-w-sm'>
-              <nav className='mt-6 flex flex-col gap-2'>
-                {TAB_CONFIG.map(tab => {
-                  const isActive = tab.value === activeTabValue;
-                  return (
-                    <Link
-                      key={tab.value}
-                      to={tab.to}
-                      onClick={() => setSheetOpen(false)}
-                      className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-muted'
-                      }`}
-                    >
-                      <div className='flex items-center gap-3'>
-                        <tab.icon className='h-5 w-5' />
-                        <span>{tab.label}</span>
-                      </div>
-                      {'badge' in tab && tab.badge
-                        ? tab.badge(ticketsNeedingUploadCount)
-                        : null}
-                    </Link>
-                  );
-                })}
+              <nav className='mt-6 flex flex-col'>
+                {SIDEBAR_SECTIONS.map((section, sectionIndex) => (
+                  <div key={section.label}>
+                    {sectionIndex > 0 && <Separator className='my-2' />}
+                    {section.items.map(tab => {
+                      const isActive = tab.value === activeTabValue;
+                      return (
+                        <Link
+                          key={tab.value}
+                          to={tab.to}
+                          onClick={() => setSheetOpen(false)}
+                          className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'hover:bg-muted'
+                          }`}
+                        >
+                          <div className='flex items-center gap-3'>
+                            <tab.icon className='h-5 w-5' />
+                            <span>{tab.label}</span>
+                          </div>
+                          {tab.badge
+                            ? tab.badge(ticketsNeedingUploadCount)
+                            : null}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ))}
               </nav>
             </SheetContent>
           </Sheet>
         </div>
 
         {/* Desktop sidebar — plain nav, single Outlet avoids multiple-outlet flash */}
-        <nav className='hidden md:flex flex-col w-auto min-w-[200px] gap-0.5 p-1'>
-          {TAB_CONFIG.map(tab => {
-            const isActive = tab.value === activeTabValue;
-            return (
-              <Link
-                key={tab.value}
-                to={tab.to}
-                className={cn(
-                  'flex items-center gap-2 rounded-md px-3 py-1.5 text-[1rem] font-medium transition-all w-full',
-                  isActive
-                    ? 'bg-background text-foreground shadow'
-                    : 'text-muted-foreground hover:bg-muted/50',
-                )}
-              >
-                <tab.icon className='h-4 w-4 shrink-0' />
-                <span>{tab.label}</span>
-                {'badge' in tab && tab.badge
-                  ? tab.badge(ticketsNeedingUploadCount)
-                  : null}
-              </Link>
-            );
-          })}
+        <nav className='hidden md:flex flex-col w-auto min-w-[200px] p-1'>
+          {SIDEBAR_SECTIONS.map((section, sectionIndex) => (
+            <div key={section.label}>
+              {sectionIndex > 0 && <Separator className='my-2' />}
+              <div className='flex flex-col gap-0.5'>
+                {section.items.map(tab => {
+                  const isActive = tab.value === activeTabValue;
+                  return (
+                    <Link
+                      key={tab.value}
+                      to={tab.to}
+                      className={cn(
+                        'flex items-center gap-2 rounded-md px-3 py-1.5 text-[1rem] font-medium transition-all w-full',
+                        isActive
+                          ? 'bg-background text-foreground shadow'
+                          : 'text-muted-foreground hover:bg-muted/50',
+                      )}
+                    >
+                      <tab.icon className='h-4 w-4 shrink-0' />
+                      <span>{tab.label}</span>
+                      {tab.badge
+                        ? tab.badge(ticketsNeedingUploadCount)
+                        : null}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Content — single Outlet, always rendered */}

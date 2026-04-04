@@ -77,6 +77,49 @@ export type ChangePasswordRouteBody = z.infer<
   typeof ChangePasswordRouteSchema
 >['body'];
 
+export const UpdatePhoneSettingsRouteSchema = z.object({
+  body: z.object({
+    phoneNumber: z
+      .string()
+      .regex(
+        /^\+[1-9]\d{6,14}$/,
+        'Número de teléfono inválido (formato E.164, ej: +59899123456)',
+      )
+      .nullable(),
+    whatsappOptedIn: z.boolean(),
+  }),
+});
+
+export type UpdatePhoneSettingsRouteBody = z.infer<
+  typeof UpdatePhoneSettingsRouteSchema
+>['body'];
+
+export const SendOtpRouteSchema = z.object({
+  body: z.object({
+    phoneNumber: z
+      .string()
+      .regex(
+        /^\+[1-9]\d{6,14}$/,
+        'Número de teléfono inválido (formato E.164, ej: +59899123456)',
+      ),
+  }),
+});
+
+export type SendOtpRouteBody = z.infer<typeof SendOtpRouteSchema>['body'];
+
+export const VerifyOtpRouteSchema = z.object({
+  body: z.object({
+    code: z
+      .string()
+      .length(6, 'El código debe tener 6 dígitos')
+      .regex(/^\d{6}$/, 'El código debe contener solo números'),
+  }),
+});
+
+export type VerifyOtpRouteBody = z.infer<
+  typeof VerifyOtpRouteSchema
+>['body'];
+
 export const DeleteAccountRouteSchema = z.object({
   body: z.object({
     confirmation: z

@@ -26,7 +26,7 @@ export const BaseNotificationSchema = z.object({
   userId: z.string().uuid(),
   title: z.string(),
   description: z.string(),
-  channels: z.array(z.enum(['in_app', 'email', 'sms'] as const)),
+  channels: z.array(z.enum(['in_app', 'email', 'sms', 'whatsapp'] as const)),
   status: z.enum(['pending', 'sent', 'failed', 'seen'] as const),
   seenAt: z.date().nullable(),
   createdAt: z.date(),

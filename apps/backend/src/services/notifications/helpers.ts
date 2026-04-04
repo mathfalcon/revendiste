@@ -27,7 +27,7 @@ export async function notifyDocumentReminder(
   return await service.createNotification({
     userId: params.sellerUserId,
     type: 'document_reminder',
-    channels: ['in_app', 'email'],
+    channels: ['in_app', 'email', 'whatsapp'],
     actions: [
       {
         type: 'upload_documents',
@@ -48,7 +48,7 @@ export async function notifyDocumentReminder(
 }
 
 export interface NotificationOptions {
-  channels?: Array<'in_app' | 'email'>;
+  channels?: Array<'in_app' | 'email' | 'whatsapp'>;
   /** When true, send is delegated to cronjob (use for e.g. email + attachments). When false/omit, send immediately. */
   deferSendToJob?: boolean;
   /** Refs for send-notification job: storage path + optional filename (generic; used when deferSendToJob is true) */

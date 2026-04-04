@@ -11,9 +11,11 @@ import {ActiveTicketsSection} from './ActiveTicketsSection';
 import {SoldTicketsSection} from './SoldTicketsSection';
 import {CancelledTicketsSection} from './CancelledTicketsSection';
 import {formatEventDate, formatPrice, calculateMaxResalePrice} from '~/utils';
-import {Calendar, MapPin, DollarSign} from 'lucide-react';
+import {Calendar, MapPin, DollarSign, Share2} from 'lucide-react';
 import {CDN_ASSETS} from '~/assets';
 import {CopyableText} from '~/components/ui/copyable-text';
+import {copyToClipboard} from '~/utils/clipboard';
+import {toast} from 'sonner';
 
 interface ListingCardProps {
   listing: GetUserListingsResponse['data'][number];
@@ -41,6 +43,36 @@ export function ListingCard({listing}: ListingCardProps) {
       }),
       resetScroll: false,
     });
+  };
+
+  const handleShareEvent = async () => {
+    const eventUrl = `${window.location.origin}/eventos/${event.slug}`;
+
+    // Try Web Share API first (mobile)
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: event.name,
+          url: eventUrl,
+        });
+      } catch (error) {
+        // AbortError means user canceled - don't show any toast
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        // Other errors - log them
+        console.error('Error sharing:', error);
+      }
+      return;
+    }
+
+    // Fallback to clipboard (desktop)
+    const success = await copyToClipboard(eventUrl);
+    if (success) {
+      toast.success('Enlace copiado');
+    } else {
+      toast.error('No se pudo copiar el enlace');
+    }
   };
 
   // Filter tickets by status
@@ -76,8 +108,8 @@ export function ListingCard({listing}: ListingCardProps) {
         <div className='flex gap-3'>
           {/* Event Flyer */}
           <Link
-            to='/eventos/$eventId'
-            params={{eventId: event.id}}
+            to='/eventos/$slug'
+            params={{slug: event.slug}}
             className='shrink-0'
           >
             <img
@@ -92,8 +124,8 @@ export function ListingCard({listing}: ListingCardProps) {
             <div className='flex items-start justify-between gap-1'>
               <div className='min-w-0 flex-1'>
                 <Link
-                  to='/eventos/$eventId'
-                  params={{eventId: event.id}}
+                  to='/eventos/$slug'
+                  params={{slug: event.slug}}
                   className='hover:text-primary transition-colors'
                 >
                   <h3 className='font-semibold text-base sm:text-lg leading-tight line-clamp-2'>
@@ -104,14 +136,26 @@ export function ListingCard({listing}: ListingCardProps) {
                   {ticketWave.name}
                 </p>
               </div>
-              {isEventPast && (
-                <Badge
-                  variant='outline'
-                  className='shrink-0 text-muted-foreground'
-                >
-                  Finalizado
-                </Badge>
-              )}
+              <div className='flex items-center gap-2 shrink-0'>
+                {event.slug && (
+                  <button
+                    type='button'
+                    onClick={handleShareEvent}
+                    aria-label='Compartir evento'
+                    className='p-1 text-muted-foreground hover:text-foreground transition-colors'
+                  >
+                    <Share2 className='h-4 w-4' />
+                  </button>
+                )}
+                {isEventPast && (
+                  <Badge
+                    variant='outline'
+                    className='text-muted-foreground'
+                  >
+                    Finalizado
+                  </Badge>
+                )}
+              </div>
             </div>
 
             {/* Event Details - Desktop */}

@@ -128,6 +128,14 @@ export class UsersService {
     return this.usersRepository.updateImageUrl(clerkId, imageUrl);
   }
 
+  // Update user's phone number and WhatsApp opt-in
+  async updatePhoneSettings(
+    clerkId: string,
+    data: {phoneNumber: string | null; whatsappOptedIn: boolean},
+  ) {
+    return this.usersRepository.updatePhoneSettings(clerkId, data);
+  }
+
   // Find user by Clerk ID (direct passthrough)
   async findByClerkId(clerkId: string) {
     return this.usersRepository.findByClerkId(clerkId);

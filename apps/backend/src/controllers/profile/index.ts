@@ -15,11 +15,18 @@ import {
 import {requireAuthMiddleware} from '~/middleware';
 import {ApiErrorResponse} from '~/errors';
 import {Body, ValidateBody} from '~/decorators';
-import {UsersRepository} from '~/repositories';
+import {UsersRepository, OtpVerificationsRepository} from '~/repositories';
 import {UsersService} from '~/services';
 import {ProfileService} from '~/services/profile';
+import {OtpService} from '~/services/otp';
 import {db} from '~/db';
 import {
+  SendOtpRouteBody,
+  SendOtpRouteSchema,
+  VerifyOtpRouteBody,
+  VerifyOtpRouteSchema,
+  UpdatePhoneSettingsRouteBody,
+  UpdatePhoneSettingsRouteSchema,
   UpdateProfileRouteBody,
   UpdateProfileRouteSchema,
   AddEmailRouteBody,
@@ -37,6 +44,9 @@ import {
 } from './validation';
 
 type UpdateProfileResponse = ReturnType<ProfileService['updateProfile']>;
+type UpdatePhoneSettingsResponse = ReturnType<
+  ProfileService['updatePhoneSettings']
+>;
 type UploadProfileImageResponse = ReturnType<
   ProfileService['uploadProfileImage']
 >;
@@ -59,15 +69,19 @@ type ChangePasswordResponse = ReturnType<ProfileService['changePassword']>;
 type GetSessionsResponse = ReturnType<ProfileService['getSessions']>;
 type RevokeSessionResponse = ReturnType<ProfileService['revokeSession']>;
 type DeleteAccountResponse = ReturnType<ProfileService['deleteAccount']>;
+type SendOtpResponse = ReturnType<OtpService['sendOtp']>;
+type VerifyOtpResponse = ReturnType<OtpService['verifyOtp']>;
 
 const usersRepository = new UsersRepository(db);
 const usersService = new UsersService(usersRepository);
+const otpRepository = new OtpVerificationsRepository(db);
 
 @Route('profile')
 @Middlewares(requireAuthMiddleware)
 @Tags('Profile')
 export class ProfileController {
   private service = new ProfileService(usersService);
+  private otpService = new OtpService(otpRepository, usersService);
 
   @Put('/')
   @ValidateBody(UpdateProfileRouteSchema)
@@ -77,6 +91,42 @@ export class ProfileController {
     @Request() request: express.Request,
   ): Promise<UpdateProfileResponse> {
     return this.service.updateProfile(request.user.clerkId, body);
+  }
+
+  @Put('/phone')
+  @ValidateBody(UpdatePhoneSettingsRouteSchema)
+  @Response<ApiErrorResponse>(401, 'Authentication required')
+  public async updatePhoneSettings(
+    @Body() body: UpdatePhoneSettingsRouteBody,
+    @Request() request: express.Request,
+  ): Promise<UpdatePhoneSettingsResponse> {
+    return this.service.updatePhoneSettings(request.user.clerkId, body);
+  }
+
+  @Post('/phone/send-otp')
+  @ValidateBody(SendOtpRouteSchema)
+  @Response<ApiErrorResponse>(401, 'Authentication required')
+  @Response<ApiErrorResponse>(429, 'Too many OTP requests')
+  public async sendOtp(
+    @Body() body: SendOtpRouteBody,
+    @Request() request: express.Request,
+  ): Promise<SendOtpResponse> {
+    return this.otpService.sendOtp(request.user.id, body.phoneNumber);
+  }
+
+  @Post('/phone/verify-otp')
+  @ValidateBody(VerifyOtpRouteSchema)
+  @Response<ApiErrorResponse>(401, 'Authentication required')
+  @Response<ApiErrorResponse>(400, 'Invalid or expired OTP')
+  public async verifyOtp(
+    @Body() body: VerifyOtpRouteBody,
+    @Request() request: express.Request,
+  ): Promise<VerifyOtpResponse> {
+    return this.otpService.verifyOtp(
+      request.user.id,
+      request.user.clerkId,
+      body.code,
+    );
   }
 
   @Put('/image')

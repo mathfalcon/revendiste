@@ -90,6 +90,26 @@ export class UsersRepository extends BaseRepository<UsersRepository> {
     return user;
   }
 
+  // Update user's phone number and WhatsApp opt-in
+  async updatePhoneSettings(
+    clerkId: string,
+    data: {phoneNumber: string | null; whatsappOptedIn: boolean},
+  ) {
+    const [user] = await this.db
+      .updateTable('users')
+      .set({
+        phoneNumber: data.phoneNumber,
+        whatsappOptedIn: data.whatsappOptedIn,
+        updatedAt: new Date(),
+      })
+      .where('clerkId', '=', clerkId)
+      .where('deletedAt', 'is', null)
+      .returningAll()
+      .execute();
+
+    return user;
+  }
+
   // Update user's image URL
   async updateImageUrl(clerkId: string, imageUrl: string | null) {
     const [user] = await this.db

@@ -324,13 +324,14 @@ module "identity_verification" {
   ]
 }
 
-# EC2 Instance Connect Endpoint for secure database access (FREE - no EC2 needed)
-module "ec2_instance_connect_endpoint" {
-  source = "../../modules/ec2-instance-connect-endpoint"
+# SSM bastion host for secure database access via port forwarding
+module "bastion" {
+  source = "../../modules/bastion"
 
   name_prefix           = local.name_prefix
   vpc_id                = module.vpc.vpc_id
-  subnet_id             = module.vpc.private_subnet_ids[0] # Use first private subnet
+  subnet_id             = module.vpc.private_subnet_ids[0]
+  private_subnet_ids    = module.vpc.private_subnet_ids
   rds_security_group_id = module.security_groups.rds_security_group_id
   common_tags           = local.common_tags
 }

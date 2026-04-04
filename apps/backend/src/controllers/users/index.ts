@@ -40,6 +40,10 @@ type GetCurrentUserResponse = {
   canRetryLiveness: boolean;
   /** Reason for manual review rejection (if rejected by admin) */
   rejectionReason: string | null;
+  /** User's phone number in E.164 format */
+  phoneNumber: string | null;
+  /** Whether user has opted in to WhatsApp notifications */
+  whatsappOptedIn: boolean;
 };
 
 @Route('users')
@@ -102,6 +106,8 @@ export class UsersController {
       verificationAttempts,
       canRetryLiveness,
       rejectionReason,
+      phoneNumber: request.user.phoneNumber ?? null,
+      whatsappOptedIn: request.user.whatsappOptedIn ?? false,
     };
   }
 }

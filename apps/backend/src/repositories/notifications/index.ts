@@ -12,7 +12,7 @@ import type {PaginationOptions} from '~/types/pagination';
 export interface CreateNotificationData {
   userId: string;
   type: NotificationType;
-  channels: ('in_app' | 'email' | 'sms')[];
+  channels: ('in_app' | 'email' | 'sms' | 'whatsapp')[];
   actions?: Array<{
     type: string;
     label: string;

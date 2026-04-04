@@ -7,6 +7,8 @@ import {
 } from '~/repositories';
 import type {IEmailProvider} from './providers/IEmailProvider';
 import {getEmailProvider} from './providers/EmailProviderFactory';
+import type {IWhatsAppProvider} from './providers/IWhatsAppProvider';
+import {getWhatsAppProvider} from './providers/WhatsAppProviderFactory';
 import {EMAIL_FROM} from '~/config/env';
 import {CreateNotificationData} from '~/repositories/notifications';
 import {
@@ -26,6 +28,7 @@ import {
   parseNotificationMetadata,
   buildEmailTemplate,
 } from './email-template-builder';
+import {buildWhatsAppTemplate} from './whatsapp-template-builder';
 import {generateNotificationText} from '@revendiste/shared';
 import {getJobQueueService} from '~/services/job-queue';
 import type {
@@ -74,15 +77,18 @@ export type MetadataMerger = (
 
 export class NotificationService {
   private emailProvider: IEmailProvider;
+  private whatsappProvider: IWhatsAppProvider;
 
   constructor(
     private readonly notificationsRepository: NotificationsRepository,
     private readonly usersRepository: UsersRepository,
     private readonly notificationBatchesRepository?: NotificationBatchesRepository,
     emailProvider?: IEmailProvider,
+    whatsappProvider?: IWhatsAppProvider,
   ) {
     // Use provided provider or get from factory based on configuration
     this.emailProvider = emailProvider || getEmailProvider();
+    this.whatsappProvider = whatsappProvider || getWhatsAppProvider();
   }
 
   /**
@@ -266,19 +272,19 @@ export class NotificationService {
       return;
     }
 
-    // Get user email and handle not found case
-    const userEmail = await this.getUserEmailForNotification(
+    // Get user contact info and handle not found case
+    const contactInfo = await this.getUserContactInfoForNotification(
       notification,
       notificationId,
     );
-    if (!userEmail) {
+    if (!contactInfo) {
       return; // Error already logged and status updated
     }
 
     // Send through all channels
     const channelStatus = await this.sendThroughChannels(
       notification,
-      userEmail,
+      contactInfo,
       attachments,
     );
 
@@ -352,15 +358,15 @@ export class NotificationService {
   }
 
   /**
-   * Get user email for notification, handle not found case
+   * Get user contact info for notification, handle not found case
    * Returns null if user not found (error already logged and status updated)
    */
-  private async getUserEmailForNotification(
+  private async getUserContactInfoForNotification(
     notification: NonNullable<
       Awaited<ReturnType<NotificationsRepository['getById']>>
     >,
     notificationId: string,
-  ): Promise<string | null> {
+  ): Promise<{email: string; phoneNumber: string | null} | null> {
     const user = await this.usersRepository.getById(notification.userId);
 
     if (!user || !user.email) {
@@ -386,7 +392,10 @@ export class NotificationService {
       return null;
     }
 
-    return user.email;
+    return {
+      email: user.email,
+      phoneNumber: user.phoneNumber ?? null,
+    };
   }
 
   /**
@@ -397,7 +406,7 @@ export class NotificationService {
     notification: NonNullable<
       Awaited<ReturnType<NotificationsRepository['getById']>>
     >,
-    userEmail: string,
+    contactInfo: {email: string; phoneNumber: string | null},
     attachments?: EmailAttachmentParam[],
   ): Promise<
     Record<string, {status: 'sent' | 'failed'; sentAt?: string; error?: string}>
@@ -414,7 +423,7 @@ export class NotificationService {
           if (channel === 'email') {
             await this.sendEmailNotification(
               notification,
-              userEmail,
+              contactInfo.email,
               attachments,
             );
             channelStatus[channel] = {
@@ -427,8 +436,24 @@ export class NotificationService {
               status: 'sent',
               sentAt: new Date().toISOString(),
             };
+          } else if (channel === 'whatsapp') {
+            // Having a phone number IS the opt-in (providing it is voluntary)
+            if (!contactInfo.phoneNumber) {
+              channelStatus[channel] = {
+                status: 'failed',
+                error: 'User has no phone number',
+              };
+              return;
+            }
+            await this.sendWhatsAppNotification(
+              notification,
+              contactInfo.phoneNumber,
+            );
+            channelStatus[channel] = {
+              status: 'sent',
+              sentAt: new Date().toISOString(),
+            };
           }
-          // Future: Add SMS, push notifications, etc.
         } catch (error) {
           channelStatus[channel] = {
             status: 'failed',
@@ -529,6 +554,49 @@ export class NotificationService {
       text,
       from: EMAIL_FROM,
       attachments,
+    });
+  }
+
+  /**
+   * Send WhatsApp notification using pre-approved templates
+   */
+  private async sendWhatsAppNotification(
+    notification: {
+      type: string;
+      metadata?: unknown;
+    },
+    userPhone: string,
+  ) {
+    const notificationType = notification.type as NotificationType;
+
+    const parsedMetadata = parseNotificationMetadata(
+      notificationType,
+      notification.metadata,
+    );
+
+    if (!parsedMetadata) {
+      logger.error('Notification metadata is required for WhatsApp', {
+        notificationType,
+      });
+      throw new Error(
+        `Notification metadata is required for WhatsApp type: ${notificationType}`,
+      );
+    }
+
+    const templateData = buildWhatsAppTemplate(notificationType, parsedMetadata);
+
+    if (!templateData) {
+      logger.debug('No WhatsApp template for notification type, skipping', {
+        notificationType,
+      });
+      return;
+    }
+
+    await this.whatsappProvider.sendMessage({
+      to: userPhone,
+      templateName: templateData.templateName,
+      templateLanguage: templateData.templateLanguage,
+      components: templateData.components,
     });
   }
 

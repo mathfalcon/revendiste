@@ -21,7 +21,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as RegistrarseSplatRouteImport } from './routes/registrarse.$'
 import { Route as IngresarSplatRouteImport } from './routes/ingresar.$'
-import { Route as EventosEventIdRouteImport } from './routes/eventos/$eventId'
+import { Route as EventosSlugRouteImport } from './routes/eventos/$slug'
 import { Route as EntradasPublicarRouteImport } from './routes/entradas/publicar'
 import { Route as CuentaVerificarRouteImport } from './routes/cuenta/verificar'
 import { Route as CuentaSubirEntradasRouteImport } from './routes/cuenta/subir-entradas'
@@ -100,9 +100,9 @@ const IngresarSplatRoute = IngresarSplatRouteImport.update({
   path: '/ingresar/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EventosEventIdRoute = EventosEventIdRouteImport.update({
-  id: '/eventos/$eventId',
-  path: '/eventos/$eventId',
+const EventosSlugRoute = EventosSlugRouteImport.update({
+  id: '/eventos/$slug',
+  path: '/eventos/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntradasPublicarRoute = EntradasPublicarRouteImport.update({
@@ -213,7 +213,7 @@ export interface FileRoutesByFullPath {
   '/cuenta/subir-entradas': typeof CuentaSubirEntradasRoute
   '/cuenta/verificar': typeof CuentaVerificarRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
-  '/eventos/$eventId': typeof EventosEventIdRoute
+  '/eventos/$slug': typeof EventosSlugRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin/': typeof AdminIndexRoute
@@ -244,7 +244,7 @@ export interface FileRoutesByTo {
   '/cuenta/subir-entradas': typeof CuentaSubirEntradasRoute
   '/cuenta/verificar': typeof CuentaVerificarRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
-  '/eventos/$eventId': typeof EventosEventIdRoute
+  '/eventos/$slug': typeof EventosSlugRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin': typeof AdminIndexRoute
@@ -277,7 +277,7 @@ export interface FileRoutesById {
   '/cuenta/subir-entradas': typeof CuentaSubirEntradasRoute
   '/cuenta/verificar': typeof CuentaVerificarRoute
   '/entradas/publicar': typeof EntradasPublicarRoute
-  '/eventos/$eventId': typeof EventosEventIdRoute
+  '/eventos/$slug': typeof EventosSlugRoute
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin/': typeof AdminIndexRoute
@@ -311,7 +311,7 @@ export interface FileRouteTypes {
     | '/cuenta/subir-entradas'
     | '/cuenta/verificar'
     | '/entradas/publicar'
-    | '/eventos/$eventId'
+    | '/eventos/$slug'
     | '/ingresar/$'
     | '/registrarse/$'
     | '/admin/'
@@ -342,7 +342,7 @@ export interface FileRouteTypes {
     | '/cuenta/subir-entradas'
     | '/cuenta/verificar'
     | '/entradas/publicar'
-    | '/eventos/$eventId'
+    | '/eventos/$slug'
     | '/ingresar/$'
     | '/registrarse/$'
     | '/admin'
@@ -374,7 +374,7 @@ export interface FileRouteTypes {
     | '/cuenta/subir-entradas'
     | '/cuenta/verificar'
     | '/entradas/publicar'
-    | '/eventos/$eventId'
+    | '/eventos/$slug'
     | '/ingresar/$'
     | '/registrarse/$'
     | '/admin/'
@@ -397,7 +397,7 @@ export interface RootRouteChildren {
   SitemapRoute: typeof SitemapRoute
   TerminosYCondicionesRoute: typeof TerminosYCondicionesRoute
   EntradasPublicarRoute: typeof EntradasPublicarRoute
-  EventosEventIdRoute: typeof EventosEventIdRoute
+  EventosSlugRoute: typeof EventosSlugRoute
   IngresarSplatRoute: typeof IngresarSplatRoute
   RegistrarseSplatRoute: typeof RegistrarseSplatRoute
   CheckoutOrderIdSuccessRoute: typeof CheckoutOrderIdSuccessRoute
@@ -490,11 +490,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngresarSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/eventos/$eventId': {
-      id: '/eventos/$eventId'
-      path: '/eventos/$eventId'
-      fullPath: '/eventos/$eventId'
-      preLoaderRoute: typeof EventosEventIdRouteImport
+    '/eventos/$slug': {
+      id: '/eventos/$slug'
+      path: '/eventos/$slug'
+      fullPath: '/eventos/$slug'
+      preLoaderRoute: typeof EventosSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entradas/publicar': {
@@ -680,7 +680,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapRoute: SitemapRoute,
   TerminosYCondicionesRoute: TerminosYCondicionesRoute,
   EntradasPublicarRoute: EntradasPublicarRoute,
-  EventosEventIdRoute: EventosEventIdRoute,
+  EventosSlugRoute: EventosSlugRoute,
   IngresarSplatRoute: IngresarSplatRoute,
   RegistrarseSplatRoute: RegistrarseSplatRoute,
   CheckoutOrderIdSuccessRoute: CheckoutOrderIdSuccessRoute,

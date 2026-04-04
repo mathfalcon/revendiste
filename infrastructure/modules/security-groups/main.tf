@@ -57,6 +57,15 @@ resource "aws_security_group" "ecs_tasks" {
     security_groups = [aws_security_group.alb.id]
   }
 
+  # Allow ECS tasks to communicate with each other (for Cloud Map service discovery)
+  ingress {
+    description = "Allow ECS tasks to communicate internally (Cloud Map)"
+    from_port   = var.backend_port
+    to_port     = var.backend_port
+    protocol    = "tcp"
+    self        = true
+  }
+
   # Allow all outbound traffic
   egress {
     description      = "Allow all outbound traffic"
@@ -70,17 +79,6 @@ resource "aws_security_group" "ecs_tasks" {
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-ecs-tasks-sg"
   })
-}
-
-# Allow ECS tasks to communicate with each other (for Cloud Map service discovery)
-resource "aws_security_group_rule" "ecs_tasks_internal" {
-  type                     = "ingress"
-  description              = "Allow ECS tasks to communicate internally (Cloud Map)"
-  from_port                = var.backend_port
-  to_port                  = var.backend_port
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.ecs_tasks.id
-  security_group_id        = aws_security_group.ecs_tasks.id
 }
 
 # Security group for RDS

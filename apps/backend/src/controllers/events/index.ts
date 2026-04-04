@@ -40,6 +40,7 @@ export type GetDistinctRegionsResponse = ReturnType<
   VenuesService['getDistinctRegions']
 >;
 export type GetEventByIdResponse = ReturnType<EventsService['getEventById']>;
+export type GetEventBySlugResponse = GetEventByIdResponse;
 export type TrackViewResponse = {success: boolean};
 
 interface EventsPaginatedQuery extends PaginationQuery {
@@ -140,6 +141,29 @@ export class EventsController {
   @Get('/regions')
   public async getDistinctRegions(): GetDistinctRegionsResponse {
     return this.venuesService.getDistinctRegions();
+  }
+
+  /**
+   * Get event details by slug (public, used by frontend)
+   */
+  @Get('/by-slug/{slug}')
+  public async getBySlug(
+    @Path() slug: string,
+    @Request() request: express.Request,
+  ): GetEventBySlugResponse {
+    return this.service.getEventBySlug(slug, request.user?.id);
+  }
+
+  /**
+   * Track a view for an event by slug (called from route loader on actual navigation)
+   */
+  @Post('/by-slug/{slug}/view')
+  public async trackViewBySlug(
+    @Path() slug: string,
+  ): Promise<TrackViewResponse> {
+    const event = await this.service.getEventBySlug(slug);
+    await this.eventViewsService.trackView(event.id);
+    return {success: true};
   }
 
   @Get('/{eventId}')
