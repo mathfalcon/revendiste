@@ -21,6 +21,7 @@ export function PwaInstallBanner() {
   const {
     canPrompt,
     isIos,
+    isMobile,
     showIosSheet,
     promptInstall,
     dismiss,
@@ -51,51 +52,88 @@ export function PwaInstallBanner() {
 
   return (
     <>
-      <div className='fixed bottom-0 inset-x-0 z-50 animate-in slide-in-from-bottom duration-300 safe-area-pb'>
-        <div className='border-t bg-background shadow-lg p-4'>
-          <div className='flex items-start gap-3'>
-            <img
-              src='/android-chrome-192x192.png'
-              alt='Revendiste'
-              className='h-10 w-10 rounded-xl flex-shrink-0'
-            />
-            <div className='flex-1 min-w-0'>
-              <p className='font-semibold text-sm'>Instalá Revendiste</p>
-              <p className='text-xs text-muted-foreground mt-0.5'>
-                Recibí notificaciones y accedé más rápido desde tu pantalla de
-                inicio.
-              </p>
+      {isMobile ? (
+        <div className='fixed bottom-0 inset-x-0 z-50 animate-in slide-in-from-bottom duration-300 safe-area-pb'>
+          <div className='border-t bg-background shadow-lg p-4'>
+            <div className='flex items-start gap-3'>
+              <img
+                src='/android-chrome-192x192.png'
+                alt='Revendiste'
+                className='h-10 w-10 rounded-xl shrink-0'
+              />
+              <div className='flex-1 min-w-0'>
+                <p className='font-semibold text-sm'>Instalá Revendiste</p>
+                <p className='text-xs text-muted-foreground mt-0.5'>
+                  Recibí notificaciones y accedé más rápido desde tu pantalla de
+                  inicio.
+                </p>
+              </div>
+              <button
+                onClick={dismiss}
+                className='text-muted-foreground hover:text-foreground -mt-0.5 -mr-1 p-1'
+                aria-label='Cerrar'
+              >
+                <X className='h-4 w-4' />
+              </button>
+            </div>
+            <div className='flex items-center gap-2 mt-3'>
+              <Button size='sm' className='flex-1' onClick={promptInstall}>
+                <Download className='mr-1.5 h-4 w-4' />
+                Instalar
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='flex-1'
+                onClick={dismiss}
+              >
+                Ahora no
+              </Button>
             </div>
             <button
-              onClick={dismiss}
-              className='text-muted-foreground hover:text-foreground -mt-0.5 -mr-1 p-1'
-              aria-label='Cerrar'
+              className='w-full text-center text-xs text-muted-foreground mt-2 hover:text-foreground transition-colors'
+              onClick={dismissForever}
             >
-              <X className='h-4 w-4' />
+              No mostrar de nuevo
             </button>
           </div>
-          <div className='flex items-center gap-2 mt-3'>
-            <Button size='sm' className='flex-1' onClick={promptInstall}>
-              <Download className='mr-1.5 h-4 w-4' />
-              Instalar
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              className='flex-1'
-              onClick={dismiss}
-            >
-              Ahora no
-            </Button>
-          </div>
-          <button
-            className='w-full text-center text-xs text-muted-foreground mt-2 hover:text-foreground transition-colors'
-            onClick={dismissForever}
-          >
-            No mostrar de nuevo
-          </button>
         </div>
-      </div>
+      ) : (
+        <div className='fixed bottom-4 right-4 z-50 w-72 animate-in slide-in-from-bottom-2 duration-300'>
+          <div className='rounded-xl border bg-background shadow-lg p-4'>
+            <div className='flex items-start gap-3'>
+              <img
+                src='/android-chrome-192x192.png'
+                alt='Revendiste'
+                className='h-9 w-9 rounded-lg shrink-0'
+              />
+              <div className='flex-1 min-w-0'>
+                <p className='font-semibold text-sm'>Instalá Revendiste</p>
+                <p className='text-xs text-muted-foreground mt-0.5'>
+                  Accedé más rápido desde tu escritorio.
+                </p>
+              </div>
+              <button
+                onClick={dismiss}
+                className='text-muted-foreground hover:text-foreground -mt-0.5 -mr-1 p-1'
+                aria-label='Cerrar'
+              >
+                <X className='h-4 w-4' />
+              </button>
+            </div>
+            <Button size='sm' className='w-full mt-3' onClick={promptInstall}>
+              <Download className='mr-1.5 h-4 w-4' />
+              Instalar app
+            </Button>
+            <button
+              className='w-full text-center text-xs text-muted-foreground mt-2 hover:text-foreground transition-colors'
+              onClick={dismissForever}
+            >
+              No mostrar de nuevo
+            </button>
+          </div>
+        </div>
+      )}
 
       <IosInstructionsSheet open={showIosSheet} onClose={closeIosSheet} />
     </>
@@ -121,7 +159,7 @@ function IosInstructionsSheet({
 
         <div className='mt-4 space-y-5'>
           <div className='flex items-start gap-3'>
-            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary flex-shrink-0'>
+            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0'>
               <Share className='h-4 w-4' />
             </div>
             <div>
@@ -133,12 +171,12 @@ function IosInstructionsSheet({
           </div>
 
           <div className='flex items-start gap-3'>
-            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary flex-shrink-0'>
+            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0'>
               <Plus className='h-4 w-4' />
             </div>
             <div>
               <p className='text-sm font-medium'>
-                2. Tocá &quot;Agregar a pantalla de inicio&quot;
+                2. Tocá &quot;Agregar a inicio&quot;
               </p>
               <p className='text-xs text-muted-foreground mt-0.5'>
                 Buscá la opción en el menú que se abre
@@ -147,7 +185,7 @@ function IosInstructionsSheet({
           </div>
 
           <div className='flex items-start gap-3'>
-            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary flex-shrink-0'>
+            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0'>
               <Download className='h-4 w-4' />
             </div>
             <div>

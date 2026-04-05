@@ -2,6 +2,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 
 const DISMISS_KEY = 'revendiste:pwa-install-dismissed';
 const DISMISS_FOREVER_KEY = 'revendiste:pwa-install-dismissed-forever';
+const INSTALLED_KEY = 'revendiste:pwa-installed';
 const TEMP_DISMISS_DAYS = 30;
 
 interface BeforeInstallPromptEvent extends Event {
@@ -12,7 +13,9 @@ interface BeforeInstallPromptEvent extends Event {
 function isIosDevice(): boolean {
   if (typeof navigator === 'undefined') return false;
   return (
-    /iPhone|iPad|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    (/iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) &&
+    !(window as any).MSStream
   );
 }
 
@@ -26,8 +29,9 @@ function isStandaloneMode(): boolean {
 
 function isMobileDevice(): boolean {
   if (typeof navigator === 'undefined') return false;
-  return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent,
+  return (
+    /Android|iPhone|iPod|webOS/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
   );
 }
 
@@ -66,24 +70,25 @@ export function usePwaInstall() {
     setIsIos(ios);
     setIsMobile(mobile);
 
-    // Already installed or desktop — no prompt
-    if (standalone || !mobile) {
+    // Already installed — no prompt needed
+    if (standalone || localStorage.getItem(INSTALLED_KEY) === 'true') {
       setCanPrompt(false);
       return;
     }
 
-    if (isDismissed()) {
-      setCanPrompt(false);
-    } else if (ios) {
-      // iOS can always show manual instructions
-      setCanPrompt(true);
+    if (!isDismissed()) {
+      if (ios) {
+        // iOS can always show manual instructions (no beforeinstallprompt)
+        setCanPrompt(true);
+      }
+      // Non-iOS: canPrompt becomes true only when beforeinstallprompt fires
     }
 
     // Listen for reset events from other hook instances
     const onReset = () => setCanPrompt(true);
     window.addEventListener(PWA_RESET_EVENT, onReset);
 
-    // Android/Chrome — listen for beforeinstallprompt
+    // All platforms (mobile + desktop Chromium) — listen for beforeinstallprompt
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPromptRef.current = e as BeforeInstallPromptEvent;
@@ -91,12 +96,20 @@ export function usePwaInstall() {
         setCanPrompt(true);
       }
     };
-
     window.addEventListener('beforeinstallprompt', handler);
+
+    // Hide banner if user installs via the browser's native UI
+    const onInstalled = () => {
+      setCanPrompt(false);
+      deferredPromptRef.current = null;
+      localStorage.setItem(INSTALLED_KEY, 'true');
+    };
+    window.addEventListener('appinstalled', onInstalled);
 
     return () => {
       window.removeEventListener(PWA_RESET_EVENT, onReset);
       window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', onInstalled);
     };
   }, []);
 
@@ -110,9 +123,10 @@ export function usePwaInstall() {
     if (!prompt) return;
 
     const {outcome} = await prompt.prompt();
+    deferredPromptRef.current = null;
+    setCanPrompt(false);
     if (outcome === 'accepted') {
-      setCanPrompt(false);
-      deferredPromptRef.current = null;
+      localStorage.setItem(INSTALLED_KEY, 'true');
     }
   }, [isIos]);
 
@@ -138,6 +152,7 @@ export function usePwaInstall() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(DISMISS_KEY);
       localStorage.removeItem(DISMISS_FOREVER_KEY);
+      localStorage.removeItem(INSTALLED_KEY);
       window.dispatchEvent(new Event(PWA_RESET_EVENT));
     }
     setCanPrompt(true);

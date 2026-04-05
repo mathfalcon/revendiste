@@ -1,5 +1,4 @@
 import {createFileRoute, redirect} from '@tanstack/react-router';
-import {Suspense} from 'react';
 import {FullScreenLoading} from '~/components';
 import {EventPage} from '~/features/event';
 import {
@@ -9,7 +8,7 @@ import {
   GetEventBySlugResponse,
 } from '~/lib';
 import {isAxiosError} from 'axios';
-import {seo} from '~/utils/seo';
+import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {EventEnded} from '~/components/EventEnded';
 import type {ErrorComponentProps} from '@tanstack/react-router';
@@ -75,8 +74,13 @@ export const fetchEventServer = createServerFn({method: 'GET'})
     return eventData;
   });
 
+function EventPageSkeleton() {
+  return <FullScreenLoading />;
+}
+
 export const Route = createFileRoute('/eventos/$slug')({
   component: RouteComponent,
+  pendingComponent: EventPageSkeleton,
   notFoundComponent: () => <EventEnded />,
   errorComponent: ({error}: ErrorComponentProps) => {
     if (isAxiosError(error) && error.response?.status === 404) {
@@ -175,9 +179,9 @@ export const Route = createFileRoute('/eventos/$slug')({
       ? `${truncatedDesc}${eventDate ? ` - ${eventDate}` : ''}${
           event.venueName ? ` en ${event.venueName}` : ''
         }`
-      : `Comprá entradas para ${event.name}${eventDate ? ` el ${eventDate}` : ''}${
+      : `Comprá o vendé entradas para ${event.name}${eventDate ? ` el ${eventDate}` : ''}${
           event.venueName ? ` en ${event.venueName}` : ''
-        }. Compra segura con garantía en Revendiste.`;
+        }. Compra y venta con garantía en Revendiste.`;
 
     // Get absolute URL for image (required for Open Graph)
     const imageUrl = metaImage?.url
@@ -188,11 +192,15 @@ export const Route = createFileRoute('/eventos/$slug')({
 
     // Build keywords from event data
     const keywords = [
+      `reventa ${event.name}`,
+      `revender entradas ${event.name}`,
       `entradas ${event.name}`,
       `comprar entradas ${event.name}`,
       event.venueName ? `entradas ${event.venueName}` : null,
       event.name,
       event.venueName,
+      'reventa de entradas Uruguay',
+      'comprar entradas reventa',
       'comprar entradas Uruguay',
       'entradas eventos',
       'revendiste',
@@ -217,6 +225,17 @@ export const Route = createFileRoute('/eventos/$slug')({
       }
       return tag;
     });
+
+    // Compute price range from available ticket waves
+    const allPrices = event.ticketWaves
+      .flatMap(wave => wave.priceGroups)
+      .filter(group => Number(group.availableTickets) > 0)
+      .map(group => parseFloat(group.price))
+      .filter(p => !isNaN(p) && p > 0);
+
+    const hasAvailableTickets = allPrices.length > 0;
+    const lowPrice = hasAvailableTickets ? Math.min(...allPrices) : undefined;
+    const highPrice = hasAvailableTickets ? Math.max(...allPrices) : undefined;
 
     // Generate structured data (JSON-LD) for the event
     const structuredData = {
@@ -249,9 +268,18 @@ export const Route = createFileRoute('/eventos/$slug')({
       image: imageUrl ? [imageUrl] : undefined,
       offers: {
         '@type': 'AggregateOffer',
-        availability: 'https://schema.org/InStock',
+        availability: hasAvailableTickets
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
         priceCurrency: 'UYU',
         url: canonicalUrl,
+        validFrom: event.createdAt,
+        ...(lowPrice !== undefined ? {lowPrice} : {}),
+        ...(highPrice !== undefined ? {highPrice} : {}),
+      },
+      performer: {
+        '@type': 'PerformingGroup',
+        name: event.name,
       },
       organizer: {
         '@type': 'Organization',
@@ -302,6 +330,7 @@ export const Route = createFileRoute('/eventos/$slug')({
           : []),
       ],
       links: [
+        alternateHreflangEsUy(canonicalUrl),
         {
           rel: 'canonical',
           href: canonicalUrl,
@@ -310,7 +339,7 @@ export const Route = createFileRoute('/eventos/$slug')({
       scripts: [
         {
           type: 'application/ld+json',
-          children: JSON.stringify(structuredData, null, 2),
+          children: JSON.stringify(structuredData),
         },
         {
           type: 'application/ld+json',
@@ -345,9 +374,5 @@ export const Route = createFileRoute('/eventos/$slug')({
 });
 
 function RouteComponent() {
-  return (
-    <Suspense fallback={<FullScreenLoading />}>
-      <EventPage />
-    </Suspense>
-  );
+  return <EventPage />;
 }

@@ -3,7 +3,7 @@ import {z} from 'zod';
 import {useCallback} from 'react';
 import {EventListingPage} from '~/features/event-listing';
 import {getEventsPaginatedQuery, getRegionsQuery} from '~/lib';
-import {seo} from '~/utils/seo';
+import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {
   slugToRegion,
@@ -103,7 +103,10 @@ export const Route = createFileRoute('/eventos/en/$location')({
         }),
         {property: 'og:url', content: canonical},
       ],
-      links: [{rel: 'canonical', href: canonical}],
+      links: [
+        alternateHreflangEsUy(canonical),
+        {rel: 'canonical', href: canonical},
+      ],
       scripts: [
         {
           type: 'application/ld+json',

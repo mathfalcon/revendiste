@@ -77,6 +77,7 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
                   <Link
                     to='/eventos/$slug'
                     params={{slug: order.event?.slug!}}
+                    preloadDelay={0}
                     className='hover:underline'
                   >
                     <TextEllipsis
@@ -242,7 +243,7 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
               </Button>
             )}
             <Button asChild variant='ghost' size='lg'>
-              <Link to='/eventos/$slug' params={{slug: order.event?.slug!}}>
+              <Link to='/eventos/$slug' params={{slug: order.event?.slug!}} preloadDelay={0}>
                 Volver al evento
               </Link>
             </Button>

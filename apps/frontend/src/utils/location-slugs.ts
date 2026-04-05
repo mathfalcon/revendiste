@@ -48,51 +48,53 @@ interface RegionSeoMeta {
 
 const REGION_SEO: Record<string, RegionSeoMeta> = {
   montevideo: {
-    title: 'Eventos en Montevideo | Entradas en Revendiste',
+    title: 'Entradas en Montevideo | Comprá y vendé en Revendiste',
     description:
-      'Encontrá entradas para conciertos, fiestas y eventos en Montevideo. Compra segura con garantía y custodia de fondos en Revendiste.',
+      'Comprá y vendé entradas para conciertos, fiestas y eventos en Montevideo. Garantía y custodia de fondos; reventa segura entre personas en Revendiste.',
     keywords:
-      'eventos Montevideo, entradas Montevideo, conciertos Montevideo, fiestas Montevideo, entradas conciertos Montevideo',
+      'reventa entradas Montevideo, revender entradas Montevideo, compra y venta entradas Montevideo, eventos Montevideo, entradas Montevideo, conciertos Montevideo, fiestas Montevideo, entradas conciertos Montevideo',
   },
   canelones: {
-    title: 'Eventos en Canelones | Entradas en Revendiste',
+    title: 'Entradas en Canelones | Comprá y vendé en Revendiste',
     description:
-      'Encontrá entradas para eventos, conciertos y fiestas en Canelones. Compra segura con garantía en Revendiste.',
+      'Comprá y vendé entradas para eventos, conciertos y fiestas en Canelones. Garantía en Revendiste; reventa segura entre personas.',
     keywords:
-      'eventos Canelones, entradas Canelones, conciertos Canelones, fiestas Canelones',
+      'reventa entradas Canelones, revender entradas Canelones, compra y venta entradas Canelones, eventos Canelones, entradas Canelones, conciertos Canelones, fiestas Canelones',
   },
   maldonado: {
-    title: 'Eventos en Maldonado | Entradas en Revendiste',
+    title: 'Entradas en Maldonado | Comprá y vendé en Revendiste',
     description:
-      'Encontrá entradas para eventos en Maldonado y Punta del Este. Conciertos, fiestas y más con compra segura en Revendiste.',
+      'Comprá y vendé entradas para eventos en Maldonado y Punta del Este. Garantía en Revendiste; reventa segura entre personas.',
     keywords:
-      'eventos Maldonado, eventos Punta del Este, entradas Maldonado, conciertos Punta del Este, fiestas Maldonado',
+      'reventa entradas Maldonado, revender entradas Punta del Este, compra y venta entradas Maldonado, eventos Maldonado, eventos Punta del Este, entradas Maldonado, conciertos Punta del Este, fiestas Maldonado',
   },
   rocha: {
-    title: 'Eventos en Rocha | Entradas en Revendiste',
+    title: 'Entradas en Rocha | Comprá y vendé en Revendiste',
     description:
-      'Encontrá entradas para eventos en Rocha y La Paloma. Compra segura con garantía en Revendiste.',
+      'Comprá y vendé entradas para eventos en Rocha y La Paloma. Garantía en Revendiste; reventa segura entre personas.',
     keywords:
-      'eventos Rocha, entradas Rocha, conciertos Rocha, fiestas La Paloma',
+      'reventa entradas Rocha, revender entradas Rocha, compra y venta entradas Rocha, eventos Rocha, entradas Rocha, conciertos Rocha, fiestas La Paloma',
   },
   colonia: {
-    title: 'Eventos en Colonia | Entradas en Revendiste',
+    title: 'Entradas en Colonia | Comprá y vendé en Revendiste',
     description:
-      'Encontrá entradas para eventos en Colonia del Sacramento y alrededores. Compra segura en Revendiste.',
+      'Comprá y vendé entradas para eventos en Colonia del Sacramento y alrededores. Garantía en Revendiste; reventa segura entre personas.',
     keywords:
-      'eventos Colonia, entradas Colonia del Sacramento, conciertos Colonia',
+      'reventa entradas Colonia, revender entradas Colonia, compra y venta entradas Colonia, eventos Colonia, entradas Colonia del Sacramento, conciertos Colonia',
   },
   paysandu: {
-    title: 'Eventos en Paysandú | Entradas en Revendiste',
+    title: 'Entradas en Paysandú | Comprá y vendé en Revendiste',
     description:
-      'Encontrá entradas para eventos, conciertos y fiestas en Paysandú. Compra segura con garantía en Revendiste.',
-    keywords: 'eventos Paysandú, entradas Paysandú, conciertos Paysandú',
+      'Comprá y vendé entradas para eventos, conciertos y fiestas en Paysandú. Garantía en Revendiste; reventa segura entre personas.',
+    keywords:
+      'reventa entradas Paysandú, revender entradas Paysandú, compra y venta entradas Paysandú, eventos Paysandú, entradas Paysandú, conciertos Paysandú',
   },
   salto: {
-    title: 'Eventos en Salto | Entradas en Revendiste',
+    title: 'Entradas en Salto | Comprá y vendé en Revendiste',
     description:
-      'Encontrá entradas para eventos, conciertos y fiestas en Salto. Compra segura con garantía en Revendiste.',
-    keywords: 'eventos Salto, entradas Salto, conciertos Salto',
+      'Comprá y vendé entradas para eventos, conciertos y fiestas en Salto. Garantía en Revendiste; reventa segura entre personas.',
+    keywords:
+      'reventa entradas Salto, revender entradas Salto, compra y venta entradas Salto, eventos Salto, entradas Salto, conciertos Salto',
   },
 };
 
@@ -102,9 +104,9 @@ export function getRegionSeoMeta(regionName: string): RegionSeoMeta {
 
   return (
     REGION_SEO[slug] ?? {
-      title: `Eventos en ${display} | Entradas en Revendiste`,
-      description: `Encontrá entradas para conciertos, fiestas y eventos en ${display}. Compra segura con garantía en Revendiste.`,
-      keywords: `eventos ${display}, entradas ${display}, conciertos ${display}, fiestas ${display}`,
+      title: `Entradas en ${display} | Comprá y vendé en Revendiste`,
+      description: `Comprá y vendé entradas para conciertos, fiestas y eventos en ${display}. Garantía en Revendiste; reventa segura entre personas.`,
+      keywords: `reventa entradas ${display}, revender entradas ${display}, compra y venta entradas ${display}, eventos ${display}, entradas ${display}, conciertos ${display}, fiestas ${display}`,
     }
   );
 }

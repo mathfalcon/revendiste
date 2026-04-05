@@ -50,6 +50,7 @@ export const EventCard = (props: EventCardProps) => {
       <Link
         to='/eventos/$slug'
         params={{slug}}
+        preloadDelay={0}
         className='flex flex-col h-full sm:justify-between sm:gap-3'
       >
         {/* Mobile: Image and Info side by side | Desktop: Image on top */}

@@ -2,7 +2,6 @@
   "name": "@revendiste/frontend",
   "version": "1.0.0",
   "private": true,
-  "sideEffects": false,
   "type": "module",
   "scripts": {
     "dev": "cross-env HTTPS_LOCAL=1 vite dev --mode localdev",

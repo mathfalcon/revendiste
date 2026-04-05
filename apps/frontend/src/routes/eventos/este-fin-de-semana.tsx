@@ -2,7 +2,7 @@ import {createFileRoute, useNavigate} from '@tanstack/react-router';
 import {useCallback} from 'react';
 import {EventListingPage} from '~/features/event-listing';
 import {getEventsPaginatedQuery} from '~/lib';
-import {seo} from '~/utils/seo';
+import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {getWeekendDateRange} from '~/utils/date-presets';
 import {regionToSlug} from '~/utils/location-slugs';
@@ -34,7 +34,7 @@ export const Route = createFileRoute('/eventos/este-fin-de-semana')({
       '@type': 'CollectionPage',
       name: 'Eventos este fin de semana en Uruguay',
       description:
-        'Descubrí todos los eventos de este fin de semana en Uruguay. Conciertos, fiestas y más con compra segura en Revendiste.',
+        'Descubrí todos los eventos de este fin de semana en Uruguay. Comprá y vendé entradas con garantía en Revendiste, incluida reventa segura entre personas.',
       url: canonical,
     };
 
@@ -62,14 +62,17 @@ export const Route = createFileRoute('/eventos/este-fin-de-semana')({
         ...seo({
           title: 'Eventos este fin de semana en Uruguay | Revendiste',
           description:
-            'Descubrí todos los eventos de este fin de semana en Uruguay. Conciertos, fiestas y más con compra segura en Revendiste.',
+            'Descubrí todos los eventos de este fin de semana en Uruguay. Comprá y vendé entradas con garantía en Revendiste, incluida reventa segura entre personas.',
           keywords:
-            'eventos fin de semana, eventos este finde Uruguay, conciertos fin de semana, fiestas viernes sábado, qué hacer este fin de semana Uruguay',
+            'eventos fin de semana, eventos este finde Uruguay, reventa entradas Uruguay, conciertos fin de semana, fiestas viernes sábado, qué hacer este fin de semana Uruguay',
           baseUrl,
         }),
         {property: 'og:url', content: canonical},
       ],
-      links: [{rel: 'canonical', href: canonical}],
+      links: [
+        alternateHreflangEsUy(canonical),
+        {rel: 'canonical', href: canonical},
+      ],
       scripts: [
         {
           type: 'application/ld+json',

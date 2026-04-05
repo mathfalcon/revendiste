@@ -6,15 +6,13 @@ import {EventInfoCards} from './EventInfoCards';
 import {VenueMapLazy} from './VenueMapLazy';
 import {EventImageType, getEventBySlugQuery} from '~/lib';
 import {useParams} from '@tanstack/react-router';
-import {useEffect, useRef, useState} from 'react';
-import {FullScreenLoading, TextEllipsis} from '~/components';
+import {useEffect, useState} from 'react';
+import {TextEllipsis} from '~/components';
 import {CDN_ASSETS} from '~/assets';
 import posthog from 'posthog-js';
 
 export const EventPage = () => {
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
   const params = useParams({from: '/eventos/$slug'});
   const response = useSuspenseQuery(getEventBySlugQuery(params.slug));
 
@@ -30,14 +28,6 @@ export const EventPage = () => {
     lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng);
 
   useEffect(() => {
-    setImageLoaded(false);
-    const img = imgRef.current;
-    if (img && img.complete && img.naturalWidth > 0) {
-      setImageLoaded(true);
-    }
-  }, [src]);
-
-  useEffect(() => {
     posthog.capture('event_page_viewed', {
       event_id: event.id,
       event_slug: params.slug,
@@ -50,21 +40,16 @@ export const EventPage = () => {
 
   return (
     <>
-      {!imageLoaded && <FullScreenLoading />}
-
       {/* Mobile Image - No badges overlay */}
       <div className='md:hidden relative w-full min-h-[15vh] bg-muted'>
         <img
-          key={src}
-          ref={imgRef}
-          src={src}
-          alt={event.name}
-          decoding='async'
-          loading='eager'
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageLoaded(true)}
-          className='w-full h-full min-h-[15vh] max-h-[15vh] object-cover transition-opacity duration-300'
-        />
+            key={src}
+            src={src}
+            alt={event.name}
+            decoding='async'
+            loading='eager'
+            className='w-full h-full min-h-[15vh] max-h-[15vh] object-cover transition-opacity duration-300'
+          />
         <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 via-30% to-transparent pointer-events-none' />
 
         {/* Title - Mobile */}

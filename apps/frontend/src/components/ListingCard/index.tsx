@@ -110,6 +110,7 @@ export function ListingCard({listing}: ListingCardProps) {
           <Link
             to='/eventos/$slug'
             params={{slug: event.slug}}
+            preloadDelay={0}
             className='shrink-0'
           >
             <img
@@ -126,6 +127,7 @@ export function ListingCard({listing}: ListingCardProps) {
                 <Link
                   to='/eventos/$slug'
                   params={{slug: event.slug}}
+                  preloadDelay={0}
                   className='hover:text-primary transition-colors'
                 >
                   <h3 className='font-semibold text-base sm:text-lg leading-tight line-clamp-2'>

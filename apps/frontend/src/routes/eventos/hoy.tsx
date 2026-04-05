@@ -2,7 +2,7 @@ import {createFileRoute, useNavigate} from '@tanstack/react-router';
 import {useCallback} from 'react';
 import {EventListingPage} from '~/features/event-listing';
 import {getEventsPaginatedQuery} from '~/lib';
-import {seo} from '~/utils/seo';
+import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {getTodayDateRange} from '~/utils/date-presets';
 import {regionToSlug} from '~/utils/location-slugs';
@@ -34,7 +34,7 @@ export const Route = createFileRoute('/eventos/hoy')({
       '@type': 'CollectionPage',
       name: 'Eventos hoy en Uruguay',
       description:
-        'Descubrí todos los eventos que pasan hoy en Uruguay. Conciertos, fiestas y más con compra segura en Revendiste.',
+        'Descubrí todos los eventos que pasan hoy en Uruguay. Comprá y vendé entradas con garantía en Revendiste, incluida reventa segura entre personas.',
       url: canonical,
     };
 
@@ -62,14 +62,17 @@ export const Route = createFileRoute('/eventos/hoy')({
         ...seo({
           title: 'Eventos hoy en Uruguay | Revendiste',
           description:
-            'Descubrí todos los eventos que pasan hoy en Uruguay. Conciertos, fiestas y más con compra segura en Revendiste.',
+            'Descubrí todos los eventos que pasan hoy en Uruguay. Comprá y vendé entradas con garantía en Revendiste, incluida reventa segura entre personas.',
           keywords:
-            'eventos hoy, eventos hoy Uruguay, conciertos hoy, fiestas hoy, qué hacer hoy Uruguay',
+            'eventos hoy, eventos hoy Uruguay, reventa entradas Uruguay, conciertos hoy, fiestas hoy, qué hacer hoy Uruguay',
           baseUrl,
         }),
         {property: 'og:url', content: canonical},
       ],
-      links: [{rel: 'canonical', href: canonical}],
+      links: [
+        alternateHreflangEsUy(canonical),
+        {rel: 'canonical', href: canonical},
+      ],
       scripts: [
         {
           type: 'application/ld+json',

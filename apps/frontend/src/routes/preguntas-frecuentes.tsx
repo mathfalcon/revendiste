@@ -12,7 +12,7 @@ import {Input} from '~/components/ui/input';
 import {z} from 'zod';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {cn} from '~/lib/utils';
-import {seo} from '~/utils/seo';
+import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {
   HelpCircle,
@@ -71,7 +71,10 @@ export const Route = createFileRoute('/preguntas-frecuentes')({
           'Dudas sobre cómo comprar o vender entradas en Revendiste? Acá te explicamos todo: comisiones, pagos, plazos de entrega, garantías y más.',
         baseUrl,
       }),
-      links: [{rel: 'canonical', href: `${baseUrl}/preguntas-frecuentes`}],
+      links: [
+        alternateHreflangEsUy(`${baseUrl}/preguntas-frecuentes`),
+        {rel: 'canonical', href: `${baseUrl}/preguntas-frecuentes`},
+      ],
       scripts: [
         {
           type: 'application/ld+json',
@@ -91,7 +94,7 @@ const faqGeneral: FAQItem[] = [
   {
     question: '¿Qué es Revendiste?',
     answer:
-      'Revendiste es una plataforma que conecta a personas que quieren vender sus entradas con quienes las quieren comprar. No somos revendedores: somos intermediarios. Nos encargamos de verificar que las entradas sean válidas, de custodiar el dinero hasta que la operación se complete correctamente y de garantizar una transferencia segura. Nuestro objetivo es que puedas comprar o vender con total tranquilidad.',
+      'Revendiste es una plataforma de compra y venta de entradas que conecta a personas que quieren vender con quienes las quieren comprar. No somos revendedores: somos intermediarios. Cuando la operación es entre personas, ofrecemos reventa segura: verificamos las entradas, custodiamos el dinero hasta que todo se complete y garantizamos una entrega segura. Comprá o vendé con total tranquilidad: eso buscamos.',
   },
   {
     question: '¿Es legal usar Revendiste?',
@@ -101,7 +104,7 @@ const faqGeneral: FAQItem[] = [
   {
     question: '¿Puedo vender mi entrada a un precio mayor al que la pagué?',
     answer:
-      'Sí, podés publicarla hasta un 15% por encima del valor original. El objetivo es que puedas recuperar las comisiones que pagaste al comprar la entrada, sin que se genere especulación. Por ejemplo, si pagaste $1.000 más $100 de comisión, podés publicarla hasta por $1.150.',
+      'Sí, podés publicarla hasta un 15% por encima del valor original. Así podés recuperar las comisiones que pagaste al comprar la entrada, sin que se genere especulación. Por ejemplo, si pagaste $1.000 más $100 de comisión, podés publicarla hasta por $1.150.',
   },
   {
     question: '¿Cómo sé que no me van a estafar?',
@@ -147,7 +150,7 @@ const faqVendedores: FAQItem[] = [
   {
     question: '¿Cómo publico mi entrada?',
     answer:
-      'Primero completás la verificación de identidad (es un proceso rápido desde tu celular). Después, publicás tu entrada con la información correspondiente: evento, fecha, sector, categoría/tanda y precio. Podés fijar un precio de hasta un 15% sobre el valor original para recuperar las comisiones que pagaste. Cuando alguien la compre, te avisamos para que realices la transferencia.',
+      'Primero completás la verificación de identidad (es un proceso rápido desde tu celular). Después, publicás tu entrada con la información correspondiente: evento, fecha, sector, categoría/tanda y precio. Podés fijar un precio de hasta un 15% sobre el valor original para recuperar las comisiones que pagaste. Cuando alguien la compre, te avisamos para que hagas la entrega.',
   },
   {
     question: '¿Por qué me piden verificar mi identidad?',
@@ -202,7 +205,7 @@ const faqPagos: FAQItem[] = [
   {
     question: '¿Me devuelven la comisión si hay un problema?',
     answer:
-      'La comisión de Revendiste corresponde al servicio de intermediación ya prestado (verificación, custodia, transferencia, etc.), por lo que no es reembolsable. Lo que sí se reembolsa es el precio de la entrada en caso de que exista un reclamo válido. Para iniciar un reclamo, abrí un reporte desde la sección "Mis Entradas" en tu cuenta. Si tenés dudas sobre el proceso, visitá nuestra página de contacto.',
+      'La comisión de Revendiste corresponde al servicio de intermediación ya prestado (verificación, custodia, entrega, etc.), por lo que no es reembolsable. Lo que sí se reembolsa es el precio de la entrada en caso de que exista un reclamo válido. Para iniciar un reclamo, abrí un reporte desde la sección "Mis Entradas" en tu cuenta. Si tenés dudas sobre el proceso, visitá nuestra página de contacto.',
   },
 ];
 

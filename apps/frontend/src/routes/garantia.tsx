@@ -8,7 +8,7 @@ import {
 } from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
 import {Shield, Lock, Clock, CheckCircle, ArrowRight} from 'lucide-react';
-import {seo} from '~/utils/seo';
+import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 
 export const Route = createFileRoute('/garantia')({
@@ -17,12 +17,16 @@ export const Route = createFileRoute('/garantia')({
     const baseUrl = getBaseUrl();
     return {
       meta: seo({
-        title: 'Garantía Revendiste | Compra segura de entradas en Uruguay',
+        title:
+          'Garantía Revendiste | Compra y venta segura de entradas en Uruguay',
         description:
           'Tu plata queda en custodia hasta que todo salga bien. Conocé cómo Revendiste protege a compradores y vendedores con verificación de identidad y garantía de reembolso.',
         baseUrl,
       }),
-      links: [{rel: 'canonical', href: `${baseUrl}/garantia`}],
+      links: [
+        alternateHreflangEsUy(`${baseUrl}/garantia`),
+        {rel: 'canonical', href: `${baseUrl}/garantia`},
+      ],
     };
   },
 });
@@ -71,8 +75,8 @@ function GarantiaPage() {
                 </div>
                 <h3 className='font-semibold mb-2'>Recibís tu entrada</h3>
                 <p className='text-sm text-muted-foreground'>
-                  El vendedor te transfiere la entrada de forma digital. Todo
-                  queda registrado en la plataforma.
+                  El vendedor te envía la entrada de forma digital. Todo queda
+                  registrado en la plataforma.
                 </p>
               </div>
               <div className='flex flex-col items-center text-center p-4'>
@@ -160,9 +164,8 @@ function GarantiaPage() {
               <p className='text-sm text-muted-foreground'>
                 El precio máximo de publicación está fijado en un 15% sobre el
                 valor original de la entrada. Esto permite que quienes quieren
-                transferir su entrada puedan recuperar lo que pagaron,
-                incluyendo las comisiones que la plataforma original les haya
-                cobrado.
+                revender su entrada puedan recuperar lo que pagaron, incluyendo
+                las comisiones que la plataforma original les haya cobrado.
               </p>
             </CardContent>
           </Card>

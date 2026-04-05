@@ -1,7 +1,7 @@
 import {createFileRoute} from '@tanstack/react-router';
 import {z} from 'zod';
 import {HomePage} from '~/features';
-import {seo} from '~/utils/seo';
+import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {getEventsInfiniteQuery, getTrendingEventsQuery} from '~/lib';
 
@@ -54,7 +54,7 @@ export const Route = createFileRoute('/')({
       url: baseUrl,
       logo: `${baseUrl}/android-chrome-512x512.png`,
       description:
-        'Plataforma de compra y venta segura de entradas para conciertos, fiestas y eventos en Uruguay. Custodia de fondos y vendedores verificados.',
+        'Plataforma de compra y venta de entradas para conciertos, fiestas y eventos en Uruguay. Incluye reventa segura entre personas, custodia de fondos y vendedores verificados.',
       sameAs: [
         'https://twitter.com/revendiste',
         'https://www.instagram.com/revendiste',
@@ -89,9 +89,9 @@ export const Route = createFileRoute('/')({
           title:
             'Revendiste | Comprá y vendé entradas de forma segura en Uruguay',
           description:
-            'Comprá entradas para conciertos, fiestas y eventos en Uruguay con garantía de compra. Vendé las que no vas a usar de forma segura. Custodia de fondos y vendedores verificados.',
+            'Comprá y vendé entradas para conciertos, fiestas y eventos en Uruguay. Operación entre personas con garantía, custodia de fondos y vendedores verificados: reventa segura en Revendiste.',
           keywords:
-            'comprar entradas Uruguay, vender entradas, entradas conciertos Montevideo, reventa segura de entradas, entradas fiestas Uruguay, entradas eventos, transferir entradas',
+            'reventa de entradas Uruguay, revender entradas, comprar entradas reventa, reventa segura de entradas, compra y venta entradas Uruguay, entradas conciertos Montevideo, comprar entradas Uruguay, vender entradas, entradas fiestas Uruguay, entradas eventos, marketplace entradas Uruguay',
           baseUrl,
         }),
         {
@@ -101,15 +101,11 @@ export const Route = createFileRoute('/')({
         // Additional meta tag for app purpose (for Google verification)
         {
           name: 'application-name',
-          content: 'Revendiste - Compra y venta segura de entradas en Uruguay',
+          content:
+            'Revendiste - Comprá y vendé entradas de forma segura en Uruguay',
         },
       ],
-      links: [
-        {
-          rel: 'canonical',
-          href: baseUrl,
-        },
-      ],
+      links: [alternateHreflangEsUy(baseUrl), {rel: 'canonical', href: baseUrl}],
       scripts: [
         {
           type: 'application/ld+json',
