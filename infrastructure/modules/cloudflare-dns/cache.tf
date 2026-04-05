@@ -9,21 +9,23 @@ resource "cloudflare_ruleset" "event_page_bot_cache" {
   kind    = "zone"
   phase   = "http_request_cache_settings"
 
-  rules {
-    ref         = "event_pages_bot_cache"
-    description = "Cache /eventos/* for verified bots (5 min edge TTL)"
-    expression  = "(cf.client.bot and starts_with(http.request.uri.path, \"/eventos/\"))"
-    action      = "set_cache_settings"
-    action_parameters {
-      cache = true
-      edge_ttl {
-        mode    = "override_origin"
-        default = 300
-      }
-      browser_ttl {
-        mode    = "override_origin"
-        default = 0
+  rules = [
+    {
+      ref         = "event_pages_bot_cache"
+      description = "Cache /eventos/* for verified bots (5 min edge TTL)"
+      expression  = "(cf.client.bot and starts_with(http.request.uri.path, \"/eventos/\"))"
+      action      = "set_cache_settings"
+      action_parameters = {
+        cache = true
+        edge_ttl = {
+          mode    = "override_origin"
+          default = 300
+        }
+        browser_ttl = {
+          mode    = "override_origin"
+          default = 0
+        }
       }
     }
-  }
+  ]
 }
