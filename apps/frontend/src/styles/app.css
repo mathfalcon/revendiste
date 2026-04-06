@@ -66,7 +66,8 @@
   html,
   body {
     @apply text-gray-900 bg-gray-50 dark:bg-gray-950 dark:text-gray-200;
-    background-color: hsl(var(--background-secondary));
+    /* Match PWA / iOS theme-color (#fff / #181819) so the notch area isn’t a different tint */
+    background-color: hsl(var(--background));
   }
 
   .using-mouse * {
@@ -130,7 +131,8 @@
   }
 
   .dark {
-    --background: 240, 3%, 12%;
+    /* Aligned with theme-color meta (#181819) for navbar / iOS status bar */
+    --background: 240, 2%, 10%;
     --background-secondary: 0, 0%, 0%;
     --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;

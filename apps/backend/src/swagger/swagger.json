@@ -51,7 +51,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--slug-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__": {
+			"PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--slug-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType--thumbnailUrl-string-or-null_-Array__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -59,6 +59,10 @@
 								"images": {
 									"items": {
 										"properties": {
+											"thumbnailUrl": {
+												"type": "string",
+												"nullable": true
+											},
 											"imageType": {
 												"$ref": "#/components/schemas/EventImageType"
 											},
@@ -67,6 +71,7 @@
 											}
 										},
 										"required": [
+											"thumbnailUrl",
 											"imageType",
 											"url"
 										],
@@ -165,7 +170,7 @@
 				"additionalProperties": false
 			},
 			"GetEventsPaginatedResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--slug-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType_-Array__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--description-string-or-null--eventEndDate-Date--eventStartDate-Date--externalUrl-string--id-string--name-string--slug-string--status-string--updatedAt-Date--venueName-string-or-null--venueAddress-string-or-null--venueCity-string-or-null--lowestAvailableTicketPrice-number-or-null--lowestAvailableTicketCurrency-string-or-null--images_58__url-string--imageType-EventImageType--thumbnailUrl-string-or-null_-Array__"
 			},
 			"infer_typeofPaginationSchema_": {
 				"properties": {
@@ -2632,9 +2637,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -2645,6 +2647,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -2704,10 +2709,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -3524,9 +3529,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -3537,6 +3539,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -3626,9 +3631,6 @@
 									"type": "number",
 									"format": "double"
 								},
-								"payoutId": {
-									"type": "string"
-								},
 								"originalName": {
 									"type": "string"
 								},
@@ -3639,6 +3641,9 @@
 									"type": "string"
 								},
 								"documentType": {
+									"type": "string"
+								},
+								"payoutId": {
 									"type": "string"
 								},
 								"updatedAt": {
@@ -3666,11 +3671,11 @@
 								"uploadedAt",
 								"storagePath",
 								"sizeBytes",
-								"payoutId",
 								"originalName",
 								"mimeType",
 								"fileName",
 								"documentType",
+								"payoutId",
 								"updatedAt",
 								"id",
 								"deletedAt",
@@ -3687,9 +3692,6 @@
 								"createdBy": {
 									"type": "string",
 									"nullable": true
-								},
-								"payoutId": {
-									"type": "string"
 								},
 								"userAgent": {
 									"type": "string",
@@ -3739,6 +3741,9 @@
 									],
 									"nullable": true
 								},
+								"payoutId": {
+									"type": "string"
+								},
 								"id": {
 									"type": "string"
 								},
@@ -3749,13 +3754,13 @@
 							},
 							"required": [
 								"createdBy",
-								"payoutId",
 								"userAgent",
 								"toStatus",
 								"ipAddress",
 								"fromStatus",
 								"eventType",
 								"eventData",
+								"payoutId",
 								"id",
 								"createdAt"
 							],
@@ -3825,10 +3830,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"id",
@@ -3840,7 +3845,7 @@
 				],
 				"type": "object"
 			},
-			"PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--amount-string--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
+			"PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--amount-string--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -3962,9 +3967,6 @@
 									"format": "date-time",
 									"nullable": true
 								},
-								"amount": {
-									"type": "string"
-								},
 								"completedAt": {
 									"type": "string",
 									"format": "date-time",
@@ -3975,6 +3977,9 @@
 								},
 								"currency": {
 									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"amount": {
+									"type": "string"
 								},
 								"updatedAt": {
 									"type": "string",
@@ -4032,10 +4037,10 @@
 								"notes",
 								"failureReason",
 								"failedAt",
-								"amount",
 								"completedAt",
 								"sellerUserId",
 								"currency",
+								"amount",
 								"updatedAt",
 								"status",
 								"metadata",
@@ -4058,7 +4063,7 @@
 				"additionalProperties": false
 			},
 			"GetPayoutsResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--amount-string--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--amount-string--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
 			},
 			"infer_typeofAdminPayoutsQuerySchema_": {
 				"properties": {
@@ -4168,9 +4173,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4181,6 +4183,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4347,9 +4352,6 @@
 									"type": "number",
 									"format": "double"
 								},
-								"payoutId": {
-									"type": "string"
-								},
 								"originalName": {
 									"type": "string"
 								},
@@ -4360,6 +4362,9 @@
 									"type": "string"
 								},
 								"documentType": {
+									"type": "string"
+								},
+								"payoutId": {
 									"type": "string"
 								},
 								"updatedAt": {
@@ -4387,11 +4392,11 @@
 								"uploadedAt",
 								"storagePath",
 								"sizeBytes",
-								"payoutId",
 								"originalName",
 								"mimeType",
 								"fileName",
 								"documentType",
+								"payoutId",
 								"updatedAt",
 								"id",
 								"deletedAt",
@@ -4464,10 +4469,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"id",
@@ -4518,9 +4523,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4531,6 +4533,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4590,10 +4595,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -4660,9 +4665,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4673,6 +4675,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4732,10 +4737,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -4795,9 +4800,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4808,6 +4810,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4867,10 +4872,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -4930,9 +4935,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4943,6 +4945,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -5002,10 +5007,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -5081,9 +5086,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -5094,6 +5096,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -5153,10 +5158,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -5206,9 +5211,6 @@
 								"type": "number",
 								"format": "double"
 							},
-							"payoutId": {
-								"type": "string"
-							},
 							"originalName": {
 								"type": "string"
 							},
@@ -5219,6 +5221,9 @@
 								"type": "string"
 							},
 							"documentType": {
+								"type": "string"
+							},
+							"payoutId": {
 								"type": "string"
 							},
 							"updatedAt": {
@@ -5243,11 +5248,11 @@
 							"uploadedAt",
 							"storagePath",
 							"sizeBytes",
-							"payoutId",
 							"originalName",
 							"mimeType",
 							"fileName",
 							"documentType",
+							"payoutId",
 							"updatedAt",
 							"id",
 							"deletedAt",
@@ -8772,7 +8777,7 @@
 						"type": "object"
 					}
 				],
-				"description": "Typed notification response with parsed metadata and actions\nThis ensures type safety when reading notifications from the database\nTitle and description are generated from type + metadata, not stored in DB\nFor backwards compatibility, uses the generic type"
+				"description": "Typed notification response with parsed metadata and actions\r\nThis ensures type safety when reading notifications from the database\r\nTitle and description are generated from type + metadata, not stored in DB\r\nFor backwards compatibility, uses the generic type"
 			},
 			"PaginatedResponse_TypedNotification_": {
 				"properties": {

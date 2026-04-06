@@ -178,7 +178,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
 
   async updateEventImages(
     eventId: string,
-    images: Array<{ type: EventImageType; url: string }>,
+    images: Array<{ type: EventImageType; url: string; thumbnailUrl?: string }>,
   ) {
     return await this.db.transaction().execute(async trx => {
       const now = new Date();
@@ -190,12 +190,14 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             eventId,
             imageType: image.type,
             url: image.url,
+            thumbnailUrl: image.thumbnailUrl ?? null,
             displayOrder: images.indexOf(image),
             createdAt: now,
           })
           .onConflict(oc =>
             oc.columns(['eventId', 'imageType']).doUpdateSet({
               url: image.url,
+              thumbnailUrl: image.thumbnailUrl ?? null,
               displayOrder: images.indexOf(image),
             }),
           )
@@ -403,8 +405,13 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
-            .select(['eventImages.url', 'eventImages.imageType'])
+            .select([
+              'eventImages.url',
+              'eventImages.imageType',
+              'eventImages.thumbnailUrl',
+            ])
             .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.deletedAt', 'is', null)
             .orderBy('eventImages.displayOrder'),
         ).as('images'),
       ])

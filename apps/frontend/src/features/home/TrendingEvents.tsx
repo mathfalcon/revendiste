@@ -23,7 +23,7 @@ type TrendingEvent = {
   slug: string;
   name: string;
   eventStartDate: string;
-  eventImages: {url: string; imageType: string}[];
+  eventImages: {url: string; imageType: string; thumbnailUrl?: string}[];
   venue: {name: string; city: string} | null;
   totalViews: number;
   lowestAvailableTicketPrice: number | null;
@@ -63,8 +63,10 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
       <div className='relative w-28 sm:w-36 h-full overflow-hidden flex-shrink-0'>
         {flyerImage ? (
           <img
-            src={flyerImage.url}
+            src={flyerImage.thumbnailUrl || flyerImage.url}
             alt={event.name}
+            width={144}
+            height={144}
             className='h-full w-full object-cover transition-transform group-hover:scale-105'
             loading='lazy'
           />
