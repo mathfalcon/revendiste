@@ -1,5 +1,5 @@
 import {createFileRoute} from '@tanstack/react-router';
-import {UploadTicketsView} from '~/features';
+import {UploadTicketsView} from '~/features/user-account';
 import {z} from 'zod';
 
 const subirTicketsSearchSchema = z.object({

@@ -130,6 +130,11 @@ export class R2StorageProvider implements IStorageProvider {
         Body: buffer,
         ContentType: options.mimeType,
         ContentLength: options.sizeBytes,
+        // Public assets use content-addressed filenames (hash in name),
+        // so immutable caching is safe
+        ...(bucketType === 'public' && {
+          CacheControl: 'public, max-age=31536000, immutable',
+        }),
         Metadata: {
           originalName: options.originalName,
           uploadedAt: new Date().toISOString(),

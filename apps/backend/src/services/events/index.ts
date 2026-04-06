@@ -126,6 +126,7 @@ export class EventsService {
             processedImages.map(img => ({
               type: img.type,
               url: img.url,
+              thumbnailUrl: img.thumbnailUrl,
             })),
           );
         } catch (error) {

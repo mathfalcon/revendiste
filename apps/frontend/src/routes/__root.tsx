@@ -198,9 +198,11 @@ function RootDocument({children}: {children: React.ReactNode}) {
             <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
               <ThemeColorSync />
               <StickyBarProvider>
-                <div className='flex flex-col h-screen bg-background-secondary'>
+                <div className='flex flex-col h-screen min-h-dvh bg-background'>
                   {!shouldHideNavbar && <Navbar />}
-                  <main className='flex-1'>{children}</main>
+                  <main className='flex-1 bg-background-secondary'>
+                    {children}
+                  </main>
                   {!shouldHideNavbar && <Footer />}
                   {/* <TanStackRouterDevtools position='bottom-right' /> */}
                   <ReactQueryDevtools buttonPosition='bottom-left' />

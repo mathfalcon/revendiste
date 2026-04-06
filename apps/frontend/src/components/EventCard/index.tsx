@@ -10,6 +10,8 @@ type EventCardProps = {
   id: string;
   slug: string;
   imageUrl?: string;
+  /** From API when present; null until backfill / new uploads */
+  thumbnailUrl?: string | null;
   name: string;
   date: string;
   description: string | null;
@@ -23,6 +25,7 @@ export const EventCard = (props: EventCardProps) => {
     id,
     slug,
     imageUrl,
+    thumbnailUrl,
     name,
     date,
     description,
@@ -57,9 +60,11 @@ export const EventCard = (props: EventCardProps) => {
         <div className='flex flex-row sm:flex-col gap-2 sm:gap-3'>
           {/* Image */}
           <img
-            src={imageUrl}
+            src={thumbnailUrl || imageUrl}
             alt={name}
             loading='lazy'
+            width={300}
+            height={280}
             className='w-24 h-24 sm:w-full sm:h-[280px] rounded-lg bg-slate-800 object-cover shrink-0'
           />
 

@@ -1,5 +1,5 @@
 import {createFileRoute} from '@tanstack/react-router';
-import {PayoutsView} from '~/features';
+import {PayoutsView} from '~/features/user-account';
 import {z} from 'zod';
 
 const retiroSearchSchema = z.object({
