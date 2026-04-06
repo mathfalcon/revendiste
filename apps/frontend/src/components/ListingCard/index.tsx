@@ -110,6 +110,7 @@ export function ListingCard({listing}: ListingCardProps) {
           <Link
             to='/eventos/$slug'
             params={{slug: event.slug}}
+            preloadDelay={0}
             className='shrink-0'
           >
             <img
@@ -126,6 +127,7 @@ export function ListingCard({listing}: ListingCardProps) {
                 <Link
                   to='/eventos/$slug'
                   params={{slug: event.slug}}
+                  preloadDelay={0}
                   className='hover:text-primary transition-colors'
                 >
                   <h3 className='font-semibold text-base sm:text-lg leading-tight line-clamp-2'>
@@ -215,7 +217,6 @@ export function ListingCard({listing}: ListingCardProps) {
         <div className='space-y-2'>
           <ActiveTicketsSection
             tickets={activeTickets}
-            ticketWaveName={ticketWave.name}
             ticketWaveCurrency={ticketWave.currency}
             ticketWaveFaceValue={calculateMaxResalePrice(
               Number(ticketWave.faceValue),
@@ -226,7 +227,6 @@ export function ListingCard({listing}: ListingCardProps) {
 
           <SoldTicketsSection
             tickets={soldTickets}
-            ticketWaveName={ticketWave.name}
             ticketWaveCurrency={ticketWave.currency}
             onUploadClick={handleUploadClick}
             isEventPast={isEventPast}
@@ -234,7 +234,6 @@ export function ListingCard({listing}: ListingCardProps) {
 
           <CancelledTicketsSection
             tickets={cancelledTickets}
-            ticketWaveName={ticketWave.name}
           />
         </div>
 

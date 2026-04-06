@@ -8,6 +8,14 @@
       "sessions": 2,
       "memories": 3,
       "prompts": 0
+    },
+    {
+      "id": "d68cae04",
+      "created_by": "mathfalcon",
+      "created_at": "2026-04-04T23:08:31Z",
+      "sessions": 40,
+      "memories": 48,
+      "prompts": 0
     }
   ]
 }

@@ -6,7 +6,7 @@ import {Badge} from '~/components/ui/badge';
 import {Button} from '~/components/ui/button';
 import {PayoutMethodForm} from './PayoutMethodForm';
 import {DeletePayoutMethodDialog} from './DeletePayoutMethodDialog';
-import {LoadingSpinner} from '~/components/LoadingScreen';
+import {Skeleton} from '~/components/ui/skeleton';
 import {Edit, Trash2, Plus} from 'lucide-react';
 import {
   Dialog,
@@ -32,33 +32,31 @@ export function PayoutMethodsSection() {
 
   if (isPending) {
     return (
-      <Card className='w-full'>
-        <CardContent className='flex h-96 items-center justify-center'>
-          <LoadingSpinner size={96} />
-        </CardContent>
-      </Card>
+      <div className='space-y-3'>
+        {[1, 2].map(i => (
+          <div key={i} className='rounded-lg border p-4 space-y-2'>
+            <Skeleton className='h-5 w-32' />
+            <Skeleton className='h-4 w-48' />
+            <Skeleton className='h-4 w-36' />
+          </div>
+        ))}
+      </div>
     );
   }
 
   return (
     <div className='space-y-4'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <h3 className='text-lg font-semibold mb-2'>Métodos de Pago</h3>
-          <p className='text-sm text-muted-foreground'>
-            Gestiona tus métodos de pago para recibir tus ganancias
-          </p>
-        </div>
+      <div className='flex items-center justify-end'>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className='h-4 w-4 mr-2' />
-              Agregar Método
+              Agregar método
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Agregar Método de Pago</DialogTitle>
+              <DialogTitle>Agregar método de pago</DialogTitle>
             </DialogHeader>
             <PayoutMethodForm
               onSuccess={() => {
@@ -75,7 +73,7 @@ export function PayoutMethodsSection() {
       {!payoutMethods || payoutMethods.length === 0 ? (
         <Card>
           <CardContent className='py-8 text-center text-muted-foreground'>
-            No tienes métodos de pago configurados
+            No tenés métodos de pago configurados
           </CardContent>
         </Card>
       ) : (
@@ -156,7 +154,7 @@ export function PayoutMethodsSection() {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Editar Método de Pago</DialogTitle>
+              <DialogTitle>Editar método de pago</DialogTitle>
             </DialogHeader>
             <PayoutMethodForm
               methodId={editingMethod}

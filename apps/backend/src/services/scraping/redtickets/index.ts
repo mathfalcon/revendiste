@@ -26,6 +26,10 @@ const MULTI_DAY_OCCURRENCES = 2;
 // Default event duration in hours (when no end time is provided)
 const DEFAULT_EVENT_DURATION_HOURS = 7;
 
+// Hours at or below this threshold are considered "next day" for nightlife events
+// e.g., "Sábado 4 de Abril - 00 hs" means the night of Saturday → starts Sunday at 00:00
+const EARLY_MORNING_HOUR_THRESHOLD = 5;
+
 // Spanish month names to numbers
 const SPANISH_MONTH_MAP: Record<string, number> = {
   enero: 0,
@@ -554,9 +558,9 @@ export class RedTicketsScraper extends BaseScraper {
     dateText: string,
     eventTime: string | null,
   ): Array<{startDate: Date; endDate: Date; dateSuffix: string | null}> {
-    // Pattern: "DayOfWeek DD de Month" with optional " - HH:MM hs"
+    // Pattern: "DayOfWeek DD de Month" with optional " - HH:MM hs" or " - HH hs"
     const match = dateText.match(
-      /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)(?:\s*-\s*(\d+):(\d+))?/i,
+      /([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d+)\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)(?:\s*-\s*(\d+)(?::(\d+))?\s*(?:hs)?)?/i,
     );
 
     if (!match) return [];
@@ -570,9 +574,9 @@ export class RedTicketsScraper extends BaseScraper {
     let hour = 23;
     let minute = 0;
 
-    if (hourFromDate && minuteFromDate) {
+    if (hourFromDate) {
       hour = parseInt(hourFromDate, 10);
-      minute = parseInt(minuteFromDate, 10);
+      minute = minuteFromDate ? parseInt(minuteFromDate, 10) : 0;
     } else if (eventTime) {
       const timeMatch = eventTime.match(/(\d+):(\d+)/);
       if (timeMatch) {
@@ -581,17 +585,30 @@ export class RedTicketsScraper extends BaseScraper {
       }
     }
 
+    const dayNum = parseInt(day, 10);
+
     const now = new Date();
     let year = now.getFullYear();
 
-    // If the date+time has passed, assume next year
-    // Use the actual event time (not midnight) to avoid same-day false positives
-    const tentativeDate = new Date(year, monthNum, parseInt(day, 10), hour, minute);
-    if (tentativeDate < now) {
+    // If the date has already passed, assume next year.
+    // Compare by date only (ignoring time) to avoid bumping same-day events
+    // to next year just because e.g. midnight already passed today.
+    const tentativeDate = new Date(year, monthNum, dayNum);
+    const todayStart = new Date(year, now.getMonth(), now.getDate());
+    if (tentativeDate < todayStart) {
       year++;
     }
 
-    const startDate = new Date(year, monthNum, parseInt(day, 10), hour, minute);
+    // For nightlife events: early morning hours (0-5) mean the party is on
+    // the listed date's night. Store as 23:59 of that date so "today" filters
+    // work correctly. e.g., "Sábado 4 de Abril - 00 hs" → April 4 23:59
+    if (hour <= EARLY_MORNING_HOUR_THRESHOLD) {
+      hour = 23;
+      minute = 59;
+    }
+
+    const startDate = new Date(year, monthNum, dayNum, hour, minute);
+
     const endDate = addHours(startDate, DEFAULT_EVENT_DURATION_HOURS);
 
     return [{startDate, endDate, dateSuffix: null}];

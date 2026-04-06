@@ -67,6 +67,7 @@ export const EventSearchInput = (props: React.ComponentProps<'input'>) => {
                     to='/eventos/$slug'
                     params={{slug: event.slug}}
                     key={event.id}
+                    preloadDelay={0}
                     className='flex w-full gap-3 h-[32px] items-center'
                   >
                     {eventImage && (

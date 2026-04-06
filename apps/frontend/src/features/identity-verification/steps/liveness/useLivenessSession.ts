@@ -90,12 +90,12 @@ export function useLivenessSession({
   });
 
   const startVerification = useCallback(() => {
-    if (sessionId) {
-      setIsDialogOpen(true);
-      return;
-    }
+    // Always create a fresh session — reusing consumed sessions causes
+    // "ReadableStream is locked" errors in the AWS Amplify SDK
+    setSessionId(undefined);
+    setLivenessError(undefined);
     getSessionMutation.mutate();
-  }, [getSessionMutation, sessionId]);
+  }, [getSessionMutation]);
 
   const resetSession = useCallback(() => {
     setSessionId(undefined);

@@ -136,6 +136,11 @@ export class UsersService {
     return this.usersRepository.updatePhoneSettings(clerkId, data);
   }
 
+  // Dismiss WhatsApp opt-in prompt
+  async dismissWhatsappPrompt(clerkId: string) {
+    return this.usersRepository.dismissWhatsappPrompt(clerkId);
+  }
+
   // Find user by Clerk ID (direct passthrough)
   async findByClerkId(clerkId: string) {
     return this.usersRepository.findByClerkId(clerkId);

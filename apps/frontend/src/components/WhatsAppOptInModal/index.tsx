@@ -26,12 +26,12 @@ import {PhoneInput} from '~/components/ui/phone-input';
 import {CheckCircle2, MessageCircle, ArrowLeft} from 'lucide-react';
 import {getCurrentUserQuery} from '~/lib/api/users';
 import {
+  dismissWhatsappPromptMutation,
   sendWhatsappOtpMutation,
   verifyWhatsappOtpMutation,
 } from '~/lib/api/profile';
 import {toast} from 'sonner';
 
-const DISMISS_KEY = 'revendiste:whatsapp-prompt-dismissed';
 const SHOW_DELAY_MS = 3000;
 const RESEND_COOLDOWN_S = 60;
 
@@ -59,27 +59,20 @@ export function WhatsAppOptInModal() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [dismissed, setDismissed] = useState(true); // default true to avoid flash
   const [resendCooldown, setResendCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const {data: user} = useQuery(getCurrentUserQuery());
 
-  // Check localStorage on mount (SSR-safe)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setDismissed(localStorage.getItem(DISMISS_KEY) === 'true');
-  }, []);
-
   // Show modal after delay when conditions are met
   useEffect(() => {
-    if (dismissed) return;
     if (!user) return;
-    if (user.phoneNumber) return; // Already has phone = already opted in
+    if (user.phoneNumber) return;
+    if (user.whatsappPromptDismissed) return;
 
     const timer = setTimeout(() => setOpen(true), SHOW_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [user, dismissed]);
+  }, [user]);
 
   // Auto-close on success
   useEffect(() => {
@@ -112,13 +105,13 @@ export function WhatsAppOptInModal() {
     }, 1000);
   }, []);
 
-  const handleDismissForever = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(DISMISS_KEY, 'true');
-    }
-    setDismissed(true);
-    setOpen(false);
-  }, []);
+  const dismissPrompt = useMutation({
+    ...dismissWhatsappPromptMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['users', 'me']});
+      setOpen(false);
+    },
+  });
 
   // Phone form
   const phoneForm = useForm<z.infer<typeof phoneSchema>>({
@@ -159,7 +152,8 @@ export function WhatsAppOptInModal() {
     },
     onError: (error: any) => {
       const message =
-        error?.response?.data?.message || 'Código incorrecto. Intentá de nuevo.';
+        error?.response?.data?.message ||
+        'Código incorrecto. Intentá de nuevo.';
       otpForm.setError('code', {message});
     },
   });
@@ -180,7 +174,6 @@ export function WhatsAppOptInModal() {
       onOpenChange={value => {
         if (!value) {
           setOpen(false);
-          // Reset to phone step when closing
           setStep('phone');
           phoneForm.reset();
           otpForm.reset();
@@ -240,7 +233,8 @@ export function WhatsAppOptInModal() {
                 variant='link'
                 size='sm'
                 className='text-xs text-muted-foreground'
-                onClick={handleDismissForever}
+                disabled={dismissPrompt.isPending}
+                onClick={() => dismissPrompt.mutate()}
               >
                 No me interesa, no preguntar de nuevo
               </Button>

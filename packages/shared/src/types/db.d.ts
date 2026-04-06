@@ -424,6 +424,17 @@ export interface Payouts {
   updatedAt: Generated<Timestamp>;
 }
 
+export interface PushSubscriptions {
+  auth: string;
+  createdAt: Generated<Timestamp>;
+  endpoint: string;
+  id: Generated<string>;
+  p256dh: string;
+  updatedAt: Generated<Timestamp>;
+  userAgent: string | null;
+  userId: string;
+}
+
 export interface RateLimit {
   count: Generated<number>;
   key: string;
@@ -544,6 +555,7 @@ export interface Users {
   verificationSessionId: string | null;
   verificationStatus: Generated<VerificationStatusEnum | null>;
   whatsappOptedIn: Generated<boolean>;
+  whatsappPromptDismissed: Generated<boolean>;
 }
 
 export interface VerificationAuditLogs {
@@ -580,6 +592,7 @@ export interface DB {
   payoutEvents: PayoutEvents;
   payoutMethods: PayoutMethods;
   payouts: Payouts;
+  pushSubscriptions: PushSubscriptions;
   rateLimit: RateLimit;
   sellerEarnings: SellerEarnings;
   ticketDocuments: TicketDocuments;

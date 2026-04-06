@@ -170,6 +170,7 @@ export const EventSearchModal = ({
                         <Link
                           to='/eventos/$slug'
                           params={{slug: event.slug}}
+                          preloadDelay={0}
                           className='flex w-full gap-3 p-3 items-center hover:bg-accent rounded-md'
                           onMouseDown={handleResultInteractionStart}
                           onTouchStart={handleResultInteractionStart}

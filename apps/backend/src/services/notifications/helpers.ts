@@ -32,7 +32,7 @@ export async function notifyDocumentReminder(
       {
         type: 'upload_documents',
         label: NOTIFICATION_BUTTON_LABELS.UPLOAD_DOCUMENTS,
-        url: `${APP_BASE_URL}/cuenta/publicaciones?subirPublicacion=${params.listingId}`,
+        url: `${APP_BASE_URL}/cuenta/subir-entradas?subirPublicacion=${params.listingId}`,
       },
     ],
     metadata: {
@@ -99,7 +99,7 @@ export async function notifyOrderConfirmed(
       {
         type: 'view_order',
         label: NOTIFICATION_BUTTON_LABELS.VIEW_MY_TICKETS,
-        url: `${APP_BASE_URL}/cuenta/tickets?orderId=${params.orderId}`,
+        url: `${APP_BASE_URL}/cuenta/entradas?orden=${params.orderId}`,
       },
     ],
     metadata: {
@@ -273,7 +273,7 @@ export async function notifyDocumentUploaded(
       {
         type: 'view_order',
         label: NOTIFICATION_BUTTON_LABELS.VIEW_AND_DOWNLOAD_TICKETS,
-        url: `${APP_BASE_URL}/cuenta/tickets?orden=${params.orderId}`,
+        url: `${APP_BASE_URL}/cuenta/entradas?orden=${params.orderId}`,
       },
     ],
     metadata: {
@@ -312,7 +312,7 @@ export async function notifyDocumentUploadedImmediate(
       {
         type: 'view_order',
         label: NOTIFICATION_BUTTON_LABELS.VIEW_AND_DOWNLOAD_TICKETS,
-        url: `${APP_BASE_URL}/cuenta/tickets?orden=${params.orderId}`,
+        url: `${APP_BASE_URL}/cuenta/entradas?orden=${params.orderId}`,
       },
     ],
     metadata: {
@@ -394,7 +394,7 @@ export async function notifySellerTicketSold(
     actions.push({
       type: 'upload_documents',
       label: 'Subir documentos',
-      url: `${APP_BASE_URL}/cuenta/publicaciones?subirPublicacion=${params.listingId}`,
+      url: `${APP_BASE_URL}/cuenta/subir-entradas?subirPublicacion=${params.listingId}`,
     });
   }
 
@@ -726,7 +726,7 @@ export async function notifyBuyerTicketCancelled(
       {
         type: 'view_order',
         label: NOTIFICATION_BUTTON_LABELS.VIEW_MY_TICKETS,
-        url: `${APP_BASE_URL}/cuenta/tickets`,
+        url: `${APP_BASE_URL}/cuenta/entradas`,
       },
     ],
     metadata: {

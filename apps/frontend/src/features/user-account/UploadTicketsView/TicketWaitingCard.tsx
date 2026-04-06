@@ -44,6 +44,7 @@ export function TicketWaitingCard({ticket}: TicketWaitingCardProps) {
               <Link
                 to='/eventos/$slug'
                 params={{slug: event.slug}}
+                preloadDelay={0}
                 className='shrink-0'
               >
                 <img

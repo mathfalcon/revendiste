@@ -24,7 +24,7 @@ export const Footer = () => {
               <FullLogo className='h-8 w-auto' />
             </Link>
             <p className='text-sm text-muted-foreground'>
-              Transferí tus entradas de forma fácil y segura
+              Comprá y vendé entradas de forma fácil y segura
             </p>
           </div>
 

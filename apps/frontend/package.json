@@ -2,7 +2,6 @@
   "name": "@revendiste/frontend",
   "version": "1.0.0",
   "private": true,
-  "sideEffects": false,
   "type": "module",
   "scripts": {
     "dev": "cross-env HTTPS_LOCAL=1 vite dev --mode localdev",
@@ -62,7 +61,7 @@
     "embla-carousel-react": "^8.6.0",
     "heic-to": "^1.4.2",
     "lucide-react": "^0.555.0",
-    "maplibre-gl": "^5.21.1",
+    "maplibre-gl": "^5.22.0",
     "next-themes": "^0.4.6",
     "nitro": "npm:nitro-nightly@latest",
     "posthog-js": "^1.250.0",

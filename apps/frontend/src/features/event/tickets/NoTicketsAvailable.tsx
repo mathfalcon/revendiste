@@ -47,7 +47,7 @@ export function NoTicketsAvailable({
                 en este evento.
               </>
             ) : (
-              '¿Tenés entradas que no vas a usar? Publicalas acá.'
+              '¿Tenés entradas que no vas a usar? Publicá las acá.'
             )}
           </p>
         </div>

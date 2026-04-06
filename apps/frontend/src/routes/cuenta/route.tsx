@@ -37,17 +37,24 @@ const SIDEBAR_SECTIONS: {label: string; items: TabItem[]}[] = [
     label: 'Entradas',
     items: [
       {
+        value: 'publicaciones',
+        label: 'Publicaciones',
+        icon: Ticket,
+        to: '/cuenta/publicaciones',
+      },
+      {
         value: 'entradas',
         label: 'Mis entradas',
         icon: QrCode,
         to: '/cuenta/entradas',
       },
       {
-        value: 'publicaciones',
-        label: 'Publicaciones',
-        icon: Ticket,
-        to: '/cuenta/publicaciones',
+        label: 'Retiros',
+        value: 'retiro',
+        icon: Wallet,
+        to: '/cuenta/retiro',
       },
+
       {
         value: 'subir-entradas',
         label: 'Subir entradas',
@@ -62,17 +69,6 @@ const SIDEBAR_SECTIONS: {label: string; items: TabItem[]}[] = [
               {count}
             </Badge>
           ) : null,
-      },
-    ],
-  },
-  {
-    label: 'Dinero',
-    items: [
-      {
-        value: 'retiro',
-        label: 'Retiros',
-        icon: Wallet,
-        to: '/cuenta/retiro',
       },
     ],
   },
@@ -152,50 +148,6 @@ function RouteComponent() {
   return (
     <div className='container mx-auto max-w-6xl mt-4 md:mt-20 mb-6 md:mb-8 px-4 md:px-0'>
       <div className='w-full flex flex-col md:flex-row gap-2'>
-        {/* Mobile hamburger */}
-        <div className='md:hidden mb-4 flex items-center justify-end'>
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetTrigger asChild>
-              <Button variant='outline' size='icon'>
-                <Menu className='h-5 w-5' />
-                <span className='sr-only'>Abrir menú</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side='right' className='w-[85vw] sm:max-w-sm'>
-              <nav className='mt-6 flex flex-col'>
-                {SIDEBAR_SECTIONS.map((section, sectionIndex) => (
-                  <div key={section.label}>
-                    {sectionIndex > 0 && <Separator className='my-2' />}
-                    {section.items.map(tab => {
-                      const isActive = tab.value === activeTabValue;
-                      return (
-                        <Link
-                          key={tab.value}
-                          to={tab.to}
-                          onClick={() => setSheetOpen(false)}
-                          className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                            isActive
-                              ? 'bg-primary text-primary-foreground'
-                              : 'hover:bg-muted'
-                          }`}
-                        >
-                          <div className='flex items-center gap-3'>
-                            <tab.icon className='h-5 w-5' />
-                            <span>{tab.label}</span>
-                          </div>
-                          {tab.badge
-                            ? tab.badge(ticketsNeedingUploadCount)
-                            : null}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
-
         {/* Desktop sidebar — plain nav, single Outlet avoids multiple-outlet flash */}
         <nav className='hidden md:flex flex-col w-auto min-w-[200px] p-1'>
           {SIDEBAR_SECTIONS.map((section, sectionIndex) => (
@@ -217,9 +169,7 @@ function RouteComponent() {
                     >
                       <tab.icon className='h-4 w-4 shrink-0' />
                       <span>{tab.label}</span>
-                      {tab.badge
-                        ? tab.badge(ticketsNeedingUploadCount)
-                        : null}
+                      {tab.badge ? tab.badge(ticketsNeedingUploadCount) : null}
                     </Link>
                   );
                 })}

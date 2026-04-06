@@ -16,7 +16,6 @@ import {SoldTicketCard} from './SoldTicketCard';
 
 interface SoldTicketsSectionProps {
   tickets: GetUserListingsResponse['data'][number]['tickets'];
-  ticketWaveName: string;
   ticketWaveCurrency: EventTicketCurrency;
   onUploadClick: (ticketId: string) => void;
   isEventPast?: boolean;
@@ -24,7 +23,6 @@ interface SoldTicketsSectionProps {
 
 export function SoldTicketsSection({
   tickets,
-  ticketWaveName,
   ticketWaveCurrency,
   onUploadClick,
   isEventPast = false,
@@ -85,7 +83,6 @@ export function SoldTicketsSection({
               <SoldTicketCard
                 key={ticket.id}
                 ticket={ticket}
-                ticketWaveName={ticketWaveName}
                 ticketWaveCurrency={ticketWaveCurrency}
                 isEventPast={isEventPast}
                 onViewDocument={handleViewDocument}

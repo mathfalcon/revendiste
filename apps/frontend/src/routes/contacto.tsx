@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import {Button} from '~/components/ui/button';
-import {seo} from '~/utils/seo';
+import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 
 export const Route = createFileRoute('/contacto')({
@@ -23,7 +23,10 @@ export const Route = createFileRoute('/contacto')({
           'Escribinos si tenés alguna duda sobre tu compra o venta de entradas. El equipo de Revendiste está para ayudarte.',
         baseUrl,
       }),
-      links: [{rel: 'canonical', href: `${baseUrl}/contacto`}],
+      links: [
+        alternateHreflangEsUy(`${baseUrl}/contacto`),
+        {rel: 'canonical', href: `${baseUrl}/contacto`},
+      ],
     };
   },
 });

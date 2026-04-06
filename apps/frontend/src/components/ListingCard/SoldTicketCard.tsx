@@ -1,5 +1,13 @@
 import {Tooltip, TooltipContent, TooltipTrigger} from '~/components/ui/tooltip';
-import {Info, TicketCheck} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu';
+import {Button} from '~/components/ui/button';
+import {Info, TicketCheck, MoreVertical, Eye, Upload, Copy} from 'lucide-react';
 import {cn} from '~/lib/utils';
 import {formatPrice, calculateSellerAmount} from '~/utils';
 import type {
@@ -7,13 +15,13 @@ import type {
   EventTicketCurrency,
 } from '~/lib/api/generated';
 import {getTicketStatusConfig} from './sold-ticket-utils';
-import {CopyableText} from '~/components/ui/copyable-text';
+import {copyToClipboard} from '~/utils/clipboard';
+import {toast} from 'sonner';
 
 type Ticket = GetUserListingsResponse['data'][number]['tickets'][number];
 
 interface SoldTicketCardProps {
   ticket: Ticket;
-  ticketWaveName: string;
   ticketWaveCurrency: EventTicketCurrency;
   isEventPast: boolean;
   onViewDocument: (ticketId: string) => void;
@@ -22,7 +30,6 @@ interface SoldTicketCardProps {
 
 export function SoldTicketCard({
   ticket,
-  ticketWaveName,
   ticketWaveCurrency,
   isEventPast,
   onViewDocument,
@@ -47,21 +54,38 @@ export function SoldTicketCard({
     ticketWaveCurrency,
   );
 
-  const handleButtonClick = () => {
-    if (config.disabled) return;
-
+  const handleCardTap = () => {
     if (hasDocument) {
       onViewDocument(ticket.id);
-    } else {
+    } else if (canUpload && !config.disabled) {
       onUploadDocument(ticket.id);
+    }
+  };
+
+  const handleCopyId = async () => {
+    const success = await copyToClipboard(ticket.id);
+    if (success) {
+      toast.success('ID copiado');
     }
   };
 
   return (
     <div
-      className={cn('rounded-xl border p-3 transition-all', config.cardClass)}
+      role='button'
+      tabIndex={0}
+      className={cn(
+        'rounded-xl border p-3 transition-all cursor-pointer active:scale-[0.98]',
+        config.cardClass,
+      )}
+      onClick={handleCardTap}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleCardTap();
+        }
+      }}
     >
-      <div className='flex items-center justify-between gap-3'>
+      <div className='flex items-center justify-between gap-2'>
         {/* Left side: Ticket info */}
         <div className='flex items-center gap-3 min-w-0 flex-1'>
           <div
@@ -76,7 +100,7 @@ export function SoldTicketCard({
           <div className='min-w-0'>
             <div className='flex items-center gap-2 flex-wrap'>
               <p className='font-semibold text-foreground'>
-                Entrada #{ticket.ticketNumber} - {ticketWaveName}
+                Entrada #{ticket.ticketNumber}
               </p>
               {config.statusText && (
                 <StatusBadge
@@ -91,42 +115,48 @@ export function SoldTicketCard({
               <span className='font-medium'>
                 {formatPrice(parseFloat(ticket.price), ticketWaveCurrency)}{' '}
                 <span className='text-muted-foreground font-normal'>
-                  por entrada
+                  · Recibís{' '}
                 </span>
-              </span>
-              <span className='text-muted-foreground'>
-                Comisión:{' '}
-                {formatPrice(
-                  sellerBreakdown.platformCommission +
-                    sellerBreakdown.vatOnCommission,
-                  ticketWaveCurrency,
-                )}{' '}
-                · Recibís:{' '}
-                <span className='font-medium text-foreground'>
+                <span className='font-medium'>
                   {formatPrice(sellerBreakdown.sellerAmount, ticketWaveCurrency)}
                 </span>
               </span>
             </div>
-            <CopyableText
-              text={ticket.id}
-              label='ID:'
-              truncateOnMobile
-              className='mt-1'
-              textClassName='text-xs text-muted-foreground'
-            />
           </div>
         </div>
 
-        {/* Right side: Action button */}
-        {!config.hideButton && (
-          <div className='shrink-0'>
-            <ActionButton
-              config={config}
-              onClick={handleButtonClick}
-              disabled={config.disabled}
-            />
-          </div>
-        )}
+        {/* Right side: Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-8 w-8 shrink-0'
+              onClick={e => e.stopPropagation()}
+            >
+              <MoreVertical className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            {hasDocument && (
+              <DropdownMenuItem onClick={() => onViewDocument(ticket.id)}>
+                <Eye className='mr-2 h-4 w-4' />
+                Ver documento
+              </DropdownMenuItem>
+            )}
+            {canUpload && !hasDocument && !config.disabled && (
+              <DropdownMenuItem onClick={() => onUploadDocument(ticket.id)}>
+                <Upload className='mr-2 h-4 w-4' />
+                Subir entrada
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleCopyId}>
+              <Copy className='mr-2 h-4 w-4' />
+              Copiar ID
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -172,44 +202,3 @@ function StatusBadge({text, icon, className, tooltipMessage}: StatusBadgeProps) 
   return badge;
 }
 
-interface ActionButtonProps {
-  config: ReturnType<typeof getTicketStatusConfig>;
-  onClick: () => void;
-  disabled: boolean;
-}
-
-function ActionButton({config, onClick, disabled}: ActionButtonProps) {
-  const button = (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-all border',
-        config.buttonClass,
-        disabled ? 'cursor-not-allowed opacity-80' : 'hover:shadow-sm',
-      )}
-    >
-      {config.buttonIcon}
-      <span className='hidden sm:inline'>{config.buttonText}</span>
-    </button>
-  );
-
-  // Wrap with tooltip if disabled and has tooltip message
-  if (disabled && config.tooltipMessage) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className='inline-block cursor-not-allowed'>{button}</span>
-        </TooltipTrigger>
-        <TooltipContent side='top' className='max-w-[280px]'>
-          <div className='flex items-start gap-2'>
-            <Info className='h-4 w-4 shrink-0 mt-0.5' />
-            <p>{config.tooltipMessage}</p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return button;
-}

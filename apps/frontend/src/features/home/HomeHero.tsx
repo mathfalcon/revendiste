@@ -4,13 +4,14 @@ import {EventSearchModal} from '~/components/EventSearchModal';
 import {CDN_ASSETS} from '~/assets';
 
 const homePageTaglines = [
-  '¿Plan a último momento? Conseguí o transferí tu entrada con nosotros',
+  '¿Plan a último momento? Conseguí o vendé tu entrada con nosotros',
   'Si no vas, que tu entrada no quede tirada. Vendela fácil y seguro',
   '¿Te pintó ir a último momento? Conseguí tu entrada al toque',
-  '¿Cambio de plan? La fiesta sigue, comprá o transferi tu entrada sin drama',
+  '¿Cambio de plan? La fiesta sigue, comprá o vendé tu entrada sin drama',
   'No llegás, pero tu entrada sí. Dejalo en nuestras manos',
   'El plan cambia, pero tu entrada no queda colgada',
   '¿Plan inesperado? La entrada la conseguís acá',
+  'La reventa segura existe: comprá y vendé entradas sin riesgo',
   'Tus amigos ya tienen entrada… ¿y vos?',
   'No te quedes afuera, todos ya están adentro',
   'Todos listos para la noche, solo faltás vos',
@@ -87,7 +88,7 @@ export const HomeHero = () => {
         />
         {/* Visually hidden h1 for SEO - every page needs exactly one h1 */}
         <h1 className='sr-only'>
-          Revendiste - Compra y vende entradas de forma segura
+          Revendiste - Comprá y vendé entradas de forma segura en Uruguay
         </h1>
         <AnimatedTagline taglines={homePageTaglines} index={taglineIndex} />
 

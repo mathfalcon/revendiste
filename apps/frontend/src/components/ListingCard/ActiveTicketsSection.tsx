@@ -7,14 +7,15 @@ import {
   Clock,
   ChevronDown,
   Upload,
-  CheckCircle,
   AlertCircle,
   Eye,
+  Copy,
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
 import {Button} from '~/components/ui/button';
@@ -31,12 +32,12 @@ import type {
 import {EditTicketPriceDialog} from './EditTicketPriceDialog';
 import {RemoveTicketDialog} from './RemoveTicketDialog';
 import {TicketDocumentViewerModal} from '~/components';
-import {CopyableText} from '~/components/ui/copyable-text';
 import {cn} from '~/lib/utils';
+import {copyToClipboard} from '~/utils/clipboard';
+import {toast} from 'sonner';
 
 interface ActiveTicketsSectionProps {
   tickets: GetUserListingsResponse['data'][number]['tickets'];
-  ticketWaveName: string;
   ticketWaveCurrency: EventTicketCurrency;
   ticketWaveFaceValue: number;
   isEventPast?: boolean;
@@ -45,7 +46,6 @@ interface ActiveTicketsSectionProps {
 
 export function ActiveTicketsSection({
   tickets,
-  ticketWaveName,
   ticketWaveCurrency,
   ticketWaveFaceValue,
   isEventPast = false,
@@ -80,6 +80,23 @@ export function ActiveTicketsSection({
   const cardBorderClass = isEventPast
     ? 'border-muted bg-muted/30'
     : 'border-blue-500/20 bg-blue-500/5';
+
+  const handleCardTap = (ticket: (typeof tickets)[number]) => {
+    if (ticket.canUploadDocument && !ticket.hasDocument) {
+      onUploadClick?.(ticket.id);
+    } else if (ticket.hasDocument) {
+      setViewingTicketId(ticket.id);
+    } else if (!isEventPast) {
+      setEditingTicketId(ticket.id);
+    }
+  };
+
+  const handleCopyId = async (id: string) => {
+    const success = await copyToClipboard(id);
+    if (success) {
+      toast.success('ID copiado');
+    }
+  };
 
   return (
     <>
@@ -126,12 +143,21 @@ export function ActiveTicketsSection({
             {tickets.map(ticket => (
               <div
                 key={ticket.id}
+                role='button'
+                tabIndex={0}
                 className={cn(
-                  'rounded-xl border p-3 transition-all',
+                  'rounded-xl border p-3 transition-all cursor-pointer active:scale-[0.98]',
                   cardBorderClass,
                 )}
+                onClick={() => handleCardTap(ticket)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleCardTap(ticket);
+                  }
+                }}
               >
-                <div className='flex items-center justify-between gap-3'>
+                <div className='flex items-center justify-between gap-2'>
                   {/* Left side: Ticket info */}
                   <div className='flex items-center gap-3 min-w-0 flex-1'>
                     <div
@@ -148,18 +174,16 @@ export function ActiveTicketsSection({
                     </div>
 
                     <div className='min-w-0'>
-                      <div className='flex items-center gap-2'>
-                        <p
-                          className={cn(
-                            'font-semibold',
-                            isEventPast
-                              ? 'text-muted-foreground'
-                              : 'text-foreground',
-                          )}
-                        >
-                          Entrada #{ticket.ticketNumber} - {ticketWaveName}
-                        </p>
-                      </div>
+                      <p
+                        className={cn(
+                          'font-semibold',
+                          isEventPast
+                            ? 'text-muted-foreground'
+                            : 'text-foreground',
+                        )}
+                      >
+                        Entrada #{ticket.ticketNumber}
+                      </p>
                       <div className='flex items-center gap-1.5 mt-0.5'>
                         <span
                           className={cn(
@@ -178,54 +202,53 @@ export function ActiveTicketsSection({
                           </span>
                         )}
                       </div>
-                      <CopyableText
-                        text={ticket.id}
-                        label='ID:'
-                        truncateOnMobile
-                        className='mt-1'
-                        textClassName='text-xs text-muted-foreground'
-                      />
+                      {/* Document status hint */}
+                      {ticket.canUploadDocument && !ticket.hasDocument && (
+                        <span className='text-xs text-orange-600 flex items-center gap-1 mt-0.5'>
+                          <Upload className='h-3 w-3' />
+                          Subir entrada
+                        </span>
+                      )}
+                      {ticket.hasDocument && (
+                        <span className='text-xs text-green-600 flex items-center gap-1 mt-0.5'>
+                          <Eye className='h-3 w-3' />
+                          Documento subido
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Right side: Document status & Actions */}
-                  <div className='flex items-center gap-2 shrink-0'>
-                    {/* Document status indicator */}
-                    {ticket.hasDocument ? (
+                  {/* Right side: Actions dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                       <Button
-                        variant='outline'
-                        size='sm'
-                        className='h-7 text-xs text-green-600 border-green-500/30 hover:bg-green-500/10'
-                        onClick={() => setViewingTicketId(ticket.id)}
+                        variant='ghost'
+                        size='icon'
+                        className='h-8 w-8 shrink-0'
+                        onClick={e => e.stopPropagation()}
                       >
-                        <Eye className='mr-1.5 h-3 w-3' />
-                        Ver documento
+                        <MoreVertical className='h-4 w-4' />
                       </Button>
-                    ) : ticket.canUploadDocument ? (
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        className='h-7 text-xs'
-                        onClick={() => onUploadClick?.(ticket.id)}
-                      >
-                        <Upload className='mr-1.5 h-3 w-3' />
-                        Subir entrada
-                      </Button>
-                    ) : null}
-
-                    {/* Actions dropdown - only show for active events */}
-                    {!isEventPast && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='h-8 w-8 shrink-0'
-                          >
-                            <MoreVertical className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      {ticket.hasDocument && (
+                        <DropdownMenuItem
+                          onClick={() => setViewingTicketId(ticket.id)}
+                        >
+                          <Eye className='mr-2 h-4 w-4' />
+                          Ver documento
+                        </DropdownMenuItem>
+                      )}
+                      {ticket.canUploadDocument && !ticket.hasDocument && (
+                        <DropdownMenuItem
+                          onClick={() => onUploadClick?.(ticket.id)}
+                        >
+                          <Upload className='mr-2 h-4 w-4' />
+                          Subir entrada
+                        </DropdownMenuItem>
+                      )}
+                      {!isEventPast && (
+                        <>
                           <DropdownMenuItem
                             onClick={() => setEditingTicketId(ticket.id)}
                           >
@@ -239,10 +262,17 @@ export function ActiveTicketsSection({
                             <Minus className='mr-2 h-4 w-4' />
                             Retirar de venta
                           </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleCopyId(ticket.id)}
+                      >
+                        <Copy className='mr-2 h-4 w-4' />
+                        Copiar ID
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             ))}

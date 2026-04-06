@@ -19,7 +19,6 @@ import {DB} from '@revendiste/shared';
  * - production: SSL enabled with rejectUnauthorized: false (RDS within AWS network)
  */
 function getSslConfig(): boolean | {rejectUnauthorized: boolean} {
- 
   if (NODE_ENV === 'local') {
     if (POSTGRES_HOST.includes('localhost')) {
       return false;

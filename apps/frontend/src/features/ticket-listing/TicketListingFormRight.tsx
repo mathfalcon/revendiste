@@ -300,6 +300,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
     ]);
     if (isValid && secondStepType) {
       setStep(secondStepType);
+      window.scrollTo({top: 0, behavior: 'smooth'});
     }
   };
 

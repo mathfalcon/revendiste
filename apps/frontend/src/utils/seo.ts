@@ -13,9 +13,21 @@ const getImageType = (url: string): string => {
   return 'image/jpeg';
 };
 
+const DEFAULT_DESCRIPTION =
+  'Revendiste es la plataforma de compra y venta de entradas en Uruguay: conciertos, fiestas y eventos. Incluye reventa segura entre personas cuando comprás o vendés a otra persona.';
+
+/** Self-referential hrefLang for Uruguay Spanish (single-locale site). */
+export function alternateHreflangEsUy(href: string): {
+  rel: 'alternate';
+  hrefLang: 'es-UY';
+  href: string;
+} {
+  return {rel: 'alternate', hrefLang: 'es-UY', href};
+}
+
 export const seo = ({
   title,
-  description,
+  description = DEFAULT_DESCRIPTION,
   keywords,
   image,
   noIndex = false,

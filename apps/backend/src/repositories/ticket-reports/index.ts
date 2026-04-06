@@ -57,7 +57,11 @@ export class TicketReportsRepository extends BaseRepository<TicketReportsReposit
           eb
             .selectFrom('ticketReportActions')
             .selectAll()
-            .whereRef('ticketReportActions.ticketReportId', '=', 'ticketReports.id')
+            .whereRef(
+              'ticketReportActions.ticketReportId',
+              '=',
+              'ticketReports.id',
+            )
             .orderBy('ticketReportActions.createdAt', 'asc'),
         ).as('actions'),
       ])
@@ -159,7 +163,11 @@ export class TicketReportsRepository extends BaseRepository<TicketReportsReposit
         .executeTakeFirstOrThrow(),
     ]);
 
-    return createPaginatedResponse(data, parseInt(countResult.count), pagination);
+    return createPaginatedResponse(
+      data,
+      parseInt(countResult.count),
+      pagination,
+    );
   }
 
   async getForAdmin(
@@ -208,9 +216,7 @@ export class TicketReportsRepository extends BaseRepository<TicketReportsReposit
         .execute(),
       this.db
         .selectFrom('ticketReports')
-        .$if(!!filters.status, qb =>
-          qb.where('status', '=', filters.status!),
-        )
+        .$if(!!filters.status, qb => qb.where('status', '=', filters.status!))
         .$if(!!filters.caseType, qb =>
           qb.where('caseType', '=', filters.caseType!),
         )
@@ -218,7 +224,11 @@ export class TicketReportsRepository extends BaseRepository<TicketReportsReposit
         .executeTakeFirstOrThrow(),
     ]);
 
-    return createPaginatedResponse(data, parseInt(countResult.count), pagination);
+    return createPaginatedResponse(
+      data,
+      parseInt(countResult.count),
+      pagination,
+    );
   }
 
   async updateStatus(
@@ -238,7 +248,10 @@ export class TicketReportsRepository extends BaseRepository<TicketReportsReposit
       .executeTakeFirstOrThrow();
   }
 
-  async findActiveByEntity(entityType: TicketReportEntityType, entityId: string) {
+  async findActiveByEntity(
+    entityType: TicketReportEntityType,
+    entityId: string,
+  ) {
     return await this.db
       .selectFrom('ticketReports')
       .selectAll()
@@ -246,6 +259,37 @@ export class TicketReportsRepository extends BaseRepository<TicketReportsReposit
       .where('entityId', '=', entityId)
       .where('status', '!=', 'closed')
       .executeTakeFirst();
+  }
+
+  /**
+   * Check if entity has a report that was closed/resolved by an admin.
+   * Returns true if a closed report exists with a closing action (close, reject,
+   * refund_full, refund_partial) performed by an admin.
+   */
+  async hasAdminResolvedReport(
+    entityType: TicketReportEntityType,
+    entityId: string,
+  ) {
+    const result = await this.db
+      .selectFrom('ticketReports')
+      .innerJoin(
+        'ticketReportActions',
+        'ticketReportActions.ticketReportId',
+        'ticketReports.id',
+      )
+      .select('ticketReports.id')
+      .where('ticketReports.entityType', '=', entityType)
+      .where('ticketReports.entityId', '=', entityId)
+      .where('ticketReports.status', '=', 'closed')
+      .where('ticketReportActions.performedByAdmin', '=', true)
+      .where('ticketReportActions.actionType', 'in', [
+        'close',
+        'reject',
+        'refund_full',
+        'refund_partial',
+      ])
+      .executeTakeFirst();
+    return !!result;
   }
 
   async getReporterInfo(userId: string) {

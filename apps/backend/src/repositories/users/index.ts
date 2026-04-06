@@ -110,6 +110,22 @@ export class UsersRepository extends BaseRepository<UsersRepository> {
     return user;
   }
 
+  // Dismiss WhatsApp opt-in prompt
+  async dismissWhatsappPrompt(clerkId: string) {
+    const [user] = await this.db
+      .updateTable('users')
+      .set({
+        whatsappPromptDismissed: true,
+        updatedAt: new Date(),
+      })
+      .where('clerkId', '=', clerkId)
+      .where('deletedAt', 'is', null)
+      .returningAll()
+      .execute();
+
+    return user;
+  }
+
   // Update user's image URL
   async updateImageUrl(clerkId: string, imageUrl: string | null) {
     const [user] = await this.db

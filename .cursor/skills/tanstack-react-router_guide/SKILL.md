@@ -977,7 +977,7 @@ interface MUIButtonLinkProps extends ButtonProps<'a'> {
 const MUIButtonLinkComponent = React.forwardRef<
   HTMLAnchorElement,
   MUIButtonLinkProps
->((props, ref) => <Button ref={ref} component='a' {...props} />);
+>((props, ref) => <Button ref={ref} component="a" {...props} />);
 
 const CreatedButtonLinkComponent = createLink(MUIButtonLinkComponent);
 
@@ -1024,7 +1024,7 @@ const MantineLinkComponent = React.forwardRef<
 const CreatedLinkComponent = createLink(MantineLinkComponent);
 
 export const CustomLink: LinkComponent<typeof MantineLinkComponent> = props => {
-  return <CreatedLinkComponent preload='intent' {...props} />;
+  return <CreatedLinkComponent preload="intent" {...props} />;
 };
 ```
 
@@ -2586,18 +2586,18 @@ const options = linkOptions([
 function DashboardComponent() {
   return (
     <>
-      <div className='flex items-center border-b'>
-        <h2 className='text-xl p-2'>Dashboard</h2>
+      <div className="flex items-center border-b">
+        <h2 className="text-xl p-2">Dashboard</h2>
       </div>
 
-      <div className='flex flex-wrap divide-x'>
+      <div className="flex flex-wrap divide-x">
         {options.map(option => {
           return (
             <Link
               {...option}
               key={option.to}
               activeProps={{className: `font-bold`}}
-              className='p-2'
+              className="p-2"
             >
               {option.label}
             </Link>
@@ -3030,7 +3030,7 @@ Let's make a simple static link!
 ```tsx
 import {Link} from '@tanstack/react-router';
 
-const link = <Link to='/about'>About</Link>;
+const link = <Link to="/about">About</Link>;
 ```
 
 ### Dynamic Links
@@ -3040,7 +3040,7 @@ Dynamic links are links that have dynamic segments in them. For example, a link 
 ```tsx
 const link = (
   <Link
-    to='/blog/post/$postId'
+    to="/blog/post/$postId"
     params={{
       postId: 'my-first-blog-post',
     }}
@@ -3069,7 +3069,7 @@ const postIdRoute = createRoute({
 });
 
 const link = (
-  <Link from={postIdRoute.fullPath} to='../categories'>
+  <Link from={postIdRoute.fullPath} to="../categories">
     Categories
   </Link>
 );
@@ -3091,16 +3091,16 @@ export const Route = createFileRoute('/posts/$postId')({
 function PostComponent() {
   return (
     <div>
-      <Link to='.'>Reload the current route of /posts/$postId</Link>
-      <Link to='..'>Navigate back to /posts</Link>
+      <Link to=".">Reload the current route of /posts/$postId</Link>
+      <Link to="..">Navigate back to /posts</Link>
       // the below are all equivalent
-      <Link to='/posts'>Navigate back to /posts</Link>
-      <Link from='/posts' to='.'>
+      <Link to="/posts">Navigate back to /posts</Link>
+      <Link from="/posts" to=".">
         Navigate back to /posts
       </Link>
       // the below are all equivalent
-      <Link to='/'>Navigate to root</Link>
-      <Link from='/posts' to='..'>
+      <Link to="/">Navigate to root</Link>
+      <Link from="/posts" to="..">
         Navigate to root
       </Link>
     </div>
@@ -3115,7 +3115,7 @@ Search params are a great way to provide additional context to a route. For exam
 ```tsx
 const link = (
   <Link
-    to='/search'
+    to="/search"
     search={{
       query: 'tanstack',
     }}
@@ -3130,7 +3130,7 @@ It's also common to want to update a single search param without supplying any o
 ```tsx
 const link = (
   <Link
-    to='.'
+    to="."
     search={prev => ({
       ...prev,
       page: prev.page + 1,
@@ -3152,11 +3152,11 @@ Hash links are a great way to link to a specific section of a page. For example,
 ```tsx
 const link = (
   <Link
-    to='/blog/post/$postId'
+    to="/blog/post/$postId"
     params={{
       postId: 'my-first-blog-post',
     }}
-    hash='section-1'
+    hash="section-1"
   >
     Section 1
   </Link>
@@ -3176,7 +3176,7 @@ Use `params: {}` to inherit all current route parameters:
 
 ```tsx
 // Inherits current route parameters
-<Link to='/posts/{-$category}' params={{}}>
+<Link to="/posts/{-$category}" params={{}}>
   All Posts
 </Link>
 ```
@@ -3186,7 +3186,7 @@ Set parameters to `undefined` to explicitly remove them:
 
 ```tsx
 // Removes the category parameter
-<Link to='/posts/{-$category}' params={{category: undefined}}>
+<Link to="/posts/{-$category}" params={{category: undefined}}>
   All Posts
 </Link>
 ```
@@ -3428,7 +3428,7 @@ Here's an example:
 ```tsx
 const link = (
   <Link
-    to='/blog/post/$postId'
+    to="/blog/post/$postId"
     params={{
       postId: 'my-first-blog-post',
     }}
@@ -3475,19 +3475,19 @@ For example, if you are on the `/blog/post/my-first-blog-post` route, the follow
 
 ```tsx
 const link1 = (
-  <Link to='/blog/post/$postId' params={{postId: 'my-first-blog-post'}}>
+  <Link to="/blog/post/$postId" params={{postId: 'my-first-blog-post'}}>
     Blog Post
   </Link>
 );
-const link2 = <Link to='/blog/post'>Blog Post</Link>;
-const link3 = <Link to='/blog'>Blog Post</Link>;
+const link2 = <Link to="/blog/post">Blog Post</Link>;
+const link3 = <Link to="/blog">Blog Post</Link>;
 ```
 
 However, the following links will not be active:
 
 ```tsx
 const link4 = (
-  <Link to='/blog/post/$postId' params={{postId: 'my-second-blog-post'}}>
+  <Link to="/blog/post/$postId" params={{postId: 'my-second-blog-post'}}>
     Blog Post
   </Link>
 );
@@ -3497,7 +3497,7 @@ It's common for some links to only be active if they are an exact match. A good 
 
 ```tsx
 const link = (
-  <Link to='/' activeOptions={{exact: true}}>
+  <Link to="/" activeOptions={{exact: true}}>
     Home
   </Link>
 );
@@ -3516,7 +3516,7 @@ The `Link` component accepts a function for its children, allowing you to propag
 
 ```tsx
 const link = (
-  <Link to='/blog/post'>
+  <Link to="/blog/post">
     {({isActive}) => {
       return (
         <>
@@ -3535,7 +3535,7 @@ The `Link` component supports automatically preloading routes on intent (hoverin
 
 ```tsx
 const link = (
-  <Link to='/blog/post/$postId' preload='intent'>
+  <Link to="/blog/post/$postId" preload="intent">
     Blog Post
   </Link>
 );
@@ -3551,7 +3551,7 @@ Along with preloading is a configurable delay which determines how long a user m
 
 ```tsx
 const link = (
-  <Link to='/blog/post/$postId' preload='intent' preloadDelay={100}>
+  <Link to="/blog/post/$postId" preload="intent" preloadDelay={100}>
     Blog Post
   </Link>
 );
@@ -3596,7 +3596,7 @@ Occasionally, you may find yourself needing to navigate immediately when a compo
 
 ```tsx
 function Component() {
-  return <Navigate to='/posts/$postId' params={{postId: 'my-first-post'}} />;
+  return <Navigate to="/posts/$postId" params={{postId: 'my-first-post'}} />;
 }
 ```
 
@@ -3614,9 +3614,9 @@ The `useMatchRoute` hook and `<MatchRoute>` component are the same thing, but th
 function Component() {
   return (
     <div>
-      <Link to='/users'>
+      <Link to="/users">
         Users
-        <MatchRoute to='/users' pending>
+        <MatchRoute to="/users" pending>
           <Spinner />
         </MatchRoute>
       </Link>
@@ -3631,9 +3631,9 @@ The component version `<MatchRoute>` can also be used with a function as childre
 function Component() {
   return (
     <div>
-      <Link to='/users'>
+      <Link to="/users">
         Users
-        <MatchRoute to='/users' pending>
+        <MatchRoute to="/users" pending>
           {match => {
             return <Spinner show={match} />;
           }}
@@ -3658,7 +3658,7 @@ function Component() {
 
   return (
     <div>
-      <Link to='/users'>Users</Link>
+      <Link to="/users">Users</Link>
     </div>
   );
 }
@@ -3801,7 +3801,7 @@ const router = createRouter({
     return (
       <div>
         <p>Not found!</p>
-        <Link to='/'>Go home</Link>
+        <Link to="/">Go home</Link>
       </div>
     );
   },
@@ -4094,7 +4094,7 @@ Let's see what an object style looks like:
 ```tsx
 function Component() {
   return (
-    <Link to='/blog/$postId' params={{postId: '123'}}>
+    <Link to="/blog/$postId" params={{postId: '123'}}>
       Post 123
     </Link>
   );
@@ -4106,7 +4106,7 @@ And here's what a function style looks like:
 ```tsx
 function Component() {
   return (
-    <Link to='/blog/$postId' params={prev => ({...prev, postId: '123'})}>
+    <Link to="/blog/$postId" params={prev => ({...prev, postId: '123'})}>
       Post 123
     </Link>
   );
@@ -4366,18 +4366,18 @@ function Navigation() {
   return (
     <div>
       {/* Navigate with optional parameter */}
-      <Link to='/posts/{-$category}' params={{category: 'tech'}}>
+      <Link to="/posts/{-$category}" params={{category: 'tech'}}>
         Tech Posts
       </Link>
 
       {/* Navigate without optional parameter */}
-      <Link to='/posts/{-$category}' params={{category: undefined}}>
+      <Link to="/posts/{-$category}" params={{category: undefined}}>
         All Posts
       </Link>
 
       {/* Navigate with multiple optional parameters */}
       <Link
-        to='/posts/{-$category}/{-$slug}'
+        to="/posts/{-$category}/{-$slug}"
         params={{category: 'tech', slug: 'react-tips'}}
       >
         Specific Post
@@ -4530,11 +4530,11 @@ function LanguageSwitcher() {
   ];
 
   return (
-    <div className='language-switcher'>
+    <div className="language-switcher">
       {languages.map(({code, name}) => (
         <Link
           key={code}
-          to='/{-$locale}/blog/{-$category}/$slug'
+          to="/{-$locale}/blog/{-$category}/$slug"
           params={prev => ({
             ...prev,
             locale: code === 'en' ? undefined : code, // Remove 'en' for clean URLs
@@ -4572,23 +4572,23 @@ function AdvancedLanguageSwitcher() {
   };
 
   return (
-    <div className='language-switcher'>
+    <div className="language-switcher">
       <Link
-        to='/{-$locale}/blog/{-$category}/$slug'
+        to="/{-$locale}/blog/{-$category}/$slug"
         params={handleLanguageChange('fr')}
       >
         Français
       </Link>
 
       <Link
-        to='/{-$locale}/blog/{-$category}/$slug'
+        to="/{-$locale}/blog/{-$category}/$slug"
         params={handleLanguageChange('es')}
       >
         Español
       </Link>
 
       <Link
-        to='/{-$locale}/blog/{-$category}/$slug'
+        to="/{-$locale}/blog/{-$category}/$slug"
         params={handleLanguageChange('en')}
       >
         English
@@ -4667,17 +4667,17 @@ export const Route = createFileRoute('/{-$locale}/products/$id')({
         // Alternate language versions
         {
           rel: 'alternate',
-          hreflang: 'en',
+          hrefLang: 'en',
           href: `https://example.com/products/${params.id}`,
         },
         {
           rel: 'alternate',
-          hreflang: 'fr',
+          hrefLang: 'fr',
           href: `https://example.com/fr/products/${params.id}`,
         },
         {
           rel: 'alternate',
-          hreflang: 'es',
+          hrefLang: 'es',
           href: `https://example.com/es/products/${params.id}`,
         },
       ],
@@ -4731,7 +4731,7 @@ function ShopComponent() {
       <h1>Shop {category ? `- ${category}` : ''}</h1>
       <p>Language: {locale || 'en'}</p>
       {!isDefaultLocale && (
-        <Link to='/shop/{-$category}' params={{category}}>
+        <Link to="/shop/{-$category}" params={{category}}>
           View in English
         </Link>
       )}
@@ -5062,7 +5062,7 @@ The `<Link>` and `navigate()` APIs both accept a `mask` option that can be used 
 
 ```tsx
 <Link
-  to='/photos/$photoId/modal'
+  to="/photos/$photoId/modal"
   params={{photoId: 5}}
   mask={{
     to: '/photos/$photoId',
@@ -5664,7 +5664,7 @@ function Component() {
       // as a custom attribute that will get picked up by the
       // scroll restoration watcher
       data-scroll-restoration-id={scrollRestorationId}
-      className='flex-1 border rounded-lg overflow-auto relative'
+      className="flex-1 border rounded-lg overflow-auto relative"
     >
       ...
     </div>
@@ -5732,7 +5732,7 @@ For example, navigating to the following route:
 ```tsx
 const link = (
   <Link
-    to='/shop'
+    to="/shop"
     search={{
       pageIndex: 3,
       includeCategories: ['electronics', 'gifts'],
@@ -5882,7 +5882,7 @@ export const Route = createFileRoute('/shop/products/')({
 It might be surprising that when you try to navigate to this route, `search` is required. The following `Link` will type error as `search` is missing.
 
 ```tsx
-<Link to='/shop/products' />
+<Link to="/shop/products" />
 ```
 
 For validation libraries we recommend using adapters which infer the correct `input` and `output` types.
@@ -5910,7 +5910,7 @@ export const Route = createFileRoute('/shop/products/')({
 The important part here is the following use of `Link` no longer requires `search` params
 
 ```tsx
-<Link to='/shop/products' />
+<Link to="/shop/products" />
 ```
 
 However the use of `catch` here overrides the types and makes `page`, `filter` and `sort` `unknown` causing type loss. We have handled this case by providing a `fallback` generic function which retains the types but provides a `fallback` value when validation fails
@@ -6187,7 +6187,7 @@ Here is an example that illustrates this:
 const PageSelector = () => {
   return (
     <div>
-      <Link to='.' search={prev => ({...prev, page: prev.page + 1})}>
+      <Link to="." search={prev => ({...prev, page: prev.page + 1})}>
         Next Page
       </Link>
     </div>
@@ -6931,7 +6931,7 @@ const MyComponent = (props: MyComponentProps) => {
 };
 
 const Page = () => {
-  return <MyComponent renderLink={() => <Link to='/absolute' />} />;
+  return <MyComponent renderLink={() => <Link to="/absolute" />} />;
 };
 ```
 
@@ -7050,7 +7050,7 @@ export function Menu(props: MenuProps): React.ReactNode {
 
 ```tsx
 <Menu
-  from='/posts'
+  from="/posts"
   items={[{to: '.'}, {to: './$postId', params: {postId: 'postId'}}]}
 />
 ```
@@ -7133,4 +7133,3 @@ const {enable, disable, navigate} = useConditionalNavigate({
   params: {postId: 'postId'},
 });
 ```
-

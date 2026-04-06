@@ -14,23 +14,10 @@ import {
   X,
 } from 'lucide-react';
 import {cn} from '~/lib/utils';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '~/components/ui/popover';
+import {Popover, PopoverContent, PopoverTrigger} from '~/components/ui/popover';
 import {Separator} from '~/components/ui/separator';
-import {
-  addDays,
-  endOfMonth,
-  format,
-  startOfMonth,
-  nextFriday,
-  nextSunday,
-  isFriday,
-  isSaturday,
-  isSunday,
-} from 'date-fns';
+import {format} from 'date-fns';
+import {getDatePresets, type DatePreset} from '~/utils/date-presets';
 
 export interface LocationFilter {
   type: 'all' | 'nearby' | 'region';
@@ -55,32 +42,6 @@ function formatRegionName(region: string): string {
     .trim();
 }
 
-interface DatePreset {
-  label: string;
-  from: string;
-  to: string;
-}
-
-function getDatePresets(): DatePreset[] {
-  const now = new Date();
-  const today = format(now, 'yyyy-MM-dd');
-  const tomorrow = format(addDays(now, 1), 'yyyy-MM-dd');
-  const monthEnd = format(endOfMonth(now), 'yyyy-MM-dd');
-  const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
-
-  // Weekend = Friday to Sunday. If we're already in the weekend, start from today.
-  const isWeekend = isFriday(now) || isSaturday(now) || isSunday(now);
-  const weekendStart = isWeekend ? today : format(nextFriday(now), 'yyyy-MM-dd');
-  const weekendEnd = isSunday(now) ? today : format(nextSunday(now), 'yyyy-MM-dd');
-
-  return [
-    {label: 'Hoy', from: today, to: today},
-    {label: 'Mañana', from: tomorrow, to: tomorrow},
-    {label: 'Este finde', from: weekendStart, to: weekendEnd},
-    {label: 'Este mes', from: monthStart, to: monthEnd},
-  ];
-}
-
 function getDateLabel(dateFrom?: string, dateTo?: string): string | null {
   if (!dateFrom && !dateTo) return null;
   const presets = getDatePresets();
@@ -93,7 +54,11 @@ function getDateLabel(dateFrom?: string, dateTo?: string): string | null {
   return null;
 }
 
-export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFilterProps) => {
+export const LocationFilterBar = ({
+  value,
+  onChange,
+  scrollTargetRef,
+}: LocationFilterProps) => {
   const {data: regionData} = useQuery(getRegionsQuery());
   const {status: geoStatus, coords, requestLocation} = useGeolocation();
   const pendingNearbyRef = useRef(false);
@@ -101,7 +66,10 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
   const [dateOpen, setDateOpen] = useState(false);
 
   const scrollIntoView = () => {
-    scrollTargetRef?.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    scrollTargetRef?.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
   };
 
   useEffect(() => {
@@ -158,11 +126,15 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
   };
 
   const handleDatePreset = (preset: DatePreset) => {
-    const isRemoving = value.dateFrom === preset.from && value.dateTo === preset.to;
+    const isRemoving =
+      value.dateFrom === preset.from && value.dateTo === preset.to;
     if (isRemoving) {
       onChange({...value, dateFrom: undefined, dateTo: undefined});
     } else {
-      posthog.capture('filter_applied', {filter_type: 'date', value: preset.label});
+      posthog.capture('filter_applied', {
+        filter_type: 'date',
+        value: preset.label,
+      });
       onChange({...value, dateFrom: preset.from, dateTo: preset.to});
     }
     setDateOpen(false);
@@ -176,7 +148,10 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
 
   const handleToggleHasTickets = () => {
     if (!value.hasTickets) {
-      posthog.capture('filter_applied', {filter_type: 'has_tickets', value: true});
+      posthog.capture('filter_applied', {
+        filter_type: 'has_tickets',
+        value: true,
+      });
     }
     onChange({...value, hasTickets: value.hasTickets ? undefined : true});
     scrollIntoView();
@@ -187,7 +162,8 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
   const hasRegionFilter = value.type === 'region' && selectedRegions.length > 0;
   const hasLocationFilter = value.type === 'nearby' || hasRegionFilter;
   const hasDateFilter = !!value.dateFrom || !!value.dateTo;
-  const isAllActive = value.type === 'all' && !hasDateFilter && !value.hasTickets;
+  const isAllActive =
+    value.type === 'all' && !hasDateFilter && !value.hasTickets;
   const hasAnyFilter = !isAllActive;
 
   const locationLabel = (() => {
@@ -206,7 +182,6 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
   return (
     <div>
       <div className='flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-0.5'>
-
         {/* Todos */}
         <FilterPill
           active={isAllActive}
@@ -223,7 +198,10 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
           <PopoverTrigger asChild>
             <button
               type='button'
-              className={cn(pillBase, hasDateFilter ? pillActive : pillInactive)}
+              className={cn(
+                pillBase,
+                hasDateFilter ? pillActive : pillInactive,
+              )}
             >
               <Calendar className='size-3.5' />
               {dateLabel}
@@ -279,7 +257,10 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
           <PopoverTrigger asChild>
             <button
               type='button'
-              className={cn(pillBase, hasLocationFilter ? pillActive : pillInactive)}
+              className={cn(
+                pillBase,
+                hasLocationFilter ? pillActive : pillInactive,
+              )}
             >
               <MapPin className='size-3.5' />
               {locationLabel}
@@ -307,7 +288,9 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
                   <Navigation className='size-4 shrink-0 text-muted-foreground' />
                 )}
                 Cerca de mí
-                {value.type === 'nearby' && <Check className='size-3.5 ml-auto' />}
+                {value.type === 'nearby' && (
+                  <Check className='size-3.5 ml-auto' />
+                )}
               </button>
             </div>
 
@@ -348,7 +331,13 @@ export const LocationFilterBar = ({value, onChange, scrollTargetRef}: LocationFi
                 <button
                   type='button'
                   onClick={() => {
-                    onChange({...value, type: 'all', regions: undefined, lat: undefined, lng: undefined});
+                    onChange({
+                      ...value,
+                      type: 'all',
+                      regions: undefined,
+                      lat: undefined,
+                      lng: undefined,
+                    });
                     setRegionOpen(false);
                   }}
                   className='flex w-full items-center justify-center px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground'

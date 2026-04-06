@@ -1,6 +1,6 @@
 import {createFileRoute} from '@tanstack/react-router';
 import {MarkdownPage} from '~/components';
-import {seo} from '~/utils/seo';
+import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 
 export const Route = createFileRoute('/terminos-y-condiciones')({
@@ -19,7 +19,10 @@ export const Route = createFileRoute('/terminos-y-condiciones')({
           'Leé los términos y condiciones de Revendiste. Reglas claras para la compra y venta segura de entradas a eventos en Uruguay.',
         baseUrl,
       }),
-      links: [{rel: 'canonical', href: `${baseUrl}/terminos-y-condiciones`}],
+      links: [
+        alternateHreflangEsUy(`${baseUrl}/terminos-y-condiciones`),
+        {rel: 'canonical', href: `${baseUrl}/terminos-y-condiciones`},
+      ],
     };
   },
 });

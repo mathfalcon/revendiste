@@ -122,11 +122,19 @@ export const revokeSessionMutation = () =>
 export const updatePhoneSettingsMutation = () =>
   mutationOptions({
     mutationKey: ['update-phone-settings'],
-    mutationFn: (data: {phoneNumber: string | null; whatsappOptedIn: boolean}) =>
-      api.profile.updatePhoneSettings(data).then(res => res.data),
+    mutationFn: (data: {
+      phoneNumber: string | null;
+      whatsappOptedIn: boolean;
+    }) => api.profile.updatePhoneSettings(data).then(res => res.data),
     onSuccess: () => {
       toast.success('Teléfono actualizado');
     },
+  });
+
+export const dismissWhatsappPromptMutation = () =>
+  mutationOptions({
+    mutationKey: ['dismiss-whatsapp-prompt'],
+    mutationFn: () => api.profile.dismissWhatsappPrompt().then(res => res.data),
   });
 
 export const sendWhatsappOtpMutation = () =>
@@ -147,7 +155,9 @@ export const deleteAccountMutation = () =>
   mutationOptions({
     mutationKey: ['delete-account'],
     mutationFn: () =>
-      api.profile.deleteAccount({confirmation: 'ELIMINAR'}).then(res => res.data),
+      api.profile
+        .deleteAccount({confirmation: 'ELIMINAR'})
+        .then(res => res.data),
     onSuccess: () => {
       toast.success('Cuenta eliminada');
     },

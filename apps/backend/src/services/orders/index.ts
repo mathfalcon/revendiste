@@ -386,6 +386,12 @@ export class OrdersService {
                 ),
               }
             : null,
+        report: ticket.report
+          ? {
+              id: ticket.report.id,
+              status: ticket.report.status,
+            }
+          : null,
       })),
     );
 

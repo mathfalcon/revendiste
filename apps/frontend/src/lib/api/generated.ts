@@ -761,6 +761,10 @@ export type GetUserOrdersResponse =
 
 export interface GetOrderTicketsResponse {
   tickets: {
+    report: {
+      status: "awaiting_customer" | "awaiting_support" | "closed";
+      id: string;
+    } | null;
     document: {
       url: string;
       mimeType: string | null;
@@ -817,6 +821,9 @@ export type GetBalanceResponse = SellerBalance;
 
 export interface EarningsForSelection {
   byListing: {
+    /** @format date-time */
+    eventStartDate: string;
+    eventName: string;
     currency: EventTicketCurrency;
     /** @format double */
     ticketCount: number;
@@ -825,6 +832,9 @@ export interface EarningsForSelection {
     listingId: string;
   }[];
   byTicket: {
+    /** @format date-time */
+    eventStartDate: string;
+    eventName: string;
     publisherUserId: string;
     listingId: string;
     /** @format date-time */
@@ -1944,6 +1954,8 @@ export interface DeleteImageResponse {
 export type DeleteEventImageResponse = DeleteImageResponse;
 
 export interface GetCurrentUserResponse {
+  /** Whether user dismissed the WhatsApp opt-in prompt */
+  whatsappPromptDismissed: boolean;
   /** Whether user has opted in to WhatsApp notifications */
   whatsappOptedIn: boolean;
   /** User's phone number in E.164 format */
@@ -2090,13 +2102,13 @@ export interface CreateTicketReportBody {
   description?: string;
   entityId: string;
   entityType:
+    | "order_ticket_reservation"
     | "listing"
     | "listing_ticket"
-    | "order"
-    | "order_ticket_reservation";
+    | "order";
   caseType:
-    | "other"
     | "invalid_ticket"
+    | "other"
     | "problem_with_seller"
     | "ticket_not_received";
 }
@@ -2332,6 +2344,10 @@ export interface UpdatePhoneSettingsResponse {
 export interface UpdatePhoneSettingsRouteBody {
   whatsappOptedIn: boolean;
   phoneNumber: string | null;
+}
+
+export interface DismissWhatsappPromptResponse {
+  success: true;
 }
 
 export interface SendOtpResponse {
@@ -2572,6 +2588,27 @@ export type MarkAllAsSeenResponse = TypedNotification[];
 
 export type DeleteNotificationResponse = TypedNotification | null;
 
+export interface SubscribePushResponse {
+  success: boolean;
+}
+
+export interface SubscribePushRouteBody {
+  userAgent?: string;
+  keys: {
+    auth: string;
+    p256dh: string;
+  };
+  endpoint: string;
+}
+
+export interface UnsubscribePushResponse {
+  success: boolean;
+}
+
+export interface UnsubscribePushRouteBody {
+  endpoint: string;
+}
+
 export interface InitiateVerificationResponse {
   message: "Verificación iniciada";
   success: boolean;
@@ -2640,8 +2677,8 @@ export type AdminListCasesResponse =
 
 export interface InferTypeofAdminListTicketReportsQuerySchema {
   caseType?:
-    | "other"
     | "invalid_ticket"
+    | "other"
     | "problem_with_seller"
     | "ticket_not_received";
   status?: "awaiting_customer" | "awaiting_support" | "closed";
@@ -4289,8 +4326,8 @@ export class Api<
     listCases: (
       query: {
         caseType?:
-          | "other"
           | "invalid_ticket"
+          | "other"
           | "problem_with_seller"
           | "ticket_not_received";
         status?: "awaiting_customer" | "awaiting_support" | "closed";
@@ -4695,6 +4732,21 @@ export class Api<
      * No description
      *
      * @tags Profile
+     * @name DismissWhatsappPrompt
+     * @request POST:/profile/whatsapp-dismiss
+     */
+    dismissWhatsappPrompt: (params: RequestParams = {}) =>
+      this.request<DismissWhatsappPromptResponse, ApiErrorResponse>({
+        path: `/profile/whatsapp-dismiss`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Profile
      * @name SendOtp
      * @request POST:/profile/phone/send-otp
      */
@@ -5073,6 +5125,66 @@ export class Api<
       >({
         path: `/notifications/${notificationId}`,
         method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name SubscribePush
+     * @request POST:/notifications/push-subscriptions
+     */
+    subscribePush: (data: SubscribePushRouteBody, params: RequestParams = {}) =>
+      this.request<SubscribePushResponse, UnauthorizedError>({
+        path: `/notifications/push-subscriptions`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notifications
+     * @name UnsubscribePush
+     * @request DELETE:/notifications/push-subscriptions
+     */
+    unsubscribePush: (
+      data: UnsubscribePushRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<UnsubscribePushResponse, UnauthorizedError>({
+        path: `/notifications/push-subscriptions`,
+        method: "DELETE",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description DEV ONLY — Send a test push notification to all user's subscribed devices. Removed before production deployment.
+     *
+     * @tags Notifications
+     * @name TestPush
+     * @request POST:/notifications/test-push
+     */
+    testPush: (params: RequestParams = {}) =>
+      this.request<
+        {
+          /** @format double */
+          failed: number;
+          /** @format double */
+          sent: number;
+        },
+        UnauthorizedError
+      >({
+        path: `/notifications/test-push`,
+        method: "POST",
         format: "json",
         ...params,
       }),

@@ -14,6 +14,13 @@ export default defineNitroConfig({
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     },
+    // Service worker must never be cached
+    '/sw.js': {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Service-Worker-Allowed': '/',
+      },
+    },
     // Cache other static files
     '/*.{ico,png,jpg,jpeg,svg,gif,webp,woff,woff2,ttf,eot}': {
       headers: {

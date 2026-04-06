@@ -56,6 +56,7 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
     <Link
       to='/eventos/$slug'
       params={{slug: event.slug}}
+      preloadDelay={0}
       className='group flex h-28 sm:h-36 overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md'
     >
       {/* Image - Left side */}

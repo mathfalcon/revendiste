@@ -10,6 +10,7 @@ interface EventsFilter {
   dateFrom?: string;
   dateTo?: string;
   hasTickets?: boolean;
+  tzOffset?: number;
 }
 
 export const getEventsPaginatedQuery = (

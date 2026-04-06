@@ -137,6 +137,7 @@ export function OrderCard({order}: OrderCardProps) {
               <Link
                 to='/eventos/$slug'
                 params={{slug: order.event?.slug!}}
+                preloadDelay={0}
                 className='shrink-0'
               >
                 <img
@@ -152,6 +153,7 @@ export function OrderCard({order}: OrderCardProps) {
                   <Link
                     to='/eventos/$slug'
                     params={{slug: order.event?.slug!}}
+                    preloadDelay={0}
                     className='hover:text-primary transition-colors'
                   >
                     <h3 className='font-semibold text-base leading-tight line-clamp-2'>

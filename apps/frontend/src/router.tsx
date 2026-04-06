@@ -23,6 +23,8 @@ export function getRouter() {
       routeTree,
       context: {queryClient},
       defaultPreload: 'intent',
+      defaultPendingMs: 0,
+      defaultPendingMinMs: 200,
       defaultErrorComponent: DefaultCatchBoundary,
       defaultNotFoundComponent: () => <NotFound />,
       defaultPendingComponent: () => <FullScreenLoading />,

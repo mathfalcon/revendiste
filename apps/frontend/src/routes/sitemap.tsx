@@ -2,6 +2,7 @@ import {createFileRoute} from '@tanstack/react-router';
 import {generateSitemapXML} from '~/utils/sitemap';
 import {getBaseUrl} from '~/config/env';
 import {api} from '~/lib';
+import {regionToSlug} from '~/utils/location-slugs';
 
 export const Route = createFileRoute('/sitemap')({
   server: {
@@ -24,13 +25,53 @@ export const Route = createFileRoute('/sitemap')({
 
         // Add static pages
         urls.push(
-          {loc: `${baseUrl}/preguntas-frecuentes`, changefreq: 'monthly', priority: 0.6},
+          {
+            loc: `${baseUrl}/preguntas-frecuentes`,
+            changefreq: 'monthly',
+            priority: 0.6,
+          },
           {loc: `${baseUrl}/contacto`, changefreq: 'monthly', priority: 0.5},
           {loc: `${baseUrl}/garantia`, changefreq: 'monthly', priority: 0.5},
-          {loc: `${baseUrl}/terminos-y-condiciones`, changefreq: 'yearly', priority: 0.3},
-          {loc: `${baseUrl}/politica-de-privacidad`, changefreq: 'yearly', priority: 0.3},
+          {
+            loc: `${baseUrl}/terminos-y-condiciones`,
+            changefreq: 'yearly',
+            priority: 0.3,
+          },
+          {
+            loc: `${baseUrl}/politica-de-privacidad`,
+            changefreq: 'yearly',
+            priority: 0.3,
+          },
         );
 
+        // Location landing pages
+        try {
+          const regionsResponse = await api.events.getDistinctRegions();
+          const regionGroups = regionsResponse.data;
+          for (const group of regionGroups) {
+            for (const region of group.regions) {
+              urls.push({
+                loc: `${baseUrl}/eventos/en/${regionToSlug(region)}`,
+                changefreq: 'daily',
+                priority: 0.7,
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching regions for sitemap:', error);
+        }
+
+        // Date-based landing pages
+        urls.push(
+          {loc: `${baseUrl}/eventos/hoy`, changefreq: 'daily', priority: 0.7},
+          {
+            loc: `${baseUrl}/eventos/este-fin-de-semana`,
+            changefreq: 'daily',
+            priority: 0.7,
+          },
+        );
+
+        // Individual event pages
         try {
           let page = 1;
           let hasMore = true;
