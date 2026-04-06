@@ -171,9 +171,10 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeThumbnailUrlStringOrNullArray {
   data: {
     images: {
+      thumbnailUrl: string | null;
       imageType: EventImageType;
       url: string;
     }[];
@@ -202,7 +203,7 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
 }
 
 export type GetEventsPaginatedResponse =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeThumbnailUrlStringOrNullArray;
 
 export interface InferTypeofPaginationSchema {
   sortOrder?: "asc" | "desc";
@@ -894,11 +895,11 @@ export interface RequestPayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1089,11 +1090,11 @@ export interface GetUserPayoutDetailsResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1115,11 +1116,11 @@ export interface GetUserPayoutDetailsResponse {
     storagePath: string;
     /** @format double */
     sizeBytes: number;
-    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
     documentType: string;
+    payoutId: string;
     /** @format date-time */
     updatedAt: string;
     id: string;
@@ -1131,13 +1132,13 @@ export interface GetUserPayoutDetailsResponse {
   }[];
   events: {
     createdBy: string | null;
-    payoutId: string;
     userAgent: string | null;
     toStatus: PayoutStatus | null;
     ipAddress: string | null;
     fromStatus: PayoutStatus | null;
     eventType: PayoutEventType;
     eventData: string | number | boolean | JsonArray | JsonObject | null;
+    payoutId: string;
     id: string;
     /** @format date-time */
     createdAt: string;
@@ -1157,7 +1158,7 @@ export interface GetUserPayoutDetailsResponse {
   } | null;
 }
 
-export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullAmountStringFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
+export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateAmountStringCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
   data: {
     payoutMethod: {
       payoutType: PayoutType;
@@ -1190,11 +1191,11 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
     failureReason: string | null;
     /** @format date-time */
     failedAt: string | null;
-    amount: string;
     /** @format date-time */
     completedAt: string | null;
     sellerUserId: string;
     currency: EventTicketCurrency;
+    amount: string;
     /** @format date-time */
     updatedAt: string;
     status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1207,7 +1208,7 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
 }
 
 export type GetPayoutsResponse =
-  PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullAmountStringFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
+  PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateAmountStringCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
 
 export interface InferTypeofAdminPayoutsQuerySchema {
   status?: "cancelled" | "pending" | "completed" | "failed";
@@ -1241,11 +1242,11 @@ export interface GetPayoutDetailsResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1288,11 +1289,11 @@ export interface GetPayoutDetailsResponse {
     storagePath: string;
     /** @format double */
     sizeBytes: number;
-    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
     documentType: string;
+    payoutId: string;
     /** @format date-time */
     updatedAt: string;
     id: string;
@@ -1330,11 +1331,11 @@ export interface ProcessPayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1367,11 +1368,11 @@ export interface CompletePayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1401,11 +1402,11 @@ export interface FailPayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1434,11 +1435,11 @@ export interface UpdatePayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1472,11 +1473,11 @@ export interface CancelPayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1502,11 +1503,11 @@ export interface UploadPayoutDocumentResponse {
     storagePath: string;
     /** @format double */
     sizeBytes: number;
-    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
     documentType: string;
+    payoutId: string;
     /** @format date-time */
     updatedAt: string;
     id: string;

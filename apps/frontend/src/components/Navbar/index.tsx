@@ -68,7 +68,7 @@ export const Navbar = () => {
     <>
       <header
         className={cn(
-          'sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-4 md:px-6 **:no-underline transition-transform duration-300 ease-in-out',
+          'sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pt-[env(safe-area-inset-top)] px-4 md:px-6 **:no-underline transition-transform duration-300 ease-in-out',
           isVisible ? 'translate-y-0' : '-translate-y-full',
         )}
       >
