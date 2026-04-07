@@ -166,6 +166,8 @@ export const PAYOUT_ERROR_MESSAGES = {
     'No podés retirar ganancias en USD a una cuenta bancaria en UYU. Seleccioná un método de pago en USD o PayPal.',
   CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS:
     'No podés retirar ganancias en UYU a una cuenta bancaria en USD. Seleccioná un método de pago en UYU o PayPal.',
+  EARNINGS_WITH_OPEN_REPORTS:
+    'Algunas ganancias seleccionadas tienen reportes abiertos y no pueden ser retiradas. Esperá a que se resuelvan los reportes.',
 } as const;
 
 // Error messages for webhook signature verification (Clerk, dLocal, etc.)
@@ -406,6 +408,7 @@ export const VALIDATION_MESSAGES = {
   ACTION_INVALID: 'Acción inválida',
   ACTION_TYPE_INVALID: 'Tipo de acción inválido',
   ENTITY_ID_INVALID: 'ID de entidad inválido',
+  ID_REQUIRED: 'El identificador es requerido',
 } as const;
 
 // Button labels for notifications (for future i18n)

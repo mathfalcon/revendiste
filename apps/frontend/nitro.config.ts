@@ -31,9 +31,7 @@ export default defineNitroConfig({
     // This is the catch-all for all other routes (HTML pages)
     '/**': {
       headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
-        Pragma: 'no-cache',
-        Expires: '0',
+        'Cache-Control': 'no-cache, must-revalidate, max-age=0',
       },
     },
   },

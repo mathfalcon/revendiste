@@ -63,7 +63,7 @@ export function QrAvailabilityDialog({
           {viewMode === 'buyer' ? (
             <>
               <div className='flex items-start gap-3'>
-                <CheckCircle2 className='mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400' />
+                <CheckCircle2 className='mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400' />
                 <p className='text-sm text-muted-foreground'>
                   <span className='font-medium text-foreground'>
                     Puedes comprar ahora.
@@ -73,7 +73,7 @@ export function QrAvailabilityDialog({
               </div>
 
               <div className='flex items-start gap-3'>
-                <Bell className='mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400' />
+                <Bell className='mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400' />
                 <p className='text-sm text-muted-foreground'>
                   <span className='font-medium text-foreground'>
                     Te avisamos.
@@ -83,7 +83,7 @@ export function QrAvailabilityDialog({
               </div>
 
               <div className='flex items-start gap-3'>
-                <ShieldCheck className='mt-0.5 h-5 w-5 flex-shrink-0 text-primary' />
+                <ShieldCheck className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
                 <p className='text-sm text-muted-foreground'>
                   <span className='font-medium text-foreground'>
                     Dinero protegido.
@@ -95,7 +95,7 @@ export function QrAvailabilityDialog({
           ) : (
             <>
               <div className='flex items-start gap-3'>
-                <Upload className='mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400' />
+                <Upload className='mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400' />
                 <p className='text-sm text-muted-foreground'>
                   <span className='font-medium text-foreground'>
                     Subida obligatoria.
@@ -106,7 +106,7 @@ export function QrAvailabilityDialog({
               </div>
 
               <div className='flex items-start gap-3'>
-                <Bell className='mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400' />
+                <Bell className='mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400' />
                 <p className='text-sm text-muted-foreground'>
                   <span className='font-medium text-foreground'>
                     Te recordamos.
@@ -116,7 +116,7 @@ export function QrAvailabilityDialog({
               </div>
 
               <div className='flex items-start gap-3'>
-                <AlertCircle className='mt-0.5 h-5 w-5 flex-shrink-0 text-orange-500' />
+                <AlertCircle className='mt-0.5 h-5 w-5 shrink-0 text-orange-500' />
                 <p className='text-sm text-muted-foreground'>
                   <span className='font-medium text-foreground'>
                     Importante.

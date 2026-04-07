@@ -34,6 +34,7 @@ import { Route as CuentaEntradasRouteImport } from './routes/cuenta/entradas'
 import { Route as CuentaConfiguracionRouteImport } from './routes/cuenta/configuracion'
 import { Route as AdminVerificacionesRouteImport } from './routes/admin/verificaciones'
 import { Route as AdminRetirosRouteImport } from './routes/admin/retiros'
+import { Route as AdminFinanzasRouteImport } from './routes/admin/finanzas'
 import { Route as AdminEventosRouteImport } from './routes/admin/eventos'
 import { Route as CuentaReportesIndexRouteImport } from './routes/cuenta/reportes/index'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
@@ -169,6 +170,11 @@ const AdminRetirosRoute = AdminRetirosRouteImport.update({
   path: '/retiros',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminFinanzasRoute = AdminFinanzasRouteImport.update({
+  id: '/finanzas',
+  path: '/finanzas',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminEventosRoute = AdminEventosRouteImport.update({
   id: '/eventos',
   path: '/eventos',
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/eventos': typeof AdminEventosRoute
+  '/admin/finanzas': typeof AdminFinanzasRoute
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/configuracion': typeof CuentaConfiguracionRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/eventos': typeof AdminEventosRoute
+  '/admin/finanzas': typeof AdminFinanzasRoute
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/configuracion': typeof CuentaConfiguracionRoute
@@ -291,6 +299,7 @@ export interface FileRoutesById {
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/eventos': typeof AdminEventosRoute
+  '/admin/finanzas': typeof AdminFinanzasRoute
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/configuracion': typeof CuentaConfiguracionRoute
@@ -328,6 +337,7 @@ export interface FileRouteTypes {
     | '/sitemap'
     | '/terminos-y-condiciones'
     | '/admin/eventos'
+    | '/admin/finanzas'
     | '/admin/retiros'
     | '/admin/verificaciones'
     | '/cuenta/configuracion'
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/sitemap'
     | '/terminos-y-condiciones'
     | '/admin/eventos'
+    | '/admin/finanzas'
     | '/admin/retiros'
     | '/admin/verificaciones'
     | '/cuenta/configuracion'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/sitemap'
     | '/terminos-y-condiciones'
     | '/admin/eventos'
+    | '/admin/finanzas'
     | '/admin/retiros'
     | '/admin/verificaciones'
     | '/cuenta/configuracion'
@@ -620,6 +632,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRetirosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/finanzas': {
+      id: '/admin/finanzas'
+      path: '/finanzas'
+      fullPath: '/admin/finanzas'
+      preLoaderRoute: typeof AdminFinanzasRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/eventos': {
       id: '/admin/eventos'
       path: '/eventos'
@@ -681,6 +700,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminEventosRoute: typeof AdminEventosRoute
+  AdminFinanzasRoute: typeof AdminFinanzasRoute
   AdminRetirosRoute: typeof AdminRetirosRoute
   AdminVerificacionesRoute: typeof AdminVerificacionesRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -690,6 +710,7 @@ interface AdminRouteRouteChildren {
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminEventosRoute: AdminEventosRoute,
+  AdminFinanzasRoute: AdminFinanzasRoute,
   AdminRetirosRoute: AdminRetirosRoute,
   AdminVerificacionesRoute: AdminVerificacionesRoute,
   AdminIndexRoute: AdminIndexRoute,

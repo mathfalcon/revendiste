@@ -32,6 +32,7 @@ import {
   TicketDocumentsRepository,
   NotificationsRepository,
   UsersRepository,
+  SellerEarningsRepository,
 } from '~/repositories';
 import {TicketReportAttachmentsService} from '~/services/ticket-report-attachments';
 import {getStorageProvider} from '~/services/storage/StorageFactory';
@@ -88,6 +89,7 @@ export class AdminTicketReportsController {
     notificationService,
     new DLocalService(),
     getStorageProvider(),
+    new SellerEarningsRepository(db),
   );
 
   private attachmentService = new TicketReportAttachmentsService(

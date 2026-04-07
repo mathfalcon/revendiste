@@ -1,6 +1,6 @@
 import {createFileRoute} from '@tanstack/react-router';
 import {z} from 'zod';
-import {HomePage} from '~/features';
+import {HomePage} from '~/features/home';
 import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {getEventsInfiniteQuery, getTrendingEventsQuery} from '~/lib';

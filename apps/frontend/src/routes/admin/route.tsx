@@ -6,6 +6,7 @@ import {
   Menu,
   Calendar,
   Flag,
+  DollarSign,
 } from 'lucide-react';
 import {Link, useLocation} from '@tanstack/react-router';
 import {useState, useEffect} from 'react';
@@ -55,7 +56,8 @@ export const Route = createFileRoute('/admin')({
 const navigation = [
   {name: 'Eventos', href: '/admin/eventos', icon: Calendar},
   {name: 'Verificaciones', href: '/admin/verificaciones', icon: UserCheck},
-  {name: 'Pagos', href: '/admin/retiros', icon: Wallet},
+  {name: 'Retiros', href: '/admin/retiros', icon: Wallet},
+  {name: 'Finanzas', href: '/admin/finanzas', icon: DollarSign},
   {name: 'Reportes', href: '/admin/reportes', icon: Flag},
 ];
 

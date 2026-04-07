@@ -1,5 +1,5 @@
 import {createFileRoute} from '@tanstack/react-router';
-import {PublicationsView} from '~/features';
+import {PublicationsView} from '~/features/user-account';
 import {z} from 'zod';
 import {seo} from '~/utils/seo';
 

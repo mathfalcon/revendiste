@@ -23,7 +23,7 @@ type TrendingEvent = {
   slug: string;
   name: string;
   eventStartDate: string;
-  eventImages: {url: string; imageType: string}[];
+  eventImages: {url: string; imageType: string; thumbnailUrl?: string}[];
   venue: {name: string; city: string} | null;
   totalViews: number;
   lowestAvailableTicketPrice: number | null;
@@ -60,11 +60,13 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
       className='group flex h-28 sm:h-36 overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md'
     >
       {/* Image - Left side */}
-      <div className='relative w-28 sm:w-36 h-full overflow-hidden flex-shrink-0'>
+      <div className='relative w-28 sm:w-36 h-full overflow-hidden shrink-0'>
         {flyerImage ? (
           <img
-            src={flyerImage.url}
+            src={flyerImage.thumbnailUrl || flyerImage.url}
             alt={event.name}
+            width={144}
+            height={144}
             className='h-full w-full object-cover transition-transform group-hover:scale-105'
             loading='lazy'
           />
@@ -111,7 +113,10 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
           )}
           <Button
             variant={hasTickets ? 'default' : 'outline'}
-            className={cn('cursor-pointer', hasTickets ? 'bg-primary-gradient' : '')}
+            className={cn(
+              'cursor-pointer',
+              hasTickets ? 'bg-primary-gradient' : '',
+            )}
             size='sm'
             onClick={handleButtonClick}
           >
@@ -125,7 +130,7 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
 
 const TrendingEventSkeleton = () => (
   <div className='flex h-28 sm:h-36 overflow-hidden rounded-lg border bg-card'>
-    <Skeleton className='w-28 sm:w-36 h-full flex-shrink-0' />
+    <Skeleton className='w-28 sm:w-36 h-full shrink-0' />
     <div className='flex flex-1 flex-col justify-between p-3'>
       <div className='flex flex-col gap-2'>
         <Skeleton className='h-4 w-3/4' />
@@ -141,9 +146,7 @@ const TrendingEventSkeleton = () => (
 );
 
 export const TrendingEvents = () => {
-  const {data: events, isLoading} = useQuery(
-    getTrendingEventsQuery(7, 6),
-  );
+  const {data: events, isLoading} = useQuery(getTrendingEventsQuery(7, 6));
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);

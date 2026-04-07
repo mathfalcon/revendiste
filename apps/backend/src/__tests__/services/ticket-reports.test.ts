@@ -10,6 +10,7 @@ import type {OrderTicketReservationsRepository} from '~/repositories';
 import type {OrdersRepository} from '~/repositories';
 import type {PaymentsRepository} from '~/repositories';
 import type {TicketDocumentsRepository} from '~/repositories/ticket-documents';
+import type {SellerEarningsRepository} from '~/repositories/seller-earnings';
 import type {NotificationService} from '~/services/notifications';
 import type {DLocalService} from '~/services/dlocal';
 import type {IStorageProvider} from '~/services/storage/IStorageProvider';
@@ -39,6 +40,7 @@ describe('TicketReportsService', () => {
   let mockOrdersRepo: jest.Mocked<OrdersRepository>;
   let mockPaymentsRepo: jest.Mocked<PaymentsRepository>;
   let mockTicketDocumentsRepo: jest.Mocked<TicketDocumentsRepository>;
+  let mockSellerEarningsRepo: jest.Mocked<SellerEarningsRepository>;
   let mockNotificationService: jest.Mocked<NotificationService>;
   let mockDLocalService: jest.Mocked<DLocalService>;
   let mockStorageProvider: jest.Mocked<IStorageProvider>;
@@ -137,6 +139,13 @@ describe('TicketReportsService', () => {
       delete: jest.fn(),
     } as unknown as jest.Mocked<IStorageProvider>;
 
+    mockSellerEarningsRepo = {
+      retainEarningsByListingTicketId: jest.fn(),
+      withTransaction: jest.fn(),
+      executeTransaction: jest.fn(),
+      getDb: jest.fn(),
+    } as unknown as jest.Mocked<SellerEarningsRepository>;
+
     // executeTransaction delegates to callback with a stub Kysely instance
     mockReportsRepo.executeTransaction.mockImplementation(cb =>
       cb({} as unknown as Kysely<DB>),
@@ -145,6 +154,9 @@ describe('TicketReportsService', () => {
     mockActionsRepo.withTransaction.mockReturnValue(mockActionsRepo);
     mockRefundsRepo.withTransaction.mockReturnValue(mockRefundsRepo);
     mockReservationsRepo.withTransaction.mockReturnValue(mockReservationsRepo);
+    mockSellerEarningsRepo.withTransaction.mockReturnValue(
+      mockSellerEarningsRepo,
+    );
 
     service = new TicketReportsService(
       mockReportsRepo,
@@ -158,6 +170,7 @@ describe('TicketReportsService', () => {
       mockNotificationService,
       mockDLocalService,
       mockStorageProvider,
+      mockSellerEarningsRepo,
     );
   });
 

@@ -131,6 +131,11 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'eventTicketWaves.id',
       )
       .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
+      .innerJoin(
+        'orderTicketReservations',
+        'orderTicketReservations.listingTicketId',
+        'sellerEarnings.listingTicketId',
+      )
       .select(eb => [
         'listings.id as listingId',
         'listings.publisherUserId',
@@ -144,6 +149,29 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .where('sellerEarnings.status', '=', 'available')
       .where('sellerEarnings.payoutId', 'is', null)
       .where('sellerEarnings.deletedAt', 'is', null)
+      // Exclude earnings with open ticket reports
+      .where(eb =>
+        eb.not(
+          eb.or([
+            eb.exists(
+              eb
+                .selectFrom('ticketReports')
+                .select('ticketReports.id')
+                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.orderId')
+                .where('ticketReports.entityType', '=', 'order')
+                .where('ticketReports.status', '!=', 'closed'),
+            ),
+            eb.exists(
+              eb
+                .selectFrom('ticketReports')
+                .select('ticketReports.id')
+                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.id')
+                .where('ticketReports.entityType', '=', 'order_ticket_reservation')
+                .where('ticketReports.status', '!=', 'closed'),
+            ),
+          ]),
+        ),
+      )
       .groupBy([
         'listings.id',
         'listings.publisherUserId',
@@ -169,6 +197,11 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'eventTicketWaves.id',
       )
       .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
+      .innerJoin(
+        'orderTicketReservations',
+        'orderTicketReservations.listingTicketId',
+        'sellerEarnings.listingTicketId',
+      )
       .select([
         'sellerEarnings.id',
         'sellerEarnings.listingTicketId',
@@ -184,6 +217,29 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .where('sellerEarnings.status', '=', 'available')
       .where('sellerEarnings.payoutId', 'is', null)
       .where('sellerEarnings.deletedAt', 'is', null)
+      // Exclude earnings with open ticket reports
+      .where(eb =>
+        eb.not(
+          eb.or([
+            eb.exists(
+              eb
+                .selectFrom('ticketReports')
+                .select('ticketReports.id')
+                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.orderId')
+                .where('ticketReports.entityType', '=', 'order')
+                .where('ticketReports.status', '!=', 'closed'),
+            ),
+            eb.exists(
+              eb
+                .selectFrom('ticketReports')
+                .select('ticketReports.id')
+                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.id')
+                .where('ticketReports.entityType', '=', 'order_ticket_reservation')
+                .where('ticketReports.status', '!=', 'closed'),
+            ),
+          ]),
+        ),
+      )
       .orderBy('sellerEarnings.createdAt', 'desc')
       .execute();
   }
@@ -258,6 +314,11 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
   }> {
     let query = this.db
       .selectFrom('sellerEarnings')
+      .innerJoin(
+        'orderTicketReservations',
+        'orderTicketReservations.listingTicketId',
+        'sellerEarnings.listingTicketId',
+      )
       .select([
         'sellerEarnings.id',
         'sellerEarnings.listingTicketId',
@@ -267,7 +328,30 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .where('sellerEarnings.sellerUserId', '=', sellerUserId)
       .where('sellerEarnings.status', '=', 'available')
       .where('sellerEarnings.payoutId', 'is', null)
-      .where('sellerEarnings.deletedAt', 'is', null);
+      .where('sellerEarnings.deletedAt', 'is', null)
+      // Exclude earnings with open ticket reports
+      .where(eb =>
+        eb.not(
+          eb.or([
+            eb.exists(
+              eb
+                .selectFrom('ticketReports')
+                .select('ticketReports.id')
+                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.orderId')
+                .where('ticketReports.entityType', '=', 'order')
+                .where('ticketReports.status', '!=', 'closed'),
+            ),
+            eb.exists(
+              eb
+                .selectFrom('ticketReports')
+                .select('ticketReports.id')
+                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.id')
+                .where('ticketReports.entityType', '=', 'order_ticket_reservation')
+                .where('ticketReports.status', '!=', 'closed'),
+            ),
+          ]),
+        ),
+      );
 
     if (listingTicketIds && listingTicketIds.length > 0) {
       query = query.where(
@@ -646,6 +730,46 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       })
       .where('id', '=', earningsId)
       .execute();
+  }
+
+  /**
+   * Retain earnings by listing ticket ID due to dispute/refund
+   * Used when a ticket report refund is issued
+   */
+  async retainEarningsByListingTicketId(
+    listingTicketId: string,
+    retainedReason: SellerEarningsRetainedReason,
+  ) {
+    return await this.db
+      .updateTable('sellerEarnings')
+      .set({
+        status: 'retained' as const,
+        retainedReason,
+        updatedAt: new Date(),
+      })
+      .where('listingTicketId', '=', listingTicketId)
+      .where(eb =>
+        eb.or([
+          eb('status', '=', 'pending'),
+          eb('status', '=', 'available'),
+          eb('status', '=', 'payout_requested'),
+        ]),
+      )
+      .where('deletedAt', 'is', null)
+      .execute();
+  }
+
+  /**
+   * Get earnings by listing ticket ID
+   * Used to retrieve earnings for a specific ticket (e.g., for refunds)
+   */
+  async getEarningByListingTicketId(listingTicketId: string) {
+    return await this.db
+      .selectFrom('sellerEarnings')
+      .selectAll()
+      .where('listingTicketId', '=', listingTicketId)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
   }
 
   /**

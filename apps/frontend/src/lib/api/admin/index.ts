@@ -149,6 +149,15 @@ export const deletePayoutDocumentMutation = () => {
   };
 };
 
+export const triggerHoldCheckMutation = () => {
+  return {
+    mutationFn: async () => {
+      const response = await api.admin.triggerHoldCheck();
+      return response.data;
+    },
+  };
+};
+
 // ============================================================================
 // Identity Verification Admin
 // ============================================================================
@@ -404,6 +413,79 @@ export const deleteEventImageMutation = () => {
       imageId: string;
     }) => {
       const response = await api.admin.deleteEventImage(eventId, imageId);
+      return response.data;
+    },
+  };
+};
+
+// ============================================================================
+// Settlements Admin
+// ============================================================================
+
+export interface AdminSettlementsQueryParams extends PaginationQuery {
+  status?: 'pending' | 'completed' | 'failed';
+  paymentProvider?: 'dlocal' | 'mercadopago' | 'paypal' | 'stripe';
+}
+
+export const adminSettlementsQueryOptions = (
+  params: AdminSettlementsQueryParams,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'settlements', params],
+    queryFn: async () => {
+      const response = await api.admin.listSettlements({
+        page: params.page,
+        limit: params.limit,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+        status: params.status,
+        paymentProvider: params.paymentProvider,
+      });
+      return response.data;
+    },
+  });
+};
+
+export const adminSettlementDetailsQueryOptions = (settlementId: string) => {
+  return queryOptions({
+    queryKey: ['admin', 'settlements', settlementId],
+    queryFn: async () => {
+      const response = await api.admin.getSettlementDetails(settlementId);
+      return response.data;
+    },
+  });
+};
+
+export const createSettlementMutation = () => {
+  return {
+    mutationFn: async (
+      data: Parameters<typeof api.admin.createSettlement>[0],
+    ) => {
+      const response = await api.admin.createSettlement(data);
+      return response.data;
+    },
+  };
+};
+
+export const completeSettlementMutation = () => {
+  return {
+    mutationFn: async ({settlementId}: {settlementId: string}) => {
+      const response = await api.admin.completeSettlement(settlementId);
+      return response.data;
+    },
+  };
+};
+
+export const failSettlementMutation = () => {
+  return {
+    mutationFn: async ({
+      settlementId,
+      reason,
+    }: {
+      settlementId: string;
+      reason?: string;
+    }) => {
+      const response = await api.admin.failSettlement(settlementId, {reason});
       return response.data;
     },
   };

@@ -1,31 +1,35 @@
 /**
- * Quick test script to preview what the OG watermark looks like.
- * Usage: npx tsx scripts/test-og-watermark.ts [image-url-or-path]
+ * Debug script: runs the EXACT same OG image pipeline as the scraper,
+ * but saves intermediate + final images locally for inspection.
  *
- * If no argument is provided, downloads a photo-like sample from the CDN (same idea as
- * `CDN_ASSETS.HOMEPAGE_BG_1` in the frontend). Do **not** use `default-og-image.jpg` here:
- * that asset is already a finished OG card (uniform dark), so running this pipeline on it
- * stacks a second frosted bar and reads as a harsh black block behind the logo.
+ * Usage:
+ *   npx tsx scripts/debug-og-pipeline.ts <hero-image-url>
  *
- * Override the default URL: `OG_WATERMARK_TEST_URL=https://... npx tsx scripts/test-og-watermark.ts`
+ * Example:
+ *   npx tsx scripts/debug-og-pipeline.ts https://dev-cdn.revendiste.com/public/assets/events/44b99e4b-…/hero-xxx.webp
  *
- * Output: ./test-og-output.jpg
+ * It downloads the image the same way the service does, then calls
+ * createOgImage with that buffer, and saves:
+ *   - debug-og-source.jpg   (the raw downloaded buffer, for dimension check)
+ *   - debug-og-pipeline.jpg (the OG image produced by the service code)
  */
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
+
+// ──────────────────────────────────────────────────────────────────────
+// Copy-paste constants + helpers from image-service.ts so we run the
+// EXACT same code path.  If these ever drift, the bug is in the drift.
+// ──────────────────────────────────────────────────────────────────────
 
 const OG_IMAGE_WIDTH = 1200;
 const OG_IMAGE_HEIGHT = 630;
 const OG_WATERMARK_WIDTH = 280;
 const OG_BAR_HEIGHT = 160;
 const OG_BAR_BLUR = 20;
-const OG_BAR_BLUR_CONTEXT_TOP = Math.ceil(OG_BAR_BLUR * 2.5);
 const OG_BLUR_SIGMA = 30;
 
-// Original ticket color (dark magenta) — visible on light backgrounds
 const TICKET_COLOR_DARK = '#a6165c';
-// Bright pink — visible on dark backgrounds
 const TICKET_COLOR_LIGHT = '#f2659c';
 
 const OG_WATERMARK_SVG = `<svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376.55 61.8">
@@ -34,67 +38,25 @@ const OG_WATERMARK_SVG = `<svg data-name="Layer 1" xmlns="http://www.w3.org/2000
   <path d="M14.28 34.95H12.5l-1.72 12.5H.72l5.5-39.33h15.72c8.11 0 13.89 4.33 12.78 13.56-1 7.28-4.11 9.72-9.5 12.28l9.44 13.5H22.27l-8-12.5Zm5.28-8.56c3.06 0 4.83-2.28 5.11-4.56.28-2.39-.89-4.44-3.83-4.44h-5.83l-1.28 9zm34.45-3.05h15.95l-1.22 8.83H52.79l-.83 5.89h17.33l-1.28 9.39H40.62l5.5-39.33h27.39l-1.33 9.39H54.85l-.83 5.83Zm88.78.23h15.95l-1.22 8.83h-15.94l-.83 5.89h17.33l-1.28 9.39h-27.39l5.5-39.33h27.39l-1.33 9.39h-17.33l-.83 5.83Zm28.96-15.22h9.44l7.17 16.78 2.22 7.89.22-.06-.11-6.78 2.5-17.83h9.89l-5.5 39.33h-10.06l-6.72-15.5-2.33-7.89-.22.06.11 7.61-2.17 15.72h-9.94zm56.45 0c7.89 0 14.72 4 13.44 13.17l-1.89 13.22c-1.28 9.06-9.17 12.95-17.06 12.95h-14.72l5.5-39.33h14.72Zm-3.89 30c2.72 0 5.17-1.5 5.45-3.61l1.89-13.22c.28-2.17-1.67-3.89-4.39-3.89h-5.06l-2.95 20.72zm33.06 9.33h-9.94l5.5-39.33h9.94zm16.22-12.44c1.72 2.5 5 3.78 7.94 3.78 2.67 0 5-.94 5.39-3 .44-2.44-3-3.5-6.17-3.94-6.17-1-11.72-5.95-10.33-13.39 1.5-8.06 8.61-10.89 15.83-10.89 4.78 0 9.22 1.33 12.61 6.28l-7.22 5c-1.67-1.89-4.28-2.78-6.56-2.83-2.5-.06-4.61.89-4.83 2.89-.28 2.28 1.72 3.28 4.72 3.94 6.83 1.28 13.5 3.89 11.67 13.67-1.44 7.67-8.11 11.5-16.61 11.5-4.72 0-10.56-2.39-13.56-7.11l7.11-5.89Zm52.4-17.84-4.17 30.28h-10.06l4.17-30.28h-10.61l1.33-9.11h31.28l-1.33 9.11zm27.84 6.17h15.95l-1.22 8.83h-15.94l-.83 5.89h17.33l-1.28 9.39h-27.39l5.5-39.33h27.39l-1.33 9.39h-17.33l-.83 5.83Z" fill="#ffffff"/>
 </svg>`;
 
-function buildWatermarkSvg(isDarkBackground: boolean): Buffer {
+function getWatermarkSvg(isDarkBackground: boolean): Buffer {
   if (isDarkBackground) {
-    // Dark background: white text, bright pink ticket so it pops against the dark frosted bar
     return Buffer.from(
       OG_WATERMARK_SVG.replace(TICKET_COLOR_DARK, TICKET_COLOR_LIGHT),
     );
   }
-  // Light background: black text, original dark magenta ticket
-  return Buffer.from(
-    OG_WATERMARK_SVG.replace(/#ffffff/gi, '#000000'),
-    // ticket stays as TICKET_COLOR_DARK — readable on light backgrounds
-  );
+  return Buffer.from(OG_WATERMARK_SVG.replace(/#ffffff/gi, '#000000'));
 }
 
-async function main() {
-  const input = process.argv[2];
-  let sourceBuffer: Buffer;
-
-  if (input && !input.startsWith('http')) {
-    sourceBuffer = fs.readFileSync(input);
-    console.log(`Loaded local file: ${input}`);
-  } else {
-    const url =
-      input ||
-      process.env.OG_WATERMARK_TEST_URL ||
-      // Photo-like wide hero; matches frontend `HOMEPAGE_BG_1` — not the DEFAULT_OG_IMAGE fallback.
-      'https://cdn.revendiste.com/assets/homepage-bg-3.webp';
-    console.log(`Downloading: ${url}`);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-    sourceBuffer = Buffer.from(await res.arrayBuffer());
-  }
-
-  const sourceMeta = await sharp(sourceBuffer).metadata();
-  console.log(
-    `Source image: ${sourceMeta.width}x${sourceMeta.height} (${sourceMeta.format})`,
-  );
-
-  // Use channel means — more representative than .dominant (which often picks light borders)
-  const stats = await sharp(sourceBuffer)
-    .resize(100, 100, {fit: 'inside'})
-    .stats();
-
-  const meanR = Math.round(stats.channels[0]!.mean);
-  const meanG = Math.round(stats.channels[1]!.mean);
-  const meanB = Math.round(stats.channels[2]!.mean);
-  const imageLuminance = 0.299 * meanR + 0.587 * meanG + 0.114 * meanB;
-
-  const isDarkBackground = imageLuminance <= 140;
-  console.log(
-    `Image mean: rgb(${meanR}, ${meanG}, ${meanB}) | luminance: ${imageLuminance.toFixed(0)} → ${isDarkBackground ? 'DARK (white logo, bright pink ticket)' : 'LIGHT (black logo, dark pink ticket)'}`,
-  );
-
-  // Step 1: Blurred background
+// ──────────────────────────────────────────────────────────────────────
+// createOgImage — EXACT copy from image-service.ts
+// ──────────────────────────────────────────────────────────────────────
+async function createOgImage(sourceBuffer: Buffer): Promise<Buffer> {
   const blurredBg = await sharp(sourceBuffer)
     .resize(OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT, {fit: 'cover', position: 'centre'})
     .blur(OG_BLUR_SIGMA)
     .modulate({brightness: 0.6})
     .toBuffer();
 
-  // Step 2: Fitted image (letterboxed, no crop)
   const fittedImage = await sharp(sourceBuffer)
     .resize(OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT, {
       fit: 'inside',
@@ -107,28 +69,30 @@ async function main() {
   const fittedHeight = fittedMeta.height || OG_IMAGE_HEIGHT;
   const leftOffset = Math.round((OG_IMAGE_WIDTH - fittedWidth) / 2);
   const topOffset = Math.round((OG_IMAGE_HEIGHT - fittedHeight) / 2);
-  console.log(
-    `Fitted to: ${fittedWidth}x${fittedHeight}, offset: (${leftOffset}, ${topOffset})`,
-  );
 
-  // Step 3: Compose blurred bg + fitted image, then extract + frost the bottom bar
+  const stats = await sharp(sourceBuffer)
+    .resize(100, 100, {fit: 'inside'})
+    .stats();
+  const meanR = Math.round(stats.channels[0]!.mean);
+  const meanG = Math.round(stats.channels[1]!.mean);
+  const meanB = Math.round(stats.channels[2]!.mean);
+  const imageLuminance = 0.299 * meanR + 0.587 * meanG + 0.114 * meanB;
+  const isDarkBackground = imageLuminance <= 140;
+
+  console.log(`  Mean color: rgb(${meanR}, ${meanG}, ${meanB}) | luminance: ${imageLuminance.toFixed(0)} → ${isDarkBackground ? 'DARK' : 'LIGHT'}`);
+  console.log(`  Fitted: ${fittedWidth}x${fittedHeight} | offset: (${leftOffset}, ${topOffset})`);
+
   const composedBase = await sharp(blurredBg)
     .composite([{input: fittedImage, left: leftOffset, top: topOffset}])
     .toBuffer();
 
   const barTop = OG_IMAGE_HEIGHT - OG_BAR_HEIGHT;
-  const blurContextTop = Math.min(barTop, OG_BAR_BLUR_CONTEXT_TOP);
+  const blurContextTop = Math.min(barTop, Math.ceil(OG_BAR_BLUR * 2.5));
   const extractY = barTop - blurContextTop;
   const extractHeight = OG_BAR_HEIGHT + blurContextTop;
 
-  // Include rows above the bar so blur samples real pixels (avoids dark seam at top of strip).
   const frostedExpanded = await sharp(composedBase)
-    .extract({
-      left: 0,
-      top: extractY,
-      width: OG_IMAGE_WIDTH,
-      height: extractHeight,
-    })
+    .extract({left: 0, top: extractY, width: OG_IMAGE_WIDTH, height: extractHeight})
     .blur(OG_BAR_BLUR)
     .modulate({brightness: 0.5, saturation: 0.7})
     .toBuffer();
@@ -142,7 +106,6 @@ async function main() {
     })
     .toBuffer();
 
-  // Feather mask: transparent at top → opaque at bottom
   const featherMask = Buffer.from(
     `<svg width="${OG_IMAGE_WIDTH}" height="${OG_BAR_HEIGHT}">
       <defs>
@@ -160,8 +123,7 @@ async function main() {
     .composite([{input: featherMask, blend: 'dest-in'}])
     .toBuffer();
 
-  // Step 4: Build watermark SVG with adaptive colors
-  const watermarkSvg = buildWatermarkSvg(isDarkBackground);
+  const watermarkSvg = getWatermarkSvg(isDarkBackground);
   const resizedWatermark = await sharp(watermarkSvg)
     .resize(OG_WATERMARK_WIDTH, OG_BAR_HEIGHT - 16, {fit: 'inside'})
     .toBuffer();
@@ -171,23 +133,72 @@ async function main() {
   const wmHeight = wmMeta.height || OG_BAR_HEIGHT - 16;
   const wmLeft = Math.round((OG_IMAGE_WIDTH - wmWidth) / 2);
   const wmTop = OG_IMAGE_HEIGHT - wmHeight - 12;
-  console.log(`Watermark: ${wmWidth}x${wmHeight} at (${wmLeft}, ${wmTop})`);
 
-  // Step 5: Compose everything
-  const result = await sharp(composedBase)
+  return await sharp(composedBase)
     .composite([
       {input: frostedBar, left: 0, top: barTop},
       {input: resizedWatermark, left: wmLeft, top: wmTop},
     ])
     .jpeg({quality: 85})
     .toBuffer();
+}
 
-  const outputPath = path.resolve(__dirname, '../test-og-output.jpg');
-  fs.writeFileSync(outputPath, result);
-  console.log(`\nDone! Saved to: ${outputPath}`);
-  console.log(
-    `Size: ${(result.length / 1024).toFixed(1)} KB | ${OG_IMAGE_WIDTH}x${OG_IMAGE_HEIGHT}`,
-  );
+// ──────────────────────────────────────────────────────────────────────
+// Simulate the pipeline: download → compress to WebP → createOgImage
+// ──────────────────────────────────────────────────────────────────────
+async function compressImage(buffer: Buffer): Promise<Buffer> {
+  return await sharp(buffer)
+    .webp({quality: 75, effort: 4})
+    .toBuffer();
+}
+
+async function main() {
+  const url = process.argv[2];
+  if (!url) {
+    console.error('Usage: npx tsx scripts/debug-og-pipeline.ts <hero-image-url>');
+    process.exit(1);
+  }
+
+  const outDir = path.resolve(__dirname, '..');
+
+  // Step A — Download (same as downloadImage in the service)
+  console.log(`Downloading: ${url}`);
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const originalBuffer = Buffer.from(await res.arrayBuffer());
+
+  const origMeta = await sharp(originalBuffer).metadata();
+  console.log(`  Original: ${origMeta.width}x${origMeta.height} (${origMeta.format})`);
+
+  // Step B — Compress to WebP (same as compressImage in the service)
+  const compressedBuffer = await compressImage(originalBuffer);
+  const compMeta = await sharp(compressedBuffer).metadata();
+  console.log(`  Compressed WebP: ${compMeta.width}x${compMeta.height} (${compMeta.format}, ${(compressedBuffer.length / 1024).toFixed(0)} KB)`);
+
+  // Step C — OG image from originalBuffer (this is what the FRESH path does)
+  console.log('\n--- OG from originalBuffer (fresh scrape path) ---');
+  const ogFromOriginal = await createOgImage(originalBuffer);
+  const p1 = path.join(outDir, 'debug-og-from-original.jpg');
+  fs.writeFileSync(p1, ogFromOriginal);
+  console.log(`  Saved: ${p1} (${(ogFromOriginal.length / 1024).toFixed(0)} KB)`);
+
+  // Step D — OG image from compressedBuffer (simulate ensureOgImage downloading the stored WebP)
+  console.log('\n--- OG from compressedBuffer (ensureOgImage path) ---');
+  const ogFromCompressed = await createOgImage(compressedBuffer);
+  const p2 = path.join(outDir, 'debug-og-from-compressed.jpg');
+  fs.writeFileSync(p2, ogFromCompressed);
+  console.log(`  Saved: ${p2} (${(ogFromCompressed.length / 1024).toFixed(0)} KB)`);
+
+  // Compare
+  console.log('\n--- Compare ---');
+  console.log(`  Original buffer OG : ${p1}`);
+  console.log(`  Compressed buffer OG: ${p2}`);
+  console.log(`  If these look different, the issue is the input buffer format.`);
 }
 
 main().catch(console.error);

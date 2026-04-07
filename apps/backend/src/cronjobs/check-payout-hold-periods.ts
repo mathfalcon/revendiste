@@ -59,6 +59,7 @@ export async function runCheckPayoutHoldPeriods() {
     notificationService,
     new DLocalService(),
     getStorageProvider(),
+    sellerEarningsRepository,
   );
 
   const sellerEarningsService = new SellerEarningsService(

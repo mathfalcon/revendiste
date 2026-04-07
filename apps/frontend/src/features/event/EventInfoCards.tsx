@@ -22,14 +22,19 @@ export function EventInfoCards({qrAvailabilityTiming}: EventInfoCardsProps) {
 
   return (
     <>
-      <div className={cn('grid grid-cols-1 gap-2', qrAvailabilityTiming && 'sm:grid-cols-2')}>
+      <div
+        className={cn(
+          'grid grid-cols-1 gap-2',
+          qrAvailabilityTiming && 'sm:grid-cols-2',
+        )}
+      >
         {/* QR Availability Card */}
         {qrAvailabilityTiming && (
           <button
             onClick={() => setQrDialogOpen(true)}
             className='group flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors text-left'
           >
-            <div className='flex items-center justify-center w-8 h-8 rounded-full bg-background border border-border flex-shrink-0'>
+            <div className='flex items-center justify-center w-8 h-8 rounded-full bg-background border border-border shrink-0'>
               <Clock className='w-4 h-4 text-muted-foreground' />
             </div>
             <div className='flex-1 min-w-0'>
@@ -37,7 +42,7 @@ export function EventInfoCards({qrAvailabilityTiming}: EventInfoCardsProps) {
                 QR disponible {QR_TIMING_LABELS[qrAvailabilityTiming]} antes
               </p>
             </div>
-            <ChevronRight className='w-4 h-4 text-muted-foreground/50 group-hover:translate-x-0.5 transition-transform flex-shrink-0' />
+            <ChevronRight className='w-4 h-4 text-muted-foreground/50 group-hover:translate-x-0.5 transition-transform shrink-0' />
           </button>
         )}
 
@@ -48,7 +53,7 @@ export function EventInfoCards({qrAvailabilityTiming}: EventInfoCardsProps) {
           rel='noopener noreferrer'
           className='group flex items-center gap-3 px-3 py-2.5 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors'
         >
-          <div className='flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0'>
+          <div className='flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 shrink-0'>
             <ShieldCheck className='w-4 h-4 text-primary' />
           </div>
           <div className='flex-1 min-w-0'>
@@ -56,7 +61,7 @@ export function EventInfoCards({qrAvailabilityTiming}: EventInfoCardsProps) {
               Compra protegida por Garantía Revendiste
             </p>
           </div>
-          <ChevronRight className='w-4 h-4 text-primary/50 group-hover:translate-x-0.5 transition-transform flex-shrink-0' />
+          <ChevronRight className='w-4 h-4 text-primary/50 group-hover:translate-x-0.5 transition-transform shrink-0' />
         </a>
       </div>
 

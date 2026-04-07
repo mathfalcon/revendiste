@@ -21,6 +21,7 @@ import type {OrderTicketReservationsRepository} from '~/repositories/order-ticke
 import type {OrdersRepository} from '~/repositories/orders';
 import type {PaymentsRepository} from '~/repositories/payments';
 import type {TicketDocumentsRepository} from '~/repositories/ticket-documents';
+import type {SellerEarningsRepository} from '~/repositories/seller-earnings';
 import type {NotificationService} from '~/services/notifications';
 import type {DLocalService} from '~/services/dlocal';
 import type {IStorageProvider} from '~/services/storage/IStorageProvider';
@@ -75,6 +76,7 @@ export class TicketReportsService {
     private readonly notificationService: NotificationService,
     private readonly dLocalService: DLocalService,
     private readonly storageProvider: IStorageProvider,
+    private readonly sellerEarningsRepository: SellerEarningsRepository,
   ) {}
 
   async createCase(data: CreateCaseData, userId: string) {
@@ -333,7 +335,7 @@ export class TicketReportsService {
               entityId: report.entityId,
             },
             data,
-            {refundsRepo, reservationsRepo},
+            {refundsRepo, reservationsRepo, earningsRepo: this.sellerEarningsRepository.withTransaction(trx)},
           );
         }
 
@@ -612,6 +614,7 @@ export class TicketReportsService {
     repos: {
       refundsRepo: TicketReportRefundsRepository;
       reservationsRepo: OrderTicketReservationsRepository;
+      earningsRepo: SellerEarningsRepository;
     },
   ) {
     const pendingRefunds: Array<{
@@ -754,6 +757,12 @@ export class TicketReportsService {
       await repos.reservationsRepo.updateStatus(
         info.reservationId,
         'refund_pending',
+      );
+
+      // Retain seller earnings due to refund/dispute
+      await repos.earningsRepo.retainEarningsByListingTicketId(
+        info.listingTicketId,
+        'dispute',
       );
 
       const refundRecord = await repos.refundsRepo.create({

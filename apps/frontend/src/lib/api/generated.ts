@@ -171,9 +171,10 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray {
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeThumbnailUrlStringOrNullArray {
   data: {
     images: {
+      thumbnailUrl: string | null;
       imageType: EventImageType;
       url: string;
     }[];
@@ -202,7 +203,7 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
 }
 
 export type GetEventsPaginatedResponse =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeArray;
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeThumbnailUrlStringOrNullArray;
 
 export interface InferTypeofPaginationSchema {
   sortOrder?: "asc" | "desc";
@@ -894,11 +895,11 @@ export interface RequestPayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1089,11 +1090,11 @@ export interface GetUserPayoutDetailsResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1115,11 +1116,11 @@ export interface GetUserPayoutDetailsResponse {
     storagePath: string;
     /** @format double */
     sizeBytes: number;
-    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
     documentType: string;
+    payoutId: string;
     /** @format date-time */
     updatedAt: string;
     id: string;
@@ -1131,13 +1132,13 @@ export interface GetUserPayoutDetailsResponse {
   }[];
   events: {
     createdBy: string | null;
-    payoutId: string;
     userAgent: string | null;
     toStatus: PayoutStatus | null;
     ipAddress: string | null;
     fromStatus: PayoutStatus | null;
     eventType: PayoutEventType;
     eventData: string | number | boolean | JsonArray | JsonObject | null;
+    payoutId: string;
     id: string;
     /** @format date-time */
     createdAt: string;
@@ -1157,7 +1158,7 @@ export interface GetUserPayoutDetailsResponse {
   } | null;
 }
 
-export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullAmountStringFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
+export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateAmountStringCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
   data: {
     payoutMethod: {
       payoutType: PayoutType;
@@ -1190,11 +1191,11 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
     failureReason: string | null;
     /** @format date-time */
     failedAt: string | null;
-    amount: string;
     /** @format date-time */
     completedAt: string | null;
     sellerUserId: string;
     currency: EventTicketCurrency;
+    amount: string;
     /** @format date-time */
     updatedAt: string;
     status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1207,7 +1208,7 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
 }
 
 export type GetPayoutsResponse =
-  PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullAmountStringFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
+  PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateAmountStringCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
 
 export interface InferTypeofAdminPayoutsQuerySchema {
   status?: "cancelled" | "pending" | "completed" | "failed";
@@ -1241,11 +1242,11 @@ export interface GetPayoutDetailsResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1288,11 +1289,11 @@ export interface GetPayoutDetailsResponse {
     storagePath: string;
     /** @format double */
     sizeBytes: number;
-    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
     documentType: string;
+    payoutId: string;
     /** @format date-time */
     updatedAt: string;
     id: string;
@@ -1330,11 +1331,11 @@ export interface ProcessPayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1367,11 +1368,11 @@ export interface CompletePayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1401,11 +1402,11 @@ export interface FailPayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1434,11 +1435,11 @@ export interface UpdatePayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1472,11 +1473,11 @@ export interface CancelPayoutResponse {
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
-  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
+  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1502,11 +1503,11 @@ export interface UploadPayoutDocumentResponse {
     storagePath: string;
     /** @format double */
     sizeBytes: number;
-    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
     documentType: string;
+    payoutId: string;
     /** @format date-time */
     updatedAt: string;
     id: string;
@@ -2819,6 +2820,169 @@ export type AdminListAttachmentsResponse = {
   url: string;
 }[];
 
+export type ListSettlementsResponse = {
+  totalAmount: string;
+  /** @format date-time */
+  settlementDate: string;
+  paymentProvider: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  settlementId: string;
+  currency: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  metadata: JsonValue;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}[];
+
+export interface InferTypeofAdminSettlementsQuerySchema {
+  paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  status?: "pending" | "completed" | "failed";
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+}
+
+export type AdminSettlementsQuery = InferTypeofAdminSettlementsQuerySchema;
+
+export interface SettlementDetailsResponse {
+  totalAmount: string;
+  /** @format date-time */
+  settlementDate: string;
+  paymentProvider: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  settlementId: string;
+  currency: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  metadata: JsonValue;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface CreateSettlementResponse {
+  totalAmount: string;
+  /** @format date-time */
+  settlementDate: string;
+  paymentProvider: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  settlementId: string;
+  currency: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  metadata: JsonValue;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+/** Construct a type with a set of properties K of type T */
+export type RecordStringOrNumberOrAnyUnknown = object;
+
+export interface CreateSettlementRouteBody {
+  /** Construct a type with a set of properties K of type T */
+  metadata?: RecordStringOrNumberOrAnyUnknown;
+  paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  currency: "USD" | "UYU";
+  totalAmount: string;
+  settlementDate: string;
+  externalSettlementId: string;
+}
+
+export interface AddSettlementPaymentResponse {
+  settlementId: string;
+  payoutId: string | null;
+  operationId: string;
+  netAmount: string;
+  fees: string | null;
+  exchangeRate: string | null;
+  currency: string;
+  amount: string;
+  /** @format date-time */
+  updatedAt: string;
+  metadata: JsonValue;
+  id: string;
+  description: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface AddSettlementPaymentRouteBody {
+  /** Construct a type with a set of properties K of type T */
+  metadata?: RecordStringOrNumberOrAnyUnknown;
+  description?: string;
+  fees?: string;
+  /** @format double */
+  exchangeRate?: number;
+  currency: "USD" | "UYU";
+  netAmount: string;
+  amount: string;
+  operationId: string;
+}
+
+export interface LinkSettlementPaymentResponse {
+  settlementId: string;
+  payoutId: string | null;
+  operationId: string;
+  netAmount: string;
+  fees: string | null;
+  exchangeRate: string | null;
+  currency: string;
+  amount: string;
+  /** @format date-time */
+  updatedAt: string;
+  metadata: JsonValue;
+  id: string;
+  description: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface LinkSettlementPaymentRouteBody {
+  payoutId: string;
+}
+
+export interface CompleteSettlementResponse {
+  totalAmount: string;
+  /** @format date-time */
+  settlementDate: string;
+  paymentProvider: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  settlementId: string;
+  currency: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  metadata: JsonValue;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface FailSettlementResponse {
+  totalAmount: string;
+  /** @format date-time */
+  settlementDate: string;
+  paymentProvider: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  settlementId: string;
+  currency: string;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  metadata: JsonValue;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface FailSettlementRouteBody {
+  reason?: string;
+}
+
 import type {
   AxiosInstance,
   AxiosRequestConfig,
@@ -3967,6 +4131,27 @@ export class Api<
     /**
      * No description
      *
+     * @tags Admin - Payouts
+     * @name TriggerHoldCheck
+     * @request POST:/admin/payouts/trigger-hold-check
+     */
+    triggerHoldCheck: (params: RequestParams = {}) =>
+      this.request<
+        {
+          message: string;
+          success: boolean;
+        },
+        UnauthorizedError
+      >({
+        path: `/admin/payouts/trigger-hold-check`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @tags Admin - Identity Verification
      * @name GetVerifications
      * @request GET:/admin/identity-verification
@@ -4435,6 +4620,169 @@ export class Api<
       >({
         path: `/admin/ticket-reports/${reportId}/attachments`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name ListSettlements
+     * @request GET:/admin/settlements
+     */
+    listSettlements: (
+      query: {
+        paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+        status?: "pending" | "completed" | "failed";
+        sortOrder?: "asc" | "desc";
+        sortBy?: string;
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          pagination: any;
+          data: ListSettlementsResponse;
+        },
+        UnauthorizedError
+      >({
+        path: `/admin/settlements`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name CreateSettlement
+     * @request POST:/admin/settlements
+     */
+    createSettlement: (
+      data: CreateSettlementRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CreateSettlementResponse,
+        UnauthorizedError | ValidationError
+      >({
+        path: `/admin/settlements`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name GetSettlementDetails
+     * @request GET:/admin/settlements/{settlementId}
+     */
+    getSettlementDetails: (settlementId: string, params: RequestParams = {}) =>
+      this.request<
+        SettlementDetailsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/settlements/${settlementId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name AddSettlementPayment
+     * @request POST:/admin/settlements/{settlementId}/payments
+     */
+    addSettlementPayment: (
+      settlementId: string,
+      data: AddSettlementPaymentRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AddSettlementPaymentResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/settlements/${settlementId}/payments`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name LinkSettlementPaymentToPayout
+     * @request POST:/admin/settlements/{settlementId}/payments/{paymentId}/link-payout
+     */
+    linkSettlementPaymentToPayout: (
+      settlementId: string,
+      paymentId: string,
+      data: LinkSettlementPaymentRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        LinkSettlementPaymentResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/settlements/${settlementId}/payments/${paymentId}/link-payout`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name CompleteSettlement
+     * @request POST:/admin/settlements/{settlementId}/complete
+     */
+    completeSettlement: (settlementId: string, params: RequestParams = {}) =>
+      this.request<
+        CompleteSettlementResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/settlements/${settlementId}/complete`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name FailSettlement
+     * @request POST:/admin/settlements/{settlementId}/fail
+     */
+    failSettlement: (
+      settlementId: string,
+      data: FailSettlementRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<FailSettlementResponse, UnauthorizedError | NotFoundError>({
+        path: `/admin/settlements/${settlementId}/fail`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

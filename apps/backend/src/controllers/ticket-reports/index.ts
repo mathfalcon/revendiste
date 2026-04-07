@@ -32,6 +32,7 @@ import {
   TicketDocumentsRepository,
   NotificationsRepository,
   UsersRepository,
+  SellerEarningsRepository,
 } from '~/repositories';
 import {db} from '~/db';
 import {NotFoundError, ValidationError, UnauthorizedError, BadRequestError, ConflictError} from '~/errors';
@@ -94,6 +95,7 @@ export class TicketReportsController {
     notificationService,
     new DLocalService(),
     getStorageProvider(),
+    new SellerEarningsRepository(db),
   );
 
   private attachmentService = new TicketReportAttachmentsService(

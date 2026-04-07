@@ -110,14 +110,16 @@ export function ProcessPayoutDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts', payoutId]});
-      toast.success('Pago procesado');
+      toast.success('Retiro procesado');
       // Reset form
       form.reset();
       setSelectedFile(null);
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Error al procesar el pago');
+      toast.error(
+        error.response?.data?.message || 'Error al procesar el retiro',
+      );
     },
   });
 
@@ -263,7 +265,7 @@ export function ProcessPayoutDialog({
           </DialogTitle>
           <DialogDescription>
             {currentStep === 1
-              ? 'Revisa los detalles del pago y la información de transferencia antes de continuar.'
+              ? 'Revisa los detalles del retiro y la información de transferencia antes de continuar.'
               : 'Completa la información de procesamiento y sube el comprobante.'}
           </DialogDescription>
         </DialogHeader>
@@ -283,7 +285,7 @@ export function ProcessPayoutDialog({
                   1
                 </div>
                 <span className={currentStep === 1 ? 'font-medium' : ''}>
-                  Detalles del Pago
+                  Detalles del Retiro
                 </span>
               </div>
               <div className='h-px flex-1 bg-border' />
@@ -308,7 +310,7 @@ export function ProcessPayoutDialog({
           {(currentStep === 1 || payout.status !== 'pending') && (
             <Card>
               <CardHeader>
-                <CardTitle className='text-base'>Detalles del Pago</CardTitle>
+                <CardTitle className='text-base'>Detalles del Retiro</CardTitle>
               </CardHeader>
               <CardContent className='space-y-3'>
                 <div className='flex justify-between items-center'>
@@ -345,92 +347,95 @@ export function ProcessPayoutDialog({
                       continuación se muestra la información del tipo de cambio
                       aplicado:
                     </p>
-                    {payout.settlementInfo.settlements.map((settlement, idx) => (
-                      <div
-                        key={idx}
-                        className='mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-700'
-                      >
-                        <div className='grid grid-cols-2 gap-2 text-sm'>
-                          <div>
-                            <span className='text-muted-foreground'>
-                              Monto al vendedor ({settlement.currency}):
-                            </span>
-                          </div>
-                          <div className='text-right font-medium'>
-                            {formatCurrency(
-                              String(settlement.totalSellerAmount),
-                              settlement.currency,
+                    {payout.settlementInfo.settlements.map(
+                      (settlement, idx) => (
+                        <div
+                          key={idx}
+                          className='mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-700'
+                        >
+                          <div className='grid grid-cols-2 gap-2 text-sm'>
+                            <div>
+                              <span className='text-muted-foreground'>
+                                Monto al vendedor ({settlement.currency}):
+                              </span>
+                            </div>
+                            <div className='text-right font-medium'>
+                              {formatCurrency(
+                                String(settlement.totalSellerAmount),
+                                settlement.currency,
+                              )}
+                            </div>
+
+                            {settlement.averageExchangeRate && (
+                              <>
+                                <div>
+                                  <span className='text-muted-foreground'>
+                                    Tipo de cambio promedio:
+                                  </span>
+                                </div>
+                                <div className='text-right font-medium'>
+                                  1 USD ={' '}
+                                  {settlement.averageExchangeRate.toFixed(4)}{' '}
+                                  UYU
+                                </div>
+                              </>
+                            )}
+
+                            {settlement.totalBalanceAmount > 0 && (
+                              <>
+                                <div>
+                                  <span className='text-muted-foreground'>
+                                    Recibido del procesador (UYU):
+                                  </span>
+                                </div>
+                                <div className='text-right font-medium'>
+                                  {formatCurrency(
+                                    String(settlement.totalBalanceAmount),
+                                    'UYU',
+                                  )}
+                                </div>
+
+                                <div>
+                                  <span className='text-muted-foreground'>
+                                    Comisión del procesador (UYU):
+                                  </span>
+                                </div>
+                                <div className='text-right font-medium text-red-600'>
+                                  -{' '}
+                                  {formatCurrency(
+                                    String(settlement.totalBalanceFee),
+                                    'UYU',
+                                  )}
+                                </div>
+                              </>
                             )}
                           </div>
 
                           {settlement.averageExchangeRate && (
-                            <>
-                              <div>
-                                <span className='text-muted-foreground'>
-                                  Tipo de cambio promedio:
+                            <div className='mt-3 pt-3 border-t border-amber-200 dark:border-amber-700'>
+                              <div className='flex justify-between items-center'>
+                                <span className='text-sm font-medium'>
+                                  Equivalente en UYU a pagar:
+                                </span>
+                                <span className='text-lg font-bold text-amber-800 dark:text-amber-200'>
+                                  {formatCurrency(
+                                    String(
+                                      settlement.totalSellerAmount *
+                                        settlement.averageExchangeRate,
+                                    ),
+                                    'UYU',
+                                  )}
                                 </span>
                               </div>
-                              <div className='text-right font-medium'>
-                                1 USD = {settlement.averageExchangeRate.toFixed(4)}{' '}
-                                UYU
-                              </div>
-                            </>
-                          )}
-
-                          {settlement.totalBalanceAmount > 0 && (
-                            <>
-                              <div>
-                                <span className='text-muted-foreground'>
-                                  Recibido del procesador (UYU):
-                                </span>
-                              </div>
-                              <div className='text-right font-medium'>
-                                {formatCurrency(
-                                  String(settlement.totalBalanceAmount),
-                                  'UYU',
-                                )}
-                              </div>
-
-                              <div>
-                                <span className='text-muted-foreground'>
-                                  Comisión del procesador (UYU):
-                                </span>
-                              </div>
-                              <div className='text-right font-medium text-red-600'>
-                                -{' '}
-                                {formatCurrency(
-                                  String(settlement.totalBalanceFee),
-                                  'UYU',
-                                )}
-                              </div>
-                            </>
+                              <p className='text-xs text-muted-foreground mt-1'>
+                                Calculado usando el tipo de cambio promedio de
+                                las transacciones
+                              </p>
+                            </div>
                           )}
                         </div>
-
-                        {settlement.averageExchangeRate && (
-                          <div className='mt-3 pt-3 border-t border-amber-200 dark:border-amber-700'>
-                            <div className='flex justify-between items-center'>
-                              <span className='text-sm font-medium'>
-                                Equivalente en UYU a pagar:
-                              </span>
-                              <span className='text-lg font-bold text-amber-800 dark:text-amber-200'>
-                                {formatCurrency(
-                                  String(
-                                    settlement.totalSellerAmount *
-                                      settlement.averageExchangeRate,
-                                  ),
-                                  'UYU',
-                                )}
-                              </span>
-                            </div>
-                            <p className='text-xs text-muted-foreground mt-1'>
-                              Calculado usando el tipo de cambio promedio de las
-                              transacciones
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                 </AlertDescription>
               </Alert>
@@ -441,7 +446,7 @@ export function ProcessPayoutDialog({
             payout.currency === 'UYU' && (
               <Alert>
                 <Info className='h-4 w-4' />
-                <AlertTitle>Pago en UYU</AlertTitle>
+                <AlertTitle>Retiro en UYU</AlertTitle>
                 <AlertDescription>
                   Este retiro está en UYU, que es la misma moneda en la que el
                   procesador de pagos nos liquida. No hay conversión de moneda
@@ -451,149 +456,152 @@ export function ProcessPayoutDialog({
             )}
 
           {/* Payout Method Details - Prominent Display - Always visible in Step 1, hidden in Step 2 */}
-          {(currentStep === 1 || payout.status !== 'pending') && payoutMethod && (
-            <Card className='border-2 border-primary/20 bg-primary/5'>
-              <CardHeader>
-                <CardTitle className='text-lg'>
-                  Información de Transferencia
-                </CardTitle>
-                <DialogDescription className='text-sm'>
-                  Usa esta información para realizar la transferencia bancaria o
-                  el envío de PayPal
-                </DialogDescription>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                {/* Account Holder */}
-                <div className='p-3 bg-background rounded-lg border'>
-                  <div className='flex justify-between items-start'>
-                    <div className='flex-1'>
-                      <Label className='text-xs text-muted-foreground mb-1 block'>
-                        Titular de la Cuenta
-                      </Label>
-                      <p className='text-sm font-semibold'>
-                        {payoutMethod.accountHolderName}{' '}
-                        {payoutMethod.accountHolderSurname}
-                      </p>
+          {(currentStep === 1 || payout.status !== 'pending') &&
+            payoutMethod && (
+              <Card className='border-2 border-primary/20 bg-primary/5'>
+                <CardHeader>
+                  <CardTitle className='text-lg'>
+                    Información de Transferencia
+                  </CardTitle>
+                  <DialogDescription className='text-sm'>
+                    Usa esta información para realizar la transferencia bancaria
+                    o el envío de PayPal
+                  </DialogDescription>
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  {/* Account Holder */}
+                  <div className='p-3 bg-background rounded-lg border'>
+                    <div className='flex justify-between items-start'>
+                      <div className='flex-1'>
+                        <Label className='text-xs text-muted-foreground mb-1 block'>
+                          Titular de la Cuenta
+                        </Label>
+                        <p className='text-sm font-semibold'>
+                          {payoutMethod.accountHolderName}{' '}
+                          {payoutMethod.accountHolderSurname}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Uruguayan Bank Details */}
-                {payoutMethod.payoutType === 'uruguayan_bank' &&
-                  uruguayanBankMetadata?.success && (
-                    <>
-                      {/* Bank Name */}
-                      {bankName && (
+                  {/* Uruguayan Bank Details */}
+                  {payoutMethod.payoutType === 'uruguayan_bank' &&
+                    uruguayanBankMetadata?.success && (
+                      <>
+                        {/* Bank Name */}
+                        {bankName && (
+                          <div className='p-3 bg-background rounded-lg border'>
+                            <div className='flex justify-between items-start'>
+                              <div className='flex-1'>
+                                <Label className='text-xs text-muted-foreground mb-1 block'>
+                                  Banco
+                                </Label>
+                                <p className='text-sm font-semibold'>
+                                  {bankName}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Account Number with Copy Button */}
+                        {accountNumber && (
+                          <div className='p-3 bg-background rounded-lg border'>
+                            <div className='flex justify-between items-start gap-2'>
+                              <div className='flex-1 min-w-0'>
+                                <Label className='text-xs text-muted-foreground mb-1 block'>
+                                  Número de Cuenta
+                                </Label>
+                                <div className='flex items-center gap-2'>
+                                  <p className='text-sm font-mono font-semibold break-all'>
+                                    {accountNumber}
+                                  </p>
+                                </div>
+                              </div>
+                              <CopyButton
+                                text={accountNumber}
+                                variant='outline'
+                                size='sm'
+                                className='shrink-0'
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Currency */}
                         <div className='p-3 bg-background rounded-lg border'>
                           <div className='flex justify-between items-start'>
                             <div className='flex-1'>
                               <Label className='text-xs text-muted-foreground mb-1 block'>
-                                Banco
+                                Moneda
                               </Label>
-                              <p className='text-sm font-semibold'>{bankName}</p>
+                              <p className='text-sm font-semibold'>
+                                {payoutMethod.currency}
+                              </p>
                             </div>
                           </div>
                         </div>
-                      )}
+                      </>
+                    )}
 
-                      {/* Account Number with Copy Button */}
-                      {accountNumber && (
-                        <div className='p-3 bg-background rounded-lg border'>
-                          <div className='flex justify-between items-start gap-2'>
-                            <div className='flex-1 min-w-0'>
-                              <Label className='text-xs text-muted-foreground mb-1 block'>
-                                Número de Cuenta
-                              </Label>
-                              <div className='flex items-center gap-2'>
-                                <p className='text-sm font-mono font-semibold break-all'>
-                                  {accountNumber}
-                                </p>
+                  {/* PayPal Details */}
+                  {payoutMethod.payoutType === 'paypal' &&
+                    paypalMetadata?.success && (
+                      <>
+                        {/* PayPal Email with Copy Button */}
+                        {email && (
+                          <div className='p-3 bg-background rounded-lg border'>
+                            <div className='flex justify-between items-start gap-2'>
+                              <div className='flex-1 min-w-0'>
+                                <Label className='text-xs text-muted-foreground mb-1 block'>
+                                  Email de PayPal
+                                </Label>
+                                <div className='flex items-center gap-2'>
+                                  <p className='text-sm font-semibold break-all'>
+                                    {email}
+                                  </p>
+                                </div>
                               </div>
+                              <CopyButton
+                                text={email}
+                                variant='outline'
+                                size='sm'
+                                className='shrink-0'
+                              />
                             </div>
-                            <CopyButton
-                              text={accountNumber}
-                              variant='outline'
-                              size='sm'
-                              className='flex-shrink-0'
-                            />
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Currency */}
-                      <div className='p-3 bg-background rounded-lg border'>
-                        <div className='flex justify-between items-start'>
-                          <div className='flex-1'>
-                            <Label className='text-xs text-muted-foreground mb-1 block'>
-                              Moneda
-                            </Label>
-                            <p className='text-sm font-semibold'>
-                              {payoutMethod.currency}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                {/* PayPal Details */}
-                {payoutMethod.payoutType === 'paypal' &&
-                  paypalMetadata?.success && (
-                    <>
-                      {/* PayPal Email with Copy Button */}
-                      {email && (
+                        {/* Currency */}
                         <div className='p-3 bg-background rounded-lg border'>
-                          <div className='flex justify-between items-start gap-2'>
-                            <div className='flex-1 min-w-0'>
+                          <div className='flex justify-between items-start'>
+                            <div className='flex-1'>
                               <Label className='text-xs text-muted-foreground mb-1 block'>
-                                Email de PayPal
+                                Moneda
                               </Label>
-                              <div className='flex items-center gap-2'>
-                                <p className='text-sm font-semibold break-all'>
-                                  {email}
-                                </p>
-                              </div>
+                              <p className='text-sm font-semibold'>
+                                {payoutMethod.currency}
+                              </p>
                             </div>
-                            <CopyButton
-                              text={email}
-                              variant='outline'
-                              size='sm'
-                              className='flex-shrink-0'
-                            />
                           </div>
                         </div>
-                      )}
+                      </>
+                    )}
 
-                      {/* Currency */}
-                      <div className='p-3 bg-background rounded-lg border'>
-                        <div className='flex justify-between items-start'>
-                          <div className='flex-1'>
-                            <Label className='text-xs text-muted-foreground mb-1 block'>
-                              Moneda
-                            </Label>
-                            <p className='text-sm font-semibold'>
-                              {payoutMethod.currency}
-                            </p>
-                          </div>
-                        </div>
+                  {/* Fallback if metadata parsing fails */}
+                  {!uruguayanBankMetadata?.success &&
+                    !paypalMetadata?.success &&
+                    payoutMethod.metadata && (
+                      <div className='p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800'>
+                        <p className='text-xs text-yellow-800 dark:text-yellow-200'>
+                          ⚠️ No se pudo parsear la información del método de
+                          pago. Por favor, revisa los detalles manualmente.
+                        </p>
                       </div>
-                    </>
-                  )}
-
-                {/* Fallback if metadata parsing fails */}
-                {!uruguayanBankMetadata?.success &&
-                  !paypalMetadata?.success &&
-                  payoutMethod.metadata && (
-                    <div className='p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800'>
-                      <p className='text-xs text-yellow-800 dark:text-yellow-200'>
-                        ⚠️ No se pudo parsear la información del método de pago.
-                        Por favor, revisa los detalles manualmente.
-                      </p>
-                    </div>
-                  )}
-              </CardContent>
-            </Card>
-          )}
+                    )}
+                </CardContent>
+              </Card>
+            )}
 
           {/* Step 2: Processing Form */}
           {currentStep === 2 && payout.status === 'pending' && (
@@ -607,7 +615,9 @@ export function ProcessPayoutDialog({
                   name='processingFee'
                   render={({field}) => (
                     <FormItem>
-                      <FormLabel>Comisión de Procesamiento (opcional)</FormLabel>
+                      <FormLabel>
+                        Comisión de Procesamiento (opcional)
+                      </FormLabel>
                       <FormControl>
                         <PriceInput
                           placeholder='Ingresa la comisión'
@@ -630,7 +640,9 @@ export function ProcessPayoutDialog({
                   name='transactionReference'
                   render={({field}) => (
                     <FormItem>
-                      <FormLabel>Referencia de Transacción (opcional)</FormLabel>
+                      <FormLabel>
+                        Referencia de Transacción (opcional)
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder='Referencia de transferencia bancaria'
@@ -719,7 +731,7 @@ export function ProcessPayoutDialog({
                                 className='flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors'
                               >
                                 <div className='flex items-center gap-3 flex-1 min-w-0'>
-                                  <FileIcon className='h-5 w-5 text-muted-foreground flex-shrink-0' />
+                                  <FileIcon className='h-5 w-5 text-muted-foreground shrink-0' />
                                   <div className='flex-1 min-w-0'>
                                     <p className='text-sm font-medium truncate'>
                                       {doc.originalName}
@@ -774,7 +786,7 @@ export function ProcessPayoutDialog({
                     {processMutation.isPending && (
                       <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                     )}
-                    Procesar Pago
+                    Procesar Retiro
                   </Button>
                 </div>
               </form>
@@ -855,7 +867,7 @@ export function ProcessPayoutDialog({
                             className='flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors'
                           >
                             <div className='flex items-center gap-3 flex-1 min-w-0'>
-                              <FileIcon className='h-5 w-5 text-muted-foreground flex-shrink-0' />
+                              <FileIcon className='h-5 w-5 text-muted-foreground shrink-0' />
                               <div className='flex-1 min-w-0'>
                                 <p className='text-sm font-medium truncate'>
                                   {doc.originalName}
@@ -906,12 +918,12 @@ export function ProcessPayoutDialog({
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2'>
               <AlertTriangle className='h-5 w-5 text-destructive' />
-              Confirmar Procesamiento de Pago
+              Confirmar Procesamiento de Retiro
             </DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de que deseas procesar este pago? Esta acción
-              cambiará el estado del pago a "procesando" y no se puede deshacer
-              fácilmente.
+              ¿Estás seguro de que deseas procesar este retiro? Esta acción
+              cambiará el estado del retiro a "procesando" y no se puede
+              deshacer fácilmente.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

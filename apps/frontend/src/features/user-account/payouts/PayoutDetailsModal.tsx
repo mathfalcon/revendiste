@@ -362,7 +362,7 @@ export function PayoutDetailsModal() {
                         key={event.id}
                         className='flex gap-3 pb-3 border-b last:border-b-0'
                       >
-                        <div className='flex-shrink-0 mt-1'>
+                        <div className='shrink-0 mt-1'>
                           <div className='w-2 h-2 rounded-full bg-primary' />
                         </div>
                         <div className='flex-1 space-y-1'>
@@ -439,7 +439,7 @@ export function PayoutDetailsModal() {
                         className='flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors'
                       >
                         <div className='flex items-center gap-3 flex-1 min-w-0'>
-                          <FileIcon className='h-5 w-5 text-muted-foreground flex-shrink-0' />
+                          <FileIcon className='h-5 w-5 text-muted-foreground shrink-0' />
                           <div className='flex-1 min-w-0'>
                             <p className='text-sm font-medium truncate'>
                               {doc.originalName}

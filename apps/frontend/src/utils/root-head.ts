@@ -17,7 +17,11 @@ export function getRootHead(): RootHead {
   return {
     meta: [
       {charSet: 'utf-8'},
-      {name: 'viewport', content: 'width=device-width, initial-scale=1'},
+      {
+        name: 'viewport',
+        content:
+          'width=device-width, initial-scale=1, viewport-fit=cover',
+      },
       ...seo({
         title:
           'Revendiste | Comprá y vendé entradas de forma segura en Uruguay',
@@ -57,13 +61,8 @@ export function getRootHead(): RootHead {
         sizes: '16x16',
         href: '/favicon-16x16.png',
       },
-      {rel: 'manifest', href: '/site.webmanifest', color: '#fffff'},
+      {rel: 'manifest', href: '/site.webmanifest', color: '#ffffff'},
       {rel: 'icon', href: '/favicon.ico'},
-      {
-        rel: 'preconnect',
-        href: 'https://fonts.googleapis.com',
-        crossOrigin: 'anonymous' as const,
-      },
       {
         rel: 'preconnect',
         href: 'https://fonts.gstatic.com',
@@ -77,11 +76,6 @@ export function getRootHead(): RootHead {
       {
         rel: 'preconnect',
         href: 'https://clerk.revendiste.com',
-        crossOrigin: 'anonymous' as const,
-      },
-      {
-        rel: 'preconnect',
-        href: 'https://e-proxy.revendiste.com',
         crossOrigin: 'anonymous' as const,
       },
       {rel: 'preload', href: POPPINS_URL, as: 'style'},

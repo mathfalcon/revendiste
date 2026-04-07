@@ -105,6 +105,7 @@ export const HomeEvents = ({
                   slug={event.slug}
                   name={event.name}
                   imageUrl={flyerImage?.url ?? CDN_ASSETS.SQUARE_LOGO}
+                  thumbnailUrl={flyerImage?.thumbnailUrl}
                   date={event.eventStartDate}
                   description={event.description}
                   venueName={event.venueName}

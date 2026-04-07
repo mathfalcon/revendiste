@@ -72,22 +72,38 @@ For each sold ticket:
 ### 48-Hour Hold Period
 
 Earnings are held for 48 hours after the event end date to allow for:
-- Dispute resolution
+- Dispute resolution (ticket reports)
 - Fraud detection
 - Buyer complaints
+
+When a report is filed against a ticket, the associated earnings are automatically **retained** and cannot be withdrawn. The earnings remain in this state until the report is resolved.
 
 ### Hold Period Release
 
 The system includes an hourly cronjob (`check-payout-hold-periods.ts`) that:
-1. Finds earnings where `hold_until <= NOW()` and `status = 'pending'`
-2. Checks for open reports/disputes (future: query reports table)
-3. Updates status:
+1. **Check for missing documents**: Marks earnings as retained if seller documentation is missing at event end
+2. **Release hold periods**: Finds earnings where `hold_until <= NOW()` and `status = 'pending'`
+3. **Check for open reports**: Skips earnings with open ticket reports (marked as retained earlier)
+4. Updates status:
    - `available`: No reports exist
    - `retained`: Reports/disputes exist
 
 **Cronjob Location**: `apps/backend/src/cronjobs/check-payout-hold-periods.ts`
 
 **Execution**: Hourly (configured via cron scheduler)
+
+**Admin Trigger**: Admins can manually trigger the hold period check via `POST /admin/payouts/trigger-hold-check`
+
+### Earnings Retention
+
+Earnings are retained (marked as unavailable for withdrawal) when:
+1. **Open ticket reports**: When a ticket report is filed, its linked earnings are retained via the `retainEarningsByListingTicketId()` method
+2. **Missing seller documentation**: When seller documentation is missing at event end
+
+**Implementation**:
+- `SellerEarningsRepository.retainEarningsByListingTicketId()`: Marks earnings as retained
+- Called in `TicketReportsService.prepareRefunds()` when refunds occur
+- Called in `SellerEarningsService.checkMissingDocumentsAfterEventEnd()` for documentation checks
 
 ## Ticket Selection
 
@@ -134,6 +150,7 @@ Sellers can request payouts by selecting:
 - All selected tickets must have `status = 'available'`
 - All selected tickets must have `payout_id IS NULL`
 - All selected tickets must be same currency
+- **All selected tickets must NOT have open reports** (checked via ticket_reports table)
 - Total amount must meet minimum threshold (UYU: $1,000, USD: $25)
 
 **Process**:
@@ -267,42 +284,65 @@ The hold period check cronjob runs hourly:
 - `PUT /payouts/payout-methods/:id` - Update payout method
 - `DELETE /payouts/payout-methods/:id` - Delete payout method
 
-### Admin Endpoints (Future)
+### Admin Endpoints
 
-- `GET /admin/payouts/pending` - List pending payouts
-- `POST /admin/payouts/:id/process` - Process payout (includes processing_fee)
+- `GET /admin/payouts` - List payouts (paginated, filterable by status)
+- `GET /admin/payouts/:id` - Get payout details
+- `POST /admin/payouts/:id/process` - Process payout (mark as processing)
+- `POST /admin/payouts/:id/complete` - Complete payout (mark as completed)
 - `POST /admin/payouts/:id/fail` - Mark payout as failed
+- `POST /admin/payouts/:id/cancel` - Cancel payout request
+- `PUT /admin/payouts/:id` - Update payout details (status, fee, reference, notes)
+- `POST /admin/payouts/:id/documents` - Upload payout document/voucher
+- `DELETE /admin/payouts/documents/:documentId` - Delete payout document
+- `POST /admin/payouts/trigger-hold-check` - Manually trigger hold period check
 
 ## Error Messages
 
 All error messages are centralized in `apps/backend/src/constants/error-messages.ts`:
 
-- `PAYOUT_NOT_FOUND`: Pago no encontrado
-- `PAYOUT_METHOD_NOT_FOUND`: Método de pago no encontrado
-- `UNAUTHORIZED_ACCESS`: No estás autorizado para acceder a este pago
-- `INSUFFICIENT_BALANCE`: Saldo insuficiente para realizar el pago
+- `PAYOUT_NOT_FOUND`: Retiro no encontrado
+- `PAYOUT_METHOD_NOT_FOUND`: Método de retiro no encontrado
+- `UNAUTHORIZED_ACCESS`: No estás autorizado para acceder a este retiro
+- `INSUFFICIENT_BALANCE`: No tenés saldo suficiente para este retiro
 - `BELOW_MINIMUM_THRESHOLD`: El monto mínimo para retirar es {amount} {currency}
-- `NO_EARNINGS_SELECTED`: Debes seleccionar al menos una ganancia para retirar
+- `NO_EARNINGS_SELECTED`: Tenés que seleccionar al menos una ganancia para retirar
 - `EARNINGS_NOT_AVAILABLE`: Las ganancias seleccionadas no están disponibles
-- `MIXED_CURRENCIES`: No se pueden mezclar diferentes monedas en un mismo pago
-- `INVALID_PAYOUT_METHOD`: Método de pago inválido
-- `PAYOUT_ALREADY_PROCESSED`: Este pago ya ha sido procesado
-- `PAYOUT_NOT_PENDING`: El pago ya está {status}. No se puede procesar.
+- `EARNINGS_WITH_OPEN_REPORTS`: Algunas ganancias seleccionadas tienen reportes abiertos y no pueden ser retiradas. Esperá a que se resuelvan los reportes.
+- `MIXED_CURRENCIES`: No podés mezclar diferentes monedas en un mismo retiro
+- `INVALID_PAYOUT_METHOD`: Método de retiro inválido
+- `PAYOUT_ALREADY_PROCESSED`: Este retiro ya fue procesado
+- `PAYOUT_NOT_PENDING`: El retiro ya está {status}. No se puede procesar.
 
 ## Testing Considerations
 
 - Test earnings creation in PaymentWebhookAdapter transaction
 - Test hold period release cronjob
 - Test ticket selection validation (same currency, belongs to seller, available)
+- **Test that open reports prevent payout requests** (earnings validation)
+- **Test that earnings are retained when reports are filed** (TicketReportsService)
 - Test minimum threshold validation
 - Test payout linking (multiple earnings per payout)
 - Test Zod metadata validation for payout methods
+- Test manual hold period check trigger endpoint
+
+## Processor settlements (reconciliation)
+
+Tables are **provider-agnostic** (not named after dLocal):
+
+- **`processor_settlements`**: one row per settlement batch from a payment processor. Columns include `payment_provider` (`dlocal`, `stripe`, etc.) and `settlement_id` (the processor’s external settlement identifier). Uniqueness is `(payment_provider, settlement_id)` so different processors can reuse the same external ID format safely.
+- **`processor_settlement_items`**: line items within a settlement (amounts, fees, optional link to `payouts.id`).
+
+Migration `1775521218600_processor_settlements.ts` creates `processor_settlements` and `processor_settlement_items` with `payment_provider` (PostgreSQL `payment_provider` enum, same as `payments.provider`). The timestamp is after existing migrations so Kysely’s lexicographic ordering stays valid.
+
+Admin API: `GET/POST /admin/settlements` (see OpenAPI / generated client).
 
 ## Future Enhancements
 
-1. **Reports System Integration**: Query reports table to determine if earnings should be retained
-2. **International Transfers**: Add Wise payout method support
-3. **Automated Processing**: Automate bank transfers via API (when available)
-4. **Payout Scheduling**: Allow sellers to schedule recurring payouts
-5. **Multi-Currency Support**: Support additional currencies beyond UYU and USD
+1. **Automated settlement import**: Pull settlement files or APIs per `PaymentProvider` into `processor_settlements` / `processor_settlement_items`.
+2. **Richer financial dashboard**: Exchange-rate views, filters by provider, export for accounting.
+3. **International Transfers**: Add Wise payout method support
+4. **Automated Processing**: Automate bank transfers via payment processor APIs
+5. **Payout Scheduling**: Allow sellers to schedule recurring payouts
+6. **Multi-Currency Support**: Support additional currencies beyond UYU and USD
 

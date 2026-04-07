@@ -253,4 +253,18 @@ export class AdminPayoutsController {
       request.user.id,
     );
   }
+
+  @Post('/trigger-hold-check')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  public async triggerHoldCheck(): Promise<{success: boolean; message: string}> {
+    const {runCheckPayoutHoldPeriods} = await import(
+      '~/cronjobs/check-payout-hold-periods'
+    );
+    await runCheckPayoutHoldPeriods();
+    return {
+      success: true,
+      message: 'Hold period check triggered successfully',
+    };
+  }
 }
