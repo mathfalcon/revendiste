@@ -2,12 +2,9 @@ import {useRef} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useMemo} from 'react';
 import {EventCard, SkeletonEventCard} from '~/components';
+import {getEventDisplayImage} from '~/utils';
 import {Separator} from '~/components/ui/separator';
-import {
-  EventImageType,
-  EventTicketCurrency,
-  getEventsPaginatedQuery,
-} from '~/lib';
+import {EventTicketCurrency, getEventsPaginatedQuery} from '~/lib';
 import {
   LocationFilterBar,
   type LocationFilter,
@@ -89,11 +86,7 @@ export const EventListingPage = ({
               <SkeletonEventCard key={`event-card-skeleton-${index}`} />
             ))
           : events.map(event => {
-              const flyerImage =
-                event.images.find(
-                  img => img.imageType === EventImageType.Flyer,
-                ) ??
-                event.images.find(img => img.imageType === EventImageType.Hero);
+              const primaryImage = getEventDisplayImage(event.images);
 
               const eventWithPrice = event as typeof event & {
                 lowestAvailableTicketPrice?: number | null;
@@ -106,7 +99,8 @@ export const EventListingPage = ({
                   id={event.id}
                   slug={event.slug}
                   name={event.name}
-                  imageUrl={flyerImage?.url ?? CDN_ASSETS.SQUARE_LOGO}
+                  imageUrl={primaryImage?.url ?? CDN_ASSETS.SQUARE_LOGO}
+                  thumbnailUrl={primaryImage?.thumbnailUrl}
                   date={event.eventStartDate}
                   description={event.description}
                   venueName={event.venueName}

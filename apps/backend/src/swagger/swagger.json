@@ -375,13 +375,13 @@
 							"type": "object",
 							"nullable": true
 						},
-						"totalViews": {
-							"type": "number",
-							"format": "double"
-						},
 						"eventImages": {
 							"items": {
 								"properties": {
+									"thumbnailUrl": {
+										"type": "string",
+										"nullable": true
+									},
 									"imageType": {
 										"$ref": "#/components/schemas/EventImageType"
 									},
@@ -390,12 +390,17 @@
 									}
 								},
 								"required": [
+									"thumbnailUrl",
 									"imageType",
 									"url"
 								],
 								"type": "object"
 							},
 							"type": "array"
+						},
+						"totalViews": {
+							"type": "number",
+							"format": "double"
 						},
 						"lowestAvailableTicketCurrency": {
 							"type": "string",
@@ -448,8 +453,8 @@
 					},
 					"required": [
 						"venue",
-						"totalViews",
 						"eventImages",
+						"totalViews",
 						"lowestAvailableTicketCurrency",
 						"lowestAvailableTicketPrice",
 						"updatedAt",

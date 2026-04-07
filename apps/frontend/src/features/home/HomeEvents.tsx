@@ -3,13 +3,10 @@ import {useInfiniteQuery} from '@tanstack/react-query';
 import {EventCard, SkeletonEventCard} from '~/components';
 import {Separator} from '~/components/ui/separator';
 import {useInfiniteScroll} from '~/hooks';
-import {
-  EventImageType,
-  EventTicketCurrency,
-  getEventsInfiniteQuery,
-} from '~/lib';
+import {EventTicketCurrency, getEventsInfiniteQuery} from '~/lib';
 import {LocationFilterBar, type LocationFilter} from './LocationFilter';
 import {CDN_ASSETS} from '~/assets';
+import {getEventDisplayImage} from '~/utils';
 
 interface HomeEventsProps {
   locationFilter: LocationFilter;
@@ -74,16 +71,7 @@ export const HomeEvents = ({
               <SkeletonEventCard key={`event-card-skeleton-${index}`} />
             ))
           : events.map(event => {
-              const eventImages = event.images;
-
-              // Prefer flyer image, fall back to hero if not available
-              const flyerImage =
-                eventImages.find(
-                  image => image.imageType === EventImageType.Flyer,
-                ) ??
-                eventImages.find(
-                  image => image.imageType === EventImageType.Hero,
-                );
+              const primaryImage = getEventDisplayImage(event.images);
 
               // Get lowest available ticket price and currency
               const eventWithPrice = event as typeof event & {
@@ -104,8 +92,8 @@ export const HomeEvents = ({
                   id={event.id}
                   slug={event.slug}
                   name={event.name}
-                  imageUrl={flyerImage?.url ?? CDN_ASSETS.SQUARE_LOGO}
-                  thumbnailUrl={flyerImage?.thumbnailUrl}
+                  imageUrl={primaryImage?.url ?? CDN_ASSETS.SQUARE_LOGO}
+                  thumbnailUrl={primaryImage?.thumbnailUrl}
                   date={event.eventStartDate}
                   description={event.description}
                   venueName={event.venueName}
