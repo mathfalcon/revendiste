@@ -290,7 +290,6 @@ module "cloudflare_dns" {
   domain_name                               = var.domain_name  # revendiste.com for prod
   alb_dns_name                              = module.alb.alb_dns_name
   acm_certificate_domain_validation_options = module.alb.acm_certificate_domain_validation_options
-  enable_bot_cache                          = true
   common_tags                               = local.common_tags
 }
 

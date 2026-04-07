@@ -294,7 +294,6 @@ module "cloudflare_dns" {
   alb_dns_name                              = module.alb.alb_dns_name
   acm_certificate_domain_validation_options = module.alb.acm_certificate_domain_validation_options
   create_www_record                         = false # Skip www.dev.revendiste.com (nested subdomain SSL issue)
-  enable_bot_cache                          = true
   common_tags                               = local.common_tags
 }
 

@@ -282,12 +282,13 @@ export type GetTrendingEventsResponse = {
     city: string;
     name: string;
   } | null;
-  /** @format double */
-  totalViews: number;
   eventImages: {
+    thumbnailUrl: string | null;
     imageType: EventImageType;
     url: string;
   }[];
+  /** @format double */
+  totalViews: number;
   lowestAvailableTicketCurrency: string | null;
   /** @format double */
   lowestAvailableTicketPrice: number | null;

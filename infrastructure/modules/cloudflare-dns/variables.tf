@@ -32,8 +32,3 @@ variable "common_tags" {
   default     = {}
 }
 
-variable "enable_bot_cache" {
-  description = "Whether to enable Cloudflare edge caching of /eventos/* for verified bots (improves link preview speed)"
-  type        = bool
-  default     = false
-}

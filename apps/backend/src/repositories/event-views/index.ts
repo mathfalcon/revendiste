@@ -111,8 +111,13 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
         jsonArrayFrom(
           eb
             .selectFrom('eventImages')
-            .select(['eventImages.url', 'eventImages.imageType'])
+            .select([
+              'eventImages.url',
+              'eventImages.imageType',
+              'eventImages.thumbnailUrl',
+            ])
             .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.deletedAt', 'is', null)
             .orderBy('eventImages.displayOrder'),
         ).as('eventImages'),
         // Venue info from join
