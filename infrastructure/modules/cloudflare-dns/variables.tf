@@ -33,7 +33,7 @@ variable "common_tags" {
 }
 
 variable "enable_bot_cache" {
-  description = "Whether to enable Cloudflare edge caching of /eventos/* for verified bots (improves link preview speed)"
+  description = "Whether to enable Cloudflare edge caching of /eventos/* for common crawlers (User-Agent heuristic; improves link previews). cf.client.bot is not allowed in Cache Rules."
   type        = bool
   default     = false
 }
