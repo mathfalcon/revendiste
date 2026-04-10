@@ -20,7 +20,11 @@ import {
   ensurePagination,
   paginationMiddleware,
 } from '~/middleware';
-import {EventsRepository, EventTicketWavesRepository} from '~/repositories';
+import {
+  EventsRepository,
+  EventTicketWavesRepository,
+  VenuesRepository,
+} from '~/repositories';
 import {db} from '~/db';
 import {
   NotFoundError,
@@ -34,6 +38,8 @@ import {
   AdminEventsRouteSchema,
   UpdateEventRouteBody,
   UpdateEventRouteSchema,
+  CreateEventRouteBody,
+  CreateEventRouteSchema,
   CreateTicketWaveRouteBody,
   CreateTicketWaveRouteSchema,
   UpdateTicketWaveRouteBody,
@@ -56,11 +62,15 @@ type GetEventsResponse = Promise<PaginatedAdminEventsResponse>;
 type GetEventDetailsResponse = Promise<AdminEventDetail>;
 type UpdateEventResponse = Promise<UpdatedEvent>;
 type DeleteEventResponse = Promise<DeletedEvent>;
+type CreateEventResponse = Promise<UpdatedEvent>;
 type CreateTicketWaveResponse = Promise<CreatedTicketWave>;
 type UpdateTicketWaveResponse = Promise<UpdatedTicketWave>;
 type DeleteTicketWaveResponse = Promise<DeletedTicketWave>;
 type UploadEventImageResponse = Promise<UploadImageResponse>;
 type DeleteEventImageResponse = Promise<DeleteImageResponse>;
+type SearchVenuesResponse = Promise<
+  Array<{id: string; name: string; address: string; city: string}>
+>;
 
 @Route('admin/events')
 @Middlewares(requireAuthMiddleware, requireAdminMiddleware)
@@ -100,6 +110,17 @@ export class AdminEventsController {
     @Path() eventId: string,
   ): Promise<GetEventDetailsResponse> {
     return this.service.getEventDetails(eventId);
+  }
+
+  @Post('/')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  @Response<ValidationError>(422, 'Validation failed')
+  @ValidateBody(CreateEventRouteSchema)
+  public async createEvent(
+    @Body() body: CreateEventRouteBody,
+  ): Promise<CreateEventResponse> {
+    return this.service.createEvent(body);
   }
 
   @Put('/{eventId}')
@@ -194,5 +215,26 @@ export class AdminEventsController {
     @Path() imageId: string,
   ): Promise<DeleteEventImageResponse> {
     return this.service.deleteEventImage(eventId, imageId);
+  }
+
+  // ============================================================================
+  // Venues (for admin event creation)
+  // ============================================================================
+
+  @Get('/venues/search')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  public async searchVenues(
+    @Queries() query: {q?: string; limit?: number},
+  ): Promise<SearchVenuesResponse> {
+    const venuesRepository = new VenuesRepository(db);
+    const searchQuery = query.q || '';
+    const limit = Math.min(query.limit || 20, 50);
+
+    if (!searchQuery.trim()) {
+      return [];
+    }
+
+    return await venuesRepository.searchByName(searchQuery, limit);
   }
 }

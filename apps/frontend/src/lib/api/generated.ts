@@ -1809,6 +1809,31 @@ export interface UpdatedEvent {
   deletedAt: string | null;
 }
 
+export type CreateEventResponse = UpdatedEvent;
+
+export interface CreateEventRouteBody {
+  ticketWaves?: {
+    description?: string | null;
+    currency: "USD" | "UYU";
+    /** @format double */
+    faceValue: number;
+    name: string;
+  }[];
+  qrAvailabilityTiming?: "12h" | "24h" | "3h" | "48h" | "6h" | "72h" | null;
+  externalUrl?: string;
+  venueCity?: string;
+  venueAddress?: string;
+  venueName?: string;
+  venueId?: string;
+  description?: string | null;
+  status: "active" | "inactive";
+  eventEndDate: string;
+  eventStartDate: string;
+  platform: string;
+  externalId: string;
+  name: string;
+}
+
 export type UpdateEventResponse = UpdatedEvent;
 
 export interface UpdateEventRouteBody {
@@ -1954,6 +1979,13 @@ export interface DeleteImageResponse {
 }
 
 export type DeleteEventImageResponse = DeleteImageResponse;
+
+export type SearchVenuesResponse = {
+  city: string;
+  address: string;
+  name: string;
+  id: string;
+}[];
 
 export interface GetCurrentUserResponse {
   /** Whether user dismissed the WhatsApp opt-in prompt */
@@ -4149,6 +4181,23 @@ export class Api<
      * No description
      *
      * @tags Admin - Events
+     * @name CreateEvent
+     * @request POST:/admin/events
+     */
+    createEvent: (data: CreateEventRouteBody, params: RequestParams = {}) =>
+      this.request<CreateEventResponse, UnauthorizedError | ValidationError>({
+        path: `/admin/events`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Events
      * @name GetEventDetails
      * @request GET:/admin/events/{eventId}
      */
@@ -4317,6 +4366,29 @@ export class Api<
           ...params,
         },
       ),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Events
+     * @name SearchVenues
+     * @request GET:/admin/events/venues/search
+     */
+    searchVenues: (
+      query?: {
+        /** @format double */
+        limit?: number;
+        q?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<SearchVenuesResponse, UnauthorizedError>({
+        path: `/admin/events/venues/search`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description

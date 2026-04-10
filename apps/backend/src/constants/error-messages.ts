@@ -186,6 +186,9 @@ export const ADMIN_EVENTS_ERROR_MESSAGES = {
   IMAGE_NOT_FOUND: 'Imagen no encontrada',
   INVALID_IMAGE_FILE_TYPE:
     'Tipo de archivo no válido. Usá JPEG, PNG, WebP o GIF.',
+  EVENT_CREATION_FAILED: 'Error al crear el evento',
+  VENUE_CREATION_FAILED: 'Error al crear el lugar',
+  EXTERNAL_ID_DUPLICATE: 'Ya existe un evento con este ID externo',
 } as const;
 
 // Error messages for admin identity verification
