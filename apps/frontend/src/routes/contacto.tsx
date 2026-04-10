@@ -1,6 +1,7 @@
 import {createFileRoute, Link} from '@tanstack/react-router';
 import posthog from 'posthog-js';
 import {Mail, MessageCircle, Clock, AlertTriangle} from 'lucide-react';
+import {SOCIAL_LINKS} from '@revendiste/shared';
 import {
   Card,
   CardContent,
@@ -86,12 +87,10 @@ function ContactPage() {
               <p className='text-sm text-muted-foreground'>+598 99 303 326</p>
               <Button asChild variant='outline' size='sm'>
                 <a
-                  href='https://wa.me/59899303326'
+                  href={SOCIAL_LINKS.whatsapp}
                   target='_blank'
                   rel='noopener noreferrer'
-                  onClick={() =>
-                    posthog.capture('contact_whatsapp_clicked')
-                  }
+                  onClick={() => posthog.capture('contact_whatsapp_clicked')}
                 >
                   <MessageCircle className='h-4 w-4 mr-1.5' />
                   Abrir chat
@@ -157,6 +156,48 @@ function ContactPage() {
             </p>
             <Button asChild variant='outline'>
               <Link to='/preguntas-frecuentes'>Ver preguntas frecuentes</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Seguinos */}
+        <Card className='mt-6'>
+          <CardHeader className='text-center pb-2'>
+            <CardTitle className='text-lg'>Seguinos</CardTitle>
+            <CardDescription>
+              Enterate de novedades, eventos y más
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='flex flex-wrap justify-center gap-3'>
+            <Button asChild variant='outline' size='sm'>
+              <a
+                href={SOCIAL_LINKS.instagram}
+                target='_blank'
+                rel='noopener noreferrer'
+                onClick={() => posthog.capture('contact_instagram_clicked')}
+              >
+                Instagram
+              </a>
+            </Button>
+            <Button asChild variant='outline' size='sm'>
+              <a
+                href={SOCIAL_LINKS.tiktok}
+                target='_blank'
+                rel='noopener noreferrer'
+                onClick={() => posthog.capture('contact_tiktok_clicked')}
+              >
+                TikTok
+              </a>
+            </Button>
+            <Button asChild variant='outline' size='sm'>
+              <a
+                href={SOCIAL_LINKS.twitter}
+                target='_blank'
+                rel='noopener noreferrer'
+                onClick={() => posthog.capture('contact_twitter_clicked')}
+              >
+                Twitter / X
+              </a>
             </Button>
           </CardContent>
         </Card>

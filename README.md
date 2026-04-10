@@ -30,6 +30,7 @@ template-monorepo/
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Framework**: React 18 with TanStack Router
 - **Styling**: Tailwind CSS
 - **Build Tool**: Vite
@@ -37,6 +38,7 @@ template-monorepo/
 - **State Management**: TanStack Query (React Query)
 
 ### Backend
+
 - **Framework**: Express.js with TSOA
 - **Database**: PostgreSQL with Kysely
 - **API Documentation**: Auto-generated OpenAPI/Swagger
@@ -44,6 +46,7 @@ template-monorepo/
 - **Type Safety**: TypeScript (strict mode)
 
 ### Shared
+
 - **Package Manager**: pnpm workspaces
 - **Build System**: Turbo
 - **Code Quality**: ESLint, Prettier
@@ -117,6 +120,7 @@ pnpm --filter backend dev
 Express API with TSOA for automatic route generation and OpenAPI documentation.
 
 **Key Features:**
+
 - TSOA decorators for type-safe API development
 - PostgreSQL with Kysely for type-safe database operations
 - Auto-generated OpenAPI/Swagger documentation
@@ -125,6 +129,7 @@ Express API with TSOA for automatic route generation and OpenAPI documentation.
 - Custom error handling
 
 **Available Scripts:**
+
 ```bash
 pnpm --filter backend dev          # Development server
 pnpm --filter backend build        # Build for production
@@ -134,6 +139,7 @@ pnpm --filter backend tsoa:spec    # Generate OpenAPI spec
 ```
 
 **API Documentation:**
+
 - Swagger UI: `http://localhost:4000/api/docs`
 - OpenAPI JSON: `http://localhost:4000/swagger.json`
 
@@ -142,6 +148,7 @@ pnpm --filter backend tsoa:spec    # Generate OpenAPI spec
 React application with TanStack Router for type-safe routing.
 
 **Key Features:**
+
 - TanStack Router for type-safe routing
 - Tailwind CSS for styling
 - Vite for fast development
@@ -149,6 +156,7 @@ React application with TanStack Router for type-safe routing.
 - TypeScript strict mode
 
 **Available Scripts:**
+
 ```bash
 pnpm --filter frontend dev    # Development server
 pnpm --filter frontend build  # Build for production
@@ -160,6 +168,7 @@ pnpm --filter frontend preview # Preview production build
 Common types, schemas, and utilities shared between frontend and backend.
 
 **Contents:**
+
 - TypeScript type definitions
 - Zod validation schemas
 - Shared utilities and constants
@@ -169,6 +178,7 @@ Common types, schemas, and utilities shared between frontend and backend.
 ### Adding New Features
 
 1. **Backend API Endpoints:**
+
    ```bash
    # Create controller with TSOA decorators
    # Generate routes and documentation
@@ -177,6 +187,7 @@ Common types, schemas, and utilities shared between frontend and backend.
    ```
 
 2. **Frontend Pages:**
+
    ```bash
    # Create new route files
    # TanStack Router will auto-generate types
@@ -230,6 +241,7 @@ pnpm --filter backend tsoa:spec
 ### Environment Variables
 
 **Backend:**
+
 ```env
 DATABASE_URL=postgresql://user:password@host:port/database
 PORT=4000
@@ -237,6 +249,7 @@ NODE_ENV=production
 ```
 
 **Frontend:**
+
 ```env
 VITE_API_URL=http://localhost:4000/api
 ```
@@ -255,31 +268,8 @@ VITE_API_URL=http://localhost:4000/api
 4. Run tests and linting
 5. Submit a pull request
 
-## 📄 License
+## DB BASTION
 
-This template is open source and available under the [MIT License](LICENSE).
+aws ssm start-session --target i-0ba2a233a56a9ffc4 --document-name AWS-StartPortForwardingSessionToRemoteHost --parameters '{"host":["revendiste-prod-postgres.crk6o8y46hf2.sa-east-1.rds.amazonaws.com"],"portNumber":["5432"],"localPortNumber":["5433"]}' --region sa-east-1 --profile revendiste
 
-## 🔄 Customization
-
-This template is designed to be easily customizable for your specific project needs:
-
-1. **Update package names** in `package.json` files
-2. **Modify environment variables** for your services
-3. **Add your own dependencies** as needed
-4. **Customize the database schema** for your domain
-5. **Update the frontend routing** for your application structure
-
-## 🆘 Support
-
-For issues and questions:
-- Check the individual app README files
-- Review the TSOA documentation for backend questions
-- Check TanStack Router docs for frontend routing
-- Open an issue in the repository
-
-SCRAPER_MAX_CONCURRENCY=10 \
-SCRAPER_SAME_DOMAIN_DELAY_SECS=1 \
-SCRAPER_MAX_PAGES_PER_BROWSER=4 \
-pnpm scrape-events
-
-LOG_LEVEL=debug pnpm tsx src/scripts/debug-scrape.ts entraste https://entraste.com/evento/no-art-open-air-uruguay-2026
+terraform output db_tunnel_command

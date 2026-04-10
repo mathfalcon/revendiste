@@ -80,9 +80,10 @@ resource "aws_security_group_rule" "rds_from_bastion" {
   description              = "Allow PostgreSQL from bastion host"
 }
 
-# VPC Endpoints for SSM (required — bastion is in a private subnet with no NAT)
-# SSM needs 3 endpoints: ssm, ssmmessages, and ec2messages
-
+# Security group for SSM VPC endpoints
+# The 3 VPC endpoints themselves (ssm, ssmmessages, ec2messages) are NOT managed by Terraform —
+# they are created/deleted on demand via the "Toggle Database Access" GitHub Actions workflow.
+# This security group is kept here so it always exists and the workflow can reference it by tag.
 resource "aws_security_group" "vpc_endpoints" {
   name        = "${var.name_prefix}-ssm-endpoints-sg"
   description = "Security group for SSM VPC endpoints"
@@ -98,47 +99,6 @@ resource "aws_security_group" "vpc_endpoints" {
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-ssm-endpoints-sg"
-  })
-}
-
-data "aws_region" "current" {}
-
-resource "aws_vpc_endpoint" "ssm" {
-  vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ssm"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = [var.subnet_id]
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  private_dns_enabled = true
-
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-ssm-endpoint"
-  })
-}
-
-resource "aws_vpc_endpoint" "ssmmessages" {
-  vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ssmmessages"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = [var.subnet_id]
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  private_dns_enabled = true
-
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-ssmmessages-endpoint"
-  })
-}
-
-resource "aws_vpc_endpoint" "ec2messages" {
-  vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ec2messages"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = [var.subnet_id]
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  private_dns_enabled = true
-
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-ec2messages-endpoint"
   })
 }
 
