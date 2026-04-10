@@ -35,21 +35,23 @@ export const SellerTicketSoldEmail = ({
     <BaseEmail
       title="¡Tus entradas se vendieron!"
       preview={`Tus ${ticketCount} ${
-        ticketCount === 1
-          ? 'entrada se vendió'
-          : 'entradas se vendieron'
+        ticketCount === 1 ? 'entrada se vendió' : 'entradas se vendieron'
       } para ${eventName}`}
       appBaseUrl={appBaseUrl}
     >
       <Text className="text-foreground mb-4">
-        ¡Felicitaciones! Tus{' '}
-        <strong>
-          {ticketCount}{' '}
-          {ticketCount === 1
-            ? 'entrada se vendió'
-            : 'entradas se vendieron'}
-        </strong>{' '}
-        para <strong>{eventName}</strong>.
+        {ticketCount === 1 ? (
+          <>
+            ¡Felicitaciones! Tu <strong>entrada se vendió</strong> para{' '}
+            <strong>{eventName}</strong>.
+          </>
+        ) : (
+          <>
+            ¡Felicitaciones! Tus{' '}
+            <strong>{ticketCount} entradas se vendieron</strong> para{' '}
+            <strong>{eventName}</strong>.
+          </>
+        )}
       </Text>
 
       <Section className="bg-muted p-4 rounded-md mb-6">
@@ -72,8 +74,8 @@ export const SellerTicketSoldEmail = ({
       {canUpload ? (
         <>
           <Text className="text-foreground mb-4">
-            Para completar la venta, subí los documentos de tus entradas
-            cuanto antes.
+            Para completar la venta, subí los documentos de tus entradas cuanto
+            antes.
           </Text>
 
           <Section className="text-center mb-6">

@@ -725,6 +725,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CreateEventResponse": {
+        "dataType": "refAlias",
+        "type": {"ref":"UpdatedEvent","validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CreateEventRouteBody": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"ticketWaves":{"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"description":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]},{"dataType":"undefined"}]},"currency":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["USD"]},{"dataType":"enum","enums":["UYU"]}],"required":true},"faceValue":{"dataType":"double","required":true},"name":{"dataType":"string","required":true}}}},{"dataType":"undefined"}]},"qrAvailabilityTiming":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["12h"]},{"dataType":"enum","enums":["24h"]},{"dataType":"enum","enums":["3h"]},{"dataType":"enum","enums":["48h"]},{"dataType":"enum","enums":["6h"]},{"dataType":"enum","enums":["72h"]},{"dataType":"enum","enums":[null]},{"dataType":"undefined"}]},"externalUrl":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"venueCity":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"venueAddress":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"venueName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"venueId":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"description":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]},{"dataType":"undefined"}]},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["active"]},{"dataType":"enum","enums":["inactive"]}],"required":true},"eventEndDate":{"dataType":"string","required":true},"eventStartDate":{"dataType":"string","required":true},"platform":{"dataType":"string","required":true},"externalId":{"dataType":"string","required":true},"name":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "UpdateEventResponse": {
         "dataType": "refAlias",
         "type": {"ref":"UpdatedEvent","validators":{}},
@@ -880,6 +890,11 @@ const models: TsoaRoute.Models = {
     "DeleteEventImageResponse": {
         "dataType": "refAlias",
         "type": {"ref":"DeleteImageResponse","validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SearchVenuesResponse": {
+        "dataType": "refAlias",
+        "type": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"city":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"name":{"dataType":"string","required":true},"id":{"dataType":"string","required":true}}},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "GetCurrentUserResponse": {
@@ -3057,6 +3072,36 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminEventsController_createEvent: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"CreateEventRouteBody"},
+        };
+        app.post('/admin/events',
+            ...(fetchMiddlewares<RequestHandler>(AdminEventsController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminEventsController.prototype.createEvent)),
+
+            async function AdminEventsController_createEvent(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminEventsController_createEvent, request, response });
+
+                const controller = new AdminEventsController();
+
+              await templateService.apiHandler({
+                methodName: 'createEvent',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAdminEventsController_updateEvent: Record<string, TsoaRoute.ParameterSchema> = {
                 eventId: {"in":"path","name":"eventId","required":true,"dataType":"string"},
                 body: {"in":"body","name":"body","required":true,"ref":"UpdateEventRouteBody"},
@@ -3270,6 +3315,36 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'deleteEventImage',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminEventsController_searchVenues: Record<string, TsoaRoute.ParameterSchema> = {
+                query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"limit":{"dataType":"double"},"q":{"dataType":"string"}}},
+        };
+        app.get('/admin/events/venues/search',
+            ...(fetchMiddlewares<RequestHandler>(AdminEventsController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminEventsController.prototype.searchVenues)),
+
+            async function AdminEventsController_searchVenues(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminEventsController_searchVenues, request, response });
+
+                const controller = new AdminEventsController();
+
+              await templateService.apiHandler({
+                methodName: 'searchVenues',
                 controller,
                 response,
                 next,
