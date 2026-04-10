@@ -26,11 +26,6 @@ variable "instance_type" {
   default     = "t4g.nano"
 }
 
-variable "private_subnet_ids" {
-  description = "Private subnet IDs for VPC endpoints (needs at least 2 for HA)"
-  type        = list(string)
-}
-
 variable "common_tags" {
   description = "Common tags for all resources"
   type        = map(string)

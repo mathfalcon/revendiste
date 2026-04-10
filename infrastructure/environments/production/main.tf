@@ -322,7 +322,6 @@ module "bastion" {
   name_prefix           = local.name_prefix
   vpc_id                = module.vpc.vpc_id
   subnet_id             = module.vpc.private_subnet_ids[0]
-  private_subnet_ids    = module.vpc.private_subnet_ids
   rds_security_group_id = module.security_groups.rds_security_group_id
   common_tags           = local.common_tags
 }
