@@ -8,6 +8,7 @@ import {SessionsList} from './SessionsList';
 import {DeleteAccountSection} from './DeleteAccountSection';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
 import {User, ShieldCheck, Lock} from 'lucide-react';
+import {NODE_ENV} from '~/config/env';
 
 export function ConfiguracionPage() {
   return (
@@ -46,7 +47,7 @@ export function ConfiguracionPage() {
           </div>
 
           <ProfileInfoForm />
-          <PhoneNumberForm />
+          {NODE_ENV !== 'production' && <PhoneNumberForm />}
           <EmailManagement />
           <ConnectedAccounts />
         </TabsContent>

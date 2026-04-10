@@ -87,6 +87,20 @@ export class VenuesRepository extends BaseRepository<VenuesRepository> {
   }
 
   /**
+   * Search venues by name (for admin venue selector combobox)
+   */
+  async searchByName(query: string, limit: number = 20) {
+    const searchPattern = `%${query}%`;
+    return await this.db
+      .selectFrom('eventVenues')
+      .select(['id', 'name', 'address', 'city'])
+      .where('deletedAt', 'is', null)
+      .where('name', 'ilike', searchPattern)
+      .limit(limit)
+      .execute();
+  }
+
+  /**
    * Create a new venue
    */
   async create(data: InsertableVenue) {

@@ -10,6 +10,7 @@ export enum Platform {
   Entraste = 'entraste',
   Passline = 'passline',
   RedTickets = 'redtickets',
+  Tickantel = 'tickantel',
 }
 
 export interface PlatformConfig {

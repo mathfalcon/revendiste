@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import {EntrasteScraper} from '../services/scraping/entraste';
 import {RedTicketsScraper} from '../services/scraping/redtickets';
+import {TickantelScraper} from '../services/scraping/tickantel';
 import {ScrapingService} from '~/services/scraping';
 import {EventsService} from '~/services/events';
 import {VenuesService} from '~/services/venues';
@@ -17,9 +18,12 @@ export async function runScrapeEvents() {
   const eventsRepository = new EventsRepository(db);
   const venuesRepository = new VenuesRepository(db);
   const googlePlacesService = new GooglePlacesService();
-  const venuesService = new VenuesService(venuesRepository, googlePlacesService);
+  const venuesService = new VenuesService(
+    venuesRepository,
+    googlePlacesService,
+  );
   const scrapingService = new ScrapingService(
-    [new EntrasteScraper(), new RedTicketsScraper()],
+    [new EntrasteScraper(), new RedTicketsScraper(), new TickantelScraper()],
     new EventsService(eventsRepository, venuesRepository),
     venuesService,
   );

@@ -38,7 +38,9 @@ export const UpdateEventRouteSchema = z.object({
   }),
 });
 
-export type UpdateEventRouteBody = z.infer<typeof UpdateEventRouteSchema>['body'];
+export type UpdateEventRouteBody = z.infer<
+  typeof UpdateEventRouteSchema
+>['body'];
 
 // ============================================================================
 // Ticket Waves
@@ -64,7 +66,10 @@ export const UpdateTicketWaveRouteSchema = z.object({
   body: z.object({
     name: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED).optional(),
     description: z.string().nullable().optional(),
-    faceValue: z.number().positive(VALIDATION_MESSAGES.PRICE_MUST_BE_POSITIVE).optional(),
+    faceValue: z
+      .number()
+      .positive(VALIDATION_MESSAGES.PRICE_MUST_BE_POSITIVE)
+      .optional(),
     currency: z.enum(['UYU', 'USD']).optional(),
     isSoldOut: z.boolean().optional(),
     isAvailable: z.boolean().optional(),
@@ -87,4 +92,45 @@ export const UploadEventImageRouteSchema = z.object({
 
 export type UploadEventImageRouteBody = z.infer<
   typeof UploadEventImageRouteSchema
+>['body'];
+
+// ============================================================================
+// Create Event
+// ============================================================================
+
+export const CreateEventRouteSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED),
+    description: z.string().nullable().optional(),
+    externalId: z.string().min(1, 'El ID externo es requerido'),
+    platform: z.string().min(1, 'La plataforma es requerida'),
+    eventStartDate: z.string().datetime(),
+    eventEndDate: z.string().datetime(),
+    venueId: z.string().uuid().optional(),
+    venueName: z.string().optional(),
+    venueAddress: z.string().optional(),
+    venueCity: z.string().optional(),
+    externalUrl: z.string().url().optional().or(z.literal('')),
+    qrAvailabilityTiming: z
+      .enum(['3h', '6h', '12h', '24h', '48h', '72h'])
+      .nullable()
+      .optional(),
+    status: z.enum(['active', 'inactive']).optional().default('active'),
+    ticketWaves: z
+      .array(
+        z.object({
+          name: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED),
+          description: z.string().nullable().optional(),
+          faceValue: z
+            .number()
+            .positive(VALIDATION_MESSAGES.PRICE_MUST_BE_POSITIVE),
+          currency: z.enum(['UYU', 'USD']),
+        }),
+      )
+      .optional(),
+  }),
+});
+
+export type CreateEventRouteBody = z.infer<
+  typeof CreateEventRouteSchema
 >['body'];

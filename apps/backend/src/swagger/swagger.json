@@ -5784,7 +5784,7 @@
 				"type": "object"
 			},
 			"AdminEventImage": {
-				"description": "Explicit response types for the Admin Events controller\r\nThese are needed because Kysely's inferred types are too complex for TSOA",
+				"description": "Explicit response types for the Admin Events controller\nThese are needed because Kysely's inferred types are too complex for TSOA",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -6257,6 +6257,107 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CreateEventResponse": {
+				"$ref": "#/components/schemas/UpdatedEvent"
+			},
+			"CreateEventRouteBody": {
+				"properties": {
+					"ticketWaves": {
+						"items": {
+							"properties": {
+								"description": {
+									"type": "string",
+									"nullable": true
+								},
+								"currency": {
+									"type": "string",
+									"enum": [
+										"USD",
+										"UYU"
+									]
+								},
+								"faceValue": {
+									"type": "number",
+									"format": "double"
+								},
+								"name": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"currency",
+								"faceValue",
+								"name"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"enum": [
+							"12h",
+							"24h",
+							"3h",
+							"48h",
+							"6h",
+							"72h",
+							null
+						],
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"venueCity": {
+						"type": "string"
+					},
+					"venueAddress": {
+						"type": "string"
+					},
+					"venueName": {
+						"type": "string"
+					},
+					"venueId": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"active",
+							"inactive"
+						]
+					},
+					"eventEndDate": {
+						"type": "string"
+					},
+					"eventStartDate": {
+						"type": "string"
+					},
+					"platform": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"status",
+					"eventEndDate",
+					"eventStartDate",
+					"platform",
+					"externalId",
+					"name"
+				],
+				"type": "object"
+			},
 			"UpdateEventResponse": {
 				"$ref": "#/components/schemas/UpdatedEvent"
 			},
@@ -6714,6 +6815,32 @@
 			},
 			"DeleteEventImageResponse": {
 				"$ref": "#/components/schemas/DeleteImageResponse"
+			},
+			"SearchVenuesResponse": {
+				"items": {
+					"properties": {
+						"city": {
+							"type": "string"
+						},
+						"address": {
+							"type": "string"
+						},
+						"name": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"city",
+						"address",
+						"name",
+						"id"
+					],
+					"type": "object"
+				},
+				"type": "array"
 			},
 			"GetCurrentUserResponse": {
 				"properties": {
@@ -8044,10 +8171,10 @@
 					"DatabaseError",
 					"ZodValidationError"
 				],
-				"description": "Union type of all error class names that can be returned by the API.\r\nUsed for type-safe error handling on the frontend."
+				"description": "Union type of all error class names that can be returned by the API.\nUsed for type-safe error handling on the frontend."
 			},
 			"ApiErrorResponse": {
-				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\r\nUse this type in",
+				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\nUse this type in",
 				"properties": {
 					"error": {
 						"$ref": "#/components/schemas/ErrorClassName",
@@ -8692,7 +8819,7 @@
 			},
 			"TypedNotificationMetadata_NotificationMetadata_": {
 				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationMetadata__",
-				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
+				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
 			},
 			"Extract_NotificationMetadata._type-NotificationMetadata__": {
 				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
@@ -8704,7 +8831,7 @@
 			},
 			"TypedNotificationMetadata_NotificationType_": {
 				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationType__",
-				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
+				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
 			},
 			"infer_typeofBaseActionSchema_": {
 				"properties": {
@@ -8782,7 +8909,7 @@
 						"type": "object"
 					}
 				],
-				"description": "Typed notification response with parsed metadata and actions\r\nThis ensures type safety when reading notifications from the database\r\nTitle and description are generated from type + metadata, not stored in DB\r\nFor backwards compatibility, uses the generic type"
+				"description": "Typed notification response with parsed metadata and actions\nThis ensures type safety when reading notifications from the database\nTitle and description are generated from type + metadata, not stored in DB\nFor backwards compatibility, uses the generic type"
 			},
 			"PaginatedResponse_TypedNotification_": {
 				"properties": {
@@ -10557,7 +10684,7 @@
 						}
 					}
 				},
-				"description": "Upload a ticket document\r\n\r\nSellers can upload PDF/image documents for their sold tickets.\r\nDocuments must be uploaded before the event ends.",
+				"description": "Upload a ticket document\n\nSellers can upload PDF/image documents for their sold tickets.\nDocuments must be uploaded before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -10648,7 +10775,7 @@
 						}
 					}
 				},
-				"description": "Update/replace a ticket document\r\n\r\nUploads a new version of the document. Previous versions are kept for audit trail.\r\nCan only update before the event ends.",
+				"description": "Update/replace a ticket document\n\nUploads a new version of the document. Previous versions are kept for audit trail.\nCan only update before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -10731,7 +10858,7 @@
 						}
 					}
 				},
-				"description": "Update ticket price\r\n\r\nOnly active tickets (not reserved, sold, or cancelled) can have their price updated.\r\nPrice cannot exceed the ticket wave face value.",
+				"description": "Update ticket price\n\nOnly active tickets (not reserved, sold, or cancelled) can have their price updated.\nPrice cannot exceed the ticket wave face value.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -10806,7 +10933,7 @@
 						}
 					}
 				},
-				"description": "Remove a ticket from listing\r\n\r\nOnly active tickets (not reserved, sold, or cancelled) can be removed.\r\nThis performs a soft delete (sets deletedAt timestamp).",
+				"description": "Remove a ticket from listing\n\nOnly active tickets (not reserved, sold, or cancelled) can be removed.\nThis performs a soft delete (sets deletedAt timestamp).",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -10859,7 +10986,7 @@
 						}
 					}
 				},
-				"description": "Get ticket information with document details\r\n\r\nReturns ticket info including document URL for viewing.\r\nOnly the seller (ticket publisher) can access this endpoint.",
+				"description": "Get ticket information with document details\n\nReturns ticket info including document URL for viewing.\nOnly the seller (ticket publisher) can access this endpoint.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -12895,6 +13022,66 @@
 						}
 					}
 				]
+			},
+			"post": {
+				"operationId": "CreateEvent",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateEventResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateEventRouteBody"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/admin/events/{eventId}": {
@@ -13503,6 +13690,66 @@
 						"in": "path",
 						"name": "imageId",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/events/venues/search": {
+			"get": {
+				"operationId": "SearchVenues",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SearchVenuesResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "q",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}
@@ -15422,7 +15669,7 @@
 						}
 					}
 				},
-				"description": "DEV ONLY — Send a test push notification to all user's subscribed devices.\r\nRemoved before production deployment.",
+				"description": "DEV ONLY — Send a test push notification to all user's subscribed devices.\nRemoved before production deployment.",
 				"tags": [
 					"Notifications"
 				],
@@ -15465,7 +15712,7 @@
 						}
 					}
 				},
-				"description": "Initiate identity verification process\r\n\r\nUser provides document type, number, and country (for passports).\r\nSystem validates the document format and checks for duplicates.",
+				"description": "Initiate identity verification process\n\nUser provides document type, number, and country (for passports).\nSystem validates the document format and checks for duplicates.",
 				"tags": [
 					"Identity Verification"
 				],
@@ -15528,7 +15775,7 @@
 						}
 					}
 				},
-				"description": "Verify document (upload document photo only)\r\n\r\nProcesses uploaded document image:\r\n- Extracts text from document\r\n- Detects face in document\r\n- Validates document number\r\n- Determines if manual review is needed\r\n\r\nFace comparison will happen during liveness check using the liveness reference image",
+				"description": "Verify document (upload document photo only)\n\nProcesses uploaded document image:\n- Extracts text from document\n- Detects face in document\n- Validates document number\n- Determines if manual review is needed\n\nFace comparison will happen during liveness check using the liveness reference image",
 				"tags": [
 					"Identity Verification"
 				],
@@ -15609,7 +15856,7 @@
 						}
 					}
 				},
-				"description": "Start liveness check session\r\n\r\nCreates an AWS Rekognition Face Liveness session for the user.\r\nReturns session ID and region for the frontend to complete the check.",
+				"description": "Start liveness check session\n\nCreates an AWS Rekognition Face Liveness session for the user.\nReturns session ID and region for the frontend to complete the check.",
 				"tags": [
 					"Identity Verification"
 				],
@@ -15652,7 +15899,7 @@
 						}
 					}
 				},
-				"description": "Verify liveness results\r\n\r\nProcesses the results of the liveness check:\r\n- Validates liveness confidence\r\n- Determines if verification is complete or requires manual review\r\n- Updates user verification status",
+				"description": "Verify liveness results\n\nProcesses the results of the liveness check:\n- Validates liveness confidence\n- Determines if verification is complete or requires manual review\n- Updates user verification status",
 				"tags": [
 					"Identity Verification"
 				],
@@ -15729,7 +15976,7 @@
 						}
 					}
 				},
-				"description": "Get temporary AWS credentials for Face Liveness SDK\r\n\r\nThe backend assumes a minimal IAM role that can ONLY call StartFaceLivenessSession.\r\nThis is more secure than Cognito because credentials are only given to authenticated users.\r\nCredentials expire in 15 minutes.",
+				"description": "Get temporary AWS credentials for Face Liveness SDK\n\nThe backend assumes a minimal IAM role that can ONLY call StartFaceLivenessSession.\nThis is more secure than Cognito because credentials are only given to authenticated users.\nCredentials expire in 15 minutes.",
 				"tags": [
 					"Identity Verification"
 				],

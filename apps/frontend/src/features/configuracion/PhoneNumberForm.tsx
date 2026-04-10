@@ -22,15 +22,13 @@ import {
   verifyWhatsappOtpMutation,
 } from '~/lib/api/profile';
 import {toast} from 'sonner';
+import {NODE_ENV} from '~/config/env';
 
 const phoneSchema = z.object({
   phoneNumber: z
     .string()
     .min(1, 'El número de teléfono es requerido')
-    .regex(
-      /^\+?[1-9]\d{6,14}$/,
-      'Ingresá un número de teléfono válido',
-    ),
+    .regex(/^\+?[1-9]\d{6,14}$/, 'Ingresá un número de teléfono válido'),
 });
 
 const otpSchema = z.object({
@@ -84,8 +82,7 @@ export function PhoneNumberForm({initialPhoneNumber}: PhoneNumberFormProps) {
       toast.success('Teléfono verificado');
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.message || 'Código incorrecto.';
+      const message = error?.response?.data?.message || 'Código incorrecto.';
       otpForm.setError('code', {message});
     },
   });
