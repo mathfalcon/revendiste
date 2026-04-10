@@ -57,8 +57,12 @@ RUN apk add --no-cache \
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Skip postinstall scripts (we use system Chromium, not Playwright's downloaded browsers)
-RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @revendiste/backend... 
+# Install production deps as nodejs user so node_modules is owned by nodejs from the start,
+# avoiding a costly recursive chown on ARM64 (was taking ~400s under QEMU/buildx overlay).
+RUN chown nodejs:nodejs /app
+USER nodejs
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @revendiste/backend...
+USER root
 
 # Copy built application
 COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/dist ./apps/backend/dist
@@ -75,16 +79,14 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/s
 COPY --from=builder --chown=nodejs:nodejs /app/packages/transactional/dist ./packages/transactional/dist
 
 # Copy entrypoint script
-COPY deploy/backend-entrypoint.sh /app/apps/backend/entrypoint.sh
+COPY --chown=nodejs:nodejs deploy/backend-entrypoint.sh /app/apps/backend/entrypoint.sh
 
 # Note: Environment variables will be injected by AWS Secrets Manager at runtime
 # No .env file is copied for security reasons
 
 # Fix line endings (CRLF to LF) and make executable
-# Change ownership of node_modules (created by pnpm install, owned by root)
 RUN sed -i 's/\r$//' /app/apps/backend/entrypoint.sh && \
-  chmod +x /app/apps/backend/entrypoint.sh && \
-  chown -R nodejs:nodejs /app/node_modules
+  chmod +x /app/apps/backend/entrypoint.sh
 
 # Expose port
 EXPOSE 3001
