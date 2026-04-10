@@ -273,18 +273,46 @@ export class TickantelScraper extends BaseScraper {
         log.info('Event grid not found on list page');
       });
 
-    // Click "Cargar más resultados" until it disappears
+    // Click "Cargar más resultados" until it disappears.
+    // Tickantel (Wicket) shows a loading overlay during AJAX updates that can
+    // detach the button from the DOM. We use try/catch per click so a single
+    // stale-element error doesn't bubble up and cause Crawlee to retry the
+    // entire LIST request.
     let clicks = 0;
     while (clicks < MAX_LOAD_MORE_CLICKS) {
-      const loadMoreBtn = await page.$('a.cargar-link:visible');
-      if (!loadMoreBtn) break;
+      const isVisible = await page
+        .locator('a.cargar-link')
+        .isVisible()
+        .catch(() => false);
+      if (!isVisible) break;
 
       log.info(`Clicking "Cargar más" (attempt ${clicks + 1})`);
-      await loadMoreBtn.click();
 
-      // Wait for new content to appear after AJAX load
-      await page.waitForTimeout(2000);
-      clicks++;
+      try {
+        // Wait for any loading overlay to clear before clicking
+        await page
+          .waitForSelector('.loading', {state: 'hidden', timeout: 5000})
+          .catch(() => {});
+
+        await page.locator('a.cargar-link').click({timeout: 5000});
+
+        // Wait for AJAX content to load — either new items appear or the
+        // loading overlay finishes
+        await page
+          .waitForSelector('.loading', {state: 'hidden', timeout: 10000})
+          .catch(() => {});
+        await page.waitForTimeout(1000);
+
+        clicks++;
+      } catch (clickError) {
+        // Button was detached or hidden during click (Wicket re-render).
+        // This typically means the AJAX load completed and there are no more
+        // results, or the button was removed. Break out of the loop.
+        log.info(
+          `"Cargar más" click failed (likely no more results): ${clickError instanceof Error ? clickError.message.split('\n')[0] : 'unknown'}`,
+        );
+        break;
+      }
     }
 
     log.info(`Finished loading results after ${clicks} clicks`);

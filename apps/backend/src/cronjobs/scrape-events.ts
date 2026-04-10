@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import {EntrasteScraper} from '../services/scraping/entraste';
 import {RedTicketsScraper} from '../services/scraping/redtickets';
 import {TickantelScraper} from '../services/scraping/tickantel';
+import {BaseScraper, Platform} from '~/services/scraping';
 import {ScrapingService} from '~/services/scraping';
 import {EventsService} from '~/services/events';
 import {VenuesService} from '~/services/venues';
@@ -10,11 +11,31 @@ import {EventsRepository, VenuesRepository} from '~/repositories';
 import {db} from '~/db';
 import {logger, startMemoryMonitor, logMemoryUsage} from '~/utils';
 
+const ALL_SCRAPERS: BaseScraper[] = [
+  new EntrasteScraper(),
+  new RedTicketsScraper(),
+  new TickantelScraper(),
+];
+
 /**
- * Runs the scrape events job logic once
- * Used by production EventBridge + ECS RunTask
+ * Runs the scrape events job logic once.
+ * Used by production EventBridge + ECS RunTask.
+ *
+ * @param platforms - Optional list of platform names to scrape. If empty/undefined, all platforms are scraped.
  */
-export async function runScrapeEvents() {
+export async function runScrapeEvents(platforms?: Platform[]) {
+  const scrapers =
+    platforms && platforms.length > 0
+      ? ALL_SCRAPERS.filter(s => platforms.includes(s.getPlatformName()))
+      : ALL_SCRAPERS;
+
+  if (scrapers.length === 0) {
+    const valid = Object.values(Platform).join(', ');
+    throw new Error(
+      `No matching scrapers for platforms: ${platforms?.join(', ')}. Valid: ${valid}`,
+    );
+  }
+
   const eventsRepository = new EventsRepository(db);
   const venuesRepository = new VenuesRepository(db);
   const googlePlacesService = new GooglePlacesService();
@@ -23,7 +44,7 @@ export async function runScrapeEvents() {
     googlePlacesService,
   );
   const scrapingService = new ScrapingService(
-    [new EntrasteScraper(), new RedTicketsScraper(), new TickantelScraper()],
+    scrapers,
     new EventsService(eventsRepository, venuesRepository),
     venuesService,
   );
