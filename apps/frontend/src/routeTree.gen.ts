@@ -35,15 +35,17 @@ import { Route as CuentaConfiguracionRouteImport } from './routes/cuenta/configu
 import { Route as AdminVerificacionesRouteImport } from './routes/admin/verificaciones'
 import { Route as AdminRetirosRouteImport } from './routes/admin/retiros'
 import { Route as AdminFinanzasRouteImport } from './routes/admin/finanzas'
-import { Route as AdminEventosRouteImport } from './routes/admin/eventos'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminEventosRouteRouteImport } from './routes/admin/eventos/route'
 import { Route as CuentaReportesIndexRouteImport } from './routes/cuenta/reportes/index'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as AdminReportesIndexRouteImport } from './routes/admin/reportes/index'
+import { Route as AdminEventosIndexRouteImport } from './routes/admin/eventos/index'
 import { Route as EventosEnLocationRouteImport } from './routes/eventos/en.$location'
 import { Route as CuentaReportesReportIdRouteImport } from './routes/cuenta/reportes/$reportId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
 import { Route as AdminReportesReportIdRouteImport } from './routes/admin/reportes/$reportId'
+import { Route as AdminEventosEventIdRouteImport } from './routes/admin/eventos/$eventId'
 import { Route as AdminFinanzasLiquidacionesSettlementIdRouteImport } from './routes/admin/finanzas/liquidaciones/$settlementId'
 
 const TerminosYCondicionesRoute = TerminosYCondicionesRouteImport.update({
@@ -177,14 +179,14 @@ const AdminFinanzasRoute = AdminFinanzasRouteImport.update({
   path: '/finanzas',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminEventosRoute = AdminEventosRouteImport.update({
-  id: '/eventos',
-  path: '/eventos',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEventosRouteRoute = AdminEventosRouteRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const CuentaReportesIndexRoute = CuentaReportesIndexRouteImport.update({
@@ -201,6 +203,11 @@ const AdminReportesIndexRoute = AdminReportesIndexRouteImport.update({
   id: '/reportes/',
   path: '/reportes/',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEventosIndexRoute = AdminEventosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminEventosRouteRoute,
 } as any)
 const EventosEnLocationRoute = EventosEnLocationRouteImport.update({
   id: '/eventos/en/$location',
@@ -222,6 +229,11 @@ const AdminReportesReportIdRoute = AdminReportesReportIdRouteImport.update({
   path: '/reportes/$reportId',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminEventosEventIdRoute = AdminEventosEventIdRouteImport.update({
+  id: '/$eventId',
+  path: '/$eventId',
+  getParentRoute: () => AdminEventosRouteRoute,
+} as any)
 const AdminFinanzasLiquidacionesSettlementIdRoute =
   AdminFinanzasLiquidacionesSettlementIdRouteImport.update({
     id: '/liquidaciones/$settlementId',
@@ -239,8 +251,8 @@ export interface FileRoutesByFullPath {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
+  '/admin/eventos': typeof AdminEventosRouteRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/eventos': typeof AdminEventosRoute
   '/admin/finanzas': typeof AdminFinanzasRouteWithChildren
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
@@ -258,10 +270,12 @@ export interface FileRoutesByFullPath {
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/eventos/$eventId': typeof AdminEventosEventIdRoute
   '/admin/reportes/$reportId': typeof AdminReportesReportIdRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/cuenta/reportes/$reportId': typeof CuentaReportesReportIdRoute
   '/eventos/en/$location': typeof EventosEnLocationRoute
+  '/admin/eventos/': typeof AdminEventosIndexRoute
   '/admin/reportes/': typeof AdminReportesIndexRoute
   '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
   '/cuenta/reportes/': typeof CuentaReportesIndexRoute
@@ -277,7 +291,6 @@ export interface FileRoutesByTo {
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/eventos': typeof AdminEventosRoute
   '/admin/finanzas': typeof AdminFinanzasRouteWithChildren
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
@@ -295,10 +308,12 @@ export interface FileRoutesByTo {
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/eventos/$eventId': typeof AdminEventosEventIdRoute
   '/admin/reportes/$reportId': typeof AdminReportesReportIdRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/cuenta/reportes/$reportId': typeof CuentaReportesReportIdRoute
   '/eventos/en/$location': typeof EventosEnLocationRoute
+  '/admin/eventos': typeof AdminEventosIndexRoute
   '/admin/reportes': typeof AdminReportesIndexRoute
   '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
   '/cuenta/reportes': typeof CuentaReportesIndexRoute
@@ -315,8 +330,8 @@ export interface FileRoutesById {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
+  '/admin/eventos': typeof AdminEventosRouteRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/eventos': typeof AdminEventosRoute
   '/admin/finanzas': typeof AdminFinanzasRouteWithChildren
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
@@ -334,10 +349,12 @@ export interface FileRoutesById {
   '/ingresar/$': typeof IngresarSplatRoute
   '/registrarse/$': typeof RegistrarseSplatRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/eventos/$eventId': typeof AdminEventosEventIdRoute
   '/admin/reportes/$reportId': typeof AdminReportesReportIdRoute
   '/checkout/$orderId/success': typeof CheckoutOrderIdSuccessRoute
   '/cuenta/reportes/$reportId': typeof CuentaReportesReportIdRoute
   '/eventos/en/$location': typeof EventosEnLocationRoute
+  '/admin/eventos/': typeof AdminEventosIndexRoute
   '/admin/reportes/': typeof AdminReportesIndexRoute
   '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
   '/cuenta/reportes/': typeof CuentaReportesIndexRoute
@@ -355,8 +372,8 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
-    | '/admin/dashboard'
     | '/admin/eventos'
+    | '/admin/dashboard'
     | '/admin/finanzas'
     | '/admin/retiros'
     | '/admin/verificaciones'
@@ -374,10 +391,12 @@ export interface FileRouteTypes {
     | '/ingresar/$'
     | '/registrarse/$'
     | '/admin/'
+    | '/admin/eventos/$eventId'
     | '/admin/reportes/$reportId'
     | '/checkout/$orderId/success'
     | '/cuenta/reportes/$reportId'
     | '/eventos/en/$location'
+    | '/admin/eventos/'
     | '/admin/reportes/'
     | '/checkout/$orderId/'
     | '/cuenta/reportes/'
@@ -393,7 +412,6 @@ export interface FileRouteTypes {
     | '/sitemap'
     | '/terminos-y-condiciones'
     | '/admin/dashboard'
-    | '/admin/eventos'
     | '/admin/finanzas'
     | '/admin/retiros'
     | '/admin/verificaciones'
@@ -411,10 +429,12 @@ export interface FileRouteTypes {
     | '/ingresar/$'
     | '/registrarse/$'
     | '/admin'
+    | '/admin/eventos/$eventId'
     | '/admin/reportes/$reportId'
     | '/checkout/$orderId/success'
     | '/cuenta/reportes/$reportId'
     | '/eventos/en/$location'
+    | '/admin/eventos'
     | '/admin/reportes'
     | '/checkout/$orderId'
     | '/cuenta/reportes'
@@ -430,8 +450,8 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
-    | '/admin/dashboard'
     | '/admin/eventos'
+    | '/admin/dashboard'
     | '/admin/finanzas'
     | '/admin/retiros'
     | '/admin/verificaciones'
@@ -449,10 +469,12 @@ export interface FileRouteTypes {
     | '/ingresar/$'
     | '/registrarse/$'
     | '/admin/'
+    | '/admin/eventos/$eventId'
     | '/admin/reportes/$reportId'
     | '/checkout/$orderId/success'
     | '/cuenta/reportes/$reportId'
     | '/eventos/en/$location'
+    | '/admin/eventos/'
     | '/admin/reportes/'
     | '/checkout/$orderId/'
     | '/cuenta/reportes/'
@@ -664,18 +686,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFinanzasRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/eventos': {
-      id: '/admin/eventos'
-      path: '/eventos'
-      fullPath: '/admin/eventos'
-      preLoaderRoute: typeof AdminEventosRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/eventos': {
+      id: '/admin/eventos'
+      path: '/eventos'
+      fullPath: '/admin/eventos'
+      preLoaderRoute: typeof AdminEventosRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/cuenta/reportes/': {
@@ -698,6 +720,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/reportes/'
       preLoaderRoute: typeof AdminReportesIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/eventos/': {
+      id: '/admin/eventos/'
+      path: '/'
+      fullPath: '/admin/eventos/'
+      preLoaderRoute: typeof AdminEventosIndexRouteImport
+      parentRoute: typeof AdminEventosRouteRoute
     }
     '/eventos/en/$location': {
       id: '/eventos/en/$location'
@@ -727,6 +756,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReportesReportIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/eventos/$eventId': {
+      id: '/admin/eventos/$eventId'
+      path: '/$eventId'
+      fullPath: '/admin/eventos/$eventId'
+      preLoaderRoute: typeof AdminEventosEventIdRouteImport
+      parentRoute: typeof AdminEventosRouteRoute
+    }
     '/admin/finanzas/liquidaciones/$settlementId': {
       id: '/admin/finanzas/liquidaciones/$settlementId'
       path: '/liquidaciones/$settlementId'
@@ -736,6 +772,19 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AdminEventosRouteRouteChildren {
+  AdminEventosEventIdRoute: typeof AdminEventosEventIdRoute
+  AdminEventosIndexRoute: typeof AdminEventosIndexRoute
+}
+
+const AdminEventosRouteRouteChildren: AdminEventosRouteRouteChildren = {
+  AdminEventosEventIdRoute: AdminEventosEventIdRoute,
+  AdminEventosIndexRoute: AdminEventosIndexRoute,
+}
+
+const AdminEventosRouteRouteWithChildren =
+  AdminEventosRouteRoute._addFileChildren(AdminEventosRouteRouteChildren)
 
 interface AdminFinanzasRouteChildren {
   AdminFinanzasLiquidacionesSettlementIdRoute: typeof AdminFinanzasLiquidacionesSettlementIdRoute
@@ -751,8 +800,8 @@ const AdminFinanzasRouteWithChildren = AdminFinanzasRoute._addFileChildren(
 )
 
 interface AdminRouteRouteChildren {
+  AdminEventosRouteRoute: typeof AdminEventosRouteRouteWithChildren
   AdminDashboardRoute: typeof AdminDashboardRoute
-  AdminEventosRoute: typeof AdminEventosRoute
   AdminFinanzasRoute: typeof AdminFinanzasRouteWithChildren
   AdminRetirosRoute: typeof AdminRetirosRoute
   AdminVerificacionesRoute: typeof AdminVerificacionesRoute
@@ -762,8 +811,8 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminEventosRouteRoute: AdminEventosRouteRouteWithChildren,
   AdminDashboardRoute: AdminDashboardRoute,
-  AdminEventosRoute: AdminEventosRoute,
   AdminFinanzasRoute: AdminFinanzasRouteWithChildren,
   AdminRetirosRoute: AdminRetirosRoute,
   AdminVerificacionesRoute: AdminVerificacionesRoute,

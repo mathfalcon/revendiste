@@ -446,6 +446,21 @@ export const adminSettlementsQueryOptions = (
   });
 };
 
+// Venues
+
+export const searchVenuesQueryOptions = (query: string) => {
+  return queryOptions({
+    queryKey: ['admin', 'venues', 'search', query],
+    queryFn: async () => {
+      if (!query.trim()) {
+        return [];
+      }
+      const response = await api.admin.searchVenues({q: query, limit: 20});
+      return response.data;
+    },
+  });
+};
+
 export const adminSettlementDetailsQueryOptions = (settlementId: string) => {
   return queryOptions({
     queryKey: ['admin', 'settlements', settlementId],
@@ -507,6 +522,37 @@ export const failSettlementMutation = () => {
       reason?: string;
     }) => {
       const response = await api.admin.failSettlement(settlementId, {reason});
+      return response.data;
+    },
+  };
+};
+
+// Create Event
+
+export const createEventMutation = () => {
+  return {
+    mutationFn: async (data: {
+      name: string;
+      description?: string | null;
+      externalId: string;
+      platform: string;
+      eventStartDate: string;
+      eventEndDate: string;
+      venueId?: string;
+      venueName?: string;
+      venueAddress?: string;
+      venueCity?: string;
+      externalUrl?: string;
+      qrAvailabilityTiming?: '3h' | '6h' | '12h' | '24h' | '48h' | '72h' | null;
+      status: 'active' | 'inactive';
+      ticketWaves?: Array<{
+        name: string;
+        description?: string | null;
+        faceValue: number;
+        currency: 'UYU' | 'USD';
+      }>;
+    }) => {
+      const response = await api.admin.createEvent(data);
       return response.data;
     },
   };

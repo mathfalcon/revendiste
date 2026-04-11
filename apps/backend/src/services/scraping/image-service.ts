@@ -26,6 +26,9 @@ const OG_BAR_BLUR = 20;
 const OG_BAR_BLUR_CONTEXT_TOP = Math.ceil(OG_BAR_BLUR * 2.5);
 const OG_BLUR_SIGMA = 30;
 
+/** Event list cards: desktop image ~280px tall → 2× DPR square crop for sharp display (object-cover, centre). */
+const EVENT_IMAGE_THUMB_SIZE = 560;
+
 // Ticket element colors in the watermark SVG
 const TICKET_COLOR_DARK = '#a6165c';  // Original dark magenta — visible on light backgrounds
 const TICKET_COLOR_LIGHT = '#f2659c'; // Bright pink — visible on dark backgrounds
@@ -516,9 +519,9 @@ export class EventImageService {
   private async generateThumbnail(buffer: Buffer): Promise<Buffer> {
     try {
       const thumbnail = await sharp(buffer)
-        .resize(400, undefined, {
-          withoutEnlargement: true,
-          fit: 'inside',
+        .resize(EVENT_IMAGE_THUMB_SIZE, EVENT_IMAGE_THUMB_SIZE, {
+          fit: 'cover',
+          position: 'centre',
         })
         .webp({
           quality: 75,

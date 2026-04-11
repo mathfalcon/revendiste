@@ -4,6 +4,7 @@ import {Link} from '@tanstack/react-router';
 import {FullLogo} from '~/assets';
 import {VITE_APP_VERSION, VITE_APP_ENV} from '~/config/env';
 import {useHasStickyBar} from '~/contexts';
+import {SOCIAL_LINKS} from '@revendiste/shared';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -86,32 +87,48 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h3 className='text-sm font-semibold mb-4'>Recursos</h3>
+            <h3 className='text-sm font-semibold mb-4'>Nuestras redes</h3>
             <ul className='space-y-3'>
               <li>
                 <a
-                  href='/sitemap'
+                  href={SOCIAL_LINKS.instagram}
+                  target='_blank'
+                  rel='noopener noreferrer'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
                 >
-                  Mapa del Sitio
+                  Instagram
                 </a>
               </li>
-              {/* <li>
-                <Link
-                  to='/acerca-de'
+              <li>
+                <a
+                  href={SOCIAL_LINKS.tiktok}
+                  target='_blank'
+                  rel='noopener noreferrer'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
                 >
-                  Acerca de Nosotros
-                </Link>
-              </li> */}
-              {/* <li>
-                <Link
-                  to='/blog'
+                  TikTok
+                </a>
+              </li>
+              <li>
+                <a
+                  href={SOCIAL_LINKS.twitter}
+                  target='_blank'
+                  rel='noopener noreferrer'
                   className='text-sm text-muted-foreground hover:text-foreground transition-colors'
                 >
-                  Blog
-                </Link>
-              </li> */}
+                  Twitter / X
+                </a>
+              </li>
+              <li>
+                <a
+                  href={SOCIAL_LINKS.whatsapp}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+                >
+                  WhatsApp
+                </a>
+              </li>
             </ul>
           </div>
         </div>

@@ -164,4 +164,5 @@ export * from './base/types';
 export * from './base';
 export * from './entraste';
 export * from './redtickets';
+export * from './tickantel';
 export * from './image-service';

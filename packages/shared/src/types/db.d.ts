@@ -93,6 +93,34 @@ export type UserRole = "admin" | "organizer" | "user";
 
 export type VerificationStatusEnum = "completed" | "failed" | "pending" | "rejected" | "requires_manual_review";
 
+export interface DlocalSettlementPayments {
+  amount: Numeric;
+  createdAt: Generated<Timestamp>;
+  currency: string;
+  description: string | null;
+  exchangeRate: Numeric | null;
+  fees: Numeric | null;
+  id: string;
+  metadata: Json | null;
+  netAmount: Numeric;
+  operationId: string;
+  payoutId: string | null;
+  settlementId: string;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface DlocalSettlements {
+  createdAt: Generated<Timestamp>;
+  currency: string;
+  id: string;
+  metadata: Json | null;
+  settlementDate: Timestamp;
+  settlementId: string;
+  status: string;
+  totalAmount: Numeric;
+  updatedAt: Generated<Timestamp>;
+}
+
 export interface EventImages {
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
@@ -601,6 +629,8 @@ export interface VerificationAuditLogs {
 }
 
 export interface DB {
+  dlocalSettlementPayments: DlocalSettlementPayments;
+  dlocalSettlements: DlocalSettlements;
   eventImages: EventImages;
   events: Events;
   eventTicketWaves: EventTicketWaves;

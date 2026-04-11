@@ -10,7 +10,7 @@ type EventCardProps = {
   id: string;
   slug: string;
   imageUrl?: string;
-  /** From API when present; null until backfill / new uploads */
+  /** 560×560 list thumb from API when present; preferred over imageUrl for this card */
   thumbnailUrl?: string | null;
   name: string;
   date: string;

@@ -15,7 +15,7 @@ import {
 } from '~/components/ui/carousel';
 import {TextEllipsis} from '~/components/ui/text-ellipsis';
 import {Button} from '~/components/ui/button';
-import {getCurrencySymbol} from '~/utils';
+import {getCurrencySymbol, getEventDisplayImage} from '~/utils';
 import {cn} from '~/lib/utils';
 
 type TrendingEvent = {
@@ -32,9 +32,7 @@ type TrendingEvent = {
 
 const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
   const navigate = useNavigate();
-  const flyerImage =
-    event.eventImages.find(img => img.imageType === 'flyer') ||
-    event.eventImages[0];
+  const primaryImage = getEventDisplayImage(event.eventImages);
 
   const hasTickets = event.lowestAvailableTicketPrice !== null;
   const currency =
@@ -61,9 +59,9 @@ const TrendingEventCard = ({event}: {event: TrendingEvent}) => {
     >
       {/* Image - Left side */}
       <div className='relative w-28 sm:w-36 h-full overflow-hidden shrink-0'>
-        {flyerImage ? (
+        {primaryImage ? (
           <img
-            src={flyerImage.thumbnailUrl || flyerImage.url}
+            src={primaryImage.thumbnailUrl || primaryImage.url}
             alt={event.name}
             width={144}
             height={144}

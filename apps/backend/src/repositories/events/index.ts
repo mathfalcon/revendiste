@@ -1,13 +1,13 @@
-import { type Kysely, type Updateable } from 'kysely';
-import type { DB, EventImageType, Events } from '@revendiste/shared';
-import type { ScrapedEventData } from '../../services/scraping';
-import { logger } from '~/utils';
-import { jsonArrayFrom } from 'kysely/helpers/postgres';
+import {type Kysely, type Updateable, type Insertable} from 'kysely';
+import type {DB, EventImageType, Events} from '@revendiste/shared';
+import type {ScrapedEventData} from '../../services/scraping';
+import {logger} from '~/utils';
+import {jsonArrayFrom} from 'kysely/helpers/postgres';
 import {mapToPaginatedResponse} from '~/middleware/pagination';
-import { sql } from 'kysely';
-import { BaseRepository } from '../base';
-import type { PaginationOptions } from '~/types/pagination';
-import { getStorageProvider } from '~/services';
+import {sql} from 'kysely';
+import {BaseRepository} from '../base';
+import type {PaginationOptions} from '~/types/pagination';
+import {getStorageProvider} from '~/services';
 
 export class EventsRepository extends BaseRepository<EventsRepository> {
   withTransaction(trx: Kysely<DB>): EventsRepository {
@@ -24,7 +24,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
   }
 
   // Upsert event with all related data in a single transaction
-  async upsertScrapedEvent(event: ScrapedEventData & { slug: string }) {
+  async upsertScrapedEvent(event: ScrapedEventData & {slug: string}) {
     return await this.db.transaction().execute(async trx => {
       const now = new Date();
 
@@ -35,7 +35,9 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         .where('externalId', '=', event.externalId)
         .executeTakeFirst();
 
-      const wasDeleted = existingEvent?.deletedAt !== null && existingEvent?.deletedAt !== undefined;
+      const wasDeleted =
+        existingEvent?.deletedAt !== null &&
+        existingEvent?.deletedAt !== undefined;
 
       // Upsert the main event
       const [upsertedEvent] = await trx
@@ -154,7 +156,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
   }
 
   // Batch process events - each event in its own transaction
-  async upsertEventsBatch(events: (ScrapedEventData & { slug: string })[]) {
+  async upsertEventsBatch(events: (ScrapedEventData & {slug: string})[]) {
     if (events.length === 0) {
       return [];
     }
@@ -178,7 +180,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
 
   async updateEventImages(
     eventId: string,
-    images: Array<{ type: EventImageType; url: string; thumbnailUrl?: string }>,
+    images: Array<{type: EventImageType; url: string; thumbnailUrl?: string}>,
   ) {
     return await this.db.transaction().execute(async trx => {
       const now = new Date();
@@ -222,8 +224,11 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       tzOffset?: number;
     },
   ) {
-    const { page, limit, offset, sortBy, sortOrder } = pagination;
-    const hasLocationFilter = !!filters?.city || !!filters?.region || (filters?.lat != null && filters?.lng != null);
+    const {page, limit, offset, sortBy, sortOrder} = pagination;
+    const hasLocationFilter =
+      !!filters?.city ||
+      !!filters?.region ||
+      (filters?.lat != null && filters?.lng != null);
     // tzOffset from browser: minutes from UTC (e.g. 180 for UTC-3). Convert to hours. Default to UTC-3 (Uruguay).
     const tzOffsetHours = filters?.tzOffset != null ? filters.tzOffset / 60 : 3;
 
@@ -243,7 +248,9 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
 
       countQuery = countQuery
         .innerJoin('eventVenues', 'eventVenues.id', 'events.venueId')
-        .$if(!!filters?.city, qb => qb.where('eventVenues.city', '=', filters!.city!))
+        .$if(!!filters?.city, qb =>
+          qb.where('eventVenues.city', '=', filters!.city!),
+        )
         .$if(!!filters?.region, qb => {
           const regions = filters!.region!.split(',').map(r => r.trim());
           return regions.length === 1
@@ -254,10 +261,26 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
           qb
             .where('eventVenues.latitude', 'is not', null)
             .where('eventVenues.longitude', 'is not', null)
-            .where('eventVenues.latitude', '>=', (lat! - radiusDegrees).toString())
-            .where('eventVenues.latitude', '<=', (lat! + radiusDegrees).toString())
-            .where('eventVenues.longitude', '>=', (lng! - radiusDegrees).toString())
-            .where('eventVenues.longitude', '<=', (lng! + radiusDegrees).toString())
+            .where(
+              'eventVenues.latitude',
+              '>=',
+              (lat! - radiusDegrees).toString(),
+            )
+            .where(
+              'eventVenues.latitude',
+              '<=',
+              (lat! + radiusDegrees).toString(),
+            )
+            .where(
+              'eventVenues.longitude',
+              '>=',
+              (lng! - radiusDegrees).toString(),
+            )
+            .where(
+              'eventVenues.longitude',
+              '<=',
+              (lng! + radiusDegrees).toString(),
+            )
             .where(
               sql<boolean>`6371000 * 2 * ASIN(SQRT(
                 POWER(SIN((RADIANS(${lat!}) - RADIANS(event_venues.latitude)) / 2), 2) +
@@ -270,12 +293,16 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
 
     if (filters?.dateFrom) {
       const [year, month, day] = filters.dateFrom.split('-').map(Number);
-      const fromUtc = new Date(Date.UTC(year!, month! - 1, day!, tzOffsetHours, 0, 0));
+      const fromUtc = new Date(
+        Date.UTC(year!, month! - 1, day!, tzOffsetHours, 0, 0),
+      );
       countQuery = countQuery.where('events.eventStartDate', '>=', fromUtc);
     }
     if (filters?.dateTo) {
       const [year, month, day] = filters.dateTo.split('-').map(Number);
-      const nextDayUtc = new Date(Date.UTC(year!, month! - 1, day! + 1, tzOffsetHours, 0, 0));
+      const nextDayUtc = new Date(
+        Date.UTC(year!, month! - 1, day! + 1, tzOffsetHours, 0, 0),
+      );
       countQuery = countQuery.where('events.eventStartDate', '<', nextDayUtc);
     }
     if (filters?.hasTickets) {
@@ -417,23 +444,41 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       ])
       .where('events.deletedAt', 'is', null)
       .where('events.status', '=', 'active')
-      .$if(!!filters?.city, qb => qb.where('eventVenues.city', '=', filters!.city!))
+      .$if(!!filters?.city, qb =>
+        qb.where('eventVenues.city', '=', filters!.city!),
+      )
       .$if(!!filters?.region, qb => {
-          const regions = filters!.region!.split(',').map(r => r.trim());
-          return regions.length === 1
-            ? qb.where('eventVenues.region', '=', regions[0])
-            : qb.where('eventVenues.region', 'in', regions);
-        })
+        const regions = filters!.region!.split(',').map(r => r.trim());
+        return regions.length === 1
+          ? qb.where('eventVenues.region', '=', regions[0])
+          : qb.where('eventVenues.region', 'in', regions);
+      })
       .$if(filters?.lat != null && filters?.lng != null, qb => {
         const radiusMeters = (filters!.radiusKm ?? 30) * 1000;
         const radiusDegrees = radiusMeters / 111320;
         return qb
           .where('eventVenues.latitude', 'is not', null)
           .where('eventVenues.longitude', 'is not', null)
-          .where('eventVenues.latitude', '>=', (filters!.lat! - radiusDegrees).toString())
-          .where('eventVenues.latitude', '<=', (filters!.lat! + radiusDegrees).toString())
-          .where('eventVenues.longitude', '>=', (filters!.lng! - radiusDegrees).toString())
-          .where('eventVenues.longitude', '<=', (filters!.lng! + radiusDegrees).toString())
+          .where(
+            'eventVenues.latitude',
+            '>=',
+            (filters!.lat! - radiusDegrees).toString(),
+          )
+          .where(
+            'eventVenues.latitude',
+            '<=',
+            (filters!.lat! + radiusDegrees).toString(),
+          )
+          .where(
+            'eventVenues.longitude',
+            '>=',
+            (filters!.lng! - radiusDegrees).toString(),
+          )
+          .where(
+            'eventVenues.longitude',
+            '<=',
+            (filters!.lng! + radiusDegrees).toString(),
+          )
           .where(
             sql<boolean>`6371000 * 2 * ASIN(SQRT(
               POWER(SIN((RADIANS(${filters!.lat!}) - RADIANS(event_venues.latitude)) / 2), 2) +
@@ -444,12 +489,16 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       })
       .$if(!!filters?.dateFrom, qb => {
         const [year, month, day] = filters!.dateFrom!.split('-').map(Number);
-        const fromUtc = new Date(Date.UTC(year!, month! - 1, day!, tzOffsetHours, 0, 0));
+        const fromUtc = new Date(
+          Date.UTC(year!, month! - 1, day!, tzOffsetHours, 0, 0),
+        );
         return qb.where('events.eventStartDate', '>=', fromUtc);
       })
       .$if(!!filters?.dateTo, qb => {
         const [year, month, day] = filters!.dateTo!.split('-').map(Number);
-        const nextDayUtc = new Date(Date.UTC(year!, month! - 1, day! + 1, tzOffsetHours, 0, 0));
+        const nextDayUtc = new Date(
+          Date.UTC(year!, month! - 1, day! + 1, tzOffsetHours, 0, 0),
+        );
         return qb.where('events.eventStartDate', '<', nextDayUtc);
       })
       .$if(!!filters?.hasTickets, qb =>
@@ -896,7 +945,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       status?: 'active' | 'inactive';
     } = {},
   ) {
-    const { page, limit, offset } = pagination;
+    const {page, limit, offset} = pagination;
     const now = new Date();
 
     // Build count query
@@ -1074,6 +1123,17 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .executeTakeFirst();
 
     return event ?? null;
+  }
+
+  /**
+   * Create a new event (for manual admin creation)
+   */
+  async createEvent(data: Insertable<Events>) {
+    return await this.db
+      .insertInto('events')
+      .values(data)
+      .returningAll()
+      .executeTakeFirstOrThrow();
   }
 
   /**

@@ -8,6 +8,7 @@
 import React, {type ReactNode} from 'react';
 import {
   Body,
+  Column,
   Container,
   Head,
   Heading,
@@ -16,6 +17,7 @@ import {
   Img,
   Link,
   Preview,
+  Row,
   Section,
   Tailwind,
   Text,
@@ -75,29 +77,59 @@ export function BaseEmail({
                 Este es un mensaje automático de Revendiste. Por favor, no
                 respondas a este correo.
               </Text>
-              <Text className="text-xs text-muted-foreground text-center m-0 mb-2">
-                <Link
-                  href={appBaseUrl}
-                  className="text-primary no-underline hover:underline"
-                >
-                  Visita Revendiste
-                </Link>
-              </Text>
-              <Text className="text-xs text-muted-foreground text-center m-0">
-                <Link
-                  href="https://www.instagram.com/revendisteuy"
-                  className="text-primary no-underline hover:underline"
-                >
-                  Instagram
-                </Link>
-                {' • '}
-                <Link
-                  href="https://x.com/revendiste"
-                  className="text-primary no-underline hover:underline"
-                >
-                  Twitter
-                </Link>
-              </Text>
+              <Row>
+                <Column align="center">
+                  <Link
+                    href={appBaseUrl}
+                    className="text-primary no-underline text-xs"
+                  >
+                    Visita Revendiste
+                  </Link>
+                </Column>
+              </Row>
+              <Row>
+                <Column align="center">
+                  <Link
+                    href="https://www.instagram.com/revendiste.uy"
+                    className="text-primary no-underline text-xs"
+                  >
+                    Instagram
+                  </Link>
+                </Column>
+                <Column align="center" style={{width: '8px'}}>
+                  <Text className="text-xs text-muted-foreground m-0">•</Text>
+                </Column>
+                <Column align="center">
+                  <Link
+                    href="https://www.tiktok.com/@revendiste"
+                    className="text-primary no-underline text-xs"
+                  >
+                    TikTok
+                  </Link>
+                </Column>
+                <Column align="center" style={{width: '8px'}}>
+                  <Text className="text-xs text-muted-foreground m-0">•</Text>
+                </Column>
+                <Column align="center">
+                  <Link
+                    href="https://x.com/revendiste"
+                    className="text-primary no-underline text-xs"
+                  >
+                    Twitter / X
+                  </Link>
+                </Column>
+                <Column align="center" style={{width: '8px'}}>
+                  <Text className="text-xs text-muted-foreground m-0">•</Text>
+                </Column>
+                <Column align="center">
+                  <Link
+                    href="https://wa.me/59899303326"
+                    className="text-primary no-underline text-xs"
+                  >
+                    WhatsApp
+                  </Link>
+                </Column>
+              </Row>
             </Section>
           </Container>
         </Body>

@@ -375,13 +375,13 @@
 							"type": "object",
 							"nullable": true
 						},
-						"totalViews": {
-							"type": "number",
-							"format": "double"
-						},
 						"eventImages": {
 							"items": {
 								"properties": {
+									"thumbnailUrl": {
+										"type": "string",
+										"nullable": true
+									},
 									"imageType": {
 										"$ref": "#/components/schemas/EventImageType"
 									},
@@ -390,12 +390,17 @@
 									}
 								},
 								"required": [
+									"thumbnailUrl",
 									"imageType",
 									"url"
 								],
 								"type": "object"
 							},
 							"type": "array"
+						},
+						"totalViews": {
+							"type": "number",
+							"format": "double"
 						},
 						"lowestAvailableTicketCurrency": {
 							"type": "string",
@@ -448,8 +453,8 @@
 					},
 					"required": [
 						"venue",
-						"totalViews",
 						"eventImages",
+						"totalViews",
 						"lowestAvailableTicketCurrency",
 						"lowestAvailableTicketPrice",
 						"updatedAt",
@@ -2637,9 +2642,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -2650,6 +2652,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -2709,10 +2714,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -3529,9 +3534,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -3542,6 +3544,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -3631,9 +3636,6 @@
 									"type": "number",
 									"format": "double"
 								},
-								"payoutId": {
-									"type": "string"
-								},
 								"originalName": {
 									"type": "string"
 								},
@@ -3644,6 +3646,9 @@
 									"type": "string"
 								},
 								"documentType": {
+									"type": "string"
+								},
+								"payoutId": {
 									"type": "string"
 								},
 								"updatedAt": {
@@ -3671,11 +3676,11 @@
 								"uploadedAt",
 								"storagePath",
 								"sizeBytes",
-								"payoutId",
 								"originalName",
 								"mimeType",
 								"fileName",
 								"documentType",
+								"payoutId",
 								"updatedAt",
 								"id",
 								"deletedAt",
@@ -3692,9 +3697,6 @@
 								"createdBy": {
 									"type": "string",
 									"nullable": true
-								},
-								"payoutId": {
-									"type": "string"
 								},
 								"userAgent": {
 									"type": "string",
@@ -3744,6 +3746,9 @@
 									],
 									"nullable": true
 								},
+								"payoutId": {
+									"type": "string"
+								},
 								"id": {
 									"type": "string"
 								},
@@ -3754,13 +3759,13 @@
 							},
 							"required": [
 								"createdBy",
-								"payoutId",
 								"userAgent",
 								"toStatus",
 								"ipAddress",
 								"fromStatus",
 								"eventType",
 								"eventData",
+								"payoutId",
 								"id",
 								"createdAt"
 							],
@@ -3830,10 +3835,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"id",
@@ -3845,7 +3850,7 @@
 				],
 				"type": "object"
 			},
-			"PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--amount-string--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
+			"PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--amount-string--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -3967,9 +3972,6 @@
 									"format": "date-time",
 									"nullable": true
 								},
-								"amount": {
-									"type": "string"
-								},
 								"completedAt": {
 									"type": "string",
 									"format": "date-time",
@@ -3980,6 +3982,9 @@
 								},
 								"currency": {
 									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"amount": {
+									"type": "string"
 								},
 								"updatedAt": {
 									"type": "string",
@@ -4037,10 +4042,10 @@
 								"notes",
 								"failureReason",
 								"failedAt",
-								"amount",
 								"completedAt",
 								"sellerUserId",
 								"currency",
+								"amount",
 								"updatedAt",
 								"status",
 								"metadata",
@@ -4063,7 +4068,7 @@
 				"additionalProperties": false
 			},
 			"GetPayoutsResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--amount-string--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--amount-string--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
 			},
 			"infer_typeofAdminPayoutsQuerySchema_": {
 				"properties": {
@@ -4173,9 +4178,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4186,6 +4188,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4352,9 +4357,6 @@
 									"type": "number",
 									"format": "double"
 								},
-								"payoutId": {
-									"type": "string"
-								},
 								"originalName": {
 									"type": "string"
 								},
@@ -4365,6 +4367,9 @@
 									"type": "string"
 								},
 								"documentType": {
+									"type": "string"
+								},
+								"payoutId": {
 									"type": "string"
 								},
 								"updatedAt": {
@@ -4392,11 +4397,11 @@
 								"uploadedAt",
 								"storagePath",
 								"sizeBytes",
-								"payoutId",
 								"originalName",
 								"mimeType",
 								"fileName",
 								"documentType",
+								"payoutId",
 								"updatedAt",
 								"id",
 								"deletedAt",
@@ -4469,10 +4474,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"id",
@@ -4523,9 +4528,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4536,6 +4538,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4595,10 +4600,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -4665,9 +4670,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4678,6 +4680,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4737,10 +4742,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -4800,9 +4805,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4813,6 +4815,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4872,10 +4877,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -4935,9 +4940,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4948,6 +4950,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -5007,10 +5012,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -5086,9 +5091,6 @@
 						"format": "date-time",
 						"nullable": true
 					},
-					"amount": {
-						"type": "string"
-					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -5099,6 +5101,9 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"amount": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -5158,10 +5163,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
-					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
+					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -5211,9 +5216,6 @@
 								"type": "number",
 								"format": "double"
 							},
-							"payoutId": {
-								"type": "string"
-							},
 							"originalName": {
 								"type": "string"
 							},
@@ -5224,6 +5226,9 @@
 								"type": "string"
 							},
 							"documentType": {
+								"type": "string"
+							},
+							"payoutId": {
 								"type": "string"
 							},
 							"updatedAt": {
@@ -5248,11 +5253,11 @@
 							"uploadedAt",
 							"storagePath",
 							"sizeBytes",
-							"payoutId",
 							"originalName",
 							"mimeType",
 							"fileName",
 							"documentType",
+							"payoutId",
 							"updatedAt",
 							"id",
 							"deletedAt",
@@ -6267,6 +6272,107 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CreateEventResponse": {
+				"$ref": "#/components/schemas/UpdatedEvent"
+			},
+			"CreateEventRouteBody": {
+				"properties": {
+					"ticketWaves": {
+						"items": {
+							"properties": {
+								"description": {
+									"type": "string",
+									"nullable": true
+								},
+								"currency": {
+									"type": "string",
+									"enum": [
+										"USD",
+										"UYU"
+									]
+								},
+								"faceValue": {
+									"type": "number",
+									"format": "double"
+								},
+								"name": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"currency",
+								"faceValue",
+								"name"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"qrAvailabilityTiming": {
+						"type": "string",
+						"enum": [
+							"12h",
+							"24h",
+							"3h",
+							"48h",
+							"6h",
+							"72h",
+							null
+						],
+						"nullable": true
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"venueCity": {
+						"type": "string"
+					},
+					"venueAddress": {
+						"type": "string"
+					},
+					"venueName": {
+						"type": "string"
+					},
+					"venueId": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"active",
+							"inactive"
+						]
+					},
+					"eventEndDate": {
+						"type": "string"
+					},
+					"eventStartDate": {
+						"type": "string"
+					},
+					"platform": {
+						"type": "string"
+					},
+					"externalId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"status",
+					"eventEndDate",
+					"eventStartDate",
+					"platform",
+					"externalId",
+					"name"
+				],
+				"type": "object"
+			},
 			"UpdateEventResponse": {
 				"$ref": "#/components/schemas/UpdatedEvent"
 			},
@@ -6724,6 +6830,32 @@
 			},
 			"DeleteEventImageResponse": {
 				"$ref": "#/components/schemas/DeleteImageResponse"
+			},
+			"SearchVenuesResponse": {
+				"items": {
+					"properties": {
+						"city": {
+							"type": "string"
+						},
+						"address": {
+							"type": "string"
+						},
+						"name": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"city",
+						"address",
+						"name",
+						"id"
+					],
+					"type": "object"
+				},
+				"type": "array"
 			},
 			"CurrentUserMeResponse": {
 				"properties": {
@@ -14059,6 +14191,66 @@
 						}
 					}
 				]
+			},
+			"post": {
+				"operationId": "CreateEvent",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateEventResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateEventRouteBody"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/admin/events/{eventId}": {
@@ -14667,6 +14859,66 @@
 						"in": "path",
 						"name": "imageId",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/events/venues/search": {
+			"get": {
+				"operationId": "SearchVenues",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SearchVenuesResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Events"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "q",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}

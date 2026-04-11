@@ -1,7 +1,11 @@
-import type {Kysely} from 'kysely';
-import type {DB} from '@revendiste/shared';
+import type {Kysely, Insertable} from 'kysely';
+import type {DB, Events} from '@revendiste/shared';
 import type {EventImageType} from '@revendiste/shared';
-import {EventsRepository, EventTicketWavesRepository} from '~/repositories';
+import {
+  EventsRepository,
+  EventTicketWavesRepository,
+  VenuesRepository,
+} from '~/repositories';
 import {NotFoundError, ValidationError, BadRequestError} from '~/errors';
 import {
   ADMIN_EVENTS_ERROR_MESSAGES,
@@ -11,6 +15,7 @@ import {EventImageService} from '~/services/scraping/image-service';
 import {getStorageProvider} from '~/services';
 import {logger} from '~/utils';
 import type {PaginationOptions} from '~/types/pagination';
+import {generateUniqueSlug} from '~/utils';
 
 interface GetEventsFilters {
   includePast?: boolean;
@@ -46,6 +51,28 @@ interface UpdateTicketWaveData {
   currency?: 'UYU' | 'USD';
   isSoldOut?: boolean;
   isAvailable?: boolean;
+}
+
+interface CreateEventData {
+  name: string;
+  description?: string | null;
+  externalId: string;
+  platform: string;
+  eventStartDate: string;
+  eventEndDate: string;
+  venueId?: string;
+  venueName?: string;
+  venueAddress?: string;
+  venueCity?: string;
+  externalUrl?: string;
+  qrAvailabilityTiming?: '3h' | '6h' | '12h' | '24h' | '48h' | '72h' | null;
+  status?: 'active' | 'inactive';
+  ticketWaves?: Array<{
+    name: string;
+    description?: string | null;
+    faceValue: number;
+    currency: 'UYU' | 'USD';
+  }>;
 }
 
 export class AdminEventsService {
@@ -85,12 +112,117 @@ export class AdminEventsService {
     return event;
   }
 
+  async createEvent(data: CreateEventData) {
+    // Determine or create venue
+    let venueId: string | null = null;
+
+    if (data.venueId) {
+      // Use provided venueId
+      venueId = data.venueId;
+    } else if (data.venueName || data.venueAddress) {
+      // Create new venue
+      try {
+        const venuesRepository = new VenuesRepository(this.db);
+        const newVenue = await venuesRepository.create({
+          name: data.venueName || 'Venue desconocido',
+          address: data.venueAddress || '',
+          city: data.venueCity || '',
+          country: 'Uruguay',
+          googlePlaceId: null,
+          latitude: null,
+          longitude: null,
+        });
+        venueId = newVenue.id;
+      } catch (error) {
+        logger.error('Failed to create venue', {error});
+        throw new BadRequestError(
+          ADMIN_EVENTS_ERROR_MESSAGES.VENUE_CREATION_FAILED,
+        );
+      }
+    }
+
+    // Generate unique slug
+    let slug: string;
+    try {
+      slug = await generateUniqueSlug(data.name, candidate =>
+        this.eventsRepository.slugExists(candidate),
+      );
+    } catch (error) {
+      logger.error('Failed to generate slug', {error});
+      throw new BadRequestError(
+        ADMIN_EVENTS_ERROR_MESSAGES.EVENT_CREATION_FAILED,
+      );
+    }
+
+    // Create event in transaction
+    let createdEvent;
+    try {
+      const eventData: Insertable<Events> = {
+        name: data.name,
+        slug: slug,
+        description: data.description || null,
+        externalId: data.externalId,
+        platform: data.platform,
+        eventStartDate: new Date(data.eventStartDate),
+        eventEndDate: new Date(data.eventEndDate),
+        venueId: venueId || null,
+        externalUrl: data.externalUrl || '',
+        qrAvailabilityTiming: data.qrAvailabilityTiming || null,
+        status: data.status || 'active',
+        metadata: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastScrapedAt: new Date(),
+      };
+
+      createdEvent = await this.eventsRepository.createEvent(eventData);
+    } catch (error: any) {
+      logger.error('Failed to create event', {error});
+
+      // Check if it's a unique constraint violation on externalId
+      if (error?.code === '23505') {
+        throw new ValidationError(
+          ADMIN_EVENTS_ERROR_MESSAGES.EXTERNAL_ID_DUPLICATE,
+        );
+      }
+
+      throw new BadRequestError(
+        ADMIN_EVENTS_ERROR_MESSAGES.EVENT_CREATION_FAILED,
+      );
+    }
+
+    // Create ticket waves if provided
+    if (data.ticketWaves && data.ticketWaves.length > 0) {
+      try {
+        for (const wave of data.ticketWaves) {
+          await this.ticketWavesRepository.create(createdEvent.id, {
+            name: wave.name,
+            description: wave.description || null,
+            faceValue: wave.faceValue,
+            currency: wave.currency,
+            isSoldOut: false,
+            isAvailable: true,
+          });
+        }
+      } catch (error) {
+        logger.error('Failed to create ticket waves', {
+          error,
+          eventId: createdEvent.id,
+        });
+        // Continue - event was created, waves failed but we don't want to fail completely
+      }
+    }
+
+    return createdEvent;
+  }
+
   async updateEvent(eventId: string, data: UpdateEventData) {
     // Convert string dates to Date objects
     const updateData: Parameters<EventsRepository['updateEvent']>[1] = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.description !== undefined) updateData.description = data.description;
+    if (data.description !== undefined)
+      updateData.description = data.description;
     if (data.eventStartDate !== undefined)
       updateData.eventStartDate = new Date(data.eventStartDate);
     if (data.eventEndDate !== undefined)
@@ -151,7 +283,9 @@ export class AdminEventsService {
     // Verify the ticket wave belongs to the event
     const wave = await this.ticketWavesRepository.getById(waveId);
     if (!wave || wave.eventId !== eventId) {
-      throw new NotFoundError(ADMIN_EVENTS_ERROR_MESSAGES.TICKET_WAVE_NOT_FOUND);
+      throw new NotFoundError(
+        ADMIN_EVENTS_ERROR_MESSAGES.TICKET_WAVE_NOT_FOUND,
+      );
     }
 
     return this.ticketWavesRepository.update(waveId, data);
@@ -161,7 +295,9 @@ export class AdminEventsService {
     // Verify the ticket wave belongs to the event
     const wave = await this.ticketWavesRepository.getById(waveId);
     if (!wave || wave.eventId !== eventId) {
-      throw new NotFoundError(ADMIN_EVENTS_ERROR_MESSAGES.TICKET_WAVE_NOT_FOUND);
+      throw new NotFoundError(
+        ADMIN_EVENTS_ERROR_MESSAGES.TICKET_WAVE_NOT_FOUND,
+      );
     }
 
     return this.ticketWavesRepository.softDelete(waveId);
@@ -218,8 +354,7 @@ export class AdminEventsService {
       ]);
 
       // Get the updated event to return the image with its ID
-      const updatedEvent =
-        await this.eventsRepository.getByIdForAdmin(eventId);
+      const updatedEvent = await this.eventsRepository.getByIdForAdmin(eventId);
       if (!updatedEvent) {
         throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
       }
