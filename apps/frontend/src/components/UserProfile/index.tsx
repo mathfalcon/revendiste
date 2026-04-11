@@ -26,6 +26,7 @@ import {
   Monitor,
   ChevronRight,
   Flag,
+  LayoutDashboard,
 } from 'lucide-react';
 import {useTheme} from '../ThemeProvider';
 
@@ -52,6 +53,12 @@ const MENU_ITEMS_USER = [
   {to: '/cuenta/configuracion', icon: Settings, label: 'Configuración'},
   {to: '/cuenta/reportes', icon: Flag, label: 'Reportes'},
 ] as const;
+
+const ADMIN_MENU_ITEM = {
+  to: '/admin/dashboard' as const,
+  icon: LayoutDashboard,
+  label: 'Administración',
+};
 
 export const UserProfile = () => {
   const {user} = useUser();
@@ -113,6 +120,16 @@ export const UserProfile = () => {
             <div>{menuContent}</div>
 
             <div>
+              {currentUser?.role === 'admin' && (
+                <Link
+                  to={ADMIN_MENU_ITEM.to}
+                  onClick={() => setOpen(false)}
+                  className='flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
+                >
+                  <ADMIN_MENU_ITEM.icon className='h-4 w-4 text-muted-foreground' />
+                  {ADMIN_MENU_ITEM.label}
+                </Link>
+              )}
               {MENU_ITEMS_USER.map(item => (
                 <Link
                   key={item.to}
@@ -203,6 +220,16 @@ export const UserProfile = () => {
 
           <Separator className='my-2' />
 
+          {currentUser?.role === 'admin' && (
+            <Link
+              to={ADMIN_MENU_ITEM.to}
+              onClick={() => setOpen(false)}
+              className='flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent'
+            >
+              <ADMIN_MENU_ITEM.icon className='h-5 w-5' />
+              {ADMIN_MENU_ITEM.label}
+            </Link>
+          )}
           {MENU_ITEMS_USER.map(item => (
             <Link
               key={item.to}

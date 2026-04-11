@@ -331,11 +331,15 @@ All error messages are centralized in `apps/backend/src/constants/error-messages
 Tables are **provider-agnostic** (not named after dLocal):
 
 - **`processor_settlements`**: one row per settlement batch from a payment processor. Columns include `payment_provider` (`dlocal`, `stripe`, etc.) and `settlement_id` (the processor’s external settlement identifier). Uniqueness is `(payment_provider, settlement_id)` so different processors can reuse the same external ID format safely.
-- **`processor_settlement_items`**: line items within a settlement (amounts, fees, optional link to `payouts.id`).
+- **`processor_settlement_items`**: line items within a settlement (amounts, fees, optional link to `payouts.id`, and **`payment_id`** → `payments.id` for reconciling each line to the buyer payment / processor credit stored in `payments.balance_amount`).
 
 Migration `1775521218600_processor_settlements.ts` creates `processor_settlements` and `processor_settlement_items` with `payment_provider` (PostgreSQL `payment_provider` enum, same as `payments.provider`). The timestamp is after existing migrations so Kysely’s lexicographic ordering stays valid.
 
-Admin API: `GET/POST /admin/settlements` (see OpenAPI / generated client).
+Migration `1775791957985_add_payment_id_to_processor_settlement_items.ts` adds `payment_id` (UUID, FK to `payments`, ON DELETE SET NULL).
+
+**Creating a settlement:** the admin posts the processor’s external batch id, date, declared total, currency, and provider. The backend selects **unreconciled** `payments` rows for that provider and currency (FIFO by `approved_at`), summing `balance_amount` until the sum covers the declared total, then validates the sum vs declared total (warning if ~1–10% diff, error if &gt;10%). Line items are created with `payment_id` set.
+
+Admin API: `GET/POST /admin/settlements`, `POST /admin/settlements/preview`, `GET /admin/settlements/{id}/breakdown` (see OpenAPI / generated client).
 
 ## Future Enhancements
 

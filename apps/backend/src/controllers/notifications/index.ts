@@ -23,7 +23,6 @@ import {db} from '~/db';
 import {NotFoundError, UnauthorizedError} from '~/errors';
 import {NOTIFICATION_ERROR_MESSAGES} from '~/constants/error-messages';
 import type {TypedNotification} from '~/services/notifications/types';
-import type {PaginatedResponse} from '~/types';
 import {
   UsersRepository,
   NotificationsRepository,
@@ -44,13 +43,16 @@ interface GetNotificationsQuery extends PaginationQuery {
   includeSeen?: boolean;
 }
 
-type GetNotificationsResponse = PaginatedResponse<TypedNotification>;
+type GetNotificationsResponse = Awaited<
+  ReturnType<NotificationService['getUserNotifications']>
+>;
 type GetUnseenCountResponse = number;
 type MarkAsSeenResponse = TypedNotification | null;
 type MarkAllAsSeenResponse = TypedNotification[];
 type DeleteNotificationResponse = TypedNotification | null;
 type SubscribePushResponse = {success: boolean};
 type UnsubscribePushResponse = {success: boolean};
+type TestPushDevResponse = {sent: number; failed: number};
 
 @Route('notifications')
 @Middlewares(requireAuthMiddleware)
@@ -173,7 +175,7 @@ export class NotificationsController {
   @Response<UnauthorizedError>(401, 'Authentication required')
   public async testPush(
     @Request() request: express.Request,
-  ): Promise<{sent: number; failed: number}> {
+  ): Promise<TestPushDevResponse> {
     if (NODE_ENV === 'production') {
       throw new UnauthorizedError('Not available in production');
     }

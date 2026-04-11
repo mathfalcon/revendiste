@@ -50,19 +50,19 @@ import {
   AdminListTicketReportsRouteSchema,
 } from './validation';
 
-type AdminListCasesResponse = ReturnType<
+type AdminListCasesResponse = Awaited<ReturnType<
   TicketReportsService['listCasesForAdmin']
->;
-type AdminGetCaseDetailsResponse = ReturnType<
+>>;
+type AdminGetCaseDetailsResponse = Awaited<ReturnType<
   TicketReportsService['getCaseDetails']
->;
-type AdminAddActionResponse = ReturnType<TicketReportsService['addAction']>;
-type AdminListAttachmentsResponse = ReturnType<
+>>;
+type AdminAddActionResponse = Awaited<ReturnType<TicketReportsService['addAction']>>;
+type AdminListAttachmentsResponse = Awaited<ReturnType<
   TicketReportAttachmentsService['getAttachmentsByReportId']
->;
-type AdminUploadAttachmentResponse = ReturnType<
+>>;
+type AdminUploadAttachmentResponse = Awaited<ReturnType<
   TicketReportAttachmentsService['uploadAttachment']
->;
+>>;
 
 const notificationsRepository = new NotificationsRepository(db);
 const usersRepository = new UsersRepository(db);

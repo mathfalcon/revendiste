@@ -3,8 +3,85 @@ import {getStorageProvider} from '~/services/storage/StorageFactory';
 import {logger} from '~/utils';
 import type {User} from '~/types';
 
+export type CurrentUserMeResponse = {
+  imageUrl: string | null;
+  role: 'user' | 'organizer' | 'admin';
+  documentVerified: boolean;
+  verificationStatus:
+    | 'pending'
+    | 'completed'
+    | 'requires_manual_review'
+    | 'failed'
+    | 'rejected'
+    | null;
+  documentType: 'ci_uy' | 'dni_ar' | 'passport' | null;
+  documentNumber: string | null;
+  documentCountry: string | null;
+  /** Session ID for resuming liveness check on another device */
+  verificationSessionId: string | null;
+  /** Whether document has been uploaded (step 2 completed) */
+  hasDocumentImage: boolean;
+  /** Whether document verification step was completed successfully (text/face detected) */
+  documentVerificationCompleted: boolean;
+  /** Number of verification attempts used (max 5) */
+  verificationAttempts: number;
+  /** Whether user can retry liveness (has attempts remaining and is in a retryable state) */
+  canRetryLiveness: boolean;
+  /** Reason for manual review rejection (if rejected by admin) */
+  rejectionReason: string | null;
+  /** User's phone number in E.164 format */
+  phoneNumber: string | null;
+  /** Whether user dismissed the WhatsApp opt-in prompt */
+  whatsappPromptDismissed: boolean;
+};
+
 export class UsersService {
   constructor(private usersRepository: UsersRepository) {}
+
+  buildCurrentUserMeResponse(user: User): CurrentUserMeResponse {
+    const verificationAttempts = user.verificationAttempts || 0;
+    const MAX_ATTEMPTS = 5;
+    const verificationStatus = user.verificationStatus || null;
+
+    const metadata =
+      (user.verificationMetadata as {
+        manualReview?: {action?: string; reason?: string};
+      }) || {};
+    const rejectionReason =
+      verificationStatus === 'rejected' && metadata.manualReview?.reason
+        ? metadata.manualReview.reason
+        : null;
+
+    const retryableStatuses: (string | null)[] = [
+      'failed',
+      'rejected',
+      'pending',
+      null,
+    ];
+    const canRetryLiveness =
+      verificationAttempts < MAX_ATTEMPTS &&
+      retryableStatuses.includes(verificationStatus);
+
+    return {
+      imageUrl: user.imageUrl,
+      role: user.role,
+      documentVerified: user.documentVerified || false,
+      verificationStatus,
+      documentType: user.documentType || null,
+      documentNumber: user.documentNumber || null,
+      documentCountry: user.documentCountry || null,
+      verificationSessionId: user.verificationSessionId || null,
+      hasDocumentImage: !!user.documentImagePath,
+      documentVerificationCompleted: !!(user.verificationConfidenceScores as {
+        textDetection?: number;
+      } | null)?.textDetection,
+      verificationAttempts,
+      canRetryLiveness,
+      rejectionReason,
+      phoneNumber: user.phoneNumber ?? null,
+      whatsappPromptDismissed: user.whatsappPromptDismissed ?? false,
+    };
+  }
 
   // Create or update user from Clerk data
   async createOrUpdateUser(

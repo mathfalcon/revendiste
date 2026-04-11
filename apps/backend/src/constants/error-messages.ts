@@ -170,6 +170,21 @@ export const PAYOUT_ERROR_MESSAGES = {
     'Algunas ganancias seleccionadas tienen reportes abiertos y no pueden ser retiradas. Esperá a que se resuelvan los reportes.',
 } as const;
 
+// Error messages for processor settlements (reconciliation)
+export const SETTLEMENT_ERROR_MESSAGES = {
+  SETTLEMENT_NOT_FOUND: 'Liquidación no encontrada.',
+  SETTLEMENT_ITEM_NOT_FOUND: 'No se encontró el ítem de liquidación indicado.',
+  INVALID_TOTAL_AMOUNT: 'El monto total de la liquidación no es válido.',
+  SETTLEMENT_ALREADY_EXISTS:
+    'Ya existe una liquidación con este ID externo para el mismo procesador.',
+  NO_UNRECONCILED_PAYMENTS:
+    'No hay pagos del procesador sin conciliar para la moneda y fecha indicadas.',
+  INSUFFICIENT_PAYMENTS_FOR_AMOUNT:
+    'No alcanzan los pagos acumulados para cubrir el monto declarado de la liquidación.',
+  AMOUNT_MISMATCH_TOO_HIGH: (pct: string) =>
+    `La suma de créditos del procesador (${pct}% de diferencia) no coincide con el monto declarado. Revisá el monto o los pagos incluidos.`,
+} as const;
+
 // Error messages for webhook signature verification (Clerk, dLocal, etc.)
 export const WEBHOOK_ERROR_MESSAGES = {
   VERIFICATION_FAILED: 'Webhook verification failed',
@@ -403,6 +418,12 @@ export const VALIDATION_MESSAGES = {
 
   // Identity verification
   DOCUMENT_COUNTRY_REQUIRED_PASSPORT: 'El país es requerido para pasaportes',
+
+  // Admin dashboard
+  DASHBOARD_RANGE_INCOMPLETE:
+    'Debés indicar fecha de inicio y fin para el rango personalizado',
+  DASHBOARD_RANGE_INVALID_ORDER:
+    'La fecha de inicio debe ser anterior o igual a la fecha de fin',
 
   // Ticket reports
   ACTION_INVALID: 'Acción inválida',

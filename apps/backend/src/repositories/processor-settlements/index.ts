@@ -73,6 +73,26 @@ export class ProcessorSettlementsRepository extends BaseRepository<ProcessorSett
     return await query.execute();
   }
 
+  async countSettlements(params: {
+    status?: string;
+    paymentProvider?: PaymentProvider;
+  }) {
+    let query = this.db
+      .selectFrom('processorSettlements')
+      .select(this.db.fn.count('id').as('total'));
+
+    if (params.status) {
+      query = query.where('status', '=', params.status);
+    }
+
+    if (params.paymentProvider) {
+      query = query.where('paymentProvider', '=', params.paymentProvider);
+    }
+
+    const row = await query.executeTakeFirst();
+    return Number(row?.total ?? 0);
+  }
+
   async updateSettlement(
     settlementId: string,
     data: Updateable<ProcessorSettlements>,

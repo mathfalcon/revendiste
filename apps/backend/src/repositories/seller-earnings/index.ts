@@ -829,4 +829,32 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .limit(limit)
       .execute();
   }
+
+  /**
+   * Seller earnings for all tickets in the given orders (settlement breakdown / reconciliation).
+   */
+  async getSellerEarningsForOrderIds(orderIds: string[]) {
+    if (orderIds.length === 0) {
+      return [];
+    }
+
+    return await this.db
+      .selectFrom('sellerEarnings')
+      .innerJoin(
+        'orderTicketReservations',
+        'orderTicketReservations.listingTicketId',
+        'sellerEarnings.listingTicketId',
+      )
+      .select([
+        'sellerEarnings.id',
+        'sellerEarnings.sellerAmount',
+        'sellerEarnings.sellerUserId',
+        'sellerEarnings.status',
+        'sellerEarnings.currency',
+        'orderTicketReservations.orderId',
+      ])
+      .where('orderTicketReservations.orderId', 'in', orderIds)
+      .where('sellerEarnings.deletedAt', 'is', null)
+      .execute();
+  }
 }

@@ -54,6 +54,7 @@ export const Route = createFileRoute('/admin')({
 });
 
 const navigation = [
+  {name: 'Panel', href: '/admin/dashboard', icon: LayoutDashboard},
   {name: 'Eventos', href: '/admin/eventos', icon: Calendar},
   {name: 'Verificaciones', href: '/admin/verificaciones', icon: UserCheck},
   {name: 'Retiros', href: '/admin/retiros', icon: Wallet},

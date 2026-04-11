@@ -1,6 +1,8 @@
-import {createFileRoute, useSearch, useNavigate} from '@tanstack/react-router';
+import {useState} from 'react';
+import {createFileRoute, Link, useSearch} from '@tanstack/react-router';
 import {z} from 'zod';
-import {useSuspenseQuery, useQuery} from '@tanstack/react-query';
+import {useSuspenseQuery} from '@tanstack/react-query';
+import {Plus} from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -11,6 +13,8 @@ import {
 } from '~/components/ui/table';
 import {Badge} from '~/components/ui/badge';
 import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
+import {Button} from '~/components/ui/button';
+import {CreateSettlementDialog} from '~/features/admin/settlements/CreateSettlementDialog';
 import {adminSettlementsQueryOptions} from '~/lib/api/admin';
 import {formatCurrency} from '~/utils';
 
@@ -42,7 +46,7 @@ export const Route = createFileRoute('/admin/finanzas')({
 
 function FinanzasPage() {
   const search = useSearch({from: '/admin/finanzas'});
-  const navigate = useNavigate({from: '/admin/finanzas'});
+  const [createOpen, setCreateOpen] = useState(false);
 
   const {data} = useSuspenseQuery(
     adminSettlementsQueryOptions({
@@ -94,12 +98,20 @@ function FinanzasPage() {
 
   return (
     <div className='space-y-6'>
-      <div>
-        <h1 className='text-3xl font-bold'>Finanzas</h1>
-        <p className='text-muted-foreground'>
-          Liquidaciones por procesador de pagos (reconciliación y seguimiento)
-        </p>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+        <div>
+          <h1 className='text-3xl font-bold'>Finanzas</h1>
+          <p className='text-muted-foreground'>
+            Liquidaciones por procesador de pagos (reconciliación y seguimiento)
+          </p>
+        </div>
+        <Button type='button' onClick={() => setCreateOpen(true)}>
+          <Plus className='mr-2 h-4 w-4' />
+          Nueva liquidación
+        </Button>
       </div>
+
+      <CreateSettlementDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       {/* Summary Cards */}
       <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
@@ -177,12 +189,13 @@ function FinanzasPage() {
                   <TableHead>Moneda</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Fecha de Creación</TableHead>
+                  <TableHead className='w-[100px]' />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data?.data && data.data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className='text-center'>
+                    <TableCell colSpan={8} className='text-center'>
                       No se encontraron liquidaciones
                     </TableCell>
                   </TableRow>
@@ -217,6 +230,16 @@ function FinanzasPage() {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant='ghost' size='sm' asChild>
+                          <Link
+                            to='/admin/finanzas/liquidaciones/$settlementId'
+                            params={{settlementId: settlement.id}}
+                          >
+                            Detalle
+                          </Link>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))

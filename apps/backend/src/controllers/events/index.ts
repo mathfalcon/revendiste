@@ -26,20 +26,20 @@ import {db} from '~/db';
 // --- Explicit controller response types for TSOA Swagger generation ---
 // Always use named type aliases for controller return values (see Custom Rules).
 
-export type GetEventsPaginatedResponse = ReturnType<
+export type GetEventsPaginatedResponse = Awaited<ReturnType<
   EventsService['getAllEventsPaginated']
->;
-export type SearchEventsResponse = ReturnType<EventsService['getBySearch']>;
-export type GetTrendingEventsResponse = ReturnType<
+>>;
+export type SearchEventsResponse = Awaited<ReturnType<EventsService['getBySearch']>>;
+export type GetTrendingEventsResponse = Awaited<ReturnType<
   EventViewsService['getTrendingEvents']
->;
-export type GetDistinctCitiesResponse = ReturnType<
+>>;
+export type GetDistinctCitiesResponse = Awaited<ReturnType<
   EventsService['getDistinctCities']
->;
-export type GetDistinctRegionsResponse = ReturnType<
+>>;
+export type GetDistinctRegionsResponse = Awaited<ReturnType<
   VenuesService['getDistinctRegions']
->;
-export type GetEventByIdResponse = ReturnType<EventsService['getEventById']>;
+>>;
+export type GetEventByIdResponse = Awaited<ReturnType<EventsService['getEventById']>>;
 export type GetEventBySlugResponse = GetEventByIdResponse;
 export type TrackViewResponse = {success: boolean};
 
@@ -81,7 +81,7 @@ export class EventsController {
   public async getAllPaginated(
     @Queries() query: EventsPaginatedQuery,
     @Request() request: express.Request,
-  ): GetEventsPaginatedResponse {
+  ): Promise<GetEventsPaginatedResponse> {
     return this.service.getAllEventsPaginated(
       {
         pagination: request.pagination!,
@@ -103,7 +103,7 @@ export class EventsController {
   public async getBySearch(
     @Query() query: string,
     @Query() limit?: number,
-  ): SearchEventsResponse {
+  ): Promise<SearchEventsResponse> {
     return this.service.getBySearch(query, limit);
   }
 
@@ -118,7 +118,7 @@ export class EventsController {
     @Query() lat?: number,
     @Query() lng?: number,
     @Query() radiusKm?: number,
-  ): GetTrendingEventsResponse {
+  ): Promise<GetTrendingEventsResponse> {
     return this.eventViewsService.getTrendingEvents(days ?? 7, limit ?? 10, {
       region,
       lat: lat != null ? Number(lat) : undefined,
@@ -131,7 +131,7 @@ export class EventsController {
    * Get list of distinct cities for filter dropdown
    */
   @Get('/cities')
-  public async getDistinctCities(): GetDistinctCitiesResponse {
+  public async getDistinctCities(): Promise<GetDistinctCitiesResponse> {
     return this.service.getDistinctCities();
   }
 
@@ -139,7 +139,7 @@ export class EventsController {
    * Get distinct regions with active events, grouped by country
    */
   @Get('/regions')
-  public async getDistinctRegions(): GetDistinctRegionsResponse {
+  public async getDistinctRegions(): Promise<GetDistinctRegionsResponse> {
     return this.venuesService.getDistinctRegions();
   }
 
@@ -150,7 +150,7 @@ export class EventsController {
   public async getBySlug(
     @Path() slug: string,
     @Request() request: express.Request,
-  ): GetEventBySlugResponse {
+  ): Promise<GetEventBySlugResponse> {
     return this.service.getEventBySlug(slug, request.user?.id);
   }
 
@@ -170,7 +170,7 @@ export class EventsController {
   public async getById(
     @Path() eventId: string,
     @Request() request: express.Request,
-  ): GetEventByIdResponse {
+  ): Promise<GetEventByIdResponse> {
     return this.service.getEventById(eventId, request.user?.id);
   }
 

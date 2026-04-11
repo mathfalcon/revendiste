@@ -11,7 +11,6 @@ import {
   FormField,
 } from '@mathfalcon/tsoa-runtime';
 import multer from 'multer';
-import {STSClient, AssumeRoleCommand} from '@aws-sdk/client-sts';
 import {IdentityVerificationService} from '~/services/identity-verification';
 import {NotificationService} from '~/services/notifications';
 import {
@@ -30,16 +29,7 @@ import {
   VerifyLivenessRouteBody,
   VerifyLivenessRouteSchema,
 } from './validation';
-import {
-  AWS_ACCESS_KEY_ID,
-  AWS_SECRET_ACCESS_KEY,
-  FACE_LIVENESS_ROLE_ARN,
-} from '~/config/env';
-import {logger} from '~/utils';
 import {getPostHog} from '~/lib/posthog';
-
-// Rekognition region for Face Liveness
-const REKOGNITION_REGION = 'us-east-1';
 
 // Configure multer for file uploads
 const upload = multer({
@@ -49,20 +39,24 @@ const upload = multer({
   },
 });
 
-type InitiateVerificationResponse = ReturnType<
-  IdentityVerificationService['initiateVerification']
+type InitiateVerificationResponse = Awaited<
+  ReturnType<IdentityVerificationService['initiateVerification']>
 >;
 
-type ProcessDocumentResponse = ReturnType<
-  IdentityVerificationService['processDocument']
+type ProcessDocumentResponse = Awaited<
+  ReturnType<IdentityVerificationService['processDocument']>
 >;
 
-type CreateLivenessCheckResponse = ReturnType<
-  IdentityVerificationService['createAndCompleteLivenessCheck']
+type CreateLivenessCheckResponse = Awaited<
+  ReturnType<IdentityVerificationService['createAndCompleteLivenessCheck']>
 >;
 
-type VerifyLivenessResultsResponse = ReturnType<
-  IdentityVerificationService['verifyLivenessResults']
+type VerifyLivenessResultsResponse = Awaited<
+  ReturnType<IdentityVerificationService['verifyLivenessResults']>
+>;
+
+type GetLivenessCredentialsResponse = Awaited<
+  ReturnType<IdentityVerificationService['getFaceLivenessAwsCredentials']>
 >;
 
 // Create shared repositories
@@ -244,70 +238,7 @@ export class IdentityVerificationController {
   @Response<ApiErrorResponse>(400, 'Face Liveness not configured')
   public async getLivenessCredentials(
     @Request() _request: express.Request,
-  ): Promise<{
-    accessKeyId: string;
-    secretAccessKey: string;
-    sessionToken: string;
-    region: string;
-    expiration: string;
-  }> {
-    if (!FACE_LIVENESS_ROLE_ARN) {
-      logger.error('FACE_LIVENESS_ROLE_ARN not configured');
-      throw new BadRequestError(
-        IDENTITY_VERIFICATION_ERROR_MESSAGES.FACE_LIVENESS_NOT_CONFIGURED,
-      );
-    }
-
-    // Create STS client
-    // In EC2/ECS, uses instance/task role automatically
-    // In local dev, uses AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY
-    const stsConfig: ConstructorParameters<typeof STSClient>[0] = {
-      region: REKOGNITION_REGION,
-    };
-
-    if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
-      stsConfig.credentials = {
-        accessKeyId: AWS_ACCESS_KEY_ID,
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
-      };
-    }
-
-    const stsClient = new STSClient(stsConfig);
-
-    try {
-      const assumeRoleResponse = await stsClient.send(
-        new AssumeRoleCommand({
-          RoleArn: FACE_LIVENESS_ROLE_ARN,
-          RoleSessionName: `face-liveness-${Date.now()}`,
-          DurationSeconds: 900, // 15 minutes
-        }),
-      );
-
-      if (!assumeRoleResponse.Credentials) {
-        throw new Error('No credentials returned from AssumeRole');
-      }
-
-      const {AccessKeyId, SecretAccessKey, SessionToken, Expiration} =
-        assumeRoleResponse.Credentials;
-
-      if (!AccessKeyId || !SecretAccessKey || !SessionToken) {
-        throw new Error('Incomplete credentials from AssumeRole');
-      }
-
-      logger.info('Generated Face Liveness credentials via AssumeRole');
-
-      return {
-        accessKeyId: AccessKeyId,
-        secretAccessKey: SecretAccessKey,
-        sessionToken: SessionToken,
-        region: REKOGNITION_REGION,
-        expiration: Expiration?.toISOString() || '',
-      };
-    } catch (error) {
-      logger.error('Failed to assume Face Liveness role', {error});
-      throw new BadRequestError(
-        IDENTITY_VERIFICATION_ERROR_MESSAGES.FACE_LIVENESS_CREDENTIALS_FAILED,
-      );
-    }
+  ): Promise<GetLivenessCredentialsResponse> {
+    return this.service.getFaceLivenessAwsCredentials();
   }
 }

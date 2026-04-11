@@ -2637,6 +2637,9 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"amount": {
+						"type": "string"
+					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -2647,9 +2650,6 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"amount": {
-						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -2709,10 +2709,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
+					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
-					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -3529,6 +3529,9 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"amount": {
+						"type": "string"
+					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -3539,9 +3542,6 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"amount": {
-						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -3631,6 +3631,9 @@
 									"type": "number",
 									"format": "double"
 								},
+								"payoutId": {
+									"type": "string"
+								},
 								"originalName": {
 									"type": "string"
 								},
@@ -3641,9 +3644,6 @@
 									"type": "string"
 								},
 								"documentType": {
-									"type": "string"
-								},
-								"payoutId": {
 									"type": "string"
 								},
 								"updatedAt": {
@@ -3671,11 +3671,11 @@
 								"uploadedAt",
 								"storagePath",
 								"sizeBytes",
+								"payoutId",
 								"originalName",
 								"mimeType",
 								"fileName",
 								"documentType",
-								"payoutId",
 								"updatedAt",
 								"id",
 								"deletedAt",
@@ -3692,6 +3692,9 @@
 								"createdBy": {
 									"type": "string",
 									"nullable": true
+								},
+								"payoutId": {
+									"type": "string"
 								},
 								"userAgent": {
 									"type": "string",
@@ -3741,9 +3744,6 @@
 									],
 									"nullable": true
 								},
-								"payoutId": {
-									"type": "string"
-								},
 								"id": {
 									"type": "string"
 								},
@@ -3754,13 +3754,13 @@
 							},
 							"required": [
 								"createdBy",
+								"payoutId",
 								"userAgent",
 								"toStatus",
 								"ipAddress",
 								"fromStatus",
 								"eventType",
 								"eventData",
-								"payoutId",
 								"id",
 								"createdAt"
 							],
@@ -3830,10 +3830,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
+					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
-					"amount",
 					"updatedAt",
 					"status",
 					"id",
@@ -3845,7 +3845,7 @@
 				],
 				"type": "object"
 			},
-			"PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--amount-string--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
+			"PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--amount-string--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__": {
 				"properties": {
 					"data": {
 						"items": {
@@ -3967,6 +3967,9 @@
 									"format": "date-time",
 									"nullable": true
 								},
+								"amount": {
+									"type": "string"
+								},
 								"completedAt": {
 									"type": "string",
 									"format": "date-time",
@@ -3977,9 +3980,6 @@
 								},
 								"currency": {
 									"$ref": "#/components/schemas/EventTicketCurrency"
-								},
-								"amount": {
-									"type": "string"
 								},
 								"updatedAt": {
 									"type": "string",
@@ -4037,10 +4037,10 @@
 								"notes",
 								"failureReason",
 								"failedAt",
+								"amount",
 								"completedAt",
 								"sellerUserId",
 								"currency",
-								"amount",
 								"updatedAt",
 								"status",
 								"metadata",
@@ -4063,7 +4063,7 @@
 				"additionalProperties": false
 			},
 			"GetPayoutsResponse": {
-				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--amount-string--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
+				"$ref": "#/components/schemas/PaginatedResponse__createdAt-Date--id-string--metadata-string-or-number-or-boolean-or-JsonArray-or-JsonObject-or-null--status-cancelled-or-pending-or-completed-or-failed-or-processing--updatedAt-Date--currency-EventTicketCurrency--sellerUserId-string--completedAt-Date-or-null--amount-string--failedAt-Date-or-null--failureReason-string-or-null--notes-string-or-null--payoutMethodId-string--processedAt-Date-or-null--processedBy-string-or-null--processingFee-string-or-null--requestedAt-Date--transactionReference-string-or-null--linkedEarnings_58__createdAt-string--id-string--currency-EventTicketCurrency--listingTicketId-string--sellerAmount-string_-Array--seller_58__id-string--email-string--firstName-string-or-null--lastName-string-or-null_-or-null--payoutMethod_58__id-string--accountHolderName-string--accountHolderSurname-string--payoutType-PayoutType_-or-null__"
 			},
 			"infer_typeofAdminPayoutsQuerySchema_": {
 				"properties": {
@@ -4173,6 +4173,9 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"amount": {
+						"type": "string"
+					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4183,9 +4186,6 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"amount": {
-						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4352,6 +4352,9 @@
 									"type": "number",
 									"format": "double"
 								},
+								"payoutId": {
+									"type": "string"
+								},
 								"originalName": {
 									"type": "string"
 								},
@@ -4362,9 +4365,6 @@
 									"type": "string"
 								},
 								"documentType": {
-									"type": "string"
-								},
-								"payoutId": {
 									"type": "string"
 								},
 								"updatedAt": {
@@ -4392,11 +4392,11 @@
 								"uploadedAt",
 								"storagePath",
 								"sizeBytes",
+								"payoutId",
 								"originalName",
 								"mimeType",
 								"fileName",
 								"documentType",
-								"payoutId",
 								"updatedAt",
 								"id",
 								"deletedAt",
@@ -4469,10 +4469,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
+					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
-					"amount",
 					"updatedAt",
 					"status",
 					"id",
@@ -4523,6 +4523,9 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"amount": {
+						"type": "string"
+					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4533,9 +4536,6 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"amount": {
-						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4595,10 +4595,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
+					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
-					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -4665,6 +4665,9 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"amount": {
+						"type": "string"
+					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4675,9 +4678,6 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"amount": {
-						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4737,10 +4737,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
+					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
-					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -4800,6 +4800,9 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"amount": {
+						"type": "string"
+					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4810,9 +4813,6 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"amount": {
-						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -4872,10 +4872,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
+					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
-					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -4935,6 +4935,9 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"amount": {
+						"type": "string"
+					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -4945,9 +4948,6 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"amount": {
-						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -5007,10 +5007,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
+					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
-					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -5086,6 +5086,9 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"amount": {
+						"type": "string"
+					},
 					"completedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -5096,9 +5099,6 @@
 					},
 					"currency": {
 						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"amount": {
-						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -5158,10 +5158,10 @@
 					"notes",
 					"failureReason",
 					"failedAt",
+					"amount",
 					"completedAt",
 					"sellerUserId",
 					"currency",
-					"amount",
 					"updatedAt",
 					"status",
 					"metadata",
@@ -5211,6 +5211,9 @@
 								"type": "number",
 								"format": "double"
 							},
+							"payoutId": {
+								"type": "string"
+							},
 							"originalName": {
 								"type": "string"
 							},
@@ -5221,9 +5224,6 @@
 								"type": "string"
 							},
 							"documentType": {
-								"type": "string"
-							},
-							"payoutId": {
 								"type": "string"
 							},
 							"updatedAt": {
@@ -5248,11 +5248,11 @@
 							"uploadedAt",
 							"storagePath",
 							"sizeBytes",
+							"payoutId",
 							"originalName",
 							"mimeType",
 							"fileName",
 							"documentType",
-							"payoutId",
 							"updatedAt",
 							"id",
 							"deletedAt",
@@ -5274,6 +5274,21 @@
 					}
 				},
 				"required": [
+					"success"
+				],
+				"type": "object"
+			},
+			"TriggerHoldCheckResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"message",
 					"success"
 				],
 				"type": "object"
@@ -6710,15 +6725,11 @@
 			"DeleteEventImageResponse": {
 				"$ref": "#/components/schemas/DeleteImageResponse"
 			},
-			"GetCurrentUserResponse": {
+			"CurrentUserMeResponse": {
 				"properties": {
 					"whatsappPromptDismissed": {
 						"type": "boolean",
 						"description": "Whether user dismissed the WhatsApp opt-in prompt"
-					},
-					"whatsappOptedIn": {
-						"type": "boolean",
-						"description": "Whether user has opted in to WhatsApp notifications"
 					},
 					"phoneNumber": {
 						"type": "string",
@@ -6796,25 +6807,10 @@
 					"imageUrl": {
 						"type": "string",
 						"nullable": true
-					},
-					"lastName": {
-						"type": "string",
-						"nullable": true
-					},
-					"firstName": {
-						"type": "string",
-						"nullable": true
-					},
-					"email": {
-						"type": "string"
-					},
-					"id": {
-						"type": "string"
 					}
 				},
 				"required": [
 					"whatsappPromptDismissed",
-					"whatsappOptedIn",
 					"phoneNumber",
 					"rejectionReason",
 					"canRetryLiveness",
@@ -6828,11 +6824,21 @@
 					"verificationStatus",
 					"documentVerified",
 					"role",
-					"imageUrl",
-					"lastName",
-					"firstName",
-					"email",
-					"id"
+					"imageUrl"
+				],
+				"type": "object"
+			},
+			"GetCurrentUserResponse": {
+				"$ref": "#/components/schemas/CurrentUserMeResponse"
+			},
+			"WebhookAcknowledgementResponse": {
+				"properties": {
+					"received": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"received"
 				],
 				"type": "object"
 			},
@@ -8530,7 +8536,7 @@
 				],
 				"type": "object"
 			},
-			"CreatePaymentLinkResponse": {
+			"CreatePaymentLinkResult": {
 				"properties": {
 					"redirectUrl": {
 						"type": "string"
@@ -8545,6 +8551,9 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"CreatePaymentLinkResponse": {
+				"$ref": "#/components/schemas/CreatePaymentLinkResult"
 			},
 			"CreatePaymentLinkRouteBody": {
 				"properties": {
@@ -8921,6 +8930,23 @@
 				],
 				"type": "object"
 			},
+			"TestPushDevResponse": {
+				"properties": {
+					"failed": {
+						"type": "number",
+						"format": "double"
+					},
+					"sent": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"failed",
+					"sent"
+				],
+				"type": "object"
+			},
 			"InitiateVerificationResponse": {
 				"properties": {
 					"message": {
@@ -9056,6 +9082,33 @@
 				},
 				"required": [
 					"sessionId"
+				],
+				"type": "object"
+			},
+			"GetLivenessCredentialsResponse": {
+				"properties": {
+					"expiration": {
+						"type": "string"
+					},
+					"region": {
+						"type": "string"
+					},
+					"sessionToken": {
+						"type": "string"
+					},
+					"secretAccessKey": {
+						"type": "string"
+					},
+					"accessKeyId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"expiration",
+					"region",
+					"sessionToken",
+					"secretAccessKey",
+					"accessKeyId"
 				],
 				"type": "object"
 			},
@@ -9667,64 +9720,89 @@
 				},
 				"type": "array"
 			},
-			"ListSettlementsResponse": {
-				"items": {
-					"properties": {
-						"totalAmount": {
-							"type": "string"
-						},
-						"settlementDate": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"paymentProvider": {
-							"type": "string",
-							"enum": [
-								"paypal",
-								"dlocal",
-								"mercadopago",
-								"stripe"
-							]
-						},
-						"settlementId": {
-							"type": "string"
-						},
-						"currency": {
-							"type": "string"
-						},
-						"updatedAt": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"status": {
-							"type": "string"
-						},
-						"metadata": {
-							"$ref": "#/components/schemas/JsonValue"
-						},
-						"id": {
-							"type": "string"
-						},
-						"createdAt": {
-							"type": "string",
-							"format": "date-time"
-						}
+			"PaymentProvider": {
+				"type": "string",
+				"enum": [
+					"dlocal",
+					"mercadopago",
+					"paypal",
+					"stripe"
+				]
+			},
+			"ProcessorSettlementListRow": {
+				"properties": {
+					"updatedAt": {
+						"type": "string"
 					},
-					"required": [
-						"totalAmount",
-						"settlementDate",
-						"paymentProvider",
-						"settlementId",
-						"currency",
-						"updatedAt",
-						"status",
-						"metadata",
-						"id",
-						"createdAt"
-					],
-					"type": "object"
+					"createdAt": {
+						"type": "string"
+					},
+					"metadata": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true
+					},
+					"settlementDate": {
+						"type": "string"
+					},
+					"paymentProvider": {
+						"$ref": "#/components/schemas/PaymentProvider"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"totalAmount": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"settlementId": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
 				},
-				"type": "array"
+				"required": [
+					"updatedAt",
+					"createdAt",
+					"metadata",
+					"settlementDate",
+					"paymentProvider",
+					"currency",
+					"totalAmount",
+					"status",
+					"settlementId",
+					"id"
+				],
+				"type": "object",
+				"description": "Serialized settlement row for admin APIs / OpenAPI (avoids TSOA issues with `Json` index types)."
+			},
+			"PaginatedResponse_ProcessorSettlementListRow_": {
+				"properties": {
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/ProcessorSettlementListRow"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ListSettlementsResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse_ProcessorSettlementListRow_"
 			},
 			"infer_typeofAdminSettlementsQuerySchema_": {
 				"properties": {
@@ -9774,126 +9852,133 @@
 				"$ref": "#/components/schemas/infer_typeofAdminSettlementsQuerySchema_"
 			},
 			"SettlementDetailsResponse": {
+				"$ref": "#/components/schemas/ProcessorSettlementListRow"
+			},
+			"ProcessorSettlementItemApiRow": {
 				"properties": {
-					"totalAmount": {
+					"updatedAt": {
 						"type": "string"
 					},
-					"settlementDate": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"paymentProvider": {
-						"type": "string",
-						"enum": [
-							"paypal",
-							"dlocal",
-							"mercadopago",
-							"stripe"
-						]
-					},
-					"settlementId": {
+					"createdAt": {
 						"type": "string"
+					},
+					"metadata": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
 					},
 					"currency": {
 						"type": "string"
 					},
-					"updatedAt": {
+					"fees": {
 						"type": "string",
-						"format": "date-time"
+						"nullable": true
 					},
-					"status": {
+					"exchangeRate": {
+						"type": "string",
+						"nullable": true
+					},
+					"netAmount": {
 						"type": "string"
 					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
+					"amount": {
+						"type": "string"
+					},
+					"payoutId": {
+						"type": "string",
+						"nullable": true
+					},
+					"operationId": {
+						"type": "string"
+					},
+					"paymentId": {
+						"type": "string",
+						"nullable": true
+					},
+					"settlementId": {
+						"type": "string"
 					},
 					"id": {
 						"type": "string"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
 					}
 				},
 				"required": [
-					"totalAmount",
-					"settlementDate",
-					"paymentProvider",
-					"settlementId",
-					"currency",
 					"updatedAt",
-					"status",
+					"createdAt",
 					"metadata",
-					"id",
-					"createdAt"
+					"description",
+					"currency",
+					"fees",
+					"exchangeRate",
+					"netAmount",
+					"amount",
+					"payoutId",
+					"operationId",
+					"paymentId",
+					"settlementId",
+					"id"
 				],
 				"type": "object"
 			},
 			"CreateSettlementResponse": {
 				"properties": {
-					"totalAmount": {
-						"type": "string"
+					"reconciliation": {
+						"properties": {
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"computedTotal": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentCount",
+							"hasWarning",
+							"differencePercent",
+							"declaredTotal",
+							"computedTotal"
+						],
+						"type": "object"
 					},
-					"settlementDate": {
-						"type": "string",
-						"format": "date-time"
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ProcessorSettlementItemApiRow"
+						},
+						"type": "array"
 					},
-					"paymentProvider": {
-						"type": "string",
-						"enum": [
-							"paypal",
-							"dlocal",
-							"mercadopago",
-							"stripe"
-						]
-					},
-					"settlementId": {
-						"type": "string"
-					},
-					"currency": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"id": {
-						"type": "string"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
+					"settlement": {
+						"$ref": "#/components/schemas/ProcessorSettlementListRow"
 					}
 				},
 				"required": [
-					"totalAmount",
-					"settlementDate",
-					"paymentProvider",
-					"settlementId",
-					"currency",
-					"updatedAt",
-					"status",
-					"metadata",
-					"id",
-					"createdAt"
+					"reconciliation",
+					"items",
+					"settlement"
 				],
 				"type": "object"
-			},
-			"Record_string-or-number-or-any.unknown_": {
-				"properties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
 			},
 			"CreateSettlementRouteBody": {
 				"properties": {
 					"metadata": {
-						"$ref": "#/components/schemas/Record_string-or-number-or-any.unknown_"
+						"$ref": "#/components/schemas/Record_string.unknown_"
 					},
 					"paymentProvider": {
 						"type": "string",
@@ -9929,75 +10014,430 @@
 				],
 				"type": "object"
 			},
-			"AddSettlementPaymentResponse": {
+			"PreviewSettlementResponse": {
+				"anyOf": [
+					{
+						"properties": {
+							"paymentIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"messageKey": {
+								"type": "string",
+								"enum": [
+									"INVALID_AMOUNT"
+								],
+								"nullable": false
+							},
+							"duplicateExists": {
+								"type": "boolean"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"hasBlockingError": {
+								"type": "boolean"
+							},
+							"differenceRatio": {
+								"type": "number",
+								"format": "double"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"computedTotal": {
+								"type": "string"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string"
+							},
+							"paymentProvider": {
+								"$ref": "#/components/schemas/PaymentProvider"
+							},
+							"externalSettlementId": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentIds",
+							"messageKey",
+							"duplicateExists",
+							"hasWarning",
+							"hasBlockingError",
+							"differenceRatio",
+							"differencePercent",
+							"paymentCount",
+							"computedTotal",
+							"declaredTotal",
+							"currency",
+							"paymentProvider",
+							"externalSettlementId"
+						],
+						"type": "object"
+					},
+					{
+						"properties": {
+							"paymentIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"messageKey": {
+								"type": "string",
+								"enum": [
+									"DUPLICATE"
+								],
+								"nullable": false
+							},
+							"duplicateExists": {
+								"type": "boolean"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"hasBlockingError": {
+								"type": "boolean"
+							},
+							"differenceRatio": {
+								"type": "number",
+								"format": "double"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"computedTotal": {
+								"type": "string"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string"
+							},
+							"paymentProvider": {
+								"$ref": "#/components/schemas/PaymentProvider"
+							},
+							"externalSettlementId": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentIds",
+							"messageKey",
+							"duplicateExists",
+							"hasWarning",
+							"hasBlockingError",
+							"differenceRatio",
+							"differencePercent",
+							"paymentCount",
+							"computedTotal",
+							"declaredTotal",
+							"currency",
+							"paymentProvider",
+							"externalSettlementId"
+						],
+						"type": "object"
+					},
+					{
+						"properties": {
+							"paymentIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"messageKey": {
+								"type": "string",
+								"enum": [
+									"NO_PAYMENTS"
+								],
+								"nullable": false
+							},
+							"duplicateExists": {
+								"type": "boolean"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"hasBlockingError": {
+								"type": "boolean"
+							},
+							"differenceRatio": {
+								"type": "number",
+								"format": "double"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"computedTotal": {
+								"type": "string"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string"
+							},
+							"paymentProvider": {
+								"$ref": "#/components/schemas/PaymentProvider"
+							},
+							"externalSettlementId": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentIds",
+							"messageKey",
+							"duplicateExists",
+							"hasWarning",
+							"hasBlockingError",
+							"differenceRatio",
+							"differencePercent",
+							"paymentCount",
+							"computedTotal",
+							"declaredTotal",
+							"currency",
+							"paymentProvider",
+							"externalSettlementId"
+						],
+						"type": "object"
+					},
+					{
+						"properties": {
+							"paymentIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"messageKey": {
+								"type": "string",
+								"enum": [
+									"MISMATCH",
+									"WARNING",
+									"OK"
+								]
+							},
+							"duplicateExists": {
+								"type": "boolean"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"hasBlockingError": {
+								"type": "boolean"
+							},
+							"differenceRatio": {
+								"type": "number",
+								"format": "double"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"computedTotal": {
+								"type": "string"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string"
+							},
+							"paymentProvider": {
+								"$ref": "#/components/schemas/PaymentProvider"
+							},
+							"externalSettlementId": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentIds",
+							"messageKey",
+							"duplicateExists",
+							"hasWarning",
+							"hasBlockingError",
+							"differenceRatio",
+							"differencePercent",
+							"paymentCount",
+							"computedTotal",
+							"declaredTotal",
+							"currency",
+							"paymentProvider",
+							"externalSettlementId"
+						],
+						"type": "object"
+					}
+				]
+			},
+			"SettlementBreakdownResponse": {
 				"properties": {
-					"settlementId": {
-						"type": "string"
+					"items": {
+						"items": {
+							"properties": {
+								"platformShare": {
+									"type": "string"
+								},
+								"sellerEarnings": {
+									"items": {
+										"properties": {
+											"currency": {
+												"$ref": "#/components/schemas/EventTicketCurrency"
+											},
+											"status": {
+												"type": "string",
+												"enum": [
+													"pending",
+													"available",
+													"failed_payout",
+													"paid_out",
+													"payout_requested",
+													"retained"
+												]
+											},
+											"sellerUserId": {
+												"type": "string"
+											},
+											"sellerAmount": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"currency",
+											"status",
+											"sellerUserId",
+											"sellerAmount",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"currency": {
+									"type": "string"
+								},
+								"exchangeRate": {
+									"type": "string",
+									"nullable": true
+								},
+								"processorFee": {
+									"type": "string"
+								},
+								"processorCredit": {
+									"type": "string"
+								},
+								"customerAmount": {
+									"type": "string"
+								},
+								"providerPaymentId": {
+									"type": "string"
+								},
+								"paymentId": {
+									"type": "string",
+									"nullable": true
+								},
+								"settlementItemId": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"platformShare",
+								"sellerEarnings",
+								"currency",
+								"exchangeRate",
+								"processorFee",
+								"processorCredit",
+								"customerAmount",
+								"providerPaymentId",
+								"paymentId",
+								"settlementItemId"
+							],
+							"type": "object"
+						},
+						"type": "array"
 					},
-					"payoutId": {
-						"type": "string",
-						"nullable": true
+					"reconciliation": {
+						"properties": {
+							"unreconciledDifference": {
+								"type": "string"
+							},
+							"platformRevenue": {
+								"type": "string"
+							},
+							"totalSellerEarnings": {
+								"type": "string"
+							},
+							"totalProcessorFees": {
+								"type": "string"
+							},
+							"totalProcessorCredits": {
+								"type": "string"
+							},
+							"totalCustomerCharges": {
+								"type": "string"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"unreconciledDifference",
+							"platformRevenue",
+							"totalSellerEarnings",
+							"totalProcessorFees",
+							"totalProcessorCredits",
+							"totalCustomerCharges",
+							"paymentCount"
+						],
+						"type": "object"
 					},
-					"operationId": {
-						"type": "string"
-					},
-					"netAmount": {
-						"type": "string"
-					},
-					"fees": {
-						"type": "string",
-						"nullable": true
-					},
-					"exchangeRate": {
-						"type": "string",
-						"nullable": true
-					},
-					"currency": {
-						"type": "string"
-					},
-					"amount": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"id": {
-						"type": "string"
-					},
-					"description": {
-						"type": "string",
-						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
+					"settlement": {
+						"$ref": "#/components/schemas/ProcessorSettlementListRow"
 					}
 				},
 				"required": [
-					"settlementId",
-					"payoutId",
-					"operationId",
-					"netAmount",
-					"fees",
-					"exchangeRate",
-					"currency",
-					"amount",
-					"updatedAt",
-					"metadata",
-					"id",
-					"description",
-					"createdAt"
+					"items",
+					"reconciliation",
+					"settlement"
 				],
 				"type": "object"
+			},
+			"AddSettlementPaymentResponse": {
+				"$ref": "#/components/schemas/ProcessorSettlementItemApiRow"
 			},
 			"AddSettlementPaymentRouteBody": {
 				"properties": {
 					"metadata": {
-						"$ref": "#/components/schemas/Record_string-or-number-or-any.unknown_"
+						"$ref": "#/components/schemas/Record_string.unknown_"
 					},
 					"description": {
 						"type": "string"
@@ -10035,69 +10475,7 @@
 				"type": "object"
 			},
 			"LinkSettlementPaymentResponse": {
-				"properties": {
-					"settlementId": {
-						"type": "string"
-					},
-					"payoutId": {
-						"type": "string",
-						"nullable": true
-					},
-					"operationId": {
-						"type": "string"
-					},
-					"netAmount": {
-						"type": "string"
-					},
-					"fees": {
-						"type": "string",
-						"nullable": true
-					},
-					"exchangeRate": {
-						"type": "string",
-						"nullable": true
-					},
-					"currency": {
-						"type": "string"
-					},
-					"amount": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"id": {
-						"type": "string"
-					},
-					"description": {
-						"type": "string",
-						"nullable": true
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					}
-				},
-				"required": [
-					"settlementId",
-					"payoutId",
-					"operationId",
-					"netAmount",
-					"fees",
-					"exchangeRate",
-					"currency",
-					"amount",
-					"updatedAt",
-					"metadata",
-					"id",
-					"description",
-					"createdAt"
-				],
-				"type": "object"
+				"$ref": "#/components/schemas/ProcessorSettlementItemApiRow"
 			},
 			"LinkSettlementPaymentRouteBody": {
 				"properties": {
@@ -10111,116 +10489,10 @@
 				"type": "object"
 			},
 			"CompleteSettlementResponse": {
-				"properties": {
-					"totalAmount": {
-						"type": "string"
-					},
-					"settlementDate": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"paymentProvider": {
-						"type": "string",
-						"enum": [
-							"paypal",
-							"dlocal",
-							"mercadopago",
-							"stripe"
-						]
-					},
-					"settlementId": {
-						"type": "string"
-					},
-					"currency": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"id": {
-						"type": "string"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					}
-				},
-				"required": [
-					"totalAmount",
-					"settlementDate",
-					"paymentProvider",
-					"settlementId",
-					"currency",
-					"updatedAt",
-					"status",
-					"metadata",
-					"id",
-					"createdAt"
-				],
-				"type": "object"
+				"$ref": "#/components/schemas/ProcessorSettlementListRow"
 			},
 			"FailSettlementResponse": {
-				"properties": {
-					"totalAmount": {
-						"type": "string"
-					},
-					"settlementDate": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"paymentProvider": {
-						"type": "string",
-						"enum": [
-							"paypal",
-							"dlocal",
-							"mercadopago",
-							"stripe"
-						]
-					},
-					"settlementId": {
-						"type": "string"
-					},
-					"currency": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string"
-					},
-					"metadata": {
-						"$ref": "#/components/schemas/JsonValue"
-					},
-					"id": {
-						"type": "string"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					}
-				},
-				"required": [
-					"totalAmount",
-					"settlementDate",
-					"paymentProvider",
-					"settlementId",
-					"currency",
-					"updatedAt",
-					"status",
-					"metadata",
-					"id",
-					"createdAt"
-				],
-				"type": "object"
+				"$ref": "#/components/schemas/ProcessorSettlementListRow"
 			},
 			"FailSettlementRouteBody": {
 				"properties": {
@@ -10229,6 +10501,298 @@
 					}
 				},
 				"type": "object"
+			},
+			"GetDashboardTicketsResponse": {
+				"properties": {
+					"publishedActiveEvents": {
+						"type": "number",
+						"format": "double"
+					},
+					"publishedTotal": {
+						"type": "number",
+						"format": "double"
+					},
+					"sold": {
+						"type": "number",
+						"format": "double"
+					},
+					"activeListings": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"publishedActiveEvents",
+					"publishedTotal",
+					"sold",
+					"activeListings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"infer_typeofAdminDashboardQuerySchema_": {
+				"properties": {
+					"to": {
+						"type": "string"
+					},
+					"from": {
+						"type": "string"
+					},
+					"period": {
+						"type": "string",
+						"enum": [
+							"today",
+							"7d",
+							"30d",
+							"all"
+						]
+					}
+				},
+				"type": "object"
+			},
+			"AdminDashboardQuery": {
+				"$ref": "#/components/schemas/infer_typeofAdminDashboardQuerySchema_"
+			},
+			"GetDashboardRevenueResponse": {
+				"properties": {
+					"gmv": {
+						"type": "string"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"processorFees": {
+						"type": "string"
+					},
+					"netPlatformIncome": {
+						"type": "string"
+					},
+					"platformIncomeVatAmount": {
+						"type": "string",
+						"description": "IVA estimado sobre el ingreso neto plataforma (tasa = platformIncomeVatRate).\r\nSolo aplica si el ingreso neto es positivo."
+					},
+					"netPlatformIncomeAfterIncomeVat": {
+						"type": "string",
+						"description": "Ingreso neto plataforma menos platformIncomeVatAmount (estimación post-IVA empresa)."
+					},
+					"platformIncomeVatRate": {
+						"type": "number",
+						"format": "double",
+						"description": "Tasa usada (0–1), coincide con VAT_RATE del entorno (p. ej. 0.22)."
+					},
+					"processorFeesPercentOfCommissionAndVat": {
+						"type": "number",
+						"format": "double",
+						"description": "% del total comisión + IVA (pedido) que representan los fees del procesador.\r\nDenominador: platformCommission + vatOnCommission."
+					},
+					"netPlatformIncomePercentOfCommissionAndVat": {
+						"type": "number",
+						"format": "double",
+						"description": "% del total comisión + IVA (pedido) que queda como ingreso neto plataforma."
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"mixedCurrency": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"gmv",
+					"platformCommission",
+					"vatOnCommission",
+					"processorFees",
+					"netPlatformIncome",
+					"platformIncomeVatAmount",
+					"netPlatformIncomeAfterIncomeVat",
+					"platformIncomeVatRate",
+					"processorFeesPercentOfCommissionAndVat",
+					"netPlatformIncomePercentOfCommissionAndVat",
+					"currency",
+					"mixedCurrency"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardOrdersResponse": {
+				"properties": {
+					"pending": {
+						"type": "number",
+						"format": "double"
+					},
+					"confirmed": {
+						"type": "number",
+						"format": "double"
+					},
+					"expired": {
+						"type": "number",
+						"format": "double"
+					},
+					"cancelled": {
+						"type": "number",
+						"format": "double"
+					},
+					"payments": {
+						"properties": {
+							"conversionRate": {
+								"type": "number",
+								"format": "double"
+							},
+							"expired": {
+								"type": "number",
+								"format": "double"
+							},
+							"failed": {
+								"type": "number",
+								"format": "double"
+							},
+							"successful": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"conversionRate",
+							"expired",
+							"failed",
+							"successful"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"pending",
+					"confirmed",
+					"expired",
+					"cancelled",
+					"payments"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardPayoutsResponse": {
+				"properties": {
+					"pendingCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"pendingAmount": {
+						"type": "string"
+					},
+					"completedCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"completedAmount": {
+						"type": "string"
+					},
+					"availableEarnings": {
+						"type": "string"
+					},
+					"retainedEarnings": {
+						"type": "string"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					}
+				},
+				"required": [
+					"pendingCount",
+					"pendingAmount",
+					"completedCount",
+					"completedAmount",
+					"availableEarnings",
+					"retainedEarnings",
+					"currency"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardHealthResponse": {
+				"properties": {
+					"totalUsers": {
+						"type": "number",
+						"format": "double"
+					},
+					"newUsers": {
+						"type": "number",
+						"format": "double"
+					},
+					"pendingVerifications": {
+						"type": "number",
+						"format": "double"
+					},
+					"openTicketReports": {
+						"type": "number",
+						"format": "double"
+					},
+					"pendingJobs": {
+						"type": "number",
+						"format": "double"
+					},
+					"activeEvents": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"totalUsers",
+					"newUsers",
+					"pendingVerifications",
+					"openTicketReports",
+					"pendingJobs",
+					"activeEvents"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DashboardTopEventRow": {
+				"properties": {
+					"eventId": {
+						"type": "string"
+					},
+					"eventName": {
+						"type": "string"
+					},
+					"ticketsSold": {
+						"type": "number",
+						"format": "double"
+					},
+					"revenue": {
+						"type": "string"
+					},
+					"listingCount": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"eventId",
+					"eventName",
+					"ticketsSold",
+					"revenue",
+					"listingCount"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardTopEventsResponse": {
+				"properties": {
+					"events": {
+						"items": {
+							"$ref": "#/components/schemas/DashboardTopEventRow"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"events"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {}
@@ -12872,19 +13436,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"message": {
-											"type": "string"
-										},
-										"success": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"message",
-										"success"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/TriggerHoldCheckResponse"
 								}
 							}
 						}
@@ -14163,15 +14715,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"received": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"received"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/WebhookAcknowledgementResponse"
 								}
 							}
 						}
@@ -14205,15 +14749,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"received": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"received"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/WebhookAcknowledgementResponse"
 								}
 							}
 						}
@@ -16004,21 +16540,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"failed": {
-											"type": "number",
-											"format": "double"
-										},
-										"sent": {
-											"type": "number",
-											"format": "double"
-										}
-									},
-									"required": [
-										"failed",
-										"sent"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/TestPushDevResponse"
 								}
 							}
 						}
@@ -16291,31 +16813,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"expiration": {
-											"type": "string"
-										},
-										"region": {
-											"type": "string"
-										},
-										"sessionToken": {
-											"type": "string"
-										},
-										"secretAccessKey": {
-											"type": "string"
-										},
-										"accessKeyId": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"expiration",
-										"region",
-										"sessionToken",
-										"secretAccessKey",
-										"accessKeyId"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/GetLivenessCredentialsResponse"
 								}
 							}
 						}
@@ -16755,17 +17253,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"pagination": {},
-										"data": {
-											"$ref": "#/components/schemas/ListSettlementsResponse"
-										}
-									},
-									"required": [
-										"pagination",
-										"data"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/ListSettlementsResponse"
 								}
 							}
 						}
@@ -16934,6 +17422,119 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/SettlementDetailsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Settlement not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "settlementId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/settlements/preview": {
+			"post": {
+				"operationId": "PreviewSettlement",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PreviewSettlementResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateSettlementRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/settlements/{settlementId}/breakdown": {
+			"get": {
+				"operationId": "GetSettlementBreakdown",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SettlementBreakdownResponse"
 								}
 							}
 						}
@@ -17285,6 +17886,413 @@
 						}
 					}
 				}
+			}
+		},
+		"/admin/dashboard/tickets": {
+			"get": {
+				"operationId": "GetDashboardTickets",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardTicketsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/revenue": {
+			"get": {
+				"operationId": "GetDashboardRevenue",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardRevenueResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/orders": {
+			"get": {
+				"operationId": "GetDashboardOrders",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardOrdersResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/payouts": {
+			"get": {
+				"operationId": "GetDashboardPayouts",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardPayoutsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/health": {
+			"get": {
+				"operationId": "GetDashboardHealth",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardHealthResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/admin/dashboard/top-events": {
+			"get": {
+				"operationId": "GetDashboardTopEvents",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardTopEventsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
 			}
 		}
 	},

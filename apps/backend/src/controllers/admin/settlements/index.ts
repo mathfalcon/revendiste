@@ -18,10 +18,16 @@ import {
 } from '~/middleware';
 import {ProcessorSettlementsRepository} from '~/repositories/processor-settlements';
 import {PayoutsRepository} from '~/repositories/payouts';
+import {PaymentsRepository} from '~/repositories/payments';
+import {SellerEarningsRepository} from '~/repositories/seller-earnings';
 import {db} from '~/db';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
-import {ValidateBody, ValidateQuery, Body, Query} from '~/decorators';
-import {ProcessorSettlementsService} from '~/services/processor-settlements';
+import {ValidateBody, ValidateQuery, Body} from '~/decorators';
+import {
+  ProcessorSettlementsService,
+  type ProcessorSettlementListRow,
+} from '~/services/processor-settlements';
+import type {PaginatedResponse} from '~/types/pagination';
 import {
   AdminSettlementsQuery,
   AdminSettlementsRouteSchema,
@@ -35,27 +41,31 @@ import {
   FailSettlementRouteSchema,
 } from './validation';
 
-type ListSettlementsResponse = Awaited<
-  ReturnType<ProcessorSettlementsRepository['listSettlements']>
->;
-type SettlementDetailsResponse = Awaited<
-  ReturnType<ProcessorSettlementsRepository['getSettlementById']>
->;
-type CreateSettlementResponse = Awaited<
-  ReturnType<ProcessorSettlementsService['createSettlement']>
->;
-type AddSettlementPaymentResponse = Awaited<
-  ReturnType<ProcessorSettlementsService['addPaymentToSettlement']>
->;
-type LinkSettlementPaymentResponse = Awaited<
-  ReturnType<ProcessorSettlementsService['linkSettlementPaymentToPayout']>
->;
-type CompleteSettlementResponse = Awaited<
-  ReturnType<ProcessorSettlementsService['completeSettlement']>
->;
-type FailSettlementResponse = Awaited<
-  ReturnType<ProcessorSettlementsService['failSettlement']>
->;
+type ListSettlementsResponse = PaginatedResponse<ProcessorSettlementListRow>;
+type SettlementDetailsResponse = Awaited<ReturnType<
+  ProcessorSettlementsService['getSettlementById']
+>>;
+type CreateSettlementResponse = Awaited<ReturnType<
+  ProcessorSettlementsService['createSettlement']
+>>;
+type PreviewSettlementResponse = Awaited<ReturnType<
+  ProcessorSettlementsService['previewSettlement']
+>>;
+type SettlementBreakdownResponse = Awaited<ReturnType<
+  ProcessorSettlementsService['getSettlementBreakdown']
+>>;
+type AddSettlementPaymentResponse = Awaited<ReturnType<
+  ProcessorSettlementsService['addPaymentToSettlement']
+>>;
+type LinkSettlementPaymentResponse = Awaited<ReturnType<
+  ProcessorSettlementsService['linkSettlementPaymentToPayout']
+>>;
+type CompleteSettlementResponse = Awaited<ReturnType<
+  ProcessorSettlementsService['completeSettlement']
+>>;
+type FailSettlementResponse = Awaited<ReturnType<
+  ProcessorSettlementsService['failSettlement']
+>>;
 
 @Route('admin/settlements')
 @Middlewares(requireAuthMiddleware, requireAdminMiddleware)
@@ -64,6 +74,8 @@ export class AdminSettlementsController {
   private service = new ProcessorSettlementsService(
     new ProcessorSettlementsRepository(db),
     new PayoutsRepository(db),
+    new PaymentsRepository(db),
+    new SellerEarningsRepository(db),
   );
 
   @Get('/')
@@ -74,21 +86,11 @@ export class AdminSettlementsController {
   public async listSettlements(
     @Queries() query: AdminSettlementsQuery,
     @Request() request: express.Request,
-  ): Promise<{
-    data: ListSettlementsResponse;
-    pagination: typeof request.pagination;
-  }> {
-    const settlements = await this.service.listSettlementsWithPagination({
-      page: request.pagination!.page,
-      limit: request.pagination!.limit,
+  ): Promise<ListSettlementsResponse> {
+    return this.service.listSettlementsWithPagination(request.pagination!, {
       status: query.status,
       paymentProvider: query.paymentProvider,
     });
-
-    return {
-      data: settlements,
-      pagination: request.pagination,
-    };
   }
 
   @Get('/{settlementId}')
@@ -117,6 +119,32 @@ export class AdminSettlementsController {
       currency: body.currency,
       metadata: body.metadata,
     });
+  }
+
+  @Post('/preview')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  @ValidateBody(CreateSettlementRouteSchema)
+  public async previewSettlement(
+    @Body() body: CreateSettlementRouteBody,
+  ): Promise<PreviewSettlementResponse> {
+    return this.service.previewSettlement({
+      paymentProvider: body.paymentProvider,
+      externalSettlementId: body.externalSettlementId,
+      settlementDate: new Date(body.settlementDate),
+      totalAmount: body.totalAmount,
+      currency: body.currency,
+    });
+  }
+
+  @Get('/{settlementId}/breakdown')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  @Response<NotFoundError>(404, 'Settlement not found')
+  public async getSettlementBreakdown(
+    @Path() settlementId: string,
+  ): Promise<SettlementBreakdownResponse> {
+    return this.service.getSettlementBreakdown(settlementId);
   }
 
   @Post('/{settlementId}/payments')

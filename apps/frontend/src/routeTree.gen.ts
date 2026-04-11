@@ -36,6 +36,7 @@ import { Route as AdminVerificacionesRouteImport } from './routes/admin/verifica
 import { Route as AdminRetirosRouteImport } from './routes/admin/retiros'
 import { Route as AdminFinanzasRouteImport } from './routes/admin/finanzas'
 import { Route as AdminEventosRouteImport } from './routes/admin/eventos'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as CuentaReportesIndexRouteImport } from './routes/cuenta/reportes/index'
 import { Route as CheckoutOrderIdIndexRouteImport } from './routes/checkout/$orderId/index'
 import { Route as AdminReportesIndexRouteImport } from './routes/admin/reportes/index'
@@ -43,6 +44,7 @@ import { Route as EventosEnLocationRouteImport } from './routes/eventos/en.$loca
 import { Route as CuentaReportesReportIdRouteImport } from './routes/cuenta/reportes/$reportId'
 import { Route as CheckoutOrderIdSuccessRouteImport } from './routes/checkout/$orderId/success'
 import { Route as AdminReportesReportIdRouteImport } from './routes/admin/reportes/$reportId'
+import { Route as AdminFinanzasLiquidacionesSettlementIdRouteImport } from './routes/admin/finanzas/liquidaciones/$settlementId'
 
 const TerminosYCondicionesRoute = TerminosYCondicionesRouteImport.update({
   id: '/terminos-y-condiciones',
@@ -180,6 +182,11 @@ const AdminEventosRoute = AdminEventosRouteImport.update({
   path: '/eventos',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const CuentaReportesIndexRoute = CuentaReportesIndexRouteImport.update({
   id: '/reportes/',
   path: '/reportes/',
@@ -215,6 +222,12 @@ const AdminReportesReportIdRoute = AdminReportesReportIdRouteImport.update({
   path: '/reportes/$reportId',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminFinanzasLiquidacionesSettlementIdRoute =
+  AdminFinanzasLiquidacionesSettlementIdRouteImport.update({
+    id: '/liquidaciones/$settlementId',
+    path: '/liquidaciones/$settlementId',
+    getParentRoute: () => AdminFinanzasRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -226,8 +239,9 @@ export interface FileRoutesByFullPath {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/eventos': typeof AdminEventosRoute
-  '/admin/finanzas': typeof AdminFinanzasRoute
+  '/admin/finanzas': typeof AdminFinanzasRouteWithChildren
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/configuracion': typeof CuentaConfiguracionRoute
@@ -251,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/admin/reportes/': typeof AdminReportesIndexRoute
   '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
   '/cuenta/reportes/': typeof CuentaReportesIndexRoute
+  '/admin/finanzas/liquidaciones/$settlementId': typeof AdminFinanzasLiquidacionesSettlementIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -261,8 +276,9 @@ export interface FileRoutesByTo {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/eventos': typeof AdminEventosRoute
-  '/admin/finanzas': typeof AdminFinanzasRoute
+  '/admin/finanzas': typeof AdminFinanzasRouteWithChildren
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/configuracion': typeof CuentaConfiguracionRoute
@@ -286,6 +302,7 @@ export interface FileRoutesByTo {
   '/admin/reportes': typeof AdminReportesIndexRoute
   '/checkout/$orderId': typeof CheckoutOrderIdIndexRoute
   '/cuenta/reportes': typeof CuentaReportesIndexRoute
+  '/admin/finanzas/liquidaciones/$settlementId': typeof AdminFinanzasLiquidacionesSettlementIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -298,8 +315,9 @@ export interface FileRoutesById {
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/eventos': typeof AdminEventosRoute
-  '/admin/finanzas': typeof AdminFinanzasRoute
+  '/admin/finanzas': typeof AdminFinanzasRouteWithChildren
   '/admin/retiros': typeof AdminRetirosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/configuracion': typeof CuentaConfiguracionRoute
@@ -323,6 +341,7 @@ export interface FileRoutesById {
   '/admin/reportes/': typeof AdminReportesIndexRoute
   '/checkout/$orderId/': typeof CheckoutOrderIdIndexRoute
   '/cuenta/reportes/': typeof CuentaReportesIndexRoute
+  '/admin/finanzas/liquidaciones/$settlementId': typeof AdminFinanzasLiquidacionesSettlementIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -336,6 +355,7 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
+    | '/admin/dashboard'
     | '/admin/eventos'
     | '/admin/finanzas'
     | '/admin/retiros'
@@ -361,6 +381,7 @@ export interface FileRouteTypes {
     | '/admin/reportes/'
     | '/checkout/$orderId/'
     | '/cuenta/reportes/'
+    | '/admin/finanzas/liquidaciones/$settlementId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -371,6 +392,7 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
+    | '/admin/dashboard'
     | '/admin/eventos'
     | '/admin/finanzas'
     | '/admin/retiros'
@@ -396,6 +418,7 @@ export interface FileRouteTypes {
     | '/admin/reportes'
     | '/checkout/$orderId'
     | '/cuenta/reportes'
+    | '/admin/finanzas/liquidaciones/$settlementId'
   id:
     | '__root__'
     | '/'
@@ -407,6 +430,7 @@ export interface FileRouteTypes {
     | '/preguntas-frecuentes'
     | '/sitemap'
     | '/terminos-y-condiciones'
+    | '/admin/dashboard'
     | '/admin/eventos'
     | '/admin/finanzas'
     | '/admin/retiros'
@@ -432,6 +456,7 @@ export interface FileRouteTypes {
     | '/admin/reportes/'
     | '/checkout/$orderId/'
     | '/cuenta/reportes/'
+    | '/admin/finanzas/liquidaciones/$settlementId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -646,6 +671,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEventosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/cuenta/reportes/': {
       id: '/cuenta/reportes/'
       path: '/reportes'
@@ -695,12 +727,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReportesReportIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/finanzas/liquidaciones/$settlementId': {
+      id: '/admin/finanzas/liquidaciones/$settlementId'
+      path: '/liquidaciones/$settlementId'
+      fullPath: '/admin/finanzas/liquidaciones/$settlementId'
+      preLoaderRoute: typeof AdminFinanzasLiquidacionesSettlementIdRouteImport
+      parentRoute: typeof AdminFinanzasRoute
+    }
   }
 }
 
+interface AdminFinanzasRouteChildren {
+  AdminFinanzasLiquidacionesSettlementIdRoute: typeof AdminFinanzasLiquidacionesSettlementIdRoute
+}
+
+const AdminFinanzasRouteChildren: AdminFinanzasRouteChildren = {
+  AdminFinanzasLiquidacionesSettlementIdRoute:
+    AdminFinanzasLiquidacionesSettlementIdRoute,
+}
+
+const AdminFinanzasRouteWithChildren = AdminFinanzasRoute._addFileChildren(
+  AdminFinanzasRouteChildren,
+)
+
 interface AdminRouteRouteChildren {
+  AdminDashboardRoute: typeof AdminDashboardRoute
   AdminEventosRoute: typeof AdminEventosRoute
-  AdminFinanzasRoute: typeof AdminFinanzasRoute
+  AdminFinanzasRoute: typeof AdminFinanzasRouteWithChildren
   AdminRetirosRoute: typeof AdminRetirosRoute
   AdminVerificacionesRoute: typeof AdminVerificacionesRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -709,8 +762,9 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminDashboardRoute: AdminDashboardRoute,
   AdminEventosRoute: AdminEventosRoute,
-  AdminFinanzasRoute: AdminFinanzasRoute,
+  AdminFinanzasRoute: AdminFinanzasRouteWithChildren,
   AdminRetirosRoute: AdminRetirosRoute,
   AdminVerificacionesRoute: AdminVerificacionesRoute,
   AdminIndexRoute: AdminIndexRoute,

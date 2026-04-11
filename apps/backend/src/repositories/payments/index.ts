@@ -1,4 +1,4 @@
-import {type Kysely, type Insertable, type Updateable} from 'kysely';
+import {type Kysely, type Insertable, type Updateable, sql} from 'kysely';
 import type {DB, Payments, PaymentProvider} from '@revendiste/shared';
 import type {Payment} from '~/types/models';
 import {PAYMENT_SYNC_BATCH_SIZE} from '~/constants/limits';
@@ -149,6 +149,57 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
    * Only returns payments that have a providerPaymentId (can be checked with provider)
    * Optionally filters by age (e.g., only check payments older than X minutes)
    */
+  /**
+   * Payments eligible to be linked to a processor settlement batch (FIFO reconciliation).
+   * Provider-agnostic: filters by payments.provider and settlement currency via balance/currency columns.
+   */
+  async listUnreconciledPaymentsForSettlement(params: {
+    paymentProvider: PaymentProvider;
+    settlementCurrency: string;
+    settlementDateEndInclusive: Date;
+  }) {
+    const currency = params.settlementCurrency.toUpperCase();
+
+    return await this.db
+      .selectFrom('payments')
+      .selectAll()
+      .where('provider', '=', params.paymentProvider)
+      .where('status', '=', 'paid')
+      .where('balanceAmount', 'is not', null)
+      .where('approvedAt', 'is not', null)
+      .where('approvedAt', '<=', params.settlementDateEndInclusive)
+      .where('deletedAt', 'is', null)
+      .where(
+        sql<boolean>`NOT EXISTS (
+          SELECT 1 FROM processor_settlement_items psi
+          WHERE psi.payment_id = payments.id
+        )`,
+      )
+      .where(
+        sql<boolean>`(
+          payments.balance_currency = ${currency}
+          OR (payments.balance_currency IS NULL AND payments.currency = ${currency})
+        )`,
+      )
+      .orderBy('approvedAt', 'asc')
+      .execute();
+  }
+
+  /**
+   * Batch fetch payments by primary key (for settlement breakdown).
+   */
+  async getByIds(ids: string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+    return await this.db
+      .selectFrom('payments')
+      .selectAll()
+      .where('id', 'in', ids)
+      .where('deletedAt', 'is', null)
+      .execute();
+  }
+
   async getPendingPaymentsForSync(options?: {
     minAgeMinutes?: number; // Only check payments older than this
     limit?: number; // Limit number of payments to process per run
