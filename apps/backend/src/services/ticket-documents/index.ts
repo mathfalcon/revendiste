@@ -17,7 +17,7 @@ import {notifyDocumentUploaded} from '~/services/notifications/helpers';
  *
  * Handles ticket document uploads, downloads, and management.
  * Documents are stored using the configured storage provider (local or S3).
- * Supports document versioning and multiple documents per ticket.
+ * Supports document versioning and multiple documents per ticket; storage objects are retained for audit (no deletes on replace or soft-delete).
  */
 export interface UploadedDocumentData {
   storagePath: string;
@@ -109,14 +109,17 @@ export class TicketDocumentService {
     const existingDocument =
       await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
 
+    const nextVersion = existingDocument ? existingDocument.version + 1 : 1;
+
     // Upload new document to storage
     // Use 'private/tickets/' prefix for R2 bucket clarity
+    // Version in the object key keeps every upload distinct (audit trail — never overwrite)
     const uploadResult = await this.storageProvider.upload(file.buffer, {
       originalName: file.originalName,
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
       directory: `private/tickets/${ticket.eventId}`,
-      filename: `ticket-${ticketId}`,
+      filename: `ticket-${ticketId}-v${nextVersion}`,
     });
 
     // Create new document record
@@ -131,9 +134,7 @@ export class TicketDocumentService {
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
       documentType: 'ticket' as const,
-      version: existingDocument
-        ? (existingDocument.version as unknown as number) + 1
-        : 1,
+      version: nextVersion,
       status: 'verified' as const,
       uploadedAt: new Date(),
     };
@@ -147,23 +148,6 @@ export class TicketDocumentService {
           ...documentData,
           isPrimary: true,
         });
-
-    if (existingDocument) {
-      // Optionally delete old file from storage
-      try {
-        await this.storageProvider.delete(existingDocument.storagePath);
-        logger.info('Deleted old ticket document from storage', {
-          ticketId,
-          oldPath: existingDocument.storagePath,
-          oldVersion: existingDocument.version,
-        });
-      } catch (error) {
-        logger.warn('Failed to delete old ticket document', {
-          ticketId,
-          error,
-        });
-      }
-    }
 
     logger.info('Ticket document uploaded successfully', {
       ticketId,
@@ -271,9 +255,8 @@ export class TicketDocumentService {
     }
 
     // Get the primary document for this ticket
-    const document = await this.ticketDocumentsRepository.getPrimaryDocument(
-      ticketId,
-    );
+    const document =
+      await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
 
     if (!document) {
       throw new NotFoundError(
@@ -313,9 +296,8 @@ export class TicketDocumentService {
     }
 
     // Get the primary document
-    const document = await this.ticketDocumentsRepository.getPrimaryDocument(
-      ticketId,
-    );
+    const document =
+      await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
 
     if (!document) {
       throw new NotFoundError(
@@ -323,10 +305,7 @@ export class TicketDocumentService {
       );
     }
 
-    // Delete from storage
-    await this.storageProvider.delete(document.storagePath);
-
-    // Soft delete the document record
+    // Soft delete the document record (storage objects retained for audit)
     await this.ticketDocumentsRepository.softDelete(
       document.id as unknown as string,
     );
@@ -377,14 +356,12 @@ export class TicketDocumentService {
     }
 
     // Get primary document (if any)
-    const document = await this.ticketDocumentsRepository.getPrimaryDocument(
-      ticketId,
-    );
+    const document =
+      await this.ticketDocumentsRepository.getPrimaryDocument(ticketId);
 
     // Get all documents for version history
-    const allDocuments = await this.ticketDocumentsRepository.getAllDocuments(
-      ticketId,
-    );
+    const allDocuments =
+      await this.ticketDocumentsRepository.getAllDocuments(ticketId);
 
     return {
       id: ticket.id,
@@ -467,20 +444,6 @@ export class TicketDocumentService {
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
     };
-  }
-
-  /**
-   * Delete a file from storage — used for cleanup after a failed DB transaction.
-   */
-  async deleteFromStorage(storagePath: string): Promise<void> {
-    try {
-      await this.storageProvider.delete(storagePath);
-    } catch (error) {
-      logger.warn('Failed to delete orphaned document from storage', {
-        storagePath,
-        error,
-      });
-    }
   }
 
   /**

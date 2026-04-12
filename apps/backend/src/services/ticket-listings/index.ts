@@ -196,12 +196,17 @@ export class TicketListingsService {
         uploadedDocuments.length > 0 ? uploadedDocuments : undefined,
       );
     } catch (dbError) {
-      // DB transaction failed — clean up any S3 objects we already uploaded
+      // DB transaction failed — uploaded objects are left in storage on purpose (audit trail).
       if (uploadedDocuments.length > 0) {
-        await Promise.allSettled(
-          uploadedDocuments.map(doc =>
-            this.ticketDocumentService!.deleteFromStorage(doc.storagePath),
-          ),
+        logger.warn(
+          'Listing DB transaction failed after ticket document uploads; storage objects retained',
+          {
+            publisherUserId,
+            eventId: data.eventId,
+            paths: uploadedDocuments.map(d => d.storagePath),
+            error:
+              dbError instanceof Error ? dbError.message : String(dbError),
+          },
         );
       }
       throw dbError;
