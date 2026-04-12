@@ -44,9 +44,8 @@ const WINSTON_TO_OTEL_SEVERITY: Record<string, SeverityNumber> = {
  * which then exports them to PostHog via OTLP.
  */
 class OTelTransport extends TransportStream {
-  private otelLogger = logs.getLogger('revendiste-backend');
-
   log(info: any, callback: () => void) {
+    const otelLogger = logs.getLogger('revendiste-backend');
     const {level, message, timestamp: _ts, ...metadata} = info;
 
     // Filter out Winston internal properties
@@ -72,7 +71,7 @@ class OTelTransport extends TransportStream {
       }
     }
 
-    this.otelLogger.emit({
+    otelLogger.emit({
       severityNumber: WINSTON_TO_OTEL_SEVERITY[level] ?? SeverityNumber.INFO,
       severityText: level,
       body: message,
