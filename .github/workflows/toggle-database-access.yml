@@ -259,28 +259,55 @@ jobs:
         run: |
           echo "=== Waiting for bastion to register with SSM ==="
 
-          INSTANCE_ID=$(aws ec2 describe-instances \
+          INSTANCES_JSON=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=${NAME_PREFIX}-bastion" \
-            --query 'Reservations[0].Instances[0].InstanceId' \
-            --output text \
+            --query 'Reservations[].Instances[]' \
+            --output json \
             --region $AWS_REGION)
+          INSTANCE_ID=$(echo "$INSTANCES_JSON" | jq -r 'if type == "array" and length > 0 then .[0].InstanceId else empty end')
+
+          if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
+            echo "::error::No bastion instance found with tag Name=${NAME_PREFIX}-bastion"
+            exit 1
+          fi
 
           echo "Bastion instance ID: $INSTANCE_ID"
 
-          for i in $(seq 1 12); do
-            STATUS=$(aws ssm describe-instance-information \
+          # After new VPC endpoints + instance start, SSM registration often needs several minutes.
+          MAX_ROUNDS=40
+          SLEEP_SECS=15
+          SSM_ONLINE=false
+
+          for i in $(seq 1 "$MAX_ROUNDS"); do
+            RAW=$(aws ssm describe-instance-information \
               --filters "Key=InstanceIds,Values=${INSTANCE_ID}" \
               --query 'InstanceInformationList[0].PingStatus' \
               --output text \
-              --region $AWS_REGION 2>/dev/null || echo "NotReady")
+              --region $AWS_REGION 2>&1) || true
+            STATUS=$(echo "$RAW" | head -n1 | tr -d '\r' | xargs)
 
-            if [ "$STATUS" = "Online" ]; then
-              echo "Bastion is online in SSM!"
-              break
-            fi
-            echo "  SSM status: $STATUS — waiting... ($((i * 10))s elapsed)"
-            sleep 10
+            case "$STATUS" in
+              Online)
+                echo "Bastion is online in SSM (PingStatus=Online)."
+                SSM_ONLINE=true
+                break
+                ;;
+              None|'')
+                STATUS="not registered yet"
+                ;;
+            esac
+
+            ELAPSED=$((i * SLEEP_SECS))
+            echo "  SSM: $STATUS — waiting... (${ELAPSED}s elapsed, max $((MAX_ROUNDS * SLEEP_SECS))s)"
+            sleep "$SLEEP_SECS"
           done
+
+          if [ "$SSM_ONLINE" != "true" ]; then
+            echo "::error::Bastion $INSTANCE_ID never reached SSM PingStatus=Online after $((MAX_ROUNDS * SLEEP_SECS))s. start-session will fail with TargetNotConnected until it registers."
+            echo "Check: interface VPC endpoints (ssm, ssmmessages, ec2messages) are available in the bastion VPC; instance profile includes AmazonSSMManagedInstanceCore; security groups and NACLs allow HTTPS to those endpoints."
+            echo "Last describe-instance-information line: $RAW"
+            exit 1
+          fi
 
           echo ""
           echo "=== Database access is ready ==="
@@ -292,4 +319,4 @@ jobs:
           echo "    --document-name AWS-StartPortForwardingSessionToRemoteHost \\"
           echo "    --parameters 'host=\"<RDS_ENDPOINT>\",portNumber=\"5432\",localPortNumber=\"5432\"'"
           echo ""
-          echo "Then connect locally on localhost:5432"
+          echo "Replace <RDS_ENDPOINT> with your RDS address. Then connect locally on localhost:5432"
