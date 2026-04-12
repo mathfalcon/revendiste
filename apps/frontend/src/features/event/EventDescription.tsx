@@ -47,7 +47,7 @@ export const EventDescription = (props: EventDescriptionProps) => {
           rel='noopener noreferrer'
           className='group flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors'
         >
-          <div className='flex items-center justify-center w-8 h-8 rounded-full bg-background border border-border flex-shrink-0'>
+          <div className='flex items-center justify-center w-8 h-8 rounded-full bg-background border border-border shrink-0'>
             <ExternalLink className='w-4 h-4 text-muted-foreground' />
           </div>
           <div className='flex-1'>

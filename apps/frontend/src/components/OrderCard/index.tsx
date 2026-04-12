@@ -128,7 +128,7 @@ export function OrderCard({order}: OrderCardProps) {
       <CardContent className='p-0'>
         <div className='flex'>
           {/* Left accent bar */}
-          <div className={`w-1.5 bg-gradient-to-b ${status.accentColor}`} />
+          <div className={`w-1.5 bg-linear-to-b ${status.accentColor}`} />
 
           <div className='flex-1 p-4'>
             {/* Header with event image and info */}
@@ -283,7 +283,6 @@ export function OrderCard({order}: OrderCardProps) {
         open={showCancelDialog}
         onOpenChange={setShowCancelDialog}
       />
-
     </Card>
   );
 }

@@ -127,26 +127,56 @@ jobs:
         run: |
           echo "=== Creating SSM VPC endpoints for $NAME_PREFIX ==="
 
-          # Look up the resources the bastion belongs to via its tags
-          BASTION_INFO=$(aws ec2 describe-instances \
+          is_blank() {
+            case "${1:-}" in ''|'null'|'None') return 0 ;; *) return 1 ;; esac
+          }
+
+          # Prefer bastion instance (any state with network info); avoid Reservations[0] when list is empty
+          INSTANCES_JSON=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=${NAME_PREFIX}-bastion" \
-            --query 'Reservations[0].Instances[0].{SubnetId:SubnetId,VpcId:VpcId}' \
+            --query 'Reservations[].Instances[]' \
             --output json \
             --region $AWS_REGION)
 
-          VPC_ID=$(echo "$BASTION_INFO" | jq -r '.VpcId')
-          SUBNET_ID=$(echo "$BASTION_INFO" | jq -r '.SubnetId')
+          VPC_ID=$(echo "$INSTANCES_JSON" | jq -r 'if type == "array" and length > 0 then .[0].VpcId else empty end')
+          SUBNET_ID=$(echo "$INSTANCES_JSON" | jq -r 'if type == "array" and length > 0 then .[0].SubnetId else empty end')
+
+          # Fallback: Terraform tags the SSM endpoints SG and first private subnet even if bastion is missing from DescribeInstances
+          if is_blank "$VPC_ID" || is_blank "$SUBNET_ID"; then
+            echo "No bastion instance found by tag Name=${NAME_PREFIX}-bastion; resolving VPC via ${NAME_PREFIX}-ssm-endpoints-sg and subnet ${NAME_PREFIX}-private-1..."
+            SG_META=$(aws ec2 describe-security-groups \
+              --filters "Name=tag:Name,Values=${NAME_PREFIX}-ssm-endpoints-sg" \
+              --query 'SecurityGroups[0].{VpcId:VpcId,GroupId:GroupId}' \
+              --output json \
+              --region $AWS_REGION)
+            VPC_ID=$(echo "$SG_META" | jq -r '.VpcId // empty')
+            if ! is_blank "$VPC_ID"; then
+              SUBNET_ID=$(aws ec2 describe-subnets \
+                --filters "Name=vpc-id,Values=$VPC_ID" "Name=tag:Name,Values=${NAME_PREFIX}-private-1" \
+                --query 'Subnets[0].SubnetId' \
+                --output text \
+                --region $AWS_REGION)
+            fi
+          fi
+
+          if is_blank "$VPC_ID" || is_blank "$SUBNET_ID"; then
+            echo "::error::Could not resolve VPC/subnet for $NAME_PREFIX. Expected an instance tagged Name=${NAME_PREFIX}-bastion, or security group tagged Name=${NAME_PREFIX}-ssm-endpoints-sg plus subnet tagged Name=${NAME_PREFIX}-private-1. Check region $AWS_REGION and that credentials target the correct AWS account."
+            exit 1
+          fi
 
           echo "VPC: $VPC_ID  Subnet: $SUBNET_ID"
 
-          # Find the SSM endpoints security group (created by Terraform, always present)
+          # SSM endpoints SG (tag is unique per name_prefix; do not filter by vpc-id — empty vpc-id breaks the API)
           SG_ID=$(aws ec2 describe-security-groups \
-            --filters \
-              "Name=tag:Name,Values=${NAME_PREFIX}-ssm-endpoints-sg" \
-              "Name=vpc-id,Values=${VPC_ID}" \
+            --filters "Name=tag:Name,Values=${NAME_PREFIX}-ssm-endpoints-sg" \
             --query 'SecurityGroups[0].GroupId' \
             --output text \
             --region $AWS_REGION)
+
+          if is_blank "$SG_ID"; then
+            echo "::error::Security group ${NAME_PREFIX}-ssm-endpoints-sg not found in $AWS_REGION. Apply Terraform for the bastion module first."
+            exit 1
+          fi
 
           echo "Endpoints SG: $SG_ID"
 

@@ -36,7 +36,7 @@ export function TicketWaitingCard({ticket}: TicketWaitingCardProps) {
       <CardContent className='p-0'>
         <div className='flex'>
           {/* Left accent bar */}
-          <div className='w-1.5 bg-gradient-to-b from-muted-foreground/40 to-muted-foreground/60' />
+          <div className='w-1.5 bg-linear-to-b from-muted-foreground/40 to-muted-foreground/60' />
 
           <div className='flex-1 p-4'>
             {/* Header with event image and info */}

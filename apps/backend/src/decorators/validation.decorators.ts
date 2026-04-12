@@ -2,6 +2,31 @@ import express from 'express';
 import {FieldErrors, ValidateError} from '@mathfalcon/tsoa-runtime';
 import {ZodObject, ZodType} from 'zod';
 
+function isExpressRequestLike(arg: unknown): arg is express.Request {
+  if (arg === null || typeof arg !== 'object') {
+    return false;
+  }
+  const o = arg as Record<string, unknown>;
+  return typeof o.method === 'string' && 'headers' in o;
+}
+
+/** First parameter that is a plain object and not an Express request (typical `@Queries()` slot). */
+function findFirstPlainControllerArgIndex(args: unknown[]): number | null {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === null || typeof arg !== 'object') {
+      continue;
+    }
+    if (Array.isArray(arg)) {
+      continue;
+    }
+    if (!isExpressRequestLike(arg)) {
+      return i;
+    }
+  }
+  return null;
+}
+
 export type ValidationSchema = ZodObject<{
   query?: ZodType;
   body?: ZodType;
@@ -146,74 +171,69 @@ export function ValidateQuery(validationSchema: ValidationSchema) {
   ) {
     const originalMethod = descriptor.value;
     descriptor.value = async function (...args: any[]) {
-      // Retrieve the list of indices of the parameters that are decorated
-      // Check for both @Query() and @Queries() decorators
+      // Parameter indices from our `@Query()` decorator; `@Queries()` may be registered
+      // by `@mathfalcon/tsoa-runtime` — use getMetadata (prototype chain) + own fallback.
       const queryCandidates: number[] =
-        Reflect.getOwnMetadata('Query', target, propertyKey) || [];
+        (Reflect.getMetadata('Query', target, propertyKey) as
+          | number[]
+          | undefined) ||
+        Reflect.getOwnMetadata('Query', target, propertyKey) ||
+        [];
       const queriesCandidates: number[] =
-        Reflect.getOwnMetadata('Queries', target, propertyKey) || [];
+        (Reflect.getMetadata('Queries', target, propertyKey) as
+          | number[]
+          | undefined) ||
+        Reflect.getOwnMetadata('Queries', target, propertyKey) ||
+        [];
 
-      // Try to find the Request object in args (similar to ValidateBody)
       let request: express.Request | null = null;
       for (const arg of args) {
-        if (
-          arg &&
-          typeof arg === 'object' &&
-          'query' in arg &&
-          'method' in arg &&
-          'headers' in arg
-        ) {
+        if (isExpressRequestLike(arg)) {
           request = arg;
           break;
         }
       }
 
-      // Use @Queries() if available, otherwise fall back to @Query()
-      const queryIndex =
+      const metaQueryIndex =
         queriesCandidates.length > 0
           ? queriesCandidates[0]
           : queryCandidates.length > 0
-          ? queryCandidates[0]
-          : null;
+            ? queryCandidates[0]
+            : null;
 
-      let rawQuery = queryIndex !== null ? args[queryIndex] : null;
-      let actualQueryIndex = queryIndex;
+      const inferredQueryIndex = findFirstPlainControllerArgIndex(args);
 
-      // Always use request.query for validation since it has the raw string values
-      // that the schema expects (PaginationSchema expects strings and transforms them)
-      // The args[queryIndex] might already be transformed by other middleware
-      if (request && request.query) {
-        rawQuery = request.query;
-      }
+      // Prefer Reflect metadata when present; otherwise the first non-Request object
+      // (TSOA passes `@Queries()` / `@Query()` values as plain objects).
+      let actualQueryIndex =
+        metaQueryIndex !== null ? metaQueryIndex : inferredQueryIndex;
 
-      // Find the query parameter index for updating after validation
-      if (actualQueryIndex === null && request && args.length > 0) {
-        // Check each arg to see if it looks like a query object
-        for (let i = 0; i < args.length; i++) {
-          const arg = args[i];
-          if (
-            arg &&
-            typeof arg === 'object' &&
-            arg !== request && // Not the request object
-            !('method' in arg) && // Not a request-like object
-            Object.keys(arg).some(key =>
-              ['page', 'limit', 'sortBy', 'sortOrder', 'status'].includes(key),
-            )
-          ) {
-            actualQueryIndex = i;
-            break;
-          }
+      // Raw query for Zod: prefer stringly `req.query` when Request is in args
+      // (PaginationSchema and similar use .transform on strings). Otherwise use the
+      // resolved queries argument from TSOA.
+      let rawQuery: Record<string, unknown> | null = null;
+      if (request?.query && typeof request.query === 'object') {
+        rawQuery = request.query as Record<string, unknown>;
+      } else if (actualQueryIndex !== null) {
+        const q = args[actualQueryIndex];
+        if (q && typeof q === 'object' && !isExpressRequestLike(q)) {
+          rawQuery = q as Record<string, unknown>;
         }
       }
 
-      if (!rawQuery && actualQueryIndex === null) {
+      // If we have req.query but metadata missed the slot, still patch the queries param.
+      if (request?.query && actualQueryIndex === null) {
+        actualQueryIndex = inferredQueryIndex;
+      }
+
+      if (rawQuery === null || actualQueryIndex === null) {
         console.error('[ValidateQuery] No query parameter found', {
-          queryMetadata: Reflect.getOwnMetadata('Query', target, propertyKey),
-          queriesMetadata: Reflect.getOwnMetadata(
-            'Queries',
-            target,
-            propertyKey,
-          ),
+          queryMetadata:
+            Reflect.getMetadata('Query', target, propertyKey) ??
+            Reflect.getOwnMetadata('Query', target, propertyKey),
+          queriesMetadata:
+            Reflect.getMetadata('Queries', target, propertyKey) ??
+            Reflect.getOwnMetadata('Queries', target, propertyKey),
           allMetadataKeys: Reflect.getOwnMetadataKeys(target, propertyKey),
           requestQuery: request?.query,
           args: args.map((arg, idx) => ({

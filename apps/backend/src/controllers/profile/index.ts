@@ -43,35 +43,35 @@ import {
   DeleteAccountRouteSchema,
 } from './validation';
 
-type UpdateProfileResponse = ReturnType<ProfileService['updateProfile']>;
-type UpdatePhoneSettingsResponse = ReturnType<
+type UpdateProfileResponse = Awaited<ReturnType<ProfileService['updateProfile']>>;
+type UpdatePhoneSettingsResponse = Awaited<ReturnType<
   ProfileService['updatePhoneSettings']
->;
-type UploadProfileImageResponse = ReturnType<
+>>;
+type UploadProfileImageResponse = Awaited<ReturnType<
   ProfileService['uploadProfileImage']
->;
-type DeleteProfileImageResponse = ReturnType<
+>>;
+type DeleteProfileImageResponse = Awaited<ReturnType<
   ProfileService['deleteProfileImage']
->;
-type GetEmailsResponse = ReturnType<ProfileService['getEmails']>;
-type AddEmailResponse = ReturnType<ProfileService['addEmail']>;
-type VerifyEmailResponse = ReturnType<ProfileService['verifyEmail']>;
-type SetPrimaryEmailResponse = ReturnType<ProfileService['setPrimaryEmail']>;
-type DeleteEmailResponse = ReturnType<ProfileService['deleteEmail']>;
-type GetExternalAccountsResponse = ReturnType<
+>>;
+type GetEmailsResponse = Awaited<ReturnType<ProfileService['getEmails']>>;
+type AddEmailResponse = Awaited<ReturnType<ProfileService['addEmail']>>;
+type VerifyEmailResponse = Awaited<ReturnType<ProfileService['verifyEmail']>>;
+type SetPrimaryEmailResponse = Awaited<ReturnType<ProfileService['setPrimaryEmail']>>;
+type DeleteEmailResponse = Awaited<ReturnType<ProfileService['deleteEmail']>>;
+type GetExternalAccountsResponse = Awaited<ReturnType<
   ProfileService['getExternalAccounts']
->;
-type GetPasswordStatusResponse = ReturnType<
+>>;
+type GetPasswordStatusResponse = Awaited<ReturnType<
   ProfileService['getPasswordStatus']
->;
-type SetPasswordResponse = ReturnType<ProfileService['setPassword']>;
-type ChangePasswordResponse = ReturnType<ProfileService['changePassword']>;
-type GetSessionsResponse = ReturnType<ProfileService['getSessions']>;
-type RevokeSessionResponse = ReturnType<ProfileService['revokeSession']>;
-type DeleteAccountResponse = ReturnType<ProfileService['deleteAccount']>;
+>>;
+type SetPasswordResponse = Awaited<ReturnType<ProfileService['setPassword']>>;
+type ChangePasswordResponse = Awaited<ReturnType<ProfileService['changePassword']>>;
+type GetSessionsResponse = Awaited<ReturnType<ProfileService['getSessions']>>;
+type RevokeSessionResponse = Awaited<ReturnType<ProfileService['revokeSession']>>;
+type DeleteAccountResponse = Awaited<ReturnType<ProfileService['deleteAccount']>>;
 type DismissWhatsappPromptResponse = {success: true};
-type SendOtpResponse = ReturnType<OtpService['sendOtp']>;
-type VerifyOtpResponse = ReturnType<OtpService['verifyOtp']>;
+type SendOtpResponse = Awaited<ReturnType<OtpService['sendOtp']>>;
+type VerifyOtpResponse = Awaited<ReturnType<OtpService['verifyOtp']>>;
 
 const usersRepository = new UsersRepository(db);
 const usersService = new UsersService(usersRepository);

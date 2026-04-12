@@ -103,6 +103,8 @@ export function createWebhookDependencies(database: Kysely<DB> = db) {
 
 const webhookDeps = createWebhookDependencies();
 
+type WebhookAcknowledgementResponse = {received: boolean};
+
 /**
  * Webhook endpoints for dLocal and Clerk.
  * Providers expect 200 within a short time or they treat the request as timed out and may retry.
@@ -123,7 +125,7 @@ export class WebhooksController {
   public async handleDLocalWebhook(
     @Body() body: DLocalWebhookrRouteBody,
     @Request() request: express.Request,
-  ): Promise<{received: boolean}> {
+  ): Promise<WebhookAcknowledgementResponse> {
     // Extract metadata from request
     const ipAddress =
       (request.headers['x-forwarded-for'] as string) || request.ip;
@@ -149,7 +151,7 @@ export class WebhooksController {
   public async handleClerkWebhook(
     @Body() body: ClerkWebhookRouteBody,
     @Request() request: express.Request,
-  ): Promise<{received: boolean}> {
+  ): Promise<WebhookAcknowledgementResponse> {
     // Extract metadata from request
     const ipAddress =
       (request.headers['x-forwarded-for'] as string) || request.ip;

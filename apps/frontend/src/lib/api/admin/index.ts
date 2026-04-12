@@ -149,6 +149,15 @@ export const deletePayoutDocumentMutation = () => {
   };
 };
 
+export const triggerHoldCheckMutation = () => {
+  return {
+    mutationFn: async () => {
+      const response = await api.admin.triggerHoldCheck();
+      return response.data;
+    },
+  };
+};
+
 // ============================================================================
 // Identity Verification Admin
 // ============================================================================
@@ -409,6 +418,34 @@ export const deleteEventImageMutation = () => {
   };
 };
 
+// ============================================================================
+// Settlements Admin
+// ============================================================================
+
+export interface AdminSettlementsQueryParams extends PaginationQuery {
+  status?: 'pending' | 'completed' | 'failed';
+  paymentProvider?: 'dlocal' | 'mercadopago' | 'paypal' | 'stripe';
+}
+
+export const adminSettlementsQueryOptions = (
+  params: AdminSettlementsQueryParams,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'settlements', params],
+    queryFn: async () => {
+      const response = await api.admin.listSettlements({
+        page: params.page,
+        limit: params.limit,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+        status: params.status,
+        paymentProvider: params.paymentProvider,
+      });
+      return response.data;
+    },
+  });
+};
+
 // Venues
 
 export const searchVenuesQueryOptions = (query: string) => {
@@ -422,6 +459,72 @@ export const searchVenuesQueryOptions = (query: string) => {
       return response.data;
     },
   });
+};
+
+export const adminSettlementDetailsQueryOptions = (settlementId: string) => {
+  return queryOptions({
+    queryKey: ['admin', 'settlements', settlementId],
+    queryFn: async () => {
+      const response = await api.admin.getSettlementDetails(settlementId);
+      return response.data;
+    },
+  });
+};
+
+export const createSettlementMutation = () => {
+  return {
+    mutationFn: async (
+      data: Parameters<typeof api.admin.createSettlement>[0],
+    ) => {
+      const response = await api.admin.createSettlement(data);
+      return response.data;
+    },
+  };
+};
+
+export const previewSettlementMutation = () => {
+  return {
+    mutationFn: async (
+      data: Parameters<typeof api.admin.previewSettlement>[0],
+    ) => {
+      const response = await api.admin.previewSettlement(data);
+      return response.data;
+    },
+  };
+};
+
+export const adminSettlementBreakdownQueryOptions = (settlementId: string) => {
+  return queryOptions({
+    queryKey: ['admin', 'settlements', settlementId, 'breakdown'] as const,
+    queryFn: async () => {
+      const response = await api.admin.getSettlementBreakdown(settlementId);
+      return response.data;
+    },
+  });
+};
+
+export const completeSettlementMutation = () => {
+  return {
+    mutationFn: async ({settlementId}: {settlementId: string}) => {
+      const response = await api.admin.completeSettlement(settlementId);
+      return response.data;
+    },
+  };
+};
+
+export const failSettlementMutation = () => {
+  return {
+    mutationFn: async ({
+      settlementId,
+      reason,
+    }: {
+      settlementId: string;
+      reason?: string;
+    }) => {
+      const response = await api.admin.failSettlement(settlementId, {reason});
+      return response.data;
+    },
+  };
 };
 
 // Create Event
@@ -453,4 +556,133 @@ export const createEventMutation = () => {
       return response.data;
     },
   };
+};
+
+// ============================================================================
+// Admin dashboard (multi-endpoint stats)
+// ============================================================================
+
+export type AdminDashboardApiQuery = {
+  period?: 'today' | '7d' | '30d' | 'all';
+  from?: string;
+  to?: string;
+};
+
+const DASHBOARD_POLL_FAST_MS = 15_000;
+const DASHBOARD_POLL_MID_MS = 30_000;
+const DASHBOARD_POLL_SLOW_MS = 60_000;
+
+export const adminDashboardTicketsQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'tickets', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardTickets(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_FAST_MS,
+  });
+};
+
+export const adminDashboardRevenueQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'revenue', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardRevenue(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_FAST_MS,
+  });
+};
+
+export const adminDashboardOrdersQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'orders', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardOrders(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_FAST_MS,
+  });
+};
+
+export const adminDashboardPayoutsQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'payouts', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardPayouts(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_MID_MS,
+  });
+};
+
+export const adminDashboardHealthQueryOptions = () => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'health'] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardHealth();
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_SLOW_MS,
+  });
+};
+
+export const adminDashboardTopEventsQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'topEvents', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardTopEvents(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_MID_MS,
+  });
+};
+
+export const adminDashboardRevenueTimeSeriesQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'revenueTimeSeries', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardRevenueTimeSeries(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_FAST_MS,
+  });
+};
+
+export const adminDashboardOrdersTimeSeriesQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'ordersTimeSeries', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardOrdersTimeSeries(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_MID_MS,
+  });
+};
+
+export const adminDashboardTicketsTimeSeriesQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'ticketsTimeSeries', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardTicketsTimeSeries(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_MID_MS,
+  });
 };

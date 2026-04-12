@@ -46,24 +46,24 @@ import {
 import {ValidateBody, Body} from '~/decorators';
 import {getPostHog} from '~/lib/posthog';
 
-type GetBalanceResponse = ReturnType<SellerEarningsService['getSellerBalance']>;
-type GetAvailableEarningsResponse = ReturnType<
+type GetBalanceResponse = Awaited<ReturnType<SellerEarningsService['getSellerBalance']>>;
+type GetAvailableEarningsResponse = Awaited<ReturnType<
   SellerEarningsService['getAvailableEarningsForSelection']
->;
-type GetPayoutHistoryResponse = ReturnType<PayoutsService['getPayoutHistory']>;
-type GetUserPayoutDetailsResponse = ReturnType<
+>>;
+type GetPayoutHistoryResponse = Awaited<ReturnType<PayoutsService['getPayoutHistory']>>;
+type GetUserPayoutDetailsResponse = Awaited<ReturnType<
   PayoutsService['getPayoutDetailsForUser']
->;
-type RequestPayoutResponse = ReturnType<PayoutsService['requestPayout']>;
-type GetPayoutMethodsResponse = ReturnType<
+>>;
+type RequestPayoutResponse = Awaited<ReturnType<PayoutsService['requestPayout']>>;
+type GetPayoutMethodsResponse = Awaited<ReturnType<
   PayoutMethodsService['getPayoutMethods']
->;
-type AddPayoutMethodResponse = ReturnType<
+>>;
+type AddPayoutMethodResponse = Awaited<ReturnType<
   PayoutMethodsService['addPayoutMethod']
->;
-type UpdatePayoutMethodResponse = ReturnType<
+>>;
+type UpdatePayoutMethodResponse = Awaited<ReturnType<
   PayoutMethodsService['updatePayoutMethod']
->;
+>>;
 
 // Create shared repositories
 const payoutsRepository = new PayoutsRepository(db);

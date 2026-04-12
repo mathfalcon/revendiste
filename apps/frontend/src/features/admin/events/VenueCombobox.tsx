@@ -43,7 +43,7 @@ export function VenueCombobox({
     enabled: searchQuery.length > 0,
   });
 
-  const selectedVenue = venues.find(v => v.id === value);
+  const selectedVenue = venues.find((v: VenueOption) => v.id === value);
 
   const handleSelect = useCallback(
     (venue: VenueOption) => {
@@ -93,7 +93,7 @@ export function VenueCombobox({
                 : 'No se encontraron lugares'}
             </CommandEmpty>
             <CommandGroup>
-              {venues.map(venue => (
+              {venues.map((venue: VenueOption) => (
                 <CommandItem
                   key={venue.id}
                   value={venue.id}

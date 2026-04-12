@@ -25,10 +25,9 @@ import {
 } from './validation';
 import {getPostHog} from '~/lib/posthog';
 
-interface CreatePaymentLinkResponse {
-  redirectUrl: string;
-  paymentId: string;
-}
+type CreatePaymentLinkResponse = Awaited<
+  ReturnType<PaymentsService['createPaymentLink']>
+>;
 
 @Route('payments')
 @Middlewares(requireAuthMiddleware)

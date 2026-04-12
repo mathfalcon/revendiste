@@ -1,6 +1,6 @@
 import {createFileRoute, useSearch, useNavigate} from '@tanstack/react-router';
 import {z} from 'zod';
-import {useSuspenseQuery} from '@tanstack/react-query';
+import {useSuspenseQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {
   Table,
   TableBody,
@@ -17,13 +17,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
-import {adminPayoutsQueryOptions} from '~/lib/api/admin';
+import {adminPayoutsQueryOptions, triggerHoldCheckMutation} from '~/lib/api/admin';
 import {PayoutEditDialog} from '~/features/admin/payouts/PayoutEditDialog';
 import {ProcessPayoutDialog} from '~/features/admin/payouts/ProcessPayoutDialog';
 import {CancelPayoutDialog} from '~/features/admin/payouts/CancelPayoutDialog';
 import {useState} from 'react';
-import {MoreVertical} from 'lucide-react';
+import {MoreVertical, Clock} from 'lucide-react';
 import {formatCurrency} from '~/utils';
+import {toast} from 'sonner';
 
 const payoutsSearchSchema = z.object({
   page: z.number().optional().default(1),
@@ -54,6 +55,7 @@ export const Route = createFileRoute('/admin/retiros')({
 function PayoutsPage() {
   const search = useSearch({from: '/admin/retiros'});
   const navigate = useNavigate({from: '/admin/retiros'});
+  const queryClient = useQueryClient();
   const [editingPayoutId, setEditingPayoutId] = useState<string | null>(null);
   const [processingPayoutId, setProcessingPayoutId] = useState<string | null>(
     null,
@@ -71,6 +73,19 @@ function PayoutsPage() {
       status: search.status,
     }),
   );
+
+  const triggerHoldCheckMutationInstance = useMutation({
+    ...triggerHoldCheckMutation(),
+    onSuccess: () => {
+      toast.success('Verificación de períodos de retención iniciada');
+      queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || 'Error al desencadenar la verificación',
+      );
+    },
+  });
 
   const isPendingFilterActive = search.status === 'pending';
 
@@ -134,25 +149,38 @@ function PayoutsPage() {
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold'>Pagos</h1>
+          <h1 className='text-3xl font-bold'>Retiros</h1>
           <p className='text-muted-foreground'>
-            Gestiona y procesa las solicitudes de pago de los publicadores
+            Gestiona y procesa las solicitudes de retiro de los publicadores
           </p>
         </div>
-        <Button
-          variant={isPendingFilterActive ? 'default' : 'outline'}
-          onClick={() => {
-            navigate({
-              search: (prev: typeof search) => ({
-                ...prev,
-                status: isPendingFilterActive ? undefined : 'pending',
-                page: 1, // Reset to first page when filtering
-              }),
-            });
-          }}
-        >
-          {isPendingFilterActive ? 'Mostrar Todos' : 'Solo Pendientes'}
-        </Button>
+        <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => triggerHoldCheckMutationInstance.mutate()}
+            disabled={triggerHoldCheckMutationInstance.isPending}
+          >
+            <Clock className='h-4 w-4 mr-2' />
+            {triggerHoldCheckMutationInstance.isPending
+              ? 'Verificando...'
+              : 'Verificar Períodos'}
+          </Button>
+          <Button
+            variant={isPendingFilterActive ? 'default' : 'outline'}
+            onClick={() => {
+              navigate({
+                search: (prev: typeof search) => ({
+                  ...prev,
+                  status: isPendingFilterActive ? undefined : 'pending',
+                  page: 1, // Reset to first page when filtering
+                }),
+              });
+            }}
+          >
+            {isPendingFilterActive ? 'Mostrar Todos' : 'Solo Pendientes'}
+          </Button>
+        </div>
       </div>
 
       <div className='rounded-md border'>
@@ -171,7 +199,7 @@ function PayoutsPage() {
             {data.data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className='text-center'>
-                  No se encontraron pagos
+                  No se encontraron retiros
                 </TableCell>
               </TableRow>
             ) : (
@@ -256,7 +284,7 @@ function PayoutsPage() {
       {/* Pagination */}
       <div className='flex items-center justify-between'>
         <div className='text-sm text-muted-foreground'>
-          Mostrando {data.data.length} de {data.pagination.total} pagos
+          Mostrando {data.data.length} de {data.pagination.total} retiros
         </div>
         <div className='flex gap-2'>
           <Button

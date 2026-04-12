@@ -137,7 +137,7 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
           eb
             .selectFrom('events')
             .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
-            .select(eb2 => [
+            .select([
               'events.id',
               'events.name',
               'events.slug',
@@ -149,10 +149,11 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
               'events.description',
               'events.qrAvailabilityTiming',
               jsonArrayFrom(
-                eb2
+                eb
                   .selectFrom('eventImages')
                   .select(['eventImages.url', 'eventImages.imageType'])
                   .whereRef('eventImages.eventId', '=', 'events.id')
+                  .where('eventImages.deletedAt', 'is', null)
                   .orderBy('eventImages.displayOrder'),
               )
                 .$notNull()

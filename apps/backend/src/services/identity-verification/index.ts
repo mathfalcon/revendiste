@@ -9,8 +9,13 @@ import {
   type TextDetection,
   type GetFaceLivenessSessionResultsCommandOutput,
 } from '@aws-sdk/client-rekognition';
+import {STSClient, AssumeRoleCommand} from '@aws-sdk/client-sts';
 import sharp from 'sharp';
-import {AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY} from '~/config/env';
+import {
+  AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY,
+  FACE_LIVENESS_ROLE_ARN,
+} from '~/config/env';
 import {UsersRepository} from '~/repositories/users';
 import {
   VerificationAuditRepository,
@@ -19,7 +24,11 @@ import {
   type AuditConfidenceScores,
 } from '~/repositories/verification-audit';
 import type {IStorageProvider} from '~/services/storage/IStorageProvider';
-import {ValidationError, MaxAttemptsExceededError} from '~/errors';
+import {
+  BadRequestError,
+  ValidationError,
+  MaxAttemptsExceededError,
+} from '~/errors';
 import {
   IDENTITY_VERIFICATION_ERROR_MESSAGES,
   NOTIFICATION_ERROR_MESSAGES,
@@ -44,6 +53,9 @@ const MAX_IMAGE_DIMENSION = 1920;
 
 /** Rekognition region (Face Liveness is only available in specific regions) */
 const REKOGNITION_REGION = 'us-west-2';
+
+/** Region for STS AssumeRole when issuing temporary Face Liveness SDK credentials */
+const FACE_LIVENESS_STS_REGION = 'us-east-1';
 
 /** Max verification attempts per user (each session costs ~$0.40) */
 const MAX_VERIFICATION_ATTEMPTS = 5;
@@ -1907,6 +1919,67 @@ export class IdentityVerificationService {
         error: error instanceof Error ? error.message : String(error),
       });
       return imageBuffer;
+    }
+  }
+
+  /**
+   * Temporary AWS credentials for the Face Liveness web/mobile SDK (minimal AssumeRole).
+   */
+  async getFaceLivenessAwsCredentials() {
+    if (!FACE_LIVENESS_ROLE_ARN) {
+      logger.error('FACE_LIVENESS_ROLE_ARN not configured');
+      throw new BadRequestError(
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.FACE_LIVENESS_NOT_CONFIGURED,
+      );
+    }
+
+    const stsConfig: ConstructorParameters<typeof STSClient>[0] = {
+      region: FACE_LIVENESS_STS_REGION,
+    };
+
+    if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+      stsConfig.credentials = {
+        accessKeyId: AWS_ACCESS_KEY_ID,
+        secretAccessKey: AWS_SECRET_ACCESS_KEY,
+      };
+    }
+
+    const stsClient = new STSClient(stsConfig);
+
+    try {
+      const assumeRoleResponse = await stsClient.send(
+        new AssumeRoleCommand({
+          RoleArn: FACE_LIVENESS_ROLE_ARN,
+          RoleSessionName: `face-liveness-${Date.now()}`,
+          DurationSeconds: 900,
+        }),
+      );
+
+      if (!assumeRoleResponse.Credentials) {
+        throw new Error('No credentials returned from AssumeRole');
+      }
+
+      const {AccessKeyId, SecretAccessKey, SessionToken, Expiration} =
+        assumeRoleResponse.Credentials;
+
+      if (!AccessKeyId || !SecretAccessKey || !SessionToken) {
+        throw new Error('Incomplete credentials from AssumeRole');
+      }
+
+      logger.info('Generated Face Liveness credentials via AssumeRole');
+
+      return {
+        accessKeyId: AccessKeyId,
+        secretAccessKey: SecretAccessKey,
+        sessionToken: SessionToken,
+        region: FACE_LIVENESS_STS_REGION,
+        expiration: Expiration?.toISOString() || '',
+      };
+    } catch (error) {
+      logger.error('Failed to assume Face Liveness role', {error});
+      throw new BadRequestError(
+        IDENTITY_VERIFICATION_ERROR_MESSAGES.FACE_LIVENESS_CREDENTIALS_FAILED,
+      );
     }
   }
 }

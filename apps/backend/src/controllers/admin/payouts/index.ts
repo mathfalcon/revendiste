@@ -59,21 +59,23 @@ import {
   AdminPayoutsQuery,
 } from './validation';
 
-type GetPayoutsResponse = ReturnType<PayoutsService['getPayoutsForAdmin']>;
-type GetPayoutDetailsResponse = ReturnType<
+type GetPayoutsResponse = Awaited<ReturnType<PayoutsService['getPayoutsForAdmin']>>;
+type GetPayoutDetailsResponse = Awaited<ReturnType<
   PayoutsService['getPayoutDetailsForAdmin']
->;
-type ProcessPayoutResponse = ReturnType<PayoutsService['processPayout']>;
-type CompletePayoutResponse = ReturnType<PayoutsService['completePayout']>;
-type FailPayoutResponse = ReturnType<PayoutsService['failPayout']>;
-type UpdatePayoutResponse = ReturnType<PayoutsService['updatePayout']>;
-type CancelPayoutResponse = ReturnType<PayoutsService['cancelPayout']>;
-type UploadPayoutDocumentResponse = ReturnType<
+>>;
+type ProcessPayoutResponse = Awaited<ReturnType<PayoutsService['processPayout']>>;
+type CompletePayoutResponse = Awaited<ReturnType<PayoutsService['completePayout']>>;
+type FailPayoutResponse = Awaited<ReturnType<PayoutsService['failPayout']>>;
+type UpdatePayoutResponse = Awaited<ReturnType<PayoutsService['updatePayout']>>;
+type CancelPayoutResponse = Awaited<ReturnType<PayoutsService['cancelPayout']>>;
+type UploadPayoutDocumentResponse = Awaited<ReturnType<
   PayoutDocumentsService['uploadPayoutDocument']
->;
-type DeletePayoutDocumentResponse = ReturnType<
+>>;
+type DeletePayoutDocumentResponse = Awaited<ReturnType<
   PayoutDocumentsService['deletePayoutDocument']
->;
+>>;
+
+type TriggerHoldCheckResponse = {success: boolean; message: string};
 
 // Create shared repositories
 const payoutsRepository = new PayoutsRepository(db);
@@ -252,5 +254,19 @@ export class AdminPayoutsController {
       documentId,
       request.user.id,
     );
+  }
+
+  @Post('/trigger-hold-check')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  public async triggerHoldCheck(): Promise<TriggerHoldCheckResponse> {
+    const {runCheckPayoutHoldPeriods} = await import(
+      '~/cronjobs/check-payout-hold-periods'
+    );
+    await runCheckPayoutHoldPeriods();
+    return {
+      success: true,
+      message: 'Hold period check triggered successfully',
+    };
   }
 }

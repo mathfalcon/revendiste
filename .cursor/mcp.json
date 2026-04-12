@@ -11,6 +11,11 @@
     "mermaid-mcp": {
       "url": "https://mcp.mermaid.ai/mcp",
       "type": "http"
+    },
+    "engram": {
+      "type": "stdio",
+      "command": "engram",
+      "args": ["mcp", "--tools=agent"]
     }
   }
 }

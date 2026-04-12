@@ -40,7 +40,7 @@ const STATUS_LABELS = [
     label: 'Pendiente de liberación',
     color: 'text-blue-600',
     tooltip:
-      'Ganancias dentro del período de espera (48 hs después del evento). Se liberan automáticamente.',
+      'Tus ganancias estarán disponibles 48 horas después de finalizado el evento. Se liberan automáticamente.',
   },
   {
     key: 'payoutPending',
@@ -107,7 +107,7 @@ export function BalanceHero({
                 <div className='flex h-full'>
                   {/* Left accent bar */}
                   <div
-                    className={`w-1.5 ${hasBalance ? 'bg-gradient-to-b from-green-400 to-green-500' : 'bg-gradient-to-b from-muted-foreground/40 to-muted-foreground/60'}`}
+                    className={`w-1.5 ${hasBalance ? 'bg-linear-to-b from-green-400 to-green-500' : 'bg-linear-to-b from-muted-foreground/40 to-muted-foreground/60'}`}
                   />
                   <div className='flex-1 p-4 flex flex-col justify-between gap-3'>
                     <div className='space-y-1'>

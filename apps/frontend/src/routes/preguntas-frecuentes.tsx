@@ -180,6 +180,12 @@ const faqVendedores: FAQItem[] = [
   },
   {
     question:
+      '¿En la foto o PDF de la entrada ya subo el QR? ¿Es seguro? ¿No queda público?',
+    answer:
+      'Sí: cuando el proceso te pide el QR o el PDF, subí el archivo con el código bien visible y legible. Lo necesitamos para validar la operación y entregarla al comprador de forma digital cuando corresponde. Esa imagen o archivo no se muestra en la página pública del evento: no cualquiera puede verlo ni descargarlo. Queda almacenado de forma segura. El personal de Revendiste no puede verlo; solo vos, desde tu cuenta al gestionar la publicación, y el comprador, desde la suya una vez hecha la compra. Igual, no compartas el QR por fuera de Revendiste (redes, grupos o chats abiertos), porque ahí sí perdés el control sobre quién lo puede usar.',
+  },
+  {
+    question:
       '¿Qué pasa si selecciono mal la categoría de la entrada a propósito?',
     answer:
       'Declarar información incorrecta de forma deliberada, como publicar una entrada de "Preventa" como "Tanda General" para obtener un precio mayor, constituye fraude. En estos casos, Revendiste procede a la suspensión de la cuenta, la retención de los fondos asociados y, cuando corresponda, el inicio de las acciones legales pertinentes. La transparencia en la información es fundamental para mantener una plataforma segura para todos.',

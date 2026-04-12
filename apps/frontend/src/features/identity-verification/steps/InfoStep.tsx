@@ -70,7 +70,11 @@ export function InfoStep({onSubmit, isPending}: InfoStepProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Validate only the fields for this step
-    const isValid = await form.trigger(['documentType', 'documentNumber', 'documentCountry']);
+    const isValid = await form.trigger([
+      'documentType',
+      'documentNumber',
+      'documentCountry',
+    ]);
     if (isValid) {
       onSubmit();
     }
@@ -169,7 +173,7 @@ export function InfoStep({onSubmit, isPending}: InfoStepProps) {
                       </div>
                       <Check
                         className={cn(
-                          'h-4 w-4 flex-shrink-0',
+                          'h-4 w-4 shrink-0',
                           isSelected ? 'opacity-100' : 'opacity-0',
                         )}
                       />

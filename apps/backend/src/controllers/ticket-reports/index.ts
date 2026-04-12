@@ -32,6 +32,7 @@ import {
   TicketDocumentsRepository,
   NotificationsRepository,
   UsersRepository,
+  SellerEarningsRepository,
 } from '~/repositories';
 import {db} from '~/db';
 import {NotFoundError, ValidationError, UnauthorizedError, BadRequestError, ConflictError} from '~/errors';
@@ -47,27 +48,27 @@ import {
   AddUserActionSchema,
 } from './validation';
 
-type UserCreateCaseResponse = ReturnType<TicketReportsService['createCase']>;
-type UserListMyCasesResponse = ReturnType<
+type UserCreateCaseResponse = Awaited<ReturnType<TicketReportsService['createCase']>>;
+type UserListMyCasesResponse = Awaited<ReturnType<
   TicketReportsService['listCasesForUser']
->;
-type UserGetCaseDetailsResponse = ReturnType<
+>>;
+type UserGetCaseDetailsResponse = Awaited<ReturnType<
   TicketReportsService['getCaseDetails']
->;
-type UserAddActionResponse = ReturnType<TicketReportsService['addAction']>;
-type UserCloseCaseResponse = ReturnType<TicketReportsService['closeCase']>;
-type CheckExistingReportResponse = ReturnType<
+>>;
+type UserAddActionResponse = Awaited<ReturnType<TicketReportsService['addAction']>>;
+type UserCloseCaseResponse = Awaited<ReturnType<TicketReportsService['closeCase']>>;
+type CheckExistingReportResponse = Awaited<ReturnType<
   TicketReportsService['checkExistingReport']
->;
-type UploadAttachmentResponse = ReturnType<
+>>;
+type UploadAttachmentResponse = Awaited<ReturnType<
   TicketReportAttachmentsService['uploadAttachment']
->;
-type ListAttachmentsResponse = ReturnType<
+>>;
+type ListAttachmentsResponse = Awaited<ReturnType<
   TicketReportAttachmentsService['getAttachmentsByReportId']
->;
-type GetAttachmentUrlResponse = ReturnType<
+>>;
+type GetAttachmentUrlResponse = Awaited<ReturnType<
   TicketReportAttachmentsService['getAttachmentUrl']
->;
+>>;
 
 const notificationsRepository = new NotificationsRepository(db);
 const usersRepository = new UsersRepository(db);
@@ -94,6 +95,7 @@ export class TicketReportsController {
     notificationService,
     new DLocalService(),
     getStorageProvider(),
+    new SellerEarningsRepository(db),
   );
 
   private attachmentService = new TicketReportAttachmentsService(
