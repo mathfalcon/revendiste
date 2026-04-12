@@ -261,19 +261,19 @@ module "cronjobs" {
   ecs_security_group_id = module.security_groups.ecs_tasks_security_group_id
 
   # Task definition ARNs
-  sync_payments_task_arn          = module.ecs.cronjob_sync_payments_task_arn
-  notify_upload_task_arn          = module.ecs.cronjob_notify_upload_task_arn
-  check_payout_task_arn           = module.ecs.cronjob_check_payout_task_arn
+  sync_payments_task_arn         = module.ecs.cronjob_sync_payments_task_arn
+  notify_upload_task_arn         = module.ecs.cronjob_notify_upload_task_arn
+  check_payout_task_arn          = module.ecs.cronjob_check_payout_task_arn
   scrape_events_task_arn         = module.ecs.cronjob_scrape_events_task_arn
   process_notifications_task_arn = module.ecs.cronjob_process_notifications_task_arn
   process_pending_jobs_task_arn  = module.ecs.cronjob_process_pending_jobs_task_arn
 
   # PRODUCTION SCHEDULES
-  sync_payments_schedule          = "cron(*/5 * * * ? *)"  # Every 5 minutes
-  notify_upload_schedule          = "cron(0 * * * ? *)"   # Every hour
-  check_payout_schedule           = "cron(0 * * * ? *)"   # Every hour
-  scrape_events_schedule         = "cron(*/30 * * * ? *)"  # Every 30 minutes
-  process_notifications_schedule = "cron(*/5 * * * ? *)" # Every 5 minutes
+  sync_payments_schedule         = "cron(*/5 * * * ? *)"  # Every 5 minutes
+  notify_upload_schedule         = "cron(0 * * * ? *)"    # Every hour
+  check_payout_schedule          = "cron(0 * * * ? *)"    # Every hour
+  scrape_events_schedule         = "cron(*/30 * * * ? *)" # Every 30 minutes
+  process_notifications_schedule = "cron(*/5 * * * ? *)"  # Every 5 minutes
   process_pending_jobs_schedule  = "cron(*/2 * * * ? *)"  # Every 2 minutes (job queue; keep buyer confirmation latency low)
 
   # Use Fargate Spot for all cronjobs (up to 70% cost savings)
@@ -322,7 +322,6 @@ module "bastion" {
   name_prefix           = local.name_prefix
   vpc_id                = module.vpc.vpc_id
   subnet_id             = module.vpc.private_subnet_ids[0]
-  private_subnet_ids    = module.vpc.private_subnet_ids
   rds_security_group_id = module.security_groups.rds_security_group_id
   common_tags           = local.common_tags
 }
