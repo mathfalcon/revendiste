@@ -10455,6 +10455,10 @@
 											"sellerUserId": {
 												"type": "string"
 											},
+											"sellerAmountConverted": {
+												"type": "string",
+												"nullable": true
+											},
 											"sellerAmount": {
 												"type": "string"
 											},
@@ -10466,6 +10470,7 @@
 											"currency",
 											"status",
 											"sellerUserId",
+											"sellerAmountConverted",
 											"sellerAmount",
 											"id"
 										],
@@ -10484,6 +10489,9 @@
 									"type": "string"
 								},
 								"processorCredit": {
+									"type": "string"
+								},
+								"customerAmountCurrency": {
 									"type": "string"
 								},
 								"customerAmount": {
@@ -10507,6 +10515,7 @@
 								"exchangeRate",
 								"processorFee",
 								"processorCredit",
+								"customerAmountCurrency",
 								"customerAmount",
 								"providerPaymentId",
 								"paymentId",
@@ -10518,19 +10527,25 @@
 					},
 					"reconciliation": {
 						"properties": {
+							"hasMultipleCurrencies": {
+								"type": "boolean"
+							},
 							"unreconciledDifference": {
 								"type": "string"
 							},
 							"platformRevenue": {
 								"type": "string"
 							},
-							"totalSellerEarnings": {
+							"totalSellerEarningsConverted": {
 								"type": "string"
 							},
 							"totalProcessorFees": {
 								"type": "string"
 							},
 							"totalProcessorCredits": {
+								"type": "string"
+							},
+							"totalCustomerChargesCurrency": {
 								"type": "string"
 							},
 							"totalCustomerCharges": {
@@ -10542,11 +10557,13 @@
 							}
 						},
 						"required": [
+							"hasMultipleCurrencies",
 							"unreconciledDifference",
 							"platformRevenue",
-							"totalSellerEarnings",
+							"totalSellerEarningsConverted",
 							"totalProcessorFees",
 							"totalProcessorCredits",
+							"totalCustomerChargesCurrency",
 							"totalCustomerCharges",
 							"paymentCount"
 						],
@@ -10763,10 +10780,12 @@
 						"description": "% del total comisión + IVA (pedido) que queda como ingreso neto plataforma."
 					},
 					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
+						"$ref": "#/components/schemas/EventTicketCurrency",
+						"description": "Moneda de liquidación del procesador (`payments.balance_currency`), no la moneda del pedido.\r\nLos importes numéricos del bloque están expresados en esta moneda (GMV/comisión/IVA convertidos con `exchange_rate` cuando aplica)."
 					},
 					"mixedCurrency": {
-						"type": "boolean"
+						"type": "boolean",
+						"description": "`true` si hay pagos pagados con más de un `balance_currency` en el rango.\r\nYa no indica solo “pedidos en monedas distintas”: varias monedas de cargo pueden seguir mostrándose como una sola moneda de liquidación."
 					}
 				},
 				"required": [
@@ -10836,10 +10855,12 @@
 						"type": "array"
 					},
 					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
+						"$ref": "#/components/schemas/EventTicketCurrency",
+						"description": "Misma semántica que `GetDashboardRevenueResponse.currency` (liquidación)."
 					},
 					"mixedCurrency": {
-						"type": "boolean"
+						"type": "boolean",
+						"description": "Misma semántica que `GetDashboardRevenueResponse.mixedCurrency`."
 					}
 				},
 				"required": [
@@ -11075,6 +11096,51 @@
 				},
 				"required": [
 					"events"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OrderCurrencyBreakdownRow": {
+				"properties": {
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency",
+						"description": "Moneda de cobro del pedido (`orders.currency`). Importes sin conversión."
+					},
+					"gmv": {
+						"type": "string"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"orderCount": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"currency",
+					"gmv",
+					"platformCommission",
+					"vatOnCommission",
+					"orderCount"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardRevenueByOrderCurrencyResponse": {
+				"properties": {
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/OrderCurrencyBreakdownRow"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"rows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -18856,6 +18922,79 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/GetDashboardTopEventsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/revenue-by-order-currency": {
+			"get": {
+				"operationId": "GetDashboardRevenueByOrderCurrency",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardRevenueByOrderCurrencyResponse"
 								}
 							}
 						}

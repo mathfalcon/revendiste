@@ -1487,7 +1487,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SettlementBreakdownResponse": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"items":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"platformShare":{"dataType":"string","required":true},"sellerEarnings":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"currency":{"ref":"EventTicketCurrency","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["available"]},{"dataType":"enum","enums":["failed_payout"]},{"dataType":"enum","enums":["paid_out"]},{"dataType":"enum","enums":["payout_requested"]},{"dataType":"enum","enums":["retained"]}],"required":true},"sellerUserId":{"dataType":"string","required":true},"sellerAmount":{"dataType":"string","required":true},"id":{"dataType":"string","required":true}}},"required":true},"currency":{"dataType":"string","required":true},"exchangeRate":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"processorFee":{"dataType":"string","required":true},"processorCredit":{"dataType":"string","required":true},"customerAmount":{"dataType":"string","required":true},"providerPaymentId":{"dataType":"string","required":true},"paymentId":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"settlementItemId":{"dataType":"string","required":true}}},"required":true},"reconciliation":{"dataType":"nestedObjectLiteral","nestedProperties":{"unreconciledDifference":{"dataType":"string","required":true},"platformRevenue":{"dataType":"string","required":true},"totalSellerEarnings":{"dataType":"string","required":true},"totalProcessorFees":{"dataType":"string","required":true},"totalProcessorCredits":{"dataType":"string","required":true},"totalCustomerCharges":{"dataType":"string","required":true},"paymentCount":{"dataType":"double","required":true}},"required":true},"settlement":{"ref":"ProcessorSettlementListRow","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"items":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"platformShare":{"dataType":"string","required":true},"sellerEarnings":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"currency":{"ref":"EventTicketCurrency","required":true},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["available"]},{"dataType":"enum","enums":["failed_payout"]},{"dataType":"enum","enums":["paid_out"]},{"dataType":"enum","enums":["payout_requested"]},{"dataType":"enum","enums":["retained"]}],"required":true},"sellerUserId":{"dataType":"string","required":true},"sellerAmountConverted":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"sellerAmount":{"dataType":"string","required":true},"id":{"dataType":"string","required":true}}},"required":true},"currency":{"dataType":"string","required":true},"exchangeRate":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"processorFee":{"dataType":"string","required":true},"processorCredit":{"dataType":"string","required":true},"customerAmountCurrency":{"dataType":"string","required":true},"customerAmount":{"dataType":"string","required":true},"providerPaymentId":{"dataType":"string","required":true},"paymentId":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"settlementItemId":{"dataType":"string","required":true}}},"required":true},"reconciliation":{"dataType":"nestedObjectLiteral","nestedProperties":{"hasMultipleCurrencies":{"dataType":"boolean","required":true},"unreconciledDifference":{"dataType":"string","required":true},"platformRevenue":{"dataType":"string","required":true},"totalSellerEarningsConverted":{"dataType":"string","required":true},"totalProcessorFees":{"dataType":"string","required":true},"totalProcessorCredits":{"dataType":"string","required":true},"totalCustomerChargesCurrency":{"dataType":"string","required":true},"totalCustomerCharges":{"dataType":"string","required":true},"paymentCount":{"dataType":"double","required":true}},"required":true},"settlement":{"ref":"ProcessorSettlementListRow","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AddSettlementPaymentResponse": {
@@ -1684,6 +1684,26 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "events": {"dataType":"array","array":{"dataType":"refObject","ref":"DashboardTopEventRow"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OrderCurrencyBreakdownRow": {
+        "dataType": "refObject",
+        "properties": {
+            "currency": {"ref":"EventTicketCurrency","required":true},
+            "gmv": {"dataType":"string","required":true},
+            "platformCommission": {"dataType":"string","required":true},
+            "vatOnCommission": {"dataType":"string","required":true},
+            "orderCount": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GetDashboardRevenueByOrderCurrencyResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "rows": {"dataType":"array","array":{"dataType":"refObject","ref":"OrderCurrencyBreakdownRow"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -5784,6 +5804,36 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'getDashboardTopEvents',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminDashboardController_getDashboardRevenueByOrderCurrency: Record<string, TsoaRoute.ParameterSchema> = {
+                query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"from":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"period":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["today"]},{"dataType":"enum","enums":["7d"]},{"dataType":"enum","enums":["30d"]},{"dataType":"enum","enums":["all"]},{"dataType":"undefined"}]}}},
+        };
+        app.get('/admin/dashboard/revenue-by-order-currency',
+            ...(fetchMiddlewares<RequestHandler>(AdminDashboardController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminDashboardController.prototype.getDashboardRevenueByOrderCurrency)),
+
+            async function AdminDashboardController_getDashboardRevenueByOrderCurrency(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminDashboardController_getDashboardRevenueByOrderCurrency, request, response });
+
+                const controller = new AdminDashboardController();
+
+              await templateService.apiHandler({
+                methodName: 'getDashboardRevenueByOrderCurrency',
                 controller,
                 response,
                 next,

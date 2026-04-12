@@ -68,7 +68,7 @@ export class R2StorageProvider implements IStorageProvider {
     const r2Endpoint = `https://${config.accountId}.r2.cloudflarestorage.com`;
 
     const s3Config = {
-      region: 'auto', // R2 uses 'auto' as the region
+      region: 'auto',
       endpoint: r2Endpoint,
       credentials: {
         accessKeyId: config.accessKeyId,

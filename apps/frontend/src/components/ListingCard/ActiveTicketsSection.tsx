@@ -230,7 +230,7 @@ export function ActiveTicketsSection({
                         <MoreVertical className='h-4 w-4' />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
+                    <DropdownMenuContent align='end' onClick={e => e.stopPropagation()}>
                       {ticket.hasDocument && (
                         <DropdownMenuItem
                           onClick={() => setViewingTicketId(ticket.id)}

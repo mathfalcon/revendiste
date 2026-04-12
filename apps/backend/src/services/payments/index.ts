@@ -14,6 +14,22 @@ import {
   PAYMENT_ERROR_MESSAGES,
 } from '~/constants/error-messages';
 import {PAYMENT_EXTENSION_WINDOW_MINUTES} from '~/constants/reservation';
+import {DLOCAL_PAYMENT_DESCRIPTION_MAX_LENGTH} from '~/constants/dlocal';
+
+function buildPaymentLinkDescription(
+  eventName: string | null | undefined,
+  orderId: string,
+) {
+  const suffix = ` - (ID: ${orderId})`;
+  const maxNameLen = Math.max(
+    0,
+    DLOCAL_PAYMENT_DESCRIPTION_MAX_LENGTH - suffix.length,
+  );
+  const base = eventName?.trim() || 'Tickets';
+  const truncated =
+    base.length > maxNameLen ? base.slice(0, maxNameLen).trimEnd() : base;
+  return `${truncated}${suffix}`;
+}
 
 interface CreatePaymentLinkParams {
   orderId: string;
@@ -172,7 +188,10 @@ export class PaymentsService {
         orderId: order.id,
         amount: Number(order.totalAmount),
         currency: order.currency,
-        description: `${order.event?.name || 'Tickets'} - (ID: ${order.id})`,
+        description: buildPaymentLinkDescription(
+          order.event?.name,
+          order.id,
+        ),
         expirationMinutes: PAYMENT_EXTENSION_WINDOW_MINUTES,
         ...urls,
         ...payerData, // Include payer data if provider supports it

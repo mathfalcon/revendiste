@@ -32,6 +32,8 @@ export const getMyListingsQuery = () =>
     queryKey: ['listings'],
     queryFn: () =>
       api.ticketListings.getMyListings().then(res => res.data.data),
+    // Shared cuenta layout uses this for the "Subir entradas" badge; avoid refetch on every tab switch.
+    staleTime: 60_000,
   });
 
 export const uploadTicketDocumentMutation = (ticketId: string) =>

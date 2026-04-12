@@ -3048,6 +3048,7 @@ export interface SettlementBreakdownResponse {
         | "payout_requested"
         | "retained";
       sellerUserId: string;
+      sellerAmountConverted: string | null;
       sellerAmount: string;
       id: string;
     }[];
@@ -3055,17 +3056,20 @@ export interface SettlementBreakdownResponse {
     exchangeRate: string | null;
     processorFee: string;
     processorCredit: string;
+    customerAmountCurrency: string;
     customerAmount: string;
     providerPaymentId: string;
     paymentId: string | null;
     settlementItemId: string;
   }[];
   reconciliation: {
+    hasMultipleCurrencies: boolean;
     unreconciledDifference: string;
     platformRevenue: string;
-    totalSellerEarnings: string;
+    totalSellerEarningsConverted: string;
     totalProcessorFees: string;
     totalProcessorCredits: string;
+    totalCustomerChargesCurrency: string;
     totalCustomerCharges: string;
     /** @format double */
     paymentCount: number;
@@ -3163,7 +3167,15 @@ export interface GetDashboardRevenueResponse {
    * @format double
    */
   netPlatformIncomePercentOfCommissionAndVat: number;
+  /**
+   * Moneda de liquidación del procesador (`payments.balance_currency`), no la moneda del pedido.
+   * Los importes numéricos del bloque están expresados en esta moneda (GMV/comisión/IVA convertidos con `exchange_rate` cuando aplica).
+   */
   currency: EventTicketCurrency;
+  /**
+   * `true` si hay pagos pagados con más de un `balance_currency` en el rango.
+   * Ya no indica solo “pedidos en monedas distintas”: varias monedas de cargo pueden seguir mostrándose como una sola moneda de liquidación.
+   */
   mixedCurrency: boolean;
 }
 
@@ -3181,7 +3193,9 @@ export interface RevenueTimeSeriesRow {
 
 export interface GetDashboardRevenueTimeSeriesResponse {
   rows: RevenueTimeSeriesRow[];
+  /** Misma semántica que `GetDashboardRevenueResponse.currency` (liquidación). */
   currency: EventTicketCurrency;
+  /** Misma semántica que `GetDashboardRevenueResponse.mixedCurrency`. */
   mixedCurrency: boolean;
 }
 
@@ -3263,6 +3277,20 @@ export interface DashboardTopEventRow {
 
 export interface GetDashboardTopEventsResponse {
   events: DashboardTopEventRow[];
+}
+
+export interface OrderCurrencyBreakdownRow {
+  /** Moneda de cobro del pedido (`orders.currency`). Importes sin conversión. */
+  currency: EventTicketCurrency;
+  gmv: string;
+  platformCommission: string;
+  vatOnCommission: string;
+  /** @format double */
+  orderCount: number;
+}
+
+export interface GetDashboardRevenueByOrderCurrencyResponse {
+  rows: OrderCurrencyBreakdownRow[];
 }
 
 import type {
@@ -5331,6 +5359,32 @@ export class Api<
     ) =>
       this.request<GetDashboardTopEventsResponse, UnauthorizedError>({
         path: `/admin/dashboard/top-events`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardRevenueByOrderCurrency
+     * @request GET:/admin/dashboard/revenue-by-order-currency
+     */
+    getDashboardRevenueByOrderCurrency: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetDashboardRevenueByOrderCurrencyResponse,
+        UnauthorizedError
+      >({
+        path: `/admin/dashboard/revenue-by-order-currency`,
         method: "GET",
         query: query,
         format: "json",

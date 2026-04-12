@@ -35,6 +35,7 @@ interface OrderCardProps {
       name?: string | null;
       slug?: string | null;
       eventStartDate?: string | null;
+      eventEndDate?: string | null;
       venueName?: string | null;
       images?: Array<{
         imageType: string;
@@ -87,11 +88,13 @@ const STATUS_CONFIG = {
 
 function ViewTicketsButton({orderId}: {orderId: string}) {
   const [open, setOpen] = useState(false);
-  const {data: orderTicketsData} = useQuery(getOrderTicketsQuery(orderId));
+  const {data: orderTicketsData} = useQuery({
+    ...getOrderTicketsQuery(orderId),
+    enabled: open && !!orderId,
+  });
 
-  const hasDocuments = orderTicketsData?.tickets.some(
-    ticket => ticket.hasDocument,
-  );
+  const hasDocuments =
+    orderTicketsData?.tickets.some(ticket => ticket.hasDocument) ?? false;
 
   return (
     <>

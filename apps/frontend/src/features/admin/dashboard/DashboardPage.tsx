@@ -39,6 +39,7 @@ import {
   adminDashboardRevenueTimeSeriesQueryOptions,
   adminDashboardOrdersTimeSeriesQueryOptions,
   adminDashboardTicketsTimeSeriesQueryOptions,
+  adminDashboardRevenueByOrderCurrencyQueryOptions,
 } from '~/lib/api/admin';
 import {MoneyFlowSankey} from './charts/MoneyFlowSankey';
 import {RevenueAreaChart} from './charts/RevenueAreaChart';
@@ -46,6 +47,7 @@ import {OrdersAreaChart} from './charts/OrdersAreaChart';
 import {TicketsAreaChart} from './charts/TicketsAreaChart';
 import {StatCard} from './StatCard';
 import {DashboardPeriodSelector} from './DashboardPeriodSelector';
+import {CurrencyBreakdownSection} from './CurrencyBreakdownSection';
 import {
   buildAdminDashboardApiQuery,
   type DashboardSearch,
@@ -85,6 +87,9 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
   const ticketsTsQ = useQuery(
     adminDashboardTicketsTimeSeriesQueryOptions(apiQuery),
   );
+  const revenueByOrderCurrencyQ = useQuery(
+    adminDashboardRevenueByOrderCurrencyQueryOptions(apiQuery),
+  );
 
   const fetchingCount = useIsFetching({queryKey: ['admin', 'dashboard']});
 
@@ -98,6 +103,7 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
     revenueTsQ.dataUpdatedAt,
     ordersTsQ.dataUpdatedAt,
     ticketsTsQ.dataUpdatedAt,
+    revenueByOrderCurrencyQ.dataUpdatedAt,
   );
 
   const handleReload = () => {
@@ -276,6 +282,10 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
           />
         </div>
         <div className='grid grid-cols-1 gap-6'>
+          <CurrencyBreakdownSection
+            data={revenueByOrderCurrencyQ.data}
+            isLoading={revenueByOrderCurrencyQ.isPending}
+          />
           <Card>
             <CardHeader>
               <CardTitle className='text-base'>Flujo de dinero</CardTitle>

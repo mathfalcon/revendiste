@@ -60,9 +60,10 @@ export function TicketViewModal({
   onOpenChange,
 }: TicketViewModalProps) {
   const navigate = useNavigate();
-  const {data: orderTicketsData, isPending} = useQuery(
-    getOrderTicketsQuery(orderId),
-  );
+  const {data: orderTicketsData, isPending} = useQuery({
+    ...getOrderTicketsQuery(orderId),
+    enabled: open && !!orderId,
+  });
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);

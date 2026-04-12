@@ -15,6 +15,7 @@ import type {
   GetDashboardRevenueTimeSeriesResponse,
   GetDashboardOrdersTimeSeriesResponse,
   GetDashboardTicketsTimeSeriesResponse,
+  GetDashboardRevenueByOrderCurrencyResponse,
 } from './types';
 
 function parseNum(s: string | null | undefined): number {
@@ -32,6 +33,17 @@ function toIsoDateOnly(d: Date | string): string {
     return d.slice(0, 10);
   }
   return d.toISOString().slice(0, 10);
+}
+
+/** Label for API: processor settlement currency (`payments.balance_currency`), not order charge currency. */
+function settlementCurrencyFromRevenueRows(
+  rows: {currency: string | null}[],
+): EventTicketCurrency {
+  const raw =
+    rows.length === 1
+      ? rows[0]!.currency
+      : (rows[0]?.currency ?? 'UYU');
+  return (raw ?? 'UYU') as EventTicketCurrency;
 }
 
 export class AdminDashboardService {
@@ -87,10 +99,7 @@ export class AdminDashboardService {
       );
     }
 
-    const currency: EventTicketCurrency =
-      rows.length === 1
-        ? rows[0]!.currency
-        : (rows[0]?.currency ?? 'UYU');
+    const currency = settlementCurrencyFromRevenueRows(rows);
 
     return {
       gmv: formatNumericString(gmv),
@@ -164,10 +173,7 @@ export class AdminDashboardService {
       this.repo.getRevenueByCurrency(tsRange),
     ]);
 
-    const currency: EventTicketCurrency =
-      currencyRows.length === 1
-        ? currencyRows[0]!.currency
-        : (currencyRows[0]?.currency ?? 'UYU');
+    const currency = settlementCurrencyFromRevenueRows(currencyRows);
 
     const rows = seriesRows.map(r => {
       const gmv = parseNum(r.gmv);
@@ -260,5 +266,20 @@ export class AdminDashboardService {
       }));
 
     return {rows};
+  }
+
+  async getRevenueByOrderCurrency(
+    range: DashboardDateRange,
+  ): Promise<GetDashboardRevenueByOrderCurrencyResponse> {
+    const rows = await this.repo.getRevenueByOrderCurrency(range);
+    return {
+      rows: rows.map(r => ({
+        currency: r.currency as EventTicketCurrency,
+        gmv: r.gmv ?? '0',
+        platformCommission: r.platformCommission ?? '0',
+        vatOnCommission: r.vatOnCommission ?? '0',
+        orderCount: Number(r.orderCount ?? 0),
+      })),
+    };
   }
 }

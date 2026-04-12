@@ -110,6 +110,7 @@ export const Route = createFileRoute('/cuenta')({
 
 function RouteComponent() {
   const {pathname} = useLocation();
+  // Full my-listings fetch powers the upload reminder badge on "Subir entradas" for every cuenta tab (including Mis entradas).
   const {data: listings} = useQuery(getMyListingsQuery());
   const [sheetOpen, setSheetOpen] = useState(false);
 

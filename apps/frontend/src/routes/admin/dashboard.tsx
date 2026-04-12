@@ -20,6 +20,7 @@ import {
   adminDashboardRevenueTimeSeriesQueryOptions,
   adminDashboardOrdersTimeSeriesQueryOptions,
   adminDashboardTicketsTimeSeriesQueryOptions,
+  adminDashboardRevenueByOrderCurrencyQueryOptions,
 } from '~/lib/api/admin';
 
 const dashboardSearchSchema = z
@@ -68,6 +69,9 @@ export const Route = createFileRoute('/admin/dashboard')({
       ),
       queryClient.ensureQueryData(
         adminDashboardTicketsTimeSeriesQueryOptions(apiQuery),
+      ),
+      queryClient.ensureQueryData(
+        adminDashboardRevenueByOrderCurrencyQueryOptions(apiQuery),
       ),
     ]);
   },

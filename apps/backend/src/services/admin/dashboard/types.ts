@@ -38,7 +38,15 @@ export interface GetDashboardRevenueResponse {
    * % del total comisión + IVA (pedido) que queda como ingreso neto plataforma.
    */
   netPlatformIncomePercentOfCommissionAndVat: number;
+  /**
+   * Moneda de liquidación del procesador (`payments.balance_currency`), no la moneda del pedido.
+   * Los importes numéricos del bloque están expresados en esta moneda (GMV/comisión/IVA convertidos con `exchange_rate` cuando aplica).
+   */
   currency: EventTicketCurrency;
+  /**
+   * `true` si hay pagos pagados con más de un `balance_currency` en el rango.
+   * Ya no indica solo “pedidos en monedas distintas”: varias monedas de cargo pueden seguir mostrándose como una sola moneda de liquidación.
+   */
   mixedCurrency: boolean;
 }
 
@@ -100,8 +108,23 @@ export interface RevenueTimeSeriesRow {
 
 export interface GetDashboardRevenueTimeSeriesResponse {
   rows: RevenueTimeSeriesRow[];
+  /** Misma semántica que `GetDashboardRevenueResponse.currency` (liquidación). */
   currency: EventTicketCurrency;
+  /** Misma semántica que `GetDashboardRevenueResponse.mixedCurrency`. */
   mixedCurrency: boolean;
+}
+
+export interface OrderCurrencyBreakdownRow {
+  /** Moneda de cobro del pedido (`orders.currency`). Importes sin conversión. */
+  currency: EventTicketCurrency;
+  gmv: string;
+  platformCommission: string;
+  vatOnCommission: string;
+  orderCount: number;
+}
+
+export interface GetDashboardRevenueByOrderCurrencyResponse {
+  rows: OrderCurrencyBreakdownRow[];
 }
 
 export interface OrdersTimeSeriesRow {

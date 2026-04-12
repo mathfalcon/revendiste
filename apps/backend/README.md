@@ -338,6 +338,12 @@ pnpm kysely:migrate
 pnpm kysely migrate down
 ```
 
+### Deployed (AWS) database
+
+RDS is private; local access uses an **SSM bastion** and **port forwarding** (not SSH). Full steps, tunnel command, and credentials (**Secrets Manager**) are in **[Connect to the deployed database](../../docs/connect_to_deployed_db.md)**.
+
+**Short reminders:** use `terraform output -raw db_tunnel_command` from `infrastructure/environments/<env>`; on Windows if local port **5433** fails to bind, pick another `localPortNumber` (e.g. **15433**); if the bastion cannot open TCP to RDS on 5432, ensure **`terraform apply`** created **`aws_security_group_rule.rds_from_bastion`** so the RDS security group allows the **bastion** SG on 5432 (not only ECS).
+
 ### Database Schema
 
 The database uses Kysely for type-safe database operations:
@@ -367,11 +373,35 @@ pnpm kysely:migrate
 
 # Generate database types
 pnpm kysely:generate
-```
 
 # Generate TSOA routes and OpenAPI spec
 pnpm tsoa:routes
 pnpm tsoa:spec
+```
+
+### Run Cronjobs On Demand
+
+Run any cronjob as a one-off command (runs once and exits):
+
+```bash
+pnpm job <job-name>
+```
+
+Available jobs:
+
+| Job name | Description |
+| --- | --- |
+| `sync-payments-and-expire-orders` | Sync payment statuses and expire stale orders |
+| `notify-upload-availability` | Notify sellers when ticket upload is available |
+| `check-payout-hold-periods` | Check and release payouts past hold period |
+| `process-pending-notifications` | Send pending push/email notifications |
+| `process-pending-jobs` | Process queued background jobs |
+| `scrape-events` | Scrape events from external sources |
+
+Run without arguments to see the full list:
+
+```bash
+pnpm job
 ```
 
 ### TypeScript Configuration
