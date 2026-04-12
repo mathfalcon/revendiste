@@ -3,7 +3,13 @@ import {DLOCAL_API_KEY, DLOCAL_BASE_URL, DLOCAL_SECRET_KEY} from '~/config/env';
 import {
   DLOCAL_REQUEST_TIMEOUT_MS,
   DLOCAL_MAX_REDIRECTS,
+  DLOCAL_PAYMENT_DESCRIPTION_MAX_LENGTH,
 } from '~/constants/dlocal';
+
+function truncateDLocalDescription(text: string) {
+  if (text.length <= DLOCAL_PAYMENT_DESCRIPTION_MAX_LENGTH) return text;
+  return text.slice(0, DLOCAL_PAYMENT_DESCRIPTION_MAX_LENGTH);
+}
 import {logger} from '~/utils';
 import {withRetry} from '~/utils/retry';
 import type {PaymentStatus} from '@revendiste/shared';
@@ -174,12 +180,6 @@ export class DLocalService implements PaymentProvider {
     params: DLocalCreatePaymentParams,
   ): Promise<DLocalPaymentResponse> {
     try {
-      logger.info('Creating dLocal payment', {
-        orderId: params.orderId,
-        amount: params.amount,
-        currency: params.currency,
-      });
-
       // Build request body with only provided parameters
       const requestBody: Record<string, unknown> = {
         currency: params.currency,
@@ -190,11 +190,18 @@ export class DLocalService implements PaymentProvider {
         expiration_value: params.expirationValue,
       };
 
+      logger.info('Creating dLocal payment', {
+        orderId: params.orderId,
+        requestBody,
+      });
+
       // Add optional fields only if provided
       if (params.country) requestBody.country = params.country;
       if (params.orderId) requestBody.order_id = params.orderId;
       if (params.payer) requestBody.payer = params.payer;
-      if (params.description) requestBody.description = params.description;
+      if (params.description) {
+        requestBody.description = truncateDLocalDescription(params.description);
+      }
       if (params.notificationUrl)
         requestBody.notification_url = params.notificationUrl;
       if (params.paymentType)
@@ -206,10 +213,7 @@ export class DLocalService implements PaymentProvider {
 
       const response = await withRetry(
         () =>
-          this.client.post<DLocalPaymentResponse>(
-            '/v1/payments',
-            requestBody,
-          ),
+          this.client.post<DLocalPaymentResponse>('/v1/payments', requestBody),
         {
           maxAttempts: 3,
           baseDelayMs: 1000,
@@ -244,7 +248,9 @@ export class DLocalService implements PaymentProvider {
             : String(error);
       logger.error('Failed to create dLocal payment', {
         orderId: params.orderId,
-        error: axios.isAxiosError(error) ? error.response?.data ?? error.message : error,
+        error: axios.isAxiosError(error)
+          ? (error.response?.data ?? error.message)
+          : error,
       });
       throw new Error(`Failed to create payment: ${msg}`);
     }
@@ -308,7 +314,7 @@ export class DLocalService implements PaymentProvider {
       logger.error('Failed to create dLocal refund', {
         paymentId: params.paymentId,
         error: axios.isAxiosError(error)
-          ? error.response?.data ?? error.message
+          ? (error.response?.data ?? error.message)
           : error,
       });
       throw new Error(`Failed to create refund: ${msg}`);
@@ -321,8 +327,7 @@ export class DLocalService implements PaymentProvider {
   async getRefund(refundId: string): Promise<DLocalRefundResponse> {
     try {
       const response = await withRetry(
-        () =>
-          this.client.get<DLocalRefundResponse>(`/v1/refunds/${refundId}`),
+        () => this.client.get<DLocalRefundResponse>(`/v1/refunds/${refundId}`),
         {
           maxAttempts: 3,
           baseDelayMs: 1000,
@@ -345,7 +350,7 @@ export class DLocalService implements PaymentProvider {
       logger.error('Failed to retrieve dLocal refund', {
         refundId,
         error: axios.isAxiosError(error)
-          ? error.response?.data ?? error.message
+          ? (error.response?.data ?? error.message)
           : error,
       });
       throw new Error(`Failed to retrieve refund: ${msg}`);
@@ -359,9 +364,7 @@ export class DLocalService implements PaymentProvider {
     try {
       const response = await withRetry(
         () =>
-          this.client.get<DLocalPaymentResponse>(
-            `/v1/payments/${paymentId}`,
-          ),
+          this.client.get<DLocalPaymentResponse>(`/v1/payments/${paymentId}`),
         {
           maxAttempts: 3,
           baseDelayMs: 1000,
@@ -383,7 +386,9 @@ export class DLocalService implements PaymentProvider {
             : String(error);
       logger.error('Failed to retrieve dLocal payment', {
         paymentId,
-        error: axios.isAxiosError(error) ? error.response?.data ?? error.message : error,
+        error: axios.isAxiosError(error)
+          ? (error.response?.data ?? error.message)
+          : error,
       });
       throw new Error(`Failed to retrieve payment: ${msg}`);
     }
