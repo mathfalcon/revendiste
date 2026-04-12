@@ -9,7 +9,12 @@ import {
   SETTLEMENT_ERROR_MESSAGES,
 } from '~/constants/error-messages';
 import type {PaginationOptions} from '~/types/pagination';
-import type {Json, PaymentProvider} from '@revendiste/shared';
+import {
+  ProcessorSettlementMetadataSchema,
+  type Json,
+  type PaymentProvider,
+  type ProcessorSettlementReconciliationSnapshot,
+} from '@revendiste/shared';
 
 /** Serialized settlement row for admin APIs / OpenAPI (avoids TSOA issues with `Json` index types). */
 export type ProcessorSettlementListRow = {
@@ -339,7 +344,7 @@ export class ProcessorSettlementsService {
 
       const hasWarning = differenceRatio > SETTLEMENT_AMOUNT_TOLERANCE_WARNING;
 
-      const reconciliationMeta = {
+      const reconciliationMeta: ProcessorSettlementReconciliationSnapshot = {
         computedTotal: String(sum),
         declaredTotal: data.totalAmount,
         differencePercent: Math.round(differenceRatio * 10000) / 100,
@@ -347,10 +352,15 @@ export class ProcessorSettlementsService {
         paymentCount: selected.length,
       };
 
-      const mergedMetadata = {
+      const mergedForMetadata = {
         ...((data.metadata ?? {}) as Record<string, unknown>),
         reconciliation: reconciliationMeta,
-      } as Record<string, unknown>;
+      };
+      const parsedMetadata =
+        ProcessorSettlementMetadataSchema.safeParse(mergedForMetadata);
+      if (!parsedMetadata.success) {
+        throw new ValidationError(SETTLEMENT_ERROR_MESSAGES.INVALID_METADATA);
+      }
 
       const settlement = await settlementsRepo.createSettlement({
         id: crypto.randomUUID(),
@@ -359,7 +369,7 @@ export class ProcessorSettlementsService {
         totalAmount: data.totalAmount,
         currency: data.currency,
         status: 'pending',
-        metadata: mergedMetadata as Json,
+        metadata: parsedMetadata.data as Json,
         paymentProvider,
       });
 
@@ -632,11 +642,35 @@ export class ProcessorSettlementsService {
   }
 
   async failSettlement(settlementId: string, reason?: string) {
+    const existing = await this.requireSettlementRow(settlementId);
+    const prevMeta =
+      existing.metadata &&
+      typeof existing.metadata === 'object' &&
+      !Array.isArray(existing.metadata)
+        ? {...(existing.metadata as Record<string, unknown>)}
+        : {};
+
+    const mergedForFail = reason
+      ? {...prevMeta, failureReason: reason}
+      : null;
+    const parsedFailMetadata =
+      mergedForFail != null
+        ? ProcessorSettlementMetadataSchema.safeParse(mergedForFail)
+        : null;
+
     const updated = await this.settlementsRepository.updateSettlement(
       settlementId,
       {
         status: 'failed',
-        metadata: reason ? ({failureReason: reason} as Json) : undefined,
+        ...(reason
+          ? {
+              metadata: (
+                parsedFailMetadata?.success
+                  ? parsedFailMetadata.data
+                  : mergedForFail
+              ) as Json,
+            }
+          : {}),
       },
     );
     if (!updated) {

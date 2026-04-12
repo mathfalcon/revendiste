@@ -91,7 +91,10 @@ export function DashboardPeriodSelector({
             {customLabel}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className='w-auto p-0' align='start'>
+        <PopoverContent
+          className='w-72 max-w-[calc(100vw-1.5rem)] p-0 md:w-[36rem]'
+          align='start'
+        >
           <Calendar
             mode='range'
             defaultMonth={rangeDraft?.from}

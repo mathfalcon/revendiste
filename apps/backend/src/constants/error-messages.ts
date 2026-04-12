@@ -183,6 +183,8 @@ export const SETTLEMENT_ERROR_MESSAGES = {
     'No alcanzan los pagos acumulados para cubrir el monto declarado de la liquidación.',
   AMOUNT_MISMATCH_TOO_HIGH: (pct: string) =>
     `La suma de créditos del procesador (${pct}% de diferencia) no coincide con el monto declarado. Revisá el monto o los pagos incluidos.`,
+  INVALID_METADATA:
+    'Los metadatos enviados para la liquidación no son válidos. Revisá el cuerpo de la solicitud.',
 } as const;
 
 // Error messages for webhook signature verification (Clerk, dLocal, etc.)

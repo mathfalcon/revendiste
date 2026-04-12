@@ -647,3 +647,42 @@ export const adminDashboardTopEventsQueryOptions = (
     refetchInterval: DASHBOARD_POLL_MID_MS,
   });
 };
+
+export const adminDashboardRevenueTimeSeriesQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'revenueTimeSeries', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardRevenueTimeSeries(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_FAST_MS,
+  });
+};
+
+export const adminDashboardOrdersTimeSeriesQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'ordersTimeSeries', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardOrdersTimeSeries(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_MID_MS,
+  });
+};
+
+export const adminDashboardTicketsTimeSeriesQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: ['admin', 'dashboard', 'ticketsTimeSeries', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardTicketsTimeSeries(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_MID_MS,
+  });
+};

@@ -3,6 +3,7 @@ import {useUser, useClerk} from '@clerk/tanstack-react-start';
 import {useQuery} from '@tanstack/react-query';
 import {Link} from '@tanstack/react-router';
 import {getCurrentUserQuery} from '~/lib';
+import {SOCIAL_LINKS} from '@revendiste/shared';
 import {Avatar, AvatarImage, AvatarFallback} from '~/components/ui/avatar';
 import {Popover, PopoverContent, PopoverTrigger} from '~/components/ui/popover';
 import {
@@ -27,6 +28,12 @@ import {
   ChevronRight,
   Flag,
   LayoutDashboard,
+  CircleHelp,
+  Mail,
+  Instagram,
+  MessageCircle,
+  Twitter,
+  Video,
 } from 'lucide-react';
 import {useTheme} from '../ThemeProvider';
 
@@ -60,12 +67,25 @@ const ADMIN_MENU_ITEM = {
   label: 'Administración',
 };
 
+const HELP_INFO_INTERNAL = [
+  {to: '/contacto' as const, icon: Mail, label: 'Contacto'},
+  {to: '/preguntas-frecuentes' as const, icon: CircleHelp, label: 'Preguntas frecuentes'},
+] as const;
+
+const HELP_INFO_SOCIAL = [
+  {href: SOCIAL_LINKS.instagram, icon: Instagram, label: 'Instagram'},
+  {href: SOCIAL_LINKS.tiktok, icon: Video, label: 'TikTok'},
+  {href: SOCIAL_LINKS.twitter, icon: Twitter, label: 'Twitter / X'},
+  {href: SOCIAL_LINKS.whatsapp, icon: MessageCircle, label: 'WhatsApp'},
+] as const;
+
 export const UserProfile = () => {
   const {user} = useUser();
   const {data: currentUser} = useQuery(getCurrentUserQuery());
   const {signOut} = useClerk();
   const [open, setOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [helpInfoOpen, setHelpInfoOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const {theme, setTheme} = useTheme();
@@ -100,7 +120,16 @@ export const UserProfile = () => {
 
   if (!isMobile) {
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={next => {
+          setOpen(next);
+          if (!next) {
+            setThemeOpen(false);
+            setHelpInfoOpen(false);
+          }
+        }}
+      >
         <PopoverTrigger asChild>{avatarButton}</PopoverTrigger>
         <PopoverContent className='w-80 p-0' align='end' sideOffset={8}>
           <div className='flex items-center gap-3 border-b px-4 py-3'>
@@ -145,7 +174,57 @@ export const UserProfile = () => {
 
             <div>
               <button
-                onClick={() => setThemeOpen(prev => !prev)}
+                type='button'
+                onClick={() => {
+                  setHelpInfoOpen(prev => !prev);
+                  setThemeOpen(false);
+                }}
+                className='flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
+              >
+                <CircleHelp className='h-4 w-4 text-muted-foreground' />
+                Ayuda
+                <ChevronRight
+                  className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${helpInfoOpen ? 'rotate-90' : ''}`}
+                />
+              </button>
+              {helpInfoOpen && (
+                <div className='flex flex-col gap-0.5 pl-7 pr-4 pb-2'>
+                  {HELP_INFO_INTERNAL.map(item => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      resetScroll
+                      onClick={() => setOpen(false)}
+                      className='flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-colors hover:bg-accent cursor-pointer'
+                    >
+                      <item.icon className='h-3.5 w-3.5 shrink-0 text-muted-foreground' />
+                      {item.label}
+                    </Link>
+                  ))}
+                  {HELP_INFO_SOCIAL.map(item => (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      onClick={() => setOpen(false)}
+                      className='flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-colors hover:bg-accent cursor-pointer'
+                    >
+                      <item.icon className='h-3.5 w-3.5 shrink-0 text-muted-foreground' />
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <button
+                type='button'
+                onClick={() => {
+                  setThemeOpen(prev => !prev);
+                  setHelpInfoOpen(false);
+                }}
                 className='flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
               >
                 <ActiveThemeIcon className='h-4 w-4 text-muted-foreground' />
@@ -171,6 +250,7 @@ export const UserProfile = () => {
             </div>
 
             <button
+              type='button'
               onClick={() => {
                 setOpen(false);
                 signOut({redirectUrl: '/'});
@@ -187,7 +267,16 @@ export const UserProfile = () => {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet
+      open={open}
+      onOpenChange={next => {
+        setOpen(next);
+        if (!next) {
+          setThemeOpen(false);
+          setHelpInfoOpen(false);
+        }
+      }}
+    >
       <SheetTrigger asChild>{avatarButton}</SheetTrigger>
       <SheetContent side='right' className='w-[85vw] sm:max-w-sm'>
         <SheetHeader className='text-left'>
@@ -245,7 +334,55 @@ export const UserProfile = () => {
           <Separator className='my-2' />
 
           <button
-            onClick={() => setThemeOpen(prev => !prev)}
+            type='button'
+            onClick={() => {
+              setHelpInfoOpen(prev => !prev);
+              setThemeOpen(false);
+            }}
+            className='flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
+          >
+            <CircleHelp className='h-5 w-5' />
+            Ayuda
+            <ChevronRight
+              className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${helpInfoOpen ? 'rotate-90' : ''}`}
+            />
+          </button>
+          {helpInfoOpen && (
+            <div className='flex flex-col gap-0.5 pl-6 pr-3 pb-2'>
+              {HELP_INFO_INTERNAL.map(item => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  resetScroll
+                  onClick={() => setOpen(false)}
+                  className='flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
+                >
+                  <item.icon className='h-4 w-4 text-muted-foreground' />
+                  {item.label}
+                </Link>
+              ))}
+              {HELP_INFO_SOCIAL.map(item => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  onClick={() => setOpen(false)}
+                  className='flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
+                >
+                  <item.icon className='h-4 w-4 text-muted-foreground' />
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          )}
+
+          <button
+            type='button'
+            onClick={() => {
+              setThemeOpen(prev => !prev);
+              setHelpInfoOpen(false);
+            }}
             className='flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent cursor-pointer'
           >
             <ActiveThemeIcon className='h-5 w-5' />
@@ -272,6 +409,7 @@ export const UserProfile = () => {
           <Separator className='my-2' />
 
           <button
+            type='button'
             onClick={() => {
               setOpen(false);
               signOut({redirectUrl: '/'});

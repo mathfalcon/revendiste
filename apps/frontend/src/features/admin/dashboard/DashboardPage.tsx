@@ -36,7 +36,14 @@ import {
   adminDashboardPayoutsQueryOptions,
   adminDashboardHealthQueryOptions,
   adminDashboardTopEventsQueryOptions,
+  adminDashboardRevenueTimeSeriesQueryOptions,
+  adminDashboardOrdersTimeSeriesQueryOptions,
+  adminDashboardTicketsTimeSeriesQueryOptions,
 } from '~/lib/api/admin';
+import {MoneyFlowSankey} from './charts/MoneyFlowSankey';
+import {RevenueAreaChart} from './charts/RevenueAreaChart';
+import {OrdersAreaChart} from './charts/OrdersAreaChart';
+import {TicketsAreaChart} from './charts/TicketsAreaChart';
 import {StatCard} from './StatCard';
 import {DashboardPeriodSelector} from './DashboardPeriodSelector';
 import {
@@ -69,6 +76,15 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
   const payoutsQ = useQuery(adminDashboardPayoutsQueryOptions(apiQuery));
   const healthQ = useQuery(adminDashboardHealthQueryOptions());
   const topEventsQ = useQuery(adminDashboardTopEventsQueryOptions(apiQuery));
+  const revenueTsQ = useQuery(
+    adminDashboardRevenueTimeSeriesQueryOptions(apiQuery),
+  );
+  const ordersTsQ = useQuery(
+    adminDashboardOrdersTimeSeriesQueryOptions(apiQuery),
+  );
+  const ticketsTsQ = useQuery(
+    adminDashboardTicketsTimeSeriesQueryOptions(apiQuery),
+  );
 
   const fetchingCount = useIsFetching({queryKey: ['admin', 'dashboard']});
 
@@ -79,6 +95,9 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
     payoutsQ.dataUpdatedAt,
     healthQ.dataUpdatedAt,
     topEventsQ.dataUpdatedAt,
+    revenueTsQ.dataUpdatedAt,
+    ordersTsQ.dataUpdatedAt,
+    ticketsTsQ.dataUpdatedAt,
   );
 
   const handleReload = () => {
@@ -98,9 +117,6 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
       <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
         <div>
           <h1 className='text-3xl font-bold'>Panel</h1>
-          <p className='text-muted-foreground'>
-            Métricas en tiempo casi real de la plataforma
-          </p>
         </div>
 
         <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
@@ -144,38 +160,19 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
         </div>
       </div>
 
-      {/* Tickets + revenue */}
-      <section className='space-y-3'>
-        <h2 className='text-lg font-semibold'>Entradas e ingresos</h2>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-          <StatCard
-            title='Publicadas (eventos activos)'
-            value={ticketsQ.data?.publishedActiveEvents ?? '—'}
-            icon={Ticket}
-            isLoading={ticketsQ.isPending}
-            accentClassName='border-l-blue-500'
-          />
-          <StatCard
-            title='Publicadas (rango)'
-            value={ticketsQ.data?.publishedTotal ?? '—'}
-            icon={LayoutGrid}
-            isLoading={ticketsQ.isPending}
-            accentClassName='border-l-blue-400'
-          />
-          <StatCard
-            title='Vendidas (rango)'
-            value={ticketsQ.data?.sold ?? '—'}
-            icon={TrendingUp}
-            isLoading={ticketsQ.isPending}
-            accentClassName='border-l-emerald-500'
-          />
-          <StatCard
-            title='Listados activos'
-            value={ticketsQ.data?.activeListings ?? '—'}
-            icon={BarChart3}
-            isLoading={ticketsQ.isPending}
-            accentClassName='border-l-cyan-500'
-          />
+      <section
+        className='space-y-4'
+        aria-labelledby='dashboard-ingresos-heading'
+      >
+        <div>
+          <h2 id='dashboard-ingresos-heading' className='text-lg font-semibold'>
+            Ingresos
+          </h2>
+          <p className='text-sm text-muted-foreground'>
+            Montos del periodo seleccionado y evolución diaria del desglose.
+          </p>
+        </div>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5'>
           <StatCard
             title='GMV (órdenes confirmadas)'
             value={
@@ -278,81 +275,208 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
             }
           />
         </div>
+        <div className='grid grid-cols-1 gap-6'>
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-base'>Flujo de dinero</CardTitle>
+              <p className='text-sm text-muted-foreground'>
+                Desde el total pagado por compradores hasta el neto estimado
+                tras IVA empresa, para el periodo seleccionado.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <MoneyFlowSankey
+                revenue={revenueQ.data}
+                isLoading={revenueQ.isPending}
+              />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-base'>
+                Desglose de ingresos por día
+              </CardTitle>
+              <p className='text-sm text-muted-foreground'>
+                Cada día: fees del procesador, IVA empresa estimado y neto tras
+                IVA (órdenes confirmadas con pago). Leyenda y tooltip indican
+                qué capa es cada valor.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <RevenueAreaChart
+                data={revenueTsQ.data}
+                isLoading={revenueTsQ.isPending}
+              />
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+      <section
+        className='space-y-4'
+        aria-labelledby='dashboard-entradas-heading'
+      >
+        <div>
+          <h2 id='dashboard-entradas-heading' className='text-lg font-semibold'>
+            Entradas
+          </h2>
+          <p className='text-sm text-muted-foreground'>
+            Stock y ventas en el periodo; la gráfica compara publicadas vs
+            vendidas por día.
+          </p>
+        </div>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+          <StatCard
+            title='Publicadas (eventos activos)'
+            value={ticketsQ.data?.publishedActiveEvents ?? '—'}
+            icon={Ticket}
+            isLoading={ticketsQ.isPending}
+            accentClassName='border-l-blue-500'
+          />
+          <StatCard
+            title='Publicadas (rango)'
+            value={ticketsQ.data?.publishedTotal ?? '—'}
+            icon={LayoutGrid}
+            isLoading={ticketsQ.isPending}
+            accentClassName='border-l-blue-400'
+          />
+          <StatCard
+            title='Vendidas (rango)'
+            value={ticketsQ.data?.sold ?? '—'}
+            icon={TrendingUp}
+            isLoading={ticketsQ.isPending}
+            accentClassName='border-l-emerald-500'
+          />
+          <StatCard
+            title='Listados activos'
+            value={ticketsQ.data?.activeListings ?? '—'}
+            icon={BarChart3}
+            isLoading={ticketsQ.isPending}
+            accentClassName='border-l-cyan-500'
+          />
+        </div>
         <Card>
           <CardHeader>
-            <CardTitle className='flex items-center gap-2 text-base'>
-              <ShoppingCart className='h-4 w-4' aria-hidden />
-              Órdenes
+            <CardTitle className='text-base'>
+              Entradas publicadas vs vendidas por día
             </CardTitle>
+            <p className='text-sm text-muted-foreground'>
+              Publicadas por fecha de alta; vendidas por fecha de venta.
+            </p>
           </CardHeader>
-          <CardContent className='grid grid-cols-2 gap-3 text-sm'>
-            <div>
-              <p className='text-muted-foreground'>Pendientes</p>
-              <p className='text-xl font-semibold'>
-                {ordersQ.isPending ? '—' : ordersQ.data?.pending}
-              </p>
-            </div>
-            <div>
-              <p className='text-muted-foreground'>Confirmadas</p>
-              <p className='text-xl font-semibold'>
-                {ordersQ.isPending ? '—' : ordersQ.data?.confirmed}
-              </p>
-            </div>
-            <div>
-              <p className='text-muted-foreground'>Expiradas (órdenes)</p>
-              <p className='text-xl font-semibold'>
-                {ordersQ.isPending ? '—' : ordersQ.data?.expired}
-              </p>
-            </div>
-            <div>
-              <p className='text-muted-foreground'>Canceladas</p>
-              <p className='text-xl font-semibold'>
-                {ordersQ.isPending ? '—' : ordersQ.data?.cancelled}
-              </p>
-            </div>
+          <CardContent>
+            <TicketsAreaChart
+              data={ticketsTsQ.data}
+              isLoading={ticketsTsQ.isPending}
+            />
           </CardContent>
         </Card>
+      </section>
 
+      <section
+        className='space-y-4'
+        aria-labelledby='dashboard-ordenes-pagos-heading'
+      >
+        <div>
+          <h2
+            id='dashboard-ordenes-pagos-heading'
+            className='text-lg font-semibold'
+          >
+            Órdenes y pagos
+          </h2>
+          <p className='text-sm text-muted-foreground'>
+            Conteos del periodo y evolución diaria de órdenes nuevas por estado.
+          </p>
+        </div>
+        <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
+          <Card>
+            <CardHeader>
+              <CardTitle className='flex items-center gap-2 text-base'>
+                <ShoppingCart className='h-4 w-4' aria-hidden />
+                Órdenes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className='grid grid-cols-2 gap-3 text-sm'>
+              <div>
+                <p className='text-muted-foreground'>Pendientes</p>
+                <p className='text-xl font-semibold'>
+                  {ordersQ.isPending ? '—' : ordersQ.data?.pending}
+                </p>
+              </div>
+              <div>
+                <p className='text-muted-foreground'>Confirmadas</p>
+                <p className='text-xl font-semibold'>
+                  {ordersQ.isPending ? '—' : ordersQ.data?.confirmed}
+                </p>
+              </div>
+              <div>
+                <p className='text-muted-foreground'>Expiradas (órdenes)</p>
+                <p className='text-xl font-semibold'>
+                  {ordersQ.isPending ? '—' : ordersQ.data?.expired}
+                </p>
+              </div>
+              <div>
+                <p className='text-muted-foreground'>Canceladas</p>
+                <p className='text-xl font-semibold'>
+                  {ordersQ.isPending ? '—' : ordersQ.data?.cancelled}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className='flex items-center gap-2 text-base'>
+                <CreditCard className='h-4 w-4' aria-hidden />
+                Pagos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className='grid grid-cols-2 gap-3 text-sm'>
+              <div>
+                <p className='text-muted-foreground'>Exitosos</p>
+                <p className='text-xl font-semibold'>
+                  {ordersQ.isPending ? '—' : ordersQ.data?.payments.successful}
+                </p>
+              </div>
+              <div>
+                <p className='text-muted-foreground'>Fallidos</p>
+                <p className='text-xl font-semibold'>
+                  {ordersQ.isPending ? '—' : ordersQ.data?.payments.failed}
+                </p>
+              </div>
+              <div>
+                <p className='text-muted-foreground'>Expirados</p>
+                <p className='text-xl font-semibold'>
+                  {ordersQ.isPending ? '—' : ordersQ.data?.payments.expired}
+                </p>
+              </div>
+              <div>
+                <p className='text-muted-foreground'>Conversión (pagos)</p>
+                <p className='text-xl font-semibold'>
+                  {ordersQ.isPending
+                    ? '—'
+                    : `${ordersQ.data?.payments.conversionRate ?? 0}%`}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         <Card>
           <CardHeader>
-            <CardTitle className='flex items-center gap-2 text-base'>
-              <CreditCard className='h-4 w-4' aria-hidden />
-              Pagos
-            </CardTitle>
+            <CardTitle className='text-base'>Órdenes por día</CardTitle>
+            <p className='text-sm text-muted-foreground'>
+              Nuevas órdenes por fecha de creación, apiladas por estado. La
+              leyenda y el tooltip muestran el color y el nombre de cada estado.
+            </p>
           </CardHeader>
-          <CardContent className='grid grid-cols-2 gap-3 text-sm'>
-            <div>
-              <p className='text-muted-foreground'>Exitosos</p>
-              <p className='text-xl font-semibold'>
-                {ordersQ.isPending ? '—' : ordersQ.data?.payments.successful}
-              </p>
-            </div>
-            <div>
-              <p className='text-muted-foreground'>Fallidos</p>
-              <p className='text-xl font-semibold'>
-                {ordersQ.isPending ? '—' : ordersQ.data?.payments.failed}
-              </p>
-            </div>
-            <div>
-              <p className='text-muted-foreground'>Expirados</p>
-              <p className='text-xl font-semibold'>
-                {ordersQ.isPending ? '—' : ordersQ.data?.payments.expired}
-              </p>
-            </div>
-            <div>
-              <p className='text-muted-foreground'>Conversión (pagos)</p>
-              <p className='text-xl font-semibold'>
-                {ordersQ.isPending
-                  ? '—'
-                  : `${ordersQ.data?.payments.conversionRate ?? 0}%`}
-              </p>
-            </div>
+          <CardContent>
+            <OrdersAreaChart
+              data={ordersTsQ.data}
+              isLoading={ordersTsQ.isPending}
+            />
           </CardContent>
         </Card>
-      </div>
+      </section>
 
       <Card>
         <CardHeader>
@@ -479,7 +603,9 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Evento</TableHead>
-                  <TableHead className='text-right'>Entradas vendidas</TableHead>
+                  <TableHead className='text-right'>
+                    Entradas vendidas
+                  </TableHead>
                   <TableHead className='text-right'>GMV</TableHead>
                   <TableHead className='text-right'>Listados</TableHead>
                 </TableRow>

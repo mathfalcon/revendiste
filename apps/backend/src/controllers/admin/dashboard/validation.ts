@@ -85,3 +85,21 @@ export function resolveDashboardDateRange(
   const from = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   return {from, to: now};
 }
+
+const TIME_SERIES_ALL_TIME_DAYS = 365;
+
+/**
+ * Date range used for dashboard time-series SQL (bounded when query is all-time).
+ */
+export function resolveDashboardTimeSeriesRange(
+  range: DashboardDateRange,
+): {from: Date; to: Date} {
+  if (range !== null) {
+    return range;
+  }
+  const to = new Date();
+  return {
+    from: new Date(to.getTime() - TIME_SERIES_ALL_TIME_DAYS * 24 * 60 * 60 * 1000),
+    to,
+  };
+}

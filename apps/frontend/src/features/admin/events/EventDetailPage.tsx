@@ -53,6 +53,7 @@ import {Loader2, Trash2, ExternalLink, ArrowLeft} from 'lucide-react';
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {deleteEventMutation} from '~/lib/api/admin';
+import {DateTimePicker} from '~/components/datetime-picker';
 
 const eventFormSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -271,10 +272,15 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
                       control={form.control}
                       name='eventStartDate'
                       render={({field}) => (
-                        <FormItem>
+                        <FormItem className='flex flex-col'>
                           <FormLabel>Fecha de Inicio</FormLabel>
                           <FormControl>
-                            <Input type='datetime-local' {...field} />
+                            <DateTimePicker
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder='Elegí fecha y hora de inicio'
+                              disabled={updateMutation.isPending}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -285,10 +291,15 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
                       control={form.control}
                       name='eventEndDate'
                       render={({field}) => (
-                        <FormItem>
+                        <FormItem className='flex flex-col'>
                           <FormLabel>Fecha de Fin</FormLabel>
                           <FormControl>
-                            <Input type='datetime-local' {...field} />
+                            <DateTimePicker
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder='Elegí fecha y hora de fin'
+                              disabled={updateMutation.isPending}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

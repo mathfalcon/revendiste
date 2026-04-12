@@ -85,3 +85,44 @@ export interface DashboardTopEventRow {
 export interface GetDashboardTopEventsResponse {
   events: DashboardTopEventRow[];
 }
+
+export interface RevenueTimeSeriesRow {
+  /** ISO date `YYYY-MM-DD` (UTC bucket). */
+  day: string;
+  gmv: string;
+  platformCommission: string;
+  vatOnCommission: string;
+  processorFees: string;
+  netPlatformIncome: string;
+  platformIncomeVatAmount: string;
+  netPlatformIncomeAfterIncomeVat: string;
+}
+
+export interface GetDashboardRevenueTimeSeriesResponse {
+  rows: RevenueTimeSeriesRow[];
+  currency: EventTicketCurrency;
+  mixedCurrency: boolean;
+}
+
+export interface OrdersTimeSeriesRow {
+  day: string;
+  total: number;
+  confirmed: number;
+  pending: number;
+  expired: number;
+  cancelled: number;
+}
+
+export interface GetDashboardOrdersTimeSeriesResponse {
+  rows: OrdersTimeSeriesRow[];
+}
+
+export interface TicketsTimeSeriesRow {
+  day: string;
+  published: number;
+  sold: number;
+}
+
+export interface GetDashboardTicketsTimeSeriesResponse {
+  rows: TicketsTimeSeriesRow[];
+}

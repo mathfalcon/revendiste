@@ -1546,6 +1546,24 @@ const models: TsoaRoute.Models = {
         "type": {"ref":"infer_typeofAdminDashboardQuerySchema_","validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TicketsTimeSeriesRow": {
+        "dataType": "refObject",
+        "properties": {
+            "day": {"dataType":"string","required":true},
+            "published": {"dataType":"double","required":true},
+            "sold": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GetDashboardTicketsTimeSeriesResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "rows": {"dataType":"array","array":{"dataType":"refObject","ref":"TicketsTimeSeriesRow"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "GetDashboardRevenueResponse": {
         "dataType": "refObject",
         "properties": {
@@ -1565,6 +1583,31 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RevenueTimeSeriesRow": {
+        "dataType": "refObject",
+        "properties": {
+            "day": {"dataType":"string","required":true},
+            "gmv": {"dataType":"string","required":true},
+            "platformCommission": {"dataType":"string","required":true},
+            "vatOnCommission": {"dataType":"string","required":true},
+            "processorFees": {"dataType":"string","required":true},
+            "netPlatformIncome": {"dataType":"string","required":true},
+            "platformIncomeVatAmount": {"dataType":"string","required":true},
+            "netPlatformIncomeAfterIncomeVat": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GetDashboardRevenueTimeSeriesResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "rows": {"dataType":"array","array":{"dataType":"refObject","ref":"RevenueTimeSeriesRow"},"required":true},
+            "currency": {"ref":"EventTicketCurrency","required":true},
+            "mixedCurrency": {"dataType":"boolean","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "GetDashboardOrdersResponse": {
         "dataType": "refObject",
         "properties": {
@@ -1573,6 +1616,27 @@ const models: TsoaRoute.Models = {
             "expired": {"dataType":"double","required":true},
             "cancelled": {"dataType":"double","required":true},
             "payments": {"dataType":"nestedObjectLiteral","nestedProperties":{"conversionRate":{"dataType":"double","required":true},"expired":{"dataType":"double","required":true},"failed":{"dataType":"double","required":true},"successful":{"dataType":"double","required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OrdersTimeSeriesRow": {
+        "dataType": "refObject",
+        "properties": {
+            "day": {"dataType":"string","required":true},
+            "total": {"dataType":"double","required":true},
+            "confirmed": {"dataType":"double","required":true},
+            "pending": {"dataType":"double","required":true},
+            "expired": {"dataType":"double","required":true},
+            "cancelled": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GetDashboardOrdersTimeSeriesResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "rows": {"dataType":"array","array":{"dataType":"refObject","ref":"OrdersTimeSeriesRow"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -5492,6 +5556,36 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminDashboardController_getDashboardTicketsTimeSeries: Record<string, TsoaRoute.ParameterSchema> = {
+                query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"from":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"period":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["today"]},{"dataType":"enum","enums":["7d"]},{"dataType":"enum","enums":["30d"]},{"dataType":"enum","enums":["all"]},{"dataType":"undefined"}]}}},
+        };
+        app.get('/admin/dashboard/tickets/time-series',
+            ...(fetchMiddlewares<RequestHandler>(AdminDashboardController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminDashboardController.prototype.getDashboardTicketsTimeSeries)),
+
+            async function AdminDashboardController_getDashboardTicketsTimeSeries(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminDashboardController_getDashboardTicketsTimeSeries, request, response });
+
+                const controller = new AdminDashboardController();
+
+              await templateService.apiHandler({
+                methodName: 'getDashboardTicketsTimeSeries',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAdminDashboardController_getDashboardRevenue: Record<string, TsoaRoute.ParameterSchema> = {
                 query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"from":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"period":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["today"]},{"dataType":"enum","enums":["7d"]},{"dataType":"enum","enums":["30d"]},{"dataType":"enum","enums":["all"]},{"dataType":"undefined"}]}}},
         };
@@ -5522,6 +5616,36 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminDashboardController_getDashboardRevenueTimeSeries: Record<string, TsoaRoute.ParameterSchema> = {
+                query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"from":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"period":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["today"]},{"dataType":"enum","enums":["7d"]},{"dataType":"enum","enums":["30d"]},{"dataType":"enum","enums":["all"]},{"dataType":"undefined"}]}}},
+        };
+        app.get('/admin/dashboard/revenue/time-series',
+            ...(fetchMiddlewares<RequestHandler>(AdminDashboardController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminDashboardController.prototype.getDashboardRevenueTimeSeries)),
+
+            async function AdminDashboardController_getDashboardRevenueTimeSeries(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminDashboardController_getDashboardRevenueTimeSeries, request, response });
+
+                const controller = new AdminDashboardController();
+
+              await templateService.apiHandler({
+                methodName: 'getDashboardRevenueTimeSeries',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAdminDashboardController_getDashboardOrders: Record<string, TsoaRoute.ParameterSchema> = {
                 query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"from":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"period":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["today"]},{"dataType":"enum","enums":["7d"]},{"dataType":"enum","enums":["30d"]},{"dataType":"enum","enums":["all"]},{"dataType":"undefined"}]}}},
         };
@@ -5541,6 +5665,36 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'getDashboardOrders',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAdminDashboardController_getDashboardOrdersTimeSeries: Record<string, TsoaRoute.ParameterSchema> = {
+                query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"from":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"period":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["today"]},{"dataType":"enum","enums":["7d"]},{"dataType":"enum","enums":["30d"]},{"dataType":"enum","enums":["all"]},{"dataType":"undefined"}]}}},
+        };
+        app.get('/admin/dashboard/orders/time-series',
+            ...(fetchMiddlewares<RequestHandler>(AdminDashboardController)),
+            ...(fetchMiddlewares<RequestHandler>(AdminDashboardController.prototype.getDashboardOrdersTimeSeries)),
+
+            async function AdminDashboardController_getDashboardOrdersTimeSeries(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminDashboardController_getDashboardOrdersTimeSeries, request, response });
+
+                const controller = new AdminDashboardController();
+
+              await templateService.apiHandler({
+                methodName: 'getDashboardOrdersTimeSeries',
                 controller,
                 response,
                 next,

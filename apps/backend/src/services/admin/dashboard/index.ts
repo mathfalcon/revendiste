@@ -1,7 +1,10 @@
 import {roundOrderAmount, type EventTicketCurrency} from '@revendiste/shared';
 import {VAT_RATE} from '~/config/env';
 import {AdminDashboardRepository} from '~/repositories/admin-dashboard';
-import type {DashboardDateRange} from '~/controllers/admin/dashboard/validation';
+import {
+  type DashboardDateRange,
+  resolveDashboardTimeSeriesRange,
+} from '~/controllers/admin/dashboard/validation';
 import type {
   GetDashboardTicketsResponse,
   GetDashboardRevenueResponse,
@@ -9,6 +12,9 @@ import type {
   GetDashboardPayoutsResponse,
   GetDashboardHealthResponse,
   GetDashboardTopEventsResponse,
+  GetDashboardRevenueTimeSeriesResponse,
+  GetDashboardOrdersTimeSeriesResponse,
+  GetDashboardTicketsTimeSeriesResponse,
 } from './types';
 
 function parseNum(s: string | null | undefined): number {
@@ -19,6 +25,13 @@ function parseNum(s: string | null | undefined): number {
 
 function formatNumericString(n: number): string {
   return String(roundOrderAmount(n));
+}
+
+function toIsoDateOnly(d: Date | string): string {
+  if (typeof d === 'string') {
+    return d.slice(0, 10);
+  }
+  return d.toISOString().slice(0, 10);
 }
 
 export class AdminDashboardService {
@@ -140,5 +153,112 @@ export class AdminDashboardService {
   ): Promise<GetDashboardTopEventsResponse> {
     const events = await this.repo.getTopEvents(range);
     return {events};
+  }
+
+  async getRevenueTimeSeries(
+    range: DashboardDateRange,
+  ): Promise<GetDashboardRevenueTimeSeriesResponse> {
+    const tsRange = resolveDashboardTimeSeriesRange(range);
+    const [seriesRows, currencyRows] = await Promise.all([
+      this.repo.getRevenueTimeSeries(range),
+      this.repo.getRevenueByCurrency(tsRange),
+    ]);
+
+    const currency: EventTicketCurrency =
+      currencyRows.length === 1
+        ? currencyRows[0]!.currency
+        : (currencyRows[0]?.currency ?? 'UYU');
+
+    const rows = seriesRows.map(r => {
+      const gmv = parseNum(r.gmv);
+      const platformCommission = parseNum(r.platformCommission);
+      const vatOnCommission = parseNum(r.vatOnCommission);
+      const processorFees = parseNum(r.processorFees);
+      const netPlatformIncome = roundOrderAmount(
+        platformCommission + vatOnCommission - processorFees,
+      );
+
+      let platformIncomeVatAmount = 0;
+      let netPlatformIncomeAfterIncomeVat = netPlatformIncome;
+      if (netPlatformIncome > 0) {
+        platformIncomeVatAmount = roundOrderAmount(
+          netPlatformIncome * VAT_RATE,
+        );
+        netPlatformIncomeAfterIncomeVat = roundOrderAmount(
+          netPlatformIncome - platformIncomeVatAmount,
+        );
+      }
+
+      return {
+        day: toIsoDateOnly(r.day as Date),
+        gmv: formatNumericString(gmv),
+        platformCommission: formatNumericString(platformCommission),
+        vatOnCommission: formatNumericString(vatOnCommission),
+        processorFees: formatNumericString(processorFees),
+        netPlatformIncome: formatNumericString(netPlatformIncome),
+        platformIncomeVatAmount: formatNumericString(platformIncomeVatAmount),
+        netPlatformIncomeAfterIncomeVat: formatNumericString(
+          netPlatformIncomeAfterIncomeVat,
+        ),
+      };
+    });
+
+    return {
+      rows,
+      currency,
+      mixedCurrency: currencyRows.length > 1,
+    };
+  }
+
+  async getOrdersTimeSeries(
+    range: DashboardDateRange,
+  ): Promise<GetDashboardOrdersTimeSeriesResponse> {
+    const raw = await this.repo.getOrdersTimeSeries(range);
+
+    return {
+      rows: raw.map(r => ({
+        day: toIsoDateOnly(r.day as Date),
+        total: Number(r.total ?? 0),
+        confirmed: Number(r.confirmed ?? 0),
+        pending: Number(r.pending ?? 0),
+        expired: Number(r.expired ?? 0),
+        cancelled: Number(r.cancelled ?? 0),
+      })),
+    };
+  }
+
+  async getTicketsTimeSeries(
+    range: DashboardDateRange,
+  ): Promise<GetDashboardTicketsTimeSeriesResponse> {
+    const [publishedRows, soldRows] = await Promise.all([
+      this.repo.getTicketsPublishedTimeSeries(range),
+      this.repo.getTicketsSoldTimeSeries(range),
+    ]);
+
+    const map = new Map<string, {published: number; sold: number}>();
+
+    for (const r of publishedRows) {
+      const day = toIsoDateOnly(r.day as Date);
+      const cur = map.get(day) ?? {published: 0, sold: 0};
+      cur.published = Number(r.published ?? 0);
+      map.set(day, cur);
+    }
+
+    for (const r of soldRows) {
+      const day = toIsoDateOnly(r.day as Date);
+      const cur = map.get(day) ?? {published: 0, sold: 0};
+      cur.sold = Number(r.sold ?? 0);
+      map.set(day, cur);
+    }
+
+    const rows = [...map.keys()]
+      .sort()
+      .map(day => ({
+        day,
+        published: map.get(day)!.published,
+        sold: map.get(day)!.sold,
+      }));
+
+    return {rows};
   }
 }

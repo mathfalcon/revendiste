@@ -29,7 +29,7 @@ const settlementsSearchSchema = z.object({
   status: z.enum(['pending', 'completed', 'failed']).optional(),
 });
 
-export const Route = createFileRoute('/admin/finanzas')({
+export const Route = createFileRoute('/admin/finanzas/')({
   component: FinanzasPage,
   validateSearch: settlementsSearchSchema,
   loaderDeps: ({search}) => ({
@@ -44,8 +44,15 @@ export const Route = createFileRoute('/admin/finanzas')({
   },
 });
 
+const SETTLEMENT_STATUS_HELP: Record<string, string> = {
+  pending:
+    'Liquidación registrada con pagos vinculados. Falta que un administrador la cierre (completada) o la marque como fallida según el control interno.',
+  completed: 'Liquidación cerrada y considerada conforme en el flujo de administración.',
+  failed: 'Liquidación marcada como fallida (no conforme o con error operativo).',
+};
+
 function FinanzasPage() {
-  const search = useSearch({from: '/admin/finanzas'});
+  const search = useSearch({from: '/admin/finanzas/'});
   const [createOpen, setCreateOpen] = useState(false);
 
   const {data} = useSuspenseQuery(
@@ -86,7 +93,7 @@ function FinanzasPage() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'Pendiente';
+        return 'Pendiente de cierre';
       case 'completed':
         return 'Completada';
       case 'failed':
@@ -118,12 +125,31 @@ function FinanzasPage() {
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium text-muted-foreground'>
-              Liquidaciones Pendientes
+              Liquidaciones pendientes de cierre
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {data?.data?.filter((s: any) => s.status === 'pending').length || 0}
+              {data?.data?.filter((s: {status: string}) => s.status === 'pending')
+                .length || 0}
+            </div>
+            <p className='mt-1 text-xs text-muted-foreground'>
+              Registradas; aún no marcadas como completadas o fallidas.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium text-muted-foreground'>
+              Liquidaciones completadas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold'>
+              {data?.data?.filter(
+                (s: {status: string}) => s.status === 'completed',
+              ).length || 0}
             </div>
           </CardContent>
         </Card>
@@ -131,39 +157,30 @@ function FinanzasPage() {
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium text-muted-foreground'>
-              Liquidaciones Completadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {data?.data?.filter((s: any) => s.status === 'completed').length || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>
-              Monto Total Liquidado
+              Monto total liquidado
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
               {(() => {
-                const total = data?.data?.reduce((sum: number, s: any) => {
-                  if (s.status === 'completed') {
-                    return sum + parseFloat(s.totalAmount);
-                  }
-                  return sum;
-                }, 0);
+                const total = data?.data?.reduce(
+                  (sum: number, s: {status: string; totalAmount: string}) => {
+                    if (s.status === 'completed') {
+                      return sum + parseFloat(s.totalAmount);
+                    }
+                    return sum;
+                  },
+                  0,
+                );
 
                 if (!total) return 'UYU 0';
 
-                // Determine currency from first completed settlement
                 const firstCompleted = data?.data?.find(
-                  (s: any) => s.status === 'completed',
+                  (s: {status: string}) => s.status === 'completed',
                 );
-                const currency = firstCompleted?.currency || 'UYU';
+                const currency =
+                  (firstCompleted as {currency?: string} | undefined)?.currency ||
+                  'UYU';
 
                 return formatCurrency(total.toString(), currency);
               })()}
@@ -200,49 +217,72 @@ function FinanzasPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  data?.data?.map((settlement: any) => (
-                    <TableRow key={settlement.id}>
-                      <TableCell className='text-sm capitalize'>
-                        {settlement.paymentProvider ?? '—'}
-                      </TableCell>
-                      <TableCell className='font-mono text-xs'>
-                        {settlement.settlementId.slice(0, 12)}...
-                      </TableCell>
-                      <TableCell>
-                        {new Date(settlement.settlementDate).toLocaleDateString(
-                          'es-UY',
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {formatCurrency(settlement.totalAmount, settlement.currency)}
-                      </TableCell>
-                      <TableCell>{settlement.currency}</TableCell>
-                      <TableCell>
-                        <Badge {...getStatusBadgeProps(settlement.status)}>
-                          {getStatusLabel(settlement.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(settlement.createdAt).toLocaleString('es-UY', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant='ghost' size='sm' asChild>
-                          <Link
-                            to='/admin/finanzas/liquidaciones/$settlementId'
-                            params={{settlementId: settlement.id}}
+                  data?.data?.map(
+                    (settlement: {
+                      id: string;
+                      paymentProvider?: string | null;
+                      settlementId: string;
+                      settlementDate: string;
+                      totalAmount: string;
+                      currency: string;
+                      status: string;
+                      createdAt: string;
+                    }) => (
+                      <TableRow key={settlement.id}>
+                        <TableCell className='text-sm capitalize'>
+                          {settlement.paymentProvider ?? '—'}
+                        </TableCell>
+                        <TableCell className='font-mono text-xs'>
+                          {settlement.settlementId.slice(0, 12)}...
+                        </TableCell>
+                        <TableCell>
+                          {new Date(settlement.settlementDate).toLocaleDateString(
+                            'es-UY',
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {formatCurrency(
+                            settlement.totalAmount,
+                            settlement.currency,
+                          )}
+                        </TableCell>
+                        <TableCell>{settlement.currency}</TableCell>
+                        <TableCell>
+                          <Badge
+                            {...getStatusBadgeProps(settlement.status)}
+                            title={
+                              SETTLEMENT_STATUS_HELP[settlement.status] ??
+                              undefined
+                            }
                           >
-                            Detalle
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            {getStatusLabel(settlement.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(settlement.createdAt).toLocaleString(
+                            'es-UY',
+                            {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            },
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant='ghost' size='sm' asChild>
+                            <Link
+                              to='/admin/finanzas/liquidaciones/$settlementId'
+                              params={{settlementId: settlement.id}}
+                            >
+                              Detalle
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ),
+                  )
                 )}
               </TableBody>
             </Table>

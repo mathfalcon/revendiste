@@ -17,6 +17,9 @@ import {
   adminDashboardPayoutsQueryOptions,
   adminDashboardHealthQueryOptions,
   adminDashboardTopEventsQueryOptions,
+  adminDashboardRevenueTimeSeriesQueryOptions,
+  adminDashboardOrdersTimeSeriesQueryOptions,
+  adminDashboardTicketsTimeSeriesQueryOptions,
 } from '~/lib/api/admin';
 
 const dashboardSearchSchema = z
@@ -57,6 +60,15 @@ export const Route = createFileRoute('/admin/dashboard')({
       queryClient.ensureQueryData(adminDashboardPayoutsQueryOptions(apiQuery)),
       queryClient.ensureQueryData(adminDashboardHealthQueryOptions()),
       queryClient.ensureQueryData(adminDashboardTopEventsQueryOptions(apiQuery)),
+      queryClient.ensureQueryData(
+        adminDashboardRevenueTimeSeriesQueryOptions(apiQuery),
+      ),
+      queryClient.ensureQueryData(
+        adminDashboardOrdersTimeSeriesQueryOptions(apiQuery),
+      ),
+      queryClient.ensureQueryData(
+        adminDashboardTicketsTimeSeriesQueryOptions(apiQuery),
+      ),
     ]);
   },
   head: () => ({

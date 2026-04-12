@@ -2,7 +2,10 @@ import {sql} from 'kysely';
 import {DB} from '@revendiste/shared';
 import {Kysely} from 'kysely';
 import {BaseRepository} from '../base';
-import type {DashboardDateRange} from '~/controllers/admin/dashboard/validation';
+import {
+  type DashboardDateRange,
+  resolveDashboardTimeSeriesRange,
+} from '~/controllers/admin/dashboard/validation';
 
 export class AdminDashboardRepository extends BaseRepository<AdminDashboardRepository> {
   withTransaction(trx: Kysely<DB>): AdminDashboardRepository {
@@ -124,6 +127,128 @@ export class AdminDashboardRepository extends BaseRepository<AdminDashboardRepos
     }
 
     return await qb.execute();
+  }
+
+  /**
+   * Daily revenue for confirmed+paid orders (same economic filters as getRevenueByCurrency).
+   * When `range` is null (all-time), uses the last 365 days to bound chart payload size.
+   */
+  async getRevenueTimeSeries(range: DashboardDateRange) {
+    const effectiveRange = resolveDashboardTimeSeriesRange(range);
+
+    const dayBucket = sql<Date>`date_trunc('day', coalesce(orders.confirmed_at, orders.created_at))::date`;
+
+    let qb = this.db
+      .selectFrom('orders')
+      .innerJoin('payments', join =>
+        join
+          .onRef('payments.orderId', '=', 'orders.id')
+          .on('payments.deletedAt', 'is', null)
+          .on('payments.status', '=', 'paid'),
+      )
+      .select(eb => [
+        dayBucket.as('day'),
+        eb.fn.sum<string>(eb.ref('orders.totalAmount')).as('gmv'),
+        eb.fn
+          .sum<string>(eb.ref('orders.platformCommission'))
+          .as('platformCommission'),
+        eb.fn
+          .sum<string>(eb.ref('orders.vatOnCommission'))
+          .as('vatOnCommission'),
+        sql<string>`sum(coalesce(${eb.ref('payments.balanceFee')}, 0))`.as(
+          'processorFees',
+        ),
+      ])
+      .where('orders.status', '=', 'confirmed')
+      .where('orders.deletedAt', 'is', null)
+      .where(
+        sql<boolean>`coalesce(orders.confirmed_at, orders.created_at) >= ${effectiveRange.from}`,
+      )
+      .where(
+        sql<boolean>`coalesce(orders.confirmed_at, orders.created_at) <= ${effectiveRange.to}`,
+      )
+      .groupBy(dayBucket)
+      .orderBy('day', 'asc');
+
+    return await qb.execute();
+  }
+
+  /**
+   * Daily order counts by status (bucket = order createdAt).
+   * When `range` is null, uses the last 365 days.
+   */
+  async getOrdersTimeSeries(range: DashboardDateRange) {
+    const effectiveRange = resolveDashboardTimeSeriesRange(range);
+
+    const dayBucket = sql<Date>`date_trunc('day', orders.created_at)::date`;
+
+    return await this.db
+      .selectFrom('orders')
+      .select(eb => [
+        dayBucket.as('day'),
+        eb.fn.count<number>('orders.id').as('total'),
+        sql<number>`count(*) filter (where orders.status = 'confirmed')`.as(
+          'confirmed',
+        ),
+        sql<number>`count(*) filter (where orders.status = 'pending')`.as(
+          'pending',
+        ),
+        sql<number>`count(*) filter (where orders.status = 'expired')`.as(
+          'expired',
+        ),
+        sql<number>`count(*) filter (where orders.status = 'cancelled')`.as(
+          'cancelled',
+        ),
+      ])
+      .where('orders.deletedAt', 'is', null)
+      .where('orders.createdAt', '>=', effectiveRange.from)
+      .where('orders.createdAt', '<=', effectiveRange.to)
+      .groupBy(dayBucket)
+      .orderBy('day', 'asc')
+      .execute();
+  }
+
+  /**
+   * Published tickets per day (createdAt) and sold tickets per day (soldAt).
+   * When `range` is null, uses the last 365 days for each query.
+   */
+  async getTicketsPublishedTimeSeries(range: DashboardDateRange) {
+    const effectiveRange = resolveDashboardTimeSeriesRange(range);
+
+    const dayBucket = sql<Date>`date_trunc('day', listing_tickets.created_at)::date`;
+
+    return await this.db
+      .selectFrom('listingTickets')
+      .select(eb => [
+        dayBucket.as('day'),
+        eb.fn.count<number>('listingTickets.id').as('published'),
+      ])
+      .where('listingTickets.deletedAt', 'is', null)
+      .where('listingTickets.createdAt', '>=', effectiveRange.from)
+      .where('listingTickets.createdAt', '<=', effectiveRange.to)
+      .groupBy(dayBucket)
+      .orderBy('day', 'asc')
+      .execute();
+  }
+
+  async getTicketsSoldTimeSeries(range: DashboardDateRange) {
+    const effectiveRange = resolveDashboardTimeSeriesRange(range);
+
+    const dayBucket = sql<Date>`date_trunc('day', listing_tickets.sold_at)::date`;
+
+    return await this.db
+      .selectFrom('listingTickets')
+      .select(eb => [
+        dayBucket.as('day'),
+        eb.fn.count<number>('listingTickets.id').as('sold'),
+      ])
+      .where('listingTickets.deletedAt', 'is', null)
+      .where('listingTickets.soldAt', 'is not', null)
+      .where('listingTickets.soldAt', '>=', effectiveRange.from)
+      .where('listingTickets.soldAt', '<=', effectiveRange.to)
+      .groupBy(dayBucket)
+      .orderBy('day', 'asc')
+      .execute();
   }
 
   async getOrdersMetrics(range: DashboardDateRange) {

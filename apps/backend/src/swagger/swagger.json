@@ -10685,6 +10685,43 @@
 			"AdminDashboardQuery": {
 				"$ref": "#/components/schemas/infer_typeofAdminDashboardQuerySchema_"
 			},
+			"TicketsTimeSeriesRow": {
+				"properties": {
+					"day": {
+						"type": "string"
+					},
+					"published": {
+						"type": "number",
+						"format": "double"
+					},
+					"sold": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"day",
+					"published",
+					"sold"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardTicketsTimeSeriesResponse": {
+				"properties": {
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/TicketsTimeSeriesRow"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"rows"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"GetDashboardRevenueResponse": {
 				"properties": {
 					"gmv": {
@@ -10749,6 +10786,70 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"RevenueTimeSeriesRow": {
+				"properties": {
+					"day": {
+						"type": "string",
+						"description": "ISO date `YYYY-MM-DD` (UTC bucket)."
+					},
+					"gmv": {
+						"type": "string"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"processorFees": {
+						"type": "string"
+					},
+					"netPlatformIncome": {
+						"type": "string"
+					},
+					"platformIncomeVatAmount": {
+						"type": "string"
+					},
+					"netPlatformIncomeAfterIncomeVat": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"day",
+					"gmv",
+					"platformCommission",
+					"vatOnCommission",
+					"processorFees",
+					"netPlatformIncome",
+					"platformIncomeVatAmount",
+					"netPlatformIncomeAfterIncomeVat"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardRevenueTimeSeriesResponse": {
+				"properties": {
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/RevenueTimeSeriesRow"
+						},
+						"type": "array"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"mixedCurrency": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"rows",
+					"currency",
+					"mixedCurrency"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"GetDashboardOrdersResponse": {
 				"properties": {
 					"pending": {
@@ -10801,6 +10902,58 @@
 					"expired",
 					"cancelled",
 					"payments"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OrdersTimeSeriesRow": {
+				"properties": {
+					"day": {
+						"type": "string"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"confirmed": {
+						"type": "number",
+						"format": "double"
+					},
+					"pending": {
+						"type": "number",
+						"format": "double"
+					},
+					"expired": {
+						"type": "number",
+						"format": "double"
+					},
+					"cancelled": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"day",
+					"total",
+					"confirmed",
+					"pending",
+					"expired",
+					"cancelled"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardOrdersTimeSeriesResponse": {
+				"properties": {
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/OrdersTimeSeriesRow"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"rows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -18213,6 +18366,79 @@
 				]
 			}
 		},
+		"/admin/dashboard/tickets/time-series": {
+			"get": {
+				"operationId": "GetDashboardTicketsTimeSeries",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardTicketsTimeSeriesResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
 		"/admin/dashboard/revenue": {
 			"get": {
 				"operationId": "GetDashboardRevenue",
@@ -18286,6 +18512,79 @@
 				]
 			}
 		},
+		"/admin/dashboard/revenue/time-series": {
+			"get": {
+				"operationId": "GetDashboardRevenueTimeSeries",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardRevenueTimeSeriesResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
 		"/admin/dashboard/orders": {
 			"get": {
 				"operationId": "GetDashboardOrders",
@@ -18296,6 +18595,79 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/GetDashboardOrdersResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/orders/time-series": {
+			"get": {
+				"operationId": "GetDashboardOrdersTimeSeries",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardOrdersTimeSeriesResponse"
 								}
 							}
 						}

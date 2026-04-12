@@ -27,6 +27,9 @@ import type {
   GetDashboardPayoutsResponse,
   GetDashboardHealthResponse,
   GetDashboardTopEventsResponse,
+  GetDashboardRevenueTimeSeriesResponse,
+  GetDashboardOrdersTimeSeriesResponse,
+  GetDashboardTicketsTimeSeriesResponse,
 } from '~/services/admin/dashboard/types';
 
 @Route('admin/dashboard')
@@ -47,6 +50,16 @@ export class AdminDashboardController {
     return this.service.getTicketsStats(resolveDashboardDateRange(query));
   }
 
+  @Get('/tickets/time-series')
+  @ValidateQuery(AdminDashboardRouteSchema)
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  public async getDashboardTicketsTimeSeries(
+    @Queries() query: AdminDashboardQuery,
+  ): Promise<GetDashboardTicketsTimeSeriesResponse> {
+    return this.service.getTicketsTimeSeries(resolveDashboardDateRange(query));
+  }
+
   @Get('/revenue')
   @ValidateQuery(AdminDashboardRouteSchema)
   @Response<UnauthorizedError>(401, 'Authentication required')
@@ -57,6 +70,16 @@ export class AdminDashboardController {
     return this.service.getRevenueStats(resolveDashboardDateRange(query));
   }
 
+  @Get('/revenue/time-series')
+  @ValidateQuery(AdminDashboardRouteSchema)
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  public async getDashboardRevenueTimeSeries(
+    @Queries() query: AdminDashboardQuery,
+  ): Promise<GetDashboardRevenueTimeSeriesResponse> {
+    return this.service.getRevenueTimeSeries(resolveDashboardDateRange(query));
+  }
+
   @Get('/orders')
   @ValidateQuery(AdminDashboardRouteSchema)
   @Response<UnauthorizedError>(401, 'Authentication required')
@@ -65,6 +88,16 @@ export class AdminDashboardController {
     @Queries() query: AdminDashboardQuery,
   ): Promise<GetDashboardOrdersResponse> {
     return this.service.getOrdersStats(resolveDashboardDateRange(query));
+  }
+
+  @Get('/orders/time-series')
+  @ValidateQuery(AdminDashboardRouteSchema)
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  public async getDashboardOrdersTimeSeries(
+    @Queries() query: AdminDashboardQuery,
+  ): Promise<GetDashboardOrdersTimeSeriesResponse> {
+    return this.service.getOrdersTimeSeries(resolveDashboardDateRange(query));
   }
 
   @Get('/payouts')

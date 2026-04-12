@@ -1992,6 +1992,13 @@ export interface DeleteImageResponse {
 
 export type DeleteEventImageResponse = DeleteImageResponse;
 
+export type SearchVenuesResponse = {
+  city: string;
+  address: string;
+  name: string;
+  id: string;
+}[];
+
 export interface CurrentUserMeResponse {
   /** Whether user dismissed the WhatsApp opt-in prompt */
   whatsappPromptDismissed: boolean;
@@ -3115,6 +3122,18 @@ export interface InferTypeofAdminDashboardQuerySchema {
 
 export type AdminDashboardQuery = InferTypeofAdminDashboardQuerySchema;
 
+export interface TicketsTimeSeriesRow {
+  day: string;
+  /** @format double */
+  published: number;
+  /** @format double */
+  sold: number;
+}
+
+export interface GetDashboardTicketsTimeSeriesResponse {
+  rows: TicketsTimeSeriesRow[];
+}
+
 export interface GetDashboardRevenueResponse {
   gmv: string;
   platformCommission: string;
@@ -3148,6 +3167,24 @@ export interface GetDashboardRevenueResponse {
   mixedCurrency: boolean;
 }
 
+export interface RevenueTimeSeriesRow {
+  /** ISO date `YYYY-MM-DD` (UTC bucket). */
+  day: string;
+  gmv: string;
+  platformCommission: string;
+  vatOnCommission: string;
+  processorFees: string;
+  netPlatformIncome: string;
+  platformIncomeVatAmount: string;
+  netPlatformIncomeAfterIncomeVat: string;
+}
+
+export interface GetDashboardRevenueTimeSeriesResponse {
+  rows: RevenueTimeSeriesRow[];
+  currency: EventTicketCurrency;
+  mixedCurrency: boolean;
+}
+
 export interface GetDashboardOrdersResponse {
   /** @format double */
   pending: number;
@@ -3167,6 +3204,24 @@ export interface GetDashboardOrdersResponse {
     /** @format double */
     successful: number;
   };
+}
+
+export interface OrdersTimeSeriesRow {
+  day: string;
+  /** @format double */
+  total: number;
+  /** @format double */
+  confirmed: number;
+  /** @format double */
+  pending: number;
+  /** @format double */
+  expired: number;
+  /** @format double */
+  cancelled: number;
+}
+
+export interface GetDashboardOrdersTimeSeriesResponse {
+  rows: OrdersTimeSeriesRow[];
 }
 
 export interface GetDashboardPayoutsResponse {
@@ -5110,6 +5165,29 @@ export class Api<
      * No description
      *
      * @tags Admin - Dashboard
+     * @name GetDashboardTicketsTimeSeries
+     * @request GET:/admin/dashboard/tickets/time-series
+     */
+    getDashboardTicketsTimeSeries: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardTicketsTimeSeriesResponse, UnauthorizedError>({
+        path: `/admin/dashboard/tickets/time-series`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
      * @name GetDashboardRevenue
      * @request GET:/admin/dashboard/revenue
      */
@@ -5133,6 +5211,29 @@ export class Api<
      * No description
      *
      * @tags Admin - Dashboard
+     * @name GetDashboardRevenueTimeSeries
+     * @request GET:/admin/dashboard/revenue/time-series
+     */
+    getDashboardRevenueTimeSeries: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardRevenueTimeSeriesResponse, UnauthorizedError>({
+        path: `/admin/dashboard/revenue/time-series`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
      * @name GetDashboardOrders
      * @request GET:/admin/dashboard/orders
      */
@@ -5146,6 +5247,29 @@ export class Api<
     ) =>
       this.request<GetDashboardOrdersResponse, UnauthorizedError>({
         path: `/admin/dashboard/orders`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardOrdersTimeSeries
+     * @request GET:/admin/dashboard/orders/time-series
+     */
+    getDashboardOrdersTimeSeries: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardOrdersTimeSeriesResponse, UnauthorizedError>({
+        path: `/admin/dashboard/orders/time-series`,
         method: "GET",
         query: query,
         format: "json",

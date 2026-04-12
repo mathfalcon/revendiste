@@ -169,11 +169,19 @@ export class PaymentsRepository extends BaseRepository<PaymentsRepository> {
       .where('approvedAt', 'is not', null)
       .where('approvedAt', '<=', params.settlementDateEndInclusive)
       .where('deletedAt', 'is', null)
-      .where(
-        sql<boolean>`NOT EXISTS (
-          SELECT 1 FROM processor_settlement_items psi
-          WHERE psi.payment_id = payments.id
-        )`,
+      .where(eb =>
+        eb.not(
+          eb.exists(
+            eb
+              .selectFrom('processorSettlementItems')
+              .select('processorSettlementItems.id')
+              .whereRef(
+                'processorSettlementItems.paymentId',
+                '=',
+                'payments.id',
+              ),
+          ),
+        ),
       )
       .where(
         sql<boolean>`(
