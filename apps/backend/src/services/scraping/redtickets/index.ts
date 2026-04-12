@@ -11,6 +11,9 @@ import {
 import {getStringFromError, trimTextAndDefaultToEmpty, logger} from '~/utils';
 import {Page} from 'playwright';
 import {addHours, addDays, format} from 'date-fns';
+import {TZDate} from '@date-fns/tz';
+
+const URUGUAY_TZ = 'America/Montevideo';
 
 enum RequestLabel {
   LIST = 'LIST',
@@ -587,14 +590,14 @@ export class RedTicketsScraper extends BaseScraper {
 
     const dayNum = parseInt(day, 10);
 
-    const now = new Date();
+    const now = new TZDate(new Date(), URUGUAY_TZ);
     let year = now.getFullYear();
 
     // If the date has already passed, assume next year.
     // Compare by date only (ignoring time) to avoid bumping same-day events
     // to next year just because e.g. midnight already passed today.
-    const tentativeDate = new Date(year, monthNum, dayNum);
-    const todayStart = new Date(year, now.getMonth(), now.getDate());
+    const tentativeDate = new TZDate(year, monthNum, dayNum, URUGUAY_TZ);
+    const todayStart = new TZDate(year, now.getMonth(), now.getDate(), URUGUAY_TZ);
     if (tentativeDate < todayStart) {
       year++;
     }
@@ -607,7 +610,7 @@ export class RedTicketsScraper extends BaseScraper {
       minute = 59;
     }
 
-    const startDate = new Date(year, monthNum, dayNum, hour, minute);
+    const startDate = new TZDate(year, monthNum, dayNum, hour, minute, URUGUAY_TZ);
 
     const endDate = addHours(startDate, DEFAULT_EVENT_DURATION_HOURS);
 
@@ -652,7 +655,7 @@ export class RedTicketsScraper extends BaseScraper {
       }
     }
 
-    const now = new Date();
+    const now = new TZDate(new Date(), URUGUAY_TZ);
     const currentYear = now.getFullYear();
 
     // Determine the year for this month
@@ -669,22 +672,24 @@ export class RedTicketsScraper extends BaseScraper {
     for (let i = 0; i < MULTI_DAY_OCCURRENCES; i++) {
       const eventDate = addDays(now, i);
 
-      // Only include dates within the specified month
-      if (eventDate.getMonth() !== monthNum) {
+      // Only include dates within the specified month (use Uruguay TZ month)
+      const eventDateUy = new TZDate(eventDate, URUGUAY_TZ);
+      if (eventDateUy.getMonth() !== monthNum) {
         // If we've moved past the month, stop
-        if (eventDate.getMonth() > monthNum && eventDate.getFullYear() === year) {
+        if (eventDateUy.getMonth() > monthNum && eventDateUy.getFullYear() === year) {
           break;
         }
         // If we're before the month (shouldn't happen), skip
         continue;
       }
 
-      const startDate = new Date(
+      const startDate = new TZDate(
         year,
         monthNum,
-        eventDate.getDate(),
+        eventDateUy.getDate(),
         hour,
         minute,
+        URUGUAY_TZ,
       );
       const endDate = addHours(startDate, DEFAULT_EVENT_DURATION_HOURS);
       const dateSuffix = format(startDate, 'yyyy-MM-dd');
