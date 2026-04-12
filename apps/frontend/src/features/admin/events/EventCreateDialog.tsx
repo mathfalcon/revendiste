@@ -34,6 +34,7 @@ import {VenueCombobox} from './VenueCombobox';
 import {toast} from 'sonner';
 import {Check, Loader2, Plus, X} from 'lucide-react';
 import {cn} from '~/lib/utils';
+import {DateTimePicker} from '~/components/datetime-picker';
 
 const eventFormSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -347,10 +348,14 @@ export function EventCreateDialog({
                     control={form.control}
                     name='eventStartDate'
                     render={({field}) => (
-                      <FormItem>
+                      <FormItem className='flex flex-col'>
                         <FormLabel>Fecha Inicio</FormLabel>
                         <FormControl>
-                          <Input type='datetime-local' {...field} />
+                          <DateTimePicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder='Elegí fecha y hora de inicio'
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -361,10 +366,14 @@ export function EventCreateDialog({
                     control={form.control}
                     name='eventEndDate'
                     render={({field}) => (
-                      <FormItem>
+                      <FormItem className='flex flex-col'>
                         <FormLabel>Fecha Fin</FormLabel>
                         <FormControl>
-                          <Input type='datetime-local' {...field} />
+                          <DateTimePicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder='Elegí fecha y hora de fin'
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

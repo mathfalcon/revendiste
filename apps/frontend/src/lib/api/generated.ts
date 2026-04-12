@@ -10,6 +10,13 @@
  * ---------------------------------------------------------------
  */
 
+export enum PaymentProvider {
+  Dlocal = "dlocal",
+  Mercadopago = "mercadopago",
+  Paypal = "paypal",
+  Stripe = "stripe",
+}
+
 export enum IdentityVerificationStatus {
   Pending = "pending",
   RequiresManualReview = "requires_manual_review",
@@ -1523,6 +1530,11 @@ export interface DeletePayoutDocumentResponse {
   success: boolean;
 }
 
+export interface TriggerHoldCheckResponse {
+  message: string;
+  success: boolean;
+}
+
 export interface GetVerificationsResponse {
   pagination: {
     hasPrev: boolean;
@@ -1987,11 +1999,9 @@ export type SearchVenuesResponse = {
   id: string;
 }[];
 
-export interface GetCurrentUserResponse {
+export interface CurrentUserMeResponse {
   /** Whether user dismissed the WhatsApp opt-in prompt */
   whatsappPromptDismissed: boolean;
-  /** Whether user has opted in to WhatsApp notifications */
-  whatsappOptedIn: boolean;
   /** User's phone number in E.164 format */
   phoneNumber: string | null;
   /** Reason for manual review rejection (if rejected by admin) */
@@ -2022,10 +2032,12 @@ export interface GetCurrentUserResponse {
   documentVerified: boolean;
   role: "user" | "organizer" | "admin";
   imageUrl: string | null;
-  lastName: string | null;
-  firstName: string | null;
-  email: string;
-  id: string;
+}
+
+export type GetCurrentUserResponse = CurrentUserMeResponse;
+
+export interface WebhookAcknowledgementResponse {
+  received: boolean;
 }
 
 export interface DLocalWebhookrRouteBody {
@@ -2508,10 +2520,12 @@ export interface DeleteAccountRouteBody {
   confirmation: "ELIMINAR";
 }
 
-export interface CreatePaymentLinkResponse {
+export interface CreatePaymentLinkResult {
   redirectUrl: string;
   paymentId: string;
 }
+
+export type CreatePaymentLinkResponse = CreatePaymentLinkResult;
 
 export interface CreatePaymentLinkRouteBody {
   country?: string;
@@ -2643,6 +2657,13 @@ export interface UnsubscribePushRouteBody {
   endpoint: string;
 }
 
+export interface TestPushDevResponse {
+  /** @format double */
+  failed: number;
+  /** @format double */
+  sent: number;
+}
+
 export interface InitiateVerificationResponse {
   message: "Verificación iniciada";
   success: boolean;
@@ -2681,6 +2702,14 @@ export interface VerifyLivenessResultsResponse {
 
 export interface VerifyLivenessRouteBody {
   sessionId: string;
+}
+
+export interface GetLivenessCredentialsResponse {
+  expiration: string;
+  region: string;
+  sessionToken: string;
+  secretAccessKey: string;
+  accessKeyId: string;
 }
 
 export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReportReporterEmailStringOrNullReporterFirstNameStringOrNullReporterLastNameStringOrNull {
@@ -2852,6 +2881,389 @@ export type AdminListAttachmentsResponse = {
   createdAt: string;
   url: string;
 }[];
+
+/** Serialized settlement row for admin APIs / OpenAPI (avoids TSOA issues with `Json` index types). */
+export interface ProcessorSettlementListRow {
+  updatedAt: string;
+  createdAt: string;
+  metadata: RecordStringUnknown | null;
+  settlementDate: string;
+  paymentProvider: PaymentProvider;
+  currency: string;
+  totalAmount: string;
+  status: string;
+  settlementId: string;
+  id: string;
+}
+
+export interface PaginatedResponseProcessorSettlementListRow {
+  data: ProcessorSettlementListRow[];
+  pagination: PaginationMeta;
+}
+
+export type ListSettlementsResponse =
+  PaginatedResponseProcessorSettlementListRow;
+
+export interface InferTypeofAdminSettlementsQuerySchema {
+  paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  status?: "pending" | "completed" | "failed";
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+}
+
+export type AdminSettlementsQuery = InferTypeofAdminSettlementsQuerySchema;
+
+export type SettlementDetailsResponse = ProcessorSettlementListRow;
+
+export interface ProcessorSettlementItemApiRow {
+  updatedAt: string;
+  createdAt: string;
+  metadata: RecordStringUnknown | null;
+  description: string | null;
+  currency: string;
+  fees: string | null;
+  exchangeRate: string | null;
+  netAmount: string;
+  amount: string;
+  payoutId: string | null;
+  operationId: string;
+  paymentId: string | null;
+  settlementId: string;
+  id: string;
+}
+
+export interface CreateSettlementResponse {
+  reconciliation: {
+    /** @format double */
+    paymentCount: number;
+    hasWarning: boolean;
+    /** @format double */
+    differencePercent: number;
+    declaredTotal: string;
+    computedTotal: string;
+  };
+  items: ProcessorSettlementItemApiRow[];
+  /** Serialized settlement row for admin APIs / OpenAPI (avoids TSOA issues with `Json` index types). */
+  settlement: ProcessorSettlementListRow;
+}
+
+export interface CreateSettlementRouteBody {
+  /** Construct a type with a set of properties K of type T */
+  metadata?: RecordStringUnknown;
+  paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  currency: "USD" | "UYU";
+  totalAmount: string;
+  settlementDate: string;
+  externalSettlementId: string;
+}
+
+export type PreviewSettlementResponse =
+  | {
+      paymentIds: string[];
+      messageKey: "INVALID_AMOUNT";
+      duplicateExists: boolean;
+      hasWarning: boolean;
+      hasBlockingError: boolean;
+      /** @format double */
+      differenceRatio: number;
+      /** @format double */
+      differencePercent: number;
+      /** @format double */
+      paymentCount: number;
+      computedTotal: string;
+      declaredTotal: string;
+      currency: string;
+      paymentProvider: PaymentProvider;
+      externalSettlementId: string;
+    }
+  | {
+      paymentIds: string[];
+      messageKey: "DUPLICATE";
+      duplicateExists: boolean;
+      hasWarning: boolean;
+      hasBlockingError: boolean;
+      /** @format double */
+      differenceRatio: number;
+      /** @format double */
+      differencePercent: number;
+      /** @format double */
+      paymentCount: number;
+      computedTotal: string;
+      declaredTotal: string;
+      currency: string;
+      paymentProvider: PaymentProvider;
+      externalSettlementId: string;
+    }
+  | {
+      paymentIds: string[];
+      messageKey: "NO_PAYMENTS";
+      duplicateExists: boolean;
+      hasWarning: boolean;
+      hasBlockingError: boolean;
+      /** @format double */
+      differenceRatio: number;
+      /** @format double */
+      differencePercent: number;
+      /** @format double */
+      paymentCount: number;
+      computedTotal: string;
+      declaredTotal: string;
+      currency: string;
+      paymentProvider: PaymentProvider;
+      externalSettlementId: string;
+    }
+  | {
+      paymentIds: string[];
+      messageKey: "MISMATCH" | "WARNING" | "OK";
+      duplicateExists: boolean;
+      hasWarning: boolean;
+      hasBlockingError: boolean;
+      /** @format double */
+      differenceRatio: number;
+      /** @format double */
+      differencePercent: number;
+      /** @format double */
+      paymentCount: number;
+      computedTotal: string;
+      declaredTotal: string;
+      currency: string;
+      paymentProvider: PaymentProvider;
+      externalSettlementId: string;
+    };
+
+export interface SettlementBreakdownResponse {
+  items: {
+    platformShare: string;
+    sellerEarnings: {
+      currency: EventTicketCurrency;
+      status:
+        | "pending"
+        | "available"
+        | "failed_payout"
+        | "paid_out"
+        | "payout_requested"
+        | "retained";
+      sellerUserId: string;
+      sellerAmount: string;
+      id: string;
+    }[];
+    currency: string;
+    exchangeRate: string | null;
+    processorFee: string;
+    processorCredit: string;
+    customerAmount: string;
+    providerPaymentId: string;
+    paymentId: string | null;
+    settlementItemId: string;
+  }[];
+  reconciliation: {
+    unreconciledDifference: string;
+    platformRevenue: string;
+    totalSellerEarnings: string;
+    totalProcessorFees: string;
+    totalProcessorCredits: string;
+    totalCustomerCharges: string;
+    /** @format double */
+    paymentCount: number;
+  };
+  /** Serialized settlement row for admin APIs / OpenAPI (avoids TSOA issues with `Json` index types). */
+  settlement: ProcessorSettlementListRow;
+}
+
+export type AddSettlementPaymentResponse = ProcessorSettlementItemApiRow;
+
+export interface AddSettlementPaymentRouteBody {
+  /** Construct a type with a set of properties K of type T */
+  metadata?: RecordStringUnknown;
+  description?: string;
+  fees?: string;
+  /** @format double */
+  exchangeRate?: number;
+  currency: "USD" | "UYU";
+  netAmount: string;
+  amount: string;
+  operationId: string;
+}
+
+export type LinkSettlementPaymentResponse = ProcessorSettlementItemApiRow;
+
+export interface LinkSettlementPaymentRouteBody {
+  payoutId: string;
+}
+
+export type CompleteSettlementResponse = ProcessorSettlementListRow;
+
+export type FailSettlementResponse = ProcessorSettlementListRow;
+
+export interface FailSettlementRouteBody {
+  reason?: string;
+}
+
+export interface GetDashboardTicketsResponse {
+  /** @format double */
+  publishedActiveEvents: number;
+  /** @format double */
+  publishedTotal: number;
+  /** @format double */
+  sold: number;
+  /** @format double */
+  activeListings: number;
+}
+
+export interface InferTypeofAdminDashboardQuerySchema {
+  to?: string;
+  from?: string;
+  period?: "today" | "7d" | "30d" | "all";
+}
+
+export type AdminDashboardQuery = InferTypeofAdminDashboardQuerySchema;
+
+export interface TicketsTimeSeriesRow {
+  day: string;
+  /** @format double */
+  published: number;
+  /** @format double */
+  sold: number;
+}
+
+export interface GetDashboardTicketsTimeSeriesResponse {
+  rows: TicketsTimeSeriesRow[];
+}
+
+export interface GetDashboardRevenueResponse {
+  gmv: string;
+  platformCommission: string;
+  vatOnCommission: string;
+  processorFees: string;
+  netPlatformIncome: string;
+  /**
+   * IVA estimado sobre el ingreso neto plataforma (tasa = platformIncomeVatRate).
+   * Solo aplica si el ingreso neto es positivo.
+   */
+  platformIncomeVatAmount: string;
+  /** Ingreso neto plataforma menos platformIncomeVatAmount (estimación post-IVA empresa). */
+  netPlatformIncomeAfterIncomeVat: string;
+  /**
+   * Tasa usada (0–1), coincide con VAT_RATE del entorno (p. ej. 0.22).
+   * @format double
+   */
+  platformIncomeVatRate: number;
+  /**
+   * % del total comisión + IVA (pedido) que representan los fees del procesador.
+   * Denominador: platformCommission + vatOnCommission.
+   * @format double
+   */
+  processorFeesPercentOfCommissionAndVat: number;
+  /**
+   * % del total comisión + IVA (pedido) que queda como ingreso neto plataforma.
+   * @format double
+   */
+  netPlatformIncomePercentOfCommissionAndVat: number;
+  currency: EventTicketCurrency;
+  mixedCurrency: boolean;
+}
+
+export interface RevenueTimeSeriesRow {
+  /** ISO date `YYYY-MM-DD` (UTC bucket). */
+  day: string;
+  gmv: string;
+  platformCommission: string;
+  vatOnCommission: string;
+  processorFees: string;
+  netPlatformIncome: string;
+  platformIncomeVatAmount: string;
+  netPlatformIncomeAfterIncomeVat: string;
+}
+
+export interface GetDashboardRevenueTimeSeriesResponse {
+  rows: RevenueTimeSeriesRow[];
+  currency: EventTicketCurrency;
+  mixedCurrency: boolean;
+}
+
+export interface GetDashboardOrdersResponse {
+  /** @format double */
+  pending: number;
+  /** @format double */
+  confirmed: number;
+  /** @format double */
+  expired: number;
+  /** @format double */
+  cancelled: number;
+  payments: {
+    /** @format double */
+    conversionRate: number;
+    /** @format double */
+    expired: number;
+    /** @format double */
+    failed: number;
+    /** @format double */
+    successful: number;
+  };
+}
+
+export interface OrdersTimeSeriesRow {
+  day: string;
+  /** @format double */
+  total: number;
+  /** @format double */
+  confirmed: number;
+  /** @format double */
+  pending: number;
+  /** @format double */
+  expired: number;
+  /** @format double */
+  cancelled: number;
+}
+
+export interface GetDashboardOrdersTimeSeriesResponse {
+  rows: OrdersTimeSeriesRow[];
+}
+
+export interface GetDashboardPayoutsResponse {
+  /** @format double */
+  pendingCount: number;
+  pendingAmount: string;
+  /** @format double */
+  completedCount: number;
+  completedAmount: string;
+  availableEarnings: string;
+  retainedEarnings: string;
+  currency: EventTicketCurrency;
+}
+
+export interface GetDashboardHealthResponse {
+  /** @format double */
+  totalUsers: number;
+  /** @format double */
+  newUsers: number;
+  /** @format double */
+  pendingVerifications: number;
+  /** @format double */
+  openTicketReports: number;
+  /** @format double */
+  pendingJobs: number;
+  /** @format double */
+  activeEvents: number;
+}
+
+export interface DashboardTopEventRow {
+  eventId: string;
+  eventName: string;
+  /** @format double */
+  ticketsSold: number;
+  revenue: string;
+  /** @format double */
+  listingCount: number;
+}
+
+export interface GetDashboardTopEventsResponse {
+  events: DashboardTopEventRow[];
+}
 
 import type {
   AxiosInstance,
@@ -4001,6 +4413,21 @@ export class Api<
     /**
      * No description
      *
+     * @tags Admin - Payouts
+     * @name TriggerHoldCheck
+     * @request POST:/admin/payouts/trigger-hold-check
+     */
+    triggerHoldCheck: (params: RequestParams = {}) =>
+      this.request<TriggerHoldCheckResponse, UnauthorizedError>({
+        path: `/admin/payouts/trigger-hold-check`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @tags Admin - Identity Verification
      * @name GetVerifications
      * @request GET:/admin/identity-verification
@@ -4512,6 +4939,403 @@ export class Api<
         format: "json",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name ListSettlements
+     * @request GET:/admin/settlements
+     */
+    listSettlements: (
+      query: {
+        paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+        status?: "pending" | "completed" | "failed";
+        sortOrder?: "asc" | "desc";
+        sortBy?: string;
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ListSettlementsResponse, UnauthorizedError>({
+        path: `/admin/settlements`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name CreateSettlement
+     * @request POST:/admin/settlements
+     */
+    createSettlement: (
+      data: CreateSettlementRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CreateSettlementResponse,
+        UnauthorizedError | ValidationError
+      >({
+        path: `/admin/settlements`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name GetSettlementDetails
+     * @request GET:/admin/settlements/{settlementId}
+     */
+    getSettlementDetails: (settlementId: string, params: RequestParams = {}) =>
+      this.request<
+        SettlementDetailsResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/settlements/${settlementId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name PreviewSettlement
+     * @request POST:/admin/settlements/preview
+     */
+    previewSettlement: (
+      data: CreateSettlementRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<PreviewSettlementResponse, UnauthorizedError>({
+        path: `/admin/settlements/preview`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name GetSettlementBreakdown
+     * @request GET:/admin/settlements/{settlementId}/breakdown
+     */
+    getSettlementBreakdown: (
+      settlementId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        SettlementBreakdownResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/settlements/${settlementId}/breakdown`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name AddSettlementPayment
+     * @request POST:/admin/settlements/{settlementId}/payments
+     */
+    addSettlementPayment: (
+      settlementId: string,
+      data: AddSettlementPaymentRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AddSettlementPaymentResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/settlements/${settlementId}/payments`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name LinkSettlementPaymentToPayout
+     * @request POST:/admin/settlements/{settlementId}/payments/{paymentId}/link-payout
+     */
+    linkSettlementPaymentToPayout: (
+      settlementId: string,
+      paymentId: string,
+      data: LinkSettlementPaymentRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        LinkSettlementPaymentResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/settlements/${settlementId}/payments/${paymentId}/link-payout`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name CompleteSettlement
+     * @request POST:/admin/settlements/{settlementId}/complete
+     */
+    completeSettlement: (settlementId: string, params: RequestParams = {}) =>
+      this.request<
+        CompleteSettlementResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/settlements/${settlementId}/complete`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Settlements
+     * @name FailSettlement
+     * @request POST:/admin/settlements/{settlementId}/fail
+     */
+    failSettlement: (
+      settlementId: string,
+      data: FailSettlementRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<FailSettlementResponse, UnauthorizedError | NotFoundError>({
+        path: `/admin/settlements/${settlementId}/fail`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardTickets
+     * @request GET:/admin/dashboard/tickets
+     */
+    getDashboardTickets: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardTicketsResponse, UnauthorizedError>({
+        path: `/admin/dashboard/tickets`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardTicketsTimeSeries
+     * @request GET:/admin/dashboard/tickets/time-series
+     */
+    getDashboardTicketsTimeSeries: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardTicketsTimeSeriesResponse, UnauthorizedError>({
+        path: `/admin/dashboard/tickets/time-series`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardRevenue
+     * @request GET:/admin/dashboard/revenue
+     */
+    getDashboardRevenue: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardRevenueResponse, UnauthorizedError>({
+        path: `/admin/dashboard/revenue`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardRevenueTimeSeries
+     * @request GET:/admin/dashboard/revenue/time-series
+     */
+    getDashboardRevenueTimeSeries: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardRevenueTimeSeriesResponse, UnauthorizedError>({
+        path: `/admin/dashboard/revenue/time-series`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardOrders
+     * @request GET:/admin/dashboard/orders
+     */
+    getDashboardOrders: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardOrdersResponse, UnauthorizedError>({
+        path: `/admin/dashboard/orders`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardOrdersTimeSeries
+     * @request GET:/admin/dashboard/orders/time-series
+     */
+    getDashboardOrdersTimeSeries: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardOrdersTimeSeriesResponse, UnauthorizedError>({
+        path: `/admin/dashboard/orders/time-series`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardPayouts
+     * @request GET:/admin/dashboard/payouts
+     */
+    getDashboardPayouts: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardPayoutsResponse, UnauthorizedError>({
+        path: `/admin/dashboard/payouts`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardHealth
+     * @request GET:/admin/dashboard/health
+     */
+    getDashboardHealth: (params: RequestParams = {}) =>
+      this.request<GetDashboardHealthResponse, UnauthorizedError>({
+        path: `/admin/dashboard/health`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
+     * @name GetDashboardTopEvents
+     * @request GET:/admin/dashboard/top-events
+     */
+    getDashboardTopEvents: (
+      query?: {
+        to?: string;
+        from?: string;
+        period?: "today" | "7d" | "30d" | "all";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<GetDashboardTopEventsResponse, UnauthorizedError>({
+        path: `/admin/dashboard/top-events`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
   };
   users = {
     /**
@@ -4542,12 +5366,7 @@ export class Api<
       data: DLocalWebhookrRouteBody,
       params: RequestParams = {},
     ) =>
-      this.request<
-        {
-          received: boolean;
-        },
-        any
-      >({
+      this.request<WebhookAcknowledgementResponse, any>({
         path: `/webhooks/dlocal`,
         method: "POST",
         body: data,
@@ -4568,12 +5387,7 @@ export class Api<
       data: ClerkWebhookRouteBody,
       params: RequestParams = {},
     ) =>
-      this.request<
-        {
-          received: boolean;
-        },
-        any
-      >({
+      this.request<WebhookAcknowledgementResponse, any>({
         path: `/webhooks/clerk`,
         method: "POST",
         body: data,
@@ -5248,15 +6062,7 @@ export class Api<
      * @request POST:/notifications/test-push
      */
     testPush: (params: RequestParams = {}) =>
-      this.request<
-        {
-          /** @format double */
-          failed: number;
-          /** @format double */
-          sent: number;
-        },
-        UnauthorizedError
-      >({
+      this.request<TestPushDevResponse, UnauthorizedError>({
         path: `/notifications/test-push`,
         method: "POST",
         format: "json",
@@ -5351,16 +6157,7 @@ export class Api<
      * @request GET:/identity-verification/liveness-credentials
      */
     getLivenessCredentials: (params: RequestParams = {}) =>
-      this.request<
-        {
-          expiration: string;
-          region: string;
-          sessionToken: string;
-          secretAccessKey: string;
-          accessKeyId: string;
-        },
-        ApiErrorResponse
-      >({
+      this.request<GetLivenessCredentialsResponse, ApiErrorResponse>({
         path: `/identity-verification/liveness-credentials`,
         method: "GET",
         format: "json",

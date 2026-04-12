@@ -100,12 +100,12 @@ export function PayoutEditDialog({
     ...updatePayoutMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
-      toast.success('Pago actualizado');
+      toast.success('Retiro actualizado');
       onOpenChange(false);
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || 'Error al actualizar el pago',
+        error.response?.data?.message || 'Error al actualizar el retiro',
       );
     },
   });
@@ -143,9 +143,9 @@ export function PayoutEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Editar Pago</DialogTitle>
+          <DialogTitle>Editar Retiro</DialogTitle>
           <DialogDescription>
-            Actualiza el estado del pago, comisión de procesamiento, notas y
+            Actualiza el estado del retiro, comisión de procesamiento, notas y
             comprobante
           </DialogDescription>
         </DialogHeader>

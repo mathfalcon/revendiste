@@ -1,0 +1,9 @@
+---
+alwaysApply: true
+---
+
+You have access to Engram persistent memory (mem_save, mem_search, mem_context).
+Save proactively after significant work. After context resets, call mem_context to recover state.---
+alwaysApply: true
+
+---

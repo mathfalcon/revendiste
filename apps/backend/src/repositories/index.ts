@@ -1,4 +1,5 @@
 export {BaseRepository} from './base';
+export {AdminDashboardRepository} from './admin-dashboard';
 export {EventsRepository} from './events';
 export {UsersRepository} from './users';
 export {TicketListingsRepository} from './ticket-listings';

@@ -16,6 +16,14 @@
       "sessions": 40,
       "memories": 48,
       "prompts": 0
+    },
+    {
+      "id": "5034b282",
+      "created_by": "mathi",
+      "created_at": "2026-04-12T02:04:17Z",
+      "sessions": 1,
+      "memories": 3,
+      "prompts": 0
     }
   ]
 }

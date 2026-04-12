@@ -166,6 +166,25 @@ export const PAYOUT_ERROR_MESSAGES = {
     'No podés retirar ganancias en USD a una cuenta bancaria en UYU. Seleccioná un método de pago en USD o PayPal.',
   CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS:
     'No podés retirar ganancias en UYU a una cuenta bancaria en USD. Seleccioná un método de pago en UYU o PayPal.',
+  EARNINGS_WITH_OPEN_REPORTS:
+    'Algunas ganancias seleccionadas tienen reportes abiertos y no pueden ser retiradas. Esperá a que se resuelvan los reportes.',
+} as const;
+
+// Error messages for processor settlements (reconciliation)
+export const SETTLEMENT_ERROR_MESSAGES = {
+  SETTLEMENT_NOT_FOUND: 'Liquidación no encontrada.',
+  SETTLEMENT_ITEM_NOT_FOUND: 'No se encontró el ítem de liquidación indicado.',
+  INVALID_TOTAL_AMOUNT: 'El monto total de la liquidación no es válido.',
+  SETTLEMENT_ALREADY_EXISTS:
+    'Ya existe una liquidación con este ID externo para el mismo procesador.',
+  NO_UNRECONCILED_PAYMENTS:
+    'No hay pagos del procesador sin conciliar para la moneda y fecha indicadas.',
+  INSUFFICIENT_PAYMENTS_FOR_AMOUNT:
+    'No alcanzan los pagos acumulados para cubrir el monto declarado de la liquidación.',
+  AMOUNT_MISMATCH_TOO_HIGH: (pct: string) =>
+    `La suma de créditos del procesador (${pct}% de diferencia) no coincide con el monto declarado. Revisá el monto o los pagos incluidos.`,
+  INVALID_METADATA:
+    'Los metadatos enviados para la liquidación no son válidos. Revisá el cuerpo de la solicitud.',
 } as const;
 
 // Error messages for webhook signature verification (Clerk, dLocal, etc.)
@@ -405,10 +424,17 @@ export const VALIDATION_MESSAGES = {
   // Identity verification
   DOCUMENT_COUNTRY_REQUIRED_PASSPORT: 'El país es requerido para pasaportes',
 
+  // Admin dashboard
+  DASHBOARD_RANGE_INCOMPLETE:
+    'Debés indicar fecha de inicio y fin para el rango personalizado',
+  DASHBOARD_RANGE_INVALID_ORDER:
+    'La fecha de inicio debe ser anterior o igual a la fecha de fin',
+
   // Ticket reports
   ACTION_INVALID: 'Acción inválida',
   ACTION_TYPE_INVALID: 'Tipo de acción inválido',
   ENTITY_ID_INVALID: 'ID de entidad inválido',
+  ID_REQUIRED: 'El identificador es requerido',
 } as const;
 
 // Button labels for notifications (for future i18n)

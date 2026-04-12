@@ -10,7 +10,10 @@ import {
 } from '../base/types';
 import {getStringFromError, trimTextAndDefaultToEmpty, logger} from '~/utils';
 import {addHours} from 'date-fns';
+import {TZDate} from '@date-fns/tz';
 import {Page} from 'playwright';
+
+const URUGUAY_TZ = 'America/Montevideo';
 
 enum RequestLabel {
   LIST = 'LIST',
@@ -714,17 +717,17 @@ export class TickantelScraper extends BaseScraper {
       const hour = parseInt(hourStr, 10);
       const minute = minuteStr ? parseInt(minuteStr, 10) : 0;
 
-      const now = new Date();
+      const now = new TZDate(new Date(), URUGUAY_TZ);
       let year = now.getFullYear();
 
       // If the date has already passed this year, assume next year
-      const tentativeDate = new Date(year, monthNum, day);
-      const todayStart = new Date(year, now.getMonth(), now.getDate());
+      const tentativeDate = new TZDate(year, monthNum, day, URUGUAY_TZ);
+      const todayStart = new TZDate(year, now.getMonth(), now.getDate(), URUGUAY_TZ);
       if (tentativeDate < todayStart) {
         year++;
       }
 
-      return new Date(year, monthNum, day, hour, minute);
+      return new TZDate(year, monthNum, day, hour, minute, URUGUAY_TZ);
     } catch {
       return null;
     }
@@ -920,12 +923,13 @@ export class TickantelScraper extends BaseScraper {
         if (match) {
           const [, day, month, year] = match;
           // Default to 21:00 since alta_demanda pages don't show the time
-          return new Date(
+          return new TZDate(
             parseInt(year, 10),
             parseInt(month, 10) - 1,
             parseInt(day, 10),
             21,
             0,
+            URUGUAY_TZ,
           );
         }
       }
@@ -945,12 +949,12 @@ export class TickantelScraper extends BaseScraper {
           const monthNum = SPANISH_MONTH_MAP[monthName.toLowerCase()];
           if (monthNum !== undefined) {
             const day = parseInt(dayStr, 10);
-            const now = new Date();
+            const now = new TZDate(new Date(), URUGUAY_TZ);
             let year = now.getFullYear();
-            const tentativeDate = new Date(year, monthNum, day);
-            const todayStart = new Date(year, now.getMonth(), now.getDate());
+            const tentativeDate = new TZDate(year, monthNum, day, URUGUAY_TZ);
+            const todayStart = new TZDate(year, now.getMonth(), now.getDate(), URUGUAY_TZ);
             if (tentativeDate < todayStart) year++;
-            return new Date(year, monthNum, day, 21, 0);
+            return new TZDate(year, monthNum, day, 21, 0, URUGUAY_TZ);
           }
         }
       }

@@ -51,25 +51,25 @@ import {Body, ValidateBody} from '~/decorators';
 import {TICKET_LISTING_ERROR_MESSAGES} from '~/constants/error-messages';
 import {getPostHog} from '~/lib/posthog';
 
-type CreateTicketListingResponse = ReturnType<
+type CreateTicketListingResponse = Awaited<ReturnType<
   TicketListingsService['createTicketListing']
->;
+>>;
 
-type GetUserListingsResponse = ReturnType<
+type GetUserListingsResponse = Awaited<ReturnType<
   TicketListingsService['getUserListingsWithTickets']
->;
+>>;
 
 type UploadDocumentResponse = Awaited<
   ReturnType<TicketDocumentService['uploadTicketDocument']>
 >;
 
-type UpdateTicketPriceResponse = ReturnType<
+type UpdateTicketPriceResponse = Awaited<ReturnType<
   TicketListingsService['updateTicketPrice']
->;
+>>;
 
-type RemoveTicketResponse = ReturnType<TicketListingsService['removeTicket']>;
+type RemoveTicketResponse = Awaited<ReturnType<TicketListingsService['removeTicket']>>;
 
-type GetTicketInfoResponse = ReturnType<TicketDocumentService['getTicketInfo']>;
+type GetTicketInfoResponse = Awaited<ReturnType<TicketDocumentService['getTicketInfo']>>;
 
 // Create shared repositories
 const ticketListingsRepository = new TicketListingsRepository(db);

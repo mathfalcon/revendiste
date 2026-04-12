@@ -27,7 +27,7 @@ export function TicketExpiredCard({ticket}: TicketExpiredCardProps) {
       <CardContent className='p-0'>
         <div className='flex'>
           {/* Left accent bar */}
-          <div className='w-1.5 bg-gradient-to-b from-destructive/60 to-destructive' />
+          <div className='w-1.5 bg-linear-to-b from-destructive/60 to-destructive' />
 
           <div className='flex-1 p-4'>
             {/* Header with event image and info */}

@@ -103,6 +103,10 @@ terraform plan
 terraform apply
 ```
 
+### Connect to RDS from your laptop (Session Manager)
+
+RDS is private; use the SSM bastion and port forwarding. See **[Connect to the deployed database](../docs/connect_to_deployed_db.md)** for prerequisites, verifying the plugin, and the `terraform output -raw db_tunnel_command` workflow.
+
 ## Estimated Monthly Costs
 
 | Environment | Monthly Cost |

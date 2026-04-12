@@ -453,6 +453,36 @@ export interface Payouts {
   updatedAt: Generated<Timestamp>;
 }
 
+export interface ProcessorSettlementItems {
+  amount: Numeric;
+  createdAt: Generated<Timestamp>;
+  currency: string;
+  description: string | null;
+  exchangeRate: Numeric | null;
+  fees: Numeric | null;
+  id: string;
+  metadata: Json | null;
+  netAmount: Numeric;
+  operationId: string;
+  paymentId: string | null;
+  payoutId: string | null;
+  settlementId: string;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface ProcessorSettlements {
+  createdAt: Generated<Timestamp>;
+  currency: string;
+  id: string;
+  metadata: Json | null;
+  paymentProvider: Generated<PaymentProvider>;
+  settlementDate: Timestamp;
+  settlementId: string;
+  status: string;
+  totalAmount: Numeric;
+  updatedAt: Generated<Timestamp>;
+}
+
 export interface PushSubscriptions {
   auth: string;
   createdAt: Generated<Timestamp>;
@@ -623,6 +653,8 @@ export interface DB {
   payoutEvents: PayoutEvents;
   payoutMethods: PayoutMethods;
   payouts: Payouts;
+  processorSettlementItems: ProcessorSettlementItems;
+  processorSettlements: ProcessorSettlements;
   pushSubscriptions: PushSubscriptions;
   rateLimit: RateLimit;
   sellerEarnings: SellerEarnings;

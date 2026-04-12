@@ -97,7 +97,7 @@ export function TicketSelection({
         className='flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors py-2'
       >
         <TicketPlus className='w-4 h-4' />
-        <span>¿Tenés entradas? Publicá las acá</span>
+        <span>¿Tenés entradas? Publicalas acá</span>
       </Link>
     </>
   );

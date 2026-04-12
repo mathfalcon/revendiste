@@ -69,13 +69,13 @@ export function CancelPayoutDialog({
     ...cancelPayoutMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
-      toast.success('Pago cancelado');
+      toast.success('Retiro cancelado');
       form.reset();
       onOpenChange(false);
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || 'Error al cancelar el pago',
+        error.response?.data?.message || 'Error al cancelar el retiro',
       );
     },
   });
@@ -92,7 +92,7 @@ export function CancelPayoutDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-2xl'>
         <DialogHeader>
-          <DialogTitle>Cancelar Pago</DialogTitle>
+          <DialogTitle>Cancelar Retiro</DialogTitle>
           <DialogDescription>
             Selecciona el motivo de la cancelación y proporciona una razón
             detallada.
@@ -120,9 +120,9 @@ export function CancelPayoutDialog({
                   </Select>
                   <FormDescription>
                     {reasonType === 'error'
-                      ? 'El pago se marcará como "Fallido" debido a un error (por ejemplo, datos incorrectos del usuario).'
+                      ? 'El retiro se marcará como "Fallido" debido a un error (por ejemplo, datos incorrectos del usuario).'
                       : reasonType === 'other'
-                        ? 'El pago se marcará como "Cancelado" por otro motivo.'
+                        ? 'El retiro se marcará como "Cancelado" por otro motivo.'
                         : 'Selecciona si la cancelación es por un error o por otro motivo.'}
                   </FormDescription>
                   <FormMessage />
@@ -145,7 +145,7 @@ export function CancelPayoutDialog({
                   </FormControl>
                   <FormDescription>
                     Proporciona una descripción detallada de por qué se está
-                    cancelando este pago.
+                    cancelando este retiro.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

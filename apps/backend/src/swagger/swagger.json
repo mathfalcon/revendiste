@@ -5283,6 +5283,21 @@
 				],
 				"type": "object"
 			},
+			"TriggerHoldCheckResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"message",
+					"success"
+				],
+				"type": "object"
+			},
 			"DocumentTypeEnum": {
 				"type": "string",
 				"enum": [
@@ -5784,7 +5799,7 @@
 				"type": "object"
 			},
 			"AdminEventImage": {
-				"description": "Explicit response types for the Admin Events controller\nThese are needed because Kysely's inferred types are too complex for TSOA",
+				"description": "Explicit response types for the Admin Events controller\r\nThese are needed because Kysely's inferred types are too complex for TSOA",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -6842,15 +6857,11 @@
 				},
 				"type": "array"
 			},
-			"GetCurrentUserResponse": {
+			"CurrentUserMeResponse": {
 				"properties": {
 					"whatsappPromptDismissed": {
 						"type": "boolean",
 						"description": "Whether user dismissed the WhatsApp opt-in prompt"
-					},
-					"whatsappOptedIn": {
-						"type": "boolean",
-						"description": "Whether user has opted in to WhatsApp notifications"
 					},
 					"phoneNumber": {
 						"type": "string",
@@ -6928,25 +6939,10 @@
 					"imageUrl": {
 						"type": "string",
 						"nullable": true
-					},
-					"lastName": {
-						"type": "string",
-						"nullable": true
-					},
-					"firstName": {
-						"type": "string",
-						"nullable": true
-					},
-					"email": {
-						"type": "string"
-					},
-					"id": {
-						"type": "string"
 					}
 				},
 				"required": [
 					"whatsappPromptDismissed",
-					"whatsappOptedIn",
 					"phoneNumber",
 					"rejectionReason",
 					"canRetryLiveness",
@@ -6960,11 +6956,21 @@
 					"verificationStatus",
 					"documentVerified",
 					"role",
-					"imageUrl",
-					"lastName",
-					"firstName",
-					"email",
-					"id"
+					"imageUrl"
+				],
+				"type": "object"
+			},
+			"GetCurrentUserResponse": {
+				"$ref": "#/components/schemas/CurrentUserMeResponse"
+			},
+			"WebhookAcknowledgementResponse": {
+				"properties": {
+					"received": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"received"
 				],
 				"type": "object"
 			},
@@ -8171,10 +8177,10 @@
 					"DatabaseError",
 					"ZodValidationError"
 				],
-				"description": "Union type of all error class names that can be returned by the API.\nUsed for type-safe error handling on the frontend."
+				"description": "Union type of all error class names that can be returned by the API.\r\nUsed for type-safe error handling on the frontend."
 			},
 			"ApiErrorResponse": {
-				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\nUse this type in",
+				"description": "API Error Response - This is the actual shape returned by the error handler middleware.\r\nUse this type in",
 				"properties": {
 					"error": {
 						"$ref": "#/components/schemas/ErrorClassName",
@@ -8662,7 +8668,7 @@
 				],
 				"type": "object"
 			},
-			"CreatePaymentLinkResponse": {
+			"CreatePaymentLinkResult": {
 				"properties": {
 					"redirectUrl": {
 						"type": "string"
@@ -8677,6 +8683,9 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"CreatePaymentLinkResponse": {
+				"$ref": "#/components/schemas/CreatePaymentLinkResult"
 			},
 			"CreatePaymentLinkRouteBody": {
 				"properties": {
@@ -8819,7 +8828,7 @@
 			},
 			"TypedNotificationMetadata_NotificationMetadata_": {
 				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationMetadata__",
-				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
+				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
 			},
 			"Extract_NotificationMetadata._type-NotificationMetadata__": {
 				"$ref": "#/components/schemas/TypedNotificationMetadata_NotificationMetadata_",
@@ -8831,7 +8840,7 @@
 			},
 			"TypedNotificationMetadata_NotificationType_": {
 				"$ref": "#/components/schemas/Extract_NotificationMetadata._type-NotificationType__",
-				"description": "Typed metadata based on notification type\nExtracts the specific metadata type from the discriminated union"
+				"description": "Typed metadata based on notification type\r\nExtracts the specific metadata type from the discriminated union"
 			},
 			"infer_typeofBaseActionSchema_": {
 				"properties": {
@@ -8909,7 +8918,7 @@
 						"type": "object"
 					}
 				],
-				"description": "Typed notification response with parsed metadata and actions\nThis ensures type safety when reading notifications from the database\nTitle and description are generated from type + metadata, not stored in DB\nFor backwards compatibility, uses the generic type"
+				"description": "Typed notification response with parsed metadata and actions\r\nThis ensures type safety when reading notifications from the database\r\nTitle and description are generated from type + metadata, not stored in DB\r\nFor backwards compatibility, uses the generic type"
 			},
 			"PaginatedResponse_TypedNotification_": {
 				"properties": {
@@ -9053,6 +9062,23 @@
 				],
 				"type": "object"
 			},
+			"TestPushDevResponse": {
+				"properties": {
+					"failed": {
+						"type": "number",
+						"format": "double"
+					},
+					"sent": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"failed",
+					"sent"
+				],
+				"type": "object"
+			},
 			"InitiateVerificationResponse": {
 				"properties": {
 					"message": {
@@ -9188,6 +9214,33 @@
 				},
 				"required": [
 					"sessionId"
+				],
+				"type": "object"
+			},
+			"GetLivenessCredentialsResponse": {
+				"properties": {
+					"expiration": {
+						"type": "string"
+					},
+					"region": {
+						"type": "string"
+					},
+					"sessionToken": {
+						"type": "string"
+					},
+					"secretAccessKey": {
+						"type": "string"
+					},
+					"accessKeyId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"expiration",
+					"region",
+					"sessionToken",
+					"secretAccessKey",
+					"accessKeyId"
 				],
 				"type": "object"
 			},
@@ -9798,6 +9851,1233 @@
 					"type": "object"
 				},
 				"type": "array"
+			},
+			"PaymentProvider": {
+				"type": "string",
+				"enum": [
+					"dlocal",
+					"mercadopago",
+					"paypal",
+					"stripe"
+				]
+			},
+			"ProcessorSettlementListRow": {
+				"properties": {
+					"updatedAt": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string"
+					},
+					"metadata": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true
+					},
+					"settlementDate": {
+						"type": "string"
+					},
+					"paymentProvider": {
+						"$ref": "#/components/schemas/PaymentProvider"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"totalAmount": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"settlementId": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"updatedAt",
+					"createdAt",
+					"metadata",
+					"settlementDate",
+					"paymentProvider",
+					"currency",
+					"totalAmount",
+					"status",
+					"settlementId",
+					"id"
+				],
+				"type": "object",
+				"description": "Serialized settlement row for admin APIs / OpenAPI (avoids TSOA issues with `Json` index types)."
+			},
+			"PaginatedResponse_ProcessorSettlementListRow_": {
+				"properties": {
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/ProcessorSettlementListRow"
+						},
+						"type": "array"
+					},
+					"pagination": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					}
+				},
+				"required": [
+					"data",
+					"pagination"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ListSettlementsResponse": {
+				"$ref": "#/components/schemas/PaginatedResponse_ProcessorSettlementListRow_"
+			},
+			"infer_typeofAdminSettlementsQuerySchema_": {
+				"properties": {
+					"paymentProvider": {
+						"type": "string",
+						"enum": [
+							"paypal",
+							"dlocal",
+							"mercadopago",
+							"stripe"
+						]
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"completed",
+							"failed"
+						]
+					},
+					"sortOrder": {
+						"type": "string",
+						"enum": [
+							"asc",
+							"desc"
+						]
+					},
+					"sortBy": {
+						"type": "string"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"limit",
+					"page"
+				],
+				"type": "object"
+			},
+			"AdminSettlementsQuery": {
+				"$ref": "#/components/schemas/infer_typeofAdminSettlementsQuerySchema_"
+			},
+			"SettlementDetailsResponse": {
+				"$ref": "#/components/schemas/ProcessorSettlementListRow"
+			},
+			"ProcessorSettlementItemApiRow": {
+				"properties": {
+					"updatedAt": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string"
+					},
+					"metadata": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"currency": {
+						"type": "string"
+					},
+					"fees": {
+						"type": "string",
+						"nullable": true
+					},
+					"exchangeRate": {
+						"type": "string",
+						"nullable": true
+					},
+					"netAmount": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "string"
+					},
+					"payoutId": {
+						"type": "string",
+						"nullable": true
+					},
+					"operationId": {
+						"type": "string"
+					},
+					"paymentId": {
+						"type": "string",
+						"nullable": true
+					},
+					"settlementId": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"updatedAt",
+					"createdAt",
+					"metadata",
+					"description",
+					"currency",
+					"fees",
+					"exchangeRate",
+					"netAmount",
+					"amount",
+					"payoutId",
+					"operationId",
+					"paymentId",
+					"settlementId",
+					"id"
+				],
+				"type": "object"
+			},
+			"CreateSettlementResponse": {
+				"properties": {
+					"reconciliation": {
+						"properties": {
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"computedTotal": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentCount",
+							"hasWarning",
+							"differencePercent",
+							"declaredTotal",
+							"computedTotal"
+						],
+						"type": "object"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ProcessorSettlementItemApiRow"
+						},
+						"type": "array"
+					},
+					"settlement": {
+						"$ref": "#/components/schemas/ProcessorSettlementListRow"
+					}
+				},
+				"required": [
+					"reconciliation",
+					"items",
+					"settlement"
+				],
+				"type": "object"
+			},
+			"CreateSettlementRouteBody": {
+				"properties": {
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"paymentProvider": {
+						"type": "string",
+						"enum": [
+							"paypal",
+							"dlocal",
+							"mercadopago",
+							"stripe"
+						]
+					},
+					"currency": {
+						"type": "string",
+						"enum": [
+							"USD",
+							"UYU"
+						]
+					},
+					"totalAmount": {
+						"type": "string"
+					},
+					"settlementDate": {
+						"type": "string"
+					},
+					"externalSettlementId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"currency",
+					"totalAmount",
+					"settlementDate",
+					"externalSettlementId"
+				],
+				"type": "object"
+			},
+			"PreviewSettlementResponse": {
+				"anyOf": [
+					{
+						"properties": {
+							"paymentIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"messageKey": {
+								"type": "string",
+								"enum": [
+									"INVALID_AMOUNT"
+								],
+								"nullable": false
+							},
+							"duplicateExists": {
+								"type": "boolean"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"hasBlockingError": {
+								"type": "boolean"
+							},
+							"differenceRatio": {
+								"type": "number",
+								"format": "double"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"computedTotal": {
+								"type": "string"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string"
+							},
+							"paymentProvider": {
+								"$ref": "#/components/schemas/PaymentProvider"
+							},
+							"externalSettlementId": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentIds",
+							"messageKey",
+							"duplicateExists",
+							"hasWarning",
+							"hasBlockingError",
+							"differenceRatio",
+							"differencePercent",
+							"paymentCount",
+							"computedTotal",
+							"declaredTotal",
+							"currency",
+							"paymentProvider",
+							"externalSettlementId"
+						],
+						"type": "object"
+					},
+					{
+						"properties": {
+							"paymentIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"messageKey": {
+								"type": "string",
+								"enum": [
+									"DUPLICATE"
+								],
+								"nullable": false
+							},
+							"duplicateExists": {
+								"type": "boolean"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"hasBlockingError": {
+								"type": "boolean"
+							},
+							"differenceRatio": {
+								"type": "number",
+								"format": "double"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"computedTotal": {
+								"type": "string"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string"
+							},
+							"paymentProvider": {
+								"$ref": "#/components/schemas/PaymentProvider"
+							},
+							"externalSettlementId": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentIds",
+							"messageKey",
+							"duplicateExists",
+							"hasWarning",
+							"hasBlockingError",
+							"differenceRatio",
+							"differencePercent",
+							"paymentCount",
+							"computedTotal",
+							"declaredTotal",
+							"currency",
+							"paymentProvider",
+							"externalSettlementId"
+						],
+						"type": "object"
+					},
+					{
+						"properties": {
+							"paymentIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"messageKey": {
+								"type": "string",
+								"enum": [
+									"NO_PAYMENTS"
+								],
+								"nullable": false
+							},
+							"duplicateExists": {
+								"type": "boolean"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"hasBlockingError": {
+								"type": "boolean"
+							},
+							"differenceRatio": {
+								"type": "number",
+								"format": "double"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"computedTotal": {
+								"type": "string"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string"
+							},
+							"paymentProvider": {
+								"$ref": "#/components/schemas/PaymentProvider"
+							},
+							"externalSettlementId": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentIds",
+							"messageKey",
+							"duplicateExists",
+							"hasWarning",
+							"hasBlockingError",
+							"differenceRatio",
+							"differencePercent",
+							"paymentCount",
+							"computedTotal",
+							"declaredTotal",
+							"currency",
+							"paymentProvider",
+							"externalSettlementId"
+						],
+						"type": "object"
+					},
+					{
+						"properties": {
+							"paymentIds": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"messageKey": {
+								"type": "string",
+								"enum": [
+									"MISMATCH",
+									"WARNING",
+									"OK"
+								]
+							},
+							"duplicateExists": {
+								"type": "boolean"
+							},
+							"hasWarning": {
+								"type": "boolean"
+							},
+							"hasBlockingError": {
+								"type": "boolean"
+							},
+							"differenceRatio": {
+								"type": "number",
+								"format": "double"
+							},
+							"differencePercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"computedTotal": {
+								"type": "string"
+							},
+							"declaredTotal": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string"
+							},
+							"paymentProvider": {
+								"$ref": "#/components/schemas/PaymentProvider"
+							},
+							"externalSettlementId": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"paymentIds",
+							"messageKey",
+							"duplicateExists",
+							"hasWarning",
+							"hasBlockingError",
+							"differenceRatio",
+							"differencePercent",
+							"paymentCount",
+							"computedTotal",
+							"declaredTotal",
+							"currency",
+							"paymentProvider",
+							"externalSettlementId"
+						],
+						"type": "object"
+					}
+				]
+			},
+			"SettlementBreakdownResponse": {
+				"properties": {
+					"items": {
+						"items": {
+							"properties": {
+								"platformShare": {
+									"type": "string"
+								},
+								"sellerEarnings": {
+									"items": {
+										"properties": {
+											"currency": {
+												"$ref": "#/components/schemas/EventTicketCurrency"
+											},
+											"status": {
+												"type": "string",
+												"enum": [
+													"pending",
+													"available",
+													"failed_payout",
+													"paid_out",
+													"payout_requested",
+													"retained"
+												]
+											},
+											"sellerUserId": {
+												"type": "string"
+											},
+											"sellerAmount": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"currency",
+											"status",
+											"sellerUserId",
+											"sellerAmount",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"currency": {
+									"type": "string"
+								},
+								"exchangeRate": {
+									"type": "string",
+									"nullable": true
+								},
+								"processorFee": {
+									"type": "string"
+								},
+								"processorCredit": {
+									"type": "string"
+								},
+								"customerAmount": {
+									"type": "string"
+								},
+								"providerPaymentId": {
+									"type": "string"
+								},
+								"paymentId": {
+									"type": "string",
+									"nullable": true
+								},
+								"settlementItemId": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"platformShare",
+								"sellerEarnings",
+								"currency",
+								"exchangeRate",
+								"processorFee",
+								"processorCredit",
+								"customerAmount",
+								"providerPaymentId",
+								"paymentId",
+								"settlementItemId"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"reconciliation": {
+						"properties": {
+							"unreconciledDifference": {
+								"type": "string"
+							},
+							"platformRevenue": {
+								"type": "string"
+							},
+							"totalSellerEarnings": {
+								"type": "string"
+							},
+							"totalProcessorFees": {
+								"type": "string"
+							},
+							"totalProcessorCredits": {
+								"type": "string"
+							},
+							"totalCustomerCharges": {
+								"type": "string"
+							},
+							"paymentCount": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"unreconciledDifference",
+							"platformRevenue",
+							"totalSellerEarnings",
+							"totalProcessorFees",
+							"totalProcessorCredits",
+							"totalCustomerCharges",
+							"paymentCount"
+						],
+						"type": "object"
+					},
+					"settlement": {
+						"$ref": "#/components/schemas/ProcessorSettlementListRow"
+					}
+				},
+				"required": [
+					"items",
+					"reconciliation",
+					"settlement"
+				],
+				"type": "object"
+			},
+			"AddSettlementPaymentResponse": {
+				"$ref": "#/components/schemas/ProcessorSettlementItemApiRow"
+			},
+			"AddSettlementPaymentRouteBody": {
+				"properties": {
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"description": {
+						"type": "string"
+					},
+					"fees": {
+						"type": "string"
+					},
+					"exchangeRate": {
+						"type": "number",
+						"format": "double"
+					},
+					"currency": {
+						"type": "string",
+						"enum": [
+							"USD",
+							"UYU"
+						]
+					},
+					"netAmount": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "string"
+					},
+					"operationId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"currency",
+					"netAmount",
+					"amount",
+					"operationId"
+				],
+				"type": "object"
+			},
+			"LinkSettlementPaymentResponse": {
+				"$ref": "#/components/schemas/ProcessorSettlementItemApiRow"
+			},
+			"LinkSettlementPaymentRouteBody": {
+				"properties": {
+					"payoutId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"payoutId"
+				],
+				"type": "object"
+			},
+			"CompleteSettlementResponse": {
+				"$ref": "#/components/schemas/ProcessorSettlementListRow"
+			},
+			"FailSettlementResponse": {
+				"$ref": "#/components/schemas/ProcessorSettlementListRow"
+			},
+			"FailSettlementRouteBody": {
+				"properties": {
+					"reason": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"GetDashboardTicketsResponse": {
+				"properties": {
+					"publishedActiveEvents": {
+						"type": "number",
+						"format": "double"
+					},
+					"publishedTotal": {
+						"type": "number",
+						"format": "double"
+					},
+					"sold": {
+						"type": "number",
+						"format": "double"
+					},
+					"activeListings": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"publishedActiveEvents",
+					"publishedTotal",
+					"sold",
+					"activeListings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"infer_typeofAdminDashboardQuerySchema_": {
+				"properties": {
+					"to": {
+						"type": "string"
+					},
+					"from": {
+						"type": "string"
+					},
+					"period": {
+						"type": "string",
+						"enum": [
+							"today",
+							"7d",
+							"30d",
+							"all"
+						]
+					}
+				},
+				"type": "object"
+			},
+			"AdminDashboardQuery": {
+				"$ref": "#/components/schemas/infer_typeofAdminDashboardQuerySchema_"
+			},
+			"TicketsTimeSeriesRow": {
+				"properties": {
+					"day": {
+						"type": "string"
+					},
+					"published": {
+						"type": "number",
+						"format": "double"
+					},
+					"sold": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"day",
+					"published",
+					"sold"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardTicketsTimeSeriesResponse": {
+				"properties": {
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/TicketsTimeSeriesRow"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"rows"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardRevenueResponse": {
+				"properties": {
+					"gmv": {
+						"type": "string"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"processorFees": {
+						"type": "string"
+					},
+					"netPlatformIncome": {
+						"type": "string"
+					},
+					"platformIncomeVatAmount": {
+						"type": "string",
+						"description": "IVA estimado sobre el ingreso neto plataforma (tasa = platformIncomeVatRate).\r\nSolo aplica si el ingreso neto es positivo."
+					},
+					"netPlatformIncomeAfterIncomeVat": {
+						"type": "string",
+						"description": "Ingreso neto plataforma menos platformIncomeVatAmount (estimación post-IVA empresa)."
+					},
+					"platformIncomeVatRate": {
+						"type": "number",
+						"format": "double",
+						"description": "Tasa usada (0–1), coincide con VAT_RATE del entorno (p. ej. 0.22)."
+					},
+					"processorFeesPercentOfCommissionAndVat": {
+						"type": "number",
+						"format": "double",
+						"description": "% del total comisión + IVA (pedido) que representan los fees del procesador.\r\nDenominador: platformCommission + vatOnCommission."
+					},
+					"netPlatformIncomePercentOfCommissionAndVat": {
+						"type": "number",
+						"format": "double",
+						"description": "% del total comisión + IVA (pedido) que queda como ingreso neto plataforma."
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"mixedCurrency": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"gmv",
+					"platformCommission",
+					"vatOnCommission",
+					"processorFees",
+					"netPlatformIncome",
+					"platformIncomeVatAmount",
+					"netPlatformIncomeAfterIncomeVat",
+					"platformIncomeVatRate",
+					"processorFeesPercentOfCommissionAndVat",
+					"netPlatformIncomePercentOfCommissionAndVat",
+					"currency",
+					"mixedCurrency"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"RevenueTimeSeriesRow": {
+				"properties": {
+					"day": {
+						"type": "string",
+						"description": "ISO date `YYYY-MM-DD` (UTC bucket)."
+					},
+					"gmv": {
+						"type": "string"
+					},
+					"platformCommission": {
+						"type": "string"
+					},
+					"vatOnCommission": {
+						"type": "string"
+					},
+					"processorFees": {
+						"type": "string"
+					},
+					"netPlatformIncome": {
+						"type": "string"
+					},
+					"platformIncomeVatAmount": {
+						"type": "string"
+					},
+					"netPlatformIncomeAfterIncomeVat": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"day",
+					"gmv",
+					"platformCommission",
+					"vatOnCommission",
+					"processorFees",
+					"netPlatformIncome",
+					"platformIncomeVatAmount",
+					"netPlatformIncomeAfterIncomeVat"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardRevenueTimeSeriesResponse": {
+				"properties": {
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/RevenueTimeSeriesRow"
+						},
+						"type": "array"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"mixedCurrency": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"rows",
+					"currency",
+					"mixedCurrency"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardOrdersResponse": {
+				"properties": {
+					"pending": {
+						"type": "number",
+						"format": "double"
+					},
+					"confirmed": {
+						"type": "number",
+						"format": "double"
+					},
+					"expired": {
+						"type": "number",
+						"format": "double"
+					},
+					"cancelled": {
+						"type": "number",
+						"format": "double"
+					},
+					"payments": {
+						"properties": {
+							"conversionRate": {
+								"type": "number",
+								"format": "double"
+							},
+							"expired": {
+								"type": "number",
+								"format": "double"
+							},
+							"failed": {
+								"type": "number",
+								"format": "double"
+							},
+							"successful": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"conversionRate",
+							"expired",
+							"failed",
+							"successful"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"pending",
+					"confirmed",
+					"expired",
+					"cancelled",
+					"payments"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OrdersTimeSeriesRow": {
+				"properties": {
+					"day": {
+						"type": "string"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"confirmed": {
+						"type": "number",
+						"format": "double"
+					},
+					"pending": {
+						"type": "number",
+						"format": "double"
+					},
+					"expired": {
+						"type": "number",
+						"format": "double"
+					},
+					"cancelled": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"day",
+					"total",
+					"confirmed",
+					"pending",
+					"expired",
+					"cancelled"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardOrdersTimeSeriesResponse": {
+				"properties": {
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/OrdersTimeSeriesRow"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"rows"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardPayoutsResponse": {
+				"properties": {
+					"pendingCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"pendingAmount": {
+						"type": "string"
+					},
+					"completedCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"completedAmount": {
+						"type": "string"
+					},
+					"availableEarnings": {
+						"type": "string"
+					},
+					"retainedEarnings": {
+						"type": "string"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					}
+				},
+				"required": [
+					"pendingCount",
+					"pendingAmount",
+					"completedCount",
+					"completedAmount",
+					"availableEarnings",
+					"retainedEarnings",
+					"currency"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardHealthResponse": {
+				"properties": {
+					"totalUsers": {
+						"type": "number",
+						"format": "double"
+					},
+					"newUsers": {
+						"type": "number",
+						"format": "double"
+					},
+					"pendingVerifications": {
+						"type": "number",
+						"format": "double"
+					},
+					"openTicketReports": {
+						"type": "number",
+						"format": "double"
+					},
+					"pendingJobs": {
+						"type": "number",
+						"format": "double"
+					},
+					"activeEvents": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"totalUsers",
+					"newUsers",
+					"pendingVerifications",
+					"openTicketReports",
+					"pendingJobs",
+					"activeEvents"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DashboardTopEventRow": {
+				"properties": {
+					"eventId": {
+						"type": "string"
+					},
+					"eventName": {
+						"type": "string"
+					},
+					"ticketsSold": {
+						"type": "number",
+						"format": "double"
+					},
+					"revenue": {
+						"type": "string"
+					},
+					"listingCount": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"eventId",
+					"eventName",
+					"ticketsSold",
+					"revenue",
+					"listingCount"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetDashboardTopEventsResponse": {
+				"properties": {
+					"events": {
+						"items": {
+							"$ref": "#/components/schemas/DashboardTopEventRow"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"events"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {}
@@ -10684,7 +11964,7 @@
 						}
 					}
 				},
-				"description": "Upload a ticket document\n\nSellers can upload PDF/image documents for their sold tickets.\nDocuments must be uploaded before the event ends.",
+				"description": "Upload a ticket document\r\n\r\nSellers can upload PDF/image documents for their sold tickets.\r\nDocuments must be uploaded before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -10775,7 +12055,7 @@
 						}
 					}
 				},
-				"description": "Update/replace a ticket document\n\nUploads a new version of the document. Previous versions are kept for audit trail.\nCan only update before the event ends.",
+				"description": "Update/replace a ticket document\r\n\r\nUploads a new version of the document. Previous versions are kept for audit trail.\r\nCan only update before the event ends.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -10858,7 +12138,7 @@
 						}
 					}
 				},
-				"description": "Update ticket price\n\nOnly active tickets (not reserved, sold, or cancelled) can have their price updated.\nPrice cannot exceed the ticket wave face value.",
+				"description": "Update ticket price\r\n\r\nOnly active tickets (not reserved, sold, or cancelled) can have their price updated.\r\nPrice cannot exceed the ticket wave face value.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -10933,7 +12213,7 @@
 						}
 					}
 				},
-				"description": "Remove a ticket from listing\n\nOnly active tickets (not reserved, sold, or cancelled) can be removed.\nThis performs a soft delete (sets deletedAt timestamp).",
+				"description": "Remove a ticket from listing\r\n\r\nOnly active tickets (not reserved, sold, or cancelled) can be removed.\r\nThis performs a soft delete (sets deletedAt timestamp).",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -10986,7 +12266,7 @@
 						}
 					}
 				},
-				"description": "Get ticket information with document details\n\nReturns ticket info including document URL for viewing.\nOnly the seller (ticket publisher) can access this endpoint.",
+				"description": "Get ticket information with document details\r\n\r\nReturns ticket info including document URL for viewing.\r\nOnly the seller (ticket publisher) can access this endpoint.",
 				"tags": [
 					"Ticket Listings"
 				],
@@ -12432,6 +13712,48 @@
 				]
 			}
 		},
+		"/admin/payouts/trigger-hold-check": {
+			"post": {
+				"operationId": "TriggerHoldCheck",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TriggerHoldCheckResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Payouts"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
 		"/admin/identity-verification": {
 			"get": {
 				"operationId": "GetVerifications",
@@ -13798,15 +15120,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"received": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"received"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/WebhookAcknowledgementResponse"
 								}
 							}
 						}
@@ -13840,15 +15154,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"received": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"received"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/WebhookAcknowledgementResponse"
 								}
 							}
 						}
@@ -15639,21 +16945,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"failed": {
-											"type": "number",
-											"format": "double"
-										},
-										"sent": {
-											"type": "number",
-											"format": "double"
-										}
-									},
-									"required": [
-										"failed",
-										"sent"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/TestPushDevResponse"
 								}
 							}
 						}
@@ -15669,7 +16961,7 @@
 						}
 					}
 				},
-				"description": "DEV ONLY — Send a test push notification to all user's subscribed devices.\nRemoved before production deployment.",
+				"description": "DEV ONLY — Send a test push notification to all user's subscribed devices.\r\nRemoved before production deployment.",
 				"tags": [
 					"Notifications"
 				],
@@ -15712,7 +17004,7 @@
 						}
 					}
 				},
-				"description": "Initiate identity verification process\n\nUser provides document type, number, and country (for passports).\nSystem validates the document format and checks for duplicates.",
+				"description": "Initiate identity verification process\r\n\r\nUser provides document type, number, and country (for passports).\r\nSystem validates the document format and checks for duplicates.",
 				"tags": [
 					"Identity Verification"
 				],
@@ -15775,7 +17067,7 @@
 						}
 					}
 				},
-				"description": "Verify document (upload document photo only)\n\nProcesses uploaded document image:\n- Extracts text from document\n- Detects face in document\n- Validates document number\n- Determines if manual review is needed\n\nFace comparison will happen during liveness check using the liveness reference image",
+				"description": "Verify document (upload document photo only)\r\n\r\nProcesses uploaded document image:\r\n- Extracts text from document\r\n- Detects face in document\r\n- Validates document number\r\n- Determines if manual review is needed\r\n\r\nFace comparison will happen during liveness check using the liveness reference image",
 				"tags": [
 					"Identity Verification"
 				],
@@ -15856,7 +17148,7 @@
 						}
 					}
 				},
-				"description": "Start liveness check session\n\nCreates an AWS Rekognition Face Liveness session for the user.\nReturns session ID and region for the frontend to complete the check.",
+				"description": "Start liveness check session\r\n\r\nCreates an AWS Rekognition Face Liveness session for the user.\r\nReturns session ID and region for the frontend to complete the check.",
 				"tags": [
 					"Identity Verification"
 				],
@@ -15899,7 +17191,7 @@
 						}
 					}
 				},
-				"description": "Verify liveness results\n\nProcesses the results of the liveness check:\n- Validates liveness confidence\n- Determines if verification is complete or requires manual review\n- Updates user verification status",
+				"description": "Verify liveness results\r\n\r\nProcesses the results of the liveness check:\r\n- Validates liveness confidence\r\n- Determines if verification is complete or requires manual review\r\n- Updates user verification status",
 				"tags": [
 					"Identity Verification"
 				],
@@ -15926,31 +17218,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"expiration": {
-											"type": "string"
-										},
-										"region": {
-											"type": "string"
-										},
-										"sessionToken": {
-											"type": "string"
-										},
-										"secretAccessKey": {
-											"type": "string"
-										},
-										"accessKeyId": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"expiration",
-										"region",
-										"sessionToken",
-										"secretAccessKey",
-										"accessKeyId"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/GetLivenessCredentialsResponse"
 								}
 							}
 						}
@@ -15976,7 +17244,7 @@
 						}
 					}
 				},
-				"description": "Get temporary AWS credentials for Face Liveness SDK\n\nThe backend assumes a minimal IAM role that can ONLY call StartFaceLivenessSession.\nThis is more secure than Cognito because credentials are only given to authenticated users.\nCredentials expire in 15 minutes.",
+				"description": "Get temporary AWS credentials for Face Liveness SDK\r\n\r\nThe backend assumes a minimal IAM role that can ONLY call StartFaceLivenessSession.\r\nThis is more secure than Cognito because credentials are only given to authenticated users.\r\nCredentials expire in 15 minutes.",
 				"tags": [
 					"Identity Verification"
 				],
@@ -16376,6 +17644,1276 @@
 						"required": true,
 						"schema": {
 							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/settlements": {
+			"get": {
+				"operationId": "ListSettlements",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ListSettlementsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "paymentProvider",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"paypal",
+								"dlocal",
+								"mercadopago",
+								"stripe"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"pending",
+								"completed",
+								"failed"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateSettlement",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateSettlementResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateSettlementRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/settlements/{settlementId}": {
+			"get": {
+				"operationId": "GetSettlementDetails",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SettlementDetailsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Settlement not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "settlementId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/settlements/preview": {
+			"post": {
+				"operationId": "PreviewSettlement",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PreviewSettlementResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateSettlementRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/settlements/{settlementId}/breakdown": {
+			"get": {
+				"operationId": "GetSettlementBreakdown",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SettlementBreakdownResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Settlement not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "settlementId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/settlements/{settlementId}/payments": {
+			"post": {
+				"operationId": "AddSettlementPayment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AddSettlementPaymentResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Settlement not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "settlementId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddSettlementPaymentRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/settlements/{settlementId}/payments/{paymentId}/link-payout": {
+			"post": {
+				"operationId": "LinkSettlementPaymentToPayout",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LinkSettlementPaymentResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Settlement or payout not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidationError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "settlementId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "paymentId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/LinkSettlementPaymentRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/settlements/{settlementId}/complete": {
+			"post": {
+				"operationId": "CompleteSettlement",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CompleteSettlementResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Settlement not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "settlementId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/admin/settlements/{settlementId}/fail": {
+			"post": {
+				"operationId": "FailSettlement",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailSettlementResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Settlement not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Settlements"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "settlementId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/FailSettlementRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/dashboard/tickets": {
+			"get": {
+				"operationId": "GetDashboardTickets",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardTicketsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/tickets/time-series": {
+			"get": {
+				"operationId": "GetDashboardTicketsTimeSeries",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardTicketsTimeSeriesResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/revenue": {
+			"get": {
+				"operationId": "GetDashboardRevenue",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardRevenueResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/revenue/time-series": {
+			"get": {
+				"operationId": "GetDashboardRevenueTimeSeries",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardRevenueTimeSeriesResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/orders": {
+			"get": {
+				"operationId": "GetDashboardOrders",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardOrdersResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/orders/time-series": {
+			"get": {
+				"operationId": "GetDashboardOrdersTimeSeries",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardOrdersTimeSeriesResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/payouts": {
+			"get": {
+				"operationId": "GetDashboardPayouts",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardPayoutsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/admin/dashboard/health": {
+			"get": {
+				"operationId": "GetDashboardHealth",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardHealthResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/admin/dashboard/top-events": {
+			"get": {
+				"operationId": "GetDashboardTopEvents",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetDashboardTopEventsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Authentication required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Admin access required",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Admin - Dashboard"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "period",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"today",
+								"7d",
+								"30d",
+								"all"
+							]
 						}
 					}
 				]

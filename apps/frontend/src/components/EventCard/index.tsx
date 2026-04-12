@@ -10,7 +10,7 @@ type EventCardProps = {
   id: string;
   slug: string;
   imageUrl?: string;
-  /** 560×560 list thumb when present; always preferred over imageUrl for this card */
+  /** 560×560 list thumb from API when present; preferred over imageUrl for this card */
   thumbnailUrl?: string | null;
   name: string;
   date: string;

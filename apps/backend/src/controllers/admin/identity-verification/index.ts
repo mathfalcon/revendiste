@@ -35,24 +35,24 @@ import {
 import {AdminIdentityVerificationService} from '~/services/admin-identity-verification';
 import {NotificationService} from '~/services/notifications';
 
-type GetVerificationsResponse = ReturnType<
+type GetVerificationsResponse = Awaited<ReturnType<
   AdminIdentityVerificationService['getVerificationsForReview']
->;
-type GetVerificationDetailsResponse = ReturnType<
+>>;
+type GetVerificationDetailsResponse = Awaited<ReturnType<
   AdminIdentityVerificationService['getVerificationDetails']
->;
-type ApproveVerificationResponse = ReturnType<
+>>;
+type ApproveVerificationResponse = Awaited<ReturnType<
   AdminIdentityVerificationService['approveVerification']
->;
-type RejectVerificationResponse = ReturnType<
+>>;
+type RejectVerificationResponse = Awaited<ReturnType<
   AdminIdentityVerificationService['rejectVerification']
->;
-type GetVerificationImageUrlResponse = ReturnType<
+>>;
+type GetVerificationImageUrlResponse = Awaited<ReturnType<
   AdminIdentityVerificationService['getVerificationImageUrl']
->;
-type GetVerificationAuditHistoryResponse = ReturnType<
+>>;
+type GetVerificationAuditHistoryResponse = Awaited<ReturnType<
   AdminIdentityVerificationService['getVerificationAuditHistory']
->;
+>>;
 
 // Create shared repositories
 const usersRepository = new UsersRepository(db);

@@ -47,11 +47,19 @@ import {ValidateBody, Body} from '~/decorators';
 import {getJobQueueService} from '~/services/job-queue';
 import {getPostHog} from '~/lib/posthog';
 
-type CreateOrderResponse = ReturnType<OrdersService['createOrder']>;
-type GetOrderByIdResponse = ReturnType<OrdersService['getOrderById']>;
-type GetUserOrdersResponse = ReturnType<OrdersService['getUserOrders']>;
-type GetOrderTicketsResponse = ReturnType<OrdersService['getOrderTickets']>;
-type CancelOrderResponse = ReturnType<OrdersService['cancelOrder']>;
+type CreateOrderResponse = Awaited<ReturnType<OrdersService['createOrder']>>;
+type GetOrderByIdResponse = Awaited<
+  ReturnType<OrdersService['getOrderById']>
+>;
+type GetUserOrdersResponse = Awaited<
+  ReturnType<OrdersService['getUserOrders']>
+>;
+type GetOrderTicketsResponse = Awaited<
+  ReturnType<OrdersService['getOrderTickets']>
+>;
+type CancelOrderResponse = Awaited<
+  ReturnType<OrdersService['cancelOrder']>
+>;
 
 // Create shared repositories
 const ordersRepository = new OrdersRepository(db);
