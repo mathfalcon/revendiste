@@ -686,3 +686,22 @@ export const adminDashboardTicketsTimeSeriesQueryOptions = (
     refetchInterval: DASHBOARD_POLL_MID_MS,
   });
 };
+
+export const adminDashboardRevenueByOrderCurrencyQueryOptions = (
+  params: AdminDashboardApiQuery,
+) => {
+  return queryOptions({
+    queryKey: [
+      'admin',
+      'dashboard',
+      'revenueByOrderCurrency',
+      params,
+    ] as const,
+    queryFn: async () => {
+      const response =
+        await api.admin.getDashboardRevenueByOrderCurrency(params);
+      return response.data;
+    },
+    refetchInterval: DASHBOARD_POLL_FAST_MS,
+  });
+};

@@ -2,8 +2,15 @@
 alwaysApply: true
 ---
 
-You have access to Engram persistent memory (mem_save, mem_search, mem_context).
-Save proactively after significant work. After context resets, call mem_context to recover state.---
-alwaysApply: true
+# Engram / persistent context
 
----
+When Engram MCP tools (`mem_save`, `mem_search`, `mem_context`) are available, use them for session state. The section below is **in-repo operational memory** for Revendiste (same facts agents should recall after resets).
+
+## Revendiste: production DB access (SSM bastion + RDS)
+
+- **Tunnel command**: `infrastructure/environments/<env>` → `terraform output -raw db_tunnel_command`. Document `AWS-StartPortForwardingSessionToRemoteHost` requires JSON **arrays**: `host`, `portNumber`, `localPortNumber` (see `docs/connect_to_deployed_db.md`).
+- **SSM private VPC**: Bastion has no public IP. **Three interface VPC endpoints** (`ssm`, `ssmmessages`, `ec2messages`) are required; toggled by GitHub workflow `.github/workflows/toggle-database-access.yml` (not full Terraform). **TargetNotConnected** / empty `describe-instance-information` often clears after **`reboot-instances`** once endpoints exist.
+- **Windows local bind**: If `listen tcp 127.0.0.1:5433: bind: ... forbidden by access permissions`, Hyper-V/WSL/Docker **excluded port ranges** blocked 5433 — use another **`localPortNumber`** (e.g. `15433`) and point the client at that port.
+- **“Wrong password” / timeouts through tunnel**: If the Session Manager plugin could not bind locally, the client may not be talking to RDS. Once the tunnel works, use credentials from **Secrets Manager** (`<name_prefix>-db-credentials` JSON: `username`, `password`, `dbname`). **RDS expects SSL** from clients (`PGSSLMODE=require` / GUI SSL mode).
+- **Bastion → RDS TCP must work**: If `timeout 5 bash -c "echo >/dev/tcp/$RDS_HOST/5432"` on the bastion **fails** but DNS resolves, **`{name_prefix}-rds-sg` is missing ingress 5432 from `{name_prefix}-bastion-sg`**. Terraform defines that as `module.bastion` → `aws_security_group_rule.rds_from_bastion`; if AWS only shows “PostgreSQL from ECS tasks”, run **`terraform apply`** (or `-replace=module.bastion.aws_security_group_rule.rds_from_bastion`) so the bastion rule exists. Inline RDS SG in `security-groups` module only references ECS; bastion rule is separate.
+- **Verify RDS SG**: `aws ec2 describe-security-groups --filters Name=group-name,Values=revendiste-prod-rds-sg --query 'SecurityGroups[0].IpPermissions[?FromPort==\`5432\`]'` — expect both ECS tasks SG and bastion SG on 5432.

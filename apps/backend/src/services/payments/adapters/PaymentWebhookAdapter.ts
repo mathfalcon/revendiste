@@ -312,8 +312,8 @@ export class PaymentWebhookAdapter {
     // Example: (2019.94 UYU + 50.26 UYU) / 53.66 USD = 38.58 UYU/USD
     let exchangeRate: string | undefined;
     if (
-      paymentData.balanceAmount &&
-      paymentData.balanceFee !== undefined &&
+      paymentData.balanceAmount != null &&
+      paymentData.balanceFee != null &&
       paymentData.balanceCurrency &&
       paymentData.currency !== paymentData.balanceCurrency
     ) {
@@ -336,12 +336,14 @@ export class PaymentWebhookAdapter {
       String(paymentRecord.id),
       {
         status: newStatus as PaymentStatus,
-        balanceAmount: paymentData.balanceAmount
-          ? String(paymentData.balanceAmount)
-          : undefined,
-        balanceFee: paymentData.balanceFee
-          ? String(paymentData.balanceFee)
-          : undefined,
+        balanceAmount:
+          paymentData.balanceAmount != null
+            ? String(paymentData.balanceAmount)
+            : undefined,
+        balanceFee:
+          paymentData.balanceFee != null
+            ? String(paymentData.balanceFee)
+            : undefined,
         balanceCurrency: paymentData.balanceCurrency,
         // Store exchange rate if currencies differ (dLocal settles in UYU even for USD orders)
         exchangeRate,

@@ -18,6 +18,7 @@
     "tsoa:routes": "tsoa routes",
     "tsoa:both": "tsoa routes && tsoa spec",
     "generate:db": "kysely-codegen --camel-case --dialect postgres --out-file ../../packages/shared/src/types/db.d.ts",
+    "job": "tsx src/scripts/run-job.ts",
     "scrape-events": "tsx scripts/run-scrape-events.ts",
     "debug-scrape": "tsx src/scripts/debug-scrape.ts",
     "postinstall": "npx playwright install chromium"
@@ -28,9 +29,9 @@
   "packageManager": "pnpm@10.13.1",
   "dependencies": {
     "@aws-sdk/client-rekognition": "^3.969.0",
-    "@aws-sdk/client-s3": "^3.931.0",
+    "@aws-sdk/client-s3": "3.726.1",
     "@aws-sdk/client-sts": "^3.969.0",
-    "@aws-sdk/s3-request-presigner": "^3.931.0",
+    "@aws-sdk/s3-request-presigner": "3.726.1",
     "@clerk/express": "^1.7.77",
     "@date-fns/tz": "^1.4.1",
     "@mathfalcon/tsoa-runtime": "^6.6.3",

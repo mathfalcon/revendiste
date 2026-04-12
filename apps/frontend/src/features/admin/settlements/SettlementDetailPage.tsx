@@ -352,17 +352,15 @@ export function SettlementDetailPage({settlementId}: SettlementDetailPageProps) 
       <Card>
         <CardHeader>
           <CardTitle>Resumen de conciliación</CardTitle>
+          {reconciliation.hasMultipleCurrencies && (
+            <p className='text-xs text-muted-foreground'>
+              Los pagos incluyen monedas distintas. Las ganancias de vendedores
+              y el ingreso de la plataforma se convirtieron a{' '}
+              {settlement.currency} usando el tipo de cambio de cada pago.
+            </p>
+          )}
         </CardHeader>
         <CardContent className='grid gap-2 sm:grid-cols-2'>
-          <div className='flex justify-between gap-4 border-b pb-2'>
-            <span className='text-muted-foreground'>Cobrado a compradores</span>
-            <span className='font-medium tabular-nums'>
-              {formatCurrency(
-                reconciliation.totalCustomerCharges,
-                settlement.currency,
-              )}
-            </span>
-          </div>
           <div className='flex justify-between gap-4 border-b pb-2'>
             <span className='text-muted-foreground'>Crédito del procesador</span>
             <span className='font-medium tabular-nums'>
@@ -382,16 +380,22 @@ export function SettlementDetailPage({settlementId}: SettlementDetailPageProps) 
             </span>
           </div>
           <div className='flex justify-between gap-4 border-b pb-2'>
-            <span className='text-muted-foreground'>Ganancias vendedores</span>
+            <span className='text-muted-foreground'>
+              Ganancias vendedores
+              {reconciliation.hasMultipleCurrencies ? ' (conv.)' : ''}
+            </span>
             <span className='font-medium tabular-nums'>
               {formatCurrency(
-                reconciliation.totalSellerEarnings,
+                reconciliation.totalSellerEarningsConverted,
                 settlement.currency,
               )}
             </span>
           </div>
           <div className='flex justify-between gap-4 border-b pb-2'>
-            <span className='text-muted-foreground'>Ingreso plataforma</span>
+            <span className='text-muted-foreground'>
+              Ingreso plataforma
+              {reconciliation.hasMultipleCurrencies ? ' (est.)' : ''}
+            </span>
             <span className='font-medium tabular-nums'>
               {formatCurrency(
                 reconciliation.platformRevenue,
@@ -427,13 +431,14 @@ export function SettlementDetailPage({settlementId}: SettlementDetailPageProps) 
                   <TableHead>Comprador (cargo)</TableHead>
                   <TableHead>Crédito procesador</TableHead>
                   <TableHead>Fee</TableHead>
+                  <TableHead>TC</TableHead>
                   <TableHead>Plataforma (est.)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className='text-center'>
+                    <TableCell colSpan={7} className='text-center'>
                       Sin ítems vinculados a pagos (liquidación manual o
                       histórica)
                     </TableCell>
@@ -450,13 +455,19 @@ export function SettlementDetailPage({settlementId}: SettlementDetailPageProps) 
                         {row.providerPaymentId}
                       </TableCell>
                       <TableCell className='tabular-nums'>
-                        {formatCurrency(row.customerAmount, row.currency)}
+                        {formatCurrency(
+                          row.customerAmount,
+                          row.customerAmountCurrency,
+                        )}
                       </TableCell>
                       <TableCell className='tabular-nums'>
                         {formatCurrency(row.processorCredit, row.currency)}
                       </TableCell>
                       <TableCell className='tabular-nums'>
                         {formatCurrency(row.processorFee, row.currency)}
+                      </TableCell>
+                      <TableCell className='tabular-nums text-xs text-muted-foreground'>
+                        {row.exchangeRate != null ? row.exchangeRate : '—'}
                       </TableCell>
                       <TableCell className='tabular-nums'>
                         {formatCurrency(row.platformShare, row.currency)}

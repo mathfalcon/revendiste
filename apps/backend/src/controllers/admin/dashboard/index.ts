@@ -30,6 +30,7 @@ import type {
   GetDashboardRevenueTimeSeriesResponse,
   GetDashboardOrdersTimeSeriesResponse,
   GetDashboardTicketsTimeSeriesResponse,
+  GetDashboardRevenueByOrderCurrencyResponse,
 } from '~/services/admin/dashboard/types';
 
 @Route('admin/dashboard')
@@ -125,5 +126,17 @@ export class AdminDashboardController {
     @Queries() query: AdminDashboardQuery,
   ): Promise<GetDashboardTopEventsResponse> {
     return this.service.getTopEventsStats(resolveDashboardDateRange(query));
+  }
+
+  @Get('/revenue-by-order-currency')
+  @ValidateQuery(AdminDashboardRouteSchema)
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  public async getDashboardRevenueByOrderCurrency(
+    @Queries() query: AdminDashboardQuery,
+  ): Promise<GetDashboardRevenueByOrderCurrencyResponse> {
+    return this.service.getRevenueByOrderCurrency(
+      resolveDashboardDateRange(query),
+    );
   }
 }

@@ -86,6 +86,11 @@ export class AdminDashboardRepository extends BaseRepository<AdminDashboardRepos
     };
   }
 
+  /**
+   * Revenue grouped by processor settlement currency (`payments.balanceCurrency`).
+   * GMV and commission fields are converted with `payments.exchangeRate` when set
+   * (cross-currency charge → settlement); otherwise order amounts are already in settlement units.
+   */
   async getRevenueByCurrency(range: DashboardDateRange) {
     let qb = this.db
       .selectFrom('orders')
@@ -93,28 +98,27 @@ export class AdminDashboardRepository extends BaseRepository<AdminDashboardRepos
         join
           .onRef('payments.orderId', '=', 'orders.id')
           .on('payments.deletedAt', 'is', null)
-          .on('payments.status', '=', 'paid'),
+          .on('payments.status', '=', 'paid')
+          .on('payments.balanceCurrency', 'is not', null),
       )
-      .select([
-        'orders.currency',
-        eb =>
-          eb.fn.sum<string>(eb.ref('orders.totalAmount')).as('gmv'),
-        eb =>
-          eb.fn
-            .sum<string>(eb.ref('orders.platformCommission'))
-            .as('platformCommission'),
-        eb =>
-          eb.fn
-            .sum<string>(eb.ref('orders.vatOnCommission'))
-            .as('vatOnCommission'),
-        eb =>
-          sql<string>`sum(coalesce(${eb.ref('payments.balanceFee')}, 0))`.as(
-            'processorFees',
-          ),
+      .select(eb => [
+        eb.ref('payments.balanceCurrency').as('currency'),
+        sql<string>`sum(case when ${eb.ref('payments.exchangeRate')} is not null then (cast(${eb.ref('orders.totalAmount')} as numeric) * cast(${eb.ref('payments.exchangeRate')} as numeric)) else cast(${eb.ref('orders.totalAmount')} as numeric) end)`.as(
+          'gmv',
+        ),
+        sql<string>`sum(case when ${eb.ref('payments.exchangeRate')} is not null then (cast(${eb.ref('orders.platformCommission')} as numeric) * cast(${eb.ref('payments.exchangeRate')} as numeric)) else cast(${eb.ref('orders.platformCommission')} as numeric) end)`.as(
+          'platformCommission',
+        ),
+        sql<string>`sum(case when ${eb.ref('payments.exchangeRate')} is not null then (cast(${eb.ref('orders.vatOnCommission')} as numeric) * cast(${eb.ref('payments.exchangeRate')} as numeric)) else cast(${eb.ref('orders.vatOnCommission')} as numeric) end)`.as(
+          'vatOnCommission',
+        ),
+        sql<string>`sum(coalesce(cast(${eb.ref('payments.balanceFee')} as numeric), 0))`.as(
+          'processorFees',
+        ),
       ])
       .where('orders.status', '=', 'confirmed')
       .where('orders.deletedAt', 'is', null)
-      .groupBy('orders.currency');
+      .groupBy('payments.balanceCurrency');
 
     if (range !== null) {
       qb = qb
@@ -130,7 +134,46 @@ export class AdminDashboardRepository extends BaseRepository<AdminDashboardRepos
   }
 
   /**
-   * Daily revenue for confirmed+paid orders (same economic filters as getRevenueByCurrency).
+   * Revenue grouped by order charge currency (`orders.currency`).
+   * Amounts are in the order's native currency — no exchange-rate conversion.
+   * Useful for showing how much GMV/commission came in each charge currency.
+   */
+  async getRevenueByOrderCurrency(range: DashboardDateRange) {
+    let qb = this.db
+      .selectFrom('orders')
+      .innerJoin('payments', join =>
+        join
+          .onRef('payments.orderId', '=', 'orders.id')
+          .on('payments.deletedAt', 'is', null)
+          .on('payments.status', '=', 'paid'),
+      )
+      .select(eb => [
+        eb.ref('orders.currency').as('currency'),
+        eb.fn.sum<string>('orders.totalAmount').as('gmv'),
+        eb.fn.sum<string>('orders.platformCommission').as('platformCommission'),
+        eb.fn.sum<string>('orders.vatOnCommission').as('vatOnCommission'),
+        eb.fn.count<number>('orders.id').as('orderCount'),
+      ])
+      .where('orders.status', '=', 'confirmed')
+      .where('orders.deletedAt', 'is', null)
+      .groupBy('orders.currency')
+      .orderBy('gmv', 'desc');
+
+    if (range !== null) {
+      qb = qb
+        .where(
+          sql<boolean>`coalesce(orders.confirmed_at, orders.created_at) >= ${range.from}`,
+        )
+        .where(
+          sql<boolean>`coalesce(orders.confirmed_at, orders.created_at) <= ${range.to}`,
+        );
+    }
+
+    return await qb.execute();
+  }
+
+  /**
+   * Daily revenue for confirmed+paid orders (same settlement-currency logic as getRevenueByCurrency).
    * When `range` is null (all-time), uses the last 365 days to bound chart payload size.
    */
   async getRevenueTimeSeries(range: DashboardDateRange) {
@@ -144,18 +187,21 @@ export class AdminDashboardRepository extends BaseRepository<AdminDashboardRepos
         join
           .onRef('payments.orderId', '=', 'orders.id')
           .on('payments.deletedAt', 'is', null)
-          .on('payments.status', '=', 'paid'),
+          .on('payments.status', '=', 'paid')
+          .on('payments.balanceCurrency', 'is not', null),
       )
       .select(eb => [
         dayBucket.as('day'),
-        eb.fn.sum<string>(eb.ref('orders.totalAmount')).as('gmv'),
-        eb.fn
-          .sum<string>(eb.ref('orders.platformCommission'))
-          .as('platformCommission'),
-        eb.fn
-          .sum<string>(eb.ref('orders.vatOnCommission'))
-          .as('vatOnCommission'),
-        sql<string>`sum(coalesce(${eb.ref('payments.balanceFee')}, 0))`.as(
+        sql<string>`sum(case when ${eb.ref('payments.exchangeRate')} is not null then (cast(${eb.ref('orders.totalAmount')} as numeric) * cast(${eb.ref('payments.exchangeRate')} as numeric)) else cast(${eb.ref('orders.totalAmount')} as numeric) end)`.as(
+          'gmv',
+        ),
+        sql<string>`sum(case when ${eb.ref('payments.exchangeRate')} is not null then (cast(${eb.ref('orders.platformCommission')} as numeric) * cast(${eb.ref('payments.exchangeRate')} as numeric)) else cast(${eb.ref('orders.platformCommission')} as numeric) end)`.as(
+          'platformCommission',
+        ),
+        sql<string>`sum(case when ${eb.ref('payments.exchangeRate')} is not null then (cast(${eb.ref('orders.vatOnCommission')} as numeric) * cast(${eb.ref('payments.exchangeRate')} as numeric)) else cast(${eb.ref('orders.vatOnCommission')} as numeric) end)`.as(
+          'vatOnCommission',
+        ),
+        sql<string>`sum(coalesce(cast(${eb.ref('payments.balanceFee')} as numeric), 0))`.as(
           'processorFees',
         ),
       ])

@@ -458,18 +458,13 @@ export class ProcessorSettlementsService {
       earningsByOrderId.set(row.orderId, list);
     }
 
-    let totalSellerEarnings = 0;
-    for (const oid of orderIds) {
-      const rows = earningsByOrderId.get(oid) ?? [];
-      totalSellerEarnings += rows.reduce(
-        (acc, e) => acc + Number(e.sellerAmount),
-        0,
-      );
-    }
-
     let totalCustomerCharges = 0;
     let totalProcessorCredits = 0;
     let totalProcessorFees = 0;
+    let totalSellerEarningsConverted = 0;
+    let hasMultipleCurrencies = false;
+
+    const settlementCurrency = settlement.currency;
 
     const breakdownItems = items.map(item => {
       const payment = item.paymentId
@@ -480,8 +475,51 @@ export class ProcessorSettlementsService {
         ? (earningsByOrderId.get(payment.orderId) ?? [])
         : [];
 
-      const sellerSum = orderEarnings.reduce(
-        (acc, e) => acc + Number(e.sellerAmount),
+      // The settlement currency is always the balance currency (e.g. UYU for dLocal).
+      // Seller earnings are stored in ticket currency (e.g. USD for USD-priced tickets).
+      // When they differ, convert seller amounts to settlement currency using the exchange rate.
+      const exchangeRate =
+        payment?.exchangeRate != null
+          ? Number(payment.exchangeRate)
+          : item.exchangeRate != null
+            ? Number(item.exchangeRate)
+            : null;
+
+      const itemCurrency =
+        payment?.balanceCurrency ?? payment?.currency ?? item.currency;
+
+      // Determine the charge currency (what the customer paid in)
+      const customerAmountCurrency = payment?.currency ?? item.currency;
+      const currenciesDiffer =
+        customerAmountCurrency !== itemCurrency ||
+        orderEarnings.some(e => e.currency !== itemCurrency);
+
+      if (currenciesDiffer) {
+        hasMultipleCurrencies = true;
+      }
+
+      // Convert each seller earning to the settlement currency when needed
+      const sellerEarningsWithConversion = orderEarnings.map(e => {
+        const needsConversion = e.currency !== itemCurrency;
+        const convertedAmount =
+          needsConversion && exchangeRate != null
+            ? Number(e.sellerAmount) * exchangeRate
+            : Number(e.sellerAmount);
+        return {
+          id: e.id,
+          sellerAmount: String(e.sellerAmount),
+          sellerAmountConverted: needsConversion
+            ? String(convertedAmount)
+            : null,
+          sellerUserId: e.sellerUserId,
+          status: e.status,
+          currency: e.currency,
+        };
+      });
+
+      const sellerSumConverted = sellerEarningsWithConversion.reduce(
+        (acc, e) =>
+          acc + Number(e.sellerAmountConverted ?? e.sellerAmount),
         0,
       );
 
@@ -499,32 +537,23 @@ export class ProcessorSettlementsService {
         totalCustomerCharges += customerAmount;
         totalProcessorCredits += processorCredit;
         totalProcessorFees += processorFee;
+        totalSellerEarningsConverted += sellerSumConverted;
       }
 
-      const platformShare = processorCredit - sellerSum;
+      // platformShare is in settlement currency (UYU), using converted seller amounts
+      const platformShare = processorCredit - sellerSumConverted;
 
       return {
         settlementItemId: item.id,
         paymentId: item.paymentId,
         providerPaymentId: payment?.providerPaymentId ?? item.operationId,
         customerAmount: String(customerAmount),
+        customerAmountCurrency,
         processorCredit: String(processorCredit),
         processorFee: String(processorFee),
-        exchangeRate:
-          payment?.exchangeRate != null
-            ? String(payment.exchangeRate)
-            : item.exchangeRate != null
-              ? String(item.exchangeRate)
-              : null,
-        currency:
-          payment?.balanceCurrency ?? payment?.currency ?? item.currency,
-        sellerEarnings: orderEarnings.map(e => ({
-          id: e.id,
-          sellerAmount: String(e.sellerAmount),
-          sellerUserId: e.sellerUserId,
-          status: e.status,
-          currency: e.currency,
-        })),
+        exchangeRate: exchangeRate != null ? String(exchangeRate) : null,
+        currency: itemCurrency,
+        sellerEarnings: sellerEarningsWithConversion,
         platformShare: String(platformShare),
       };
     });
@@ -532,18 +561,22 @@ export class ProcessorSettlementsService {
     const declaredTotal = Number(settlement.totalAmount);
     const unreconciledDifference = declaredTotal - totalProcessorCredits;
 
-    const platformRevenue = totalProcessorCredits - totalSellerEarnings;
+    // Platform revenue in settlement currency (UYU), using converted seller earnings
+    const platformRevenue =
+      totalProcessorCredits - totalSellerEarningsConverted;
 
     return {
       settlement: toSettlementListRow(settlement),
       reconciliation: {
         paymentCount: items.length,
         totalCustomerCharges: String(totalCustomerCharges),
+        totalCustomerChargesCurrency: settlementCurrency,
         totalProcessorCredits: String(totalProcessorCredits),
         totalProcessorFees: String(totalProcessorFees),
-        totalSellerEarnings: String(totalSellerEarnings),
+        totalSellerEarningsConverted: String(totalSellerEarningsConverted),
         platformRevenue: String(platformRevenue),
         unreconciledDifference: String(unreconciledDifference),
+        hasMultipleCurrencies,
       },
       items: breakdownItems,
     };
