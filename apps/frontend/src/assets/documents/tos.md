@@ -2,6 +2,14 @@
 
 **Última actualización:** 1 de Abril de 2026
 
+<!--
+  MAINTENANCE (comisión de plataforma): Los porcentajes y montos de ejemplo en este documento
+  deben alinearse con la comisión vigente. La aplicación usa las variables de entorno
+  PLATFORM_COMMISSION_RATE (backend) y VITE_PLATFORM_COMMISSION_RATE (frontend); al cambiarlas,
+  actualizá manualmente las secciones que mencionan comisión e IVA (p. ej. 8.2, 9 y 9.1).
+  Ver: apps/backend/docs/platform-commission-rate.md
+-->
+
 ---
 
 # PARTE I: Términos y Condiciones para Compradores
@@ -724,7 +732,7 @@ En protección del consumidor, **el precio máximo de transferencia está limita
 **Esta regla existe para:**
 
 - **Proteger a los compradores** de sobreprecios excesivos y especulación.
-- **Permitir a los publicadores recuperar su inversión**, incluyendo los costos de adquisición (comisiones de plataformas originales, típicamente 10-12%).
+- **Permitir a los publicadores recuperar su inversión**, incluyendo los costos de adquisición (comisiones de plataformas originales, típicamente 10-15%).
 - **Evitar la generación de ganancias** a través de la reventa de entradas.
 
 Esta regla es obligatoria para todas las operaciones en la Plataforma. Exceder el precio máximo permitido resultará en la cancelación de publicaciones, operaciones y/o cuentas.

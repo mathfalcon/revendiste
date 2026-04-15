@@ -1,4 +1,4 @@
-import {AdminEvent} from '~/lib/api/generated';
+import type {AdminEvent} from '~/lib/api/admin/admin-event-types';
 import {Badge} from '~/components/ui/badge';
 import {Calendar, MapPin, Ticket} from 'lucide-react';
 import {format} from 'date-fns';

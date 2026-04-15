@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useNavigate, useSearch} from '@tanstack/react-router';
 import {getMyListingsQuery} from '~/lib';
@@ -18,9 +18,10 @@ import {Alert, AlertDescription} from '~/components/ui/alert';
 
 export function PublicationsView() {
   const {data: listings, isPending} = useQuery(getMyListingsQuery());
-  const search = useSearch({from: '/cuenta/publicaciones'});
-  const navigate = useNavigate({from: '/cuenta/publicaciones'});
+  const search = useSearch({from: '/cuenta/publicaciones/'});
+  const navigate = useNavigate({from: '/cuenta/publicaciones/'});
   const [carouselOpen, setCarouselOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<string[]>(['active']);
 
   // Find the ticket to upload based on search param
   const ticketToUpload = search.subirTicket
@@ -59,6 +60,31 @@ export function PublicationsView() {
   const listingFromParam = search.subirPublicacion
     ? listings?.find(listing => listing.id === search.subirPublicacion)
     : null;
+
+  const scrollToListingCard = useCallback((listingId: string) => {
+    const openAndScroll = () => {
+      document
+        .getElementById(`listing-card-${listingId}`)
+        ?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    };
+    // Accordion content must be open before scroll (Radix keeps closed panels out of layout).
+    window.setTimeout(openAndScroll, 280);
+  }, []);
+
+  // Open the right accordion panel and scroll to the card (after layout; Radix hides closed content).
+  useEffect(() => {
+    if (!listingFromParam || !search.subirPublicacion) {
+      return;
+    }
+    const section =
+      new Date(listingFromParam.event.eventEndDate) > new Date()
+        ? 'active'
+        : 'sold';
+    setOpenSections(prev =>
+      prev.includes(section) ? prev : [...prev, section],
+    );
+    scrollToListingCard(listingFromParam.id);
+  }, [search.subirPublicacion, listingFromParam, scrollToListingCard]);
 
   // Get tickets from specific listing that need upload
   const listingTicketsNeedingUpload = listingFromParam
@@ -180,15 +206,8 @@ export function PublicationsView() {
 
       <Accordion
         type='multiple'
-        defaultValue={
-          search.subirPublicacion && listingFromParam
-            ? [
-                new Date(listingFromParam.event.eventEndDate) > now
-                  ? 'active'
-                  : 'sold',
-              ].filter(Boolean)
-            : ['active']
-        }
+        value={openSections}
+        onValueChange={setOpenSections}
         className='w-full flex flex-col gap-4'
       >
         {/* Active Listings */}

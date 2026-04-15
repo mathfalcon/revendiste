@@ -7,12 +7,17 @@ import {cn} from '~/lib/utils';
 import type {TicketSelectionFormValues, TicketWave} from './types';
 import type {EventTicketCurrency} from '~/lib/api/generated';
 
+const CURRENCY_BLOCKED_PLUS_TITLE =
+  'En la misma compra solo podés elegir entradas en una moneda. Quitá las otras para sumar acá.';
+
 /**
  * Props for form mode (event page - selecting tickets)
  */
 interface FormModeProps {
   mode: 'form';
   ticketWave: TicketWave;
+  /** When set, waves in another currency cannot add tickets until selection is cleared. */
+  lockedCurrency: EventTicketCurrency | null;
   updateTicketCount: (
     ticketWaveId: string,
     priceGroupPrice: string,
@@ -106,7 +111,11 @@ function ReadonlyTicketWaveCard({
 /**
  * Form version for the event page with +/- controls
  */
-function FormTicketWaveCard({ticketWave, updateTicketCount}: FormModeProps) {
+function FormTicketWaveCard({
+  ticketWave,
+  lockedCurrency,
+  updateTicketCount,
+}: FormModeProps) {
   const form = useFormContext<TicketSelectionFormValues>();
 
   // Filter price groups that have available tickets
@@ -121,12 +130,15 @@ function FormTicketWaveCard({ticketWave, updateTicketCount}: FormModeProps) {
   // Check if any tickets are selected in this wave
   const waveSelection = form.watch(ticketWave.id) || {};
   const hasSelection = Object.values(waveSelection).some(count => count > 0);
+  const currencyBlocked =
+    lockedCurrency !== null && ticketWave.currency !== lockedCurrency;
 
   return (
     <Card
       className={cn(
         'overflow-hidden transition-all rounded-md',
         hasSelection && 'ring-2 ring-primary/20 border-primary/30',
+        currencyBlocked && !hasSelection && 'opacity-60',
       )}
     >
       {/* Header */}
@@ -209,7 +221,14 @@ function FormTicketWaveCard({ticketWave, updateTicketCount}: FormModeProps) {
                       1,
                     )
                   }
-                  disabled={selectedCount >= availableTickets}
+                  disabled={
+                    selectedCount >= availableTickets || currencyBlocked
+                  }
+                  title={
+                    currencyBlocked && selectedCount < availableTickets
+                      ? CURRENCY_BLOCKED_PLUS_TITLE
+                      : undefined
+                  }
                   className='h-9 w-9 rounded-full'
                 >
                   <PlusIcon className='h-4 w-4' />

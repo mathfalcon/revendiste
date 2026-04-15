@@ -14,11 +14,15 @@ const homeSearchSchema = z.object({
   conEntradas: z.coerce.boolean().optional().catch(undefined),
 });
 
+type HomeSearch = z.infer<typeof homeSearchSchema>;
+
 export const Route = createFileRoute('/')({
   component: Home,
   validateSearch: homeSearchSchema,
-  loaderDeps: ({search}) => ({search}),
-  loader: async ({context, deps: {search}}) => {
+  // No search in loaderDeps: same-path filter navigations must not re-run this loader
+  // (would trigger default route pending → fullscreen loader instead of HomeEvents skeletons).
+  loader: async ({context, location}) => {
+    const search = location.search as HomeSearch;
     const filters: Record<string, string | number | boolean> = {};
 
     if (search.ubicacion === 'cerca' && search.lat && search.lng) {
@@ -45,42 +49,53 @@ export const Route = createFileRoute('/')({
   },
   head: () => {
     const baseUrl = getBaseUrl();
+    // Canonical origin without trailing slash (matches getBaseUrl / env)
+    const origin = baseUrl.replace(/\/$/, '');
+    // Google site-name docs use the domain root with trailing slash for WebSite.url
+    const homePageUrl = `${origin}/`;
+    const organizationId = `${homePageUrl}#organization`;
+    const websiteId = `${homePageUrl}#website`;
 
-    // Organization structured data for homepage
-    const organizationSchema = {
+    // Single @graph: Google recommends one WebSite node and linking Organization via publisher/@id
+    // https://developers.google.com/search/docs/appearance/site-names
+    const homeStructuredData = {
       '@context': 'https://schema.org',
-      '@type': 'Organization',
-      name: 'Revendiste',
-      url: baseUrl,
-      logo: `${baseUrl}/android-chrome-512x512.png`,
-      description:
-        'Plataforma de compra y venta de entradas para conciertos, fiestas y eventos en Uruguay. Incluye reventa segura entre personas, custodia de fondos y vendedores verificados.',
-      sameAs: [
-        'https://twitter.com/revendiste',
-        'https://www.instagram.com/revendiste',
-      ],
-      contactPoint: {
-        '@type': 'ContactPoint',
-        contactType: 'customer service',
-        email: 'ayuda@revendiste.com',
-        availableLanguage: 'Spanish',
-      },
-    };
-
-    // Website structured data
-    const websiteSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'Revendiste',
-      url: baseUrl,
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: {
-          '@type': 'EntryPoint',
-          urlTemplate: `${baseUrl}/eventos?search={search_term_string}`,
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': organizationId,
+          name: 'Revendiste',
+          url: homePageUrl,
+          logo: `${origin}/android-chrome-512x512.png`,
+          description:
+            'Plataforma de compra y venta de entradas para conciertos, fiestas y eventos en Uruguay. Incluye reventa segura entre personas, custodia de fondos y vendedores verificados.',
+          sameAs: [
+            'https://twitter.com/revendiste',
+            'https://www.instagram.com/revendiste',
+          ],
+          contactPoint: {
+            '@type': 'ContactPoint',
+            contactType: 'customer service',
+            email: 'ayuda@revendiste.com',
+            availableLanguage: 'Spanish',
+          },
         },
-        'query-input': 'required name=search_term_string',
-      },
+        {
+          '@type': 'WebSite',
+          '@id': websiteId,
+          name: 'Revendiste',
+          url: homePageUrl,
+          publisher: {'@id': organizationId},
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: {
+              '@type': 'EntryPoint',
+              urlTemplate: `${origin}/eventos?search={search_term_string}`,
+            },
+            'query-input': 'required name=search_term_string',
+          },
+        },
+      ],
     };
 
     return {
@@ -109,11 +124,7 @@ export const Route = createFileRoute('/')({
       scripts: [
         {
           type: 'application/ld+json',
-          children: JSON.stringify(organizationSchema),
-        },
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify(websiteSchema),
+          children: JSON.stringify(homeStructuredData),
         },
       ],
     };

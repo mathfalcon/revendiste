@@ -11,6 +11,7 @@ import {
 import type {PaginationOptions} from '~/types/pagination';
 import {
   ProcessorSettlementMetadataSchema,
+  PayoutMetadataSchema,
   type Json,
   type PaymentProvider,
   type ProcessorSettlementReconciliationSnapshot,
@@ -514,6 +515,7 @@ export class ProcessorSettlementsService {
           sellerUserId: e.sellerUserId,
           status: e.status,
           currency: e.currency,
+          payoutId: e.payoutId,
         };
       });
 
@@ -565,6 +567,83 @@ export class ProcessorSettlementsService {
     const platformRevenue =
       totalProcessorCredits - totalSellerEarningsConverted;
 
+    const payoutBackedUyu = new Map<string, number>();
+    let availableSellerUyuInSettlement = 0;
+
+    for (const item of breakdownItems) {
+      for (const se of item.sellerEarnings) {
+        const conv = Number(se.sellerAmountConverted ?? se.sellerAmount);
+        if (se.payoutId) {
+          payoutBackedUyu.set(
+            se.payoutId,
+            (payoutBackedUyu.get(se.payoutId) ?? 0) + conv,
+          );
+        } else if (se.status === 'available') {
+          availableSellerUyuInSettlement += conv;
+        }
+      }
+    }
+
+    const fundingPayoutIds = [...payoutBackedUyu.keys()];
+    const payoutRows =
+      fundingPayoutIds.length > 0
+        ? await this.payoutsRepository.getByIdsWithPayoutType(fundingPayoutIds)
+        : [];
+
+    const fundedPayouts = payoutRows.map(row => {
+      const meta = row.metadata
+        ? PayoutMetadataSchema.safeParse(row.metadata)
+        : {success: false as const};
+      const rateLock =
+        meta.success && meta.data.rateLock ? meta.data.rateLock : null;
+      const backingUyu = payoutBackedUyu.get(row.id) ?? 0;
+      return {
+        payoutId: row.id,
+        sellerUserId: row.sellerUserId,
+        status: row.status,
+        amount: String(row.amount),
+        currency: row.currency,
+        payoutType: row.payoutType,
+        uyuBackedInThisSettlement: String(backingUyu),
+        rateLock: rateLock
+          ? {
+              lockedRate: rateLock.lockedRate,
+              brouVentaRate: rateLock.brouVentaRate,
+              originalAmount: rateLock.originalAmount,
+              convertedAmount: rateLock.convertedAmount,
+              rateExpiresAt: rateLock.rateExpiresAt,
+            }
+          : null,
+      };
+    });
+
+    let bankTransferUyuOut = 0;
+    let payPalUyuBacking = 0;
+    let payPalUsdOut = 0;
+
+    for (const row of payoutRows) {
+      const backing = payoutBackedUyu.get(row.id) ?? 0;
+      if (row.payoutType === 'paypal') {
+        payPalUyuBacking += backing;
+        if (row.currency === 'USD') {
+          payPalUsdOut += Number(row.amount);
+        }
+      } else {
+        bankTransferUyuOut += backing;
+      }
+    }
+
+    const attributedToPayoutsUyu = [...payoutBackedUyu.values()].reduce(
+      (a, b) => a + b,
+      0,
+    );
+    const earningsCoverageDifference =
+      totalSellerEarningsConverted -
+      (availableSellerUyuInSettlement + attributedToPayoutsUyu);
+
+    const payoutReconciliationStatus =
+      Math.abs(earningsCoverageDifference) < 0.05 ? 'balanced' : 'mismatch';
+
     return {
       settlement: toSettlementListRow(settlement),
       reconciliation: {
@@ -579,6 +658,19 @@ export class ProcessorSettlementsService {
         hasMultipleCurrencies,
       },
       items: breakdownItems,
+      fundedPayouts,
+      moneyFlowSummary: {
+        availableSellerUyuInSettlement: String(availableSellerUyuInSettlement),
+        attributedToPayoutsUyu: String(attributedToPayoutsUyu),
+        bankTransferUyuOut: String(bankTransferUyuOut),
+        payPalUyuBacking: String(payPalUyuBacking),
+        payPalUsdOut: String(payPalUsdOut),
+        earningsCoverageDifference: String(earningsCoverageDifference),
+      },
+      payoutReconciliation: {
+        status: payoutReconciliationStatus,
+        differenceUyu: String(earningsCoverageDifference),
+      },
     };
   }
 

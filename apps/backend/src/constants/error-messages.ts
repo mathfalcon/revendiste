@@ -77,6 +77,7 @@ export const TICKET_LISTING_ERROR_MESSAGES = {
       currency,
     )} (115% del valor nominal)`,
   INVALID_QUANTITY: 'La cantidad debe ser mayor que 0',
+  LISTING_NOT_FOUND: 'No encontramos esa publicación en tu cuenta.',
   TICKET_NOT_FOUND: 'Entrada no encontrada',
   UNAUTHORIZED_TICKET_ACCESS: 'No estás autorizado para modificar esta entrada',
   TICKET_SOLD: 'No podés modificar una entrada que ya se vendió',
@@ -168,6 +169,12 @@ export const PAYOUT_ERROR_MESSAGES = {
     'No podés retirar ganancias en UYU a una cuenta bancaria en USD. Seleccioná un método de pago en UYU o PayPal.',
   EARNINGS_WITH_OPEN_REPORTS:
     'Algunas ganancias seleccionadas tienen reportes abiertos y no pueden ser retiradas. Esperá a que se resuelvan los reportes.',
+  PAYOUT_HAS_NO_RATE_LOCK:
+    'Este retiro no tiene un tipo de cambio bloqueado para actualizar.',
+  PAYOUT_RATE_REFRESH_BELOW_MINIMUM: (minimumUsd: number) =>
+    `El nuevo monto en USD quedaría por debajo del mínimo (${minimumUsd} USD) tras actualizar el tipo de cambio.`,
+  USD_UYU_EXCHANGE_RATE_UNAVAILABLE:
+    'No pudimos obtener la cotización del dólar (BROU ni Itaú). Probá de nuevo en unos minutos.',
 } as const;
 
 // Error messages for processor settlements (reconciliation)
@@ -447,6 +454,7 @@ export const NOTIFICATION_BUTTON_LABELS = {
   PUBLISH_TICKETS: 'Publicar entradas',
   RETRY_VERIFICATION: 'Reintentar verificación',
   VIEW_EARNINGS: 'Ver ganancias',
+  REQUEST_WITHDRAWAL: 'Solicitar retiro',
   VIEW_MY_CASE: 'Ver mi caso',
 } as const;
 

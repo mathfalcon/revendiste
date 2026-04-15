@@ -3,11 +3,11 @@ import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
 import {useForm} from 'react-hook-form';
 import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {z} from 'zod';
-import {AdminEventDetail} from '~/lib/api/generated';
 import {
   adminEventDetailsQueryOptions,
   updateEventMutation,
 } from '~/lib/api/admin';
+import type {GetEventDetailsResponse} from '~/lib/api/generated';
 import {Button} from '~/components/ui/button';
 import {Input} from '~/components/ui/input';
 import {Textarea} from '~/components/ui/textarea';
@@ -47,13 +47,13 @@ import {
 import {EventMetadataCard} from './EventMetadataCard';
 import {EventImagesSection} from './EventImagesSection';
 import {EventTicketWavesSection} from './EventTicketWavesSection';
-import {VenueCombobox} from './VenueCombobox';
 import {toast} from 'sonner';
 import {Loader2, Trash2, ExternalLink, ArrowLeft} from 'lucide-react';
-import {format} from 'date-fns';
-import {es} from 'date-fns/locale';
 import {deleteEventMutation} from '~/lib/api/admin';
 import {DateTimePicker} from '~/components/datetime-picker';
+import {Link} from '@tanstack/react-router';
+
+const QR_TIMINGS = ['3h', '6h', '12h', '24h', '48h', '72h'] as const;
 
 const eventFormSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -61,13 +61,11 @@ const eventFormSchema = z.object({
   eventStartDate: z.string().min(1, 'La fecha de inicio es requerida'),
   eventEndDate: z.string().min(1, 'La fecha de fin es requerida'),
   externalUrl: z.string().optional(),
-  qrAvailabilityTiming: z.string().nullable().optional(),
+  qrAvailabilityTiming: z.enum(['none', ...QR_TIMINGS]),
   status: z.enum(['active', 'inactive']),
 });
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
-
-const QR_TIMINGS = ['3h', '6h', '12h', '24h', '48h', '72h'];
 
 interface EventDetailPageProps {
   eventId: string;
@@ -84,41 +82,41 @@ function formatDateTimeLocal(dateString: string): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
+function buildEventFormDefaults(event: GetEventDetailsResponse): EventFormValues {
+  return {
+    name: event.name,
+    description: event.description || '',
+    eventStartDate: formatDateTimeLocal(event.eventStartDate),
+    eventEndDate: formatDateTimeLocal(event.eventEndDate),
+    externalUrl: event.externalUrl || '',
+    qrAvailabilityTiming: event.qrAvailabilityTiming ?? 'none',
+    status: event.status as 'active' | 'inactive',
+  };
+}
+
+type QrTimingApi = NonNullable<
+  GetEventDetailsResponse['qrAvailabilityTiming']
+>;
+
+function EventDetailEditor({
+  event,
+  eventId,
+  onBack,
+}: {
+  event: GetEventDetailsResponse;
+  eventId: string;
+  onBack: () => void;
+}) {
   const queryClient = useQueryClient();
-  const {data: event, isLoading} = useQuery(
-    adminEventDetailsQueryOptions(eventId),
-  );
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [selectedVenue, setSelectedVenue] = useState<
-    {id: string; name: string; address: string; city: string} | undefined
-  >();
 
   const form = useForm<EventFormValues>({
     resolver: standardSchemaResolver(eventFormSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      eventStartDate: '',
-      eventEndDate: '',
-      externalUrl: '',
-      qrAvailabilityTiming: '',
-      status: 'active',
-    },
+    defaultValues: buildEventFormDefaults(event),
   });
 
   useEffect(() => {
-    if (event) {
-      form.reset({
-        name: event.name,
-        description: event.description || '',
-        eventStartDate: formatDateTimeLocal(event.eventStartDate),
-        eventEndDate: formatDateTimeLocal(event.eventEndDate),
-        externalUrl: event.externalUrl || '',
-        qrAvailabilityTiming: event.qrAvailabilityTiming || '',
-        status: event.status as 'active' | 'inactive',
-      });
-    }
+    form.reset(buildEventFormDefaults(event));
   }, [event, form]);
 
   const updateMutation = useMutation({
@@ -148,18 +146,6 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className='flex items-center justify-center p-8'>
-        <Loader2 className='h-6 w-6 animate-spin' />
-      </div>
-    );
-  }
-
-  if (!event) {
-    return null;
-  }
-
   const onSubmit = (data: EventFormValues) => {
     updateMutation.mutate({
       eventId,
@@ -169,9 +155,10 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
         eventStartDate: new Date(data.eventStartDate).toISOString(),
         eventEndDate: new Date(data.eventEndDate).toISOString(),
         externalUrl: data.externalUrl || '',
-        qrAvailabilityTiming: data.qrAvailabilityTiming
-          ? (data.qrAvailabilityTiming as any)
-          : null,
+        qrAvailabilityTiming:
+          data.qrAvailabilityTiming === 'none'
+            ? null
+            : (data.qrAvailabilityTiming as QrTimingApi),
         status: data.status,
       },
     });
@@ -181,7 +168,6 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
 
   return (
     <div className='space-y-6'>
-      {/* Header with Back Button */}
       <div className='flex items-center gap-2'>
         <Button variant='ghost' size='sm' onClick={onBack}>
           <ArrowLeft className='mr-2 h-4 w-4' />
@@ -189,7 +175,6 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
         </Button>
       </div>
 
-      {/* Hero Section */}
       <div className='relative h-48 md:h-64 rounded-lg overflow-hidden bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800'>
         {heroImage ? (
           <img
@@ -217,11 +202,8 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
         </div>
       </div>
 
-      {/* Main Content Grid */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-        {/* Left Column: Edit Form */}
         <div className='lg:col-span-2 space-y-6'>
-          {/* General Info */}
           <Card>
             <CardHeader>
               <CardTitle className='text-lg'>Información General</CardTitle>
@@ -332,12 +314,12 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
                       <FormItem>
                         <FormLabel>Disponibilidad de los QR</FormLabel>
                         <Select
-                          value={field.value || ''}
+                          value={field.value}
                           onValueChange={field.onChange}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder='Sin restricción' />
+                              <SelectValue placeholder='Elegí una opción' />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -396,7 +378,6 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
             </CardContent>
           </Card>
 
-          {/* Venue */}
           <Card>
             <CardHeader>
               <CardTitle className='text-lg'>Lugar</CardTitle>
@@ -428,24 +409,32 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
             </CardContent>
           </Card>
 
-          {/* Ticket Waves */}
           <EventTicketWavesSection event={event} />
         </div>
 
-        {/* Right Column: Sidebar */}
         <div className='space-y-6'>
-          {/* Images */}
           <EventImagesSection event={event} />
 
-          {/* Metadata */}
           <EventMetadataCard event={event} />
 
-          {/* Quick Actions */}
           <Card className='border-destructive/20'>
             <CardHeader>
               <CardTitle className='text-lg'>Acciones Rápidas</CardTitle>
             </CardHeader>
             <CardContent className='space-y-2'>
+              {event.slug && (
+                <Button className='w-full justify-start' asChild>
+                  <Link
+                    to='/eventos/$slug'
+                    params={{slug: event.slug}}
+                    target='_blank'
+                    rel='noreferrer'
+                  >
+                    <ExternalLink className='mr-2 h-4 w-4' />
+                    Abrir en Revendiste
+                  </Link>
+                </Button>
+              )}
               {event.externalUrl && (
                 <Button
                   variant='outline'
@@ -454,10 +443,11 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
                 >
                   <a href={event.externalUrl} target='_blank' rel='noreferrer'>
                     <ExternalLink className='mr-2 h-4 w-4' />
-                    Abrir en línea
+                    Abrir URL externa
                   </a>
                 </Button>
               )}
+
               <Button
                 variant='destructive'
                 className='w-full justify-start'
@@ -471,7 +461,6 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
         </div>
       </div>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -496,5 +485,32 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
+  const {data: event, isLoading} = useQuery(
+    adminEventDetailsQueryOptions(eventId),
+  );
+
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center p-8'>
+        <Loader2 className='h-6 w-6 animate-spin' />
+      </div>
+    );
+  }
+
+  if (!event) {
+    return null;
+  }
+
+  return (
+    <EventDetailEditor
+      key={event.id}
+      event={event}
+      eventId={eventId}
+      onBack={onBack}
+    />
   );
 }

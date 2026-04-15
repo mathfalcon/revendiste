@@ -5,7 +5,13 @@
  * additional frontend-specific string utilities.
  */
 
-import {format, isToday, isTomorrow, isThisWeek, differenceInCalendarDays} from 'date-fns';
+import {
+  format,
+  isToday,
+  isTomorrow,
+  isYesterday,
+  differenceInCalendarDays,
+} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {EventTicketCurrency} from '~/lib';
 
@@ -51,6 +57,34 @@ export function formatEventDateSmart(date: Date | string | null): string {
     return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} a las ${time}`;
   }
   return format(d, "d 'de' MMMM 'a las' HH:mm", {locale: es});
+}
+
+/**
+ * Human-friendly date+time for past (or recent) activity:
+ * - Today → "Hoy a las 18:30"
+ * - Yesterday → "Ayer a las 09:00"
+ * - Same calendar year → "Viernes 11 de abril a las 14:20"
+ * - Other years → weekday + full date with year
+ */
+export function formatSmartDateTime(date: Date | string | null): string {
+  if (!date) return '';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const time = format(d, timeFormat, {locale: es});
+  if (isToday(d)) {
+    return `Hoy a las ${time}`;
+  }
+  if (isYesterday(d)) {
+    return `Ayer a las ${time}`;
+  }
+  const now = new Date();
+  const sameYear = d.getFullYear() === now.getFullYear();
+  const datePart = format(
+    d,
+    sameYear ? "EEEE d 'de' MMMM" : "EEEE d 'de' MMMM yyyy",
+    {locale: es},
+  );
+  const capitalized = datePart.charAt(0).toUpperCase() + datePart.slice(1);
+  return `${capitalized} a las ${time}`;
 }
 
 /**

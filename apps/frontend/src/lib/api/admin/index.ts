@@ -1,8 +1,13 @@
 import {queryOptions} from '@tanstack/react-query';
-import {api, PaginationQuery, UpdatePayoutRouteBody} from '../';
+import {api, PaginationQuery} from '../';
 
 export interface AdminPayoutsQueryParams extends PaginationQuery {
-  status?: 'pending' | 'completed' | 'failed' | 'cancelled';
+  status?:
+    | 'pending'
+    | 'processing'
+    | 'completed'
+    | 'failed'
+    | 'cancelled';
 }
 
 export const adminPayoutsQueryOptions = (params: AdminPayoutsQueryParams) => {
@@ -31,21 +36,6 @@ export const adminPayoutDetailsQueryOptions = (payoutId: string) => {
   });
 };
 
-export const updatePayoutMutation = () => {
-  return {
-    mutationFn: async ({
-      payoutId,
-      updates,
-    }: {
-      payoutId: string;
-      updates: UpdatePayoutRouteBody;
-    }) => {
-      const response = await api.admin.updatePayout(payoutId, updates);
-      return response.data;
-    },
-  };
-};
-
 export const processPayoutMutation = () => {
   return {
     mutationFn: async ({
@@ -57,7 +47,8 @@ export const processPayoutMutation = () => {
         processingFee?: number;
         transactionReference?: string;
         notes?: string;
-        voucherUrl?: string;
+        actualBankRate?: number;
+        actualUyuCost?: number;
       };
     }) => {
       // Ensure we always send at least an empty object
@@ -68,19 +59,10 @@ export const processPayoutMutation = () => {
   };
 };
 
-export const completePayoutMutation = () => {
+export const refreshPayoutRateLockMutation = () => {
   return {
-    mutationFn: async ({
-      payoutId,
-      options,
-    }: {
-      payoutId: string;
-      options?: {
-        transactionReference?: string;
-        voucherUrl?: string;
-      };
-    }) => {
-      const response = await api.admin.completePayout(payoutId, options || {});
+    mutationFn: async (payoutId: string) => {
+      const response = await api.admin.refreshPayoutRateLock(payoutId, {});
       return response.data;
     },
   };
@@ -124,17 +106,9 @@ export const cancelPayoutMutation = () => {
 export const uploadPayoutDocumentMutation = () => {
   return {
     mutationFn: async ({payoutId, file}: {payoutId: string; file: File}) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await api.admin.uploadPayoutDocument(
-        payoutId,
-        {file},
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        },
-      );
+      // Same as ticket document upload: let the generated client build FormData.
+      // Do not set Content-Type manually — it omits the boundary and breaks multer.
+      const response = await api.admin.uploadPayoutDocument(payoutId, {file});
       return response.data;
     },
   };
@@ -149,14 +123,27 @@ export const deletePayoutDocumentMutation = () => {
   };
 };
 
-export const triggerHoldCheckMutation = () => {
-  return {
-    mutationFn: async () => {
-      const response = await api.admin.triggerHoldCheck();
-      return response.data;
-    },
-  };
-};
+const CRONJOB_TRIGGER_FNS = {
+  syncPaymentsAndExpireOrders: () =>
+    api.admin.triggerSyncPaymentsAndExpireOrders(),
+  notifyUploadAvailability: () =>
+    api.admin.triggerNotifyUploadAvailability(),
+  checkPayoutHoldPeriods: () => api.admin.triggerCheckPayoutHoldPeriods(),
+  processPendingNotifications: () =>
+    api.admin.triggerProcessPendingNotifications(),
+  processPendingJobs: () => api.admin.triggerProcessPendingJobs(),
+  scrapeEvents: () => api.admin.triggerScrapeEvents(),
+} as const;
+
+export type AdminCronjobTriggerKey = keyof typeof CRONJOB_TRIGGER_FNS;
+
+/** Manual run of scheduled cronjob logic (admin API). */
+export const triggerCronjobMutation = () => ({
+  mutationFn: async (key: AdminCronjobTriggerKey) => {
+    const response = await CRONJOB_TRIGGER_FNS[key]();
+    return response.data;
+  },
+});
 
 // ============================================================================
 // Identity Verification Admin
@@ -571,6 +558,7 @@ export type AdminDashboardApiQuery = {
 const DASHBOARD_POLL_FAST_MS = 15_000;
 const DASHBOARD_POLL_MID_MS = 30_000;
 const DASHBOARD_POLL_SLOW_MS = 60_000;
+const ADMIN_SIDEBAR_COUNTS_POLL_MS = 30_000;
 
 export const adminDashboardTicketsQueryOptions = (
   params: AdminDashboardApiQuery,
@@ -632,6 +620,17 @@ export const adminDashboardHealthQueryOptions = () => {
       return response.data;
     },
     refetchInterval: DASHBOARD_POLL_SLOW_MS,
+  });
+};
+
+export const adminSidebarCountsQueryOptions = () => {
+  return queryOptions({
+    queryKey: ['admin', 'sidebar-counts'] as const,
+    queryFn: async () => {
+      const response = await api.admin.getDashboardSidebarCounts();
+      return response.data;
+    },
+    refetchInterval: ADMIN_SIDEBAR_COUNTS_POLL_MS,
   });
 };
 

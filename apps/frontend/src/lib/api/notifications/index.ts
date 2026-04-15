@@ -81,3 +81,8 @@ export const testPushMutation = () =>
   mutationOptions({
     mutationFn: () => api.notifications.testPush().then(res => res.data),
   });
+
+export const testInAppMutation = () =>
+  mutationOptions({
+    mutationFn: () => api.notifications.testInApp().then(res => res.data),
+  });

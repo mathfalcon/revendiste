@@ -293,6 +293,18 @@ export const SellerEarningsRetainedMetadataSchema = z.object({
   currency: z.enum(['UYU', 'USD']).optional(),
 });
 
+// seller_earnings_available - Hold period ended; earnings moved to available (ready to withdraw)
+export const SellerEarningsAvailableLineSchema = z.object({
+  currency: z.enum(['UYU', 'USD']),
+  amount: z.string(),
+  earningCount: z.number().int().positive(),
+});
+
+export const SellerEarningsAvailableMetadataSchema = z.object({
+  type: z.literal('seller_earnings_available'),
+  lines: z.array(SellerEarningsAvailableLineSchema).min(1),
+});
+
 // buyer_ticket_cancelled - Buyer's ticket cancelled due to seller failure
 export const BuyerTicketCancelledMetadataSchema = z.object({
   type: z.literal('buyer_ticket_cancelled'),
@@ -402,6 +414,7 @@ export const NotificationMetadataSchema = z.discriminatedUnion('type', [
   IdentityVerificationManualReviewMetadataSchema,
   // Missing document refund notification types
   SellerEarningsRetainedMetadataSchema,
+  SellerEarningsAvailableMetadataSchema,
   BuyerTicketCancelledMetadataSchema,
   OrderInvoiceMetadataSchema,
   // Ticket report / case system
@@ -642,6 +655,17 @@ export const IdentityVerificationManualReviewActionsSchema = z
 
 // seller_earnings_retained - view earnings action
 export const SellerEarningsRetainedActionsSchema = z
+  .array(
+    BaseActionSchema.extend({
+      type: z.literal('view_earnings'),
+      label: z.string(),
+      url: z.url().optional(),
+    }),
+  )
+  .nullable();
+
+// seller_earnings_available - same CTA as earnings / retiro
+export const SellerEarningsAvailableActionsSchema = z
   .array(
     BaseActionSchema.extend({
       type: z.literal('view_earnings'),
@@ -912,6 +936,14 @@ export const SellerEarningsRetainedNotificationSchema =
     actions: SellerEarningsRetainedActionsSchema,
   });
 
+// seller_earnings_available
+export const SellerEarningsAvailableNotificationSchema =
+  BaseNotificationSchema.extend({
+    type: z.literal('seller_earnings_available'),
+    metadata: SellerEarningsAvailableMetadataSchema,
+    actions: SellerEarningsAvailableActionsSchema,
+  });
+
 // buyer_ticket_cancelled
 export const BuyerTicketCancelledNotificationSchema =
   BaseNotificationSchema.extend({
@@ -996,6 +1028,7 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   IdentityVerificationManualReviewNotificationSchema,
   // Missing document refund notification types
   SellerEarningsRetainedNotificationSchema,
+  SellerEarningsAvailableNotificationSchema,
   BuyerTicketCancelledNotificationSchema,
   OrderInvoiceNotificationSchema,
   // Ticket report / case system

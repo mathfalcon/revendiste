@@ -28,6 +28,11 @@ Welcome to the Revendiste backend documentation! This directory contains compreh
    - Compliance requirements (PCI-DSS, GDPR, SOC 2)
    - Incident response procedures
 
+4. **[USD / UYU exchange for payouts](./usd-uyu-payout-exchange.md)**
+   - BROU eBROU + Itaú `cotiz.xml` fallback
+   - Rate lock metadata, `PayoutsService` touchpoints
+   - `ExchangeRateService` cache behavior and failure semantics
+
 ---
 
 ## 🚀 Quick Start

@@ -47,7 +47,7 @@ export type NotificationChannel = "email" | "in_app" | "sms" | "whatsapp";
 
 export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
-export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "buyer_ticket_cancelled" | "document_reminder" | "document_uploaded" | "document_uploaded_batch" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "order_invoice" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "seller_earnings_retained" | "ticket_report_action_added" | "ticket_report_closed" | "ticket_report_created" | "ticket_report_status_changed" | "ticket_sold_seller";
+export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "buyer_ticket_cancelled" | "document_reminder" | "document_uploaded" | "document_uploaded_batch" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "order_invoice" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "seller_earnings_available" | "seller_earnings_retained" | "ticket_report_action_added" | "ticket_report_closed" | "ticket_report_created" | "ticket_report_status_changed" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
@@ -64,6 +64,8 @@ export type PaymentProvider = "dlocal" | "mercadopago" | "paypal" | "stripe";
 export type PaymentStatus = "cancelled" | "expired" | "failed" | "paid" | "partially_refunded" | "pending" | "processing" | "refunded";
 
 export type PayoutEventType = "admin_processed" | "cancelled" | "payout_requested" | "status_change" | "transfer_completed" | "transfer_failed" | "transfer_initiated";
+
+export type PayoutProvider = "manual_bank" | "manual_paypal";
 
 export type PayoutStatus = "cancelled" | "completed" | "failed" | "pending" | "processing";
 
@@ -92,34 +94,6 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 export type UserRole = "admin" | "organizer" | "user";
 
 export type VerificationStatusEnum = "completed" | "failed" | "pending" | "rejected" | "requires_manual_review";
-
-export interface DlocalSettlementPayments {
-  amount: Numeric;
-  createdAt: Generated<Timestamp>;
-  currency: string;
-  description: string | null;
-  exchangeRate: Numeric | null;
-  fees: Numeric | null;
-  id: string;
-  metadata: Json | null;
-  netAmount: Numeric;
-  operationId: string;
-  payoutId: string | null;
-  settlementId: string;
-  updatedAt: Generated<Timestamp>;
-}
-
-export interface DlocalSettlements {
-  createdAt: Generated<Timestamp>;
-  currency: string;
-  id: string;
-  metadata: Json | null;
-  settlementDate: Timestamp;
-  settlementId: string;
-  status: string;
-  totalAmount: Numeric;
-  updatedAt: Generated<Timestamp>;
-}
 
 export interface EventImages {
   createdAt: Generated<Timestamp>;
@@ -443,6 +417,7 @@ export interface Payouts {
   metadata: Generated<Json | null>;
   notes: string | null;
   payoutMethodId: string;
+  payoutProvider: Generated<PayoutProvider>;
   processedAt: Timestamp | null;
   processedBy: string | null;
   processingFee: Numeric | null;
@@ -504,7 +479,6 @@ export interface SellerEarnings {
   createdAt: Generated<Timestamp>;
   currency: EventTicketCurrency;
   deletedAt: Timestamp | null;
-  holdUntil: Timestamp;
   id: Generated<string>;
   listingTicketId: string;
   payoutId: string | null;
@@ -629,8 +603,6 @@ export interface VerificationAuditLogs {
 }
 
 export interface DB {
-  dlocalSettlementPayments: DlocalSettlementPayments;
-  dlocalSettlements: DlocalSettlements;
   eventImages: EventImages;
   events: Events;
   eventTicketWaves: EventTicketWaves;

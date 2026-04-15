@@ -7,7 +7,8 @@ import {Button} from '~/components/ui/button';
 import {PayoutMethodForm} from './PayoutMethodForm';
 import {DeletePayoutMethodDialog} from './DeletePayoutMethodDialog';
 import {Skeleton} from '~/components/ui/skeleton';
-import {Edit, Trash2, Plus} from 'lucide-react';
+import {Edit, Trash2, Plus, CreditCard} from 'lucide-react';
+import {AccountEmptyState} from '../AccountEmptyState';
 import {
   Dialog,
   DialogContent,
@@ -46,11 +47,15 @@ export function PayoutMethodsSection() {
 
   return (
     <div className='space-y-4'>
-      <div className='flex items-center justify-end'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <p className='text-sm text-muted-foreground max-w-xl'>
+          Los retiros se envían a uno de estos métodos. Podés tener varios y
+          elegir el predeterminado al solicitar un retiro.
+        </p>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className='h-4 w-4 mr-2' />
+            <Button className='cursor-pointer shrink-0 min-h-11 w-full sm:w-auto'>
+              <Plus className='h-4 w-4 mr-2 shrink-0' aria-hidden />
               Agregar método
             </Button>
           </DialogTrigger>
@@ -71,18 +76,29 @@ export function PayoutMethodsSection() {
       </div>
 
       {!payoutMethods || payoutMethods.length === 0 ? (
-        <Card>
-          <CardContent className='py-8 text-center text-muted-foreground'>
-            No tenés métodos de pago configurados
-          </CardContent>
-        </Card>
+        <AccountEmptyState
+          icon={
+            <CreditCard className='h-8 w-8 text-muted-foreground' aria-hidden />
+          }
+          title='No tenés métodos de pago'
+          description='Agregá una cuenta bancaria uruguaya o PayPal para poder retirar tus ganancias.'
+          action={
+            <Button
+              className='cursor-pointer min-h-11'
+              onClick={() => setIsAddDialogOpen(true)}
+            >
+              <Plus className='h-4 w-4 mr-2 shrink-0' aria-hidden />
+              Agregar método
+            </Button>
+          }
+        />
       ) : (
         <div className='space-y-3'>
           {payoutMethods.map(method => (
-            <Card key={method.id}>
+            <Card key={method.id} className='transition-shadow duration-200'>
               <CardHeader>
-                <div className='flex items-center justify-between'>
-                  <CardTitle className='text-base flex items-center gap-2'>
+                <div className='flex items-start justify-between gap-3'>
+                  <CardTitle className='text-base flex flex-wrap items-center gap-2'>
                     {getPayoutMethodDisplayName(method)}
                     {method.isDefault && (
                       <Badge variant='secondary' className='text-xs'>
@@ -90,20 +106,24 @@ export function PayoutMethodsSection() {
                       </Badge>
                     )}
                   </CardTitle>
-                  <div className='flex gap-2'>
+                  <div className='flex gap-1 shrink-0'>
                     <Button
                       variant='outline'
-                      size='sm'
+                      size='icon'
+                      className='cursor-pointer h-10 w-10 sm:h-9 sm:w-9'
+                      aria-label='Editar método de pago'
                       onClick={() => setEditingMethod(method.id)}
                     >
-                      <Edit className='h-4 w-4' />
+                      <Edit className='h-4 w-4' aria-hidden />
                     </Button>
                     <Button
                       variant='outline'
-                      size='sm'
+                      size='icon'
+                      className='cursor-pointer h-10 w-10 sm:h-9 sm:w-9'
+                      aria-label='Eliminar método de pago'
                       onClick={() => setDeletingMethod(method.id)}
                     >
-                      <Trash2 className='h-4 w-4' />
+                      <Trash2 className='h-4 w-4' aria-hidden />
                     </Button>
                   </div>
                 </div>

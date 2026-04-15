@@ -132,12 +132,7 @@ graph LR
 
 ### 2. Platform Fee Structure
 
-| Transaction Type | Platform Fee | Notes |
-|------------------|--------------|-------|
-| Peer-to-peer | 8% | Standard fee |
-| Official resale | 5% | Reduced fee for organizers |
-| High-value (>$500) | 6% | Reduced fee for premium tickets |
-| First-time seller | 5% | Promotional rate |
+La comisión de plataforma es **única y configurable** por entorno: se define con `PLATFORM_COMMISSION_RATE` en el backend y `VITE_PLATFORM_COMMISSION_RATE` en el frontend (mismo valor decimal, p. ej. `0.06` para 6%). El IVA sobre la comisión usa `VAT_RATE` / `VITE_VAT_RATE` (p. ej. `0.22` para 22%). El cálculo compartido está en `@revendiste/shared` (`calculateOrderFees`, `calculateSellerAmount`). No hay tarifas diferenciadas por tipo de transacción en el producto actual.
 
 ## Security & Fraud Prevention
 

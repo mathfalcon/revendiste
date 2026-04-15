@@ -58,20 +58,12 @@ const EnvSchema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().min(1),
   WHATSAPP_API_VERSION: z.string().default('v21.0'),
   // Payout configuration
-  PAYOUT_MINIMUM_UYU: z.coerce.number().default(1000), // $1,000 UYU
-  PAYOUT_MINIMUM_USD: z.coerce.number().default(25), // $25 USD
+  PAYOUT_MINIMUM_UYU: z.coerce.number().default(500), // $1,000 UYU
+  PAYOUT_MINIMUM_USD: z.coerce.number().default(12.5), // $25 USD
   PAYOUT_HOLD_PERIOD_HOURS: z.coerce.number().default(48), // 48 hours post-event
-  // Exchange rate configuration (for currency conversion)
-  EXCHANGE_RATE_PROVIDER: z
-    .enum(['exchange_rate_api', 'uruguay_bank', 'fallback'])
-    .optional()
-    .default('exchange_rate_api'), // Default to ExchangeRate-API
-  EXCHANGE_RATE_API_KEY: z.string().optional(),
-  EXCHANGE_RATE_API_URL: z.url().optional(),
-  EXCHANGE_RATE_FALLBACK_UYU_TO_USD: z.coerce
-    .number()
-    .optional()
-    .default(0.0247), // ~40.5 UYU = 1 USD
+  PAYOUT_FX_SPREAD_PERCENT: z.coerce.number().min(0).max(10).default(1),
+  PAYOUT_FX_RATE_LOCK_HOURS: z.coerce.number().min(1).max(168).default(72),
+  // Exchange rate cache (BROU eBROU via UruguayBankProvider only)
   EXCHANGE_RATE_CACHE_TTL_HOURS: z.coerce.number().default(1),
   GOOGLE_PLACES_API_KEY: z.string().optional(),
   // PostHog analytics
@@ -150,10 +142,8 @@ export const {
   PAYOUT_MINIMUM_UYU,
   PAYOUT_MINIMUM_USD,
   PAYOUT_HOLD_PERIOD_HOURS,
-  EXCHANGE_RATE_PROVIDER,
-  EXCHANGE_RATE_API_KEY,
-  EXCHANGE_RATE_API_URL,
-  EXCHANGE_RATE_FALLBACK_UYU_TO_USD,
+  PAYOUT_FX_SPREAD_PERCENT,
+  PAYOUT_FX_RATE_LOCK_HOURS,
   EXCHANGE_RATE_CACHE_TTL_HOURS,
   GOOGLE_PLACES_API_KEY,
   POSTHOG_KEY,

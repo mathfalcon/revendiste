@@ -14,6 +14,12 @@ import {useEffect, useMemo, useRef, useState} from 'react';
 import {cn} from '~/lib/utils';
 import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
+import {EventTicketCurrency} from '~/lib';
+import {
+  calculateOrderFees,
+  calculateSellerAmount,
+  getFeeRates,
+} from '~/utils';
 import {
   HelpCircle,
   ShoppingCart,
@@ -46,8 +52,8 @@ export const Route = createFileRoute('/preguntas-frecuentes')({
 
     const allFaqItems = [
       ...faqGeneral,
-      ...faqCompradores,
-      ...faqVendedores,
+      ...getFaqCompradores(),
+      ...getFaqVendedores(),
       ...faqPagos,
     ];
     const faqSchema = {
@@ -90,6 +96,46 @@ interface FAQItem {
   answer: string;
 }
 
+const FAQ_EXAMPLE_TICKET_PRICE = 1000;
+
+function formatMoneyEsUy(amount: number): string {
+  return amount.toLocaleString('es-UY', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatIntegerEsUy(amount: number): string {
+  return amount.toLocaleString('es-UY', {
+    maximumFractionDigits: 0,
+  });
+}
+
+/** Copy for FAQ examples; rates from VITE_PLATFORM_COMMISSION_RATE / VITE_VAT_RATE. */
+function buildCommissionFaqAnswers(): {buyer: string; seller: string} {
+  const feeRates = getFeeRates();
+  const buyerBreakdown = calculateOrderFees(FAQ_EXAMPLE_TICKET_PRICE);
+  const sellerBreakdown = calculateSellerAmount(
+    FAQ_EXAMPLE_TICKET_PRICE,
+    EventTicketCurrency.UYU,
+  );
+  const commissionPlusVat =
+    buyerBreakdown.platformCommission + buyerBreakdown.vatOnCommission;
+  const sellerDeductions =
+    sellerBreakdown.platformCommission + sellerBreakdown.vatOnCommission;
+  const priceLabel = `$${formatIntegerEsUy(FAQ_EXAMPLE_TICKET_PRICE)}`;
+
+  const buyer = `La comisión es del ${feeRates.platformCommissionPercentage}% sobre el precio de la entrada, más el IVA correspondiente (${feeRates.vatPercentage}%). Por ejemplo, si la entrada cuesta ${priceLabel}, la comisión es $${formatMoneyEsUy(buyerBreakdown.platformCommission)} + IVA ($${formatMoneyEsUy(buyerBreakdown.vatOnCommission)}) = $${formatMoneyEsUy(commissionPlusVat)}. Total a pagar: $${formatMoneyEsUy(buyerBreakdown.totalAmount)}. Siempre vas a ver el desglose completo antes de confirmar la compra, sin costos ocultos.`;
+
+  const seller = `La comisión es del ${feeRates.platformCommissionPercentage}% más IVA (${feeRates.vatPercentage}%), igual que para los compradores. Si vendés una entrada de ${priceLabel}, se te descuentan $${formatMoneyEsUy(sellerDeductions)} y recibís $${formatMoneyEsUy(sellerBreakdown.sellerAmount)}. El descuento se aplica automáticamente al momento de la liquidación.`;
+
+  return {buyer, seller};
+}
+
+const BUYER_COMMISSION_FAQ_QUESTION = '¿Cuánto me cobran de comisión?';
+const SELLER_COMMISSION_FAQ_QUESTION =
+  '¿Cuánto me cobran de comisión como vendedor?';
+
 const faqGeneral: FAQItem[] = [
   {
     question: '¿Qué es Revendiste?',
@@ -118,16 +164,15 @@ const faqGeneral: FAQItem[] = [
   },
 ];
 
-const faqCompradores: FAQItem[] = [
+const faqCompradoresBase: FAQItem[] = [
   {
     question: '¿Cómo compro una entrada?',
     answer:
       'Es muy sencillo: buscás el evento que te interesa, elegís la entrada que querés, pagás con el medio de pago disponible y listo. Recibís la entrada por email o podés descargarla desde tu cuenta. Todo el proceso es digital, sin necesidad de coordinación presencial.',
   },
   {
-    question: '¿Cuánto me cobran de comisión?',
-    answer:
-      'La comisión es del 6% sobre el precio de la entrada, más el IVA correspondiente. Por ejemplo, si la entrada cuesta $1.000, la comisión es $60 + IVA ($13,20) = $73,20. Total a pagar: $1.073,20. Siempre vas a ver el desglose completo antes de confirmar la compra, sin costos ocultos.',
+    question: BUYER_COMMISSION_FAQ_QUESTION,
+    answer: '',
   },
   {
     question: '¿Qué pasa si la entrada no funciona?',
@@ -146,7 +191,16 @@ const faqCompradores: FAQItem[] = [
   },
 ];
 
-const faqVendedores: FAQItem[] = [
+function getFaqCompradores(): FAQItem[] {
+  const {buyer} = buildCommissionFaqAnswers();
+  return faqCompradoresBase.map(item =>
+    item.question === BUYER_COMMISSION_FAQ_QUESTION
+      ? {...item, answer: buyer}
+      : item,
+  );
+}
+
+const faqVendedoresBase: FAQItem[] = [
   {
     question: '¿Cómo publico mi entrada?',
     answer:
@@ -165,12 +219,21 @@ const faqVendedores: FAQItem[] = [
   {
     question: '¿Cuándo me pagan?',
     answer:
-      'El pago se libera hasta 10 días hábiles después de la fecha del evento. Este plazo existe para dar tiempo al comprador a presentar un reclamo si hubo algún inconveniente. Si no se registran reclamos ni problemas, te transferimos el dinero a tu cuenta bancaria o PayPal.',
+      'Tus ganancias pasan a estar disponibles para retirar después de que termina el evento y se cumple un período de custodia (ventana para que el comprador pueda reportar un problema). No es un pago automático: tenés que ir a Cuenta → Retiros, elegir las ganancias y pedir el retiro. El equipo procesa los retiros manualmente en días hábiles; en general podés esperar 1 a 3 días hábiles desde que lo pedís.',
   },
   {
-    question: '¿Cuánto me cobran de comisión como vendedor?',
+    question: '¿Cómo solicito un retiro?',
     answer:
-      'La comisión es del 6% más IVA, igual que para los compradores. Si vendés una entrada de $1.000, se te descuentan $73,20 y recibís $926,80. El descuento se aplica automáticamente al momento de la liquidación.',
+      'Entrá a tu cuenta, sección Retiros. Seleccioná las ganancias que querés retirar (por publicación o por entrada). Elegí un método de cobro compatible (cuenta en Uruguay o PayPal según corresponda), confirmá la solicitud y listo. Te avisamos cuando el retiro esté procesado.',
+  },
+  {
+    question: 'Soy extranjero, ¿puedo vender en Revendiste?',
+    answer:
+      'Sí, podés vender si completás la verificación de identidad como cualquier vendedor. Para cobrar usamos PayPal en USD; no ofrecemos transferencias bancarias internacionales por los costos. Si vendés en pesos uruguayos y cobrás por PayPal, el monto se convierte a USD con el tipo de cambio del Banco República (eBROU), con un pequeño ajuste (~1%) y un bloqueo del tipo por 72 horas; el monto en USD te lo mostramos antes de confirmar.',
+  },
+  {
+    question: SELLER_COMMISSION_FAQ_QUESTION,
+    answer: '',
   },
   {
     question:
@@ -192,6 +255,15 @@ const faqVendedores: FAQItem[] = [
   },
 ];
 
+function getFaqVendedores(): FAQItem[] {
+  const {seller} = buildCommissionFaqAnswers();
+  return faqVendedoresBase.map(item =>
+    item.question === SELLER_COMMISSION_FAQ_QUESTION
+      ? {...item, answer: seller}
+      : item,
+  );
+}
+
 const faqPagos: FAQItem[] = [
   {
     question: '¿Qué métodos de pago aceptan?',
@@ -199,9 +271,19 @@ const faqPagos: FAQItem[] = [
       'Aceptamos los medios de pago que se muestran habilitados al momento del checkout, generalmente tarjetas de crédito y débito. Estamos trabajando para incorporar más opciones de pago próximamente.',
   },
   {
-    question: '¿Cómo recibo mi plata si soy vendedor?',
+    question: '¿Cómo retiro mi dinero si soy vendedor?',
     answer:
-      'Podés elegir entre transferencia bancaria o PayPal. Configurás tu método de cobro preferido desde tu perfil y, al momento de la liquidación, te enviamos el dinero al medio que hayas seleccionado.',
+      'Configurás tus métodos en Cuenta → Retiros. Si tenés cuenta bancaria en Uruguay, podés cobrar por transferencia en la misma moneda que tus ganancias (UYU o USD, según la cuenta). PayPal es la opción para vendedores internacionales y siempre es en USD. Elegís el método al momento de solicitar cada retiro.',
+  },
+  {
+    question: '¿Qué pasa si mis ganancias están en UYU y uso PayPal?',
+    answer:
+      'PayPal solo permite enviar USD. Convertimos tus ganancias en UYU usando el tipo de cambio venta del Banco República (eBROU), con un pequeño ajuste (alrededor del 1%) para cubrir variaciones del tipo. Te mostramos el monto exacto en USD antes de confirmar el retiro y ese tipo queda fijo por 72 horas.',
+  },
+  {
+    question: '¿Hay un monto mínimo para retirar?',
+    answer:
+      'Sí. El mínimo es 1.000 UYU para retiros en pesos uruguayos y 25 USD para retiros en dólares (incluye retiros PayPal en USD).',
   },
   {
     question: '¿Qué es la custodia de fondos?',
@@ -215,15 +297,25 @@ const faqPagos: FAQItem[] = [
   },
 ];
 
-const sectionConfig: Record<
+function getSectionConfig(): Record<
   FAQSection,
   {label: string; icon: typeof HelpCircle; items: FAQItem[]}
-> = {
-  general: {label: 'General', icon: HelpCircle, items: faqGeneral},
-  compradores: {label: 'Compradores', icon: ShoppingCart, items: faqCompradores},
-  publicadores: {label: 'Publicadores', icon: Tag, items: faqVendedores},
-  pagos: {label: 'Pagos', icon: CreditCard, items: faqPagos},
-};
+> {
+  return {
+    general: {label: 'General', icon: HelpCircle, items: faqGeneral},
+    compradores: {
+      label: 'Compradores',
+      icon: ShoppingCart,
+      items: getFaqCompradores(),
+    },
+    publicadores: {
+      label: 'Publicadores',
+      icon: Tag,
+      items: getFaqVendedores(),
+    },
+    pagos: {label: 'Pagos', icon: CreditCard, items: faqPagos},
+  };
+}
 
 interface FAQSectionProps {
   items: FAQItem[];
@@ -299,6 +391,8 @@ function FAQPage() {
   const navigate = useNavigate({from: Route.fullPath});
   const [searchQuery, setSearchQuery] = useState('');
 
+  const sectionConfig = useMemo(() => getSectionConfig(), []);
+
   // Determine active tab - default to 'general'
   const activeTab = seccion ?? 'general';
 
@@ -341,7 +435,7 @@ function FAQPage() {
     }
 
     return results;
-  }, [searchQuery]);
+  }, [searchQuery, sectionConfig]);
 
   const handleTabChange = (value: string) => {
     setSearchQuery('');

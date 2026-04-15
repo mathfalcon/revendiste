@@ -82,6 +82,12 @@ export interface GetDashboardHealthResponse {
   activeEvents: number;
 }
 
+export interface GetSidebarCountsResponse {
+  pendingVerifications: number;
+  pendingPayouts: number;
+  reportsAwaitingResponse: number;
+}
+
 export interface DashboardTopEventRow {
   eventId: string;
   eventName: string;

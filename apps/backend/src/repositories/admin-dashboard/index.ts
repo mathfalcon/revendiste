@@ -495,6 +495,34 @@ export class AdminDashboardRepository extends BaseRepository<AdminDashboardRepos
     };
   }
 
+  async getSidebarCounts() {
+    const [verifications, payouts, reports] = await Promise.all([
+      this.db
+        .selectFrom('users')
+        .select(eb => eb.fn.count('users.id').as('count'))
+        .where('users.deletedAt', 'is', null)
+        .where('users.verificationStatus', '=', 'requires_manual_review')
+        .executeTakeFirst(),
+      this.db
+        .selectFrom('payouts')
+        .select(eb => eb.fn.count('payouts.id').as('count'))
+        .where('payouts.status', '=', 'pending')
+        .where('payouts.deletedAt', 'is', null)
+        .executeTakeFirst(),
+      this.db
+        .selectFrom('ticketReports')
+        .select(eb => eb.fn.count('ticketReports.id').as('count'))
+        .where('ticketReports.status', '=', 'awaiting_support')
+        .executeTakeFirst(),
+    ]);
+
+    return {
+      pendingVerifications: Number(verifications?.count ?? 0),
+      pendingPayouts: Number(payouts?.count ?? 0),
+      reportsAwaitingResponse: Number(reports?.count ?? 0),
+    };
+  }
+
   async getTopEvents(range: DashboardDateRange) {
     let topQb = this.db
       .selectFrom('listingTickets')

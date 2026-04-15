@@ -92,6 +92,10 @@ import {
   type SellerEarningsRetainedEmailProps,
 } from '../emails/seller-earnings-retained-email';
 import {
+  SellerEarningsAvailableEmail as SellerEarningsAvailableEmailComponent,
+  type SellerEarningsAvailableEmailProps,
+} from '../emails/seller-earnings-available-email';
+import {
   BuyerTicketCancelledEmail as BuyerTicketCancelledEmailComponent,
   type BuyerTicketCancelledEmailProps,
 } from '../emails/buyer-ticket-cancelled-email';
@@ -125,6 +129,11 @@ export interface EmailTemplateProps<
   actions?: NotificationAction[];
   metadata?: TypedNotificationMetadata<T>;
   appBaseUrl?: string;
+  /** Required for `order_confirmed` — fee label percentages from backend env at send time. */
+  orderFeeLabelPercentages?: {
+    platformCommissionPercentage: number;
+    vatPercentage: number;
+  };
 }
 
 /**
@@ -137,7 +146,8 @@ export function getEmailTemplate<T extends NotificationType>(
   Component: React.ComponentType<any>;
   props: Record<string, any>;
 } {
-  const {notificationType, metadata, actions, appBaseUrl} = props;
+  const {notificationType, metadata, actions, appBaseUrl, orderFeeLabelPercentages} =
+    props;
 
   const uploadUrl = actions?.find(a => a.type === 'upload_documents')?.url;
   const orderUrl = actions?.find(a => a.type === 'view_order')?.url;
@@ -165,6 +175,11 @@ export function getEmailTemplate<T extends NotificationType>(
 
     case 'order_confirmed': {
       const meta = metadata as TypedNotificationMetadata<'order_confirmed'>;
+      if (!orderFeeLabelPercentages) {
+        throw new Error(
+          'orderFeeLabelPercentages is required for order_confirmed emails',
+        );
+      }
       // Find flyer image from event images if available in metadata
       const flyerImageUrl = undefined; // Will be populated from order data if needed
       return {
@@ -188,6 +203,9 @@ export function getEmailTemplate<T extends NotificationType>(
           orderUrl:
             orderUrl || `${appBaseUrl}/cuenta/tickets?orderId=${meta?.orderId}`,
           appBaseUrl,
+          platformCommissionPercentage:
+            orderFeeLabelPercentages.platformCommissionPercentage,
+          vatPercentage: orderFeeLabelPercentages.vatPercentage,
         },
       };
     }
@@ -509,6 +527,22 @@ export function getEmailTemplate<T extends NotificationType>(
           currency: meta?.currency,
           appBaseUrl,
         } as SellerEarningsRetainedEmailProps,
+      };
+    }
+
+    case 'seller_earnings_available': {
+      const meta =
+        metadata as TypedNotificationMetadata<'seller_earnings_available'>;
+      const withdrawalUrl =
+        actions?.find(a => a.type === 'view_earnings')?.url ||
+        `${appBaseUrl}/cuenta/retiro`;
+      return {
+        Component: SellerEarningsAvailableEmailComponent,
+        props: {
+          lines: meta?.lines ?? [],
+          withdrawalUrl,
+          appBaseUrl,
+        } as SellerEarningsAvailableEmailProps,
       };
     }
 

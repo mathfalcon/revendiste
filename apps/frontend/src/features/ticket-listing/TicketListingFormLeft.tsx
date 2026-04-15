@@ -5,7 +5,12 @@ import {Separator} from '~/components/ui/separator';
 import {EventImageType, getEventByIdQuery} from '~/lib';
 import {TicketListingFormValues} from './TicketListingForm';
 import {PageLoading, TextEllipsis} from '~/components';
-import {formatEventDate, formatPrice, calculateSellerAmount} from '~/utils';
+import {
+  formatEventDate,
+  formatPrice,
+  calculateSellerAmount,
+  getFeeRates,
+} from '~/utils';
 import {useMemo, useState} from 'react';
 import {cn} from '~/lib/utils';
 import {
@@ -18,6 +23,7 @@ import {Button} from '~/components/ui/button';
 import {Link} from '@tanstack/react-router';
 
 export const TicketListingFormLeft = () => {
+  const feeRates = getFeeRates();
   const form = useFormContext<TicketListingFormValues>();
   const eventDetailsQuery = useQuery(getEventByIdQuery(form.watch('eventId')));
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
@@ -115,13 +121,17 @@ export const TicketListingFormLeft = () => {
                 </span>
               </div>
               <div className='flex justify-between items-center text-sm'>
-                <span className='text-muted-foreground'>Comisión (6%)</span>
+                <span className='text-muted-foreground'>
+                  Comisión ({feeRates.platformCommissionPercentage}%)
+                </span>
                 <span className='text-muted-foreground'>
                   -{formatPrice(sellerAmountCalculation.platformCommission, sellerAmountCalculation.currency)}
                 </span>
               </div>
               <div className='flex justify-between items-center text-sm'>
-                <span className='text-muted-foreground'>IVA sobre comisión (22%)</span>
+                <span className='text-muted-foreground'>
+                  IVA sobre comisión ({feeRates.vatPercentage}%)
+                </span>
                 <span className='text-muted-foreground'>
                   -{formatPrice(sellerAmountCalculation.vatOnCommission, sellerAmountCalculation.currency)}
                 </span>
