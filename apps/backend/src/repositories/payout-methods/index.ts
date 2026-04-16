@@ -9,7 +9,7 @@ export class PayoutMethodsRepository extends BaseRepository<PayoutMethodsReposit
 
   async create(payoutMethodData: {
     userId: string;
-    payoutType: 'uruguayan_bank' | 'paypal';
+    payoutType: 'uruguayan_bank';
     accountHolderName: string;
     accountHolderSurname: string;
     currency: EventTicketCurrency;

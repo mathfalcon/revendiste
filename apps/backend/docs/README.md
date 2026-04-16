@@ -17,7 +17,7 @@ Welcome to the Revendiste backend documentation! This directory contains compreh
 
 2. **[Adding Payment Providers](./adding-payment-providers.md)**
    - Step-by-step guide for new providers
-   - Code examples (Stripe, PayPal)
+   - Code examples (Stripe, etc.)
    - Testing strategies
    - Common pitfalls
 
@@ -99,7 +99,7 @@ Welcome to the Revendiste backend documentation! This directory contains compreh
 
 ### Provider Pattern
 - Abstraction layer for payment providers
-- Easy to add new providers (Stripe, PayPal, etc.)
+- Easy to add new providers (Stripe, etc.)
 - Standardized types across providers
 
 ### Immutable Audit Log

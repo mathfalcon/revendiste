@@ -34,12 +34,7 @@ import {
   NotificationsRepository,
 } from '~/repositories';
 import {db} from '~/db';
-import {
-  NotFoundError,
-  ServiceUnavailableError,
-  ValidationError,
-  UnauthorizedError,
-} from '~/errors';
+import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {
   RequestPayoutRouteBody,
   RequestPayoutRouteSchema,
@@ -59,9 +54,6 @@ type GetPayoutHistoryResponse = Awaited<ReturnType<PayoutsService['getPayoutHist
 type GetUserPayoutDetailsResponse = Awaited<ReturnType<
   PayoutsService['getPayoutDetailsForUser']
 >>;
-type GetPayPalUyuFxPreviewResponse = Awaited<
-  ReturnType<PayoutsService['getPayPalUyuFxPreview']>
->;
 type RequestPayoutResponse = Awaited<ReturnType<PayoutsService['requestPayout']>>;
 type GetPayoutMethodsResponse = Awaited<ReturnType<
   PayoutMethodsService['getPayoutMethods']
@@ -236,16 +228,6 @@ export class PayoutsController {
       payoutMethodId,
       request.user.id,
     );
-  }
-
-  @Get('/paypal-uyu-fx-preview')
-  @Response<UnauthorizedError>(401, 'Authentication required')
-  @Response<ServiceUnavailableError>(
-    503,
-    'Could not fetch reference exchange rate',
-  )
-  public async getPayPalUyuFxPreview(): Promise<GetPayPalUyuFxPreviewResponse> {
-    return this.payoutsService.getPayPalUyuFxPreview();
   }
 
   @Get('/{payoutId}')

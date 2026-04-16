@@ -1,6 +1,6 @@
 import type {EventTicketCurrency, PayoutStatus} from '@revendiste/shared';
 
-export type PayoutProviderName = 'manual_bank' | 'manual_paypal';
+export type PayoutProviderName = 'manual_bank';
 
 export interface InitiatePayoutParams {
   payoutId: string;

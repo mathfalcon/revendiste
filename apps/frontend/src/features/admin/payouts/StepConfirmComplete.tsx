@@ -34,7 +34,6 @@ import {formatCurrency} from '~/utils';
 import {
   getBankName,
   getAccountNumber,
-  getEmail,
 } from '~/features/user-account/payouts/payout-method-utils';
 import {EventTicketCurrency} from '~/lib';
 import {cn} from '~/lib/utils';
@@ -263,17 +262,10 @@ export function StepConfirmComplete({
   const accountNumber = payoutMethod?.metadata
     ? getAccountNumber(payoutMethod.metadata)
     : null;
-  const email = payoutMethod?.metadata
-    ? getEmail(payoutMethod.metadata)
-    : null;
-
   const destination = (() => {
     if (payoutMethod?.payoutType === 'uruguayan_bank') {
       const parts = [bankName, accountNumber].filter(Boolean);
       return parts.length > 0 ? parts.join(' · ') : 'Banco';
-    }
-    if (payoutMethod?.payoutType === 'paypal') {
-      return email ? `PayPal · ${email}` : 'PayPal';
     }
     return 'Método desconocido';
   })();

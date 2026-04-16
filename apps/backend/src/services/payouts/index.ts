@@ -70,24 +70,6 @@ export class PayoutsService {
   ) {}
 
   /**
-   * Indicative UYU→USD conversion inputs for PayPal (same formula as {@link requestPayout}).
-   */
-  async getPayPalUyuFxPreview() {
-    const referenceVentaUyuPerUsd = await fetchBrouEbrouVentaRate();
-    const spreadPercent = PAYOUT_FX_SPREAD_PERCENT;
-    const effectiveUyuPerUsd = roundToDecimals(
-      referenceVentaUyuPerUsd * (1 + spreadPercent / 100),
-      6,
-    );
-    return {
-      referenceVentaUyuPerUsd: roundToDecimals(referenceVentaUyuPerUsd, 4),
-      spreadPercent,
-      effectiveUyuPerUsd,
-      rateLockHours: PAYOUT_FX_RATE_LOCK_HOURS,
-    };
-  }
-
-  /**
    * Request a payout with selected tickets/listings
    * Validates selected tickets, creates payout, links selected earnings
    */
@@ -135,72 +117,20 @@ export class PayoutsService {
       0,
     );
 
-    // Determine final amount and currency (may need conversion for PayPal)
     let finalAmount = totalAmount;
     let finalCurrency = earnings[0].currency;
-    let rateLock: {
-      lockedRate: number;
-      brouVentaRate: number;
-      spreadPercent: number;
-      lockedAt: string;
-      rateExpiresAt: string;
-      originalAmount: number;
-      originalCurrency: string;
-      convertedAmount: number;
-      convertedCurrency: string;
-    } | null = null;
 
-    // Validate currency compatibility between earnings and payout method
-    // - PayPal (USD) can receive both USD and UYU (UYU will be converted)
-    // - UYU bank account can only receive UYU earnings
-    // - USD bank account can only receive USD earnings
-    const isPayPal = payoutMethod.payoutType === 'paypal';
     const payoutMethodCurrency = payoutMethod.currency;
 
-    if (!isPayPal) {
-      // For non-PayPal methods, currency must match
-      if (payoutMethodCurrency === 'UYU' && finalCurrency === 'USD') {
-        throw new ValidationError(
-          PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS,
-        );
-      }
-      if (payoutMethodCurrency === 'USD' && finalCurrency === 'UYU') {
-        throw new ValidationError(
-          PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS,
-        );
-      }
-    }
-
-    // If PayPal method and earnings are in UYU, convert to USD (BROU eBROU + spread, rate lock)
-    if (isPayPal && finalCurrency === 'UYU') {
-      const brouVenta = await fetchBrouEbrouVentaRate();
-      const spreadFrac = PAYOUT_FX_SPREAD_PERCENT / 100;
-      const effectiveUyuPerUsd = brouVenta * (1 + spreadFrac);
-      finalAmount = roundToDecimals(totalAmount / effectiveUyuPerUsd, 2);
-      finalCurrency = 'USD';
-      const lockedAt = new Date();
-      const rateExpiresAt = new Date(
-        lockedAt.getTime() +
-          PAYOUT_FX_RATE_LOCK_HOURS * 60 * 60 * 1000,
+    if (payoutMethodCurrency === 'UYU' && finalCurrency === 'USD') {
+      throw new ValidationError(
+        PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS,
       );
-      rateLock = {
-        lockedRate: effectiveUyuPerUsd,
-        brouVentaRate: brouVenta,
-        spreadPercent: PAYOUT_FX_SPREAD_PERCENT,
-        lockedAt: lockedAt.toISOString(),
-        rateExpiresAt: rateExpiresAt.toISOString(),
-        originalAmount: totalAmount,
-        originalCurrency: 'UYU',
-        convertedAmount: finalAmount,
-        convertedCurrency: 'USD',
-      };
-
-      logger.info('Currency conversion for PayPal payout (rate lock)', {
-        originalAmount: totalAmount,
-        brouVenta,
-        effectiveUyuPerUsd,
-        convertedAmount: finalAmount,
-      });
+    }
+    if (payoutMethodCurrency === 'USD' && finalCurrency === 'UYU') {
+      throw new ValidationError(
+        PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS,
+      );
     }
 
     // Validate minimum threshold in final currency
@@ -221,7 +151,6 @@ export class PayoutsService {
       const payoutMetadataParsed = PayoutMetadataSchema.parse({
         listingTicketIds: listingTicketIds || [],
         listingIds: listingIds || [],
-        ...(rateLock && {rateLock}),
       });
       const payoutMetadata = payoutMetadataParsed as unknown as Json;
 
@@ -257,7 +186,6 @@ export class PayoutsService {
           payoutMethodId,
           amount: finalAmount,
           currency: finalCurrency,
-          rateLock,
           earningsCount: earnings.length,
         },
         createdBy: sellerUserId,
@@ -268,7 +196,6 @@ export class PayoutsService {
         sellerUserId,
         amount: finalAmount,
         currency: finalCurrency,
-        rateLock,
         earningsCount: earnings.length,
       });
 

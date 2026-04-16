@@ -224,12 +224,12 @@ const faqVendedoresBase: FAQItem[] = [
   {
     question: '¿Cómo solicito un retiro?',
     answer:
-      'Entrá a tu cuenta, sección Retiros. Seleccioná las ganancias que querés retirar (por publicación o por entrada). Elegí un método de cobro compatible (cuenta en Uruguay o PayPal según corresponda), confirmá la solicitud y listo. Te avisamos cuando el retiro esté procesado.',
+      'Entrá a tu cuenta, sección Retiros. Seleccioná las ganancias que querés retirar (por publicación o por entrada). Elegí un método de cobro compatible (cuenta bancaria en Uruguay en la misma moneda que tus ganancias: UYU o USD), confirmá la solicitud y listo. Te avisamos cuando el retiro esté procesado.',
   },
   {
     question: 'Soy extranjero, ¿puedo vender en Revendiste?',
     answer:
-      'Sí, podés vender si completás la verificación de identidad como cualquier vendedor. Para cobrar usamos PayPal en USD; no ofrecemos transferencias bancarias internacionales por los costos. Si vendés en pesos uruguayos y cobrás por PayPal, el monto se convierte a USD con el tipo de cambio del Banco República (eBROU), con un pequeño ajuste (~1%) y un bloqueo del tipo por 72 horas; el monto en USD te lo mostramos antes de confirmar.',
+      'Sí, podés vender si completás la verificación de identidad como cualquier vendedor. Para cobrar necesitás una cuenta bancaria en Uruguay en la misma moneda que tus ganancias (UYU o USD). No ofrecemos transferencias bancarias internacionales ni otros canales de cobro por fuera de Uruguay.',
   },
   {
     question: SELLER_COMMISSION_FAQ_QUESTION,
@@ -273,17 +273,12 @@ const faqPagos: FAQItem[] = [
   {
     question: '¿Cómo retiro mi dinero si soy vendedor?',
     answer:
-      'Configurás tus métodos en Cuenta → Retiros. Si tenés cuenta bancaria en Uruguay, podés cobrar por transferencia en la misma moneda que tus ganancias (UYU o USD, según la cuenta). PayPal es la opción para vendedores internacionales y siempre es en USD. Elegís el método al momento de solicitar cada retiro.',
-  },
-  {
-    question: '¿Qué pasa si mis ganancias están en UYU y uso PayPal?',
-    answer:
-      'PayPal solo permite enviar USD. Convertimos tus ganancias en UYU usando el tipo de cambio venta del Banco República (eBROU), con un pequeño ajuste (alrededor del 1%) para cubrir variaciones del tipo. Te mostramos el monto exacto en USD antes de confirmar el retiro y ese tipo queda fijo por 72 horas.',
+      'Configurás tus métodos en Cuenta → Retiros. Con una cuenta bancaria en Uruguay podés cobrar por transferencia en la misma moneda que tus ganancias (UYU o USD, según la cuenta). Elegís el método al momento de solicitar cada retiro.',
   },
   {
     question: '¿Hay un monto mínimo para retirar?',
     answer:
-      'Sí. El mínimo es 1.000 UYU para retiros en pesos uruguayos y 25 USD para retiros en dólares (incluye retiros PayPal en USD).',
+      'Sí. El mínimo es 1.000 UYU para retiros en pesos uruguayos y 25 USD para retiros en dólares.',
   },
   {
     question: '¿Qué es la custodia de fondos?',

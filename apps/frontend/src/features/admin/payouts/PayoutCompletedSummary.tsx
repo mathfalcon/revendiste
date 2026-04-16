@@ -24,12 +24,8 @@ import {getFileIcon, formatFileSize} from '~/utils/file-icons';
 import {
   getBankName,
   getAccountNumber,
-  getEmail,
 } from '~/features/user-account/payouts/payout-method-utils';
-import {
-  UruguayanBankMetadataSchema,
-  PayPalMetadataSchema,
-} from '@revendiste/shared/schemas/payout-methods';
+import {UruguayanBankMetadataSchema} from '@revendiste/shared/schemas/payout-methods';
 import {statusBadge, providerLabel, formatAge} from './payout-utils';
 import {Download, ExternalLink} from 'lucide-react';
 import type {GetPayoutDetailsResponse} from '~/lib/api/generated';
@@ -47,26 +43,13 @@ export function PayoutCompletedSummary({payout}: PayoutCompletedSummaryProps) {
   const accountNumber = payoutMethod?.metadata
     ? getAccountNumber(payoutMethod.metadata)
     : null;
-  const email = payoutMethod?.metadata
-    ? getEmail(payoutMethod.metadata)
-    : null;
-
   const isUruguayanBank =
     payoutMethod?.payoutType === 'uruguayan_bank' &&
     payoutMethod?.metadata &&
     typeof payoutMethod.metadata === 'object' &&
     !Array.isArray(payoutMethod.metadata);
-  const isPayPal =
-    payoutMethod?.payoutType === 'paypal' &&
-    payoutMethod?.metadata &&
-    typeof payoutMethod.metadata === 'object' &&
-    !Array.isArray(payoutMethod.metadata);
-
   const uruguayanBankMetadata = isUruguayanBank
     ? UruguayanBankMetadataSchema.safeParse(payoutMethod!.metadata)
-    : null;
-  const paypalMetadata = isPayPal
-    ? PayPalMetadataSchema.safeParse(payoutMethod!.metadata)
     : null;
 
   return (
@@ -151,14 +134,6 @@ export function PayoutCompletedSummary({payout}: PayoutCompletedSummaryProps) {
                       <p className='font-mono break-all'>{accountNumber}</p>
                     </div>
                   )}
-                </div>
-              )}
-            {payoutMethod.payoutType === 'paypal' &&
-              paypalMetadata?.success &&
-              email && (
-                <div className='rounded-lg border bg-muted/20 p-3'>
-                  <Label className='text-xs text-muted-foreground'>PayPal</Label>
-                  <p className='break-all font-medium'>{email}</p>
                 </div>
               )}
           </CardContent>

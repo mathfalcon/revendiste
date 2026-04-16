@@ -26,7 +26,7 @@ export type RequestPayoutRouteBody = z.infer<
 /**
  * Add payout method route schema
  * Uses discriminated union from shared package for type-safe payoutType + metadata validation
- * The base schema ensures metadata matches the payoutType (uruguayan_bank vs paypal)
+ * The base schema ensures metadata matches the payoutType (uruguayan_bank)
  */
 export const AddPayoutMethodRouteSchema = z.object({
   body: PayoutMethodBaseSchema.and(

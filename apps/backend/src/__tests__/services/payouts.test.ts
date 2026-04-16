@@ -2,7 +2,7 @@
  * Comprehensive PayoutsService tests.
  *
  * Covers:
- * - requestPayout: validation, UYU direct, USD direct, UYU→USD PayPal conversion (FX)
+ * - requestPayout: validation, UYU direct, USD direct
  * - processPayout: happy path, FX metadata, non-pending rejection
  * - failPayout: earnings cloning for audit trail, notification fire-and-forget
  * - cancelPayout: 'error' vs 'other' reason types, earnings cloning
@@ -109,15 +109,6 @@ const USD_BANK_METHOD = {
   payoutType: 'uruguayan_bank' as const,
   currency: 'USD' as const,
   metadata: {bankName: 'BROU', accountNumber: '789'},
-} as any;
-
-/** PayPal payout method (always USD) */
-const PAYPAL_METHOD = {
-  id: 'pm-paypal',
-  userId: 'seller-1',
-  payoutType: 'paypal' as const,
-  currency: 'USD' as const,
-  metadata: {email: 'seller@paypal.com'},
 } as any;
 
 function uyuEarnings(count: number, amount = 350) {
@@ -372,95 +363,6 @@ describe('PayoutsService', () => {
           payoutProvider: 'manual_bank',
         }),
       );
-    });
-
-    // --- Happy path: USD → PayPal (no conversion) ---
-    it('creates USD payout to PayPal without conversion when earnings are USD', async () => {
-      const earnings = usdEarnings(2, 30);
-      methodsRepo.getById.mockResolvedValue(PAYPAL_METHOD);
-      earningsRepo.validateEarningsSelection.mockResolvedValue({
-        valid: true,
-        earnings,
-      });
-      payoutsRepo.create.mockResolvedValue({id: 'payout-3'} as any);
-
-      await service.requestPayout({
-        sellerUserId: 'seller-1',
-        payoutMethodId: 'pm-paypal',
-        listingTicketIds: ['lt-usd-0', 'lt-usd-1'],
-      });
-
-      expect(payoutsRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          amount: 60,
-          currency: 'USD',
-          payoutProvider: 'manual_paypal',
-        }),
-      );
-      const meta = payoutsRepo.create.mock.calls[0][0] as any;
-      expect(meta.metadata).not.toHaveProperty('rateLock');
-    });
-
-    // --- Happy path: UYU → PayPal with FX conversion ---
-    it('converts UYU to USD using BROU rate + spread for PayPal payout', async () => {
-      const earnings = uyuEarnings(4, 350); // 1400 UYU
-      methodsRepo.getById.mockResolvedValue(PAYPAL_METHOD);
-      earningsRepo.validateEarningsSelection.mockResolvedValue({
-        valid: true,
-        earnings,
-      });
-      payoutsRepo.create.mockResolvedValue({id: 'payout-fx'} as any);
-      mockedFetchRate.mockResolvedValue(MOCK_BROU_RATE);
-
-      await service.requestPayout({
-        sellerUserId: 'seller-1',
-        payoutMethodId: 'pm-paypal',
-        listingIds: ['listing-1'],
-      });
-
-      // effectiveRate = 41.05 * (1 + 0.01) = 41.4605
-      // convertedAmount = round(1400 / 41.4605, 2) = 33.77
-      const expectedRate = MOCK_BROU_RATE * 1.01;
-      const expectedUsd = Math.round((1400 / expectedRate) * 100) / 100;
-
-      expect(payoutsRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          amount: expectedUsd,
-          currency: 'USD',
-          payoutProvider: 'manual_paypal',
-        }),
-      );
-
-      // Verify rateLock metadata
-      const meta = (payoutsRepo.create.mock.calls[0][0] as any).metadata;
-      expect(meta).toHaveProperty('rateLock');
-      expect(meta.rateLock.originalAmount).toBe(1400);
-      expect(meta.rateLock.originalCurrency).toBe('UYU');
-      expect(meta.rateLock.convertedAmount).toBe(expectedUsd);
-      expect(meta.rateLock.convertedCurrency).toBe('USD');
-      expect(meta.rateLock.brouVentaRate).toBe(MOCK_BROU_RATE);
-      expect(meta.rateLock.spreadPercent).toBe(1);
-      expect(meta.rateLock).toHaveProperty('lockedAt');
-      expect(meta.rateLock).toHaveProperty('rateExpiresAt');
-    });
-
-    it('rejects UYU→PayPal conversion if resulting USD is below minimum', async () => {
-      // 500 UYU / 41.4605 ≈ 12.06 USD < 25
-      const earnings = uyuEarnings(1, 500);
-      methodsRepo.getById.mockResolvedValue(PAYPAL_METHOD);
-      earningsRepo.validateEarningsSelection.mockResolvedValue({
-        valid: true,
-        earnings,
-      });
-      mockedFetchRate.mockResolvedValue(MOCK_BROU_RATE);
-
-      await expect(
-        service.requestPayout({
-          sellerUserId: 'seller-1',
-          payoutMethodId: 'pm-paypal',
-          listingIds: ['listing-1'],
-        }),
-      ).rejects.toThrow(ValidationError);
     });
 
     // --- Earnings linking ---
@@ -895,9 +797,9 @@ describe('PayoutsService', () => {
         id: 'p-r',
         status: 'pending',
         metadata: {rateLock: EXISTING_RATE_LOCK},
-        payoutMethodId: 'pm-paypal',
+        payoutMethodId: 'pm-usd',
       } as any);
-      methodsRepo.getById.mockResolvedValue(PAYPAL_METHOD);
+      methodsRepo.getById.mockResolvedValue(USD_BANK_METHOD);
       mockedFetchRate.mockResolvedValue(41.05);
 
       // mock getPayoutDocuments

@@ -4,7 +4,7 @@
 
 The payout system enables sellers to withdraw their earnings from sold tickets.
 
-For **USD/UYU conversion and rate lock** (BROU + Itaú fallback, PayPal, admin FX panel), see [USD / UYU exchange for payouts](./usd-uyu-payout-exchange.md).
+For **USD/UYU conversion and rate lock** (BROU + Itaú fallback, admin FX panel, optional `rateLock` on payout metadata for legacy or future FX flows), see [USD / UYU exchange for payouts](./usd-uyu-payout-exchange.md).
 
 Earnings stay **pending** until `event_end_date + PAYOUT_HOLD_PERIOD_HOURS` (default **48 hours**, configurable in `apps/backend/src/config/env.ts`) so disputes can be reviewed. A scheduled job then moves eligible rows to **available** (or **retained** if documentation is missing or reports apply). Sellers choose which tickets or listings to include in each payout request.
 
@@ -19,12 +19,12 @@ The payout system centers on these tables (among others):
    - **Hold end time is not stored**: release eligibility uses **`events.event_end_date` + `PAYOUT_HOLD_PERIOD_HOURS`** in SQL (the legacy `hold_until` column was removed; see migration `1776031365892_remove_seller_earnings_hold_until.ts`).  
    - Typical status flow: `pending` → `available` → `payout_requested` (while a payout is pending) → `paid_out` after admin completion; or `retained` / `failed_payout` on other paths  
 
-2. **`payout_methods`**: Seller destination (bank or PayPal)  
-   - `payout_type`: `uruguayan_bank` | `paypal` (see `packages/shared/src/schemas/payout-methods.ts` for metadata validation)  
-   - Holder name columns plus JSON `metadata` (bank + account, or PayPal email)  
+2. **`payout_methods`**: Seller destination (Uruguayan bank account)  
+   - `payout_type`: `uruguayan_bank` (see `packages/shared/src/schemas/payout-methods.ts` for metadata validation)  
+   - Holder name columns plus JSON `metadata` (bank + account)  
 
 3. **`payouts`**: Withdrawal requests  
-   - `amount`, `currency`, `status`, `payout_method_id`, `payout_provider` (`manual_bank` | `manual_paypal`), `processing_fee`, `transaction_reference`, `notes`, `metadata` (JSON), timestamps  
+   - `amount`, `currency`, `status`, `payout_method_id`, `payout_provider` (`manual_bank`), `processing_fee`, `transaction_reference`, `notes`, `metadata` (JSON), timestamps  
    - Status values include `pending`, `completed`, `failed`, `cancelled`, `processing` (enum allows `processing`; the main admin flow completes from **`pending` → `completed`** in one step)  
 
 4. **`payout_events`**: Immutable audit log (status changes, transfer completed/failed, cancel, etc.)  
@@ -36,18 +36,17 @@ The payout system centers on these tables (among others):
 Shared schema: `packages/shared/src/schemas/payouts.ts` (`PayoutMetadataSchema`).
 
 - **`listingTicketIds`**, **`listingIds`**: Selection snapshot from the seller request  
-- **`rateLock`**: Present when **UYU → USD** conversion was applied for a **PayPal** payout (locked rate, BROU/Itaú reference, expiry)  
+- **`rateLock`**: Optional; may appear on payouts that used a locked UYU→USD conversion (BROU/Itaú reference, expiry) — retained for legacy rows and admin tooling, not set on new seller requests today  
 - **`fxProcessing`**: Optional fields filled when an admin records **actual** bank execution for USD payouts (e.g. `actualBankRate`, `actualUyuCost`, `processedAt`)  
 
 Unknown keys are allowed at parse time (`.passthrough()`) for forward compatibility.
 
 ### Key design decisions
 
-1. **Ticket selection**: Sellers pass `listing_ticket_ids` and/or `listing_ids`; all selected earnings must be `available`, same currency (after conversion rules), meet minimums, and have no blocking reports.  
+1. **Ticket selection**: Sellers pass `listing_ticket_ids` and/or `listing_ids`; all selected earnings must be `available`, same currency as the payout method, meet minimums, and have no blocking reports.  
 2. **Joins over duplication**: Event/listing context comes from joins; earnings rows stay narrow.  
 3. **Processing fee**: Optional `processing_fee` on the payout for internal cost tracking (not debited from the seller line item in this model).  
-4. **PayPal + UYU earnings**: Server may convert to USD with a **rate lock** stored in metadata; see the USD/UYU payout doc.  
-5. **Balance APIs**: Aggregates by status, including **`payout_pending`** (earnings linked to a pending payout) and **`paid_out`**.
+4. **Balance APIs**: Aggregates by status, including **`payout_pending`** (earnings linked to a pending payout) and **`paid_out`**.
 
 ## Earnings creation
 
@@ -124,13 +123,13 @@ Example shape (illustrative):
 **Validation** (non-exhaustive):
 
 - Selection belongs to the seller and is **`available`** with **`payout_id` null**  
-- Same currency **after** PayPal conversion rules (UYU can map to a USD payout amount)  
+- Earnings currency must match the payout method currency (UYU bank ↔ UYU earnings, USD bank ↔ USD earnings)  
 - No open reports blocking withdrawal  
 - Total meets **`PAYOUT_MINIMUM_UYU` / `PAYOUT_MINIMUM_USD`** from env  
 
 **Process**:
 
-1. Create **`payouts`** row (`status: pending`, amount/currency possibly post-conversion, `metadata` with selection + optional `rateLock`).  
+1. Create **`payouts`** row (`status: pending`, amount/currency, `metadata` with selection snapshot).  
 2. Link earnings (**`payout_requested`**, `payout_id` set).  
 3. Log **`payout_requested`** on `payout_events`.
 
@@ -148,7 +147,7 @@ Body (all optional except logical constraints): `processingFee`, `transactionRef
 - Appends **`transfer_completed`** to `payout_events`.  
 - Sends payout completed notification (async).
 
-**Rate lock refresh** (pending UYU→USD PayPal payouts with expired lock): `POST /admin/payouts/{payoutId}/refresh-rate-lock`.
+**Rate lock refresh** (pending payouts that still have `rateLock` in metadata): `POST /admin/payouts/{payoutId}/refresh-rate-lock`.
 
 **Vouchers**: upload/delete via `POST /admin/payouts/{payoutId}/documents` and `DELETE /admin/payouts/documents/{documentId}`. Sellers see files on their payout detail API; there is **no** separate `metadata.voucherUrl` flow.
 
@@ -164,8 +163,7 @@ Returns buckets such as **available**, **retained**, **pending** (still in hold)
 
 ## Payout methods
 
-- **`uruguayan_bank`**: Bank metadata per shared schemas (bank name + account rules).  
-- **`paypal`**: USD method; can accept USD earnings directly or **UYU** earnings with server-side conversion + **rate lock** in payout metadata.
+- **`uruguayan_bank`**: Bank metadata per shared schemas (bank name + account rules).
 
 Validation runs in `PayoutMethodsService` when adding/updating methods.
 
@@ -223,13 +221,13 @@ Centralized in `apps/backend/src/constants/error-messages.ts` (Spanish copy), in
 - `INSUFFICIENT_BALANCE`, `BELOW_MINIMUM_THRESHOLD`, `NO_EARNINGS_SELECTED`  
 - `EARNINGS_NOT_AVAILABLE`, `EARNINGS_WITH_OPEN_REPORTS`, `MIXED_CURRENCIES`  
 - `INVALID_PAYOUT_METHOD`, `PAYOUT_ALREADY_PROCESSED`, `PAYOUT_NOT_PENDING`  
-- Currency mismatch messages for bank vs PayPal methods  
+- Currency mismatch messages when method currency ≠ earnings currency  
 
 ## Testing considerations
 
 - Earnings creation inside payment / order flows  
 - Hold release job and **retained** paths (reports, missing docs)  
-- Payout request validation (currency, minimum, reports, PayPal conversion)  
+- Payout request validation (currency, minimum, reports)  
 - Admin **process** + **documents** + optional **fxProcessing** metadata  
 - Failure/cancel and earnings **clone** behavior where applicable  
 - Zod validation for payout method metadata  

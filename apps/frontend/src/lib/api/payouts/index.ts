@@ -18,14 +18,6 @@ export const getAvailableEarningsQuery = () =>
     queryFn: () => api.payouts.getAvailableEarnings().then(res => res.data),
   });
 
-/** Same UYU→USD inputs as PayPal payout request (BROU/Itaú + spread); short staleTime avoids hammering upstream. */
-export const getPayPalUyuFxPreviewQuery = () =>
-  queryOptions({
-    queryKey: ['payouts', 'paypal-uyu-fx-preview'] as const,
-    queryFn: () => api.payouts.getPayPalUyuFxPreview().then(res => res.data),
-    staleTime: 60_000,
-  });
-
 export const getPayoutHistoryQuery = (page: number = 1, limit: number = 20) =>
   queryOptions({
     queryKey: ['payouts', 'history', page, limit],
@@ -108,14 +100,10 @@ export const updatePayoutMethodMutation = () =>
         accountHolderName?: string;
         accountHolderSurname?: string;
         currency?: 'UYU' | 'USD';
-        metadata?:
-          | {
-              bankName: string;
-              accountNumber: string;
-            }
-          | {
-              email: string;
-            };
+        metadata?: {
+          bankName: string;
+          accountNumber: string;
+        };
         isDefault?: boolean;
       };
     }) =>

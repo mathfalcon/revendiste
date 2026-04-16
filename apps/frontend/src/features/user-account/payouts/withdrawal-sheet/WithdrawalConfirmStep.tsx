@@ -1,24 +1,15 @@
-import type {UseQueryResult} from '@tanstack/react-query';
 import {Button} from '~/components/ui/button';
 import {ArrowLeft, Check, Loader2, Plus} from 'lucide-react';
 import {cn} from '~/lib/utils';
 import {formatCurrency} from '~/utils';
-import type {
-  GetPayPalUyuFxPreviewResponse,
-  GetPayoutMethodsResponse,
-} from '~/lib/api/generated';
+import type {GetPayoutMethodsResponse} from '~/lib/api/generated';
 import type {EventTicketCurrency} from '@revendiste/shared';
 import {getPayoutMethodDropdownText} from '../payout-method-utils';
-import {PayPalUyuFxAlert} from './PayPalUyuFxAlert';
 
 interface WithdrawalConfirmStepProps {
   currency: EventTicketCurrency;
   selectedTotal: number;
   selectedCount: number;
-  showConversionAlert: boolean;
-  estimatedUsdPayPal: number | null;
-  fxPreviewQuery: UseQueryResult<GetPayPalUyuFxPreviewResponse, Error>;
-  fxPreviewBlocksConfirm: boolean;
   compatibleMethods: GetPayoutMethodsResponse;
   payoutMethodId: string;
   onPayoutMethodId: (id: string) => void;
@@ -32,10 +23,6 @@ export function WithdrawalConfirmStep({
   currency,
   selectedTotal,
   selectedCount,
-  showConversionAlert,
-  estimatedUsdPayPal,
-  fxPreviewQuery,
-  fxPreviewBlocksConfirm,
   compatibleMethods,
   payoutMethodId,
   onPayoutMethodId,
@@ -56,17 +43,6 @@ export function WithdrawalConfirmStep({
                 {formatCurrency(String(selectedTotal), currency)}
               </span>
             </div>
-            {showConversionAlert &&
-              estimatedUsdPayPal != null &&
-              !fxPreviewQuery.isPending &&
-              !fxPreviewQuery.isError && (
-                <div className='flex justify-between items-center text-sm border-t pt-2'>
-                  <span className='text-muted-foreground'>Estimado en PayPal</span>
-                  <span className='font-semibold tabular-nums'>
-                    ~ {formatCurrency(String(estimatedUsdPayPal), 'USD')}
-                  </span>
-                </div>
-              )}
             <div className='flex justify-between items-center text-sm border-t pt-2'>
               <span className='text-muted-foreground'>Entradas incluidas</span>
               <span className='font-medium'>{selectedCount}</span>
@@ -82,8 +58,7 @@ export function WithdrawalConfirmStep({
           <p className='text-sm font-medium'>Método de retiro</p>
           <p className='text-xs text-muted-foreground'>
             Cuenta bancaria en Uruguay: tiene que ser en la misma moneda que tus
-            ganancias (UYU o USD). PayPal siempre recibe USD; si tus ganancias
-            están en UYU, aplicamos la conversión explicada abajo.
+            ganancias (UYU o USD).
           </p>
           {compatibleMethods.length === 0 ? (
             <div className='rounded-lg border border-dashed p-4 text-center space-y-3'>
@@ -132,21 +107,12 @@ export function WithdrawalConfirmStep({
             </div>
           )}
         </div>
-
-        {showConversionAlert && (
-          <PayPalUyuFxAlert
-            fxPreviewQuery={fxPreviewQuery}
-            estimatedUsdPayPal={estimatedUsdPayPal}
-          />
-        )}
       </div>
 
       <div className='border-t bg-background px-6 py-4 shrink-0 space-y-3'>
         <Button
           onClick={onSubmit}
-          disabled={
-            !payoutMethodId || requestPayoutPending || fxPreviewBlocksConfirm
-          }
+          disabled={!payoutMethodId || requestPayoutPending}
           className='w-full'
         >
           {requestPayoutPending ? (
@@ -154,10 +120,6 @@ export function WithdrawalConfirmStep({
               <Loader2 className='h-4 w-4 mr-1.5 animate-spin' />
               Procesando...
             </>
-          ) : showConversionAlert &&
-            estimatedUsdPayPal != null &&
-            fxPreviewQuery.data ? (
-            `Confirmar · ~ ${formatCurrency(String(estimatedUsdPayPal), 'USD')} PayPal (${formatCurrency(String(selectedTotal), 'UYU')})`
           ) : (
             `Confirmar retiro · ${formatCurrency(String(selectedTotal), currency)}`
           )}

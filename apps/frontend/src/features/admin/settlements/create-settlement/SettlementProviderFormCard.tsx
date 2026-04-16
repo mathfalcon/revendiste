@@ -185,7 +185,6 @@ export function SettlementProviderFormCard({
                   <SelectContent>
                     <SelectItem value='dlocal'>dLocal</SelectItem>
                     <SelectItem value='mercadopago'>Mercado Pago</SelectItem>
-                    <SelectItem value='paypal'>PayPal</SelectItem>
                     <SelectItem value='stripe'>Stripe</SelectItem>
                   </SelectContent>
                 </Select>

@@ -411,7 +411,7 @@ export const deleteEventImageMutation = () => {
 
 export interface AdminSettlementsQueryParams extends PaginationQuery {
   status?: 'pending' | 'completed' | 'failed';
-  paymentProvider?: 'dlocal' | 'mercadopago' | 'paypal' | 'stripe';
+  paymentProvider?: 'dlocal' | 'mercadopago' | 'stripe';
 }
 
 export const adminSettlementsQueryOptions = (

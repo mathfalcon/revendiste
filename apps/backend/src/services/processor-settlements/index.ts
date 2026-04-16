@@ -618,19 +618,10 @@ export class ProcessorSettlementsService {
     });
 
     let bankTransferUyuOut = 0;
-    let payPalUyuBacking = 0;
-    let payPalUsdOut = 0;
 
     for (const row of payoutRows) {
       const backing = payoutBackedUyu.get(row.id) ?? 0;
-      if (row.payoutType === 'paypal') {
-        payPalUyuBacking += backing;
-        if (row.currency === 'USD') {
-          payPalUsdOut += Number(row.amount);
-        }
-      } else {
-        bankTransferUyuOut += backing;
-      }
+      bankTransferUyuOut += backing;
     }
 
     const attributedToPayoutsUyu = [...payoutBackedUyu.values()].reduce(
@@ -663,8 +654,6 @@ export class ProcessorSettlementsService {
         availableSellerUyuInSettlement: String(availableSellerUyuInSettlement),
         attributedToPayoutsUyu: String(attributedToPayoutsUyu),
         bankTransferUyuOut: String(bankTransferUyuOut),
-        payPalUyuBacking: String(payPalUyuBacking),
-        payPalUsdOut: String(payPalUsdOut),
         earningsCoverageDifference: String(earningsCoverageDifference),
       },
       payoutReconciliation: {

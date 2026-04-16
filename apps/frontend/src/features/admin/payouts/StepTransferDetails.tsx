@@ -13,12 +13,8 @@ import {formatCurrency} from '~/utils';
 import {
   getBankName,
   getAccountNumber,
-  getEmail,
 } from '~/features/user-account/payouts/payout-method-utils';
-import {
-  UruguayanBankMetadataSchema,
-  PayPalMetadataSchema,
-} from '@revendiste/shared/schemas/payout-methods';
+import {UruguayanBankMetadataSchema} from '@revendiste/shared/schemas/payout-methods';
 import {ArrowLeft, ArrowRight, AlertTriangle} from 'lucide-react';
 import type {GetPayoutDetailsResponse} from '~/lib/api/generated';
 
@@ -66,26 +62,15 @@ export function StepTransferDetails({
   const accountNumber = payoutMethod.metadata
     ? getAccountNumber(payoutMethod.metadata)
     : null;
-  const email = payoutMethod.metadata
-    ? getEmail(payoutMethod.metadata)
-    : null;
 
   const isUruguayanBank =
     payoutMethod.payoutType === 'uruguayan_bank' &&
     payoutMethod.metadata &&
     typeof payoutMethod.metadata === 'object' &&
     !Array.isArray(payoutMethod.metadata);
-  const isPayPal =
-    payoutMethod.payoutType === 'paypal' &&
-    payoutMethod.metadata &&
-    typeof payoutMethod.metadata === 'object' &&
-    !Array.isArray(payoutMethod.metadata);
 
   const uruguayanBankMetadata = isUruguayanBank
     ? UruguayanBankMetadataSchema.safeParse(payoutMethod.metadata)
-    : null;
-  const paypalMetadata = isPayPal
-    ? PayPalMetadataSchema.safeParse(payoutMethod.metadata)
     : null;
 
   return (
@@ -94,11 +79,10 @@ export function StepTransferDetails({
         <CardHeader className='pb-3'>
           <CardTitle className='text-lg'>Datos para transferir</CardTitle>
           <CardDescription>
-            Copiá y pegá en home banking o PayPal.
+            Copiá y pegá en home banking.
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-3 text-sm'>
-          {/* Amount — the most important piece */}
           <div className='flex flex-col gap-2 rounded-xl border-2 border-primary/30 bg-background p-5 sm:flex-row sm:items-center sm:justify-between'>
             <div>
               <p className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>
@@ -118,7 +102,6 @@ export function StepTransferDetails({
             </CopyButton>
           </div>
 
-          {/* Recipient */}
           <div className='rounded-lg border bg-background p-3'>
             <Label className='text-xs text-muted-foreground'>Titular</Label>
             <p className='font-medium'>
@@ -127,7 +110,6 @@ export function StepTransferDetails({
             </p>
           </div>
 
-          {/* Bank details */}
           {payoutMethod.payoutType === 'uruguayan_bank' &&
             uruguayanBankMetadata?.success && (
               <>
@@ -157,21 +139,6 @@ export function StepTransferDetails({
                   <p>{payoutMethod.currency}</p>
                 </div>
               </>
-            )}
-
-          {/* PayPal details */}
-          {payoutMethod.payoutType === 'paypal' &&
-            paypalMetadata?.success &&
-            email && (
-              <div className='flex items-start justify-between gap-2 rounded-lg border bg-background p-3'>
-                <div className='min-w-0'>
-                  <Label className='text-xs text-muted-foreground'>
-                    PayPal
-                  </Label>
-                  <p className='break-all font-medium'>{email}</p>
-                </div>
-                <CopyButton text={email} size='sm' />
-              </div>
             )}
         </CardContent>
       </Card>

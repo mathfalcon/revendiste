@@ -15,7 +15,6 @@ export class WebhooksService {
   ) {
     // Future providers can be added as constructor parameters:
     // private readonly stripeAdapter: PaymentWebhookAdapter,
-    // private readonly paypalAdapter: PaymentWebhookAdapter,
   }
 
   async handleDLocalPaymentWebhook(

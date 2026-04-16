@@ -13,7 +13,6 @@
 export enum PaymentProvider {
   Dlocal = "dlocal",
   Mercadopago = "mercadopago",
-  Paypal = "paypal",
   Stripe = "stripe",
 }
 
@@ -133,11 +132,6 @@ export enum PayoutEventType {
   TransferCompleted = "transfer_completed",
   TransferFailed = "transfer_failed",
   TransferInitiated = "transfer_initiated",
-}
-
-export enum PayoutType {
-  Paypal = "paypal",
-  UruguayanBank = "uruguayan_bank",
 }
 
 export enum UploadAvailabilityReason {
@@ -957,7 +951,7 @@ export interface RequestPayoutResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank" | "manual_paypal";
+  payoutProvider: "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -986,7 +980,7 @@ export interface RequestPayoutRouteBody {
 }
 
 export type GetPayoutMethodsResponse = {
-  payoutType: PayoutType;
+  payoutType: "uruguayan_bank";
   isDefault: boolean;
   accountHolderSurname: string;
   accountHolderName: string;
@@ -1003,7 +997,7 @@ export type GetPayoutMethodsResponse = {
 }[];
 
 export interface AddPayoutMethodResponse {
-  payoutType: PayoutType;
+  payoutType: "uruguayan_bank";
   isDefault: boolean;
   accountHolderSurname: string;
   accountHolderName: string;
@@ -1019,94 +1013,86 @@ export interface AddPayoutMethodResponse {
   createdAt: string;
 }
 
-export type AddPayoutMethodRouteBody = (
-  | {
-      metadata:
-        | {
-            accountNumber: string;
-            bankName: "Itau";
-          }
-        | {
-            accountNumber: string;
-            bankName: "OCA Blue";
-          }
-        | {
-            accountNumber: string;
-            bankName: "PREX";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Banco Nacion Arg";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Bandes";
-          }
-        | {
-            accountNumber: string;
-            bankName: "BBVA";
-          }
-        | {
-            accountNumber: string;
-            bankName: "BHU";
-          }
-        | {
-            accountNumber: string;
-            bankName: "BROU";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Citibank";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Dinero Electronico ANDA";
-          }
-        | {
-            accountNumber: string;
-            bankName: "FUCAC";
-          }
-        | {
-            accountNumber: string;
-            bankName: "FUCEREP";
-          }
-        | {
-            accountNumber: string;
-            bankName: "GRIN";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Heritage";
-          }
-        | {
-            accountNumber: string;
-            bankName: "HSBC";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Mercadopago";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Midinero";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Santander";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Scotiabank";
-          };
-      payoutType: "uruguayan_bank";
-    }
-  | {
-      metadata: {
-        email: string;
+export type AddPayoutMethodRouteBody = {
+  metadata:
+    | {
+        accountNumber: string;
+        bankName: "Itau";
+      }
+    | {
+        accountNumber: string;
+        bankName: "OCA Blue";
+      }
+    | {
+        accountNumber: string;
+        bankName: "PREX";
+      }
+    | {
+        accountNumber: string;
+        bankName: "Banco Nacion Arg";
+      }
+    | {
+        accountNumber: string;
+        bankName: "Bandes";
+      }
+    | {
+        accountNumber: string;
+        bankName: "BBVA";
+      }
+    | {
+        accountNumber: string;
+        bankName: "BHU";
+      }
+    | {
+        accountNumber: string;
+        bankName: "BROU";
+      }
+    | {
+        accountNumber: string;
+        bankName: "Citibank";
+      }
+    | {
+        accountNumber: string;
+        bankName: "Dinero Electronico ANDA";
+      }
+    | {
+        accountNumber: string;
+        bankName: "FUCAC";
+      }
+    | {
+        accountNumber: string;
+        bankName: "FUCEREP";
+      }
+    | {
+        accountNumber: string;
+        bankName: "GRIN";
+      }
+    | {
+        accountNumber: string;
+        bankName: "Heritage";
+      }
+    | {
+        accountNumber: string;
+        bankName: "HSBC";
+      }
+    | {
+        accountNumber: string;
+        bankName: "Mercadopago";
+      }
+    | {
+        accountNumber: string;
+        bankName: "Midinero";
+      }
+    | {
+        accountNumber: string;
+        bankName: "Santander";
+      }
+    | {
+        accountNumber: string;
+        bankName: "Scotiabank";
       };
-      payoutType: "paypal";
-    }
-) & {
+  payoutType: "uruguayan_bank";
+} & {
   isDefault?: boolean;
   currency: "USD" | "UYU";
   accountHolderSurname: string;
@@ -1114,7 +1100,7 @@ export type AddPayoutMethodRouteBody = (
 };
 
 export interface UpdatePayoutMethodResponse {
-  payoutType: PayoutType;
+  payoutType: "uruguayan_bank";
   isDefault: boolean;
   accountHolderSurname: string;
   accountHolderName: string;
@@ -1136,26 +1122,6 @@ export interface UpdatePayoutMethodRouteBody {
   currency?: "USD" | "UYU";
   accountHolderSurname?: string;
   accountHolderName?: string;
-}
-
-export interface GetPayPalUyuFxPreviewResponse {
-  /** @format double */
-  rateLockHours: number;
-  /** @format double */
-  effectiveUyuPerUsd: number;
-  /** @format double */
-  spreadPercent: number;
-  /** @format double */
-  referenceVentaUyuPerUsd: number;
-}
-
-export interface ServiceUnavailableError {
-  name: string;
-  message: string;
-  stack?: string;
-  /** @format double */
-  statusCode: number;
-  isOperational: boolean;
 }
 
 export interface GetUserPayoutDetailsResponse {
@@ -1180,7 +1146,7 @@ export interface GetUserPayoutDetailsResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank" | "manual_paypal";
+  payoutProvider: "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1202,7 +1168,7 @@ export interface GetUserPayoutDetailsResponse {
     currency: EventTicketCurrency;
     accountHolderSurname: string;
     accountHolderName: string;
-    payoutType: PayoutType;
+    payoutType: "uruguayan_bank";
     id: string;
   };
   documents: {
@@ -1274,7 +1240,7 @@ export interface GetPayoutsResponse {
   pagination: PaginationMeta;
   data: {
     payoutMethod: {
-      payoutType: PayoutType;
+      payoutType: "uruguayan_bank";
       accountHolderSurname: string;
       accountHolderName: string;
       id: string;
@@ -1306,7 +1272,7 @@ export interface GetPayoutsResponse {
     processedBy: string | null;
     /** @format date-time */
     processedAt: string | null;
-    payoutProvider: "manual_bank" | "manual_paypal";
+    payoutProvider: "manual_bank";
     payoutMethodId: string;
     notes: string | null;
     failureReason: string | null;
@@ -1375,7 +1341,7 @@ export interface GetPayoutDetailsResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank" | "manual_paypal";
+  payoutProvider: "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1397,7 +1363,7 @@ export interface GetPayoutDetailsResponse {
     currency: EventTicketCurrency;
     accountHolderSurname: string;
     accountHolderName: string;
-    payoutType: PayoutType;
+    payoutType: "uruguayan_bank";
     id: string;
   };
   seller: {
@@ -1536,7 +1502,7 @@ export interface ProcessPayoutResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank" | "manual_paypal";
+  payoutProvider: "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1591,7 +1557,7 @@ export interface RefreshPayoutRateLockResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank" | "manual_paypal";
+  payoutProvider: "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1613,7 +1579,7 @@ export interface RefreshPayoutRateLockResponse {
     currency: EventTicketCurrency;
     accountHolderSurname: string;
     accountHolderName: string;
-    payoutType: PayoutType;
+    payoutType: "uruguayan_bank";
     id: string;
   };
   seller: {
@@ -1757,7 +1723,7 @@ export interface FailPayoutResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank" | "manual_paypal";
+  payoutProvider: "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1791,7 +1757,7 @@ export interface CancelPayoutResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank" | "manual_paypal";
+  payoutProvider: "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -3204,7 +3170,7 @@ export type ListSettlementsResponse =
   PaginatedResponseProcessorSettlementListRow;
 
 export interface InferTypeofAdminSettlementsQuerySchema {
-  paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  paymentProvider?: "dlocal" | "mercadopago" | "stripe";
   status?: "pending" | "completed" | "failed";
   sortOrder?: "asc" | "desc";
   sortBy?: string;
@@ -3253,7 +3219,7 @@ export interface CreateSettlementResponse {
 export interface CreateSettlementRouteBody {
   /** Construct a type with a set of properties K of type T */
   metadata?: RecordStringUnknown;
-  paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  paymentProvider?: "dlocal" | "mercadopago" | "stripe";
   currency: "USD" | "UYU";
   totalAmount: string;
   settlementDate: string;
@@ -3341,8 +3307,6 @@ export interface SettlementBreakdownResponse {
   };
   moneyFlowSummary: {
     earningsCoverageDifference: string;
-    payPalUsdOut: string;
-    payPalUyuBacking: string;
     bankTransferUyuOut: string;
     attributedToPayoutsUyu: string;
     availableSellerUyuInSettlement: string;
@@ -3360,7 +3324,7 @@ export interface SettlementBreakdownResponse {
       lockedRate: number;
     } | null;
     uyuBackedInThisSettlement: string;
-    payoutType: PayoutType;
+    payoutType: "uruguayan_bank";
     currency: EventTicketCurrency;
     amount: string;
     status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -4577,24 +4541,6 @@ export class Api<
      * No description
      *
      * @tags Payouts
-     * @name GetPayPalUyuFxPreview
-     * @request GET:/payouts/paypal-uyu-fx-preview
-     */
-    getPayPalUyuFxPreview: (params: RequestParams = {}) =>
-      this.request<
-        GetPayPalUyuFxPreviewResponse,
-        UnauthorizedError | ServiceUnavailableError
-      >({
-        path: `/payouts/paypal-uyu-fx-preview`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Payouts
      * @name GetPayoutDetails
      * @request GET:/payouts/{payoutId}
      */
@@ -5324,7 +5270,7 @@ export class Api<
      */
     listSettlements: (
       query: {
-        paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+        paymentProvider?: "dlocal" | "mercadopago" | "stripe";
         status?: "pending" | "completed" | "failed";
         sortOrder?: "asc" | "desc";
         sortBy?: string;

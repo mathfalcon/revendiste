@@ -30,9 +30,7 @@ export const createSettlementFormSchema = z
         message: 'El monto debe ser mayor a 0',
       }),
     currency: z.enum(['UYU', 'USD']),
-    paymentProvider: z
-      .enum(['dlocal', 'mercadopago', 'paypal', 'stripe'])
-      .optional(),
+    paymentProvider: z.enum(['dlocal', 'mercadopago', 'stripe']).optional(),
   })
   .refine(
     data => {

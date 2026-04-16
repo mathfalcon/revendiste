@@ -16,10 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '~/components/ui/dialog';
-import {PayoutType} from '~/lib/api/generated';
 import {
-  getBankName,
-  getEmail,
   getAccountNumber,
   getPayoutMethodDisplayName,
 } from './payout-method-utils';
@@ -81,7 +78,7 @@ export function PayoutMethodsSection() {
             <CreditCard className='h-8 w-8 text-muted-foreground' aria-hidden />
           }
           title='No tenés métodos de pago'
-          description='Agregá una cuenta bancaria uruguaya o PayPal para poder retirar tus ganancias.'
+          description='Agregá una cuenta bancaria en Uruguay para poder retirar tus ganancias.'
           action={
             <Button
               className='cursor-pointer min-h-11'
@@ -131,27 +128,11 @@ export function PayoutMethodsSection() {
               <CardContent className='space-y-2'>
                 <div className='text-sm'>
                   <span className='text-muted-foreground'>Tipo:</span>{' '}
-                  <Badge variant='outline'>
-                    {method.payoutType === PayoutType.Paypal
-                      ? 'PayPal'
-                      : 'Banco Uruguayo'}
-                  </Badge>
+                  <Badge variant='outline'>Banco en Uruguay</Badge>
                 </div>
                 <div className='text-sm'>
-                  <span className='text-muted-foreground'>
-                    {method.payoutType === PayoutType.Paypal
-                      ? 'Email:'
-                      : 'Cuenta:'}
-                  </span>{' '}
-                  {method.payoutType === PayoutType.Paypal
-                    ? (() => {
-                        const email = getEmail(method.metadata);
-                        return email || 'N/A';
-                      })()
-                    : (() => {
-                        const accountNumber = getAccountNumber(method.metadata);
-                        return accountNumber || 'N/A';
-                      })()}
+                  <span className='text-muted-foreground'>Cuenta:</span>{' '}
+                  {getAccountNumber(method.metadata) || 'N/A'}
                 </div>
                 <div className='text-sm'>
                   <span className='text-muted-foreground'>Titular:</span>{' '}

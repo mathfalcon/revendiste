@@ -269,35 +269,10 @@ export const UruguayanBankPayoutMethodSchema = z.object({
 });
 
 /**
- * PayPal metadata schema
- * PayPal requires the recipient's PayPal email address
- * PayPal only supports USD (not UYU natively)
+ * All payout method metadata by country (discriminator `type`).
+ * When more countries exist, use z.discriminatedUnion again.
  */
-export const PayPalMetadataSchema = z.object({
-  email: z.string().email('Debe ser un email válido de PayPal'),
-});
-
-/**
- * PayPal payout method schema
- * Includes the type discriminator for use in PayoutMethodMetadataSchema
- */
-export const PayPalPayoutMethodSchema = z.object({
-  type: z.literal('paypal'),
-  metadata: PayPalMetadataSchema,
-});
-
-/**
- * Discriminated union of all payout method types by country
- * Uses 'type' as the discriminator field for type safety
- * Future: Add ArgentinianBankPayoutMethodSchema, WisePayoutMethodSchema, etc.
- */
-export const PayoutMethodMetadataSchema = z.discriminatedUnion('type', [
-  UruguayanBankPayoutMethodSchema,
-  PayPalPayoutMethodSchema,
-  // Future payout types can be added here:
-  // ArgentinianBankPayoutMethodSchema,
-  // WisePayoutMethodSchema,
-]);
+export const PayoutMethodMetadataSchema = UruguayanBankPayoutMethodSchema;
 
 /**
  * TypeScript type inferred from the discriminated union schema
@@ -315,11 +290,6 @@ export type TypedPayoutMethodMetadata<T extends PayoutMethodMetadata['type']> =
  * Uruguayan bank metadata type
  */
 export type UruguayanBankMetadata = z.infer<typeof UruguayanBankMetadataSchema>;
-
-/**
- * PayPal metadata type
- */
-export type PayPalMetadata = z.infer<typeof PayPalMetadataSchema>;
 
 /**
  * Helper to get all Uruguayan bank names as an array
@@ -357,25 +327,7 @@ export const PayoutMethodUruguayanBankSchema = z.object({
 });
 
 /**
- * PayPal payout method schema (for API routes)
- * Uses 'payoutType' as discriminator (matching API route structure)
- * Can be extended with additional fields using .and()
+ * Base schema for payout method route bodies (API `payoutType` + metadata).
+ * Extend with account holder fields via `.and()` in route-specific schemas.
  */
-export const PayoutMethodPayPalSchema = z.object({
-  payoutType: z.literal('paypal'),
-  metadata: PayPalMetadataSchema,
-});
-
-/**
- * Base schema for payout method route bodies
- * Uses 'payoutType' as discriminator (matching API route structure)
- * This discriminated union ensures type-safe metadata validation
- *
- * Both frontend and backend can extend these schemas with additional fields:
- * - Backend: .and(z.object({ accountHolderName, accountHolderSurname, currency, isDefault }))
- * - Frontend: .and(z.object({ accountHolderName, accountHolderSurname, currency, bankName, accountNumber, isDefault }))
- */
-export const PayoutMethodBaseSchema = z.discriminatedUnion('payoutType', [
-  PayoutMethodUruguayanBankSchema,
-  PayoutMethodPayPalSchema,
-]);
+export const PayoutMethodBaseSchema = PayoutMethodUruguayanBankSchema;

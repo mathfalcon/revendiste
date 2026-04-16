@@ -3,9 +3,7 @@ import {NotFoundError, ValidationError} from '~/errors';
 import {PAYOUT_ERROR_MESSAGES} from '~/constants/error-messages';
 import {
   UruguayanBankPayoutMethodSchema,
-  PayPalPayoutMethodSchema,
   type UruguayanBankMetadata,
-  type PayPalMetadata,
   type JsonValue,
 } from '@revendiste/shared';
 import {logger} from '~/utils';
@@ -13,11 +11,11 @@ import type {EventTicketCurrency} from '@revendiste/shared';
 
 interface AddPayoutMethodParams {
   userId: string;
-  payoutType: 'uruguayan_bank' | 'paypal';
+  payoutType: 'uruguayan_bank';
   accountHolderName: string;
   accountHolderSurname: string;
   currency: EventTicketCurrency;
-  metadata: UruguayanBankMetadata | PayPalMetadata;
+  metadata: UruguayanBankMetadata;
   isDefault?: boolean;
 }
 
@@ -39,38 +37,19 @@ export class PayoutMethodsService {
    * Validates payout method metadata using Zod discriminated union schema
    */
   validatePayoutMethodMetadata(
-    payoutType: 'uruguayan_bank' | 'paypal',
+    payoutType: 'uruguayan_bank',
     metadata: unknown,
-  ): UruguayanBankMetadata | PayPalMetadata {
-    if (payoutType === 'uruguayan_bank') {
-      // Validate using the full payout method schema, then extract metadata
-      const result = UruguayanBankPayoutMethodSchema.safeParse({
-        type: 'uruguayan_bank',
-        metadata,
-      });
-      if (!result.success) {
-        throw new ValidationError(
-          `Invalid uruguayan_bank metadata: ${result.error.message}`,
-        );
-      }
-      return result.data.metadata;
+  ): UruguayanBankMetadata {
+    const result = UruguayanBankPayoutMethodSchema.safeParse({
+      type: 'uruguayan_bank',
+      metadata,
+    });
+    if (!result.success) {
+      throw new ValidationError(
+        `Invalid uruguayan_bank metadata: ${result.error.message}`,
+      );
     }
-
-    if (payoutType === 'paypal') {
-      // Validate using the full payout method schema, then extract metadata
-      const result = PayPalPayoutMethodSchema.safeParse({
-        type: 'paypal',
-        metadata,
-      });
-      if (!result.success) {
-        throw new ValidationError(
-          `Invalid paypal metadata: ${result.error.message}`,
-        );
-      }
-      return result.data.metadata;
-    }
-
-    throw new ValidationError(`Unsupported payout type: ${payoutType}`);
+    return result.data.metadata;
   }
 
   /**

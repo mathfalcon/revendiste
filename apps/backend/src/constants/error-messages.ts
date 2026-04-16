@@ -164,9 +164,9 @@ export const PAYOUT_ERROR_MESSAGES = {
   PAYOUT_NOT_PENDING: (status: string) =>
     `El retiro ya está ${status}. No se puede procesar.`,
   CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS:
-    'No podés retirar ganancias en USD a una cuenta bancaria en UYU. Seleccioná un método de pago en USD o PayPal.',
+    'No podés retirar ganancias en USD a una cuenta bancaria en UYU. Seleccioná un método de retiro en USD.',
   CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS:
-    'No podés retirar ganancias en UYU a una cuenta bancaria en USD. Seleccioná un método de pago en UYU o PayPal.',
+    'No podés retirar ganancias en UYU a una cuenta bancaria en USD. Seleccioná un método de retiro en UYU.',
   EARNINGS_WITH_OPEN_REPORTS:
     'Algunas ganancias seleccionadas tienen reportes abiertos y no pueden ser retiradas. Esperá a que se resuelvan los reportes.',
   PAYOUT_HAS_NO_RATE_LOCK:

@@ -80,7 +80,7 @@ export function StepUploadVoucher({
         <CardHeader className='pb-3'>
           <CardTitle className='text-lg'>Comprobante de transferencia</CardTitle>
           <CardDescription>
-            Subí el comprobante de la transferencia bancaria o PayPal. Podés
+            Subí el comprobante de la transferencia bancaria. Podés
             saltear este paso y subir después.
           </CardDescription>
         </CardHeader>

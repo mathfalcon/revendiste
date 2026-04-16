@@ -20,7 +20,7 @@ import {
 } from '~/components/ui/card';
 import {Tabs, TabsList, TabsTrigger} from '~/components/ui/tabs';
 import {adminPayoutsQueryOptions} from '~/lib/api/admin';
-import {Landmark, Mail} from 'lucide-react';
+import {Landmark} from 'lucide-react';
 import {formatCurrency} from '~/utils';
 import {Skeleton} from '~/components/ui/skeleton';
 
@@ -350,11 +350,7 @@ function PayoutsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {payout.payoutMethod?.payoutType === 'paypal' ? (
-                        <Mail className='h-4 w-4 text-muted-foreground' />
-                      ) : (
-                        <Landmark className='h-4 w-4 text-muted-foreground' />
-                      )}
+                      <Landmark className='h-4 w-4 text-muted-foreground' />
                     </TableCell>
                     <TableCell className='text-muted-foreground text-sm whitespace-nowrap'>
                       {new Date(payout.requestedAt).toLocaleString('es-UY', {

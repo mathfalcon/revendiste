@@ -525,7 +525,7 @@ Si existe un reclamo o contracargo pendiente, Revendiste podrá retener los fond
 
 ### 8.4. Forma de Liquidación
 
-La liquidación se realizará mediante transferencia a la cuenta bancaria o cuenta de PayPal declarada por el Vendedor en su perfil de usuario. El Vendedor podrá elegir su método de liquidación preferido al configurar su perfil.
+La liquidación se realizará mediante transferencia a la cuenta bancaria en Uruguay declarada por el Vendedor en su perfil de usuario. El Vendedor podrá elegir su método de liquidación preferido al configurar su perfil.
 
 ### 8.5. Monto a Liquidar
 

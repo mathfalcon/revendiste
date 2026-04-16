@@ -59,17 +59,17 @@ export type PaymentEventType = "chargeback_received" | "dispute_opened" | "dispu
 
 export type PaymentMethod = "bank_transfer" | "cash" | "credit_card" | "debit_card" | "other" | "pix" | "voucher";
 
-export type PaymentProvider = "dlocal" | "mercadopago" | "paypal" | "stripe";
+export type PaymentProvider = "dlocal" | "mercadopago" | "stripe";
 
 export type PaymentStatus = "cancelled" | "expired" | "failed" | "paid" | "partially_refunded" | "pending" | "processing" | "refunded";
 
 export type PayoutEventType = "admin_processed" | "cancelled" | "payout_requested" | "status_change" | "transfer_completed" | "transfer_failed" | "transfer_initiated";
 
-export type PayoutProvider = "manual_bank" | "manual_paypal";
+export type PayoutProvider = "manual_bank";
 
 export type PayoutStatus = "cancelled" | "completed" | "failed" | "pending" | "processing";
 
-export type PayoutType = "paypal" | "uruguayan_bank";
+export type PayoutType = "uruguayan_bank";
 
 export type QrAvailabilityTiming = "12h" | "24h" | "3h" | "48h" | "6h" | "72h";
 

@@ -24,18 +24,13 @@ import {
   FileText,
   Wallet,
   Landmark,
-  Mail,
   Ban,
   Calendar,
   MapPin,
 } from 'lucide-react';
 import {formatFileSize} from '~/utils/file-icons';
 import type {GetUserPayoutDetailsResponse} from '~/lib/api/generated';
-import {
-  PayoutEventType,
-  PayoutStatus,
-  PayoutType,
-} from '~/lib/api/generated';
+import {PayoutEventType, PayoutStatus} from '~/lib/api/generated';
 import {cn} from '~/lib/utils';
 
 function getStatusBadge(status: string) {
@@ -158,7 +153,7 @@ const PAYOUT_FLOW_DEFINITIONS = [
     id: 'delivery',
     title: 'Transferencia del retiro',
     description:
-      'Enviamos el monto al método que seleccionaste. Tu banco o PayPal pueden tardar en reflejarlo en tu cuenta.',
+      'Enviamos el monto al método que seleccionaste. Tu banco puede tardar en reflejarlo en tu cuenta.',
   },
 ] as const;
 
@@ -188,7 +183,7 @@ function getDeliveryStepDescription(phase: FlowPhase): string {
     case 'upcoming':
       return 'Cuando finalice la revisión, enviamos el dinero al método que seleccionaste.';
     case 'current':
-      return 'Estamos procesando el envío al método que elegiste. Puede demorar en verse según tu banco o PayPal.';
+      return 'Estamos procesando el envío al método que elegiste. Puede demorar en verse según tu banco.';
     case 'complete':
       return 'El envío se completó. Puede tardar en aparecer en el extracto según tu entidad.';
     default:
@@ -862,14 +857,6 @@ export function PayoutDetailContent({
           ? methodMeta.accountNumber
           : methodMeta.account_number)
       : undefined;
-  const paypalEmail =
-    methodMeta &&
-    typeof methodMeta === 'object' &&
-    methodMeta !== null &&
-    'email' in methodMeta
-      ? (methodMeta.email as string)
-      : undefined;
-
   return (
     <>
       <div className='grid grid-cols-1 lg:grid-cols-[1fr_min(300px,100%)] gap-4 items-start'>
@@ -928,16 +915,10 @@ export function PayoutDetailContent({
                 <div
                   className={cn(
                     'shrink-0 h-9 w-9 rounded-lg flex items-center justify-center',
-                    payout.payoutMethod?.payoutType === PayoutType.Paypal
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-muted text-muted-foreground',
+                    'bg-muted text-muted-foreground',
                   )}
                 >
-                  {payout.payoutMethod?.payoutType === PayoutType.Paypal ? (
-                    <Mail className='h-4 w-4' aria-hidden />
-                  ) : (
-                    <Landmark className='h-4 w-4' aria-hidden />
-                  )}
+                  <Landmark className='h-4 w-4' aria-hidden />
                 </div>
                 <div className='min-w-0 flex-1'>
                   <p className='font-semibold text-sm leading-snug'>
@@ -1024,14 +1005,7 @@ export function PayoutDetailContent({
                   <p className='text-xs font-medium uppercase tracking-wider text-muted-foreground'>
                     Método de pago
                   </p>
-                  <DetailRow
-                    label='Tipo'
-                    value={
-                      payout.payoutMethod.payoutType === PayoutType.UruguayanBank
-                        ? 'Banco en Uruguay'
-                        : 'PayPal'
-                    }
-                  />
+                  <DetailRow label='Tipo' value='Banco en Uruguay' />
                   <DetailRow
                     label='Titular'
                     value={`${payout.payoutMethod.accountHolderName} ${payout.payoutMethod.accountHolderSurname}`}
@@ -1044,9 +1018,6 @@ export function PayoutDetailContent({
                         <span className='font-mono text-xs'>{accountNumber}</span>
                       }
                     />
-                  )}
-                  {paypalEmail && (
-                    <DetailRow label='Email' value={paypalEmail} />
                   )}
                   <DetailRow
                     label='Moneda'

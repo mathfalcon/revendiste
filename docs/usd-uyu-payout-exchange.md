@@ -21,9 +21,10 @@ The caller receives **`ServiceUnavailableError` (503)** with `PAYOUT_ERROR_MESSA
 
 ## Where the rate is used
 
-- **`PayoutsService.requestPayout`** — PayPal path with earnings in UYU: fetches venta, applies configured **spread** (`PAYOUT_FX_SPREAD_PERCENT`), computes USD amount, and writes **`rateLock`** into payout `metadata` (schema: `packages/shared/src/schemas/payouts.ts`).
-- **`PayoutsService.refreshPayoutRateLock`** — Pending payouts: recomputes USD from locked UYU principal using a fresh venta + spread.
+- **`PayoutsService.refreshPayoutRateLock`** — Pending payouts that include **`rateLock`** in metadata: recomputes USD from the locked UYU principal using a fresh venta + spread (legacy / special FX cases).
 - **`PayoutsService.getPayoutDetailsForAdmin`** — Loads **current** venta for the FX decision panel (if BROU+Itaú both fail, the whole admin detail request errors with 503).
+
+Seller **`requestPayout`** no longer applies automatic UYU→USD conversion; earnings currency must match the bank method currency.
 
 ## ExchangeRateService (optional path)
 

@@ -22,10 +22,8 @@ import {
 import {Checkbox} from '~/components/ui/checkbox';
 import {PayoutMethodBaseSchema} from '@revendiste/shared';
 import {UruguayanBankPayoutFormFields} from './UruguayanBankPayoutFormFields';
-import {PayPalPayoutFormFields} from './PayPalPayoutFormFields';
-import {Loader2, Building2, CreditCard} from 'lucide-react';
-import {cn} from '~/lib/utils';
-import {getBankName, getAccountNumber, getEmail} from './payout-method-utils';
+import {Loader2} from 'lucide-react';
+import {getBankName, getAccountNumber} from './payout-method-utils';
 
 const payoutMethodSchema = PayoutMethodBaseSchema.and(
   z.object({
@@ -55,17 +53,6 @@ function buildDefaultValues(
       metadata: {bankName: '' as any, accountNumber: ''},
       isDefault: false,
     } as any;
-  }
-
-  if (existingMethod.payoutType === ('paypal' as string)) {
-    return {
-      payoutType: 'paypal' as const,
-      accountHolderName: existingMethod.accountHolderName,
-      accountHolderSurname: existingMethod.accountHolderSurname,
-      currency: 'USD' as const,
-      metadata: {email: getEmail(existingMethod.metadata) ?? ''},
-      isDefault: existingMethod.isDefault,
-    };
   }
 
   return {
@@ -114,24 +101,11 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
     defaultValues: buildDefaultValues(existingMethod),
   });
 
-  const payoutType = form.watch('payoutType');
-
-  const handlePayoutTypeChange = (newType: 'uruguayan_bank' | 'paypal') => {
-    form.setValue('payoutType', newType);
-    form.clearErrors();
-    if (newType === 'uruguayan_bank') {
-      form.setValue('currency', 'UYU');
-      form.setValue('metadata', {
-        bankName: '' as any,
-        accountNumber: '',
-      });
-    } else {
-      form.setValue('currency', 'USD');
-      form.setValue('metadata', {email: ''});
-    }
-  };
-
   const onSubmit = async (data: PayoutMethodFormValues) => {
+    const metadata = data.metadata as {
+      bankName: string;
+      accountNumber: string;
+    };
     if (methodId && existingMethod) {
       await updateMethod.mutateAsync({
         payoutMethodId: methodId,
@@ -143,11 +117,7 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
           isDefault: data.isDefault,
         },
       });
-    } else if (data.payoutType === 'uruguayan_bank') {
-      const metadata = data.metadata as {
-        bankName: string;
-        accountNumber: string;
-      };
+    } else {
       await addMethod.mutateAsync({
         payoutType: 'uruguayan_bank',
         accountHolderName: data.accountHolderName,
@@ -157,15 +127,6 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
           bankName: metadata.bankName as any,
           accountNumber: metadata.accountNumber,
         },
-        isDefault: data.isDefault,
-      });
-    } else {
-      await addMethod.mutateAsync({
-        payoutType: 'paypal',
-        accountHolderName: data.accountHolderName,
-        accountHolderSurname: data.accountHolderSurname,
-        currency: 'USD',
-        metadata: data.metadata as {email: string},
         isDefault: data.isDefault,
       });
     }
@@ -183,42 +144,6 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-5'>
-        {/* Payout type selector — card buttons instead of dropdown */}
-        {!methodId && (
-          <div className='space-y-2'>
-            <FormLabel>Tipo de método</FormLabel>
-            <div className='grid grid-cols-2 gap-3'>
-              <button
-                type='button'
-                onClick={() => handlePayoutTypeChange('uruguayan_bank')}
-                className={cn(
-                  'flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors',
-                  payoutType === 'uruguayan_bank'
-                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                    : 'hover:bg-muted/50',
-                )}
-              >
-                <Building2 className='h-5 w-5' />
-                <span className='text-sm font-medium'>Banco uruguayo</span>
-              </button>
-              <button
-                type='button'
-                onClick={() => handlePayoutTypeChange('paypal')}
-                className={cn(
-                  'flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors',
-                  payoutType === 'paypal'
-                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                    : 'hover:bg-muted/50',
-                )}
-              >
-                <CreditCard className='h-5 w-5' />
-                <span className='text-sm font-medium'>PayPal</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Common fields */}
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
           <FormField
             control={form.control}
@@ -248,13 +173,8 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
           />
         </div>
 
-        {/* Type-specific fields */}
-        {payoutType === 'uruguayan_bank' && (
-          <UruguayanBankPayoutFormFields form={form} />
-        )}
-        {payoutType === 'paypal' && <PayPalPayoutFormFields form={form} />}
+        <UruguayanBankPayoutFormFields form={form} />
 
-        {/* Default method checkbox */}
         <FormField
           control={form.control}
           name='isDefault'

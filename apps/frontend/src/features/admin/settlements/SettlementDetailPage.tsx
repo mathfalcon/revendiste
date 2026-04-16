@@ -475,23 +475,6 @@ export function SettlementDetailPage({settlementId}: SettlementDetailPageProps) 
               )}
             </span>
           </div>
-          <div className='flex justify-between gap-4 border-b pb-2'>
-            <span className='text-muted-foreground'>
-              PayPal — respaldo UYU (est.)
-            </span>
-            <span className='font-medium tabular-nums'>
-              {formatCurrency(
-                moneyFlowSummary.payPalUyuBacking,
-                settlement.currency,
-              )}
-            </span>
-          </div>
-          <div className='flex justify-between gap-4 border-b pb-2'>
-            <span className='text-muted-foreground'>PayPal — USD enviados</span>
-            <span className='font-medium tabular-nums'>
-              {formatCurrency(moneyFlowSummary.payPalUsdOut, 'USD')}
-            </span>
-          </div>
           <div className='flex justify-between gap-4'>
             <span className='text-muted-foreground'>
               Diferencia cobertura ganancias

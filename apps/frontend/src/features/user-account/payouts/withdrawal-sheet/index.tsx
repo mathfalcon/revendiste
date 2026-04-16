@@ -1,6 +1,5 @@
 import {useState, useCallback, useEffect} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {roundToDecimals} from '@revendiste/shared';
 import {usePostHog} from 'posthog-js/react';
 import {
   Sheet,
@@ -19,9 +18,7 @@ import {
   requestPayoutMutation,
   getPayoutMethodsQuery,
   getAvailableEarningsQuery,
-  getPayPalUyuFxPreviewQuery,
 } from '~/lib/api/payouts';
-import {PayoutType} from '~/lib/api/generated';
 import type {EventTicketCurrency} from '@revendiste/shared';
 import {PayoutMethodForm} from '../PayoutMethodForm';
 import type {WithdrawalSheetProps} from './types';
@@ -86,32 +83,9 @@ export function WithdrawalSheet({
   }, [open, initialCurrency]);
 
   const compatibleMethods =
-    payoutMethods?.filter(
-      m => m.payoutType === PayoutType.Paypal || m.currency === currency,
-    ) ?? [];
+    payoutMethods?.filter(m => m.currency === currency) ?? [];
 
   const selectedMethod = compatibleMethods.find(m => m.id === payoutMethodId);
-  const isPayPal = selectedMethod?.payoutType === PayoutType.Paypal;
-  const showConversionAlert = isPayPal && currency === 'UYU';
-
-  const fxPreviewQuery = useQuery({
-    ...getPayPalUyuFxPreviewQuery(),
-    enabled: open && step === 2 && showConversionAlert,
-  });
-
-  const estimatedUsdPayPal =
-    fxPreviewQuery.data && selectedTotal > 0
-      ? roundToDecimals(
-          selectedTotal / fxPreviewQuery.data.effectiveUyuPerUsd,
-          2,
-        )
-      : null;
-
-  const fxPreviewBlocksConfirm =
-    showConversionAlert &&
-    (fxPreviewQuery.isPending ||
-      fxPreviewQuery.isError ||
-      !fxPreviewQuery.data);
 
   const handleContinue = () => {
     const defaultMethod =
@@ -189,10 +163,6 @@ export function WithdrawalSheet({
               currency={currency}
               selectedTotal={selectedTotal}
               selectedCount={selectedCount}
-              showConversionAlert={showConversionAlert}
-              estimatedUsdPayPal={estimatedUsdPayPal}
-              fxPreviewQuery={fxPreviewQuery}
-              fxPreviewBlocksConfirm={fxPreviewBlocksConfirm}
               compatibleMethods={compatibleMethods}
               payoutMethodId={payoutMethodId}
               onPayoutMethodId={setPayoutMethodId}
