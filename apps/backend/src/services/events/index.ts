@@ -4,7 +4,11 @@ import {EVENT_ERROR_MESSAGES} from '~/constants/error-messages';
 import {WithPagination} from '~/types';
 import {ScrapedEventData} from '../scraping';
 import {EventImageService} from '../scraping/image-service';
-import {logger, generateUniqueSlug} from '~/utils';
+import {
+  logger,
+  generateUniqueSlug,
+  formatUruguayDateForEventSlug,
+} from '~/utils';
 import {VenuesService} from '../venues';
 import {GooglePlacesService} from '../google-places';
 
@@ -79,7 +83,8 @@ export class EventsService {
     }));
 
     // Process venues for all events first (in parallel batches)
-    const eventsWithVenues = await this.processVenuesForEvents(eventsWithPaidWaves);
+    const eventsWithVenues =
+      await this.processVenuesForEvents(eventsWithPaidWaves);
 
     // Generate slugs for events
     const eventsWithSlugs = await this.generateSlugsForEvents(eventsWithVenues);
@@ -89,9 +94,8 @@ export class EventsService {
       images: [],
     }));
 
-    const upsertedEvents = await this.eventsRepository.upsertEventsBatch(
-      eventsWithoutImages,
-    );
+    const upsertedEvents =
+      await this.eventsRepository.upsertEventsBatch(eventsWithoutImages);
 
     // Create a map from externalId to original event to handle cases where
     // some events failed to upsert (indices won't match)
@@ -144,19 +148,31 @@ export class EventsService {
 
   /**
    * Generate unique slugs for events that don't already have one in the DB.
+   * Appends the Montevideo calendar date to the name seed so same-title shows
+   * on different days (e.g. multi-function Tickantel) get distinct slugs, and
+   * tracks slugs reserved in this batch so parallel name collisions cannot
+   * assign the same slug before insert.
    * Existing events (matched by externalId) keep their current slug on upsert.
    */
   private async generateSlugsForEvents(
     events: ScrapedEventData[],
-  ): Promise<(ScrapedEventData & { slug: string })[]> {
-    const results: (ScrapedEventData & { slug: string })[] = [];
+  ): Promise<(ScrapedEventData & {slug: string})[]> {
+    const results: (ScrapedEventData & {slug: string})[] = [];
+    const reservedSlugs = new Set<string>();
 
     for (const event of events) {
-      const slug = await generateUniqueSlug(
-        event.name,
-        (candidate) => this.eventsRepository.slugExists(candidate),
-      );
-      results.push({ ...event, slug });
+      const datePart = formatUruguayDateForEventSlug(event.eventStartDate);
+      const slugSeed = `${event.name} ${datePart}`;
+
+      const slug = await generateUniqueSlug(slugSeed, async candidate => {
+        if (reservedSlugs.has(candidate)) {
+          return true;
+        }
+        return this.eventsRepository.slugExists(candidate);
+      });
+
+      reservedSlugs.add(slug);
+      results.push({...event, slug});
     }
 
     return results;

@@ -227,8 +227,8 @@ export class TickantelScraper extends BaseScraper {
 
       if (this.events.length > 0) {
         logger.info('Debug scrape successful', {
-          eventName: this.events[0].name,
           totalEvents: this.events.length,
+          externalIds: this.events.map(e => e.externalId),
         });
         return this.events[0];
       }
@@ -239,6 +239,12 @@ export class TickantelScraper extends BaseScraper {
       logger.error('Debug scrape error:', error);
       return this.events[0] || null;
     }
+  }
+
+  /** Debug: return ALL events produced (one per function). */
+  async debugScrapeUrlAll(url: string): Promise<ScrapedEventData[]> {
+    await this.debugScrapeUrl(url);
+    return this.events;
   }
 
   handleRequest: PlaywrightRequestHandler = async args => {
@@ -353,6 +359,7 @@ export class TickantelScraper extends BaseScraper {
     const {page, request, crawler, log} = args;
     const url = page.url();
     const isAltaDemanda = url.includes('/alta_demanda/');
+    let altaDemandaBypassed = false;
 
     // Extract eventId from URL or userData
     const eventId =
@@ -381,10 +388,15 @@ export class TickantelScraper extends BaseScraper {
         const bypassed = await this.tryBypassAltaDemanda(page, log);
 
         if (bypassed) {
+          altaDemandaBypassed = true;
           // We're now on the real espectaculo page — continue with normal flow below
           log.info(
             `alta_demanda bypassed for event ${eventId}, continuing with normal extraction`,
           );
+          // Shared data was read before navigation; canonical + function URLs
+          // must use the current espectaculo URL, not the stale alta_demanda URL
+          // (otherwise FUNCTION_DETAIL hits alta_demanda and ERR_TOO_MANY_REDIRECTS).
+          sharedData.externalUrl = this.buildCanonicalEventUrl(page.url());
         } else {
           // Still on alta_demanda — scrape what we can with empty ticket waves
           log.info(
@@ -420,10 +432,26 @@ export class TickantelScraper extends BaseScraper {
         }
       }
 
-      // Discover functions from the carousel
-      const functions = await this.extractFunctions(page, url);
+      // Discover functions from the carousel — always use current URL (e.g. after
+      // alta_demanda → espectaculo navigation) so buildFunctionUrl is not based on
+      // the initial request URL.
+      const functions = await this.extractFunctions(page, page.url());
 
-      if (functions.length > 1) {
+      if (functions.length > 1 && altaDemandaBypassed) {
+        // Cold page.goto to idFuncionSeleccionada URLs still hits ERR_TOO_MANY_REDIRECTS
+        // for some alta_demanda events — Wicket needs the session from bypass + in-page
+        // navigation. Scrape every function by clicking the carousel on this page.
+        log.info(
+          `Found ${functions.length} functions for event ${eventId} after alta_demanda bypass; same-page carousel scrape (no FUNCTION_DETAIL queue)`,
+        );
+        await this.scrapeMultiFunctionsOnSamePage(
+          page,
+          log,
+          sharedData,
+          eventId,
+          functions,
+        );
+      } else if (functions.length > 1) {
         // Multi-function: enqueue each function URL as a FUNCTION_DETAIL request
         log.info(
           `Found ${functions.length} functions for event ${eventId}, enqueueing each`,
@@ -481,6 +509,92 @@ export class TickantelScraper extends BaseScraper {
       );
     }
   };
+
+  /**
+   * After alta_demanda bypass, scrape each carousel function without enqueueing
+   * FUNCTION_DETAIL — cold `goto` to idFuncionSeleccionada can ERR_TOO_MANY_REDIRECTS
+   * even with Wicket ?NN; clicking the calendar preserves the session.
+   */
+  private async scrapeMultiFunctionsOnSamePage(
+    page: Page,
+    log: {info: (msg: string, data?: Record<string, unknown>) => void},
+    sharedData: SharedEventData,
+    eventId: string,
+    functions: Array<{functionId: string; url: string}>,
+  ): Promise<void> {
+    for (const fn of functions) {
+      try {
+        log.info('Tickantel same-page function: clicking carousel', {
+          eventId,
+          functionId: fn.functionId,
+          urlBeforeClick: page.url(),
+        });
+
+        const fnLink = page
+          .locator(`#calendar-select a[href*="${fn.functionId}"]`)
+          .first();
+
+        await fnLink.waitFor({state: 'visible', timeout: 15000});
+        await fnLink.scrollIntoViewIfNeeded().catch(() => {});
+
+        await page
+          .waitForSelector('.loading', {state: 'hidden', timeout: 3000})
+          .catch(() => {});
+
+        await fnLink.click({timeout: 15000});
+
+        await page
+          .waitForSelector('.loading', {state: 'hidden', timeout: 15000})
+          .catch(() => {});
+        await page.waitForTimeout(500);
+
+        await page.waitForSelector('.filter-content h3', {timeout: 15000});
+
+        const startDate = await this.extractSingleFunctionDate(page);
+        if (!startDate) {
+          log.info('Tickantel same-page function: could not parse date', {
+            eventId,
+            functionId: fn.functionId,
+            urlAfterClick: page.url(),
+          });
+          continue;
+        }
+
+        const ticketWaves = await this.extractTicketWaves(page);
+
+        this.validateAndAddEvent({
+          externalId: `${eventId}-${fn.functionId}`,
+          platform: Platform.Tickantel,
+          name: sharedData.name,
+          description: sharedData.description,
+          eventStartDate: startDate,
+          eventEndDate: addHours(startDate, DEFAULT_EVENT_DURATION_HOURS),
+          scrapedVenueName: sharedData.scrapedVenueName,
+          scrapedVenueAddress: sharedData.scrapedVenueAddress,
+          scrapedVenueLatitude: sharedData.scrapedVenueLatitude,
+          scrapedVenueLongitude: sharedData.scrapedVenueLongitude,
+          externalUrl: sharedData.externalUrl,
+          images: sharedData.imageUrl
+            ? [{type: ScrapedImageType.Hero, url: sharedData.imageUrl}]
+            : [],
+          ticketWaves,
+        });
+
+        this.urlsProcessed++;
+
+        log.info('Tickantel same-page function: extracted', {
+          eventId,
+          functionId: fn.functionId,
+          urlAfterClick: page.url(),
+          ticketWaveCount: ticketWaves.length,
+        });
+      } catch (err) {
+        log.info(
+          `Tickantel same-page function failed ${eventId}/${fn.functionId}: ${getStringFromError(err)}`,
+        );
+      }
+    }
+  }
 
   /**
    * FUNCTION_DETAIL handler: extract date + ticket waves for a specific function.
@@ -650,24 +764,41 @@ export class TickantelScraper extends BaseScraper {
     pageUrl: string,
   ): Promise<Array<{functionId: string; url: string}>> {
     try {
-      const items = await page.$$('#calendar-select .owl-carousel .item a');
+      // Wait briefly for the carousel to render (Owl Carousel initializes async)
+      await page
+        .waitForSelector('#calendar-select .item a', {timeout: 3000})
+        .catch(() => {});
 
-      if (items.length === 0) return [];
+      // Use the broader selector — #calendar-select .item a — to catch both
+      // the initialized Owl layout (.owl-carousel .owl-item .item a) and any
+      // pre-init DOM. Dedupe by functionId to avoid Owl clones.
+      const hrefs = await page
+        .$$eval('#calendar-select .item a', els =>
+          els
+            .map(a => (a as HTMLAnchorElement).getAttribute('href') || '')
+            .filter(Boolean),
+        )
+        .catch(() => [] as string[]);
+
+      logger.debug('Tickantel extractFunctions hrefs found', {
+        count: hrefs.length,
+        hrefs,
+      });
+
+      if (hrefs.length === 0) return [];
 
       const results: Array<{functionId: string; url: string}> = [];
+      const seen = new Set<string>();
 
-      for (const item of items) {
-        const href = await item.getAttribute('href');
-        if (!href) continue;
-
+      for (const href of hrefs) {
         // Extract functionId from href — patterns seen:
         //   ./40059175
         //   ./Milo%20J/idFuncionSeleccionada/40059175
         const fnIdMatch = href.match(/(\d+)\s*$/);
         const functionId = fnIdMatch ? fnIdMatch[1] : null;
-        if (!functionId) continue;
+        if (!functionId || seen.has(functionId)) continue;
+        seen.add(functionId);
 
-        // Build absolute function URL
         const functionUrl = this.buildFunctionUrl(pageUrl, functionId);
         results.push({functionId, url: functionUrl});
       }
@@ -722,7 +853,12 @@ export class TickantelScraper extends BaseScraper {
 
       // If the date has already passed this year, assume next year
       const tentativeDate = new TZDate(year, monthNum, day, URUGUAY_TZ);
-      const todayStart = new TZDate(year, now.getMonth(), now.getDate(), URUGUAY_TZ);
+      const todayStart = new TZDate(
+        year,
+        now.getMonth(),
+        now.getDate(),
+        URUGUAY_TZ,
+      );
       if (tentativeDate < todayStart) {
         year++;
       }
@@ -952,7 +1088,12 @@ export class TickantelScraper extends BaseScraper {
             const now = new TZDate(new Date(), URUGUAY_TZ);
             let year = now.getFullYear();
             const tentativeDate = new TZDate(year, monthNum, day, URUGUAY_TZ);
-            const todayStart = new TZDate(year, now.getMonth(), now.getDate(), URUGUAY_TZ);
+            const todayStart = new TZDate(
+              year,
+              now.getMonth(),
+              now.getDate(),
+              URUGUAY_TZ,
+            );
             if (tentativeDate < todayStart) year++;
             return new TZDate(year, monthNum, day, 21, 0, URUGUAY_TZ);
           }
@@ -991,13 +1132,22 @@ export class TickantelScraper extends BaseScraper {
   /**
    * Build the absolute URL for a function-specific page.
    * The carousel href can be relative (./40059175) or include the full path segment.
+   *
+   * Preserves the trailing Wicket page-map suffix (`?NN`) from the current page.
+   * Without it, some events (especially after alta_demanda bypass) return
+   * net::ERR_TOO_MANY_REDIRECTS on a cold `goto` to idFuncionSeleccionada URLs.
    */
   private buildFunctionUrl(pageUrl: string, functionId: string): string {
-    // Canonical base: strip session/function suffixes
-    const canonical = this.buildCanonicalEventUrl(pageUrl);
-    // Extract the event name segment from the URL for the path
-    // e.g. https://tickantel.com.uy/inicio/espectaculo/40020021/espectaculo/Milo%20J
-    return `${canonical}/idFuncionSeleccionada/${functionId}`;
+    const sessionMatch = pageUrl.match(/\?(\d+)$/);
+    const sessionSuffix = sessionMatch ? `?${sessionMatch[1]}` : '';
+
+    const urlWithoutSession = pageUrl.replace(/\?\d+$/, '');
+    const basePath = urlWithoutSession.replace(
+      /\/idFuncionSeleccionada\/\d+.*/,
+      '',
+    );
+
+    return `${basePath}/idFuncionSeleccionada/${functionId}${sessionSuffix}`;
   }
 
   private validateAndAddEvent(eventData: Partial<ScrapedEventData>) {
