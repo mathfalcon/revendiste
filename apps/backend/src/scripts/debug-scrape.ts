@@ -15,6 +15,7 @@
 
 import {EntrasteScraper} from '~/services/scraping/entraste';
 import {RedTicketsScraper} from '~/services/scraping/redtickets';
+import {TickantelScraper} from '~/services/scraping/tickantel';
 import type {ScrapedEventData} from '~/services/scraping/base/types';
 
 const platform = process.argv[2];
@@ -37,9 +38,9 @@ if (!platform || !url) {
   process.exit(1);
 }
 
-if (!['entraste', 'redtickets'].includes(platform)) {
+if (!['entraste', 'redtickets', 'tickantel'].includes(platform)) {
   console.error(`Unknown platform: ${platform}`);
-  console.error('Supported platforms: entraste, redtickets');
+  console.error('Supported platforms: entraste, redtickets, tickantel');
   process.exit(1);
 }
 
@@ -53,7 +54,9 @@ function printEventData(event: ScrapedEventData): void {
   console.log(`Platform: ${event.platform}`);
   console.log(`External ID: ${event.externalId}`);
   console.log(`External URL: ${event.externalUrl}`);
-  console.log(`Description: ${event.description?.substring(0, 200)}${event.description && event.description.length > 200 ? '...' : ''}`);
+  console.log(
+    `Description: ${event.description?.substring(0, 200)}${event.description && event.description.length > 200 ? '...' : ''}`,
+  );
 
   console.log('\n--- VENUE ---');
   console.log(`Venue Name: ${event.scrapedVenueName || 'NOT FOUND'}`);
@@ -63,7 +66,9 @@ function printEventData(event: ScrapedEventData): void {
   );
 
   console.log('\n--- DATES ---');
-  console.log(`Start Date: ${event.eventStartDate?.toISOString() || 'NOT FOUND'}`);
+  console.log(
+    `Start Date: ${event.eventStartDate?.toISOString() || 'NOT FOUND'}`,
+  );
   console.log(`End Date: ${event.eventEndDate?.toISOString() || 'NOT FOUND'}`);
 
   console.log('\n--- IMAGES ---');
@@ -94,18 +99,24 @@ async function main(): Promise<void> {
   console.log(`\nDebug scraping ${platform} URL: ${url}`);
   console.log('Using the SAME extraction logic as the production scraper\n');
 
-  let result: ScrapedEventData | null = null;
+  let results: ScrapedEventData[] = [];
 
   if (platform === 'entraste') {
     const scraper = new EntrasteScraper();
-    result = await scraper.debugScrapeUrl(url);
+    const r = await scraper.debugScrapeUrl(url);
+    if (r) results = [r];
   } else if (platform === 'redtickets') {
     const scraper = new RedTicketsScraper();
-    result = await scraper.debugScrapeUrl(url);
+    const r = await scraper.debugScrapeUrl(url);
+    if (r) results = [r];
+  } else if (platform === 'tickantel') {
+    const scraper = new TickantelScraper();
+    results = await scraper.debugScrapeUrlAll(url);
   }
 
-  if (result) {
-    printEventData(result);
+  if (results.length > 0) {
+    console.log(`\nTotal events extracted: ${results.length}`);
+    results.forEach(printEventData);
     console.log('\n✅ Debug scrape completed successfully\n');
   } else {
     console.error('\n❌ Debug scrape failed - no event data extracted\n');
