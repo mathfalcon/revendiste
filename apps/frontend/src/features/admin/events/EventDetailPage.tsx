@@ -54,6 +54,7 @@ import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {deleteEventMutation} from '~/lib/api/admin';
 import {DateTimePicker} from '~/components/datetime-picker';
+import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
 
 const eventFormSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -123,9 +124,14 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
 
   const updateMutation = useMutation({
     ...updateEventMutation(),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({queryKey: ['admin', 'events']});
-      toast.success('Evento actualizado');
+      queryClient.invalidateQueries({queryKey: ['admin', 'events', eventId]});
+      toast.success(
+        variables.updates.clearDeletion
+          ? 'Evento restaurado'
+          : 'Evento actualizado',
+      );
     },
     onError: (error: any) => {
       toast.error(
@@ -189,6 +195,32 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
         </Button>
       </div>
 
+      {event.deletedAt ? (
+        <Alert variant='destructive'>
+          <AlertTitle>Evento eliminado (borrado lógico)</AlertTitle>
+          <AlertDescription className='space-y-3'>
+            <p>
+              No aparece en el catálogo público. Puedes restaurarlo para
+              reactivarlo y recuperar las olas de entradas que se marcaron al
+              eliminar el evento.
+            </p>
+            <Button
+              type='button'
+              variant='secondary'
+              disabled={updateMutation.isPending}
+              onClick={() =>
+                updateMutation.mutate({
+                  eventId,
+                  updates: {clearDeletion: true},
+                })
+              }
+            >
+              Restaurar evento
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       {/* Hero Section */}
       <div className='relative h-48 md:h-64 rounded-lg overflow-hidden bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800'>
         {heroImage ? (
@@ -213,6 +245,11 @@ export function EventDetailPage({eventId, onBack}: EventDetailPageProps) {
             >
               {event.status === 'active' ? 'Activo' : 'Inactivo'}
             </Badge>
+            {event.deletedAt ? (
+              <Badge className='bg-rose-600 text-white border-0'>
+                Eliminado
+              </Badge>
+            ) : null}
           </div>
         </div>
       </div>

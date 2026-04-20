@@ -8,6 +8,8 @@ import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 
 export const AdminEventsQuerySchema = PaginationSchema.extend({
   includePast: z.coerce.boolean().optional().default(false),
+  /** When true, includes events with soft-delete (deletedAt set) in the list */
+  includeDeleted: z.coerce.boolean().optional().default(false),
   search: z.string().optional(),
   status: z.enum(['active', 'inactive']).optional(),
 });
@@ -35,6 +37,8 @@ export const UpdateEventRouteSchema = z.object({
       .nullable()
       .optional(),
     status: z.enum(['active', 'inactive']).optional(),
+    /** Clears soft-delete on the event and its ticket waves (admin restore) */
+    clearDeletion: z.boolean().optional(),
   }),
 });
 

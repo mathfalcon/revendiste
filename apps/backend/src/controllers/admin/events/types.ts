@@ -21,6 +21,7 @@ export interface AdminTicketWave {
   isAvailable: boolean;
   externalId: string;
   status: string;
+  deletedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
@@ -39,6 +40,8 @@ export interface AdminEvent {
   platform: string;
   qrAvailabilityTiming: string | null;
   status: string;
+  /** Present when the event was soft-deleted (e.g. scraper cleanup) */
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   images: AdminEventImage[];

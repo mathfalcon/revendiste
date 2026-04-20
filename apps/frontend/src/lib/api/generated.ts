@@ -1707,6 +1707,7 @@ export interface AdminTicketWave {
   isAvailable: boolean;
   externalId: string;
   status: string;
+  deletedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -1727,6 +1728,11 @@ export interface AdminEvent {
   platform: string;
   qrAvailabilityTiming: string | null;
   status: string;
+  /**
+   * Present when the event was soft-deleted (e.g. scraper cleanup)
+   * @format date-time
+   */
+  deletedAt: string | null;
   /** @format date-time */
   createdAt: string;
   /** @format date-time */
@@ -1758,6 +1764,7 @@ export interface InferTypeofAdminEventsQuerySchema {
   search?: string;
   sortOrder?: "asc" | "desc";
   sortBy?: string;
+  includeDeleted: boolean;
   includePast: boolean;
   /** @format double */
   limit: number;
@@ -1783,6 +1790,11 @@ export interface AdminEventDetail {
   platform: string;
   qrAvailabilityTiming: string | null;
   status: string;
+  /**
+   * Present when the event was soft-deleted (e.g. scraper cleanup)
+   * @format date-time
+   */
+  deletedAt: string | null;
   /** @format date-time */
   createdAt: string;
   /** @format date-time */
@@ -1849,6 +1861,7 @@ export interface CreateEventRouteBody {
 export type UpdateEventResponse = UpdatedEvent;
 
 export interface UpdateEventRouteBody {
+  clearDeletion?: boolean;
   status?: "active" | "inactive";
   qrAvailabilityTiming?: "12h" | "24h" | "3h" | "48h" | "6h" | "72h" | null;
   externalUrl?: string;
@@ -4616,6 +4629,7 @@ export class Api<
         search?: string;
         sortOrder?: "asc" | "desc";
         sortBy?: string;
+        includeDeleted: boolean;
         includePast: boolean;
         /** @format double */
         limit: number;

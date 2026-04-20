@@ -27,6 +27,8 @@ const eventsSearchSchema = z.object({
     .default('eventStartDate'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
   includePast: z.boolean().optional().default(false),
+  /** Incluye eventos con borrado lógico (p. ej. quitados del scrape por agotado) */
+  includeDeleted: z.boolean().optional().default(false),
   search: z.string().optional(),
   status: z.enum(['active', 'inactive']).optional(),
   platform: z.string().optional(),
@@ -67,6 +69,7 @@ function EventsPage() {
     sortBy: search.sortBy ?? ('eventStartDate' as const),
     sortOrder: search.sortOrder ?? ('asc' as const),
     includePast: search.includePast ?? false,
+    includeDeleted: search.includeDeleted ?? false,
     search: search.search,
     status: search.status,
   };
@@ -77,6 +80,7 @@ function EventsPage() {
   });
 
   const showingPastEvents = search.includePast === true;
+  const showingDeletedEvents = search.includeDeleted === true;
 
   useEffect(() => {
     setSearchInput(search.search || '');
@@ -163,6 +167,22 @@ function EventsPage() {
           className='w-full sm:w-auto'
         >
           {showingPastEvents ? 'Ocultar pasados' : 'Mostrar pasados'}
+        </Button>
+
+        <Button
+          variant={showingDeletedEvents ? 'default' : 'outline'}
+          onClick={() => {
+            navigate({
+              search: prev => ({
+                ...prev,
+                includeDeleted: !showingDeletedEvents,
+                page: 1,
+              }),
+            });
+          }}
+          className='w-full sm:w-auto'
+        >
+          {showingDeletedEvents ? 'Ocultar eliminados' : 'Mostrar eliminados'}
         </Button>
 
         {search.search && (
