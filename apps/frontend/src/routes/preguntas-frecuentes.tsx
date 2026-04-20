@@ -15,11 +15,7 @@ import {cn} from '~/lib/utils';
 import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
 import {EventTicketCurrency} from '~/lib';
-import {
-  calculateOrderFees,
-  calculateSellerAmount,
-  getFeeRates,
-} from '~/utils';
+import {calculateOrderFees, calculateSellerAmount, getFeeRates} from '~/utils';
 import {
   HelpCircle,
   ShoppingCart,
@@ -71,8 +67,7 @@ export const Route = createFileRoute('/preguntas-frecuentes')({
 
     return {
       meta: seo({
-        title:
-          'Preguntas Frecuentes | Revendiste - Compra y venta de entradas',
+        title: 'Preguntas Frecuentes | Revendiste - Compra y venta de entradas',
         description:
           'Dudas sobre cómo comprar o vender entradas en Revendiste? Acá te explicamos todo: comisiones, pagos, plazos de entrega, garantías y más.',
         baseUrl,
@@ -219,17 +214,17 @@ const faqVendedoresBase: FAQItem[] = [
   {
     question: '¿Cuándo me pagan?',
     answer:
-      'Tus ganancias pasan a estar disponibles para retirar después de que termina el evento y se cumple un período de custodia (ventana para que el comprador pueda reportar un problema). No es un pago automático: tenés que ir a Cuenta → Retiros, elegir las ganancias y pedir el retiro. El equipo procesa los retiros manualmente en días hábiles; en general podés esperar 1 a 3 días hábiles desde que lo pedís.',
+      'Tus ganancias pasan a estar disponibles para retirar después de que termina el evento y se cumple un período de custodia (ventana para que el comprador pueda reportar un problema). No es un pago automático: tenés que ir a Cuenta → Retiros, elegir las ganancias y pedir el retiro. El equipo procesa los retiros manualmente en días hábiles a tu cuenta bancaria en Uruguay; en general podés esperar 1 a 3 días hábiles desde que lo pedís.',
   },
   {
     question: '¿Cómo solicito un retiro?',
     answer:
-      'Entrá a tu cuenta, sección Retiros. Seleccioná las ganancias que querés retirar (por publicación o por entrada). Elegí un método de cobro compatible (cuenta bancaria en Uruguay en la misma moneda que tus ganancias: UYU o USD), confirmá la solicitud y listo. Te avisamos cuando el retiro esté procesado.',
+      'Entrá a tu cuenta, sección Retiros. Seleccioná las ganancias que querés retirar (por publicación o por entrada). Elegí un método de cobro compatible (cuenta bancaria en Uruguay en la misma moneda que tus ganancias: UYU o USD), confirmá la solicitud y listo. Te avisamos cuando el retiro esté procesado. Por ahora no ofrecemos cuentas del exterior ni otros canales de cobro.',
   },
   {
     question: 'Soy extranjero, ¿puedo vender en Revendiste?',
     answer:
-      'Sí, podés vender si completás la verificación de identidad como cualquier vendedor. Para cobrar necesitás una cuenta bancaria en Uruguay en la misma moneda que tus ganancias (UYU o USD). No ofrecemos transferencias bancarias internacionales ni otros canales de cobro por fuera de Uruguay.',
+      'Sí, podés vender si completás la verificación de identidad como cualquier vendedor. Para cobrar necesitás una cuenta bancaria en Uruguay en la misma moneda que tus ganancias (UYU o USD). No ofrecemos transferencias bancarias internacionales ni otros canales de cobro por fuera de Uruguay. Estamos trabajando para habilitar cobros a cuentas en Argentina y Brasil próximamente.',
   },
   {
     question: SELLER_COMMISSION_FAQ_QUESTION,
@@ -273,7 +268,7 @@ const faqPagos: FAQItem[] = [
   {
     question: '¿Cómo retiro mi dinero si soy vendedor?',
     answer:
-      'Configurás tus métodos en Cuenta → Retiros. Con una cuenta bancaria en Uruguay podés cobrar por transferencia en la misma moneda que tus ganancias (UYU o USD, según la cuenta). Elegís el método al momento de solicitar cada retiro.',
+      'Configurás tus métodos en Cuenta → Retiros. Por ahora solo podés cobrar por transferencia a una cuenta bancaria en Uruguay, en la misma moneda que tus ganancias (UYU o USD, según la cuenta). Elegís el método al momento de solicitar cada retiro.',
   },
   {
     question: '¿Hay un monto mínimo para retirar?',
@@ -289,6 +284,11 @@ const faqPagos: FAQItem[] = [
     question: '¿Me devuelven la comisión si hay un problema?',
     answer:
       'La comisión de Revendiste corresponde al servicio de intermediación ya prestado (verificación, custodia, entrega, etc.), por lo que no es reembolsable. Lo que sí se reembolsa es el precio de la entrada en caso de que exista un reclamo válido. Para iniciar un reclamo, abrí un reporte desde la sección "Mis Entradas" en tu cuenta. Si tenés dudas sobre el proceso, visitá nuestra página de contacto.',
+  },
+  {
+    question: '¿Van a sumar más formas de cobrar?',
+    answer:
+      'Sí. Por ahora los retiros se procesan manualmente y solo a cuentas bancarias en Uruguay (UYU o USD). Estamos trabajando para habilitar pagos automáticos a cuentas bancarias en Uruguay, Argentina y Brasil. No usamos PayPal ni ofrecemos transferencias internacionales.',
   },
 ];
 
@@ -569,9 +569,7 @@ function FAQPage() {
                     <TabsContent key={section} value={section} className='mt-0'>
                       <FAQSectionAccordion
                         items={sectionConfig[section].items}
-                        openItem={
-                          activeTab === section ? openItem : undefined
-                        }
+                        openItem={activeTab === section ? openItem : undefined}
                         highlightedItem={
                           activeTab === section ? validPregunta : undefined
                         }

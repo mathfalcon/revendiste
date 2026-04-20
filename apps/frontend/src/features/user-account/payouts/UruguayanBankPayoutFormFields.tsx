@@ -1,5 +1,5 @@
-import {useState} from 'react';
-import {UseFormReturn} from 'react-hook-form';
+import {useEffect, useState} from 'react';
+import {UseFormReturn, useWatch} from 'react-hook-form';
 import {
   FormField,
   FormItem,
@@ -27,8 +27,13 @@ import {
 import {Button} from '~/components/ui/button';
 import {Check, ChevronsUpDown} from 'lucide-react';
 import {cn} from '~/lib/utils';
-import {URUGUAYAN_BANKS, type UruguayanBankName} from '@revendiste/shared';
-import type {PayoutMethodFormValues} from './PayoutMethodForm';
+import {
+  getBanksForCurrency,
+  URUGUAYAN_BANK_INFO,
+  UruguayanBankName as UruguayanBankNameSchema,
+  type UruguayanBankName,
+} from '@revendiste/shared';
+import type {PayoutMethodFormValues} from './payout-method-form-schema';
 
 interface UruguayanBankPayoutFormFieldsProps {
   form: UseFormReturn<PayoutMethodFormValues>;
@@ -38,6 +43,28 @@ export function UruguayanBankPayoutFormFields({
   form,
 }: UruguayanBankPayoutFormFieldsProps) {
   const [bankOpen, setBankOpen] = useState(false);
+  const rawCurrency = useWatch({control: form.control, name: 'currency'});
+  const currency = rawCurrency === 'USD' ? 'USD' : 'UYU';
+  const banks = getBanksForCurrency(currency);
+
+  useEffect(() => {
+    const current = form.getValues('metadata.bankName');
+    if (current === '') {
+      return;
+    }
+    if (!banks.includes(current as UruguayanBankName)) {
+      form.setValue('metadata.bankName', '', {shouldValidate: true});
+    }
+  }, [currency, banks, form]);
+
+  const rawBankName = useWatch({
+    control: form.control,
+    name: 'metadata.bankName',
+  });
+  const bankParse = UruguayanBankNameSchema.safeParse(rawBankName);
+  const selectedLabel = bankParse.success
+    ? URUGUAYAN_BANK_INFO[bankParse.data].displayName
+    : null;
 
   return (
     <>
@@ -81,7 +108,7 @@ export function UruguayanBankPayoutFormFields({
                       !field.value && 'text-muted-foreground',
                     )}
                   >
-                    {field.value || 'Buscá tu banco...'}
+                    {selectedLabel ?? 'Buscá tu banco...'}
                     <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
                   </Button>
                 </FormControl>
@@ -95,28 +122,31 @@ export function UruguayanBankPayoutFormFields({
                   <CommandList>
                     <CommandEmpty>No se encontró el banco.</CommandEmpty>
                     <CommandGroup>
-                      {URUGUAYAN_BANKS.map((bank: UruguayanBankName) => (
-                        <CommandItem
-                          key={bank}
-                          value={bank}
-                          onSelect={() => {
-                            form.setValue('metadata.bankName', bank as any, {
-                              shouldValidate: true,
-                            });
-                            setBankOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              field.value === bank
-                                ? 'opacity-100'
-                                : 'opacity-0',
-                            )}
-                          />
-                          {bank}
-                        </CommandItem>
-                      ))}
+                      {banks.map((bank: UruguayanBankName) => {
+                        const info = URUGUAYAN_BANK_INFO[bank];
+                        return (
+                          <CommandItem
+                            key={bank}
+                            value={`${bank} ${info.displayName}`}
+                            onSelect={() => {
+                              form.setValue('metadata.bankName', bank, {
+                                shouldValidate: true,
+                              });
+                              setBankOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                field.value === bank
+                                  ? 'opacity-100'
+                                  : 'opacity-0',
+                              )}
+                            />
+                            {info.displayName}
+                          </CommandItem>
+                        );
+                      })}
                     </CommandGroup>
                   </CommandList>
                 </Command>

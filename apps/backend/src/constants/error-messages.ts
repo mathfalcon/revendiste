@@ -175,6 +175,8 @@ export const PAYOUT_ERROR_MESSAGES = {
     `El nuevo monto en USD quedaría por debajo del mínimo (${minimumUsd} USD) tras actualizar el tipo de cambio.`,
   USD_UYU_EXCHANGE_RATE_UNAVAILABLE:
     'No pudimos obtener la cotización del dólar (BROU ni Itaú). Probá de nuevo en unos minutos.',
+  PAYOUT_PROVIDER_NOT_REGISTERED: (provider: string) =>
+    `Proveedor de retiro no registrado: ${provider}. Contactá a soporte.`,
 } as const;
 
 // Error messages for processor settlements (reconciliation)

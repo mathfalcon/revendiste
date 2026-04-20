@@ -1017,23 +1017,7 @@ export type AddPayoutMethodRouteBody = {
   metadata:
     | {
         accountNumber: string;
-        bankName: "Itau";
-      }
-    | {
-        accountNumber: string;
-        bankName: "OCA Blue";
-      }
-    | {
-        accountNumber: string;
-        bankName: "PREX";
-      }
-    | {
-        accountNumber: string;
         bankName: "Banco Nacion Arg";
-      }
-    | {
-        accountNumber: string;
-        bankName: "Bandes";
       }
     | {
         accountNumber: string;
@@ -1053,22 +1037,6 @@ export type AddPayoutMethodRouteBody = {
       }
     | {
         accountNumber: string;
-        bankName: "Dinero Electronico ANDA";
-      }
-    | {
-        accountNumber: string;
-        bankName: "FUCAC";
-      }
-    | {
-        accountNumber: string;
-        bankName: "FUCEREP";
-      }
-    | {
-        accountNumber: string;
-        bankName: "GRIN";
-      }
-    | {
-        accountNumber: string;
         bankName: "Heritage";
       }
     | {
@@ -1077,11 +1045,19 @@ export type AddPayoutMethodRouteBody = {
       }
     | {
         accountNumber: string;
-        bankName: "Mercadopago";
+        bankName: "Itau";
       }
     | {
         accountNumber: string;
         bankName: "Midinero";
+      }
+    | {
+        accountNumber: string;
+        bankName: "OCA Blue";
+      }
+    | {
+        accountNumber: string;
+        bankName: "PREX";
       }
     | {
         accountNumber: string;

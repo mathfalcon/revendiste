@@ -1,5 +1,4 @@
 import {useForm} from 'react-hook-form';
-import {z} from 'zod';
 import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {usePostHog} from 'posthog-js/react';
 import {
@@ -20,21 +19,19 @@ import {
   getPayoutMethodsQuery,
 } from '~/lib/api/payouts';
 import {Checkbox} from '~/components/ui/checkbox';
-import {PayoutMethodBaseSchema} from '@revendiste/shared';
+import {UruguayanBankMetadataSchema} from '@revendiste/shared';
 import {UruguayanBankPayoutFormFields} from './UruguayanBankPayoutFormFields';
-import {Loader2} from 'lucide-react';
+import {Alert, AlertDescription} from '~/components/ui/alert';
+import {Info, Loader2} from 'lucide-react';
 import {getBankName, getAccountNumber} from './payout-method-utils';
+import {
+  payoutMethodFormSchema,
+  parseBankNameForForm,
+  parsePayoutMethodMetadataForApi,
+  type PayoutMethodFormValues,
+} from './payout-method-form-schema';
 
-const payoutMethodSchema = PayoutMethodBaseSchema.and(
-  z.object({
-    accountHolderName: z.string().min(1, 'El nombre es requerido'),
-    accountHolderSurname: z.string().min(1, 'El apellido es requerido'),
-    currency: z.enum(['UYU', 'USD']),
-    isDefault: z.boolean().optional(),
-  }),
-);
-
-export type PayoutMethodFormValues = z.infer<typeof payoutMethodSchema>;
+export type {PayoutMethodFormValues} from './payout-method-form-schema';
 
 interface PayoutMethodFormProps {
   methodId?: string;
@@ -46,26 +43,38 @@ function buildDefaultValues(
 ): PayoutMethodFormValues {
   if (!existingMethod) {
     return {
-      payoutType: 'uruguayan_bank' as const,
+      payoutType: 'uruguayan_bank',
       accountHolderName: '',
       accountHolderSurname: '',
       currency: 'UYU',
-      metadata: {bankName: '' as any, accountNumber: ''},
+      metadata: {bankName: '', accountNumber: ''},
       isDefault: false,
-    } as any;
+    };
+  }
+
+  const parsed = UruguayanBankMetadataSchema.safeParse(existingMethod.metadata);
+  if (parsed.success) {
+    return {
+      payoutType: 'uruguayan_bank',
+      accountHolderName: existingMethod.accountHolderName,
+      accountHolderSurname: existingMethod.accountHolderSurname,
+      currency: existingMethod.currency === 'USD' ? 'USD' : 'UYU',
+      metadata: parsed.data,
+      isDefault: Boolean(existingMethod.isDefault),
+    };
   }
 
   return {
-    payoutType: 'uruguayan_bank' as const,
+    payoutType: 'uruguayan_bank',
     accountHolderName: existingMethod.accountHolderName,
     accountHolderSurname: existingMethod.accountHolderSurname,
-    currency: existingMethod.currency as 'UYU' | 'USD',
+    currency: existingMethod.currency === 'USD' ? 'USD' : 'UYU',
     metadata: {
-      bankName: (getBankName(existingMethod.metadata) ?? '') as any,
+      bankName: parseBankNameForForm(getBankName(existingMethod.metadata)),
       accountNumber: getAccountNumber(existingMethod.metadata) ?? '',
     },
-    isDefault: existingMethod.isDefault,
-  } as any;
+    isDefault: Boolean(existingMethod.isDefault),
+  };
 }
 
 function useExistingMethod(methodId?: string) {
@@ -97,15 +106,12 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   });
 
   const form = useForm<PayoutMethodFormValues>({
-    resolver: standardSchemaResolver(payoutMethodSchema),
+    resolver: standardSchemaResolver(payoutMethodFormSchema),
     defaultValues: buildDefaultValues(existingMethod),
   });
 
   const onSubmit = async (data: PayoutMethodFormValues) => {
-    const metadata = data.metadata as {
-      bankName: string;
-      accountNumber: string;
-    };
+    const metadata = parsePayoutMethodMetadataForApi(data.metadata);
     if (methodId && existingMethod) {
       await updateMethod.mutateAsync({
         payoutMethodId: methodId,
@@ -113,7 +119,7 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
           accountHolderName: data.accountHolderName,
           accountHolderSurname: data.accountHolderSurname,
           currency: data.currency,
-          metadata: data.metadata,
+          metadata,
           isDefault: data.isDefault,
         },
       });
@@ -123,10 +129,7 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
         accountHolderName: data.accountHolderName,
         accountHolderSurname: data.accountHolderSurname,
         currency: data.currency,
-        metadata: {
-          bankName: metadata.bankName as any,
-          accountNumber: metadata.accountNumber,
-        },
+        metadata,
         isDefault: data.isDefault,
       });
     }
@@ -144,6 +147,15 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-5'>
+        <Alert>
+          <Info className='h-4 w-4' />
+          <AlertDescription>
+            Por ahora solo aceptamos{' '}
+            <strong>cuentas bancarias en Uruguay</strong> (UYU o USD). Pronto
+            vamos a sumar más países.
+          </AlertDescription>
+        </Alert>
+
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
           <FormField
             control={form.control}

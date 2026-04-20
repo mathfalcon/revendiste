@@ -3161,83 +3161,7 @@
 											"bankName": {
 												"type": "string",
 												"enum": [
-													"Itau"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"OCA Blue"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"PREX"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
 													"Banco Nacion Arg"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"Bandes"
 												],
 												"nullable": false
 											}
@@ -3332,82 +3256,6 @@
 											"bankName": {
 												"type": "string",
 												"enum": [
-													"Dinero Electronico ANDA"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"FUCAC"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"FUCEREP"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"GRIN"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
 													"Heritage"
 												],
 												"nullable": false
@@ -3446,7 +3294,7 @@
 											"bankName": {
 												"type": "string",
 												"enum": [
-													"Mercadopago"
+													"Itau"
 												],
 												"nullable": false
 											}
@@ -3466,6 +3314,44 @@
 												"type": "string",
 												"enum": [
 													"Midinero"
+												],
+												"nullable": false
+											}
+										},
+										"required": [
+											"accountNumber",
+											"bankName"
+										],
+										"type": "object"
+									},
+									{
+										"properties": {
+											"accountNumber": {
+												"type": "string"
+											},
+											"bankName": {
+												"type": "string",
+												"enum": [
+													"OCA Blue"
+												],
+												"nullable": false
+											}
+										},
+										"required": [
+											"accountNumber",
+											"bankName"
+										],
+										"type": "object"
+									},
+									{
+										"properties": {
+											"accountNumber": {
+												"type": "string"
+											},
+											"bankName": {
+												"type": "string",
+												"enum": [
+													"PREX"
 												],
 												"nullable": false
 											}

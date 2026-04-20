@@ -10,7 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import {Clock, CreditCard} from 'lucide-react';
+import {Alert, AlertDescription} from '~/components/ui/alert';
+import {Clock, CreditCard, Info} from 'lucide-react';
 import {BalanceHero} from './payouts/BalanceHero';
 import {WithdrawalSheet} from './payouts/WithdrawalSheet';
 import {PayoutHistorySection} from './payouts/PayoutHistorySection';
@@ -55,6 +56,16 @@ export function PayoutsView() {
           Gestioná tus ganancias y retirá tu dinero
         </p>
       </div>
+
+      <Alert>
+        <Info className='h-4 w-4' />
+        <AlertDescription>
+          Por ahora los retiros solo se envían a{' '}
+          <strong>cuentas bancarias en Uruguay</strong>, en la misma moneda que
+          tus ganancias (UYU o USD). Estamos trabajando para habilitar pagos
+          automáticos a cuentas en Uruguay, Argentina y Brasil más adelante.
+        </AlertDescription>
+      </Alert>
 
       {/* Balance Hero */}
       {balancePending || !balance ? (

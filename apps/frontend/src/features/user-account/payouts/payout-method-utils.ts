@@ -1,5 +1,6 @@
 import type {GetPayoutMethodsResponse} from '~/lib';
 import {UruguayanBankMetadataSchema} from '@revendiste/shared/schemas/payout-methods';
+import {URUGUAYAN_BANK_INFO, type UruguayanBankName} from '@revendiste/shared';
 
 /**
  * Safely extracts bank name from payout method metadata
@@ -66,6 +67,9 @@ export function getPayoutMethodDisplayName(
   method: GetPayoutMethodsResponse[number],
 ): string {
   const bankName = getBankName(method.metadata);
+  if (bankName && bankName in URUGUAYAN_BANK_INFO) {
+    return URUGUAYAN_BANK_INFO[bankName as UruguayanBankName].displayName;
+  }
   if (bankName) {
     return bankName;
   }

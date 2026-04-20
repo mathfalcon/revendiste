@@ -78,7 +78,7 @@ export function PayoutMethodsSection() {
             <CreditCard className='h-8 w-8 text-muted-foreground' aria-hidden />
           }
           title='No tenés métodos de pago'
-          description='Agregá una cuenta bancaria en Uruguay para poder retirar tus ganancias.'
+          description='Agregá una cuenta bancaria en Uruguay para poder retirar tus ganancias. Por ahora no aceptamos cuentas del exterior.'
           action={
             <Button
               className='cursor-pointer min-h-11'

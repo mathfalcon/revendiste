@@ -9,6 +9,8 @@
  * - refreshPayoutRateLock: new rate, below-minimum guard
  * - Currency / method compatibility matrix
  */
+import type {Kysely} from 'kysely';
+import type {DB} from '@revendiste/shared';
 import {PayoutsService} from '~/services/payouts';
 import type {
   PayoutsRepository,
@@ -24,12 +26,9 @@ import {PAYOUT_ERROR_MESSAGES} from '~/constants/error-messages';
 // ---------------------------------------------------------------------------
 // Mock the external rate provider so no real HTTP calls are made
 // ---------------------------------------------------------------------------
-jest.mock(
-  '~/services/exchange-rates/providers/UruguayBankProvider',
-  () => ({
-    fetchBrouEbrouVentaRate: jest.fn().mockResolvedValue(41.05),
-  }),
-);
+jest.mock('~/services/exchange-rates/providers/UruguayBankProvider', () => ({
+  fetchBrouEbrouVentaRate: jest.fn().mockResolvedValue(41.05),
+}));
 import {fetchBrouEbrouVentaRate} from '~/services/exchange-rates/providers/UruguayBankProvider';
 const mockedFetchRate = fetchBrouEbrouVentaRate as jest.MockedFunction<
   typeof fetchBrouEbrouVentaRate
@@ -47,6 +46,22 @@ import {
   notifyPayoutFailed,
   notifyPayoutCancelled,
 } from '~/services/notifications/helpers';
+import {selectPayoutProvider} from '~/services/payouts/providers/PayoutProviderRegistry';
+import {ManualBankTransferProvider} from '~/services/payouts/providers/ManualBankTransferProvider';
+
+type PayoutMethodRow = NonNullable<
+  Awaited<ReturnType<PayoutMethodsRepository['getById']>>
+>;
+type PayoutRow = NonNullable<Awaited<ReturnType<PayoutsRepository['getById']>>>;
+type PayoutWithLinkedEarningsRow = NonNullable<
+  Awaited<ReturnType<PayoutsRepository['getWithLinkedEarnings']>>
+>;
+type PayoutCreateResult = Awaited<ReturnType<PayoutsRepository['create']>>;
+type PayoutUpdateResult = NonNullable<
+  Awaited<ReturnType<PayoutsRepository['updateStatus']>>
+>;
+type CreatePayoutArg = Parameters<PayoutsRepository['create']>[0];
+type UpdatePayoutStatusArg = Parameters<PayoutsRepository['updateStatus']>[2];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -57,12 +72,19 @@ function makeMockPayoutsRepo(): jest.Mocked<PayoutsRepository> {
     create: jest.fn(),
     updateStatus: jest.fn(),
     updateProcessingFee: jest.fn(),
-    executeTransaction: jest.fn().mockImplementation(async (cb: any) => cb({})),
+    executeTransaction: jest
+      .fn()
+      .mockImplementation(async <U>(cb: (trx: Kysely<DB>) => Promise<U>) =>
+        cb({} as unknown as Kysely<DB>),
+      ),
     withTransaction: jest.fn().mockReturnThis(),
     getWithLinkedEarnings: jest.fn(),
+    getPayoutSettlementInfo: jest.fn(),
     getDb: jest.fn(),
   } as unknown as jest.Mocked<PayoutsRepository>;
 }
+
+const VALID_BROU_ACCOUNT_14 = '00099299700002';
 
 function makeMockPayoutMethodsRepo(): jest.Mocked<PayoutMethodsRepository> {
   return {
@@ -99,8 +121,13 @@ const UYU_BANK_METHOD = {
   userId: 'seller-1',
   payoutType: 'uruguayan_bank' as const,
   currency: 'UYU' as const,
-  metadata: {bankName: 'BROU', accountNumber: '123456'},
-} as any;
+  accountHolderName: 'Test',
+  accountHolderSurname: 'User',
+  metadata: {
+    bankName: 'BROU',
+    accountNumber: VALID_BROU_ACCOUNT_14,
+  },
+} as unknown as PayoutMethodRow;
 
 /** Standard USD bank payout method */
 const USD_BANK_METHOD = {
@@ -108,8 +135,13 @@ const USD_BANK_METHOD = {
   userId: 'seller-1',
   payoutType: 'uruguayan_bank' as const,
   currency: 'USD' as const,
-  metadata: {bankName: 'BROU', accountNumber: '789'},
-} as any;
+  accountHolderName: 'Test',
+  accountHolderSurname: 'User',
+  metadata: {
+    bankName: 'BROU',
+    accountNumber: VALID_BROU_ACCOUNT_14,
+  },
+} as unknown as PayoutMethodRow;
 
 function uyuEarnings(count: number, amount = 350) {
   return Array.from({length: count}, (_, i) => ({
@@ -156,12 +188,13 @@ describe('PayoutsService', () => {
       earningsRepo,
       eventsRepo,
     };
-    payoutsRepo.withTransaction.mockReturnValue(payoutsRepo as any);
-    earningsRepo.withTransaction.mockReturnValue(earningsRepo as any);
-    eventsRepo.withTransaction.mockReturnValue(eventsRepo as any);
+    payoutsRepo.withTransaction.mockReturnValue(payoutsRepo);
+    earningsRepo.withTransaction.mockReturnValue(earningsRepo);
+    eventsRepo.withTransaction.mockReturnValue(eventsRepo);
 
-    payoutsRepo.executeTransaction.mockImplementation(async (cb: any) =>
-      cb({} as any),
+    payoutsRepo.executeTransaction.mockImplementation(
+      async <U>(cb: (trx: Kysely<DB>) => Promise<U>) =>
+        cb({} as unknown as Kysely<DB>),
     );
 
     service = new PayoutsService(
@@ -180,7 +213,7 @@ describe('PayoutsService', () => {
   describe('requestPayout', () => {
     // --- Validation ---
     it('throws NotFoundError when payout method does not exist', async () => {
-      methodsRepo.getById.mockResolvedValue(undefined as any);
+      methodsRepo.getById.mockResolvedValue(undefined);
 
       await expect(
         service.requestPayout({
@@ -318,7 +351,9 @@ describe('PayoutsService', () => {
         valid: true,
         earnings,
       });
-      payoutsRepo.create.mockResolvedValue({id: 'payout-1'} as any);
+      payoutsRepo.create.mockResolvedValue({
+        id: 'payout-1',
+      } as unknown as PayoutCreateResult);
 
       await service.requestPayout({
         sellerUserId: 'seller-1',
@@ -336,7 +371,7 @@ describe('PayoutsService', () => {
       );
 
       // Metadata should NOT have rateLock
-      const createCall = payoutsRepo.create.mock.calls[0][0] as any;
+      const createCall = payoutsRepo.create.mock.calls[0][0] as CreatePayoutArg;
       expect(createCall.metadata).not.toHaveProperty('rateLock');
     });
 
@@ -348,7 +383,9 @@ describe('PayoutsService', () => {
         valid: true,
         earnings,
       });
-      payoutsRepo.create.mockResolvedValue({id: 'payout-2'} as any);
+      payoutsRepo.create.mockResolvedValue({
+        id: 'payout-2',
+      } as unknown as PayoutCreateResult);
 
       await service.requestPayout({
         sellerUserId: 'seller-1',
@@ -373,7 +410,9 @@ describe('PayoutsService', () => {
         valid: true,
         earnings,
       });
-      payoutsRepo.create.mockResolvedValue({id: 'payout-link'} as any);
+      payoutsRepo.create.mockResolvedValue({
+        id: 'payout-link',
+      } as unknown as PayoutCreateResult);
 
       await service.requestPayout({
         sellerUserId: 'seller-1',
@@ -395,7 +434,9 @@ describe('PayoutsService', () => {
         valid: true,
         earnings,
       });
-      payoutsRepo.create.mockResolvedValue({id: 'payout-evt'} as any);
+      payoutsRepo.create.mockResolvedValue({
+        id: 'payout-evt',
+      } as unknown as PayoutCreateResult);
 
       await service.requestPayout({
         sellerUserId: 'seller-1',
@@ -422,8 +463,12 @@ describe('PayoutsService', () => {
   // processPayout
   // =========================================================================
   describe('processPayout', () => {
+    beforeEach(() => {
+      methodsRepo.getById.mockResolvedValue(UYU_BANK_METHOD);
+    });
+
     it('throws NotFoundError when payout does not exist', async () => {
-      payoutsRepo.getById.mockResolvedValue(undefined as any);
+      payoutsRepo.getById.mockResolvedValue(undefined);
 
       await expect(
         service.processPayout('nonexistent', 'admin-1', {}),
@@ -434,11 +479,11 @@ describe('PayoutsService', () => {
       payoutsRepo.getById.mockResolvedValue({
         id: 'p-1',
         status: 'completed',
-      } as any);
+      } as unknown as PayoutRow);
 
-      await expect(
-        service.processPayout('p-1', 'admin-1', {}),
-      ).rejects.toThrow(ValidationError);
+      await expect(service.processPayout('p-1', 'admin-1', {})).rejects.toThrow(
+        ValidationError,
+      );
     });
 
     it('completes payout, marks earnings as paid_out, and logs event', async () => {
@@ -448,9 +493,13 @@ describe('PayoutsService', () => {
         sellerUserId: 'seller-1',
         amount: '1200',
         currency: 'UYU',
+        payoutMethodId: 'pm-uyu',
+        payoutProvider: 'manual_bank',
         metadata: {},
-      } as any);
-      payoutsRepo.updateStatus.mockResolvedValue({id: 'p-1'} as any);
+      } as unknown as PayoutRow);
+      payoutsRepo.updateStatus.mockResolvedValue({
+        id: 'p-1',
+      } as unknown as PayoutUpdateResult);
 
       await service.processPayout('p-1', 'admin-1', {
         processingFee: 50,
@@ -478,15 +527,20 @@ describe('PayoutsService', () => {
     });
 
     it('fires payout completed notification (fire-and-forget)', async () => {
+      methodsRepo.getById.mockResolvedValue(USD_BANK_METHOD);
       payoutsRepo.getById.mockResolvedValue({
         id: 'p-1',
         status: 'pending',
         sellerUserId: 'seller-1',
         amount: '60',
         currency: 'USD',
+        payoutMethodId: 'pm-usd',
+        payoutProvider: 'manual_bank',
         metadata: {},
-      } as any);
-      payoutsRepo.updateStatus.mockResolvedValue({id: 'p-1'} as any);
+      } as unknown as PayoutRow);
+      payoutsRepo.updateStatus.mockResolvedValue({
+        id: 'p-1',
+      } as unknown as PayoutUpdateResult);
 
       await service.processPayout('p-1', 'admin-1', {});
 
@@ -502,12 +556,15 @@ describe('PayoutsService', () => {
     });
 
     it('stores FX processing metadata when actualBankRate is provided', async () => {
+      methodsRepo.getById.mockResolvedValue(USD_BANK_METHOD);
       payoutsRepo.getById.mockResolvedValue({
         id: 'p-fx',
         status: 'pending',
         sellerUserId: 'seller-1',
         amount: '33.77',
         currency: 'USD',
+        payoutMethodId: 'pm-usd',
+        payoutProvider: 'manual_bank',
         metadata: {
           rateLock: {
             lockedRate: 41.4605,
@@ -521,17 +578,28 @@ describe('PayoutsService', () => {
             convertedCurrency: 'USD',
           },
         },
-      } as any);
-      payoutsRepo.updateStatus.mockResolvedValue({id: 'p-fx'} as any);
+      } as unknown as PayoutRow);
+      payoutsRepo.updateStatus.mockResolvedValue({
+        id: 'p-fx',
+      } as unknown as PayoutUpdateResult);
 
       await service.processPayout('p-fx', 'admin-1', {
-        actualBankRate: 41.10,
+        actualBankRate: 41.1,
         actualUyuCost: 1388.15,
       });
 
       const updateCall = payoutsRepo.updateStatus.mock.calls[0];
-      const metadata = (updateCall[2] as any).metadata;
-      expect(metadata.fxProcessing.actualBankRate).toBe(41.10);
+      const metadata = (
+        updateCall[2] as unknown as {
+          metadata: {
+            fxProcessing: {
+              actualBankRate: number;
+              actualUyuCost: number;
+            };
+          };
+        }
+      ).metadata;
+      expect(metadata.fxProcessing.actualBankRate).toBe(41.1);
       expect(metadata.fxProcessing.actualUyuCost).toBe(1388.15);
       expect(metadata.fxProcessing).toHaveProperty('processedAt');
     });
@@ -543,9 +611,13 @@ describe('PayoutsService', () => {
         sellerUserId: 'seller-1',
         amount: '100',
         currency: 'UYU',
+        payoutMethodId: 'pm-uyu',
+        payoutProvider: 'manual_bank',
         metadata: {},
-      } as any);
-      payoutsRepo.updateStatus.mockResolvedValue({id: 'p-doc'} as any);
+      } as unknown as PayoutRow);
+      payoutsRepo.updateStatus.mockResolvedValue({
+        id: 'p-doc',
+      } as unknown as PayoutUpdateResult);
 
       await service.processPayout('p-doc', 'admin-1', {});
 
@@ -562,7 +634,7 @@ describe('PayoutsService', () => {
   // =========================================================================
   describe('failPayout', () => {
     it('throws NotFoundError when payout does not exist', async () => {
-      payoutsRepo.getById.mockResolvedValue(undefined as any);
+      payoutsRepo.getById.mockResolvedValue(undefined);
 
       await expect(
         service.failPayout('nonexistent', 'admin-1', 'reason'),
@@ -576,8 +648,10 @@ describe('PayoutsService', () => {
         sellerUserId: 'seller-1',
         amount: '1200',
         currency: 'UYU',
-      } as any);
-      payoutsRepo.updateStatus.mockResolvedValue({id: 'p-fail'} as any);
+      } as unknown as PayoutRow);
+      payoutsRepo.updateStatus.mockResolvedValue({
+        id: 'p-fail',
+      } as unknown as PayoutUpdateResult);
 
       await service.failPayout('p-fail', 'admin-1', 'Bank rejected');
 
@@ -604,8 +678,10 @@ describe('PayoutsService', () => {
         sellerUserId: 'seller-1',
         amount: '60',
         currency: 'USD',
-      } as any);
-      payoutsRepo.updateStatus.mockResolvedValue({id: 'p-fail'} as any);
+      } as unknown as PayoutRow);
+      payoutsRepo.updateStatus.mockResolvedValue({
+        id: 'p-fail',
+      } as unknown as PayoutUpdateResult);
 
       await service.failPayout('p-fail', 'admin-1', 'Bank rejected');
 
@@ -631,15 +707,17 @@ describe('PayoutsService', () => {
         sellerUserId: 'seller-1',
         amount: '1200',
         currency: 'UYU',
-      } as any);
-      payoutsRepo.updateStatus.mockResolvedValue({id: 'p-cancel'} as any);
+      } as unknown as PayoutRow);
+      payoutsRepo.updateStatus.mockResolvedValue({
+        id: 'p-cancel',
+      } as unknown as PayoutUpdateResult);
     });
 
     it('throws ValidationError when payout is not pending', async () => {
       payoutsRepo.getById.mockResolvedValue({
         id: 'p-cancel',
         status: 'completed',
-      } as any);
+      } as unknown as PayoutRow);
 
       await expect(
         service.cancelPayout('p-cancel', 'admin-1', 'other', 'User request'),
@@ -684,8 +762,10 @@ describe('PayoutsService', () => {
         }),
       );
       // For 'other', failedAt should NOT be set
-      const updateData = payoutsRepo.updateStatus.mock.calls[0][2] as any;
-      expect(updateData.failedAt).toBeUndefined();
+      const updateData = payoutsRepo.updateStatus.mock.calls[0][2] as
+        | UpdatePayoutStatusArg
+        | undefined;
+      expect(updateData?.failedAt).toBeUndefined();
 
       expect(notifyPayoutCancelled).toHaveBeenCalled();
       expect(notifyPayoutFailed).not.toHaveBeenCalled();
@@ -722,8 +802,10 @@ describe('PayoutsService', () => {
         sellerUserId: 'seller-1',
         amount: '1200',
         currency: 'UYU',
-      } as any);
-      payoutsRepo.updateStatus.mockResolvedValue({id: 'p-cancel'} as any);
+      } as unknown as PayoutRow);
+      payoutsRepo.updateStatus.mockResolvedValue({
+        id: 'p-cancel',
+      } as unknown as PayoutUpdateResult);
 
       await service.cancelPayout(
         'p-cancel',
@@ -754,7 +836,7 @@ describe('PayoutsService', () => {
     };
 
     it('throws NotFoundError when payout does not exist', async () => {
-      payoutsRepo.getById.mockResolvedValue(undefined as any);
+      payoutsRepo.getById.mockResolvedValue(undefined);
 
       await expect(
         service.refreshPayoutRateLock('nonexistent', 'admin-1'),
@@ -765,7 +847,7 @@ describe('PayoutsService', () => {
       payoutsRepo.getById.mockResolvedValue({
         id: 'p-r',
         status: 'completed',
-      } as any);
+      } as unknown as PayoutRow);
 
       await expect(
         service.refreshPayoutRateLock('p-r', 'admin-1'),
@@ -777,7 +859,7 @@ describe('PayoutsService', () => {
         id: 'p-r',
         status: 'pending',
         metadata: {},
-      } as any);
+      } as unknown as PayoutRow);
 
       await expect(
         service.refreshPayoutRateLock('p-r', 'admin-1'),
@@ -791,22 +873,23 @@ describe('PayoutsService', () => {
         id: 'p-r',
         status: 'pending',
         metadata: {rateLock: EXISTING_RATE_LOCK},
-      } as any);
+      } as unknown as PayoutRow);
       // After refresh, the service calls getPayoutDetailsForAdmin which we need to mock
       payoutsRepo.getWithLinkedEarnings.mockResolvedValue({
         id: 'p-r',
         status: 'pending',
         metadata: {rateLock: EXISTING_RATE_LOCK},
         payoutMethodId: 'pm-usd',
-      } as any);
+      } as unknown as PayoutWithLinkedEarningsRow);
       methodsRepo.getById.mockResolvedValue(USD_BANK_METHOD);
       mockedFetchRate.mockResolvedValue(41.05);
 
       // mock getPayoutDocuments
       const mockDocs = {getPayoutDocuments: jest.fn().mockResolvedValue([])};
-      (service as any).payoutDocumentsService = mockDocs;
-      // mock getPayoutSettlementInfo
-      payoutsRepo.getPayoutSettlementInfo = jest.fn().mockResolvedValue(null) as any;
+      (
+        service as unknown as {payoutDocumentsService: PayoutDocumentsService}
+      ).payoutDocumentsService = mockDocs as unknown as PayoutDocumentsService;
+      payoutsRepo.getPayoutSettlementInfo.mockResolvedValue(null);
 
       await service.refreshPayoutRateLock('p-r', 'admin-1');
 
@@ -821,8 +904,13 @@ describe('PayoutsService', () => {
         expect.objectContaining({amount: expectedUsd}),
       );
 
-      const updatedMeta = (payoutsRepo.updateStatus.mock.calls[0][2] as any)
-        .metadata;
+      const updatedMeta = (
+        payoutsRepo.updateStatus.mock.calls[0][2] as unknown as {
+          metadata: {
+            rateLock: {convertedAmount: number; brouVentaRate: number};
+          };
+        }
+      ).metadata;
       expect(updatedMeta.rateLock.convertedAmount).toBe(expectedUsd);
       expect(updatedMeta.rateLock.brouVentaRate).toBe(41.05);
     });
@@ -837,7 +925,7 @@ describe('PayoutsService', () => {
             originalAmount: 500, // 500 UYU / 41.4605 ≈ 12.06 < 25
           },
         },
-      } as any);
+      } as unknown as PayoutRow);
       mockedFetchRate.mockResolvedValue(41.05);
 
       await expect(
@@ -847,4 +935,40 @@ describe('PayoutsService', () => {
   });
 
   // =========================================================================
+  describe('PayoutProviderRegistry (strategy)', () => {
+    it('selectPayoutProvider returns ManualBankTransferProvider for uruguayan_bank', () => {
+      const p = selectPayoutProvider({payoutType: 'uruguayan_bank'});
+      expect(p).toBeInstanceOf(ManualBankTransferProvider);
+      expect(p.name).toBe('manual_bank');
+    });
+
+    it('initiatePayout returns Spanish summary and no externalId', async () => {
+      const p = selectPayoutProvider({payoutType: 'uruguayan_bank'});
+      const r = await p.initiatePayout({
+        payoutId: 'p-x',
+        amount: 100,
+        currency: 'UYU',
+        payoutMethodMetadata: {},
+        accountHolderName: 'A',
+        accountHolderSurname: 'B',
+      });
+      expect(r.instructions.summary).toContain(
+        'Transferencia bancaria Uruguay',
+      );
+      expect(r.externalId).toBeUndefined();
+    });
+
+    it('processPayout returns completed', async () => {
+      const p = selectPayoutProvider({payoutType: 'uruguayan_bank'});
+      const r = await p.processPayout({
+        payoutId: 'p-x',
+        amount: 100,
+        currency: 'UYU',
+        payoutMethodMetadata: {},
+        accountHolderName: 'A',
+        accountHolderSurname: 'B',
+      });
+      expect(r.status).toBe('completed');
+    });
+  });
 });

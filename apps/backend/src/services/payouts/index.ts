@@ -15,12 +15,21 @@ import {
   PAYOUT_FX_RATE_LOCK_HOURS,
 } from '~/config/env';
 import {logger} from '~/utils';
-import type {EventTicketCurrency, Json, PayoutStatus} from '@revendiste/shared';
+import type {
+  EventTicketCurrency,
+  Json,
+  PayoutProvider,
+  PayoutStatus,
+} from '@revendiste/shared';
 import {PayoutMetadataSchema, roundToDecimals} from '@revendiste/shared';
 import type {PaginationOptions} from '~/types/pagination';
 import {fetchBrouEbrouVentaRate} from '~/services/exchange-rates/providers/UruguayBankProvider';
 import {NotificationService} from '~/services/notifications';
-import {payoutProviderNameForMethod} from '~/services/payouts/providers/PayoutProviderFactory';
+import {
+  getPayoutProviderByName,
+  selectPayoutProvider,
+} from '~/services/payouts/providers/PayoutProviderRegistry';
+import type {PayoutProviderName} from '~/services/payouts/providers/PayoutProvider.interface';
 import {
   notifyPayoutCompleted,
   notifyPayoutFailed,
@@ -77,9 +86,8 @@ export class PayoutsService {
     const {sellerUserId, payoutMethodId, listingTicketIds, listingIds} = params;
 
     // Validate payout method exists and belongs to seller
-    const payoutMethod = await this.payoutMethodsRepository.getById(
-      payoutMethodId,
-    );
+    const payoutMethod =
+      await this.payoutMethodsRepository.getById(payoutMethodId);
     if (!payoutMethod) {
       throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_METHOD_NOT_FOUND);
     }
@@ -142,65 +150,87 @@ export class PayoutsService {
       );
     }
 
+    const provider = selectPayoutProvider({
+      payoutType: payoutMethod.payoutType,
+    });
+
     // Create payout and link earnings in transaction
-    return await this.payoutsRepository.executeTransaction(async trx => {
-      const payoutsRepo = this.payoutsRepository.withTransaction(trx);
-      const earningsRepo = this.sellerEarningsRepository.withTransaction(trx);
-      const payoutEventsRepo = this.payoutEventsRepository.withTransaction(trx);
+    const payout = await this.payoutsRepository.executeTransaction(
+      async trx => {
+        const payoutsRepo = this.payoutsRepository.withTransaction(trx);
+        const earningsRepo = this.sellerEarningsRepository.withTransaction(trx);
+        const payoutEventsRepo =
+          this.payoutEventsRepository.withTransaction(trx);
 
-      const payoutMetadataParsed = PayoutMetadataSchema.parse({
-        listingTicketIds: listingTicketIds || [],
-        listingIds: listingIds || [],
-      });
-      const payoutMetadata = payoutMetadataParsed as unknown as Json;
+        const payoutMetadataParsed = PayoutMetadataSchema.parse({
+          listingTicketIds: listingTicketIds || [],
+          listingIds: listingIds || [],
+        });
+        const payoutMetadata = payoutMetadataParsed as unknown as Json;
 
-      const payoutProviderDb = payoutProviderNameForMethod(
-        payoutMethod.payoutType,
-      );
-
-      // Create payout record
-      const payout = await payoutsRepo.create({
-        sellerUserId,
-        payoutMethodId,
-        payoutProvider: payoutProviderDb,
-        status: 'pending',
-        amount: finalAmount,
-        currency: finalCurrency,
-        requestedAt: new Date(),
-        metadata: payoutMetadata,
-      });
-
-      // Link selected earnings to payout
-      await earningsRepo.linkSelectedEarningsToPayout(
-        payout.id,
-        listingTicketIds,
-        listingIds,
-      );
-
-      // Log payout requested event
-      await payoutEventsRepo.create({
-        payoutId: payout.id,
-        eventType: 'payout_requested',
-        eventData: {
+        // Create payout record
+        const created = await payoutsRepo.create({
           sellerUserId,
           payoutMethodId,
+          payoutProvider: provider.name as PayoutProvider,
+          status: 'pending',
+          amount: finalAmount,
+          currency: finalCurrency,
+          requestedAt: new Date(),
+          metadata: payoutMetadata,
+        });
+
+        // Link selected earnings to payout
+        await earningsRepo.linkSelectedEarningsToPayout(
+          created.id,
+          listingTicketIds,
+          listingIds,
+        );
+
+        // Log payout requested event
+        await payoutEventsRepo.create({
+          payoutId: created.id,
+          eventType: 'payout_requested',
+          eventData: {
+            sellerUserId,
+            payoutMethodId,
+            amount: finalAmount,
+            currency: finalCurrency,
+            earningsCount: earnings.length,
+          },
+          createdBy: sellerUserId,
+        });
+
+        logger.info('Payout requested', {
+          payoutId: created.id,
+          sellerUserId,
           amount: finalAmount,
           currency: finalCurrency,
           earningsCount: earnings.length,
-        },
-        createdBy: sellerUserId,
-      });
+        });
 
-      logger.info('Payout requested', {
-        payoutId: payout.id,
-        sellerUserId,
-        amount: finalAmount,
-        currency: finalCurrency,
-        earningsCount: earnings.length,
-      });
+        return created;
+      },
+    );
 
-      return payout;
+    // External / provider hook — must stay outside DB transaction
+    const initiateResult = await provider.initiatePayout({
+      payoutId: payout.id,
+      amount: finalAmount,
+      currency: finalCurrency,
+      payoutMethodMetadata: payoutMethod.metadata,
+      accountHolderName: payoutMethod.accountHolderName,
+      accountHolderSurname: payoutMethod.accountHolderSurname,
     });
+
+    logger.info('Payout provider initiate completed', {
+      payoutId: payout.id,
+      provider: provider.name,
+      externalId: initiateResult.externalId,
+      instructionsSummary: initiateResult.instructions.summary,
+    });
+
+    return payout;
   }
 
   /**
@@ -268,6 +298,25 @@ export class PayoutsService {
         PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_PENDING(payout.status),
       );
     }
+
+    const payoutMethod = await this.payoutMethodsRepository.getById(
+      payout.payoutMethodId,
+    );
+    if (!payoutMethod) {
+      throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_METHOD_NOT_FOUND);
+    }
+
+    const payoutProvider = getPayoutProviderByName(
+      payout.payoutProvider as PayoutProviderName,
+    );
+    await payoutProvider.processPayout({
+      payoutId,
+      amount: Number(payout.amount),
+      currency: payout.currency as EventTicketCurrency,
+      payoutMethodMetadata: payoutMethod.metadata,
+      accountHolderName: payoutMethod.accountHolderName,
+      accountHolderSurname: payoutMethod.accountHolderSurname,
+    });
 
     const currentMetadata = PayoutMetadataSchema.parse(payout.metadata || {});
     const rateLockMeta = currentMetadata.rateLock;
@@ -615,9 +664,8 @@ export class PayoutsService {
 
     // Get settlement information (exchange rates, balance amounts from dLocal)
     // This helps admin understand what we actually received vs what seller is owed
-    const settlementInfo = await this.payoutsRepository.getPayoutSettlementInfo(
-      payoutId,
-    );
+    const settlementInfo =
+      await this.payoutsRepository.getPayoutSettlementInfo(payoutId);
 
     const currentBrouVentaRate = await fetchBrouEbrouVentaRate();
 
@@ -648,9 +696,8 @@ export class PayoutsService {
       rateLockMsRemaining,
       uyuCostAtLockedRate,
       dLocalAverageExchangeRate:
-        settlementInfo?.settlements?.find(
-          s => s.averageExchangeRate != null,
-        )?.averageExchangeRate ?? null,
+        settlementInfo?.settlements?.find(s => s.averageExchangeRate != null)
+          ?.averageExchangeRate ?? null,
     };
 
     const sellerUser = this.usersRepository

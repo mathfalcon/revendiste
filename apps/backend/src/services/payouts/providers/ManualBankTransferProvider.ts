@@ -1,18 +1,30 @@
-import type {EventTicketCurrency, PayoutStatus} from '@revendiste/shared';
+import type {PayoutStatus} from '@revendiste/shared';
+import {BasePayoutProvider} from './BasePayoutProvider';
 import type {
   InitiatePayoutParams,
   InitiatePayoutResult,
-  PayoutProvider,
+  ProcessPayoutParams,
+  ProcessPayoutResult,
   PayoutStatusResult,
 } from './PayoutProvider.interface';
 
-export class ManualBankTransferProvider implements PayoutProvider {
+export class ManualBankTransferProvider extends BasePayoutProvider {
   readonly name = 'manual_bank' as const;
 
-  async initiatePayout(params: InitiatePayoutParams): Promise<InitiatePayoutResult> {
+  async initiatePayout(
+    params: InitiatePayoutParams,
+  ): Promise<InitiatePayoutResult> {
+    const summary = `Transferencia bancaria Uruguay: ${params.amount} ${params.currency} a ${params.accountHolderName} ${params.accountHolderSurname}. Usá los datos del método de retiro en el panel de administración.`;
     return {
-      instructions: `Transferencia bancaria Uruguay: ${params.amount} ${params.currency} a ${params.accountHolderName} ${params.accountHolderSurname}. Usá los datos del método de retiro en el panel de administración.`,
+      instructions: {summary},
+      externalId: undefined,
     };
+  }
+
+  async processPayout(
+    _params: ProcessPayoutParams,
+  ): Promise<ProcessPayoutResult> {
+    return {status: 'completed', externalId: undefined};
   }
 
   async getPayoutStatus(_externalId: string): Promise<PayoutStatusResult> {
@@ -21,16 +33,5 @@ export class ManualBankTransferProvider implements PayoutProvider {
 
   normalizeStatus(_providerStatus: string): PayoutStatus {
     return 'pending';
-  }
-
-  supportsCurrency(currency: EventTicketCurrency): boolean {
-    return currency === 'UYU' || currency === 'USD';
-  }
-
-  requiresFxConversion(
-    sourceCurrency: EventTicketCurrency,
-    targetCurrency: EventTicketCurrency,
-  ): boolean {
-    return sourceCurrency !== targetCurrency;
   }
 }

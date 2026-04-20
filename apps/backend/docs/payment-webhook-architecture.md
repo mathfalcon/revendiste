@@ -2,7 +2,7 @@
 
 ## Overview
 
-The payment webhook system uses the **Template Method Pattern** to provide a consistent, extensible architecture for processing webhooks from different payment providers (dLocal, Stripe, PayPal, etc.).
+The payment webhook system uses the **Template Method Pattern** to provide a consistent, extensible architecture for processing webhooks from different payment providers (dLocal, Stripe, MercadoPago, etc.).
 
 ## Architecture
 
@@ -43,10 +43,10 @@ The payment webhook system uses the **Template Method Pattern** to provide a con
                              │
           ┌──────────────────┼──────────────────┐
           ▼                  ▼                  ▼
-  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-  │ DLocalService │  │ StripeService │  │ PayPalService │
-  │ extends Base  │  │ extends Base  │  │ extends Base  │
-  └───────────────┘  └───────────────┘  └───────────────┘
+  ┌───────────────┐  ┌───────────────┐  ┌──────────────────┐
+  │ DLocalService │  │ StripeService │  │ MercadoPagoSvc   │
+  │ extends Base  │  │ extends Base  │  │ extends Base     │
+  └───────────────┘  └───────────────┘  └──────────────────┘
 ```
 
 ## Core Components
@@ -56,6 +56,7 @@ The payment webhook system uses the **Template Method Pattern** to provide a con
 The base class that defines the webhook processing algorithm.
 
 #### Template Method
+
 ```typescript
 async processWebhook(
   paymentId: string,
@@ -84,11 +85,13 @@ await this.handleOrderStatusUpdate(...);
 ```
 
 #### Abstract Methods (Must Implement)
+
 - `getProviderName()`: Returns provider identifier ('dlocal', 'stripe', etc.)
 - `fetchPaymentDetails()`: Fetches payment from provider's API
 - `normalizeStatus()`: Maps provider status to standard statuses
 
 #### Common Methods (Provided)
+
 - `updatePaymentRecord()`: Updates payment in database
 - `handleOrderStatusUpdate()`: Routes to success/failure handlers
 - `handleSuccessfulPayment()`: Confirms order + reservations
@@ -112,7 +115,7 @@ export class DLocalService extends BasePaymentProvider {
   async fetchPaymentDetails(paymentId: string): Promise<NormalizedPaymentData> {
     // Call dLocal API
     const payment = await this.getPayment(paymentId);
-    
+
     // Normalize to standard format
     return {
       providerPaymentId: payment.id,
@@ -170,26 +173,31 @@ interface NormalizedPaymentData {
 ## Benefits of Template Method Pattern
 
 ### 1. Code Reuse
+
 ✅ Common webhook logic (database operations, validation, logging) is written once in the base class  
 ✅ Each provider only implements provider-specific logic  
 ✅ Reduces code duplication across providers
 
 ### 2. Consistency
+
 ✅ All providers follow the same algorithm  
 ✅ Guaranteed order of operations  
 ✅ Same error handling and logging across providers
 
 ### 3. Extensibility
+
 ✅ Easy to add new payment providers  
 ✅ Just extend `BasePaymentProvider` and implement 3 methods  
 ✅ No changes to existing code (Open/Closed Principle)
 
 ### 4. Maintainability
+
 ✅ Business logic changes in one place (base class)  
 ✅ Provider-specific code is isolated  
 ✅ Easy to understand and test
 
 ### 5. Type Safety
+
 ✅ Compile-time enforcement of required methods  
 ✅ TypeScript ensures all providers conform to the interface  
 ✅ Normalized data structure prevents type errors
@@ -202,7 +210,10 @@ interface NormalizedPaymentData {
 
 ```typescript
 // apps/backend/src/services/stripe/index.ts
-import {BasePaymentProvider, NormalizedPaymentData} from '~/services/payments/providers';
+import {
+  BasePaymentProvider,
+  NormalizedPaymentData,
+} from '~/services/payments/providers';
 import type {Kysely} from 'kysely';
 import type {DB} from '~/types';
 
@@ -219,7 +230,7 @@ export class StripeService extends BasePaymentProvider {
   async fetchPaymentDetails(paymentId: string): Promise<NormalizedPaymentData> {
     // Fetch from Stripe API
     const payment = await stripe.paymentIntents.retrieve(paymentId);
-    
+
     // Normalize to standard format
     return {
       providerPaymentId: payment.id,
@@ -232,11 +243,11 @@ export class StripeService extends BasePaymentProvider {
 
   normalizeStatus(stripeStatus: string): string {
     const statusMap = {
-      'requires_payment_method': 'pending',
-      'processing': 'processing',
-      'succeeded': 'paid',
-      'canceled': 'cancelled',
-      'requires_action': 'pending',
+      requires_payment_method: 'pending',
+      processing: 'processing',
+      succeeded: 'paid',
+      canceled: 'cancelled',
+      requires_action: 'pending',
     };
     return statusMap[stripeStatus] || stripeStatus;
   }
@@ -298,15 +309,15 @@ That's it! The entire payment processing logic (database updates, order handling
 
 All providers must normalize to these standard statuses:
 
-| Status | Description | Action |
-|--------|-------------|--------|
-| `pending` | Payment initiated, awaiting completion | Log only |
-| `processing` | Payment being processed | Log only |
-| `paid` | Payment successful | Confirm order + reservations |
-| `failed` | Payment failed | Cancel order + release tickets |
-| `cancelled` | Payment cancelled by user | Cancel order + release tickets |
-| `expired` | Payment expired (timeout) | Cancel order + release tickets |
-| `refunded` | Payment refunded | (Future implementation) |
+| Status       | Description                            | Action                         |
+| ------------ | -------------------------------------- | ------------------------------ |
+| `pending`    | Payment initiated, awaiting completion | Log only                       |
+| `processing` | Payment being processed                | Log only                       |
+| `paid`       | Payment successful                     | Confirm order + reservations   |
+| `failed`     | Payment failed                         | Cancel order + release tickets |
+| `cancelled`  | Payment cancelled by user              | Cancel order + release tickets |
+| `expired`    | Payment expired (timeout)              | Cancel order + release tickets |
+| `refunded`   | Payment refunded                       | (Future implementation)        |
 
 ## Testing Strategy
 
@@ -337,11 +348,11 @@ describe('DLocalService', () => {
 describe('BasePaymentProvider processWebhook', () => {
   it('should process successful payment end-to-end', async () => {
     await service.processWebhook('pay_123', {ipAddress: '127.0.0.1'});
-    
+
     // Verify order is confirmed
     const order = await ordersRepo.getById(orderId);
     expect(order.status).toBe('confirmed');
-    
+
     // Verify reservations are confirmed
     const reservations = await reservationsRepo.getByOrderId(orderId);
     expect(reservations.every(r => r.confirmedAt !== null)).toBe(true);
@@ -361,14 +372,14 @@ describe('BasePaymentProvider processWebhook', () => {
 
 ## Comparison with Other Approaches
 
-| Approach | Before (Switch Statement) | After (Template Method) |
-|----------|---------------------------|-------------------------|
-| **Extensibility** | ❌ Modify switch for new provider | ✅ Create new class |
-| **Code Reuse** | ❌ Duplicate common logic | ✅ Common logic in base class |
-| **Testing** | ❌ Test entire service | ✅ Test each provider independently |
-| **Type Safety** | ⚠️ Compile-time warnings only | ✅ Compile-time enforcement |
-| **Maintainability** | ❌ Large, complex method | ✅ Small, focused classes |
-| **Provider Isolation** | ❌ All mixed together | ✅ Each provider separate |
+| Approach               | Before (Switch Statement)         | After (Template Method)             |
+| ---------------------- | --------------------------------- | ----------------------------------- |
+| **Extensibility**      | ❌ Modify switch for new provider | ✅ Create new class                 |
+| **Code Reuse**         | ❌ Duplicate common logic         | ✅ Common logic in base class       |
+| **Testing**            | ❌ Test entire service            | ✅ Test each provider independently |
+| **Type Safety**        | ⚠️ Compile-time warnings only     | ✅ Compile-time enforcement         |
+| **Maintainability**    | ❌ Large, complex method          | ✅ Small, focused classes           |
+| **Provider Isolation** | ❌ All mixed together             | ✅ Each provider separate           |
 
 ## Conclusion
 
@@ -381,4 +392,3 @@ The Template Method pattern provides a robust, maintainable architecture for web
 - **Enforces standards** through abstract base class
 
 This pattern is particularly well-suited for payment processing where the high-level algorithm is the same, but provider-specific details vary.
-

@@ -3,7 +3,7 @@ import {
   queryOptions,
   mutationOptions,
 } from '@tanstack/react-query';
-import {AddPayoutMethodRouteBody, api} from '..';
+import {AddPayoutMethodRouteBody, UpdatePayoutMethodRouteBody, api} from '..';
 import {toast} from 'sonner';
 
 export const getBalanceQuery = () =>
@@ -48,9 +48,7 @@ export const getPayoutHistoryInfiniteQuery = () =>
         })
         .then(res => res.data),
     getNextPageParam: lastPage =>
-      lastPage.pagination.hasNext
-        ? lastPage.pagination.page + 1
-        : undefined,
+      lastPage.pagination.hasNext ? lastPage.pagination.page + 1 : undefined,
   });
 
 export const getPayoutDetailsQuery = (payoutId: string) =>
@@ -96,16 +94,7 @@ export const updatePayoutMethodMutation = () =>
       data,
     }: {
       payoutMethodId: string;
-      data: {
-        accountHolderName?: string;
-        accountHolderSurname?: string;
-        currency?: 'UYU' | 'USD';
-        metadata?: {
-          bankName: string;
-          accountNumber: string;
-        };
-        isDefault?: boolean;
-      };
+      data: UpdatePayoutMethodRouteBody;
     }) =>
       api.payouts
         .updatePayoutMethod(payoutMethodId, data)

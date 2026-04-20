@@ -58,7 +58,7 @@ export function WithdrawalConfirmStep({
           <p className='text-sm font-medium'>Método de retiro</p>
           <p className='text-xs text-muted-foreground'>
             Cuenta bancaria en Uruguay: tiene que ser en la misma moneda que tus
-            ganancias (UYU o USD).
+            ganancias (UYU o USD). Por ahora no aceptamos cuentas del exterior.
           </p>
           {compatibleMethods.length === 0 ? (
             <div className='rounded-lg border border-dashed p-4 text-center space-y-3'>
@@ -89,7 +89,9 @@ export function WithdrawalConfirmStep({
                       {getPayoutMethodDropdownText(method)}
                     </p>
                     {method.isDefault && (
-                      <p className='text-xs text-muted-foreground'>Por defecto</p>
+                      <p className='text-xs text-muted-foreground'>
+                        Por defecto
+                      </p>
                     )}
                   </div>
                   {payoutMethodId === method.id && (
