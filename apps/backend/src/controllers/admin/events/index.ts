@@ -97,6 +97,7 @@ export class AdminEventsController {
   ): Promise<GetEventsResponse> {
     return this.service.getEvents(request.pagination!, {
       includePast: query.includePast,
+      includeDeleted: query.includeDeleted,
       search: query.search,
       status: query.status,
     });

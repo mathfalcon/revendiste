@@ -5865,6 +5865,18 @@
 					"status": {
 						"type": "string"
 					},
+					"deletedAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"nullable": true
+					},
 					"createdAt": {
 						"anyOf": [
 							{
@@ -5950,6 +5962,12 @@
 					"status": {
 						"type": "string"
 					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "Present when the event was soft-deleted (e.g. scraper cleanup)"
+					},
 					"createdAt": {
 						"type": "string",
 						"format": "date-time"
@@ -5985,6 +6003,7 @@
 					"platform",
 					"qrAvailabilityTiming",
 					"status",
+					"deletedAt",
 					"createdAt",
 					"updatedAt",
 					"images",
@@ -6069,6 +6088,9 @@
 					"sortBy": {
 						"type": "string"
 					},
+					"includeDeleted": {
+						"type": "boolean"
+					},
 					"includePast": {
 						"type": "boolean"
 					},
@@ -6082,6 +6104,7 @@
 					}
 				},
 				"required": [
+					"includeDeleted",
 					"includePast",
 					"limit",
 					"page"
@@ -6139,6 +6162,12 @@
 					"status": {
 						"type": "string"
 					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "Present when the event was soft-deleted (e.g. scraper cleanup)"
+					},
 					"createdAt": {
 						"type": "string",
 						"format": "date-time"
@@ -6179,6 +6208,7 @@
 					"platform",
 					"qrAvailabilityTiming",
 					"status",
+					"deletedAt",
 					"createdAt",
 					"updatedAt",
 					"images",
@@ -6378,6 +6408,9 @@
 			},
 			"UpdateEventRouteBody": {
 				"properties": {
+					"clearDeletion": {
+						"type": "boolean"
+					},
 					"status": {
 						"type": "string",
 						"enum": [
@@ -14381,6 +14414,14 @@
 						"required": false,
 						"schema": {
 							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "includeDeleted",
+						"required": true,
+						"schema": {
+							"type": "boolean"
 						}
 					},
 					{

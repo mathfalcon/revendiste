@@ -40,7 +40,7 @@ export class ScrapingService {
 
     // Separate events into categories:
     // 1. Valid events (has at least one paid wave) → ingest normally
-    // 2. Guest-list events (has waves but all faceValue === 0) → skip AND soft-delete existing
+    // 2. Guest-list events (has waves but all faceValue === 0) → skip store; soft-deleted explicitly in Phase 4
     // 3. Empty-wave events (no waves at all) → skip but protect from deletion (could be sold out)
     const validEvents: typeof allEvents = [];
     const guestListEvents: typeof allEvents = [];
@@ -68,8 +68,7 @@ export class ScrapingService {
       });
     }
 
-    // For cleanup: include valid + empty-wave events as "safe" (won't be deleted)
-    // Guest-list events are excluded → will be soft-deleted if they exist in DB
+    // Stale cleanup uses valid + empty-wave ids; guest-list removals run first per platform.
     const eventsForCleanup = [...validEvents, ...emptyWaveEvents];
 
     // Phase 2: Venue processing
@@ -124,6 +123,18 @@ export class ScrapingService {
         );
         continue;
       }
+
+      const platformGuestExternalIds = [
+        ...new Set(
+          guestListEvents
+            .filter(e => e.platform === result.platform)
+            .map(e => e.externalId),
+        ),
+      ];
+      await this.eventsService.softDeleteGuestListScrapedEvents(
+        result.platform,
+        platformGuestExternalIds,
+      );
 
       const platformCleanupEvents = eventsForCleanup.filter(
         e => e.platform === result.platform,
