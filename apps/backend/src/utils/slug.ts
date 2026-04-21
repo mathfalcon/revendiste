@@ -15,6 +15,19 @@ const TRANSLITERATION_MAP: Record<string, string> = {
   Ü: 'u',
 };
 
+/**
+ * Calendar date (YYYY-MM-DD) in America/Montevideo for slug disambiguation —
+ * e.g. same tour name on different days (multi-function Tickantel events).
+ */
+export function formatUruguayDateForEventSlug(date: Date): string {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Montevideo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
 export function generateSlug(name: string): string {
   let slug = name.toLowerCase();
 
