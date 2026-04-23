@@ -141,9 +141,15 @@ export function FxDecisionPanel({
 
         {showBrou && (
           <div className='flex justify-between gap-4 border-b pb-2'>
-            <span className='text-muted-foreground'>BROU eBROU venta (ahora)</span>
+            <span className='text-muted-foreground'>
+              BROU eBROU venta (ahora)
+            </span>
             <span className='font-medium tabular-nums'>
-              1 USD = {fx.currentBrouVentaRate.toFixed(4)} UYU
+              1 USD ={' '}
+              {fx.currentBrouVentaRate == null
+                ? '—'
+                : `${fx.currentBrouVentaRate.toFixed(4)}`}{' '}
+              UYU
             </span>
           </div>
         )}

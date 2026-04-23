@@ -22,7 +22,14 @@ import {
 import {refreshPayoutRateLockMutation} from '~/lib/api/admin';
 import {formatCurrency} from '~/utils';
 import {formatProvidersList} from '@revendiste/shared';
-import {ArrowRight, ArrowRightLeft, ExternalLink, Info, Loader2, RefreshCw} from 'lucide-react';
+import {
+  ArrowRight,
+  ArrowRightLeft,
+  ExternalLink,
+  Info,
+  Loader2,
+  RefreshCw,
+} from 'lucide-react';
 import {toast} from 'sonner';
 import type {GetPayoutDetailsResponse} from '~/lib/api/generated';
 
@@ -70,7 +77,9 @@ function RateLockSection({
 
   const rateLock = fx.rateLock;
   const canRefresh =
-    payoutStatus === 'pending' && rateLock != null && !refreshMutation.isPending;
+    payoutStatus === 'pending' &&
+    rateLock != null &&
+    !refreshMutation.isPending;
 
   if (!rateLock) return null;
 
@@ -159,9 +168,15 @@ function CurrentRatesSection({fx}: {fx: FxSupport}) {
       <CardContent className='space-y-2 text-sm'>
         {showBrou && (
           <div className='flex justify-between gap-4'>
-            <span className='text-muted-foreground'>BROU eBROU venta (ahora)</span>
+            <span className='text-muted-foreground'>
+              BROU eBROU venta (ahora)
+            </span>
             <span className='tabular-nums font-medium'>
-              1 USD = {fx.currentBrouVentaRate.toFixed(4)} UYU
+              1 USD ={' '}
+              {fx.currentBrouVentaRate == null
+                ? '—'
+                : `${fx.currentBrouVentaRate.toFixed(4)}`}{' '}
+              UYU
             </span>
           </div>
         )}
@@ -235,8 +250,8 @@ export function StepFxReview({payoutId, payout, onNext}: StepFxReviewProps) {
                 >
                   {s.averageExchangeRate != null && (
                     <p>
-                      TC promedio: 1 USD ={' '}
-                      {s.averageExchangeRate.toFixed(4)} UYU
+                      TC promedio: 1 USD = {s.averageExchangeRate.toFixed(4)}{' '}
+                      UYU
                     </p>
                   )}
                 </div>
@@ -301,7 +316,12 @@ export function StepFxReview({payoutId, payout, onNext}: StepFxReviewProps) {
                       {s.paymentProvider}
                     </p>
                   </div>
-                  <Button variant='outline' size='sm' className='cursor-pointer' asChild>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='cursor-pointer'
+                    asChild
+                  >
                     <Link
                       to='/admin/finanzas/liquidaciones/$settlementId'
                       params={{settlementId: s.id}}
@@ -334,16 +354,19 @@ export function StepFxReview({payoutId, payout, onNext}: StepFxReviewProps) {
             </p>
           )}
           <div className='flex flex-wrap items-center gap-3 pt-1'>
-            <Button variant='outline' size='sm' className='cursor-pointer' asChild>
+            <Button
+              variant='outline'
+              size='sm'
+              className='cursor-pointer'
+              asChild
+            >
               <Link to='/admin/verificaciones'>
                 <ExternalLink className='mr-1.5 h-3.5 w-3.5' />
                 Verificación de identidad
               </Link>
             </Button>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-              <span className='font-mono break-all'>
-                {payout.sellerUserId}
-              </span>
+              <span className='font-mono break-all'>{payout.sellerUserId}</span>
               <CopyButton text={payout.sellerUserId} size='sm' />
             </div>
           </div>
