@@ -60,9 +60,31 @@ const EnvSchema = z.object({
   // Payout configuration
   PAYOUT_MINIMUM_UYU: z.coerce.number().default(500), // 500 UYU
   PAYOUT_MINIMUM_USD: z.coerce.number().default(12.5), // $25 USD
+  /** Payouts v3 AR: minimum destination amount in ARS (dLocal Go / Argentina) */
+  PAYOUT_MINIMUM_ARS: z.coerce.number().default(25_000),
   PAYOUT_HOLD_PERIOD_HOURS: z.coerce.number().default(48), // 48 hours post-event
   PAYOUT_FX_SPREAD_PERCENT: z.coerce.number().min(0).max(10).default(1),
   PAYOUT_FX_RATE_LOCK_HOURS: z.coerce.number().min(1).max(168).default(72),
+  // dLocal Payouts v3 (overrides DLOCAL_BASE_URL for `/payouts/v3` if needed)
+  DLOCAL_PAYOUTS_BASE_URL: z.preprocess(
+    v => (v === '' || v == null ? undefined : v),
+    z.string().url().optional(),
+  ),
+  DLOCAL_PAYOUTS_TIMEOUT_MS: z.coerce.number().min(1_000).default(30_000),
+  DLOCAL_PAYOUT_REMITTER_FIRST_NAME: z.string().min(1).optional(),
+  DLOCAL_PAYOUT_REMITTER_LAST_NAME: z.string().min(1).optional(),
+  DLOCAL_PAYOUT_REMITTER_EMAIL: z.string().email().optional(),
+  DLOCAL_PAYOUT_REMITTER_PHONE: z.string().min(1).optional(),
+  DLOCAL_PAYOUT_REMITTER_NATIONALITY: z.string().length(2).default('UY'),
+  DLOCAL_PAYOUT_REMITTER_DOCUMENT_ID: z.string().min(1).optional(),
+  DLOCAL_PAYOUT_REMITTER_DOCUMENT_TYPE: z
+    .string()
+    .min(1)
+    .default('NATIONAL_ID'),
+  DLOCAL_PAYOUT_NOTIFICATION_URL: z.preprocess(
+    v => (v === '' || v == null ? undefined : v),
+    z.string().url().optional(),
+  ),
   // Exchange rate cache (BROU eBROU via UruguayBankProvider only)
   EXCHANGE_RATE_CACHE_TTL_HOURS: z.coerce.number().default(1),
   GOOGLE_PLACES_API_KEY: z.string().optional(),
@@ -141,9 +163,20 @@ export const {
   WHATSAPP_API_VERSION,
   PAYOUT_MINIMUM_UYU,
   PAYOUT_MINIMUM_USD,
+  PAYOUT_MINIMUM_ARS,
   PAYOUT_HOLD_PERIOD_HOURS,
   PAYOUT_FX_SPREAD_PERCENT,
   PAYOUT_FX_RATE_LOCK_HOURS,
+  DLOCAL_PAYOUTS_BASE_URL,
+  DLOCAL_PAYOUTS_TIMEOUT_MS,
+  DLOCAL_PAYOUT_REMITTER_FIRST_NAME,
+  DLOCAL_PAYOUT_REMITTER_LAST_NAME,
+  DLOCAL_PAYOUT_REMITTER_EMAIL,
+  DLOCAL_PAYOUT_REMITTER_PHONE,
+  DLOCAL_PAYOUT_REMITTER_NATIONALITY,
+  DLOCAL_PAYOUT_REMITTER_DOCUMENT_ID,
+  DLOCAL_PAYOUT_REMITTER_DOCUMENT_TYPE,
+  DLOCAL_PAYOUT_NOTIFICATION_URL,
   EXCHANGE_RATE_CACHE_TTL_HOURS,
   GOOGLE_PLACES_API_KEY,
   POSTHOG_KEY,

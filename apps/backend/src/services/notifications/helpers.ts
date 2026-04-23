@@ -1,7 +1,14 @@
 import {NotificationService, type CreateNotificationParams} from './index';
 import {APP_BASE_URL} from '~/config/env';
 import {NOTIFICATION_BUTTON_LABELS} from '~/constants/error-messages';
-import type {QrAvailabilityTiming, TicketReportCaseType, TicketReportEntityType, TicketReportActionType, TicketReportStatus} from '@revendiste/shared';
+import type {
+  EventTicketCurrency,
+  QrAvailabilityTiming,
+  TicketReportActionType,
+  TicketReportCaseType,
+  TicketReportEntityType,
+  TicketReportStatus,
+} from '@revendiste/shared';
 
 /**
  * Helper functions for creating common notification types
@@ -671,7 +678,7 @@ export async function notifySellerEarningsAvailable(
   params: {
     sellerUserId: string;
     lines: Array<{
-      currency: 'UYU' | 'USD';
+      currency: EventTicketCurrency;
       amount: string;
       earningCount: number;
     }>;

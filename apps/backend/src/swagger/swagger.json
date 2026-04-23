@@ -514,6 +514,7 @@
 			"EventTicketCurrency": {
 				"type": "string",
 				"enum": [
+					"ARS",
 					"USD",
 					"UYU"
 				]
@@ -2861,9 +2862,9 @@
 					"payoutProvider": {
 						"type": "string",
 						"enum": [
+							"dlocal_go",
 							"manual_bank"
-						],
-						"nullable": false
+						]
 					},
 					"payoutMethodId": {
 						"type": "string"
@@ -2990,15 +2991,18 @@
 				],
 				"type": "object"
 			},
+			"PayoutType": {
+				"type": "string",
+				"enum": [
+					"argentinian_bank",
+					"uruguayan_bank"
+				]
+			},
 			"GetPayoutMethodsResponse": {
 				"items": {
 					"properties": {
 						"payoutType": {
-							"type": "string",
-							"enum": [
-								"uruguayan_bank"
-							],
-							"nullable": false
+							"$ref": "#/components/schemas/PayoutType"
 						},
 						"isDefault": {
 							"type": "boolean"
@@ -3073,11 +3077,7 @@
 			"AddPayoutMethodResponse": {
 				"properties": {
 					"payoutType": {
-						"type": "string",
-						"enum": [
-							"uruguayan_bank"
-						],
-						"nullable": false
+						"$ref": "#/components/schemas/PayoutType"
 					},
 					"isDefault": {
 						"type": "boolean"
@@ -3150,271 +3150,387 @@
 			"AddPayoutMethodRouteBody": {
 				"allOf": [
 					{
-						"properties": {
-							"metadata": {
-								"anyOf": [
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"Banco Nacion Arg"
+						"anyOf": [
+							{
+								"properties": {
+									"metadata": {
+										"anyOf": [
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"Banco Nacion Arg"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
 												],
-												"nullable": false
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"BBVA"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"BHU"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"BROU"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"Citibank"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"Heritage"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"HSBC"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"Itau"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"Midinero"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"OCA Blue"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"PREX"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"Santander"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankName": {
+														"type": "string",
+														"enum": [
+															"Scotiabank"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"accountNumber",
+													"bankName"
+												],
+												"type": "object"
 											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
+										]
 									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"BBVA"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
+									"payoutType": {
+										"type": "string",
+										"enum": [
+											"uruguayan_bank"
 										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"BHU"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"BROU"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"Citibank"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"Heritage"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"HSBC"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"Itau"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"Midinero"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"OCA Blue"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"PREX"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"Santander"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
-									},
-									{
-										"properties": {
-											"accountNumber": {
-												"type": "string"
-											},
-											"bankName": {
-												"type": "string",
-												"enum": [
-													"Scotiabank"
-												],
-												"nullable": false
-											}
-										},
-										"required": [
-											"accountNumber",
-											"bankName"
-										],
-										"type": "object"
+										"nullable": false
 									}
-								]
-							},
-							"payoutType": {
-								"type": "string",
-								"enum": [
-									"uruguayan_bank"
+								},
+								"required": [
+									"metadata",
+									"payoutType"
 								],
-								"nullable": false
+								"type": "object"
+							},
+							{
+								"properties": {
+									"metadata": {
+										"anyOf": [
+											{
+												"properties": {
+													"document": {
+														"properties": {
+															"id": {
+																"type": "string"
+															},
+															"type": {
+																"type": "string",
+																"enum": [
+																	"CUIT",
+																	"CUIL",
+																	"DNI"
+																]
+															}
+														},
+														"required": [
+															"id",
+															"type"
+														],
+														"type": "object"
+													},
+													"accountNumber": {
+														"type": "string"
+													},
+													"bankCode": {
+														"type": "string"
+													},
+													"routing": {
+														"type": "string",
+														"enum": [
+															"cbu_cvu"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"document",
+													"accountNumber",
+													"bankCode",
+													"routing"
+												],
+												"type": "object"
+											},
+											{
+												"properties": {
+													"document": {
+														"properties": {
+															"id": {
+																"type": "string"
+															},
+															"type": {
+																"type": "string",
+																"enum": [
+																	"CUIT",
+																	"CUIL",
+																	"DNI"
+																]
+															}
+														},
+														"required": [
+															"id",
+															"type"
+														],
+														"type": "object"
+													},
+													"alias": {
+														"type": "string"
+													},
+													"bankCode": {
+														"type": "string",
+														"enum": [
+															"000"
+														],
+														"nullable": false
+													},
+													"routing": {
+														"type": "string",
+														"enum": [
+															"alias"
+														],
+														"nullable": false
+													}
+												},
+												"required": [
+													"document",
+													"alias",
+													"bankCode",
+													"routing"
+												],
+												"type": "object"
+											}
+										]
+									},
+									"payoutType": {
+										"type": "string",
+										"enum": [
+											"argentinian_bank"
+										],
+										"nullable": false
+									}
+								},
+								"required": [
+									"metadata",
+									"payoutType"
+								],
+								"type": "object"
 							}
-						},
-						"required": [
-							"metadata",
-							"payoutType"
-						],
-						"type": "object"
+						]
 					},
 					{
 						"properties": {
@@ -3424,6 +3540,7 @@
 							"currency": {
 								"type": "string",
 								"enum": [
+									"ARS",
 									"USD",
 									"UYU"
 								]
@@ -3447,11 +3564,7 @@
 			"UpdatePayoutMethodResponse": {
 				"properties": {
 					"payoutType": {
-						"type": "string",
-						"enum": [
-							"uruguayan_bank"
-						],
-						"nullable": false
+						"$ref": "#/components/schemas/PayoutType"
 					},
 					"isDefault": {
 						"type": "boolean"
@@ -3530,6 +3643,7 @@
 					"currency": {
 						"type": "string",
 						"enum": [
+							"ARS",
 							"USD",
 							"UYU"
 						]
@@ -3650,9 +3764,9 @@
 					"payoutProvider": {
 						"type": "string",
 						"enum": [
+							"dlocal_go",
 							"manual_bank"
-						],
-						"nullable": false
+						]
 					},
 					"payoutMethodId": {
 						"type": "string"
@@ -3738,11 +3852,7 @@
 								"type": "string"
 							},
 							"payoutType": {
-								"type": "string",
-								"enum": [
-									"uruguayan_bank"
-								],
-								"nullable": false
+								"$ref": "#/components/schemas/PayoutType"
 							},
 							"id": {
 								"type": "string"
@@ -3934,6 +4044,40 @@
 								},
 								"type": "object"
 							},
+							"dLocalArRateLock": {
+								"properties": {
+									"rateArsPerUsd": {
+										"type": "number",
+										"format": "double"
+									},
+									"destinationAmountArs": {
+										"type": "number",
+										"format": "double"
+									},
+									"sourceAmountUsd": {
+										"type": "number",
+										"format": "double"
+									},
+									"rateExpiresAt": {
+										"type": "string"
+									},
+									"lockedAt": {
+										"type": "string"
+									},
+									"quoteId": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"rateArsPerUsd",
+									"destinationAmountArs",
+									"sourceAmountUsd",
+									"rateExpiresAt",
+									"lockedAt",
+									"quoteId"
+								],
+								"type": "object"
+							},
 							"rateLock": {
 								"properties": {
 									"convertedCurrency": {
@@ -4042,11 +4186,7 @@
 								"payoutMethod": {
 									"properties": {
 										"payoutType": {
-											"type": "string",
-											"enum": [
-												"uruguayan_bank"
-											],
-											"nullable": false
+											"$ref": "#/components/schemas/PayoutType"
 										},
 										"accountHolderSurname": {
 											"type": "string"
@@ -4176,9 +4316,9 @@
 								"payoutProvider": {
 									"type": "string",
 									"enum": [
+										"dlocal_go",
 										"manual_bank"
-									],
-									"nullable": false
+									]
 								},
 								"payoutMethodId": {
 									"type": "string"
@@ -4457,9 +4597,9 @@
 					"payoutProvider": {
 						"type": "string",
 						"enum": [
+							"dlocal_go",
 							"manual_bank"
-						],
-						"nullable": false
+						]
 					},
 					"payoutMethodId": {
 						"type": "string"
@@ -4545,11 +4685,7 @@
 								"type": "string"
 							},
 							"payoutType": {
-								"type": "string",
-								"enum": [
-									"uruguayan_bank"
-								],
-								"nullable": false
+								"$ref": "#/components/schemas/PayoutType"
 							},
 							"id": {
 								"type": "string"
@@ -4916,6 +5052,40 @@
 								},
 								"type": "object"
 							},
+							"dLocalArRateLock": {
+								"properties": {
+									"rateArsPerUsd": {
+										"type": "number",
+										"format": "double"
+									},
+									"destinationAmountArs": {
+										"type": "number",
+										"format": "double"
+									},
+									"sourceAmountUsd": {
+										"type": "number",
+										"format": "double"
+									},
+									"rateExpiresAt": {
+										"type": "string"
+									},
+									"lockedAt": {
+										"type": "string"
+									},
+									"quoteId": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"rateArsPerUsd",
+									"destinationAmountArs",
+									"sourceAmountUsd",
+									"rateExpiresAt",
+									"lockedAt",
+									"quoteId"
+								],
+								"type": "object"
+							},
 							"rateLock": {
 								"properties": {
 									"convertedCurrency": {
@@ -5041,9 +5211,9 @@
 					"payoutProvider": {
 						"type": "string",
 						"enum": [
+							"dlocal_go",
 							"manual_bank"
-						],
-						"nullable": false
+						]
 					},
 					"payoutMethodId": {
 						"type": "string"
@@ -5255,9 +5425,9 @@
 					"payoutProvider": {
 						"type": "string",
 						"enum": [
+							"dlocal_go",
 							"manual_bank"
-						],
-						"nullable": false
+						]
 					},
 					"payoutMethodId": {
 						"type": "string"
@@ -5343,11 +5513,7 @@
 								"type": "string"
 							},
 							"payoutType": {
-								"type": "string",
-								"enum": [
-									"uruguayan_bank"
-								],
-								"nullable": false
+								"$ref": "#/components/schemas/PayoutType"
 							},
 							"id": {
 								"type": "string"
@@ -5714,6 +5880,40 @@
 								},
 								"type": "object"
 							},
+							"dLocalArRateLock": {
+								"properties": {
+									"rateArsPerUsd": {
+										"type": "number",
+										"format": "double"
+									},
+									"destinationAmountArs": {
+										"type": "number",
+										"format": "double"
+									},
+									"sourceAmountUsd": {
+										"type": "number",
+										"format": "double"
+									},
+									"rateExpiresAt": {
+										"type": "string"
+									},
+									"lockedAt": {
+										"type": "string"
+									},
+									"quoteId": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"rateArsPerUsd",
+									"destinationAmountArs",
+									"sourceAmountUsd",
+									"rateExpiresAt",
+									"lockedAt",
+									"quoteId"
+								],
+								"type": "object"
+							},
 							"rateLock": {
 								"properties": {
 									"convertedCurrency": {
@@ -5847,9 +6047,9 @@
 					"payoutProvider": {
 						"type": "string",
 						"enum": [
+							"dlocal_go",
 							"manual_bank"
-						],
-						"nullable": false
+						]
 					},
 					"payoutMethodId": {
 						"type": "string"
@@ -5990,9 +6190,9 @@
 					"payoutProvider": {
 						"type": "string",
 						"enum": [
+							"dlocal_go",
 							"manual_bank"
-						],
-						"nullable": false
+						]
 					},
 					"payoutMethodId": {
 						"type": "string"
@@ -11430,11 +11630,7 @@
 									"type": "string"
 								},
 								"payoutType": {
-									"type": "string",
-									"enum": [
-										"uruguayan_bank"
-									],
-									"nullable": false
+									"$ref": "#/components/schemas/PayoutType"
 								},
 								"currency": {
 									"$ref": "#/components/schemas/EventTicketCurrency"

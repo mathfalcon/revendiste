@@ -7,10 +7,7 @@
 
 import {z} from 'zod';
 import type {QrAvailabilityTiming, NotificationType} from '../types';
-import type {
-  PostSendAction,
-  SendNotificationAttachmentRef,
-} from './jobs';
+import type {PostSendAction, SendNotificationAttachmentRef} from './jobs';
 import {
   TicketReportCaseTypeSchema,
   TicketReportEntityTypeSchema,
@@ -295,7 +292,7 @@ export const SellerEarningsRetainedMetadataSchema = z.object({
 
 // seller_earnings_available - Hold period ended; earnings moved to available (ready to withdraw)
 export const SellerEarningsAvailableLineSchema = z.object({
-  currency: z.enum(['UYU', 'USD']),
+  currency: z.enum(['ARS', 'UYU', 'USD']),
   amount: z.string(),
   earningCount: z.number().int().positive(),
 });
@@ -353,7 +350,7 @@ export const TicketReportCreatedMetadataSchema = z.object({
   entityType: TicketReportEntityTypeSchema,
   entityId: z.uuid(),
   isAutoCase: z.boolean().optional(), // true when created by system (e.g. missing document)
-  eventName: z.string().optional(),   // event name for auto-case emails
+  eventName: z.string().optional(), // event name for auto-case emails
 });
 
 // ticket_report_status_changed - notifies reporter when admin changes status

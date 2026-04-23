@@ -1,5 +1,11 @@
 import {Kysely, Updateable} from 'kysely';
-import {DB, EventTicketCurrency, JsonValue, PayoutMethods} from '@revendiste/shared';
+import {
+  DB,
+  EventTicketCurrency,
+  JsonValue,
+  PayoutMethods,
+  PayoutType,
+} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 
 export class PayoutMethodsRepository extends BaseRepository<PayoutMethodsRepository> {
@@ -9,7 +15,7 @@ export class PayoutMethodsRepository extends BaseRepository<PayoutMethodsReposit
 
   async create(payoutMethodData: {
     userId: string;
-    payoutType: 'uruguayan_bank';
+    payoutType: PayoutType;
     accountHolderName: string;
     accountHolderSurname: string;
     currency: EventTicketCurrency;

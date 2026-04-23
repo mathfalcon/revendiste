@@ -1,7 +1,10 @@
-import type {EventTicketCurrency, PayoutStatus} from '@revendiste/shared';
+import type {
+  EventTicketCurrency,
+  PayoutStatus,
+  PayoutType,
+} from '@revendiste/shared';
 
-/** DB / future: only `manual_bank` is persisted until dLocal migration. */
-export type PayoutProviderName = 'manual_bank' | 'dlocal_automated';
+export type PayoutProviderName = 'dlocal_go' | 'manual_bank';
 
 export interface InitiatePayoutInstructions {
   /** Human-readable summary for admin / logs */
@@ -12,6 +15,8 @@ export interface InitiatePayoutParams {
   payoutId: string;
   amount: number;
   currency: EventTicketCurrency;
+  payoutType: PayoutType;
+  payoutMethodCurrency: EventTicketCurrency;
   payoutMethodMetadata: unknown;
   accountHolderName: string;
   accountHolderSurname: string;
@@ -26,6 +31,10 @@ export interface ProcessPayoutParams {
   payoutId: string;
   amount: number;
   currency: EventTicketCurrency;
+  payoutType: PayoutType;
+  payoutMethodCurrency: EventTicketCurrency;
+  /** Merged `payouts.metadata` (quote locks, etc.) */
+  payoutMetadata: unknown;
   payoutMethodMetadata: unknown;
   accountHolderName: string;
   accountHolderSurname: string;
@@ -42,7 +51,7 @@ export interface PayoutStatusResult {
 }
 
 /**
- * Strategy for payout execution (manual today; API-driven later).
+ * Strategy for payout execution (manual today; API-driven with dLocal Go / Payouts v3 when enabled).
  * Implementations must not perform DB transactions — orchestration stays in PayoutsService.
  */
 export interface PayoutProvider {

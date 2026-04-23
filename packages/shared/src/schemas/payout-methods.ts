@@ -209,12 +209,66 @@ export const UruguayanBankMetadataSchema = z.discriminatedUnion('bankName', [
   ScotiabankBankMetadataSchema,
 ]);
 
+const ArgentinianDocumentIdSchema = z
+  .string()
+  .min(7, 'Ingresá el documento con el formato requerido')
+  .max(20);
+
+export const ArgentinianBankCbuCvuMetadataSchema = z.object({
+  routing: z.literal('cbu_cvu'),
+  /** First 3 digits of CBU/CVU (BCRA bank code) */
+  bankCode: z.string().length(3, 'Código de banco inválido'),
+  accountNumber: z
+    .string()
+    .length(22, 'El CBU/CVU debe tener 22 dígitos')
+    .regex(/^\d{22}$/, 'Solo se permiten dígitos en el CBU/CVU'),
+  document: z.object({
+    type: z.enum(['CUIT', 'CUIL', 'DNI']),
+    id: ArgentinianDocumentIdSchema,
+  }),
+});
+
+export const ArgentinianBankAliasMetadataSchema = z.object({
+  routing: z.literal('alias'),
+  /** dLocal: bank code 000 when paying by savings alias (CVU alias) */
+  bankCode: z.literal('000'),
+  alias: z
+    .string()
+    .min(6, 'Ingresá el alias bancario')
+    .max(20, 'Alias bancario demasiado largo')
+    .regex(
+      /^[A-Za-z0-9.]+$/u,
+      'Solo se permiten letras, números y un punto (sin @)',
+    ),
+  document: z.object({
+    type: z.enum(['CUIT', 'CUIL', 'DNI']),
+    id: ArgentinianDocumentIdSchema,
+  }),
+});
+
+export const ArgentinianBankMetadataSchema = z.discriminatedUnion('routing', [
+  ArgentinianBankCbuCvuMetadataSchema,
+  ArgentinianBankAliasMetadataSchema,
+]);
+
+export type ArgentinianBankMetadata = z.infer<
+  typeof ArgentinianBankMetadataSchema
+>;
+
 export const UruguayanBankPayoutMethodSchema = z.object({
   type: z.literal('uruguayan_bank'),
   metadata: UruguayanBankMetadataSchema,
 });
 
-export const PayoutMethodMetadataSchema = UruguayanBankPayoutMethodSchema;
+export const ArgentinianBankPayoutMethodSchema = z.object({
+  type: z.literal('argentinian_bank'),
+  metadata: ArgentinianBankMetadataSchema,
+});
+
+export const PayoutMethodMetadataSchema = z.discriminatedUnion('type', [
+  UruguayanBankPayoutMethodSchema,
+  ArgentinianBankPayoutMethodSchema,
+]);
 
 export type PayoutMethodMetadata = z.infer<typeof PayoutMethodMetadataSchema>;
 
@@ -244,4 +298,16 @@ export const PayoutMethodUruguayanBankSchema = z.object({
   metadata: UruguayanBankMetadataSchema,
 });
 
-export const PayoutMethodBaseSchema = PayoutMethodUruguayanBankSchema;
+export const PayoutMethodArgentinianBankSchema = z.object({
+  payoutType: z.literal('argentinian_bank'),
+  metadata: ArgentinianBankMetadataSchema,
+});
+
+/**
+ * Add/update API body: discriminated by `payoutType`.
+ * Internal typed metadata (`{ type, metadata }`) is defined by {@link PayoutMethodMetadataSchema}.
+ */
+export const PayoutMethodBaseSchema = z.discriminatedUnion('payoutType', [
+  PayoutMethodUruguayanBankSchema,
+  PayoutMethodArgentinianBankSchema,
+]);

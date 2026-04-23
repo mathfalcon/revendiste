@@ -35,6 +35,17 @@ export const FxProcessingSchema = z.object({
   rateWasExpired: z.boolean().optional(),
 });
 
+/** dLocal Payouts v3 quote lock for AR (USD source → ARS pay) */
+export const DLocalArRateLockSchema = z.object({
+  quoteId: z.string(),
+  lockedAt: z.string(),
+  rateExpiresAt: z.string(),
+  sourceAmountUsd: z.number(),
+  destinationAmountArs: z.number(),
+  /** ARS per 1 USD (destination / source) */
+  rateArsPerUsd: z.number(),
+});
+
 export type FxProcessing = z.infer<typeof FxProcessingSchema>;
 
 export const PayoutMetadataSchema = z
@@ -42,6 +53,7 @@ export const PayoutMetadataSchema = z
     listingTicketIds: z.array(z.string()).default([]),
     listingIds: z.array(z.string()).default([]),
     rateLock: RateLockSchema.optional(),
+    dLocalArRateLock: DLocalArRateLockSchema.optional(),
     fxProcessing: FxProcessingSchema.optional(),
   })
   .passthrough();

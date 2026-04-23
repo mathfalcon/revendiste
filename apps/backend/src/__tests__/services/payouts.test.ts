@@ -46,8 +46,15 @@ import {
   notifyPayoutFailed,
   notifyPayoutCancelled,
 } from '~/services/notifications/helpers';
-import {selectPayoutProvider} from '~/services/payouts/providers/PayoutProviderRegistry';
+import {
+  getPayoutProviderByName,
+  resolvePayoutProviderName,
+} from '~/services/payouts/providers/PayoutProviderRegistry';
 import {ManualBankTransferProvider} from '~/services/payouts/providers/ManualBankTransferProvider';
+
+jest.mock('~/lib/feature-flags', () => ({
+  isDLocalGoPayoutsEnabled: jest.fn().mockResolvedValue(false),
+}));
 
 type PayoutMethodRow = NonNullable<
   Awaited<ReturnType<PayoutMethodsRepository['getById']>>
@@ -936,34 +943,52 @@ describe('PayoutsService', () => {
 
   // =========================================================================
   describe('PayoutProviderRegistry (strategy)', () => {
-    it('selectPayoutProvider returns ManualBankTransferProvider for uruguayan_bank', () => {
-      const p = selectPayoutProvider({payoutType: 'uruguayan_bank'});
+    it('returns ManualBankTransferProvider for uruguayan_bank when flag is off', () => {
+      const p = getPayoutProviderByName(
+        resolvePayoutProviderName({
+          payoutType: 'uruguayan_bank',
+          dlocalGoEnabled: false,
+        }),
+      );
       expect(p).toBeInstanceOf(ManualBankTransferProvider);
       expect(p.name).toBe('manual_bank');
     });
 
     it('initiatePayout returns Spanish summary and no externalId', async () => {
-      const p = selectPayoutProvider({payoutType: 'uruguayan_bank'});
+      const p = getPayoutProviderByName(
+        resolvePayoutProviderName({
+          payoutType: 'uruguayan_bank',
+          dlocalGoEnabled: false,
+        }),
+      );
       const r = await p.initiatePayout({
         payoutId: 'p-x',
         amount: 100,
         currency: 'UYU',
+        payoutType: 'uruguayan_bank',
+        payoutMethodCurrency: 'UYU',
         payoutMethodMetadata: {},
         accountHolderName: 'A',
         accountHolderSurname: 'B',
       });
-      expect(r.instructions.summary).toContain(
-        'Transferencia bancaria Uruguay',
-      );
+      expect(r.instructions.summary).toContain('Transferencia bancaria:');
       expect(r.externalId).toBeUndefined();
     });
 
     it('processPayout returns completed', async () => {
-      const p = selectPayoutProvider({payoutType: 'uruguayan_bank'});
+      const p = getPayoutProviderByName(
+        resolvePayoutProviderName({
+          payoutType: 'uruguayan_bank',
+          dlocalGoEnabled: false,
+        }),
+      );
       const r = await p.processPayout({
         payoutId: 'p-x',
         amount: 100,
         currency: 'UYU',
+        payoutType: 'uruguayan_bank',
+        payoutMethodCurrency: 'UYU',
+        payoutMetadata: {},
         payoutMethodMetadata: {},
         accountHolderName: 'A',
         accountHolderSurname: 'B',

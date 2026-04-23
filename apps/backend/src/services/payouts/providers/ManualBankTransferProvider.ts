@@ -14,7 +14,7 @@ export class ManualBankTransferProvider extends BasePayoutProvider {
   async initiatePayout(
     params: InitiatePayoutParams,
   ): Promise<InitiatePayoutResult> {
-    const summary = `Transferencia bancaria Uruguay: ${params.amount} ${params.currency} a ${params.accountHolderName} ${params.accountHolderSurname}. Usá los datos del método de retiro en el panel de administración.`;
+    const summary = `Transferencia bancaria: ${params.amount} ${params.currency} (${params.payoutType}) a ${params.accountHolderName} ${params.accountHolderSurname}. Usá los datos del método de retiro en el panel de administración.`;
     return {
       instructions: {summary},
       externalId: undefined,
@@ -22,6 +22,7 @@ export class ManualBankTransferProvider extends BasePayoutProvider {
   }
 
   async processPayout(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _params: ProcessPayoutParams,
   ): Promise<ProcessPayoutResult> {
     return {status: 'completed', externalId: undefined};

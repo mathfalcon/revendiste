@@ -134,6 +134,11 @@ export enum PayoutEventType {
   TransferInitiated = "transfer_initiated",
 }
 
+export enum PayoutType {
+  ArgentinianBank = "argentinian_bank",
+  UruguayanBank = "uruguayan_bank",
+}
+
 export enum UploadAvailabilityReason {
   EventEnded = "event_ended",
   TooEarly = "too_early",
@@ -141,6 +146,7 @@ export enum UploadAvailabilityReason {
 }
 
 export enum EventTicketCurrency {
+  ARS = "ARS",
   USD = "USD",
   UYU = "UYU",
 }
@@ -951,7 +957,7 @@ export interface RequestPayoutResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank";
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -980,7 +986,7 @@ export interface RequestPayoutRouteBody {
 }
 
 export type GetPayoutMethodsResponse = {
-  payoutType: "uruguayan_bank";
+  payoutType: PayoutType;
   isDefault: boolean;
   accountHolderSurname: string;
   accountHolderName: string;
@@ -997,7 +1003,7 @@ export type GetPayoutMethodsResponse = {
 }[];
 
 export interface AddPayoutMethodResponse {
-  payoutType: "uruguayan_bank";
+  payoutType: PayoutType;
   isDefault: boolean;
   accountHolderSurname: string;
   accountHolderName: string;
@@ -1013,70 +1019,94 @@ export interface AddPayoutMethodResponse {
   createdAt: string;
 }
 
-export type AddPayoutMethodRouteBody = {
-  metadata:
-    | {
-        accountNumber: string;
-        bankName: "Banco Nacion Arg";
-      }
-    | {
-        accountNumber: string;
-        bankName: "BBVA";
-      }
-    | {
-        accountNumber: string;
-        bankName: "BHU";
-      }
-    | {
-        accountNumber: string;
-        bankName: "BROU";
-      }
-    | {
-        accountNumber: string;
-        bankName: "Citibank";
-      }
-    | {
-        accountNumber: string;
-        bankName: "Heritage";
-      }
-    | {
-        accountNumber: string;
-        bankName: "HSBC";
-      }
-    | {
-        accountNumber: string;
-        bankName: "Itau";
-      }
-    | {
-        accountNumber: string;
-        bankName: "Midinero";
-      }
-    | {
-        accountNumber: string;
-        bankName: "OCA Blue";
-      }
-    | {
-        accountNumber: string;
-        bankName: "PREX";
-      }
-    | {
-        accountNumber: string;
-        bankName: "Santander";
-      }
-    | {
-        accountNumber: string;
-        bankName: "Scotiabank";
-      };
-  payoutType: "uruguayan_bank";
-} & {
+export type AddPayoutMethodRouteBody = (
+  | {
+      metadata:
+        | {
+            accountNumber: string;
+            bankName: "Banco Nacion Arg";
+          }
+        | {
+            accountNumber: string;
+            bankName: "BBVA";
+          }
+        | {
+            accountNumber: string;
+            bankName: "BHU";
+          }
+        | {
+            accountNumber: string;
+            bankName: "BROU";
+          }
+        | {
+            accountNumber: string;
+            bankName: "Citibank";
+          }
+        | {
+            accountNumber: string;
+            bankName: "Heritage";
+          }
+        | {
+            accountNumber: string;
+            bankName: "HSBC";
+          }
+        | {
+            accountNumber: string;
+            bankName: "Itau";
+          }
+        | {
+            accountNumber: string;
+            bankName: "Midinero";
+          }
+        | {
+            accountNumber: string;
+            bankName: "OCA Blue";
+          }
+        | {
+            accountNumber: string;
+            bankName: "PREX";
+          }
+        | {
+            accountNumber: string;
+            bankName: "Santander";
+          }
+        | {
+            accountNumber: string;
+            bankName: "Scotiabank";
+          };
+      payoutType: "uruguayan_bank";
+    }
+  | {
+      metadata:
+        | {
+            document: {
+              id: string;
+              type: "CUIT" | "CUIL" | "DNI";
+            };
+            accountNumber: string;
+            bankCode: string;
+            routing: "cbu_cvu";
+          }
+        | {
+            document: {
+              id: string;
+              type: "CUIT" | "CUIL" | "DNI";
+            };
+            alias: string;
+            bankCode: "000";
+            routing: "alias";
+          };
+      payoutType: "argentinian_bank";
+    }
+) & {
   isDefault?: boolean;
-  currency: "USD" | "UYU";
+  currency: "ARS" | "USD" | "UYU";
   accountHolderSurname: string;
   accountHolderName: string;
 };
 
 export interface UpdatePayoutMethodResponse {
-  payoutType: "uruguayan_bank";
+  payoutType: PayoutType;
   isDefault: boolean;
   accountHolderSurname: string;
   accountHolderName: string;
@@ -1095,7 +1125,7 @@ export interface UpdatePayoutMethodResponse {
 export interface UpdatePayoutMethodRouteBody {
   isDefault?: boolean;
   metadata?: any;
-  currency?: "USD" | "UYU";
+  currency?: "ARS" | "USD" | "UYU";
   accountHolderSurname?: string;
   accountHolderName?: string;
 }
@@ -1122,7 +1152,7 @@ export interface GetUserPayoutDetailsResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank";
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1144,7 +1174,7 @@ export interface GetUserPayoutDetailsResponse {
     currency: EventTicketCurrency;
     accountHolderSurname: string;
     accountHolderName: string;
-    payoutType: "uruguayan_bank";
+    payoutType: PayoutType;
     id: string;
   };
   documents: {
@@ -1190,6 +1220,17 @@ export interface GetUserPayoutDetailsResponse {
       /** @format double */
       actualBankRate?: number;
     };
+    dLocalArRateLock?: {
+      /** @format double */
+      rateArsPerUsd: number;
+      /** @format double */
+      destinationAmountArs: number;
+      /** @format double */
+      sourceAmountUsd: number;
+      rateExpiresAt: string;
+      lockedAt: string;
+      quoteId: string;
+    };
     rateLock?: {
       convertedCurrency: string;
       /** @format double */
@@ -1216,7 +1257,7 @@ export interface GetPayoutsResponse {
   pagination: PaginationMeta;
   data: {
     payoutMethod: {
-      payoutType: "uruguayan_bank";
+      payoutType: PayoutType;
       accountHolderSurname: string;
       accountHolderName: string;
       id: string;
@@ -1248,7 +1289,7 @@ export interface GetPayoutsResponse {
     processedBy: string | null;
     /** @format date-time */
     processedAt: string | null;
-    payoutProvider: "manual_bank";
+    payoutProvider: "dlocal_go" | "manual_bank";
     payoutMethodId: string;
     notes: string | null;
     failureReason: string | null;
@@ -1317,7 +1358,7 @@ export interface GetPayoutDetailsResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank";
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1339,7 +1380,7 @@ export interface GetPayoutDetailsResponse {
     currency: EventTicketCurrency;
     accountHolderSurname: string;
     accountHolderName: string;
-    payoutType: "uruguayan_bank";
+    payoutType: PayoutType;
     id: string;
   };
   seller: {
@@ -1448,6 +1489,17 @@ export interface GetPayoutDetailsResponse {
       /** @format double */
       actualBankRate?: number;
     };
+    dLocalArRateLock?: {
+      /** @format double */
+      rateArsPerUsd: number;
+      /** @format double */
+      destinationAmountArs: number;
+      /** @format double */
+      sourceAmountUsd: number;
+      rateExpiresAt: string;
+      lockedAt: string;
+      quoteId: string;
+    };
     rateLock?: {
       convertedCurrency: string;
       /** @format double */
@@ -1478,7 +1530,7 @@ export interface ProcessPayoutResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank";
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1533,7 +1585,7 @@ export interface RefreshPayoutRateLockResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank";
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1555,7 +1607,7 @@ export interface RefreshPayoutRateLockResponse {
     currency: EventTicketCurrency;
     accountHolderSurname: string;
     accountHolderName: string;
-    payoutType: "uruguayan_bank";
+    payoutType: PayoutType;
     id: string;
   };
   seller: {
@@ -1664,6 +1716,17 @@ export interface RefreshPayoutRateLockResponse {
       /** @format double */
       actualBankRate?: number;
     };
+    dLocalArRateLock?: {
+      /** @format double */
+      rateArsPerUsd: number;
+      /** @format double */
+      destinationAmountArs: number;
+      /** @format double */
+      sourceAmountUsd: number;
+      rateExpiresAt: string;
+      lockedAt: string;
+      quoteId: string;
+    };
     rateLock?: {
       convertedCurrency: string;
       /** @format double */
@@ -1699,7 +1762,7 @@ export interface FailPayoutResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank";
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -1733,7 +1796,7 @@ export interface CancelPayoutResponse {
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
-  payoutProvider: "manual_bank";
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
   failureReason: string | null;
@@ -3300,7 +3363,7 @@ export interface SettlementBreakdownResponse {
       lockedRate: number;
     } | null;
     uyuBackedInThisSettlement: string;
-    payoutType: "uruguayan_bank";
+    payoutType: PayoutType;
     currency: EventTicketCurrency;
     amount: string;
     status: "cancelled" | "pending" | "completed" | "failed" | "processing";

@@ -177,6 +177,14 @@ export const PAYOUT_ERROR_MESSAGES = {
     'No pudimos obtener la cotización del dólar (BROU ni Itaú). Probá de nuevo en unos minutos.',
   PAYOUT_PROVIDER_NOT_REGISTERED: (provider: string) =>
     `Proveedor de retiro no registrado: ${provider}. Contactá a soporte.`,
+  DLOCAL_GO_PAYOUTS_DISABLED:
+    'El retiro a bancos argentinos aún no está activo para tu cuenta. Probá de nuevo más tarde.',
+  ARGENTINIAN_PAYOUT_REQUIRES_USD_EARNINGS:
+    'Solo podés vincular un método argentino cuando tenés saldo a cobrar en dólares (USD).',
+  DLOCAL_PAYOUT_QUOTE_FAILED:
+    'No pudimos obtener la cotización para el retiro en ARS. Probá de nuevo en unos minutos o elegí cobrar en USD al mismo método.',
+  DLOCAL_PAYOUT_REMITTER_NOT_CONFIGURED:
+    'Falta la configuración del emisor dLocal (remitente) en el servidor. Contactá a soporte.',
 } as const;
 
 // Error messages for processor settlements (reconciliation)

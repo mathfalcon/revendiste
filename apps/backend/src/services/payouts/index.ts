@@ -9,6 +9,7 @@ import {PayoutDocumentsService} from '~/services/payout-documents';
 import {NotFoundError, ValidationError} from '~/errors';
 import {PAYOUT_ERROR_MESSAGES} from '~/constants/error-messages';
 import {
+  PAYOUT_MINIMUM_ARS,
   PAYOUT_MINIMUM_UYU,
   PAYOUT_MINIMUM_USD,
   PAYOUT_FX_SPREAD_PERCENT,
@@ -22,12 +23,14 @@ import type {
   PayoutStatus,
 } from '@revendiste/shared';
 import {PayoutMetadataSchema, roundToDecimals} from '@revendiste/shared';
+import {createDLocalPayoutQuote} from '~/services/payouts/providers/dlocal-payouts/client';
+import {isDLocalGoPayoutsEnabled} from '~/lib/feature-flags';
 import type {PaginationOptions} from '~/types/pagination';
 import {fetchBrouEbrouVentaRate} from '~/services/exchange-rates/providers/UruguayBankProvider';
 import {NotificationService} from '~/services/notifications';
 import {
   getPayoutProviderByName,
-  selectPayoutProvider,
+  resolvePayoutProviderName,
 } from '~/services/payouts/providers/PayoutProviderRegistry';
 import type {PayoutProviderName} from '~/services/payouts/providers/PayoutProvider.interface';
 import {
@@ -119,6 +122,13 @@ export class PayoutsService {
 
     const {earnings} = validation;
 
+    const dlocalGoEnabled = await isDLocalGoPayoutsEnabled(sellerUserId);
+    if (payoutMethod.payoutType === 'argentinian_bank' && !dlocalGoEnabled) {
+      throw new ValidationError(
+        PAYOUT_ERROR_MESSAGES.DLOCAL_GO_PAYOUTS_DISABLED,
+      );
+    }
+
     // Calculate total amount
     const totalAmount = earnings.reduce(
       (sum, e) => sum + Number(e.sellerAmount),
@@ -127,32 +137,110 @@ export class PayoutsService {
 
     let finalAmount = totalAmount;
     let finalCurrency = earnings[0].currency;
-
     const payoutMethodCurrency = payoutMethod.currency;
+    const usdPrincipal = totalAmount;
 
-    if (payoutMethodCurrency === 'UYU' && finalCurrency === 'USD') {
+    if (
+      payoutMethod.payoutType === 'argentinian_bank' &&
+      finalCurrency !== 'USD'
+    ) {
       throw new ValidationError(
-        PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS,
+        PAYOUT_ERROR_MESSAGES.ARGENTINIAN_PAYOUT_REQUIRES_USD_EARNINGS,
       );
     }
-    if (payoutMethodCurrency === 'USD' && finalCurrency === 'UYU') {
-      throw new ValidationError(
-        PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS,
-      );
+
+    if (payoutMethod.payoutType === 'uruguayan_bank') {
+      if (payoutMethodCurrency === 'UYU' && finalCurrency === 'USD') {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS,
+        );
+      }
+      if (payoutMethodCurrency === 'USD' && finalCurrency === 'UYU') {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS,
+        );
+      }
     }
 
-    // Validate minimum threshold in final currency
-    const minimum =
-      finalCurrency === 'UYU' ? PAYOUT_MINIMUM_UYU : PAYOUT_MINIMUM_USD;
+    let dLocalArLock:
+      | {
+          quoteId: string;
+          lockedAt: string;
+          rateExpiresAt: string;
+          sourceAmountUsd: number;
+          destinationAmountArs: number;
+          rateArsPerUsd: number;
+        }
+      | undefined;
+    if (
+      payoutMethod.payoutType === 'argentinian_bank' &&
+      payoutMethodCurrency === 'ARS' &&
+      dlocalGoEnabled
+    ) {
+      let quote: Awaited<ReturnType<typeof createDLocalPayoutQuote>>;
+      try {
+        quote = await createDLocalPayoutQuote({
+          country: 'AR',
+          sourceCurrency: 'USD',
+          destinationCurrency: 'ARS',
+          sourceAmount: usdPrincipal,
+        });
+      } catch {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.DLOCAL_PAYOUT_QUOTE_FAILED,
+        );
+      }
+      const dest = quote.details?.destination_amount;
+      if (dest == null || !Number.isFinite(dest)) {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.DLOCAL_PAYOUT_QUOTE_FAILED,
+        );
+      }
+      const exp =
+        typeof quote.expiration_date === 'string' && quote.expiration_date
+          ? quote.expiration_date
+          : new Date(
+              Date.now() + PAYOUT_FX_RATE_LOCK_HOURS * 3_600_000,
+            ).toISOString();
+      const nowIso = new Date().toISOString();
+      dLocalArLock = {
+        quoteId: quote.quote_id,
+        lockedAt: nowIso,
+        rateExpiresAt: exp,
+        sourceAmountUsd: usdPrincipal,
+        destinationAmountArs: dest,
+        rateArsPerUsd: usdPrincipal > 0 ? dest / usdPrincipal : 0,
+      };
+      finalAmount = dest;
+      finalCurrency = 'ARS' as EventTicketCurrency;
+    }
+
+    const minimumUyu = PAYOUT_MINIMUM_UYU;
+    const minimumUsd = PAYOUT_MINIMUM_USD;
+    const minimumArs = PAYOUT_MINIMUM_ARS;
+    let minimum: number;
+    if (finalCurrency === 'UYU') {
+      minimum = minimumUyu;
+    } else if (finalCurrency === 'ARS') {
+      minimum = minimumArs;
+    } else {
+      minimum = minimumUsd;
+    }
     if (finalAmount < minimum) {
       throw new ValidationError(
-        PAYOUT_ERROR_MESSAGES.BELOW_MINIMUM_THRESHOLD(finalCurrency, minimum),
+        PAYOUT_ERROR_MESSAGES.BELOW_MINIMUM_THRESHOLD(
+          String(finalCurrency),
+          minimum,
+        ),
       );
     }
 
-    const provider = selectPayoutProvider({
-      payoutType: payoutMethod.payoutType,
-    });
+    const provider = getPayoutProviderByName(
+      resolvePayoutProviderName({
+        payoutType: payoutMethod.payoutType,
+        dlocalGoEnabled,
+      }),
+    );
 
     // Create payout and link earnings in transaction
     const payout = await this.payoutsRepository.executeTransaction(
@@ -162,11 +250,12 @@ export class PayoutsService {
         const payoutEventsRepo =
           this.payoutEventsRepository.withTransaction(trx);
 
-        const payoutMetadataParsed = PayoutMetadataSchema.parse({
+        const baseMeta = PayoutMetadataSchema.parse({
           listingTicketIds: listingTicketIds || [],
           listingIds: listingIds || [],
+          ...(dLocalArLock ? {dLocalArRateLock: dLocalArLock} : {}),
         });
-        const payoutMetadata = payoutMetadataParsed as unknown as Json;
+        const payoutMetadata = baseMeta as unknown as Json;
 
         // Create payout record
         const created = await payoutsRepo.create({
@@ -218,6 +307,8 @@ export class PayoutsService {
       payoutId: payout.id,
       amount: finalAmount,
       currency: finalCurrency,
+      payoutType: payoutMethod.payoutType,
+      payoutMethodCurrency: payoutMethod.currency as EventTicketCurrency,
       payoutMethodMetadata: payoutMethod.metadata,
       accountHolderName: payoutMethod.accountHolderName,
       accountHolderSurname: payoutMethod.accountHolderSurname,
@@ -313,6 +404,9 @@ export class PayoutsService {
       payoutId,
       amount: Number(payout.amount),
       currency: payout.currency as EventTicketCurrency,
+      payoutType: payoutMethod.payoutType,
+      payoutMethodCurrency: payoutMethod.currency as EventTicketCurrency,
+      payoutMetadata: payout.metadata,
       payoutMethodMetadata: payoutMethod.metadata,
       accountHolderName: payoutMethod.accountHolderName,
       accountHolderSurname: payoutMethod.accountHolderSurname,

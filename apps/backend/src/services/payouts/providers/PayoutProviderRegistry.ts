@@ -2,39 +2,42 @@ import type {PayoutType} from '@revendiste/shared';
 import {ValidationError} from '~/errors';
 import {PAYOUT_ERROR_MESSAGES} from '~/constants/error-messages';
 import {ManualBankTransferProvider} from './ManualBankTransferProvider';
+import {DLocalGoPayoutProvider} from './DLocalGoPayoutProvider';
 import type {
   PayoutProvider,
   PayoutProviderName,
 } from './PayoutProvider.interface';
 
 const manualBankProvider = new ManualBankTransferProvider();
+const dlocalGoPayoutProvider = new DLocalGoPayoutProvider();
 
-const PROVIDERS: Partial<Record<PayoutProviderName, PayoutProvider>> = {
+const PROVIDERS: Record<PayoutProviderName, PayoutProvider> = {
   manual_bank: manualBankProvider,
+  dlocal_go: dlocalGoPayoutProvider,
 };
 
 /**
- * Resolves which provider name to persist for a payout method type.
- * Phase 2: gate `uruguayan_bank` with a feature flag → `dlocal_automated`.
+ * Decides which provider id is stored on `payouts.payout_provider` for a payout method.
+ * - Uruguay: `dlocal_go` when the PostHog flag is on, otherwise `manual_bank`.
+ * - Argentina: only `dlocal_go` (flag and route validation must block otherwise).
  */
-export function resolveProviderName(
-  payoutType: PayoutType,
-): PayoutProviderName {
-  switch (payoutType) {
-    case 'uruguayan_bank':
-      return 'manual_bank';
-    default: {
-      const _exhaustive: never = payoutType;
-      return _exhaustive;
-    }
-  }
-}
-
-export function selectPayoutProvider(payoutMethod: {
+export function resolvePayoutProviderName(input: {
   payoutType: PayoutType;
-}): PayoutProvider {
-  const name = resolveProviderName(payoutMethod.payoutType);
-  return getPayoutProviderByName(name);
+  dlocalGoEnabled: boolean;
+}): PayoutProviderName {
+  if (input.payoutType === 'uruguayan_bank') {
+    return input.dlocalGoEnabled ? 'dlocal_go' : 'manual_bank';
+  }
+  if (input.payoutType === 'argentinian_bank') {
+    if (!input.dlocalGoEnabled) {
+      throw new ValidationError(
+        PAYOUT_ERROR_MESSAGES.DLOCAL_GO_PAYOUTS_DISABLED,
+      );
+    }
+    return 'dlocal_go';
+  }
+  const _e: never = input.payoutType;
+  return _e;
 }
 
 export function getPayoutProviderByName(
@@ -43,7 +46,7 @@ export function getPayoutProviderByName(
   const provider = PROVIDERS[name];
   if (!provider) {
     throw new ValidationError(
-      PAYOUT_ERROR_MESSAGES.PAYOUT_PROVIDER_NOT_REGISTERED(name),
+      PAYOUT_ERROR_MESSAGES.PAYOUT_PROVIDER_NOT_REGISTERED(String(name)),
     );
   }
   return provider;

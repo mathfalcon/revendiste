@@ -25,17 +25,23 @@ export type RequestPayoutRouteBody = z.infer<
 
 /**
  * Add payout method route schema
- * Uses discriminated union from shared package for type-safe payoutType + metadata validation
- * The base schema ensures metadata matches the payoutType (uruguayan_bank)
+ * Uses discriminated union from shared for payoutType + metadata; currency matches type.
  */
 export const AddPayoutMethodRouteSchema = z.object({
   body: PayoutMethodBaseSchema.and(
     z.object({
       accountHolderName: z.string().min(1),
       accountHolderSurname: z.string().min(1),
-      currency: z.enum(['UYU', 'USD']),
+      currency: z.enum(['ARS', 'UYU', 'USD']),
       isDefault: z.boolean().optional(),
     }),
+  ).refine(
+    b =>
+      (b.payoutType === 'uruguayan_bank' &&
+        (b.currency === 'UYU' || b.currency === 'USD')) ||
+      (b.payoutType === 'argentinian_bank' &&
+        (b.currency === 'ARS' || b.currency === 'USD')),
+    {message: 'Moneda no válida para el tipo de retiro indicado.'},
   ),
 });
 
@@ -53,7 +59,7 @@ export const UpdatePayoutMethodRouteSchema = z.object({
   body: z.object({
     accountHolderName: z.string().min(1).optional(),
     accountHolderSurname: z.string().min(1).optional(),
-    currency: z.enum(['UYU', 'USD']).optional(),
+    currency: z.enum(['ARS', 'UYU', 'USD']).optional(),
     metadata: z.unknown().optional(),
     isDefault: z.boolean().optional(),
   }),
