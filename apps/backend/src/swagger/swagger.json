@@ -4690,7 +4690,8 @@
 							},
 							"currentBrouVentaRate": {
 								"type": "number",
-								"format": "double"
+								"format": "double",
+								"nullable": true
 							}
 						},
 						"required": [
@@ -5487,7 +5488,8 @@
 							},
 							"currentBrouVentaRate": {
 								"type": "number",
-								"format": "double"
+								"format": "double",
+								"nullable": true
 							}
 						},
 						"required": [

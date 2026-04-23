@@ -21,8 +21,7 @@ import {
 import {Checkbox} from '~/components/ui/checkbox';
 import {UruguayanBankMetadataSchema} from '@revendiste/shared';
 import {UruguayanBankPayoutFormFields} from './UruguayanBankPayoutFormFields';
-import {Alert, AlertDescription} from '~/components/ui/alert';
-import {Info, Loader2} from 'lucide-react';
+import {Loader2} from 'lucide-react';
 import {getBankName, getAccountNumber} from './payout-method-utils';
 import {
   payoutMethodFormSchema,
@@ -147,15 +146,6 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-5'>
-        <Alert>
-          <Info className='h-4 w-4' />
-          <AlertDescription>
-            Por ahora solo aceptamos{' '}
-            <strong>cuentas bancarias en Uruguay</strong> (UYU o USD). Pronto
-            vamos a sumar más países.
-          </AlertDescription>
-        </Alert>
-
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
           <FormField
             control={form.control}

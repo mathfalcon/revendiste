@@ -667,7 +667,18 @@ export class PayoutsService {
     const settlementInfo =
       await this.payoutsRepository.getPayoutSettlementInfo(payoutId);
 
-    const currentBrouVentaRate = await fetchBrouEbrouVentaRate();
+    let currentBrouVentaRate: number | null = null;
+    try {
+      currentBrouVentaRate = await fetchBrouEbrouVentaRate();
+    } catch (err) {
+      logger.warn(
+        'BROU eBROU venta rate unavailable; admin payout details show null rate',
+        {
+          payoutId,
+          err,
+        },
+      );
+    }
 
     const rl = metadata?.rateLock;
     const nowMs = Date.now();

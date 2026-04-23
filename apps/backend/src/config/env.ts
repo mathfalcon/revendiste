@@ -58,7 +58,7 @@ const EnvSchema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().min(1),
   WHATSAPP_API_VERSION: z.string().default('v21.0'),
   // Payout configuration
-  PAYOUT_MINIMUM_UYU: z.coerce.number().default(500), // $1,000 UYU
+  PAYOUT_MINIMUM_UYU: z.coerce.number().default(500), // 500 UYU
   PAYOUT_MINIMUM_USD: z.coerce.number().default(12.5), // $25 USD
   PAYOUT_HOLD_PERIOD_HOURS: z.coerce.number().default(48), // 48 hours post-event
   PAYOUT_FX_SPREAD_PERCENT: z.coerce.number().min(0).max(10).default(1),

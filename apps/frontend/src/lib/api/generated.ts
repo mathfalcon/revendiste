@@ -1385,7 +1385,7 @@ export interface GetPayoutDetailsResponse {
     /** @format double */
     spreadPercentConfigured: number;
     /** @format double */
-    currentBrouVentaRate: number;
+    currentBrouVentaRate: number | null;
   };
   settlementInfo: {
     linkedProcessorSettlements: {
@@ -1601,7 +1601,7 @@ export interface RefreshPayoutRateLockResponse {
     /** @format double */
     spreadPercentConfigured: number;
     /** @format double */
-    currentBrouVentaRate: number;
+    currentBrouVentaRate: number | null;
   };
   settlementInfo: {
     linkedProcessorSettlements: {
