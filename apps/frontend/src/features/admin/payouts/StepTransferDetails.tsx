@@ -16,6 +16,7 @@ import {
 } from '~/features/user-account/payouts/payout-method-utils';
 import {UruguayanBankMetadataSchema} from '@revendiste/shared/schemas/payout-methods';
 import {ArrowLeft, ArrowRight, AlertTriangle} from 'lucide-react';
+import {getArgentinianPayoutViewModel} from './argentinian-payout-helpers';
 import type {GetPayoutDetailsResponse} from '~/lib/api/generated';
 
 interface StepTransferDetailsProps {
@@ -73,14 +74,17 @@ export function StepTransferDetails({
     ? UruguayanBankMetadataSchema.safeParse(payoutMethod.metadata)
     : null;
 
+  const arView =
+    payoutMethod.payoutType === 'argentinian_bank'
+      ? getArgentinianPayoutViewModel(payoutMethod.metadata)
+      : null;
+
   return (
     <div className='space-y-4'>
       <Card className='border-2 border-primary/20 bg-primary/3 shadow-sm'>
         <CardHeader className='pb-3'>
           <CardTitle className='text-lg'>Datos para transferir</CardTitle>
-          <CardDescription>
-            Copiá y pegá en home banking.
-          </CardDescription>
+          <CardDescription>Copiá y pegá en home banking.</CardDescription>
         </CardHeader>
         <CardContent className='space-y-3 text-sm'>
           <div className='flex flex-col gap-2 rounded-xl border-2 border-primary/30 bg-background p-5 sm:flex-row sm:items-center sm:justify-between'>
@@ -140,6 +144,36 @@ export function StepTransferDetails({
                 </div>
               </>
             )}
+
+          {payoutMethod.payoutType === 'argentinian_bank' && arView && (
+            <>
+              <div className='rounded-lg border bg-background p-3'>
+                <Label className='text-xs text-muted-foreground'>
+                  Documento (titular)
+                </Label>
+                <p className='font-mono'>{arView.doc}</p>
+              </div>
+              <div className='rounded-lg border bg-background p-3'>
+                <Label className='text-xs text-muted-foreground'>Banco</Label>
+                <p>{arView.bank}</p>
+              </div>
+              <div className='flex items-start justify-between gap-2 rounded-lg border bg-background p-3'>
+                <div className='min-w-0'>
+                  <Label className='text-xs text-muted-foreground'>
+                    {arView.destinationLabel}
+                  </Label>
+                  <p className='font-mono break-all'>{arView.destination}</p>
+                </div>
+                <CopyButton text={arView.destination} size='sm' />
+              </div>
+              <div className='rounded-lg border bg-background p-3'>
+                <Label className='text-xs text-muted-foreground'>
+                  Moneda de la cuenta
+                </Label>
+                <p>{payoutMethod.currency}</p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

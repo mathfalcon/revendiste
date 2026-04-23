@@ -35,6 +35,7 @@ import {
   getBankName,
   getAccountNumber,
 } from '~/features/user-account/payouts/payout-method-utils';
+import {getArgentinianPayoutViewModel} from './argentinian-payout-helpers';
 import {EventTicketCurrency} from '~/lib';
 import {cn} from '~/lib/utils';
 import {
@@ -99,8 +100,10 @@ function FxImpactIndicator({
     <div
       className={cn(
         'rounded-lg border p-3 text-sm transition-colors',
-        isGain && 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20',
-        isLoss && 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20',
+        isGain &&
+          'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20',
+        isLoss &&
+          'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20',
         isNeutral && 'border-border bg-muted/30',
       )}
     >
@@ -267,6 +270,18 @@ export function StepConfirmComplete({
       const parts = [bankName, accountNumber].filter(Boolean);
       return parts.length > 0 ? parts.join(' · ') : 'Banco';
     }
+    if (
+      payoutMethod?.payoutType === 'argentinian_bank' &&
+      payoutMethod?.metadata
+    ) {
+      const v = getArgentinianPayoutViewModel(payoutMethod.metadata);
+      if (v) {
+        return (
+          [v.bank, v.destination].filter(Boolean).join(' · ') || 'Argentina'
+        );
+      }
+      return 'Cuenta bancaria Argentina';
+    }
     return 'Método desconocido';
   })();
 
@@ -390,7 +405,10 @@ export function StepConfirmComplete({
                   <FormItem>
                     <FormLabel>Referencia bancaria</FormLabel>
                     <FormControl>
-                      <Input placeholder='Referencia de la transferencia' {...field} />
+                      <Input
+                        placeholder='Referencia de la transferencia'
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -403,7 +421,11 @@ export function StepConfirmComplete({
                   <FormItem>
                     <FormLabel>Notas</FormLabel>
                     <FormControl>
-                      <Textarea rows={2} placeholder='Notas internas (opcional)' {...field} />
+                      <Textarea
+                        rows={2}
+                        placeholder='Notas internas (opcional)'
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

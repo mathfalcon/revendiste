@@ -26,6 +26,7 @@ import {
   getAccountNumber,
 } from '~/features/user-account/payouts/payout-method-utils';
 import {UruguayanBankMetadataSchema} from '@revendiste/shared/schemas/payout-methods';
+import {getArgentinianPayoutViewModel} from './argentinian-payout-helpers';
 import {statusBadge, providerLabel, formatAge} from './payout-utils';
 import {Download, ExternalLink} from 'lucide-react';
 import type {GetPayoutDetailsResponse} from '~/lib/api/generated';
@@ -51,6 +52,10 @@ export function PayoutCompletedSummary({payout}: PayoutCompletedSummaryProps) {
   const uruguayanBankMetadata = isUruguayanBank
     ? UruguayanBankMetadataSchema.safeParse(payoutMethod!.metadata)
     : null;
+  const arView =
+    payoutMethod?.payoutType === 'argentinian_bank' && payoutMethod?.metadata
+      ? getArgentinianPayoutViewModel(payoutMethod.metadata)
+      : null;
 
   return (
     <div className='space-y-4'>
@@ -79,8 +84,7 @@ export function PayoutCompletedSummary({payout}: PayoutCompletedSummaryProps) {
             )}
             {payout.failedAt && (
               <p className='text-sm text-destructive'>
-                Fallido el{' '}
-                {new Date(payout.failedAt).toLocaleString('es-UY')}
+                Fallido el {new Date(payout.failedAt).toLocaleString('es-UY')}
               </p>
             )}
           </div>
@@ -136,12 +140,45 @@ export function PayoutCompletedSummary({payout}: PayoutCompletedSummaryProps) {
                   )}
                 </div>
               )}
+
+            {payoutMethod.payoutType === 'argentinian_bank' && arView && (
+              <div className='space-y-3'>
+                <div className='rounded-lg border bg-muted/20 p-3'>
+                  <Label className='text-xs text-muted-foreground'>
+                    Documento
+                  </Label>
+                  <p className='font-mono'>{arView.doc}</p>
+                </div>
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  <div className='rounded-lg border bg-muted/20 p-3'>
+                    <Label className='text-xs text-muted-foreground'>
+                      Banco
+                    </Label>
+                    <p>{arView.bank}</p>
+                  </div>
+                  <div className='rounded-lg border bg-muted/20 p-3'>
+                    <Label className='text-xs text-muted-foreground'>
+                      {arView.destinationLabel}
+                    </Label>
+                    <p className='font-mono break-all'>{arView.destination}</p>
+                  </div>
+                </div>
+                <div className='rounded-lg border bg-muted/20 p-3'>
+                  <Label className='text-xs text-muted-foreground'>
+                    Moneda
+                  </Label>
+                  <p>{payoutMethod.currency}</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
       {/* Processing details */}
-      {(payout.transactionReference || payout.notes || payout.processingFee) && (
+      {(payout.transactionReference ||
+        payout.notes ||
+        payout.processingFee) && (
         <Card>
           <CardHeader className='pb-3'>
             <CardTitle className='text-base'>
@@ -272,7 +309,12 @@ export function PayoutCompletedSummary({payout}: PayoutCompletedSummaryProps) {
                       {s.paymentProvider}
                     </p>
                   </div>
-                  <Button variant='outline' size='sm' className='cursor-pointer' asChild>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='cursor-pointer'
+                    asChild
+                  >
                     <Link
                       to='/admin/finanzas/liquidaciones/$settlementId'
                       params={{settlementId: s.id}}
@@ -306,16 +348,19 @@ export function PayoutCompletedSummary({payout}: PayoutCompletedSummaryProps) {
             </p>
           )}
           <div className='flex flex-wrap items-center gap-3 pt-1'>
-            <Button variant='outline' size='sm' className='cursor-pointer' asChild>
+            <Button
+              variant='outline'
+              size='sm'
+              className='cursor-pointer'
+              asChild
+            >
               <Link to='/admin/verificaciones'>
                 <ExternalLink className='mr-1.5 h-3.5 w-3.5' />
                 Verificación de identidad
               </Link>
             </Button>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-              <span className='font-mono break-all'>
-                {payout.sellerUserId}
-              </span>
+              <span className='font-mono break-all'>{payout.sellerUserId}</span>
               <CopyButton text={payout.sellerUserId} size='sm' />
             </div>
           </div>
