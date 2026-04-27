@@ -149,7 +149,7 @@ Si el presupuesto es **muy chico**, hacé **solo 1 campaña por plataforma** con
 ### Checklist “día 0” antes de poner en vivo
 
 - [ ] Cada URL de anuncio tiene **`utm_source`**, **`utm_medium`**, **`utm_campaign`**, **`utm_content`** y coincide con lo que configuraste en PostHog (Parte A + Parte C).
-- [ ] El `utm_campaign` en el enlace es **idéntico** al nombre (o al ID) de la campaña en la plataforma, según lo que elegiste en PostHog (_Campaign field preference_).
+- [ ] El `utm_campaign` en el enlace coincide con la campaña en Meta/TikTok según **A1 bis** y _Campaign field preference_ en PostHog (nombre **idéntico** al slug, o **mapeo manual** si el nombre en la plataforma es distinto).
 - [ ] Probaste abrir el enlace en **incógnito**: carga revendiste.com, sin errores, CTA claro.
 - [ ] Tenés acceso a **Meta Business** y **TikTok Ads** con facturación / método de pago ok.
 - [ ] Anotás en “Notas de seguimiento” fecha, monto diario y nombres de campaña.
@@ -184,15 +184,88 @@ PostHog relaciona filas de gasto de la plataforma con conversiones on-site usand
   - Meta: `meta` (y si hace falta, permitir también `facebook`, `instagram`).
   - TikTok: `tiktok`.
 
+### A1 bis — Valores UTM concretos para Campaña 1 (5 vendedor + 3 comprador)
+
+Tenés **dos líneas de campaña** en las plataformas (recomendado): una para **vendedores** y una para **compradores**. El nombre **exacto** de cada campaña en Meta/TikTok debe coincidir con **`utm_campaign`** (o mapearlo manual en PostHog — ver A4).
+
+#### Valores fijos que repetís en todos los enlaces
+
+| Parámetro    | Valor fijo        | Notas                                     |
+| ------------ | ----------------- | ----------------------------------------- |
+| `utm_medium` | `paid_social`     | Mismo en Meta y TikTok.                   |
+| `utm_source` | `meta` o `tiktok` | Según plataforma; mapeá ambos en PostHog. |
+
+#### `utm_campaign` — dos strings (uno por intención)
+
+Elegí **estos slugs** (o renombrá la campaña en Meta/TikTok para que sea **idéntica** a ellos si usás _Campaign name_ en PostHog):
+
+| Intención   | `utm_campaign` (usar en URL y como nombre de campaña en ads) |
+| ----------- | ------------------------------------------------------------ |
+| Vendedores  | `revendiste_c1_vendedores_uy`                                |
+| Compradores | `revendiste_c1_compradores_uy`                               |
+
+Si en Meta el nombre visible tiene espacios (“Revendiste C1 Vendedores UY”), **o** cambiás el nombre de la campaña al slug de arriba, **o** en PostHog usás **mapeo manual** del slug al nombre real.
+
+#### `utm_content` — un valor **único por creativo** (8 en total)
+
+**Vendedores (5):** 1 video 9:16 + 4 fotos 9:16.
+
+| #   | Tipo     | Descripción interna | `utm_content` (copiar en la URL del anuncio) |
+| --- | -------- | ------------------- | -------------------------------------------- |
+| 1   | Video    | único video 9:16    | `c1_seller_vid_v1`                           |
+| 2   | Estático | foto 9:16 diseño A  | `c1_seller_img_a`                            |
+| 3   | Estático | foto 9:16 diseño B  | `c1_seller_img_b`                            |
+| 4   | Estático | foto 9:16 diseño C  | `c1_seller_img_c`                            |
+| 5   | Estático | foto 9:16 diseño D  | `c1_seller_img_d`                            |
+
+**Compradores (3):** (asumimos estáticos o mix; los nombres son únicos por pieza.)
+
+| #   | `utm_content`     |
+| --- | ----------------- |
+| 1   | `c1_buyer_crea_a` |
+| 2   | `c1_buyer_crea_b` |
+| 3   | `c1_buyer_crea_c` |
+
+Si algún comprador es video, podés usar `c1_buyer_vid_v1` en lugar de uno de los `crea_*` — lo importante es **no repetir** el mismo `utm_content` en dos anuncios distintos.
+
+#### URLs de ejemplo (Meta — vendedor video)
+
+`https://revendiste.com/?utm_source=meta&utm_medium=paid_social&utm_campaign=revendiste_c1_vendedores_uy&utm_content=c1_seller_vid_v1`
+
+#### URLs de ejemplo (TikTok — comprador creativo B)
+
+`https://revendiste.com/?utm_source=tiktok&utm_medium=paid_social&utm_campaign=revendiste_c1_compradores_uy&utm_content=c1_buyer_crea_b`
+
+#### Tabla resumen: qué va en cada anuncio
+
+| Plataforma | Intención | Creativo (tu archivo) | `utm_campaign`                                | `utm_content`                     |
+| ---------- | --------- | --------------------- | --------------------------------------------- | --------------------------------- |
+| Meta       | Vendedor  | video 9:16            | `revendiste_c1_vendedores_uy`                 | `c1_seller_vid_v1`                |
+| Meta       | Vendedor  | foto 9:16 A–D         | `revendiste_c1_vendedores_uy`                 | `c1_seller_img_a` … `d`           |
+| Meta       | Comprador | diseño A–C            | `revendiste_c1_compradores_uy`                | `c1_buyer_crea_a` … `c`           |
+| TikTok     | (igual)   | (mismos 8 creativos)  | **misma** `utm_campaign` por intención        | **mismo** `utm_content` por pieza |
+| TikTok     |           |                       | Solo cambiá **`utm_source=tiktok`** en la URL |                                   |
+
+**Regla de oro:** mismo creativo (mismo diseño) en Meta y TikTok puede reutilizar el **mismo** `utm_content` si querés comparar **creativo vs creativo** agregando fuentes en PostHog; si querés ver **Meta vs TikTok** del mismo archivo, usá `utm_content` distinto (ej. `c1_seller_vid_v1_meta` / `c1_seller_vid_v1_tiktok`). Para la Campaña 1, **reutilizar el mismo `utm_content` cross-plataforma** suele bastar y simplifica la hoja de cálculo.
+
+#### Parámetros opcionales (no obligatorios)
+
+- `utm_term`: audiencia o test, ej. `cold_uy`, `broad_18_35`.
+- No hace falta `utm_id` salvo que uses una convención interna; con `utm_content` ya separás 8 piezas.
+
 ### A2. URL de destino (siempre con UTMs en el enlace del anuncio)
 
-Ejemplo Meta (ángulo vendedor):
+Los valores concretos de `utm_campaign` y `utm_content` para cada creativo están en **A1 bis**. Patrón general:
 
-`https://revendiste.com/?utm_source=meta&utm_medium=paid_social&utm_campaign=revendiste_vendedores_uy_2026_04&utm_content=vendedor_video_9x16_v1`
+`https://revendiste.com/?utm_source=<meta|tiktok>&utm_medium=paid_social&utm_campaign=<vendedores|compradores>&utm_content=<id_creativo>`
 
-Ejemplo TikTok:
+Ejemplo rápido Meta (vendedor, video):
 
-`https://revendiste.com/?utm_source=tiktok&utm_medium=paid_social&utm_campaign=revendiste_vendedores_uy_2026_04&utm_content=vendedor_video_9x16_tiktok_v1`
+`https://revendiste.com/?utm_source=meta&utm_medium=paid_social&utm_campaign=revendiste_c1_vendedores_uy&utm_content=c1_seller_vid_v1`
+
+Ejemplo TikTok (comprador, creativo B):
+
+`https://revendiste.com/?utm_source=tiktok&utm_medium=paid_social&utm_campaign=revendiste_c1_compradores_uy&utm_content=c1_buyer_crea_b`
 
 **Buenas prácticas:**
 
