@@ -1,5 +1,5 @@
 import {createFileRoute, Link} from '@tanstack/react-router';
-import posthog from 'posthog-js';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {Mail, MessageCircle, Clock, AlertTriangle} from 'lucide-react';
 import {SOCIAL_LINKS} from '@revendiste/shared';
 import {
@@ -90,7 +90,9 @@ function ContactPage() {
                   href={SOCIAL_LINKS.whatsapp}
                   target='_blank'
                   rel='noopener noreferrer'
-                  onClick={() => posthog.capture('contact_whatsapp_clicked')}
+                  onClick={() =>
+                    trackEvent(ANALYTICS_EVENTS.CONTACT_WHATSAPP_CLICKED)
+                  }
                 >
                   <MessageCircle className='h-4 w-4 mr-1.5' />
                   Abrir chat
@@ -174,7 +176,9 @@ function ContactPage() {
                 href={SOCIAL_LINKS.instagram}
                 target='_blank'
                 rel='noopener noreferrer'
-                onClick={() => posthog.capture('contact_instagram_clicked')}
+                onClick={() =>
+                  trackEvent(ANALYTICS_EVENTS.CONTACT_INSTAGRAM_CLICKED)
+                }
               >
                 Instagram
               </a>
@@ -184,7 +188,9 @@ function ContactPage() {
                 href={SOCIAL_LINKS.tiktok}
                 target='_blank'
                 rel='noopener noreferrer'
-                onClick={() => posthog.capture('contact_tiktok_clicked')}
+                onClick={() =>
+                  trackEvent(ANALYTICS_EVENTS.CONTACT_TIKTOK_CLICKED)
+                }
               >
                 TikTok
               </a>
@@ -194,7 +200,9 @@ function ContactPage() {
                 href={SOCIAL_LINKS.twitter}
                 target='_blank'
                 rel='noopener noreferrer'
-                onClick={() => posthog.capture('contact_twitter_clicked')}
+                onClick={() =>
+                  trackEvent(ANALYTICS_EVENTS.CONTACT_TWITTER_CLICKED)
+                }
               >
                 Twitter / X
               </a>

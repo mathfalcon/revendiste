@@ -1,6 +1,6 @@
 import {useState, useMemo, useCallback, useEffect} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {usePostHog} from 'posthog-js/react';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {
   Sheet,
   SheetContent,
@@ -58,7 +58,6 @@ export function WithdrawalSheet({
   initialCurrency,
 }: WithdrawalSheetProps) {
   const queryClient = useQueryClient();
-  const posthog = usePostHog();
   const {data: availableEarnings} = useQuery(getAvailableEarningsQuery());
   const {data: payoutMethods} = useQuery(getPayoutMethodsQuery());
 
@@ -257,13 +256,15 @@ export function WithdrawalSheet({
       listingIds:
         selectedListingIds.length > 0 ? selectedListingIds : undefined,
     });
-    posthog.capture('payout_requested', {
+    trackEvent(ANALYTICS_EVENTS.PAYOUT_REQUESTED, {
       payout_method_id: payoutMethodId,
       payout_type: selectedMethod?.payoutType,
       payout_currency: currency,
+      currency,
       listing_count: selectedListingIds.length,
       ticket_count: selectedTicketIds.length,
       total_amount: selectedTotal,
+      value: selectedTotal,
     });
   };
 

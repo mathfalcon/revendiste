@@ -16,6 +16,10 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['local', 'development', 'production']).default('local'),
   // Web Push (VAPID public key — safe to expose)
   VITE_VAPID_PUBLIC_KEY: z.string().min(1),
+  // Google Tag Manager (web container)
+  VITE_GTM_ID: z.string().min(1),
+  // Meta Pixel ID — also configured in GTM; required here for parity per env / future use
+  VITE_META_PIXEL_ID: z.string().min(1),
 });
 export const env = EnvSchema.safeParse(import.meta.env);
 
@@ -35,6 +39,8 @@ export const {
   VITE_VAT_RATE,
   NODE_ENV,
   VITE_VAPID_PUBLIC_KEY,
+  VITE_GTM_ID,
+  VITE_META_PIXEL_ID,
 } = env.data;
 
 // Helper function to get base URL

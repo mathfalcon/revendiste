@@ -15,7 +15,7 @@ import {
   FORM_DATA_STORAGE_KEY,
   TicketWave,
 } from './types';
-import {usePostHog} from 'posthog-js/react';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 
 interface UseTicketSelectionProps {
   eventId: string;
@@ -29,8 +29,6 @@ export function useTicketSelection({
   const {isLoaded, isSignedIn} = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const posthog = usePostHog();
-
   const form = useForm<TicketSelectionFormValues>({
     resolver: standardSchemaResolver(TicketSelectionSchema),
     defaultValues: {},
@@ -183,10 +181,11 @@ export function useTicketSelection({
     }
 
     const {subtotalAmount, currency} = calculateTotals();
-    posthog.capture('order_started', {
+    trackEvent(ANALYTICS_EVENTS.ORDER_STARTED, {
       event_id: eventId,
       ticket_count: totalSelectedTickets,
       subtotal_amount: subtotalAmount,
+      value: subtotalAmount,
       currency,
     });
 

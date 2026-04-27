@@ -1,7 +1,7 @@
 import type {AnyRouteMatch} from '@tanstack/react-router';
 import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
-import {getBaseUrl} from '~/config/env';
+import {getBaseUrl, VITE_GTM_ID} from '~/config/env';
 
 type RootHead = {
   links?: AnyRouteMatch['links'];
@@ -19,8 +19,7 @@ export function getRootHead(): RootHead {
       {charSet: 'utf-8'},
       {
         name: 'viewport',
-        content:
-          'width=device-width, initial-scale=1, viewport-fit=cover',
+        content: 'width=device-width, initial-scale=1, viewport-fit=cover',
       },
       ...seo({
         title:
@@ -78,6 +77,11 @@ export function getRootHead(): RootHead {
         href: 'https://clerk.revendiste.com',
         crossOrigin: 'anonymous' as const,
       },
+      {
+        rel: 'preconnect',
+        href: 'https://www.googletagmanager.com',
+        crossOrigin: 'anonymous' as const,
+      },
       {rel: 'preload', href: POPPINS_URL, as: 'style'},
       {rel: 'stylesheet', href: POPPINS_URL, media: 'print'},
     ],
@@ -107,6 +111,14 @@ export function getRootHead(): RootHead {
               }
             }
           })();
+        `,
+      },
+      {
+        children: `
+          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+          var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+          j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+          f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${VITE_GTM_ID}');
         `,
       },
     ],
