@@ -1,6 +1,6 @@
 # Post — r/uruguay (borrador personal)
 
-Texto en primera persona, tono conversación. Ajustá nombre y detalles antes de publicar.
+Borrador para copiar y pegar en Reddit. Ajustá detalles antes de publicar.
 
 ---
 
@@ -16,16 +16,18 @@ Si el post suena solo a aviso comercial, encaja mal en **Hecho en UY**. Conviene
 
 ---
 
-Buenas, ¿cómo están? Quería contarles acerca de algo que nos pasa **acá en Uruguay** con la reventa de entradas y de un proyecto local en el que estoy metido.
+## Texto para publicar (ortografía revisada)
 
-La cosa es que acá la reventa pasa mucho en lo informal: grupos, Instagram, conocidos… y cuando no sale, la pasás mal: **te pueden cagar**, o perdés tiempo y plata buscando comprador o vendedor serio. No es un problema abstracto: nos impacta a los que vamos a shows, recitales o partidos y terminamos en ese limbo.
+Buenas, ¿cómo están? Quería contarles acerca de un nuevo emprendimiento que armé con respecto a la reventa de entradas en Uruguay.
 
-Por eso venimos armando **Revendiste**: no somos “los que revenden”, sino los que **intermedian** para que la operación sea más clara — el **dinero queda retenido** hasta que el trato cierre bien, hay **vendedores verificados** y reglas que se entienden.
+Como muchos sabrán, la reventa existe en contextos informales: grupos de WhatsApp, Instagram, Facebook, conocidos… muchas cosas pueden salir mal en el medio: **estafas**, pérdida de tiempo buscando comprador o vendedor serio y en el peor de los casos, perder el dinero por no conseguir a quien transferirle tu entrada. No es un problema abstracto: impacta a quienes vamos a fiestas, shows y eventos.
 
-Sobre el **precio**, sé que genera dudas. En la plataforma **podés publicar hasta un 15% por encima del valor original** de la entrada: la idea es **recuperar** lo que ya te comió la ticketera al comprarla, sin que se dispare todo a precios imposibles.
+Por eso armamos **Revendiste**: una plataforma diseñada para intermediar en la transacción para que la operación sea más clara y confiable. Nosotros retenemos el dinero hasta que el evento suceda, los vendedores pasan un proceso de verificación de identidad automático y nos aseguramos de que la entrada que compres sea válida; de lo contrario, te devolvemos el dinero.
 
-Me interesa también escuchar **cómo lo ven ustedes**: ¿alguna vez les pasó algo feo con una compra/venta informal? ¿Qué les haría falta para confiar más?
+En la plataforma **podés publicar hasta un 15% por encima del valor original** de la entrada: la idea es **recuperar** cualquier costo de servicio que te haya cobrado la ticketera al comprarla, sin fomentar la especulación con el precio de las entradas.
 
-Si querés los detalles legales y operativos (custodia, comisiones, etc.), están acá las preguntas frecuentes: **https://revendiste.com/preguntas-frecuentes** — y si algo es más largo, **ayuda@revendiste.com**.
+Me interesa también escuchar **cómo lo ven ustedes**: ¿alguna vez les pasó de tener una mala experiencia comprando/vendiendo una entrada de reventa? ¿Piensan que falta algo dentro de la página?
 
-Gracias por leer.
+Si querés los detalles legales y operativos, están acá las preguntas frecuentes: [**https://revendiste.com/preguntas-frecuentes**](https://revendiste.com/preguntas-frecuentes) y si no encontrás la respuesta a tu duda, podés dejarla acá abajo :)
+
+Gracias por leer!
