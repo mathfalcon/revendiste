@@ -109,8 +109,8 @@ export function CurrencyBreakdownSection({data, isLoading}: Props) {
                           <TableCell className='text-right tabular-nums'>
                             {formatCurrency(
                               String(
-                                parseFloat(row.platformCommission) +
-                                  parseFloat(row.vatOnCommission),
+                                parseFloat(row.platformRevenue) +
+                                  parseFloat(row.vatOnRevenue),
                               ),
                               row.currency,
                             )}
