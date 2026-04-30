@@ -38,7 +38,7 @@ Podemos recopilar los siguientes datos personales:
 
 - **Cifrado en reposo:** Las imágenes de documentos de identidad y verificación facial se almacenan utilizando cifrado AES-256, el mismo estándar utilizado por instituciones financieras. Los datos están protegidos tanto en tránsito (TLS 1.3) como en reposo.
 - **Acceso restringido:** Solo personal autorizado de Revendiste puede acceder a las imágenes en casos excepcionales que requieran revisión manual de seguridad, investigación de fraude o cumplimiento de requerimientos legales.
-- **Procesamiento automatizado:** La verificación de identidad se realiza principalmente mediante sistemas automatizados de reconocimiento de texto y comparación facial. En casos de resultados borderline, puede requerirse revisión manual por personal autorizado.
+- **Procesamiento automatizado:** La verificación de identidad se realiza principalmente mediante sistemas automatizados de reconocimiento de texto y comparación facial. En casos de resultados dudosos puede requerirse revisión manual por personal autorizado.
 - **Almacenamiento seguro de datos biométricos:** Las imágenes de verificación de vida (liveness) se almacenan de forma segura junto con las imágenes del documento. Esto permite la revisión manual en casos excepcionales, investigación de fraude y cumplimiento de obligaciones legales.
 - **Sin uso secundario:** Los datos de verificación no se utilizan para reconocimiento facial en otros contextos, creación de perfiles biométricos, publicidad ni ningún otro fin distinto a la verificación de identidad, prevención de fraude y cumplimiento legal.
 
@@ -179,7 +179,7 @@ En caso de no obtener una respuesta satisfactoria, el usuario puede presentar un
 
 ## 11. Seguridad de la información
 
-Revendiste implementa medidas técnicas y organizativas avanzadas para proteger los datos personales contra:
+Revendiste implementa medidas técnicas y organizativas razonables, conforme a estándares de la industria, para proteger los datos personales contra:
 
 - Accesos no autorizados
 - Pérdida accidental o destrucción
@@ -229,7 +229,7 @@ Algunos de nuestros proveedores tecnológicos están ubicados fuera del territor
 - **Clerk** (Estados Unidos): proveedor de autenticación y gestión de identidad.
 - **dLocal Go** (Uruguay / regional): procesamiento de pagos. Si bien dLocal tiene presencia local, parte de su infraestructura puede operar en otras jurisdicciones.
 - **PostHog** (Reino Unido / Estados Unidos): plataforma de analítica de producto y observabilidad.
-- **Meta Platforms, Inc. — WhatsApp Business API** (Estados Unidos): mensajería operativa, únicamente cuando el usuario opta por activar este canal.
+- **Meta Platforms, Inc. (WhatsApp Business API)** (Estados Unidos): mensajería operativa, únicamente cuando el usuario opta por activar este canal.
 - **Proveedores de infraestructura cloud y email transaccional** ubicados habitualmente en Estados Unidos o Europa.
 
 En todos los casos, Revendiste procura que dichos proveedores:
