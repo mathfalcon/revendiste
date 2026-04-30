@@ -1,6 +1,6 @@
 # Política de Privacidad – Revendiste
 
-**Última actualización:** 1 de Abril de 2026
+**Última actualización:** 30 de Abril de 2026
 
 ## 1. Introducción
 
@@ -15,7 +15,7 @@ Al utilizar nuestros servicios, el usuario acepta las prácticas descritas en es
 **FALCON GALLAZTEGUI MATHIAS, empresa unipersonal**  
 RUT: **218826920018**  
 Domicilio: **Avenida Ocho de Octubre 2487, Apartamento 801, Montevideo, Uruguay**  
-Correo electrónico para temas de datos personales: **mathiasfalcon@gmail.com**  
+Correo electrónico para temas de datos personales: **privacidad@revendiste.com**  
 Correo electrónico para consultas generales: **ayuda@revendiste.com**
 
 ---
@@ -139,6 +139,7 @@ Revendiste podrá compartir datos personales únicamente cuando sea necesario pa
 - **Servicios tecnológicos:** con proveedores de infraestructura, hosting, almacenamiento en la nube y seguridad necesarios para operar la plataforma.
 - **Autenticación:** con proveedores de identidad como Google, cuando el usuario opta por utilizar estos servicios.
 - **Mensajería:** con Meta Platforms, Inc. (WhatsApp Business API), cuando el usuario opta por recibir notificaciones por WhatsApp. Se comparte únicamente el número de teléfono del usuario y el contenido de las notificaciones operativas. El usuario puede desactivar este canal en cualquier momento desde la configuración de su cuenta.
+- **Analítica de producto y observabilidad:** con proveedores especializados como PostHog, utilizados para comprender cómo los usuarios interactúan con la Plataforma, detectar errores, medir desempeño y mejorar la experiencia. Estos datos se utilizan en forma agregada y con identificadores pseudonimizados siempre que es posible. **No se comparten datos identificables con fines publicitarios** ni se enriquecen con información de terceros con fines comerciales.
 
 En todos los casos, se adoptan medidas contractuales y técnicas razonables para garantizar la confidencialidad y seguridad de la información compartida. Los terceros están obligados a utilizar los datos únicamente para los fines especificados y conforme a esta política.
 
@@ -168,7 +169,7 @@ De acuerdo con la Ley Nº 18.331 de Protección de Datos Personales y su normati
 - **Supresión:** solicitar la eliminación de sus datos cuando corresponda y no exista obligación legal de conservarlos.
 - **Revocación del consentimiento:** retirar el consentimiento otorgado para el tratamiento de datos en cualquier momento.
 
-Para ejercer estos derechos, el usuario puede enviar una solicitud al correo electrónico **mathiasfalcon@gmail.com**, indicando claramente el derecho que desea ejercer y adjuntando una copia de su documento de identidad para verificar su identidad.
+Para ejercer estos derechos, el usuario puede enviar una solicitud al correo electrónico **privacidad@revendiste.com**, indicando claramente el derecho que desea ejercer y adjuntando una copia de su documento de identidad para verificar su identidad.
 
 Revendiste responderá a las solicitudes dentro de los plazos establecidos por la normativa vigente (10 días hábiles).
 
@@ -216,17 +217,28 @@ Sin embargo, ningún sistema de transmisión o almacenamiento de datos es comple
 
 Revendiste no está dirigido a menores de 18 años. No recopilamos intencionalmente datos personales de menores de edad. Si tomamos conocimiento de que hemos recopilado datos de un menor sin el consentimiento verificable de su padre o tutor, tomaremos medidas para eliminar dicha información.
 
-Si usted es padre o tutor y cree que su hijo menor de edad nos ha proporcionado datos personales, por favor contáctenos a **mathiasfalcon@gmail.com**.
+Si usted es padre o tutor y cree que su hijo menor de edad nos ha proporcionado datos personales, por favor contáctenos a **privacidad@revendiste.com**.
 
 ---
 
 ## 13. Transferencias internacionales de datos
 
-En caso de utilizar servicios tecnológicos ubicados fuera del territorio uruguayo (como servicios de cloud computing, procesamiento de pagos o autenticación), Revendiste procurará que dichos proveedores:
+Algunos de nuestros proveedores tecnológicos están ubicados fuera del territorio uruguayo. Esto implica una transferencia internacional de datos personales que Revendiste informa con transparencia. Los principales proveedores con los que se realizan transferencias internacionales son:
 
-- Cuenten con estándares adecuados de protección de datos.
-- Se encuentren en países con niveles de protección reconocidos como adecuados.
-- Suscriban cláusulas contractuales que garanticen la protección de los datos conforme a la normativa uruguaya.
+- **Cloudflare R2** (Estados Unidos / red global): almacenamiento de archivos (imágenes de tickets, documentos de verificación cifrados, recursos estáticos).
+- **Clerk** (Estados Unidos): proveedor de autenticación y gestión de identidad.
+- **dLocal Go** (Uruguay / regional): procesamiento de pagos. Si bien dLocal tiene presencia local, parte de su infraestructura puede operar en otras jurisdicciones.
+- **PostHog** (Reino Unido / Estados Unidos): plataforma de analítica de producto y observabilidad.
+- **Meta Platforms, Inc. — WhatsApp Business API** (Estados Unidos): mensajería operativa, únicamente cuando el usuario opta por activar este canal.
+- **Proveedores de infraestructura cloud y email transaccional** ubicados habitualmente en Estados Unidos o Europa.
+
+En todos los casos, Revendiste procura que dichos proveedores:
+
+- Cuenten con estándares adecuados de protección de datos (cifrado en tránsito y en reposo, controles de acceso, auditorías independientes).
+- Se encuentren en países con niveles de protección reconocidos como adecuados, o adopten salvaguardas contractuales equivalentes.
+- Suscriban condiciones contractuales (incluidos contratos de procesamiento de datos cuando corresponda) que garanticen la protección de los datos conforme a la normativa uruguaya y, cuando aplique, al Reglamento General de Protección de Datos europeo (RGPD).
+
+El usuario, al aceptar esta Política de Privacidad y utilizar la Plataforma, otorga su consentimiento informado a estas transferencias internacionales en los términos del artículo 23 de la Ley Nº 18.331.
 
 ---
 
@@ -256,7 +268,7 @@ Cualquier controversia relacionada con esta política será sometida a la jurisd
 
 Para cualquier consulta, solicitud o reclamo relacionado con esta Política de Privacidad o el tratamiento de sus datos personales, el usuario puede contactarse a:
 
-**Correo electrónico para temas de datos personales:** mathiasfalcon@gmail.com  
+**Correo electrónico para temas de datos personales:** privacidad@revendiste.com  
 **Correo electrónico para consultas generales:** ayuda@revendiste.com
 
 ---
