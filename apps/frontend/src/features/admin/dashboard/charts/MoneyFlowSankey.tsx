@@ -28,8 +28,8 @@ function buildSankeyData(
     return null;
   }
 
-  const pc = parseN(revenue.platformCommission);
-  const vat = parseN(revenue.vatOnCommission);
+  const pc = parseN(revenue.platformRevenue);
+  const vat = parseN(revenue.vatOnRevenue);
   const fees = parseN(revenue.processorFees);
   const net = parseN(revenue.netPlatformIncome);
   const commVat = Math.max(0, pc + vat);
@@ -44,7 +44,7 @@ function buildSankeyData(
   const nodes: SankeyData['nodes'] = [
     {name: 'Total pagado (GMV)', category: 'source'},
     {name: 'Subtotal vendedor', category: 'landing'},
-    {name: 'Comisión + IVA (pedido)', category: 'landing'},
+    {name: 'Comisión + IVA (plataforma)', category: 'landing'},
     {name: 'Fees procesador', category: 'outcome'},
     {name: 'Ingreso neto plataforma', category: 'landing'},
   ];

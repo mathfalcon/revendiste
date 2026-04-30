@@ -1567,12 +1567,26 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "DashboardRevenuePartyAmounts": {
+        "dataType": "refObject",
+        "properties": {
+            "base": {"dataType":"string","required":true},
+            "vat": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Record_string.DashboardRevenuePartyAmounts_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"ref":"DashboardRevenuePartyAmounts"},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "GetDashboardRevenueResponse": {
         "dataType": "refObject",
         "properties": {
             "gmv": {"dataType":"string","required":true},
-            "platformCommission": {"dataType":"string","required":true},
-            "vatOnCommission": {"dataType":"string","required":true},
+            "platformRevenue": {"dataType":"string","required":true},
+            "vatOnRevenue": {"dataType":"string","required":true},
             "processorFees": {"dataType":"string","required":true},
             "netPlatformIncome": {"dataType":"string","required":true},
             "platformIncomeVatAmount": {"dataType":"string","required":true},
@@ -1582,6 +1596,8 @@ const models: TsoaRoute.Models = {
             "netPlatformIncomePercentOfCommissionAndVat": {"dataType":"double","required":true},
             "currency": {"ref":"EventTicketCurrency","required":true},
             "mixedCurrency": {"dataType":"boolean","required":true},
+            "revenueByParty": {"ref":"Record_string.DashboardRevenuePartyAmounts_","required":true},
+            "ordersMissingInvoices": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -1591,8 +1607,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "day": {"dataType":"string","required":true},
             "gmv": {"dataType":"string","required":true},
-            "platformCommission": {"dataType":"string","required":true},
-            "vatOnCommission": {"dataType":"string","required":true},
+            "platformRevenue": {"dataType":"string","required":true},
+            "vatOnRevenue": {"dataType":"string","required":true},
             "processorFees": {"dataType":"string","required":true},
             "netPlatformIncome": {"dataType":"string","required":true},
             "platformIncomeVatAmount": {"dataType":"string","required":true},
@@ -1696,8 +1712,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "currency": {"ref":"EventTicketCurrency","required":true},
             "gmv": {"dataType":"string","required":true},
-            "platformCommission": {"dataType":"string","required":true},
-            "vatOnCommission": {"dataType":"string","required":true},
+            "platformRevenue": {"dataType":"string","required":true},
+            "vatOnRevenue": {"dataType":"string","required":true},
             "orderCount": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
