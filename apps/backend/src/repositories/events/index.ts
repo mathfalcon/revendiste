@@ -539,9 +539,17 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     });
   }
 
-  // Soft delete events by external IDs (for events not in scraped results)
-  async softDeleteEventsByExternalIds(externalIds: string[], deletedAt: Date) {
-    const result = await this.db
+  // Soft delete events by external IDs (e.g. guest list, or batched stale cleanup)
+  async softDeleteEventsByExternalIds(
+    externalIds: string[],
+    deletedAt: Date,
+    options?: {platform?: string; onlyPastEventEndDate?: boolean},
+  ) {
+    if (externalIds.length === 0) {
+      return [];
+    }
+
+    let query = this.db
       .updateTable('events')
       .set({
         deletedAt: deletedAt,
@@ -549,7 +557,16 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         updatedAt: deletedAt,
       })
       .where('deletedAt', 'is', null)
-      .where('externalId', 'in', externalIds)
+      .where('externalId', 'in', externalIds);
+
+    if (options?.platform !== undefined) {
+      query = query.where('platform', '=', options.platform);
+    }
+    if (options?.onlyPastEventEndDate) {
+      query = query.where('eventEndDate', '<', deletedAt);
+    }
+
+    const result = await query
       .returning(['id', 'externalId', 'name'])
       .execute();
 
@@ -599,6 +616,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         updatedAt: deletedAt,
       })
       .where('deletedAt', 'is', null)
+      .where('eventEndDate', '<', deletedAt)
       .where(eb =>
         eb.not(
           eb.exists(
@@ -657,6 +675,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       })
       .where('deletedAt', 'is', null)
       .where('platform', '=', platform)
+      .where('eventEndDate', '<', deletedAt)
       .where(eb =>
         eb.not(
           eb.exists(
@@ -941,18 +960,22 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
     pagination: PaginationOptions,
     filters: {
       includePast?: boolean;
+      includeDeleted?: boolean;
       search?: string;
       status?: 'active' | 'inactive';
     } = {},
   ) {
     const {page, limit, offset} = pagination;
     const now = new Date();
+    const includeDeleted = filters.includeDeleted ?? false;
 
     // Build count query
     let countQuery = this.db
       .selectFrom('events')
-      .select(this.db.fn.count('id').as('total'))
-      .where('deletedAt', 'is', null);
+      .select(this.db.fn.count('id').as('total'));
+    if (!includeDeleted) {
+      countQuery = countQuery.where('deletedAt', 'is', null);
+    }
 
     // Apply filters to count
     if (!filters.includePast) {
@@ -988,6 +1011,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'events.platform',
         'events.qrAvailabilityTiming',
         'events.status',
+        'events.deletedAt',
         'events.createdAt',
         'events.updatedAt',
         jsonArrayFrom(
@@ -1018,11 +1042,16 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
               'eventTicketWaves.status',
             ])
             .whereRef('eventTicketWaves.eventId', '=', 'events.id')
-            .where('eventTicketWaves.deletedAt', 'is', null)
+            .$if(!includeDeleted, qb =>
+              qb.where('eventTicketWaves.deletedAt', 'is', null),
+            )
             .orderBy('eventTicketWaves.faceValue', 'asc'),
         ).as('ticketWaves'),
-      ])
-      .where('events.deletedAt', 'is', null);
+      ]);
+
+    if (!includeDeleted) {
+      query = query.where('events.deletedAt', 'is', null);
+    }
 
     // Apply filters
     if (!filters.includePast) {
@@ -1079,6 +1108,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         'events.platform',
         'events.qrAvailabilityTiming',
         'events.status',
+        'events.deletedAt',
         'events.metadata',
         'events.createdAt',
         'events.updatedAt',
@@ -1094,7 +1124,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
               'eventImages.createdAt',
             ])
             .whereRef('eventImages.eventId', '=', 'events.id')
-            .where('eventImages.deletedAt', 'is', null)
             .orderBy('eventImages.displayOrder'),
         ).as('images'),
         jsonArrayFrom(
@@ -1110,16 +1139,15 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
               'eventTicketWaves.isAvailable',
               'eventTicketWaves.externalId',
               'eventTicketWaves.status',
+              'eventTicketWaves.deletedAt',
               'eventTicketWaves.createdAt',
               'eventTicketWaves.updatedAt',
             ])
             .whereRef('eventTicketWaves.eventId', '=', 'events.id')
-            .where('eventTicketWaves.deletedAt', 'is', null)
             .orderBy('eventTicketWaves.faceValue', 'asc'),
         ).as('ticketWaves'),
       ])
       .where('events.id', '=', eventId)
-      .where('events.deletedAt', 'is', null)
       .executeTakeFirst();
 
     return event ?? null;
@@ -1149,7 +1177,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .updateTable('events')
       .set(updateData)
       .where('id', '=', eventId)
-      .where('deletedAt', 'is', null)
       .returningAll()
       .execute();
 

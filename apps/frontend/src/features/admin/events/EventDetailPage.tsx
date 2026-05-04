@@ -52,6 +52,7 @@ import {Loader2, Trash2, ExternalLink, ArrowLeft} from 'lucide-react';
 import {deleteEventMutation} from '~/lib/api/admin';
 import {DateTimePicker} from '~/components/datetime-picker';
 import {Link} from '@tanstack/react-router';
+import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
 
 const QR_TIMINGS = ['3h', '6h', '12h', '24h', '48h', '72h'] as const;
 
@@ -82,7 +83,9 @@ function formatDateTimeLocal(dateString: string): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-function buildEventFormDefaults(event: GetEventDetailsResponse): EventFormValues {
+function buildEventFormDefaults(
+  event: GetEventDetailsResponse,
+): EventFormValues {
   return {
     name: event.name,
     description: event.description || '',
@@ -94,9 +97,7 @@ function buildEventFormDefaults(event: GetEventDetailsResponse): EventFormValues
   };
 }
 
-type QrTimingApi = NonNullable<
-  GetEventDetailsResponse['qrAvailabilityTiming']
->;
+type QrTimingApi = NonNullable<GetEventDetailsResponse['qrAvailabilityTiming']>;
 
 function EventDetailEditor({
   event,
@@ -121,9 +122,14 @@ function EventDetailEditor({
 
   const updateMutation = useMutation({
     ...updateEventMutation(),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({queryKey: ['admin', 'events']});
-      toast.success('Evento actualizado');
+      queryClient.invalidateQueries({queryKey: ['admin', 'events', eventId]});
+      toast.success(
+        variables.updates.clearDeletion
+          ? 'Evento restaurado'
+          : 'Evento actualizado',
+      );
     },
     onError: (error: any) => {
       toast.error(
@@ -175,6 +181,33 @@ function EventDetailEditor({
         </Button>
       </div>
 
+      {event.deletedAt ? (
+        <Alert variant='destructive'>
+          <AlertTitle>Evento eliminado (borrado lógico)</AlertTitle>
+          <AlertDescription className='space-y-3'>
+            <p>
+              No aparece en el catálogo público. Puedes restaurarlo para
+              reactivarlo y recuperar las olas de entradas que se marcaron al
+              eliminar el evento.
+            </p>
+            <Button
+              type='button'
+              variant='secondary'
+              disabled={updateMutation.isPending}
+              onClick={() =>
+                updateMutation.mutate({
+                  eventId,
+                  updates: {clearDeletion: true},
+                })
+              }
+            >
+              Restaurar evento
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {/* Hero Section */}
       <div className='relative h-48 md:h-64 rounded-lg overflow-hidden bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800'>
         {heroImage ? (
           <img
@@ -198,6 +231,11 @@ function EventDetailEditor({
             >
               {event.status === 'active' ? 'Activo' : 'Inactivo'}
             </Badge>
+            {event.deletedAt ? (
+              <Badge className='bg-rose-600 text-white border-0'>
+                Eliminado
+              </Badge>
+            ) : null}
           </div>
         </div>
       </div>

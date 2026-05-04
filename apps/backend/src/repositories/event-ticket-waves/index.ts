@@ -141,4 +141,21 @@ export class EventTicketWavesRepository extends BaseRepository<EventTicketWavesR
 
     return deleted;
   }
+
+  /**
+   * Clears soft-delete on all waves for an event (admin restore after scraper cleanup)
+   */
+  async restoreSoftDeletedForEvent(eventId: string) {
+    const now = new Date();
+    await this.db
+      .updateTable('eventTicketWaves')
+      .set({
+        deletedAt: null,
+        status: 'active',
+        updatedAt: now,
+      })
+      .where('eventId', '=', eventId)
+      .where('deletedAt', 'is not', null)
+      .execute();
+  }
 }

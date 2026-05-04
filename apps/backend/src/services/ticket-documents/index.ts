@@ -432,7 +432,7 @@ export class TicketDocumentService {
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
       directory: `private/tickets/${eventId}`,
-      filename: `ticket-creation-${Date.now()}`,
+      filename: `ticket-creation-${Date.now()}-${crypto.randomUUID()}`,
     });
 
     const fileName = uploadResult.path.split('/').pop() || uploadResult.path;

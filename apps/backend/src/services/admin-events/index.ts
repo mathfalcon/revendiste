@@ -19,6 +19,7 @@ import {generateUniqueSlug} from '~/utils';
 
 interface GetEventsFilters {
   includePast?: boolean;
+  includeDeleted?: boolean;
   search?: string;
   status?: 'active' | 'inactive';
 }
@@ -32,6 +33,7 @@ interface UpdateEventData {
   externalUrl?: string | null;
   qrAvailabilityTiming?: '3h' | '6h' | '12h' | '24h' | '48h' | '72h' | null;
   status?: 'active' | 'inactive';
+  clearDeletion?: boolean;
 }
 
 interface CreateTicketWaveData {
@@ -99,6 +101,7 @@ export class AdminEventsService {
   async getEvents(pagination: PaginationOptions, filters: GetEventsFilters) {
     return this.eventsRepository.findAllForAdmin(pagination, {
       includePast: filters.includePast,
+      includeDeleted: filters.includeDeleted,
       search: filters.search,
       status: filters.status,
     });
@@ -220,6 +223,11 @@ export class AdminEventsService {
     // Convert string dates to Date objects
     const updateData: Parameters<EventsRepository['updateEvent']>[1] = {};
 
+    if (data.clearDeletion) {
+      updateData.deletedAt = null;
+      updateData.status = 'active';
+    }
+
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined)
       updateData.description = data.description;
@@ -233,7 +241,8 @@ export class AdminEventsService {
       updateData.externalUrl = data.externalUrl ?? undefined;
     if (data.qrAvailabilityTiming !== undefined)
       updateData.qrAvailabilityTiming = data.qrAvailabilityTiming;
-    if (data.status !== undefined) updateData.status = data.status;
+    if (data.status !== undefined && !data.clearDeletion)
+      updateData.status = data.status;
 
     const updated = await this.eventsRepository.updateEvent(
       eventId,
@@ -242,6 +251,11 @@ export class AdminEventsService {
     if (!updated) {
       throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
     }
+
+    if (data.clearDeletion) {
+      await this.ticketWavesRepository.restoreSoftDeletedForEvent(eventId);
+    }
+
     return updated;
   }
 

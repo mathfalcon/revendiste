@@ -19,6 +19,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import {Button} from '~/components/ui/button';
+import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
 import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
 import {
   Table,
@@ -52,6 +53,7 @@ import {
   buildAdminDashboardApiQuery,
   type DashboardSearch,
 } from './dashboard-params';
+import type {GetDashboardRevenueResponse} from '~/lib/api/generated';
 import {formatDistanceToNow} from 'date-fns';
 import {es} from 'date-fns/locale';
 import {cn} from '~/lib/utils';
@@ -61,6 +63,33 @@ function formatDashboardPercent(value: number) {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   })}%`;
+}
+
+const REVENUE_PARTY_LABEL_ES: Record<string, string> = {
+  buyer: 'Comprador',
+  seller: 'Vendedor',
+};
+
+function formatRevenuePartyBreakdownDescription(
+  revenue: GetDashboardRevenueResponse,
+): string | undefined {
+  const parties = revenue.revenueByParty;
+  if (!parties || Object.keys(parties).length === 0) {
+    return undefined;
+  }
+  const parts: string[] = [];
+  for (const [key, amounts] of Object.entries(parties)) {
+    const label = REVENUE_PARTY_LABEL_ES[key] ?? key;
+    const total = parseFloat(amounts.base) + parseFloat(amounts.vat);
+    if (!Number.isFinite(total) || total === 0) {
+      continue;
+    }
+    parts.push(`${label}: ${formatCurrency(String(total), revenue.currency)}`);
+  }
+  if (parts.length === 0) {
+    return undefined;
+  }
+  return parts.join(' · ');
 }
 
 type Props = {
@@ -196,13 +225,13 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
             }
           />
           <StatCard
-            title='Comisión + IVA (bruto)'
+            title='Comisión + IVA (plataforma)'
             value={
               revenueQ.data
                 ? formatCurrency(
                     (
-                      parseFloat(revenueQ.data.platformCommission) +
-                      parseFloat(revenueQ.data.vatOnCommission)
+                      parseFloat(revenueQ.data.platformRevenue) +
+                      parseFloat(revenueQ.data.vatOnRevenue)
                     ).toString(),
                     revenueQ.data.currency,
                   )
@@ -211,6 +240,11 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
             icon={Banknote}
             isLoading={revenueQ.isPending}
             accentClassName='border-l-violet-500'
+            description={
+              revenueQ.data
+                ? formatRevenuePartyBreakdownDescription(revenueQ.data)
+                : undefined
+            }
           />
           <StatCard
             title='Fees procesador'
@@ -229,7 +263,7 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
               revenueQ.data
                 ? `${formatDashboardPercent(
                     revenueQ.data.processorFeesPercentOfCommissionAndVat,
-                  )} de comisión + IVA (bruto)`
+                  )} de comisión + IVA (plataforma)`
                 : undefined
             }
           />
@@ -250,7 +284,7 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
               revenueQ.data
                 ? `${formatDashboardPercent(
                     revenueQ.data.netPlatformIncomePercentOfCommissionAndVat,
-                  )} de comisión + IVA (bruto)`
+                  )} de comisión + IVA (plataforma)`
                 : undefined
             }
           />
@@ -281,6 +315,17 @@ export function DashboardPage({search, onNavigateSearch}: Props) {
             }
           />
         </div>
+        {revenueQ.data && revenueQ.data.ordersMissingInvoices > 0 ? (
+          <Alert variant='destructive'>
+            <AlertTriangle className='h-4 w-4' aria-hidden />
+            <AlertTitle>Facturación pendiente</AlertTitle>
+            <AlertDescription>
+              {revenueQ.data.ordersMissingInvoices === 1
+                ? 'Hay 1 pedido con comisión en el pedido pero sin facturas emitidas en FEU (el ingreso por comisión puede estar incompleto hasta que se emitan).'
+                : `Hay ${revenueQ.data.ordersMissingInvoices} pedidos con comisión en el pedido pero sin facturas emitidas en FEU (el ingreso por comisión puede estar incompleto hasta que se emitan).`}
+            </AlertDescription>
+          </Alert>
+        ) : null}
         <div className='grid grid-cols-1 gap-6'>
           <CurrencyBreakdownSection
             data={revenueByOrderCurrencyQ.data}

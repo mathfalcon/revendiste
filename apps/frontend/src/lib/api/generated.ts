@@ -1882,7 +1882,7 @@ export interface GetVerificationAuditHistoryResponse {
   }[];
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray {
+export interface PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray {
   data: {
     ticketWaves: {
       isSoldOut: boolean;
@@ -1921,19 +1921,22 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
     eventEndDate: string;
     description: string | null;
     /** @format date-time */
+    deletedAt: string | null;
+    /** @format date-time */
     createdAt: string;
   }[];
   pagination: PaginationMeta;
 }
 
 export type GetEventsResponse =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray;
+  PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray;
 
 export interface InferTypeofAdminEventsQuerySchema {
   status?: "active" | "inactive";
   search?: string;
   sortOrder?: "asc" | "desc";
   sortBy?: string;
+  includeDeleted: boolean;
   includePast: boolean;
   /** @format double */
   limit: number;
@@ -1955,6 +1958,7 @@ export interface GetEventDetailsResponse {
     id: string;
     externalId: string;
     description: string | null;
+    deletedAt: string | null;
     createdAt: string;
   }[];
   images: {
@@ -1986,6 +1990,8 @@ export interface GetEventDetailsResponse {
   /** @format date-time */
   eventEndDate: string;
   description: string | null;
+  /** @format date-time */
+  deletedAt: string | null;
   /** @format date-time */
   createdAt: string;
 }
@@ -2042,6 +2048,7 @@ export interface UpdateEventResponse {
 }
 
 export interface UpdateEventRouteBody {
+  clearDeletion?: boolean;
   status?: "active" | "inactive";
   qrAvailabilityTiming?: "12h" | "24h" | "3h" | "48h" | "6h" | "72h" | null;
   externalUrl?: string;
@@ -3355,10 +3362,27 @@ export interface GetDashboardTicketsTimeSeriesResponse {
   rows: TicketsTimeSeriesRow[];
 }
 
+/** Per-invoice-party amounts (excl. VAT on line / VAT on line) from issued invoices. */
+export interface DashboardRevenuePartyAmounts {
+  base: string;
+  vat: string;
+}
+
+/** Construct a type with a set of properties K of type T */
+export type RecordStringDashboardRevenuePartyAmounts = Record<
+  string,
+  DashboardRevenuePartyAmounts
+>;
+
 export interface GetDashboardRevenueResponse {
   gmv: string;
-  platformCommission: string;
-  vatOnCommission: string;
+  /**
+   * Comisión facturada (suma `invoices.base_amount` emitidas), todas las partes.
+   * Antes se exponía como `platformCommission` (solo comprador); renombrado para reflejar la fuente real.
+   */
+  platformRevenue: string;
+  /** IVA sobre comisión facturada (suma `invoices.vat_amount` emitidas). */
+  vatOnRevenue: string;
   processorFees: string;
   netPlatformIncome: string;
   /**
@@ -3374,13 +3398,13 @@ export interface GetDashboardRevenueResponse {
    */
   platformIncomeVatRate: number;
   /**
-   * % del total comisión + IVA (pedido) que representan los fees del procesador.
-   * Denominador: platformCommission + vatOnCommission.
+   * % del total comisión + IVA facturada que representan los fees del procesador.
+   * Denominador: platformRevenue + vatOnRevenue.
    * @format double
    */
   processorFeesPercentOfCommissionAndVat: number;
   /**
-   * % del total comisión + IVA (pedido) que queda como ingreso neto plataforma.
+   * % del total comisión + IVA facturada que queda como ingreso neto plataforma.
    * @format double
    */
   netPlatformIncomePercentOfCommissionAndVat: number;
@@ -3394,14 +3418,24 @@ export interface GetDashboardRevenueResponse {
    * Ya no indica solo “pedidos en monedas distintas”: varias monedas de cargo pueden seguir mostrándose como una sola moneda de liquidación.
    */
   mixedCurrency: boolean;
+  /**
+   * Importes por parte (`buyer`, `seller`, …) en la misma moneda de liquidación que los totales cuando solo hay una moneda de liquidación;
+   * si hay varias, se fusionan sumando por parte (mezcla de monedas — revisar desglose).
+   */
+  revenueByParty: RecordStringDashboardRevenuePartyAmounts;
+  /**
+   * Pedidos confirmados con `platformCommission` > 0 pero sin ninguna factura `issued` (FEU pendiente o fallida).
+   * @format double
+   */
+  ordersMissingInvoices: number;
 }
 
 export interface RevenueTimeSeriesRow {
   /** ISO date `YYYY-MM-DD` (UTC bucket). */
   day: string;
   gmv: string;
-  platformCommission: string;
-  vatOnCommission: string;
+  platformRevenue: string;
+  vatOnRevenue: string;
   processorFees: string;
   netPlatformIncome: string;
   platformIncomeVatAmount: string;
@@ -3509,8 +3543,8 @@ export interface OrderCurrencyBreakdownRow {
   /** Moneda de cobro del pedido (`orders.currency`). Importes sin conversión. */
   currency: EventTicketCurrency;
   gmv: string;
-  platformCommission: string;
-  vatOnCommission: string;
+  platformRevenue: string;
+  vatOnRevenue: string;
   /** @format double */
   orderCount: number;
 }
@@ -4806,6 +4840,7 @@ export class Api<
         search?: string;
         sortOrder?: "asc" | "desc";
         sortBy?: string;
+        includeDeleted: boolean;
         includePast: boolean;
         /** @format double */
         limit: number;

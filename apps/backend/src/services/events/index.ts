@@ -83,8 +83,9 @@ export class EventsService {
     }));
 
     // Process venues for all events first (in parallel batches)
-    const eventsWithVenues =
-      await this.processVenuesForEvents(eventsWithPaidWaves);
+    const eventsWithVenues = await this.processVenuesForEvents(
+      eventsWithPaidWaves,
+    );
 
     // Generate slugs for events
     const eventsWithSlugs = await this.generateSlugsForEvents(eventsWithVenues);
@@ -94,8 +95,9 @@ export class EventsService {
       images: [],
     }));
 
-    const upsertedEvents =
-      await this.eventsRepository.upsertEventsBatch(eventsWithoutImages);
+    const upsertedEvents = await this.eventsRepository.upsertEventsBatch(
+      eventsWithoutImages,
+    );
 
     // Create a map from externalId to original event to handle cases where
     // some events failed to upsert (indices won't match)
@@ -224,8 +226,45 @@ export class EventsService {
   }
 
   /**
+   * Soft-delete active events that appear on this scrape as guest-list only
+   * (paid waves stripped). Does not use eventEndDate — must run before stale cleanup
+   * so future guest-list events are still removed when the platform lists them as free.
+   */
+  async softDeleteGuestListScrapedEvents(
+    platform: string,
+    externalIds: string[],
+  ) {
+    const uniqueIds = [...new Set(externalIds)];
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const now = new Date();
+    const deleted = await this.eventsRepository.softDeleteEventsByExternalIds(
+      uniqueIds,
+      now,
+      {
+        platform,
+      },
+    );
+
+    if (deleted.length > 0) {
+      logger.info(
+        `Soft deleted ${deleted.length} ${platform} guest-list events (scraped as free-only)`,
+      );
+      await this.softDeleteRelatedTicketWaves(
+        deleted.map(event => event.id),
+        now,
+      );
+    }
+
+    return deleted;
+  }
+
+  /**
    * Cleanup stale events for a specific platform.
-   * Only deletes events from this platform that are no longer in scraped results.
+   * Soft-deletes active rows not in this scrape's id set when eventEndDate is already
+   * past (sold-out / delisted events that disappear from listing pages stay until end).
    * Includes a ratio safety check to prevent mass deletion from partial scrapes.
    */
   async cleanupStaleEventsForPlatform(
@@ -255,7 +294,11 @@ export class EventsService {
 
       if (ratio < minRatio) {
         logger.warn(
-          `Ratio check failed for ${platform}: scraped ${scrapedExternalIds.length} vs ${activeCount} active (ratio=${ratio.toFixed(2)}, threshold=${minRatio}). Skipping cleanup.`,
+          `Ratio check failed for ${platform}: scraped ${
+            scrapedExternalIds.length
+          } vs ${activeCount} active (ratio=${ratio.toFixed(
+            2,
+          )}, threshold=${minRatio}). Skipping cleanup.`,
         );
         return [];
       }
@@ -281,7 +324,7 @@ export class EventsService {
 
         if (eventsToDelete.length > 0) {
           logger.info(
-            `Found ${eventsToDelete.length} ${platform} events to delete (not in scraped results)`,
+            `Found ${eventsToDelete.length} ${platform} events to evaluate for stale cleanup (not in scraped results; only past eventEndDate are removed)`,
           );
 
           for (let i = 0; i < eventsToDelete.length; i += batchSize) {
@@ -290,6 +333,10 @@ export class EventsService {
               await this.eventsRepository.softDeleteEventsByExternalIds(
                 batch,
                 now,
+                {
+                  platform,
+                  onlyPastEventEndDate: true,
+                },
               );
             deletedNotInScraped.push(...batchResult);
           }
@@ -306,7 +353,7 @@ export class EventsService {
 
       if (deletedNotInScraped.length > 0) {
         logger.info(
-          `Soft deleted ${deletedNotInScraped.length} ${platform} events no longer in scraped results`,
+          `Soft deleted ${deletedNotInScraped.length} ${platform} events no longer in scraped results and with past eventEndDate`,
         );
 
         // Soft delete related ticket waves

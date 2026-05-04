@@ -4,7 +4,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import posthog from 'posthog-js';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {useNavigate} from '@tanstack/react-router';
 import {toast} from 'sonner';
 import {
@@ -98,7 +98,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       navigate({href: data.redirectUrl});
     },
     onError: () => {
-      posthog.capture('payment_link_error', {
+      trackEvent(ANALYTICS_EVENTS.PAYMENT_LINK_ERROR, {
         order_id: orderId,
         country: payerCountry,
       });
@@ -187,10 +187,11 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       countryRef.current?.scrollIntoView({behavior: 'smooth', block: 'center'});
       return;
     }
-    posthog.capture('checkout_payment_initiated', {
+    trackEvent(ANALYTICS_EVENTS.CHECKOUT_PAYMENT_INITIATED, {
       order_id: orderId,
       country: payerCountry,
       total_amount: Number(order.totalAmount),
+      value: Number(order.totalAmount),
       currency,
     });
     createPaymentLink.mutate({country: payerCountry});
@@ -342,7 +343,9 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                 </span>
               </div>
               <div className='flex justify-between text-xs sm:text-sm text-muted-foreground'>
-                <span>Comisión ({feeRates.platformCommissionPercentage}%):</span>
+                <span>
+                  Comisión ({feeRates.platformCommissionPercentage}%):
+                </span>
                 <span>
                   {formatPrice(Number(order.platformCommission), currency)}
                 </span>
@@ -403,9 +406,7 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                   aria-expanded={countryPopoverOpen}
                   disabled={countdown.isExpired}
                   className={`w-full justify-between h-12 text-base ${
-                    !isCountrySelected
-                      ? 'text-muted-foreground'
-                      : 'font-medium'
+                    !isCountrySelected ? 'text-muted-foreground' : 'font-medium'
                   } ${showCountryError ? 'border-destructive' : ''}`}
                 >
                   {isCountrySelected
@@ -431,10 +432,13 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                           onSelect={() => {
                             setPayerCountry(c.value);
                             setCountryPopoverOpen(false);
-                            posthog.capture('checkout_country_selected', {
-                              order_id: orderId,
-                              country: c.value,
-                            });
+                            trackEvent(
+                              ANALYTICS_EVENTS.CHECKOUT_COUNTRY_SELECTED,
+                              {
+                                order_id: orderId,
+                                country: c.value,
+                              },
+                            );
                           }}
                         >
                           {c.label}

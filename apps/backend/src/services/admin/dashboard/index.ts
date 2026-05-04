@@ -17,6 +17,7 @@ import type {
   GetDashboardOrdersTimeSeriesResponse,
   GetDashboardTicketsTimeSeriesResponse,
   GetDashboardRevenueByOrderCurrencyResponse,
+  DashboardRevenuePartyAmounts,
 } from './types';
 
 function parseNum(s: string | null | undefined): number {
@@ -41,10 +42,43 @@ function settlementCurrencyFromRevenueRows(
   rows: {currency: string | null}[],
 ): EventTicketCurrency {
   const raw =
-    rows.length === 1
-      ? rows[0]!.currency
-      : (rows[0]?.currency ?? 'UYU');
+    rows.length === 1 ? rows[0]!.currency : (rows[0]?.currency ?? 'UYU');
   return (raw ?? 'UYU') as EventTicketCurrency;
+}
+
+function mergeRevenueByPartyFromSettlementRows(
+  partyRows: {
+    currency: string | null;
+    party: string;
+    platformRevenue: string | null;
+    vatOnRevenue: string | null;
+  }[],
+  settlementCurrencyRows: {currency: string | null}[],
+  mixedSettlementCurrency: boolean,
+): Record<string, DashboardRevenuePartyAmounts> {
+  const filtered =
+    mixedSettlementCurrency || settlementCurrencyRows.length === 0
+      ? partyRows
+      : partyRows.filter(
+          row => row.currency === settlementCurrencyRows[0]?.currency,
+        );
+
+  const acc = new Map<string, {base: number; vat: number}>();
+  for (const row of filtered) {
+    const cur = acc.get(row.party) ?? {base: 0, vat: 0};
+    cur.base += parseNum(row.platformRevenue);
+    cur.vat += parseNum(row.vatOnRevenue);
+    acc.set(row.party, cur);
+  }
+
+  const out: Record<string, DashboardRevenuePartyAmounts> = {};
+  for (const [party, v] of acc) {
+    out[party] = {
+      base: formatNumericString(v.base),
+      vat: formatNumericString(v.vat),
+    };
+  }
+  return out;
 }
 
 export class AdminDashboardService {
@@ -59,31 +93,33 @@ export class AdminDashboardService {
   async getRevenueStats(
     range: DashboardDateRange,
   ): Promise<GetDashboardRevenueResponse> {
-    const rows = await this.repo.getRevenueByCurrency(range);
+    const [rows, partyRows, ordersMissingInvoices] = await Promise.all([
+      this.repo.getRevenueByCurrency(range),
+      this.repo.getRevenuePartyBreakdownSettlement(range),
+      this.repo.countOrdersMissingIssuedInvoices(range),
+    ]);
 
     let gmv = 0;
-    let platformCommission = 0;
-    let vatOnCommission = 0;
+    let platformRevenue = 0;
+    let vatOnRevenue = 0;
     let processorFees = 0;
 
     for (const r of rows) {
       gmv += parseNum(r.gmv);
-      platformCommission += parseNum(r.platformCommission);
-      vatOnCommission += parseNum(r.vatOnCommission);
+      platformRevenue += parseNum(r.platformRevenue);
+      vatOnRevenue += parseNum(r.vatOnRevenue);
       processorFees += parseNum(r.processorFees);
     }
 
     const netPlatformIncome = roundOrderAmount(
-      platformCommission + vatOnCommission - processorFees,
+      platformRevenue + vatOnRevenue - processorFees,
     );
 
-    const commissionPlusVat = platformCommission + vatOnCommission;
+    const commissionPlusVat = platformRevenue + vatOnRevenue;
     let platformIncomeVatAmount = 0;
     let netPlatformIncomeAfterIncomeVat = netPlatformIncome;
     if (netPlatformIncome > 0) {
-      platformIncomeVatAmount = roundOrderAmount(
-        netPlatformIncome * VAT_RATE,
-      );
+      platformIncomeVatAmount = roundOrderAmount(netPlatformIncome * VAT_RATE);
       netPlatformIncomeAfterIncomeVat = roundOrderAmount(
         netPlatformIncome - platformIncomeVatAmount,
       );
@@ -101,11 +137,17 @@ export class AdminDashboardService {
     }
 
     const currency = settlementCurrencyFromRevenueRows(rows);
+    const mixedCurrency = rows.length > 1;
+    const revenueByParty = mergeRevenueByPartyFromSettlementRows(
+      partyRows,
+      rows,
+      mixedCurrency,
+    );
 
     return {
       gmv: formatNumericString(gmv),
-      platformCommission: formatNumericString(platformCommission),
-      vatOnCommission: formatNumericString(vatOnCommission),
+      platformRevenue: formatNumericString(platformRevenue),
+      vatOnRevenue: formatNumericString(vatOnRevenue),
       processorFees: formatNumericString(processorFees),
       netPlatformIncome: formatNumericString(netPlatformIncome),
       platformIncomeVatAmount: formatNumericString(platformIncomeVatAmount),
@@ -116,7 +158,9 @@ export class AdminDashboardService {
       processorFeesPercentOfCommissionAndVat,
       netPlatformIncomePercentOfCommissionAndVat,
       currency,
-      mixedCurrency: rows.length > 1,
+      mixedCurrency,
+      revenueByParty,
+      ordersMissingInvoices,
     };
   }
 
@@ -182,11 +226,11 @@ export class AdminDashboardService {
 
     const rows = seriesRows.map(r => {
       const gmv = parseNum(r.gmv);
-      const platformCommission = parseNum(r.platformCommission);
-      const vatOnCommission = parseNum(r.vatOnCommission);
+      const platformRevenue = parseNum(r.platformRevenue);
+      const vatOnRevenue = parseNum(r.vatOnRevenue);
       const processorFees = parseNum(r.processorFees);
       const netPlatformIncome = roundOrderAmount(
-        platformCommission + vatOnCommission - processorFees,
+        platformRevenue + vatOnRevenue - processorFees,
       );
 
       let platformIncomeVatAmount = 0;
@@ -203,8 +247,8 @@ export class AdminDashboardService {
       return {
         day: toIsoDateOnly(r.day as Date),
         gmv: formatNumericString(gmv),
-        platformCommission: formatNumericString(platformCommission),
-        vatOnCommission: formatNumericString(vatOnCommission),
+        platformRevenue: formatNumericString(platformRevenue),
+        vatOnRevenue: formatNumericString(vatOnRevenue),
         processorFees: formatNumericString(processorFees),
         netPlatformIncome: formatNumericString(netPlatformIncome),
         platformIncomeVatAmount: formatNumericString(platformIncomeVatAmount),
@@ -262,13 +306,11 @@ export class AdminDashboardService {
       map.set(day, cur);
     }
 
-    const rows = [...map.keys()]
-      .sort()
-      .map(day => ({
-        day,
-        published: map.get(day)!.published,
-        sold: map.get(day)!.sold,
-      }));
+    const rows = [...map.keys()].sort().map(day => ({
+      day,
+      published: map.get(day)!.published,
+      sold: map.get(day)!.sold,
+    }));
 
     return {rows};
   }
@@ -281,8 +323,8 @@ export class AdminDashboardService {
       rows: rows.map(r => ({
         currency: r.currency as EventTicketCurrency,
         gmv: r.gmv ?? '0',
-        platformCommission: r.platformCommission ?? '0',
-        vatOnCommission: r.vatOnCommission ?? '0',
+        platformRevenue: r.platformRevenue ?? '0',
+        vatOnRevenue: r.vatOnRevenue ?? '0',
         orderCount: Number(r.orderCount ?? 0),
       })),
     };

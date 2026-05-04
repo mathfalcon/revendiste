@@ -12,7 +12,7 @@ import {Button} from '~/components/ui/button';
 import {CheckCircle2, Calendar, MapPin, Ticket} from 'lucide-react';
 import {FullScreenLoading, CopyableText, TextEllipsis} from '~/components';
 import {TicketWaveCard} from '~/features/event/tickets';
-import {usePostHog} from 'posthog-js/react';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 
 interface CheckoutSuccessPageProps {
   orderId: string;
@@ -20,18 +20,21 @@ interface CheckoutSuccessPageProps {
 
 export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
   const order = useSuspenseQuery(getOrderByIdQuery(orderId)).data;
-  const posthog = usePostHog();
 
   useEffect(() => {
-    posthog.capture('checkout_completed', {
+    trackEvent(ANALYTICS_EVENTS.CHECKOUT_COMPLETED, {
       order_id: order.id,
       event_id: order.eventId,
       event_name: order.event?.name,
       total_amount: Number(order.totalAmount),
+      value: Number(order.totalAmount),
       subtotal_amount: Number(order.subtotalAmount),
       platform_commission: Number(order.platformCommission),
       currency: order.items[0]?.currency,
-      ticket_count: order.items.reduce((sum, item) => sum + (item.quantity ?? 0), 0),
+      ticket_count: order.items.reduce(
+        (sum, item) => sum + (item.quantity ?? 0),
+        0,
+      ),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
@@ -139,7 +142,9 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
                 </div>
                 {order.confirmedAt && (
                   <div className='flex justify-between text-sm'>
-                    <span className='text-muted-foreground'>Confirmada el:</span>
+                    <span className='text-muted-foreground'>
+                      Confirmada el:
+                    </span>
                     <span>
                       {new Date(order.confirmedAt).toLocaleString('es-UY', {
                         dateStyle: 'medium',
@@ -222,9 +227,7 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
             <ul className='space-y-2 text-sm text-muted-foreground'>
               <li className='flex items-start gap-2'>
                 <CheckCircle2 className='h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0' />
-                <span>
-                  Revisá tu correo para ver los detalles de tu compra
-                </span>
+                <span>Revisá tu correo para ver los detalles de tu compra</span>
               </li>
               <li className='flex items-start gap-2'>
                 <CheckCircle2 className='h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0' />
@@ -234,9 +237,7 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
               </li>
               <li className='flex items-start gap-2'>
                 <CheckCircle2 className='h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0' />
-                <span>
-                  Mostrá tu entrada digital en la puerta del evento
-                </span>
+                <span>Mostrá tu entrada digital en la puerta del evento</span>
               </li>
             </ul>
           </div>
@@ -249,7 +250,11 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
               </Button>
             )}
             <Button asChild variant='ghost' size='lg'>
-              <Link to='/eventos/$slug' params={{slug: order.event?.slug!}} preloadDelay={0}>
+              <Link
+                to='/eventos/$slug'
+                params={{slug: order.event?.slug!}}
+                preloadDelay={0}
+              >
                 Volver al evento
               </Link>
             </Button>

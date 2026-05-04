@@ -14,16 +14,16 @@ The wizard has completed a deep integration of PostHog analytics into the Revend
 
 ## Events instrumented
 
-| Event | Description | File |
-|---|---|---|
-| `checkout_completed` | User successfully completed a ticket purchase and lands on the checkout success page | `src/features/checkout/CheckoutSuccess.tsx` |
-| `ticket_listing_created` | Seller successfully created a new ticket listing | `src/features/ticket-listing/TicketListingFormRight.tsx` |
-| `order_started` | User initiated a ticket purchase by submitting the ticket selection form | `src/features/event/tickets/useTicketSelection.ts` |
-| `payout_requested` | Seller requested a payout of their available balance | `src/features/user-account/payouts/RequestPayoutForm.tsx` |
-| `identity_verification_started` | User initiated the identity verification process | `src/features/identity-verification/VerificationPage.tsx` |
-| `support_case_created` | User submitted a support case/dispute | `src/components/CreateCaseDialog.tsx` |
-| `ticket_document_uploaded` | Seller uploaded a ticket document (QR code or PDF) for a sold ticket | `src/components/TicketUploadModal/index.tsx` |
-| `payout_method_added` | Seller added or updated their payout method | `src/features/user-account/payouts/PayoutMethodForm.tsx` |
+| Event                           | Description                                                                          | File                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| `checkout_completed`            | User successfully completed a ticket purchase and lands on the checkout success page | `src/features/checkout/CheckoutSuccess.tsx`               |
+| `ticket_listing_created`        | Seller successfully created a new ticket listing                                     | `src/features/ticket-listing/TicketListingFormRight.tsx`  |
+| `order_started`                 | User initiated a ticket purchase by submitting the ticket selection form             | `src/features/event/tickets/useTicketSelection.ts`        |
+| `payout_requested`              | Seller requested a payout of their available balance                                 | `src/features/user-account/payouts/RequestPayoutForm.tsx` |
+| `identity_verification_started` | User initiated the identity verification process                                     | `src/features/identity-verification/VerificationPage.tsx` |
+| `support_case_created`          | User submitted a support case/dispute                                                | `src/components/CreateCaseDialog.tsx`                     |
+| `ticket_document_uploaded`      | Seller uploaded a ticket document (QR code or PDF) for a sold ticket                 | `src/components/TicketUploadModal/index.tsx`              |
+| `payout_method_added`           | Seller added or updated their payout method                                          | `src/features/user-account/payouts/PayoutMethodForm.tsx`  |
 
 ## Next steps
 
@@ -39,3 +39,7 @@ We've built some insights and a dashboard for you to keep an eye on user behavio
 ### Agent skill
 
 We've left an agent skill folder in your project at `.claude/skills/integration-tanstack-start/`. You can use this context for further agent development when using Claude Code. This will help ensure the model provides the most up-to-date approaches for integrating PostHog.
+
+## GTM, Meta Pixel & centralized events
+
+Product analytics events should be sent with `trackEvent(ANALYTICS_EVENTS.*, props)` from [`src/lib/analytics`](./src/lib/analytics/) so **PostHog** and the **GTM `dataLayer`** stay aligned. Full architecture, env vars, event catalog, and GTM checklist: [`docs/analytics.md`](./docs/analytics.md).

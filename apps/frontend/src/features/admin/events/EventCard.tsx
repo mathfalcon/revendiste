@@ -130,6 +130,15 @@ export function EventCard({event, onClick}: EventCardProps) {
             {event.status === 'active' ? 'Activo' : 'Inactivo'}
           </Badge>
 
+          {event.deletedAt ? (
+            <Badge
+              variant='outline'
+              className='border-rose-500 bg-rose-500/10 text-rose-800 dark:text-rose-200'
+            >
+              Eliminado
+            </Badge>
+          ) : null}
+
           {/* Ticket Waves Count */}
           {event.ticketWaves?.length > 0 && (
             <Badge variant='secondary' className='flex items-center gap-1'>

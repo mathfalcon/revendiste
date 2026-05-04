@@ -39,13 +39,10 @@ export const fetchEventServer = createServerFn({method: 'GET'})
     }
 
     // Fetch event data on the server by slug
-    const response = await fetch(
-      `${apiUrl}/events/by-slug/${data.slug}`,
-      {
-        method: 'GET',
-        headers,
-      },
-    );
+    const response = await fetch(`${apiUrl}/events/by-slug/${data.slug}`, {
+      method: 'GET',
+      headers,
+    });
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -168,20 +165,16 @@ export const Route = createFileRoute('/eventos/$slug')({
         })
       : null;
 
-    // Build description with event details
-    const rawDesc = event.description
-      ? event.description.replace(/\s+/g, ' ').trim()
-      : null;
-    const truncatedDesc = rawDesc && rawDesc.length > 120
-      ? rawDesc.slice(0, 120) + '…'
-      : rawDesc;
-    const description = truncatedDesc
-      ? `${truncatedDesc}${eventDate ? ` - ${eventDate}` : ''}${
-          event.venueName ? ` en ${event.venueName}` : ''
-        }`
-      : `Comprá o vendé entradas para ${event.name}${eventDate ? ` el ${eventDate}` : ''}${
-          event.venueName ? ` en ${event.venueName}` : ''
-        }. Compra y venta con garantía en Revendiste.`;
+    // Always use a marketing-friendly meta description so the Google snippet
+    // stays consistent across events and doesn't depend on whatever copy the
+    // organizer pasted into event.description (which can be ALL CAPS, truncated
+    // mid-sentence, etc.). The organizer's description is still rendered on the
+    // page and used in the Event JSON-LD below.
+    const description = `Comprá o vendé entradas para ${event.name}${
+      eventDate ? ` el ${eventDate}` : ''
+    }${
+      event.venueName ? ` en ${event.venueName}` : ''
+    }. Compra y venta con garantía en Revendiste.`;
 
     // Get absolute URL for image (required for Open Graph)
     const imageUrl = metaImage?.url
@@ -242,7 +235,9 @@ export const Route = createFileRoute('/eventos/$slug')({
       '@context': 'https://schema.org',
       '@type': 'Event',
       name: event.name,
-      description: (event.description ?? description).replace(/\s+/g, ' ').trim(),
+      description: (event.description ?? description)
+        .replace(/\s+/g, ' ')
+        .trim(),
       startDate: event.eventStartDate,
       endDate: event.eventEndDate || event.eventStartDate,
       eventStatus: 'https://schema.org/EventScheduled',

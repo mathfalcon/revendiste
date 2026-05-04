@@ -1,6 +1,6 @@
 import {useState, useCallback, useEffect, useRef} from 'react';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
-import {usePostHog} from 'posthog-js/react';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {Link} from '@tanstack/react-router';
 import axios from 'axios';
 import {
@@ -74,18 +74,11 @@ const ACCEPTED_MIME_TYPES = [
   'video/quicktime',
   'video/webm',
 ];
-const ACCEPTED_EXTENSIONS =
-  '.jpg,.jpeg,.png,.webp,.heic,.heif,.mp4,.mov,.webm';
+const ACCEPTED_EXTENSIONS = '.jpg,.jpeg,.png,.webp,.heic,.heif,.mp4,.mov,.webm';
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 /** Thumbnail chip for an attached file with preview. */
-function FileThumbnail({
-  file,
-  onRemove,
-}: {
-  file: File;
-  onRemove: () => void;
-}) {
+function FileThumbnail({file, onRemove}: {file: File; onRemove: () => void}) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const isVideo = file.type.startsWith('video/');
   const isImage = file.type.startsWith('image/');
@@ -153,7 +146,6 @@ export function CreateCaseDialog({
   onSuccess,
 }: CreateCaseDialogProps) {
   const queryClient = useQueryClient();
-  const posthog = usePostHog();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [caseType, setCaseType] = useState<TicketReportCaseType>('other');
@@ -185,25 +177,22 @@ export function CreateCaseDialog({
     setFileError(null);
   }, []);
 
-  const validateAndAddFiles = useCallback(
-    (files: File[]) => {
-      setFileError(null);
-      const valid: File[] = [];
-      for (const file of files) {
-        if (!ACCEPTED_MIME_TYPES.includes(file.type)) {
-          setFileError('Solo se aceptan imágenes o videos');
-          return;
-        }
-        if (file.size > MAX_FILE_SIZE) {
-          setFileError('El archivo es demasiado grande (máx. 50 MB)');
-          return;
-        }
-        valid.push(file);
+  const validateAndAddFiles = useCallback((files: File[]) => {
+    setFileError(null);
+    const valid: File[] = [];
+    for (const file of files) {
+      if (!ACCEPTED_MIME_TYPES.includes(file.type)) {
+        setFileError('Solo se aceptan imágenes o videos');
+        return;
       }
-      setSelectedFiles(prev => [...prev, ...valid].slice(0, MAX_FILES));
-    },
-    [],
-  );
+      if (file.size > MAX_FILE_SIZE) {
+        setFileError('El archivo es demasiado grande (máx. 50 MB)');
+        return;
+      }
+      valid.push(file);
+    }
+    setSelectedFiles(prev => [...prev, ...valid].slice(0, MAX_FILES));
+  }, []);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -250,7 +239,7 @@ export function CreateCaseDialog({
         }
       }
 
-      posthog.capture('support_case_created', {
+      trackEvent(ANALYTICS_EVENTS.SUPPORT_CASE_CREATED, {
         case_type: caseType,
         entity_type: prefillContext.entityType,
         has_attachments: selectedFiles.length > 0,
@@ -380,16 +369,12 @@ export function CreateCaseDialog({
                   key={`${file.name}-${file.size}-${i}`}
                   file={file}
                   onRemove={() =>
-                    setSelectedFiles(prev =>
-                      prev.filter((_, idx) => idx !== i),
-                    )
+                    setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))
                   }
                 />
               ))}
               {selectedFiles.length < MAX_FILES && (
-                <AddFileButton
-                  onClick={() => fileInputRef.current?.click()}
-                />
+                <AddFileButton onClick={() => fileInputRef.current?.click()} />
               )}
             </div>
 

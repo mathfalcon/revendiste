@@ -1,7 +1,7 @@
 import {useEffect} from 'react';
 import {type UseFormReturn, useForm} from 'react-hook-form';
 import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
-import {usePostHog} from 'posthog-js/react';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {
   Form,
   FormControl,
@@ -168,7 +168,6 @@ function useExistingMethod(methodId?: string) {
 
 export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   const queryClient = useQueryClient();
-  const posthog = usePostHog();
   const dlocalPayoutsEnabled = useDlocalGoPayoutsEnabled();
   const existingMethod = useExistingMethod(methodId);
   const showPayoutTypeChoice = dlocalPayoutsEnabled && !methodId;
@@ -260,7 +259,7 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
         await addMethod.mutateAsync(body);
       }
     }
-    posthog.capture('payout_method_added', {
+    trackEvent(ANALYTICS_EVENTS.PAYOUT_METHOD_ADDED, {
       payout_type: data.payoutType,
       currency: data.currency,
       is_default: data.isDefault,

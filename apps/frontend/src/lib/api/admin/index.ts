@@ -211,6 +211,7 @@ export const rejectVerificationMutation = () => {
 
 export interface AdminEventsQueryParams extends PaginationQuery {
   includePast?: boolean;
+  includeDeleted?: boolean;
   search?: string;
   status?: 'active' | 'inactive';
 }
@@ -225,6 +226,7 @@ export const adminEventsQueryOptions = (params: AdminEventsQueryParams) => {
         sortBy: params.sortBy,
         sortOrder: params.sortOrder,
         includePast: params.includePast ?? false,
+        includeDeleted: params.includeDeleted ?? false,
         search: params.search,
         status: params.status,
       });
@@ -267,6 +269,7 @@ export const updateEventMutation = () => {
           | '72h'
           | null;
         status?: 'active' | 'inactive';
+        clearDeletion?: boolean;
       };
     }) => {
       const response = await api.admin.updateEvent(eventId, updates);
