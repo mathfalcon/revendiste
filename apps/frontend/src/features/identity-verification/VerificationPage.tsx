@@ -5,15 +5,14 @@ import {VerificationLoading} from './VerificationLoading';
 import {VerificationSuccess} from './VerificationSuccess';
 import {VerificationFailed} from './VerificationFailed';
 import {VerificationPending} from './VerificationPending';
-import {usePostHog} from 'posthog-js/react';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 
 export function VerificationPage() {
   const {data: user, isLoading, refetch} = useQuery(getCurrentUserQuery());
-  const posthog = usePostHog();
 
   useEffect(() => {
     if (!isLoading && user && !user.documentVerified) {
-      posthog.capture('identity_verification_started', {
+      trackEvent(ANALYTICS_EVENTS.IDENTITY_VERIFICATION_STARTED, {
         verification_status: user.verificationStatus,
         can_retry: user.canRetryLiveness,
       });
@@ -49,7 +48,10 @@ export function VerificationPage() {
   // User verification failed and cannot retry (exhausted attempts)
   if (user?.verificationStatus === 'failed' && !user?.canRetryLiveness) {
     return (
-      <VerificationFailed onComplete={handleVerificationComplete} canRetry={false} />
+      <VerificationFailed
+        onComplete={handleVerificationComplete}
+        canRetry={false}
+      />
     );
   }
 

@@ -1,6 +1,6 @@
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {useNavigate} from '@tanstack/react-router';
-import posthog from 'posthog-js';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +32,7 @@ export function CancelOrderDialog({
   const mutation = useMutation({
     ...cancelOrderMutation(orderId),
     onSuccess: () => {
-      posthog.capture('checkout_abandoned', {
+      trackEvent(ANALYTICS_EVENTS.CHECKOUT_ABANDONED, {
         order_id: orderId,
         event_slug: eventSlug,
       });
@@ -41,7 +41,9 @@ export function CancelOrderDialog({
 
       // If we have a slug, also invalidate the event query to refresh ticket availability
       if (eventSlug) {
-        queryClient.invalidateQueries({queryKey: ['events', 'slug', eventSlug]});
+        queryClient.invalidateQueries({
+          queryKey: ['events', 'slug', eventSlug],
+        });
       }
 
       onOpenChange(false);
