@@ -13,6 +13,26 @@ type RootHead = {
 const POPPINS_URL =
   'https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap';
 
+const GOOGLE_ADS_ID = 'AW-18109696447';
+
+const googleAdsHeadScripts: NonNullable<RootHead['scripts']> = import.meta.env
+  .PROD
+  ? [
+      {
+        src: `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`,
+        async: true,
+      },
+      {
+        children: `
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GOOGLE_ADS_ID}');
+`,
+      },
+    ]
+  : [];
+
 export function getRootHead(): RootHead {
   return {
     meta: [
@@ -113,14 +133,7 @@ export function getRootHead(): RootHead {
           })();
         `,
       },
-      {
-        children: `
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-          var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
-          j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-          f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${VITE_GTM_ID}');
-        `,
-      },
+      ...googleAdsHeadScripts,
     ],
   };
 }

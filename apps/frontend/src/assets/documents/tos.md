@@ -1,6 +1,6 @@
 # Términos y Condiciones de Uso – Revendiste
 
-**Última actualización:** 1 de Abril de 2026
+**Última actualización:** 30 de Abril de 2026
 
 ---
 
@@ -17,11 +17,11 @@
 
 ## 2. Aceptación de los Términos
 
-2.1. Los presentes Términos y Condiciones (en adelante, "**Términos**") regulan el acceso y uso de la plataforma Revendiste (en adelante, "**la Plataforma**") por parte de las personas que adquieren entradas (en adelante, "**Comprador**" o "**Compradores**").
+**2.1.** Los presentes Términos y Condiciones (en adelante, "**Términos**") regulan el acceso y uso de la plataforma Revendiste (en adelante, "**la Plataforma**") por parte de las personas que adquieren entradas (en adelante, "**Comprador**" o "**Compradores**").
 
-2.2. Al registrarse, navegar, o realizar cualquier operación en la Plataforma, el Comprador declara haber leído, comprendido y aceptado íntegramente estos Términos.
+**2.2.** Al registrarse, navegar, o realizar cualquier operación en la Plataforma, el Comprador declara haber leído, comprendido y aceptado íntegramente estos Términos.
 
-2.3. Revendiste se reserva el derecho de modificar estos Términos en cualquier momento. Las modificaciones serán publicadas en la Plataforma y entrarán en vigencia desde su publicación. Para cada operación regirán los Términos vigentes al momento de confirmar la compra.
+**2.3.** Revendiste se reserva el derecho de modificar estos Términos en cualquier momento. Las modificaciones serán publicadas en la Plataforma y entrarán en vigencia desde su publicación. Para cada operación regirán los Términos vigentes al momento de confirmar la compra.
 
 ---
 
@@ -38,6 +38,8 @@ A los efectos de estos Términos, se entenderá por:
 - **Precio del Ticket:** Importe informado en la publicación del Ticket, validado por Revendiste conforme las reglas de la Plataforma.
 - **Comisión:** Contraprestación que percibe Revendiste por la prestación de sus servicios de intermediación.
 - **Precio Original:** Precio de venta al público por el cual el Vendedor adquirió originalmente el Ticket a través de un canal oficial.
+- **Datos Personales:** Conforme al artículo 4 literal D) de la Ley Nº 18.331 de Protección de Datos Personales, toda información de cualquier tipo referida a personas físicas o jurídicas determinadas o determinables, incluyendo, sin limitación, datos de identificación, contacto, autenticación, transacción, técnicos y biométricos cuando corresponda.
+- **Propiedad Intelectual:** Comprende derechos de autor y derechos conexos, bases de datos, invenciones (patentadas o no), marcas y nombres comerciales, know-how, secretos industriales o comerciales, compilaciones de información y cualquier derecho intelectual sobre software, diseño de interfaz, código fuente, código objeto, manuales y toda otra información o documentación asociada a la Plataforma.
 
 ---
 
@@ -55,12 +57,12 @@ Revendiste **garantiza la ejecución de la transferencia** del Ticket del Vended
 
 ### 4.2. Regla de Precio Máximo (Protección al Consumidor)
 
-En todas las operaciones realizadas a través de la Plataforma, el Ticket **podrá ser transferido hasta un máximo del 120% del Precio Original** (es decir, hasta un 20% por encima del valor nominal).
+En todas las operaciones realizadas a través de la Plataforma, el Ticket **podrá ser transferido hasta un máximo del 115% del Precio Original** (es decir, hasta un 15% por encima del valor nominal).
 
 **Fundamento de esta regla:**
 
 - **Protección al comprador:** Limitar el precio máximo protege a los compradores de sobreprecios excesivos y especulación.
-- **Recuperación de costos de adquisición:** El margen del 20% permite a los publicadores recuperar los costos asociados a la compra original (comisiones de plataformas de venta primaria, que típicamente son del 10-12%), sin generar ganancias.
+- **Recuperación de costos de adquisición:** El margen del 15% permite a los publicadores recuperar los costos asociados a la compra original (comisiones de plataformas de venta primaria, que típicamente son del 10-12%) y diferencias menores asociadas a la operativa, sin generar ganancias significativas.
 - **Equilibrio justo:** Esta regla equilibra los intereses de compradores y publicadores, permitiendo la recuperación de la inversión original sin fomentar la reventa con fines de lucro.
 
 **Aplicación:**
@@ -77,17 +79,25 @@ Si una publicación indica "**Venta Oficial**", "**Vendido por Revendiste**" o "
 
 ## 5. Cuenta de Usuario y Requisitos
 
-### 5.1. Para utilizar la Plataforma como Comprador, es requisito:
+### 5.1. Requisitos
+
+Para utilizar la Plataforma como Comprador es requisito:
 
 - Tener capacidad legal para contratar (ser mayor de 18 años o contar con autorización de padre, tutor o curador).
 - Aceptar los presentes Términos.
 - Crear una cuenta de usuario proporcionando datos personales veraces.
 
-### 5.2. El Comprador garantiza la veracidad, vigencia, exactitud y actualización de los datos proporcionados.
+### 5.2. Veracidad de los datos
 
-### 5.3. Revendiste podrá solicitar verificaciones adicionales (correo electrónico, teléfono, documento de identidad) para prevenir fraudes y garantizar la seguridad de las operaciones.
+El Comprador garantiza la veracidad, vigencia, exactitud y actualización de los datos proporcionados.
 
-### 5.4. Revendiste se reserva el derecho de suspender temporal o definitivamente cualquier cuenta que:
+### 5.3. Verificaciones adicionales
+
+Revendiste podrá solicitar verificaciones adicionales (correo electrónico, teléfono, documento de identidad) para prevenir fraudes y garantizar la seguridad de las operaciones.
+
+### 5.4. Suspensión de cuentas
+
+Revendiste se reserva el derecho de suspender temporal o definitivamente cualquier cuenta que:
 
 - Proporcione información falsa, inexacta o fraudulenta.
 - Incumpla estos Términos.
@@ -97,11 +107,11 @@ Si una publicación indica "**Venta Oficial**", "**Vendido por Revendiste**" o "
 
 ## 6. Información de los Tickets
 
-6.1. La información del Ticket (evento, fecha, hora, sector, fila, asiento, restricciones, etc.) es provista por el Vendedor o por el canal oficial en caso de Venta Oficial.
+**6.1.** La información del Ticket (evento, fecha, hora, sector, fila, asiento, restricciones, etc.) es provista por el Vendedor o por el canal oficial en caso de Venta Oficial.
 
-6.2. Revendiste aplica controles y validaciones razonables sobre la información publicada, sin perjuicio de las responsabilidades del Vendedor conforme estos Términos.
+**6.2.** Revendiste aplica controles y validaciones razonables sobre la información publicada, sin perjuicio de las responsabilidades del Vendedor conforme estos Términos.
 
-6.3. En caso de discrepancia entre la información publicada y las características reales del Ticket, el Comprador tendrá derecho a iniciar un reclamo conforme el procedimiento establecido en estos Términos.
+**6.3.** En caso de discrepancia entre la información publicada y las características reales del Ticket, el Comprador tendrá derecho a iniciar un reclamo conforme el procedimiento establecido en estos Términos.
 
 ---
 
@@ -206,23 +216,42 @@ En caso de cancelación o postergación del Evento:
 - Revendiste comunicará la información oficial disponible.
 - Cuando corresponda, procesará los reembolsos conforme las reglas aplicables.
 
-### 9.7. Comisión No Reembolsable
+### 9.7. Derecho de Retracto / Arrepentimiento (art. 16 Ley 17.250)
 
-La Comisión cobrada por Revendiste corresponde a un **servicio ya prestado** (intermediación, verificación, seguridad de la operación) y **NO es reembolsable**, salvo obligación legal o resolución que expresamente disponga lo contrario.
+Conforme al artículo 16 de la Ley Nº 17.250 de Defensa del Consumidor, el Comprador que contrate fuera del local comercial tiene derecho a revocar la operación dentro de los **5 (cinco) días hábiles** contados desde la fecha de confirmación de la compra o desde la entrega del Ticket, lo que ocurra primero.
+
+**Aplicación al servicio de Revendiste.** Por tratarse de Tickets de espectáculos públicos, cuya naturaleza supone una fecha y hora determinadas y una capacidad limitada, este derecho podrá ejercerse únicamente mientras concurran ambas condiciones: (a) el Ticket no haya sido aún transferido digitalmente al Comprador, y (b) el Evento no se haya realizado. Una vez transferido el Ticket o realizado el Evento, el servicio de intermediación se considera ejecutado y el derecho de retracto resulta inaplicable conforme la naturaleza del bien, en línea con las excepciones reconocidas por el artículo 16 último párrafo de la Ley 17.250.
+
+**Cómo ejercerlo.** Para ejercer este derecho, el Comprador deberá comunicarlo a `ayuda@revendiste.com` indicando el número de Operación y manifestando expresamente su voluntad de revocar la compra. Cuando el retracto proceda, Revendiste reembolsará el Precio del Ticket pagado por el Comprador dentro de los plazos razonables que permitan los medios de pago intervinientes.
+
+**Defensa del Consumidor.** Sin perjuicio de los procedimientos internos de Revendiste, el Comprador podrá acudir en todo momento al **Área de Defensa del Consumidor del Ministerio de Economía y Finanzas** ([gub.uy/ministerio-economia-finanzas](https://www.gub.uy/ministerio-economia-finanzas/)) para presentar reclamos vinculados a estos Términos.
+
+### 9.8. Comisión
+
+La Comisión cobrada por Revendiste corresponde a la prestación efectiva del servicio de intermediación (mediación, verificación, custodia de fondos y seguridad de la operación):
+
+- Cuando el servicio de intermediación se haya **ejecutado integralmente** (transferencia del Ticket completada), la Comisión **no es reembolsable**, salvo obligación legal o resolución que expresamente disponga lo contrario.
+- Cuando el servicio de intermediación **no haya sido prestado** (por ejemplo, retracto válido conforme la Sección 9.7 antes de la transferencia del Ticket, o cancelación del Evento previa a la transferencia), la Comisión correspondiente **será reembolsada al Comprador** junto con el Precio del Ticket.
 
 ---
 
 ## 10. Contracargos (Chargebacks)
 
-### 10.1. Si el Comprador inicia un contracargo ante su banco o medio de pago, Revendiste podrá:
+### 10.1. Inicio de un contracargo
+
+Si el Comprador inicia un contracargo ante su banco o medio de pago, Revendiste podrá:
 
 - Suspender la cuenta del Comprador.
 - Retener fondos asociados a la Operación hasta la resolución del contracargo.
 - Aportar información y evidencia al procesador de pago para disputar el contracargo.
 
-### 10.2. El Comprador se compromete a cooperar con Revendiste aportando información veraz en caso de ser requerido.
+### 10.2. Cooperación del Comprador
 
-### 10.3. El **uso abusivo o fraudulento de contracargos** podrá resultar en:
+El Comprador se compromete a cooperar con Revendiste aportando información veraz en caso de ser requerido.
+
+### 10.3. Uso abusivo
+
+El **uso abusivo o fraudulento de contracargos** podrá resultar en:
 
 - Cancelación permanente de la cuenta.
 - Acciones legales correspondientes.
@@ -247,9 +276,9 @@ El incumplimiento de estas prohibiciones podrá resultar en la suspensión o can
 
 ## 12. Propiedad Intelectual
 
-12.1. La Plataforma, incluyendo su diseño, código, marcas, logotipos, contenidos y software, pertenecen a Revendiste o sus licenciantes.
+**12.1.** La Plataforma, incluyendo su diseño, código, marcas, logotipos, contenidos y software, pertenecen a Revendiste o sus licenciantes.
 
-12.2. Se prohíbe la reproducción, distribución, modificación o uso no autorizado de cualquier elemento de la Plataforma.
+**12.2.** Se prohíbe la reproducción, distribución, modificación o uso no autorizado de cualquier elemento de la Plataforma.
 
 ---
 
@@ -261,18 +290,26 @@ El tratamiento de datos personales del Comprador se rige por la **Política de P
 
 ## 14. Limitación de Responsabilidad
 
-### 14.1. Revendiste brinda la Plataforma "tal cual" ("as is") y realiza esfuerzos razonables para garantizar su disponibilidad y funcionamiento.
+### 14.1. Servicio "tal cual"
 
-### 14.2. Revendiste **NO responde por:**
+Revendiste brinda la Plataforma "tal cual" ("as is") y realiza esfuerzos razonables para garantizar su disponibilidad y funcionamiento.
+
+### 14.2. Exclusiones
+
+Revendiste **NO responde por:**
 
 - Actos, omisiones o decisiones del organizador del Evento (cambios de fecha, cancelaciones, restricciones de acceso, etc.).
 - Hechos imputables exclusivamente al Vendedor.
 - Interrupciones o fallas técnicas fuera de su control.
 - Actos de terceros (procesadores de pago, proveedores de servicios, etc.).
 
-### 14.3. **Límite de responsabilidad:** En la máxima medida permitida por la ley, la responsabilidad total de Revendiste por cualquier Operación se limita al monto de la **Comisión efectivamente cobrada** en dicha Operación.
+### 14.3. Límite de responsabilidad
 
-### 14.4. Esta limitación no afecta los derechos irrenunciables del consumidor conforme la normativa uruguaya vigente.
+En la máxima medida permitida por la ley, la responsabilidad total de Revendiste por cualquier Operación se limita al monto de la **Comisión efectivamente cobrada** en dicha Operación.
+
+### 14.4. Derechos irrenunciables
+
+Esta limitación no afecta los derechos irrenunciables del consumidor conforme la normativa uruguaya vigente.
 
 ---
 
@@ -288,32 +325,40 @@ El Comprador se obliga a mantener indemne a Revendiste, sus socios, empleados, c
 
 ## 16. Comunicaciones
 
-### 16.1. Todas las notificaciones a los Compradores serán válidas cuando se realicen a:
+### 16.1. Canales de notificación
+
+Todas las notificaciones a los Compradores serán válidas cuando se realicen a:
 
 - El correo electrónico registrado en la cuenta.
 - El número de teléfono registrado (si aplica).
 - Mensajes de WhatsApp al número registrado (cuando el usuario haya activado este canal).
 - Notificaciones dentro de la Plataforma (in-app).
 
-### 16.2. Todas las comunicaciones del Comprador a Revendiste deberán dirigirse a: **ayuda@revendiste.com**
+### 16.2. Domicilio electrónico constituido
+
+El Comprador declara como **válido a todos los efectos legales** el domicilio electrónico (correo electrónico) registrado en su cuenta. Las comunicaciones cursadas a dicho correo se considerarán **fehacientemente recibidas a las 24 (veinticuatro) horas de su envío**, salvo prueba en contrario aportada por el Comprador. Es responsabilidad del Comprador mantener actualizado dicho correo y revisar regularmente su bandeja de entrada (incluyendo la carpeta de correo no deseado).
+
+### 16.3. Contacto con Revendiste
+
+Todas las comunicaciones del Comprador a Revendiste deberán dirigirse a **ayuda@revendiste.com**.
 
 ---
 
 ## 17. Ley Aplicable y Jurisdicción
 
-17.1. Estos Términos se rigen por las leyes de la **República Oriental del Uruguay**.
+**17.1.** Estos Términos se rigen por las leyes de la **República Oriental del Uruguay**.
 
-17.2. Para cualquier controversia derivada de estos Términos, las partes se someten a la jurisdicción de los **Tribunales competentes de la ciudad de Montevideo**, sin perjuicio de los derechos del consumidor de acudir a la **Área de Defensa del Consumidor** u otros organismos competentes.
+**17.2.** Para cualquier controversia derivada de estos Términos, las partes se someten a la jurisdicción de los **Tribunales competentes de la ciudad de Montevideo**, sin perjuicio de los derechos del consumidor de acudir al **Área de Defensa del Consumidor** del Ministerio de Economía y Finanzas u otros organismos competentes.
 
 ---
 
 ## 18. Disposiciones Generales
 
-18.1. **Cesión:** El Comprador no podrá ceder sus derechos u obligaciones bajo estos Términos sin autorización previa y escrita de Revendiste.
+**18.1. Cesión.** El Comprador no podrá ceder sus derechos u obligaciones bajo estos Términos sin autorización previa y escrita de Revendiste.
 
-18.2. **Nulidad parcial:** Si cualquier disposición de estos Términos fuese declarada nula, inválida o inexigible, dicha disposición se considerará separable y no afectará la validez del resto de los Términos.
+**18.2. Nulidad parcial.** Si cualquier disposición de estos Términos fuese declarada nula, inválida o inexigible, dicha disposición se considerará separable y no afectará la validez del resto de los Términos.
 
-18.3. **Acuerdo completo:** Estos Términos, junto con la Política de Privacidad, constituyen el acuerdo completo entre el Comprador y Revendiste respecto al uso de la Plataforma.
+**18.3. Acuerdo completo.** Estos Términos, junto con la Política de Privacidad, constituyen el acuerdo completo entre el Comprador y Revendiste respecto al uso de la Plataforma.
 
 ---
 
@@ -332,19 +377,18 @@ El Comprador se obliga a mantener indemne a Revendiste, sus socios, empleados, c
 
 ## 2. Aceptación de los Términos
 
-2.1. Los presentes Términos y Condiciones (en adelante, "**Términos**") regulan el acceso y uso de la plataforma Revendiste (en adelante, "**la Plataforma**") por parte de las personas que ofrecen entradas para su transferencia (en adelante, "**Vendedor**" o "**Vendedores**").
+**2.1.** Los presentes Términos y Condiciones (en adelante, "**Términos**") regulan el acceso y uso de la plataforma Revendiste (en adelante, "**la Plataforma**") por parte de las personas que ofrecen entradas para su transferencia (en adelante, "**Vendedor**" o "**Vendedores**").
 
-2.2. Al registrarse, publicar Tickets o participar en cualquier Operación, el Vendedor declara haber leído, comprendido y aceptado íntegramente estos Términos.
+**2.2.** Al registrarse, publicar Tickets o participar en cualquier Operación, el Vendedor declara haber leído, comprendido y aceptado íntegramente estos Términos.
 
-2.3. Revendiste se reserva el derecho de modificar estos Términos en cualquier momento. Para cada operación regirán los Términos vigentes al momento de confirmar la publicación.
+**2.3.** Revendiste se reserva el derecho de modificar estos Términos en cualquier momento. Para cada operación regirán los Términos vigentes al momento de confirmar la publicación.
 
 ---
 
 ## 3. Definiciones
 
-Las definiciones establecidas en la Parte I (Términos para Compradores) aplican igualmente a esta Parte II, con las siguientes adiciones:
+Las definiciones establecidas en la Parte I (Términos para Compradores) aplican igualmente a esta Parte II, con la siguiente adición:
 
-- **Precio Original:** Precio de venta al público por el cual el Vendedor adquirió originalmente el Ticket a través de un canal oficial.
 - **Liquidación:** Transferencia de los fondos correspondientes al Vendedor una vez cumplidas las condiciones establecidas en estos Términos.
 
 ---
@@ -353,25 +397,47 @@ Las definiciones establecidas en la Parte I (Términos para Compradores) aplican
 
 Al utilizar la Plataforma, el Vendedor declara y garantiza que:
 
-### 4.1. **Titularidad legítima:** Es el titular legítimo del Ticket y tiene el derecho válido e irrestricto para transferirlo.
+### 4.1. Titularidad legítima
 
-### 4.2. **Adquisición por canal oficial:** El Ticket fue adquirido a través de un canal de venta oficial autorizado por el organizador del Evento.
+Es el titular legítimo del Ticket y tiene el derecho válido e irrestricto para transferirlo.
 
-### 4.3. **Ticket válido:** El Ticket:
+### 4.2. Adquisición por canal oficial
+
+El Ticket fue adquirido a través de un canal de venta oficial autorizado por el organizador del Evento.
+
+### 4.3. Ticket válido
+
+El Ticket:
 
 - No está duplicado, bloqueado, anulado ni sujeto a restricciones no informadas.
 - No ha sido previamente transferido a otra persona.
 - Es válido para el Evento indicado.
 
-### 4.4. **Precio máximo:** El Vendedor (Publicador) se compromete a **NO publicar ni transferir Tickets a un precio superior al 120% del Precio Original** (valor nominal más un máximo de 20% para recuperación de costos de adquisición). Este margen permite recuperar las comisiones pagadas en la compra original, pero no está destinado a generar ganancias. Revendiste podrá solicitar comprobantes de compra para verificar el cumplimiento de esta regla.
+### 4.4. Precio máximo
 
-### 4.5. **Información exacta:** Proveerá información exacta y completa del Ticket (evento, fecha, hora, sector, fila, asiento, restricciones, etc.).
+El Vendedor (Publicador) se compromete a **NO publicar ni transferir Tickets a un precio superior al 115% del Precio Original** (valor nominal más un máximo de 15% para recuperación de costos de adquisición). Este margen permite recuperar las comisiones pagadas en la compra original, pero no está destinado a generar ganancias. Revendiste podrá solicitar comprobantes de compra para verificar el cumplimiento de esta regla.
 
-### 4.6. **Categoría/Tanda correcta:** El Publicador se compromete a seleccionar la **categoría, tanda o tipo de entrada correcta** que corresponde exactamente al Ticket que posee. Queda **expresamente prohibido** seleccionar una categoría diferente a la real (por ejemplo, seleccionar "Tanda General" cuando el Ticket es de "Preventa", o viceversa) con el fin de evadir el límite de precio máximo permitido o engañar al Comprador.
+### 4.5. Autorización del Organizador
+
+El Vendedor declara y garantiza, bajo su exclusiva responsabilidad, que cuenta con autorización suficiente (expresa o implícita conforme los términos del Ticket original y las condiciones del organizador del Evento) para transferir el Ticket a través de la Plataforma, conforme lo requerido por la normativa aplicable en la República Oriental del Uruguay, en particular el artículo 360 numeral 3 del Código Penal (texto incorporado originalmente como numeral 11 por la Ley Nº 18.103 de 12 de marzo de 2007 y modificado por la Ley Nº 19.120 de 20 de agosto de 2013).
+
+Revendiste actúa exclusivamente como plataforma tecnológica de intermediación y **no verifica individualmente la autorización del organizador para cada Ticket**. El Vendedor es el único responsable por dicha autorización y por las consecuencias legales que pudieran derivar de su falta.
+
+Ante notificación fundada del organizador del Evento de que no autoriza la transferencia de Tickets a través de la Plataforma, Revendiste podrá retirar las publicaciones afectadas sin responsabilidad alguna y sin perjuicio de las acciones que pudieran corresponder contra el Vendedor.
+
+### 4.6. Información exacta
+
+Proveerá información exacta y completa del Ticket (evento, fecha, hora, sector, fila, asiento, restricciones, etc.).
+
+### 4.7. Categoría/Tanda correcta
+
+El Publicador se compromete a seleccionar la **categoría, tanda o tipo de entrada correcta** que corresponde exactamente al Ticket que posee. Queda **expresamente prohibido** seleccionar una categoría diferente a la real (por ejemplo, seleccionar "Tanda General" cuando el Ticket es de "Preventa", o viceversa) con el fin de evadir el límite de precio máximo permitido o engañar al Comprador.
 
 > **ADVERTENCIA:** La falsificación de la categoría o tanda del Ticket constituye una **violación grave** de estos Términos y será considerada **conducta fraudulenta**, con las consecuencias establecidas en la Sección 5.3.
 
-4.7. **Cumplimiento normativo:** Cumplirá con todas las condiciones del organizador del Evento y la normativa aplicable en Uruguay.
+### 4.8. Cumplimiento normativo
+
+Cumplirá con todas las condiciones del organizador del Evento y la normativa aplicable en Uruguay.
 
 ---
 
@@ -397,12 +463,12 @@ Para poder publicar Tickets en la Plataforma, el Vendedor **deberá completar un
 
 ### 5.1.1. Seguridad de los Datos de Verificación
 
-Revendiste implementa las más altas medidas de seguridad para proteger los datos de verificación de identidad:
+Revendiste implementa medidas técnicas y organizativas razonables, conforme a estándares de la industria, para proteger los datos de verificación de identidad:
 
-- **Cifrado de datos:** Las imágenes de documentos y verificación facial se almacenan utilizando cifrado AES-256, el mismo estándar utilizado por instituciones financieras.
-- **Acceso restringido:** Solo personal autorizado de Revendiste puede acceder a las imágenes en casos excepcionales que requieran revisión manual de seguridad o investigación de fraude.
-- **Almacenamiento seguro de datos biométricos:** Las imágenes del proceso de verificación de vida (liveness) se almacenan de forma segura para fines de auditoría, revisión manual y cumplimiento legal.
-- **Procesamiento automatizado:** La verificación se realiza principalmente mediante sistemas automatizados de reconocimiento de texto y comparación facial. En casos borderline, puede requerirse revisión manual.
+- **Cifrado de datos:** Las imágenes de documentos y de verificación facial se almacenan utilizando cifrado AES-256.
+- **Acceso restringido:** Solo personal autorizado de Revendiste puede acceder a las imágenes, en casos excepcionales que requieran revisión manual de seguridad o investigación de fraude.
+- **Almacenamiento de datos biométricos:** Las imágenes del proceso de verificación de vida (liveness) se almacenan con las mismas medidas técnicas, para fines de auditoría, revisión manual y cumplimiento legal.
+- **Procesamiento automatizado:** La verificación se realiza principalmente mediante sistemas automatizados de reconocimiento de texto y comparación facial. En casos dudosos puede requerirse revisión manual.
 
 ### 5.2. Rechazo o Limitación
 
@@ -418,7 +484,7 @@ Si un Vendedor incurre en cualquiera de las siguientes conductas, será consider
 
 - Publicar Tickets falsos, inválidos, duplicados o bloqueados.
 - **Falsificar la categoría, tanda o tipo de entrada** (por ejemplo, seleccionar "Tanda General 4" cuando el Ticket es de "Preventa" o una categoría de menor precio).
-- Publicar a un precio superior al máximo permitido (120% del Precio Original).
+- Publicar a un precio superior al máximo permitido (115% del Precio Original).
 - Proporcionar información falsa o engañosa sobre el Ticket.
 - Cualquier otra conducta destinada a engañar al Comprador o evadir las reglas de la Plataforma.
 
@@ -431,7 +497,7 @@ Si un Vendedor incurre en cualquiera de las siguientes conductas, será consider
 - **Comunicación a las autoridades competentes** cuando sea requerido o corresponda.
 - **Acciones legales** civiles y/o penales que correspondan por los daños causados.
 
-> **IMPORTANTE:** La retención de fondos por falsificación de información o fraude podrá extenderse **indefinidamente** hasta que se resuelvan todas las disputas y se verifique que no existen reclamos pendientes de otros Compradores afectados por el mismo Vendedor.
+> **IMPORTANTE:** La retención de fondos por falsificación de información o fraude podrá extenderse **por el plazo razonable necesario para resolver las disputas existentes**, con un máximo de **12 (doce) meses** desde la última operación bajo disputa, salvo orden de autoridad judicial o administrativa competente que disponga un plazo distinto. Vencido dicho plazo sin reclamos pendientes acreditados, los fondos se liquidarán al Vendedor conforme las reglas generales, sin perjuicio de las demás sanciones aplicables.
 
 ### 5.4. Tratamiento de Datos
 
@@ -452,7 +518,7 @@ El Vendedor debe cargar información **completa, veraz y exacta** del Ticket, in
 - Sector, fila y asiento (cuando aplique)
 - Restricciones (si las hubiere)
 - Precio Original de compra (según comprobante)
-- Precio de publicación (hasta un máximo del 120% del Precio Original, permitiendo recuperar costos de adquisición)
+- Precio de publicación (hasta un máximo del 115% del Precio Original, permitiendo recuperar costos de adquisición)
 
 > **OBLIGATORIO:** La categoría/tanda seleccionada **DEBE coincidir exactamente** con la categoría real del Ticket. Seleccionar una categoría diferente para evadir el límite de precio máximo es considerado **fraude** y resultará en la suspensión de la cuenta y retención de fondos (ver Sección 5.3).
 
@@ -517,7 +583,7 @@ Si existe un reclamo o contracargo pendiente, Revendiste podrá retener los fond
 
 ### 8.4. Forma de Liquidación
 
-La liquidación se realizará mediante transferencia a la cuenta bancaria o cuenta de PayPal declarada por el Vendedor en su perfil de usuario. El Vendedor podrá elegir su método de liquidación preferido al configurar su perfil.
+La liquidación se realizará mediante transferencia bancaria a través del procesador de pagos **dLocal**, conforme los datos declarados por el Vendedor en su perfil de usuario. Los plazos efectivos de acreditación dependerán del banco receptor y de los tiempos operativos de dLocal.
 
 ### 8.5. Monto a Liquidar
 
@@ -576,13 +642,17 @@ La Comisión cobrada por Revendiste corresponde a un servicio ya prestado y **NO
 
 ## 11. Contracargos (Chargebacks)
 
-11.1. Ante contracargos iniciados por el Comprador, Revendiste podrá:
+### 11.1. Inicio de un contracargo
+
+Ante contracargos iniciados por el Comprador, Revendiste podrá:
 
 - Descontar del Vendedor el monto perdido más los cargos asociados, **cuando el contracargo derive de un incumplimiento imputable al Vendedor** (Ticket inválido, no entregado, fraude, etc.).
 - Suspender la cuenta del Vendedor durante la investigación.
 - Retener fondos de otras operaciones hasta resolver el contracargo.
 
-  11.2. El Vendedor se compromete a cooperar con Revendiste aportando información y documentación para disputar contracargos fraudulentos.
+### 11.2. Cooperación del Vendedor
+
+El Vendedor se compromete a cooperar con Revendiste aportando información y documentación para disputar contracargos fraudulentos.
 
 ---
 
@@ -604,7 +674,7 @@ Revendiste podrá aplicar las siguientes sanciones ante incumplimientos de estos
 Las siguientes conductas se consideran **infracciones graves** y resultarán en **suspensión o cancelación inmediata** de la cuenta, junto con **retención de todos los fondos pendientes**:
 
 - **Falsificación de categoría/tanda:** Seleccionar una categoría diferente a la real del Ticket para evadir el límite de precio máximo.
-- **Exceder precio máximo:** Publicar a un precio superior al 120% del Precio Original.
+- **Exceder precio máximo:** Publicar a un precio superior al 115% del Precio Original.
 - **Tickets falsos o inválidos:** Publicar entradas falsas, duplicadas, bloqueadas o inválidas.
 - **Información fraudulenta:** Proporcionar información falsa sobre el Ticket o el Evento.
 - **Múltiples cuentas:** Crear múltiples cuentas para evadir sanciones o restricciones.
@@ -623,11 +693,11 @@ Las sanciones serán aplicadas según:
 
 ## 13. Propiedad Intelectual
 
-13.1. El Vendedor no adquiere ningún derecho de propiedad intelectual sobre la Plataforma, sus marcas, diseños o software.
+**13.1.** El Vendedor no adquiere ningún derecho de propiedad intelectual sobre la Plataforma, sus marcas, diseños o software.
 
-13.2. El contenido que el Vendedor suba a la Plataforma (imágenes de Tickets, descripciones, etc.) debe ser propio o contar con las autorizaciones correspondientes.
+**13.2.** El contenido que el Vendedor suba a la Plataforma (imágenes de Tickets, descripciones, etc.) debe ser propio o contar con las autorizaciones correspondientes.
 
-13.3. El Vendedor concede a Revendiste una licencia limitada, no exclusiva y gratuita para utilizar dicho contenido con fines de:
+**13.3.** El Vendedor concede a Revendiste una licencia limitada, no exclusiva y gratuita para utilizar dicho contenido con fines de:
 
 - Verificación de Tickets.
 - Operación de la Plataforma.
@@ -645,11 +715,17 @@ El tratamiento de datos personales del Vendedor (incluyendo los datos de verific
 
 ## 15. Limitación de Responsabilidad
 
-15.1. Revendiste brinda la Plataforma "tal cual" ("as is") y realiza esfuerzos razonables para garantizar su disponibilidad y funcionamiento.
+### 15.1. Servicio "tal cual"
 
-15.2. **Límite de responsabilidad:** En la máxima medida permitida por la ley, la responsabilidad total de Revendiste frente al Vendedor por cualquier Operación se limita al monto de la **Comisión efectivamente cobrada** al Vendedor en dicha Operación.
+Revendiste brinda la Plataforma "tal cual" ("as is") y realiza esfuerzos razonables para garantizar su disponibilidad y funcionamiento.
 
-15.3. Revendiste **NO responde por:**
+### 15.2. Límite de responsabilidad
+
+En la máxima medida permitida por la ley, la responsabilidad total de Revendiste frente al Vendedor por cualquier Operación se limita al monto de la **Comisión efectivamente cobrada** al Vendedor en dicha Operación.
+
+### 15.3. Exclusiones
+
+Revendiste **NO responde por:**
 
 - Decisiones o actos del Comprador.
 - Cancelaciones o cambios del Evento por parte del organizador.
@@ -674,32 +750,40 @@ El Vendedor se obliga a mantener indemne a Revendiste, sus socios, empleados, co
 
 ## 17. Comunicaciones
 
-17.1. Todas las notificaciones al Vendedor serán válidas cuando se realicen a:
+### 17.1. Canales de notificación
+
+Todas las notificaciones al Vendedor serán válidas cuando se realicen a:
 
 - El correo electrónico registrado en la cuenta.
 - El número de teléfono registrado (si aplica).
 - Mensajes de WhatsApp al número registrado (cuando el usuario haya activado este canal).
 - Notificaciones dentro de la Plataforma (in-app).
 
-  17.2. Todas las comunicaciones del Vendedor a Revendiste deberán dirigirse a: **ayuda@revendiste.com**
+### 17.2. Domicilio electrónico constituido
+
+El Vendedor declara como **válido a todos los efectos legales** el domicilio electrónico (correo electrónico) registrado en su cuenta. Las comunicaciones cursadas a dicho correo se considerarán **fehacientemente recibidas a las 24 (veinticuatro) horas de su envío**, salvo prueba en contrario aportada por el Vendedor. Es responsabilidad del Vendedor mantener actualizado dicho correo y revisar regularmente su bandeja de entrada (incluyendo la carpeta de correo no deseado).
+
+### 17.3. Contacto con Revendiste
+
+Todas las comunicaciones del Vendedor a Revendiste deberán dirigirse a **ayuda@revendiste.com**.
 
 ---
 
 ## 18. Ley Aplicable y Jurisdicción
 
-18.1. Estos Términos se rigen por las leyes de la **República Oriental del Uruguay**.
+**18.1.** Estos Términos se rigen por las leyes de la **República Oriental del Uruguay**.
 
-18.2. Para cualquier controversia derivada de estos Términos, las partes se someten a la jurisdicción de los **Tribunales competentes de la ciudad de Montevideo**.
+**18.2.** Para cualquier controversia derivada de estos Términos, las partes se someten a la jurisdicción de los **Tribunales competentes de la ciudad de Montevideo**.
 
 ---
 
 ## 19. Disposiciones Generales
 
-19.1. **Cesión:** El Vendedor no podrá ceder sus derechos u obligaciones bajo estos Términos sin autorización previa y escrita de Revendiste.
+**19.1. Cesión.** El Vendedor no podrá ceder sus derechos u obligaciones bajo estos Términos sin autorización previa y escrita de Revendiste.
 
-19.2. **Nulidad parcial:** Si cualquier disposición de estos Términos fuese declarada nula, inválida o inexigible, dicha disposición se considerará separable y no afectará la validez del resto de los Términos.
+**19.2. Nulidad parcial.** Si cualquier disposición de estos Términos fuese declarada nula, inválida o inexigible, dicha disposición se considerará separable y no afectará la validez del resto de los Términos.
 
-19.3. **Acuerdo completo:** Estos Términos, junto con la Política de Privacidad, constituyen el acuerdo completo entre el Vendedor y Revendiste respecto al uso de la Plataforma.
+**19.3. Acuerdo completo.** Estos Términos, junto con la Política de Privacidad, constituyen el acuerdo completo entre el Vendedor y Revendiste respecto al uso de la Plataforma.
 
 ---
 
@@ -717,9 +801,15 @@ Revendiste es una plataforma de intermediación operada por FALCON GALLAZTEGUI M
 
 **Revendiste NO es una revendedora de entradas.** No compramos ni vendemos Tickets. Cobramos una comisión únicamente por nuestro servicio de intermediación segura.
 
+### 1.1. Naturaleza de plataforma de intermediación
+
+Revendiste no comercializa entradas por cuenta propia. Los Tickets son ofrecidos por Vendedores que declaran ser titulares legítimos y contar con la autorización del organizador del Evento conforme la Sección 4.5 de la Parte II. La regla de precio máximo (115% del Precio Original) tiene por finalidad excluir cualquier intención de lucro especulativo, limitando el margen al estricto recupero de costos de adquisición.
+
+Bajo este modelo, Revendiste opera dentro de la legalidad uruguaya, en particular respecto del artículo 360 numeral 3 del Código Penal, cuyo tipo penal requiere acumulativamente la falta de autorización del organizador y la intención de obtener un provecho económico.
+
 ## 2. Regla Fundamental: Precio Justo
 
-En protección del consumidor, **el precio máximo de transferencia está limitado al 120% del valor original** (hasta un 20% por encima del precio nominal).
+En protección del consumidor, **el precio máximo de transferencia está limitado al 115% del valor original** (hasta un 15% por encima del precio nominal).
 
 **Esta regla existe para:**
 
@@ -729,7 +819,30 @@ En protección del consumidor, **el precio máximo de transferencia está limita
 
 Esta regla es obligatoria para todas las operaciones en la Plataforma. Exceder el precio máximo permitido resultará en la cancelación de publicaciones, operaciones y/o cuentas.
 
-## 3. Contacto
+## 3. Mediación y Resolución de Disputas
+
+Ante cualquier conflicto entre Comprador y Vendedor relacionado con una Operación, **Revendiste mediará entre las partes** con criterios objetivos y de buena fe, sobre la base de la información y evidencia aportada por ambas. La decisión adoptada por Revendiste en este proceso será **vinculante tanto para el Vendedor como para el Comprador**, quienes expresamente aceptan sujetarse a ella en virtud de los presentes Términos y reconocen que dicha decisión constituye la vía primaria de resolución de la disputa.
+
+**Salvedad sobre derechos del consumidor.** Lo anterior no afecta los derechos irrenunciables que la normativa uruguaya de defensa del consumidor (Ley Nº 17.250) reconoce al Comprador, quien podrá acudir al **Área de Defensa del Consumidor del Ministerio de Economía y Finanzas** o a la jurisdicción competente cuando entienda que sus derechos no han sido debidamente atendidos por el procedimiento interno.
+
+**Abstención de mediar.** Revendiste podrá abstenerse de mediar cuando entienda que no cuenta con elementos suficientes para arribar a una decisión fundada. En tal caso, los fondos asociados a la Operación quedarán retenidos hasta tanto se acredite acuerdo entre las partes o resolución de autoridad competente.
+
+**Debido proceso interno.** Revendiste se compromete a oír a ambas partes, otorgar plazos razonables para presentar evidencia, y fundamentar sus decisiones por escrito cuando sean solicitadas.
+
+## 4. Fuerza Mayor y Caso Fortuito
+
+Ninguna de las partes será responsable por incumplimientos derivados de hechos de **fuerza mayor o caso fortuito** conforme los artículos 1342 y siguientes del Código Civil uruguayo, incluyendo a título enunciativo y no taxativo:
+
+- Catástrofes naturales (terremotos, inundaciones, etc.).
+- Conflictos bélicos, conmoción interior o actos de terrorismo.
+- Actos de autoridad pública (medidas sanitarias, restricciones gubernamentales).
+- Suspensión generalizada de servicios de telecomunicaciones, energía o medios de pago.
+- Ataques informáticos a infraestructura crítica de terceros que afecten la disponibilidad de la Plataforma.
+- Pandemias o epidemias declaradas por autoridad competente.
+
+En tales casos, las obligaciones de las partes quedarán suspendidas mientras subsista el evento, sin generar derecho a indemnización. Si la imposibilidad se prolonga por más de **30 (treinta) días corridos** desde la notificación del hecho, cualquiera de las partes podrá resolver la Operación, procediendo Revendiste a las restituciones que correspondan según la etapa en que se encontrara la prestación.
+
+## 5. Contacto
 
 Para cualquier consulta, reclamo o solicitud relacionada con estos Términos:
 

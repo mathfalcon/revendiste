@@ -52,7 +52,7 @@ export function moneyFlowSankeyNodeFill(nodeName: string): string {
       return 'hsl(var(--chart-1))';
     case 'Subtotal vendedor':
       return 'hsl(var(--chart-4))';
-    case 'Comisión + IVA (pedido)':
+    case 'Comisión + IVA (plataforma)':
       return 'hsl(var(--chart-5))';
     case 'Ingreso neto plataforma':
       return dashboardChartPositive;
