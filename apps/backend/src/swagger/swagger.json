@@ -2836,79 +2836,19 @@
 				],
 				"nullable": true
 			},
-			"RequestPayoutResponse": {
+			"Omit_Awaited_ReturnType_PayoutsService-at-requestPayout__.fxSnapshot_": {
 				"properties": {
-					"transactionReference": {
-						"type": "string",
-						"nullable": true
-					},
-					"requestedAt": {
+					"createdAt": {
 						"type": "string",
 						"format": "date-time"
 					},
-					"processingFee": {
-						"type": "string",
-						"nullable": true
-					},
-					"processedBy": {
-						"type": "string",
-						"nullable": true
-					},
-					"processedAt": {
+					"deletedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
 					},
-					"payoutProvider": {
-						"type": "string",
-						"enum": [
-							"dlocal_go",
-							"manual_bank"
-						]
-					},
-					"payoutMethodId": {
+					"id": {
 						"type": "string"
-					},
-					"notes": {
-						"type": "string",
-						"nullable": true
-					},
-					"failureReason": {
-						"type": "string",
-						"nullable": true
-					},
-					"failedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"amount": {
-						"type": "string"
-					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"sellerUserId": {
-						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string",
-						"enum": [
-							"cancelled",
-							"pending",
-							"completed",
-							"failed",
-							"processing"
-						]
 					},
 					"metadata": {
 						"anyOf": [
@@ -2931,42 +2871,231 @@
 						],
 						"nullable": true
 					},
-					"id": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"cancelled",
+							"pending",
+							"completed",
+							"failed",
+							"processing"
+						]
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"currency": {
+						"$ref": "#/components/schemas/EventTicketCurrency"
+					},
+					"sellerUserId": {
 						"type": "string"
 					},
-					"deletedAt": {
+					"completedAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
 					},
-					"createdAt": {
+					"amount": {
+						"type": "string"
+					},
+					"failedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"failureReason": {
+						"type": "string",
+						"nullable": true
+					},
+					"idempotencyKeyHash": {
+						"type": "string",
+						"nullable": true
+					},
+					"notes": {
+						"type": "string",
+						"nullable": true
+					},
+					"payoutMethodId": {
+						"type": "string"
+					},
+					"payoutProvider": {
+						"type": "string",
+						"enum": [
+							"dlocal_go",
+							"manual_bank"
+						]
+					},
+					"processedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"processedBy": {
+						"type": "string",
+						"nullable": true
+					},
+					"processingFee": {
+						"type": "string",
+						"nullable": true
+					},
+					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"sourceAmount": {
+						"type": "string",
+						"nullable": true
+					},
+					"sourceCurrency": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/EventTicketCurrency"
+							}
+						],
+						"nullable": true
+					},
+					"transactionReference": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
-					"transactionReference",
-					"requestedAt",
-					"processingFee",
-					"processedBy",
-					"processedAt",
-					"payoutProvider",
-					"payoutMethodId",
-					"notes",
-					"failureReason",
-					"failedAt",
-					"amount",
-					"completedAt",
-					"sellerUserId",
-					"currency",
-					"updatedAt",
-					"status",
-					"metadata",
-					"id",
+					"createdAt",
 					"deletedAt",
-					"createdAt"
+					"id",
+					"metadata",
+					"status",
+					"updatedAt",
+					"currency",
+					"sellerUserId",
+					"completedAt",
+					"amount",
+					"failedAt",
+					"failureReason",
+					"idempotencyKeyHash",
+					"notes",
+					"payoutMethodId",
+					"payoutProvider",
+					"processedAt",
+					"processedBy",
+					"processingFee",
+					"requestedAt",
+					"sourceAmount",
+					"sourceCurrency",
+					"transactionReference"
+				],
+				"type": "object",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"infer_typeofFxSnapshotSchema_": {
+				"properties": {
+					"quoteExpiresAt": {
+						"type": "string"
+					},
+					"quoteId": {
+						"type": "string"
+					},
+					"spreadPercent": {
+						"type": "number",
+						"format": "double"
+					},
+					"providerRate": {
+						"type": "number",
+						"format": "double"
+					},
+					"referenceRate": {
+						"properties": {
+							"fetchedAt": {
+								"type": "string"
+							},
+							"source": {
+								"type": "string",
+								"enum": [
+									"brou_venta",
+									"dlocal_quote_reference",
+									"manual"
+								]
+							},
+							"value": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"fetchedAt",
+							"source",
+							"value"
+						],
+						"type": "object",
+						"nullable": true
+					},
+					"executor": {
+						"type": "string",
+						"enum": [
+							"dlocal_go",
+							"admin_manual"
+						]
+					},
+					"destinationAmount": {
+						"type": "number",
+						"format": "double"
+					},
+					"destinationCurrency": {
+						"type": "string",
+						"enum": [
+							"ARS",
+							"USD",
+							"UYU"
+						]
+					},
+					"sourceAmount": {
+						"type": "number",
+						"format": "double"
+					},
+					"sourceCurrency": {
+						"type": "string",
+						"enum": [
+							"ARS",
+							"USD",
+							"UYU"
+						]
+					}
+				},
+				"required": [
+					"executor",
+					"destinationAmount",
+					"destinationCurrency",
+					"sourceAmount",
+					"sourceCurrency"
 				],
 				"type": "object"
+			},
+			"FxSnapshot": {
+				"$ref": "#/components/schemas/infer_typeofFxSnapshotSchema_"
+			},
+			"RequestPayoutResponse": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/Omit_Awaited_ReturnType_PayoutsService-at-requestPayout__.fxSnapshot_"
+					},
+					{
+						"properties": {
+							"fxSnapshot": {
+								"allOf": [
+									{
+										"$ref": "#/components/schemas/FxSnapshot"
+									}
+								],
+								"nullable": true
+							}
+						},
+						"required": [
+							"fxSnapshot"
+						],
+						"type": "object"
+					}
+				]
 			},
 			"RequestPayoutRouteBody": {
 				"properties": {
@@ -3663,6 +3792,7 @@
 					"admin_processed",
 					"cancelled",
 					"payout_requested",
+					"provider_response",
 					"status_change",
 					"transfer_completed",
 					"transfer_failed",
@@ -3744,6 +3874,18 @@
 						"type": "string",
 						"nullable": true
 					},
+					"sourceCurrency": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/EventTicketCurrency"
+							}
+						],
+						"nullable": true
+					},
+					"sourceAmount": {
+						"type": "string",
+						"nullable": true
+					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -3772,6 +3914,10 @@
 						"type": "string"
 					},
 					"notes": {
+						"type": "string",
+						"nullable": true
+					},
+					"idempotencyKeyHash": {
 						"type": "string",
 						"nullable": true
 					},
@@ -4023,106 +4169,201 @@
 						},
 						"type": "array"
 					},
+					"fxSnapshot": {
+						"properties": {
+							"quoteExpiresAt": {
+								"type": "string"
+							},
+							"quoteId": {
+								"type": "string"
+							},
+							"spreadPercent": {
+								"type": "number",
+								"format": "double"
+							},
+							"providerRate": {
+								"type": "number",
+								"format": "double"
+							},
+							"referenceRate": {
+								"properties": {
+									"fetchedAt": {
+										"type": "string"
+									},
+									"source": {
+										"type": "string",
+										"enum": [
+											"brou_venta",
+											"dlocal_quote_reference",
+											"manual"
+										]
+									},
+									"value": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": [
+									"fetchedAt",
+									"source",
+									"value"
+								],
+								"type": "object",
+								"nullable": true
+							},
+							"executor": {
+								"type": "string",
+								"enum": [
+									"dlocal_go",
+									"admin_manual"
+								]
+							},
+							"destinationAmount": {
+								"type": "number",
+								"format": "double"
+							},
+							"destinationCurrency": {
+								"type": "string",
+								"enum": [
+									"ARS",
+									"USD",
+									"UYU"
+								]
+							},
+							"sourceAmount": {
+								"type": "number",
+								"format": "double"
+							},
+							"sourceCurrency": {
+								"type": "string",
+								"enum": [
+									"ARS",
+									"USD",
+									"UYU"
+								]
+							}
+						},
+						"required": [
+							"executor",
+							"destinationAmount",
+							"destinationCurrency",
+							"sourceAmount",
+							"sourceCurrency"
+						],
+						"type": "object",
+						"nullable": true
+					},
 					"metadata": {
 						"properties": {
-							"fxProcessing": {
+							"fxExecution": {
 								"properties": {
 									"rateWasExpired": {
 										"type": "boolean"
 									},
+									"externalId": {
+										"type": "string"
+									},
+									"providerFees": {
+										"type": "number",
+										"format": "double"
+									},
+									"actualSourceAmount": {
+										"type": "number",
+										"format": "double"
+									},
+									"actualRate": {
+										"type": "number",
+										"format": "double"
+									},
 									"processedAt": {
-										"type": "string"
-									},
-									"actualUyuCost": {
-										"type": "number",
-										"format": "double"
-									},
-									"actualBankRate": {
-										"type": "number",
-										"format": "double"
-									}
-								},
-								"type": "object"
-							},
-							"dLocalArRateLock": {
-								"properties": {
-									"rateArsPerUsd": {
-										"type": "number",
-										"format": "double"
-									},
-									"destinationAmountArs": {
-										"type": "number",
-										"format": "double"
-									},
-									"sourceAmountUsd": {
-										"type": "number",
-										"format": "double"
-									},
-									"rateExpiresAt": {
-										"type": "string"
-									},
-									"lockedAt": {
-										"type": "string"
-									},
-									"quoteId": {
 										"type": "string"
 									}
 								},
 								"required": [
-									"rateArsPerUsd",
-									"destinationAmountArs",
-									"sourceAmountUsd",
-									"rateExpiresAt",
-									"lockedAt",
-									"quoteId"
+									"processedAt"
 								],
 								"type": "object"
 							},
-							"rateLock": {
+							"fxSnapshot": {
 								"properties": {
-									"convertedCurrency": {
+									"quoteExpiresAt": {
 										"type": "string"
 									},
-									"convertedAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"originalCurrency": {
-										"type": "string"
-									},
-									"originalAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"rateExpiresAt": {
-										"type": "string"
-									},
-									"lockedAt": {
+									"quoteId": {
 										"type": "string"
 									},
 									"spreadPercent": {
 										"type": "number",
 										"format": "double"
 									},
-									"brouVentaRate": {
+									"providerRate": {
 										"type": "number",
 										"format": "double"
 									},
-									"lockedRate": {
+									"referenceRate": {
+										"properties": {
+											"fetchedAt": {
+												"type": "string"
+											},
+											"source": {
+												"type": "string",
+												"enum": [
+													"brou_venta",
+													"dlocal_quote_reference",
+													"manual"
+												]
+											},
+											"value": {
+												"type": "number",
+												"format": "double"
+											}
+										},
+										"required": [
+											"fetchedAt",
+											"source",
+											"value"
+										],
+										"type": "object",
+										"nullable": true
+									},
+									"executor": {
+										"type": "string",
+										"enum": [
+											"dlocal_go",
+											"admin_manual"
+										]
+									},
+									"destinationAmount": {
 										"type": "number",
 										"format": "double"
+									},
+									"destinationCurrency": {
+										"type": "string",
+										"enum": [
+											"ARS",
+											"USD",
+											"UYU"
+										]
+									},
+									"sourceAmount": {
+										"type": "number",
+										"format": "double"
+									},
+									"sourceCurrency": {
+										"type": "string",
+										"enum": [
+											"ARS",
+											"USD",
+											"UYU"
+										]
 									}
 								},
 								"required": [
-									"convertedCurrency",
-									"convertedAmount",
-									"originalCurrency",
-									"originalAmount",
-									"rateExpiresAt",
-									"lockedAt",
-									"spreadPercent",
-									"brouVentaRate",
-									"lockedRate"
+									"executor",
+									"destinationAmount",
+									"destinationCurrency",
+									"sourceAmount",
+									"sourceCurrency"
 								],
 								"type": "object"
 							},
@@ -4151,6 +4392,8 @@
 				"required": [
 					"linkedEarnings",
 					"transactionReference",
+					"sourceCurrency",
+					"sourceAmount",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
@@ -4158,6 +4401,7 @@
 					"payoutProvider",
 					"payoutMethodId",
 					"notes",
+					"idempotencyKeyHash",
 					"failureReason",
 					"failedAt",
 					"amount",
@@ -4171,6 +4415,7 @@
 					"payoutMethod",
 					"documents",
 					"events",
+					"fxSnapshot",
 					"metadata"
 				],
 				"type": "object"
@@ -4296,6 +4541,18 @@
 									"type": "string",
 									"nullable": true
 								},
+								"sourceCurrency": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/EventTicketCurrency"
+										}
+									],
+									"nullable": true
+								},
+								"sourceAmount": {
+									"type": "string",
+									"nullable": true
+								},
 								"requestedAt": {
 									"type": "string",
 									"format": "date-time"
@@ -4324,6 +4581,10 @@
 									"type": "string"
 								},
 								"notes": {
+									"type": "string",
+									"nullable": true
+								},
+								"idempotencyKeyHash": {
 									"type": "string",
 									"nullable": true
 								},
@@ -4398,6 +4659,8 @@
 								"seller",
 								"linkedEarnings",
 								"transactionReference",
+								"sourceCurrency",
+								"sourceAmount",
 								"requestedAt",
 								"processingFee",
 								"processedBy",
@@ -4405,6 +4668,7 @@
 								"payoutProvider",
 								"payoutMethodId",
 								"notes",
+								"idempotencyKeyHash",
 								"failureReason",
 								"failedAt",
 								"amount",
@@ -4577,6 +4841,18 @@
 						"type": "string",
 						"nullable": true
 					},
+					"sourceCurrency": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/EventTicketCurrency"
+							}
+						],
+						"nullable": true
+					},
+					"sourceAmount": {
+						"type": "string",
+						"nullable": true
+					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -4605,6 +4881,10 @@
 						"type": "string"
 					},
 					"notes": {
+						"type": "string",
+						"nullable": true
+					},
+					"idempotencyKeyHash": {
 						"type": "string",
 						"nullable": true
 					},
@@ -4735,90 +5015,132 @@
 								"format": "double",
 								"nullable": true
 							},
-							"uyuCostAtLockedRate": {
+							"uyuCostAtSnapshotRate": {
 								"type": "number",
 								"format": "double",
 								"nullable": true
 							},
-							"rateLockMsRemaining": {
+							"quoteMsRemaining": {
 								"type": "number",
 								"format": "double",
 								"nullable": true
 							},
-							"rateLockExpired": {
+							"quoteExpired": {
 								"type": "boolean"
 							},
-							"fxProcessing": {
+							"fxExecution": {
 								"properties": {
 									"rateWasExpired": {
 										"type": "boolean"
 									},
-									"processedAt": {
+									"externalId": {
 										"type": "string"
 									},
-									"actualUyuCost": {
+									"providerFees": {
 										"type": "number",
 										"format": "double"
 									},
-									"actualBankRate": {
+									"actualSourceAmount": {
 										"type": "number",
 										"format": "double"
+									},
+									"actualRate": {
+										"type": "number",
+										"format": "double"
+									},
+									"processedAt": {
+										"type": "string"
 									}
 								},
+								"required": [
+									"processedAt"
+								],
 								"type": "object",
 								"nullable": true
 							},
-							"rateLock": {
+							"fxSnapshot": {
 								"properties": {
-									"convertedCurrency": {
+									"quoteExpiresAt": {
 										"type": "string"
 									},
-									"convertedAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"originalCurrency": {
-										"type": "string"
-									},
-									"originalAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"rateExpiresAt": {
-										"type": "string"
-									},
-									"lockedAt": {
+									"quoteId": {
 										"type": "string"
 									},
 									"spreadPercent": {
 										"type": "number",
 										"format": "double"
 									},
-									"brouVentaRate": {
+									"providerRate": {
 										"type": "number",
 										"format": "double"
 									},
-									"lockedRate": {
+									"referenceRate": {
+										"properties": {
+											"fetchedAt": {
+												"type": "string"
+											},
+											"source": {
+												"type": "string",
+												"enum": [
+													"brou_venta",
+													"dlocal_quote_reference",
+													"manual"
+												]
+											},
+											"value": {
+												"type": "number",
+												"format": "double"
+											}
+										},
+										"required": [
+											"fetchedAt",
+											"source",
+											"value"
+										],
+										"type": "object",
+										"nullable": true
+									},
+									"executor": {
+										"type": "string",
+										"enum": [
+											"dlocal_go",
+											"admin_manual"
+										]
+									},
+									"destinationAmount": {
 										"type": "number",
 										"format": "double"
+									},
+									"destinationCurrency": {
+										"type": "string",
+										"enum": [
+											"ARS",
+											"USD",
+											"UYU"
+										]
+									},
+									"sourceAmount": {
+										"type": "number",
+										"format": "double"
+									},
+									"sourceCurrency": {
+										"type": "string",
+										"enum": [
+											"ARS",
+											"USD",
+											"UYU"
+										]
 									}
 								},
 								"required": [
-									"convertedCurrency",
-									"convertedAmount",
-									"originalCurrency",
-									"originalAmount",
-									"rateExpiresAt",
-									"lockedAt",
-									"spreadPercent",
-									"brouVentaRate",
-									"lockedRate"
+									"executor",
+									"destinationAmount",
+									"destinationCurrency",
+									"sourceAmount",
+									"sourceCurrency"
 								],
-								"type": "object"
-							},
-							"rateLockHoursConfigured": {
-								"type": "number",
-								"format": "double"
+								"type": "object",
+								"nullable": true
 							},
 							"spreadPercentConfigured": {
 								"type": "number",
@@ -4832,11 +5154,11 @@
 						},
 						"required": [
 							"dLocalAverageExchangeRate",
-							"uyuCostAtLockedRate",
-							"rateLockMsRemaining",
-							"rateLockExpired",
-							"fxProcessing",
-							"rateLockHoursConfigured",
+							"uyuCostAtSnapshotRate",
+							"quoteMsRemaining",
+							"quoteExpired",
+							"fxExecution",
+							"fxSnapshot",
 							"spreadPercentConfigured",
 							"currentBrouVentaRate"
 						],
@@ -5033,104 +5355,115 @@
 					},
 					"metadata": {
 						"properties": {
-							"fxProcessing": {
+							"fxExecution": {
 								"properties": {
 									"rateWasExpired": {
 										"type": "boolean"
 									},
+									"externalId": {
+										"type": "string"
+									},
+									"providerFees": {
+										"type": "number",
+										"format": "double"
+									},
+									"actualSourceAmount": {
+										"type": "number",
+										"format": "double"
+									},
+									"actualRate": {
+										"type": "number",
+										"format": "double"
+									},
 									"processedAt": {
-										"type": "string"
-									},
-									"actualUyuCost": {
-										"type": "number",
-										"format": "double"
-									},
-									"actualBankRate": {
-										"type": "number",
-										"format": "double"
-									}
-								},
-								"type": "object"
-							},
-							"dLocalArRateLock": {
-								"properties": {
-									"rateArsPerUsd": {
-										"type": "number",
-										"format": "double"
-									},
-									"destinationAmountArs": {
-										"type": "number",
-										"format": "double"
-									},
-									"sourceAmountUsd": {
-										"type": "number",
-										"format": "double"
-									},
-									"rateExpiresAt": {
-										"type": "string"
-									},
-									"lockedAt": {
-										"type": "string"
-									},
-									"quoteId": {
 										"type": "string"
 									}
 								},
 								"required": [
-									"rateArsPerUsd",
-									"destinationAmountArs",
-									"sourceAmountUsd",
-									"rateExpiresAt",
-									"lockedAt",
-									"quoteId"
+									"processedAt"
 								],
 								"type": "object"
 							},
-							"rateLock": {
+							"fxSnapshot": {
 								"properties": {
-									"convertedCurrency": {
+									"quoteExpiresAt": {
 										"type": "string"
 									},
-									"convertedAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"originalCurrency": {
-										"type": "string"
-									},
-									"originalAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"rateExpiresAt": {
-										"type": "string"
-									},
-									"lockedAt": {
+									"quoteId": {
 										"type": "string"
 									},
 									"spreadPercent": {
 										"type": "number",
 										"format": "double"
 									},
-									"brouVentaRate": {
+									"providerRate": {
 										"type": "number",
 										"format": "double"
 									},
-									"lockedRate": {
+									"referenceRate": {
+										"properties": {
+											"fetchedAt": {
+												"type": "string"
+											},
+											"source": {
+												"type": "string",
+												"enum": [
+													"brou_venta",
+													"dlocal_quote_reference",
+													"manual"
+												]
+											},
+											"value": {
+												"type": "number",
+												"format": "double"
+											}
+										},
+										"required": [
+											"fetchedAt",
+											"source",
+											"value"
+										],
+										"type": "object",
+										"nullable": true
+									},
+									"executor": {
+										"type": "string",
+										"enum": [
+											"dlocal_go",
+											"admin_manual"
+										]
+									},
+									"destinationAmount": {
 										"type": "number",
 										"format": "double"
+									},
+									"destinationCurrency": {
+										"type": "string",
+										"enum": [
+											"ARS",
+											"USD",
+											"UYU"
+										]
+									},
+									"sourceAmount": {
+										"type": "number",
+										"format": "double"
+									},
+									"sourceCurrency": {
+										"type": "string",
+										"enum": [
+											"ARS",
+											"USD",
+											"UYU"
+										]
 									}
 								},
 								"required": [
-									"convertedCurrency",
-									"convertedAmount",
-									"originalCurrency",
-									"originalAmount",
-									"rateExpiresAt",
-									"lockedAt",
-									"spreadPercent",
-									"brouVentaRate",
-									"lockedRate"
+									"executor",
+									"destinationAmount",
+									"destinationCurrency",
+									"sourceAmount",
+									"sourceCurrency"
 								],
 								"type": "object"
 							},
@@ -5159,6 +5492,8 @@
 				"required": [
 					"linkedEarnings",
 					"transactionReference",
+					"sourceCurrency",
+					"sourceAmount",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
@@ -5166,6 +5501,7 @@
 					"payoutProvider",
 					"payoutMethodId",
 					"notes",
+					"idempotencyKeyHash",
 					"failureReason",
 					"failedAt",
 					"amount",
@@ -5188,6 +5524,18 @@
 			"ProcessPayoutResponse": {
 				"properties": {
 					"transactionReference": {
+						"type": "string",
+						"nullable": true
+					},
+					"sourceCurrency": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/EventTicketCurrency"
+							}
+						],
+						"nullable": true
+					},
+					"sourceAmount": {
 						"type": "string",
 						"nullable": true
 					},
@@ -5219,6 +5567,10 @@
 						"type": "string"
 					},
 					"notes": {
+						"type": "string",
+						"nullable": true
+					},
+					"idempotencyKeyHash": {
 						"type": "string",
 						"nullable": true
 					},
@@ -5295,6 +5647,8 @@
 				},
 				"required": [
 					"transactionReference",
+					"sourceCurrency",
+					"sourceAmount",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
@@ -5302,6 +5656,7 @@
 					"payoutProvider",
 					"payoutMethodId",
 					"notes",
+					"idempotencyKeyHash",
 					"failureReason",
 					"failedAt",
 					"amount",
@@ -5340,693 +5695,24 @@
 				},
 				"type": "object"
 			},
-			"RefreshPayoutRateLockResponse": {
-				"properties": {
-					"linkedEarnings": {
-						"items": {
-							"properties": {
-								"venueName": {
-									"type": "string",
-									"nullable": true
-								},
-								"ticketWaveName": {
-									"type": "string"
-								},
-								"eventEndDate": {
-									"type": "string"
-								},
-								"eventStartDate": {
-									"type": "string"
-								},
-								"eventSlug": {
-									"type": "string"
-								},
-								"eventName": {
-									"type": "string"
-								},
-								"sellerAmount": {
-									"type": "string"
-								},
-								"listingTicketId": {
-									"type": "string"
-								},
-								"currency": {
-									"$ref": "#/components/schemas/EventTicketCurrency"
-								},
-								"id": {
-									"type": "string"
-								},
-								"createdAt": {
-									"type": "string"
-								},
-								"listingId": {
-									"type": "string"
-								}
-							},
-							"required": [
-								"venueName",
-								"ticketWaveName",
-								"eventEndDate",
-								"eventStartDate",
-								"eventSlug",
-								"eventName",
-								"sellerAmount",
-								"listingTicketId",
-								"currency",
-								"id",
-								"createdAt",
-								"listingId"
-							],
-							"type": "object"
-						},
-						"type": "array"
-					},
-					"transactionReference": {
-						"type": "string",
-						"nullable": true
-					},
-					"requestedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"processingFee": {
-						"type": "string",
-						"nullable": true
-					},
-					"processedBy": {
-						"type": "string",
-						"nullable": true
-					},
-					"processedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"payoutProvider": {
-						"type": "string",
-						"enum": [
-							"dlocal_go",
-							"manual_bank"
-						]
-					},
-					"payoutMethodId": {
-						"type": "string"
-					},
-					"notes": {
-						"type": "string",
-						"nullable": true
-					},
-					"failureReason": {
-						"type": "string",
-						"nullable": true
-					},
-					"failedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"amount": {
-						"type": "string"
-					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"sellerUserId": {
-						"type": "string"
-					},
-					"currency": {
-						"$ref": "#/components/schemas/EventTicketCurrency"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"status": {
-						"type": "string",
-						"enum": [
-							"cancelled",
-							"pending",
-							"completed",
-							"failed",
-							"processing"
-						]
-					},
-					"id": {
-						"type": "string"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"payoutMethod": {
-						"properties": {
-							"metadata": {
-								"anyOf": [
-									{
-										"type": "string"
-									},
-									{
-										"type": "number",
-										"format": "double"
-									},
-									{
-										"type": "boolean"
-									},
-									{
-										"$ref": "#/components/schemas/JsonArray"
-									},
-									{
-										"$ref": "#/components/schemas/JsonObject"
-									}
-								],
-								"nullable": true
-							},
-							"currency": {
-								"$ref": "#/components/schemas/EventTicketCurrency"
-							},
-							"accountHolderSurname": {
-								"type": "string"
-							},
-							"accountHolderName": {
-								"type": "string"
-							},
-							"payoutType": {
-								"$ref": "#/components/schemas/PayoutType"
-							},
-							"id": {
-								"type": "string"
-							}
-						},
-						"required": [
-							"metadata",
-							"currency",
-							"accountHolderSurname",
-							"accountHolderName",
-							"payoutType",
-							"id"
-						],
-						"type": "object",
-						"nullable": true
-					},
-					"seller": {
-						"properties": {
-							"email": {
-								"type": "string"
-							},
-							"lastName": {
-								"type": "string",
-								"nullable": true
-							},
-							"firstName": {
-								"type": "string",
-								"nullable": true
-							},
-							"id": {
-								"type": "string"
-							}
-						},
-						"required": [
-							"email",
-							"lastName",
-							"firstName",
-							"id"
-						],
-						"type": "object",
-						"nullable": true
-					},
-					"fxDecisionSupport": {
-						"properties": {
-							"dLocalAverageExchangeRate": {
-								"type": "number",
-								"format": "double",
-								"nullable": true
-							},
-							"uyuCostAtLockedRate": {
-								"type": "number",
-								"format": "double",
-								"nullable": true
-							},
-							"rateLockMsRemaining": {
-								"type": "number",
-								"format": "double",
-								"nullable": true
-							},
-							"rateLockExpired": {
-								"type": "boolean"
-							},
-							"fxProcessing": {
-								"properties": {
-									"rateWasExpired": {
-										"type": "boolean"
-									},
-									"processedAt": {
-										"type": "string"
-									},
-									"actualUyuCost": {
-										"type": "number",
-										"format": "double"
-									},
-									"actualBankRate": {
-										"type": "number",
-										"format": "double"
-									}
-								},
-								"type": "object",
-								"nullable": true
-							},
-							"rateLock": {
-								"properties": {
-									"convertedCurrency": {
-										"type": "string"
-									},
-									"convertedAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"originalCurrency": {
-										"type": "string"
-									},
-									"originalAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"rateExpiresAt": {
-										"type": "string"
-									},
-									"lockedAt": {
-										"type": "string"
-									},
-									"spreadPercent": {
-										"type": "number",
-										"format": "double"
-									},
-									"brouVentaRate": {
-										"type": "number",
-										"format": "double"
-									},
-									"lockedRate": {
-										"type": "number",
-										"format": "double"
-									}
-								},
-								"required": [
-									"convertedCurrency",
-									"convertedAmount",
-									"originalCurrency",
-									"originalAmount",
-									"rateExpiresAt",
-									"lockedAt",
-									"spreadPercent",
-									"brouVentaRate",
-									"lockedRate"
-								],
-								"type": "object"
-							},
-							"rateLockHoursConfigured": {
-								"type": "number",
-								"format": "double"
-							},
-							"spreadPercentConfigured": {
-								"type": "number",
-								"format": "double"
-							},
-							"currentBrouVentaRate": {
-								"type": "number",
-								"format": "double",
-								"nullable": true
-							}
-						},
-						"required": [
-							"dLocalAverageExchangeRate",
-							"uyuCostAtLockedRate",
-							"rateLockMsRemaining",
-							"rateLockExpired",
-							"fxProcessing",
-							"rateLockHoursConfigured",
-							"spreadPercentConfigured",
-							"currentBrouVentaRate"
-						],
-						"type": "object"
-					},
-					"settlementInfo": {
-						"properties": {
-							"linkedProcessorSettlements": {
-								"items": {
-									"properties": {
-										"paymentProvider": {
-											"type": "string"
-										},
-										"settlementCurrency": {
-											"type": "string"
-										},
-										"totalAmount": {
-											"type": "string"
-										},
-										"settlementStatus": {
-											"type": "string"
-										},
-										"settlementDate": {
-											"type": "string",
-											"format": "date-time"
-										},
-										"externalSettlementId": {
-											"type": "string"
-										},
-										"id": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"paymentProvider",
-										"settlementCurrency",
-										"totalAmount",
-										"settlementStatus",
-										"settlementDate",
-										"externalSettlementId",
-										"id"
-									],
-									"type": "object"
-								},
-								"type": "array"
-							},
-							"providers": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							},
-							"hasExchangeRateData": {
-								"type": "boolean"
-							},
-							"settlements": {
-								"items": {
-									"properties": {
-										"providers": {
-											"items": {
-												"type": "string"
-											},
-											"type": "array"
-										},
-										"paymentCount": {
-											"type": "number",
-											"format": "double"
-										},
-										"balanceCurrency": {
-											"type": "string",
-											"nullable": true
-										},
-										"averageExchangeRate": {
-											"type": "number",
-											"format": "double",
-											"nullable": true
-										},
-										"totalSellerAmount": {
-											"type": "number",
-											"format": "double"
-										},
-										"totalBalanceFee": {
-											"type": "number",
-											"format": "double"
-										},
-										"totalBalanceAmount": {
-											"type": "number",
-											"format": "double"
-										},
-										"totalPaymentAmount": {
-											"type": "number",
-											"format": "double"
-										},
-										"currency": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"providers",
-										"paymentCount",
-										"balanceCurrency",
-										"averageExchangeRate",
-										"totalSellerAmount",
-										"totalBalanceFee",
-										"totalBalanceAmount",
-										"totalPaymentAmount",
-										"currency"
-									],
-									"type": "object"
-								},
-								"type": "array"
-							}
-						},
-						"required": [
-							"linkedProcessorSettlements",
-							"providers",
-							"hasExchangeRateData",
-							"settlements"
-						],
-						"type": "object",
-						"nullable": true
-					},
-					"documents": {
-						"items": {
-							"properties": {
-								"uploadedBy": {
-									"type": "string"
-								},
-								"uploadedAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"storagePath": {
-									"type": "string"
-								},
-								"sizeBytes": {
-									"type": "number",
-									"format": "double"
-								},
-								"payoutId": {
-									"type": "string"
-								},
-								"originalName": {
-									"type": "string"
-								},
-								"mimeType": {
-									"type": "string"
-								},
-								"fileName": {
-									"type": "string"
-								},
-								"documentType": {
-									"type": "string"
-								},
-								"updatedAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"id": {
-									"type": "string"
-								},
-								"deletedAt": {
-									"type": "string",
-									"format": "date-time",
-									"nullable": true
-								},
-								"createdAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"url": {
-									"type": "string"
-								}
-							},
-							"required": [
-								"uploadedBy",
-								"uploadedAt",
-								"storagePath",
-								"sizeBytes",
-								"payoutId",
-								"originalName",
-								"mimeType",
-								"fileName",
-								"documentType",
-								"updatedAt",
-								"id",
-								"deletedAt",
-								"createdAt",
-								"url"
-							],
-							"type": "object"
-						},
-						"type": "array"
-					},
-					"metadata": {
-						"properties": {
-							"fxProcessing": {
-								"properties": {
-									"rateWasExpired": {
-										"type": "boolean"
-									},
-									"processedAt": {
-										"type": "string"
-									},
-									"actualUyuCost": {
-										"type": "number",
-										"format": "double"
-									},
-									"actualBankRate": {
-										"type": "number",
-										"format": "double"
-									}
-								},
-								"type": "object"
-							},
-							"dLocalArRateLock": {
-								"properties": {
-									"rateArsPerUsd": {
-										"type": "number",
-										"format": "double"
-									},
-									"destinationAmountArs": {
-										"type": "number",
-										"format": "double"
-									},
-									"sourceAmountUsd": {
-										"type": "number",
-										"format": "double"
-									},
-									"rateExpiresAt": {
-										"type": "string"
-									},
-									"lockedAt": {
-										"type": "string"
-									},
-									"quoteId": {
-										"type": "string"
-									}
-								},
-								"required": [
-									"rateArsPerUsd",
-									"destinationAmountArs",
-									"sourceAmountUsd",
-									"rateExpiresAt",
-									"lockedAt",
-									"quoteId"
-								],
-								"type": "object"
-							},
-							"rateLock": {
-								"properties": {
-									"convertedCurrency": {
-										"type": "string"
-									},
-									"convertedAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"originalCurrency": {
-										"type": "string"
-									},
-									"originalAmount": {
-										"type": "number",
-										"format": "double"
-									},
-									"rateExpiresAt": {
-										"type": "string"
-									},
-									"lockedAt": {
-										"type": "string"
-									},
-									"spreadPercent": {
-										"type": "number",
-										"format": "double"
-									},
-									"brouVentaRate": {
-										"type": "number",
-										"format": "double"
-									},
-									"lockedRate": {
-										"type": "number",
-										"format": "double"
-									}
-								},
-								"required": [
-									"convertedCurrency",
-									"convertedAmount",
-									"originalCurrency",
-									"originalAmount",
-									"rateExpiresAt",
-									"lockedAt",
-									"spreadPercent",
-									"brouVentaRate",
-									"lockedRate"
-								],
-								"type": "object"
-							},
-							"listingIds": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							},
-							"listingTicketIds": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							}
-						},
-						"additionalProperties": {},
-						"required": [
-							"listingIds",
-							"listingTicketIds"
-						],
-						"type": "object",
-						"nullable": true
-					}
-				},
-				"required": [
-					"linkedEarnings",
-					"transactionReference",
-					"requestedAt",
-					"processingFee",
-					"processedBy",
-					"processedAt",
-					"payoutProvider",
-					"payoutMethodId",
-					"notes",
-					"failureReason",
-					"failedAt",
-					"amount",
-					"completedAt",
-					"sellerUserId",
-					"currency",
-					"updatedAt",
-					"status",
-					"id",
-					"createdAt",
-					"payoutMethod",
-					"seller",
-					"fxDecisionSupport",
-					"settlementInfo",
-					"documents",
-					"metadata"
-				],
-				"type": "object"
-			},
-			"Record_string.never_": {
-				"properties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
-			},
-			"RefreshPayoutRateLockRouteBody": {
-				"$ref": "#/components/schemas/Record_string.never_"
-			},
 			"FailPayoutResponse": {
 				"properties": {
 					"transactionReference": {
 						"type": "string",
 						"nullable": true
 					},
+					"sourceCurrency": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/EventTicketCurrency"
+							}
+						],
+						"nullable": true
+					},
+					"sourceAmount": {
+						"type": "string",
+						"nullable": true
+					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -6055,6 +5741,10 @@
 						"type": "string"
 					},
 					"notes": {
+						"type": "string",
+						"nullable": true
+					},
+					"idempotencyKeyHash": {
 						"type": "string",
 						"nullable": true
 					},
@@ -6131,6 +5821,8 @@
 				},
 				"required": [
 					"transactionReference",
+					"sourceCurrency",
+					"sourceAmount",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
@@ -6138,6 +5830,7 @@
 					"payoutProvider",
 					"payoutMethodId",
 					"notes",
+					"idempotencyKeyHash",
 					"failureReason",
 					"failedAt",
 					"amount",
@@ -6170,6 +5863,18 @@
 						"type": "string",
 						"nullable": true
 					},
+					"sourceCurrency": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/EventTicketCurrency"
+							}
+						],
+						"nullable": true
+					},
+					"sourceAmount": {
+						"type": "string",
+						"nullable": true
+					},
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -6198,6 +5903,10 @@
 						"type": "string"
 					},
 					"notes": {
+						"type": "string",
+						"nullable": true
+					},
+					"idempotencyKeyHash": {
 						"type": "string",
 						"nullable": true
 					},
@@ -6274,6 +5983,8 @@
 				},
 				"required": [
 					"transactionReference",
+					"sourceCurrency",
+					"sourceAmount",
 					"requestedAt",
 					"processingFee",
 					"processedBy",
@@ -6281,6 +5992,7 @@
 					"payoutProvider",
 					"payoutMethodId",
 					"notes",
+					"idempotencyKeyHash",
 					"failureReason",
 					"failedAt",
 					"amount",
@@ -14627,87 +14339,6 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/ProcessPayoutRouteBody"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/admin/payouts/{payoutId}/refresh-rate-lock": {
-			"post": {
-				"operationId": "RefreshPayoutRateLock",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/RefreshPayoutRateLockResponse"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Authentication required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Admin access required",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UnauthorizedError"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Payout not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/NotFoundError"
-								}
-							}
-						}
-					},
-					"422": {
-						"description": "Invalid payout status or no rate lock",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ValidationError"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Admin - Payouts"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "payoutId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/RefreshPayoutRateLockRouteBody"
 							}
 						}
 					}

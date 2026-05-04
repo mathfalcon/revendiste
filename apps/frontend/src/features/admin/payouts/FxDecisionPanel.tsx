@@ -1,6 +1,4 @@
-import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {Badge} from '~/components/ui/badge';
-import {Button} from '~/components/ui/button';
 import {
   Card,
   CardContent,
@@ -8,10 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import {refreshPayoutRateLockMutation} from '~/lib/api/admin';
 import type {GetPayoutDetailsResponse} from '~/lib/api/generated';
-import {Loader2, RefreshCw} from 'lucide-react';
-import {toast} from 'sonner';
 
 type FxSupport = GetPayoutDetailsResponse['fxDecisionSupport'];
 
@@ -23,118 +18,105 @@ function formatDurationMs(ms: number) {
 }
 
 interface FxDecisionPanelProps {
-  payoutId: string;
-  payoutStatus: string;
   fx: FxSupport;
 }
 
-export function FxDecisionPanel({
-  payoutId,
-  payoutStatus,
-  fx,
-}: FxDecisionPanelProps) {
-  const queryClient = useQueryClient();
-
-  const refreshMutation = useMutation({
-    ...refreshPayoutRateLockMutation(),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
-      void queryClient.invalidateQueries({
-        queryKey: ['admin', 'payouts', payoutId],
-      });
-      toast.success('Tipo de cambio actualizado');
-    },
-    onError: (error: {response?: {data?: {message?: string}}}) => {
-      toast.error(
-        error.response?.data?.message ||
-          'No se pudo actualizar el tipo de cambio',
-      );
-    },
-  });
-
+export function FxDecisionPanel({fx}: FxDecisionPanelProps) {
   const showBrou = Number.isFinite(fx.currentBrouVentaRate);
   const showDlocal = fx.dLocalAverageExchangeRate != null;
-  const rateLock = fx.rateLock;
-  const showRateLock = rateLock != null;
+  const snap = fx.fxSnapshot;
+  const showSnapshot = snap != null;
 
-  if (!showBrou && !showDlocal && !showRateLock) {
+  if (!showBrou && !showDlocal && !showSnapshot && !fx.fxExecution) {
     return null;
   }
-
-  const canRefresh =
-    payoutStatus === 'pending' && showRateLock && !refreshMutation.isPending;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className='text-base'>Tipo de cambio (decisión)</CardTitle>
         <CardDescription>
-          Comparación BROU eBROU vs bloqueo del retiro y referencia dLocal.
+          Cotización al momento del retiro, tasas actuales y ejecución (si
+          aplica).
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4 text-sm'>
-        {showRateLock && rateLock && (
+        {showSnapshot && snap && (
           <div className='rounded-lg border bg-muted/30 p-3 space-y-2'>
             <div className='flex flex-wrap items-center justify-between gap-2'>
-              <span className='font-medium'>Bloqueo actual</span>
-              {fx.rateLockExpired ? (
-                <Badge variant='destructive'>Vencido</Badge>
+              <span className='font-medium'>Cotización del retiro</span>
+              {snap.quoteExpiresAt != null ? (
+                fx.quoteExpired ? (
+                  <Badge variant='destructive'>Cotización vencida</Badge>
+                ) : (
+                  <Badge
+                    variant='outline'
+                    className='border-green-600/50 bg-green-500/10 text-green-800 dark:text-green-300'
+                  >
+                    Vigente
+                    {fx.quoteMsRemaining != null &&
+                      ` · ${formatDurationMs(fx.quoteMsRemaining)} restantes`}
+                  </Badge>
+                )
               ) : (
-                <Badge
-                  variant='outline'
-                  className='border-green-600/50 bg-green-500/10 text-green-800 dark:text-green-300'
-                >
-                  Vigente
-                  {fx.rateLockMsRemaining != null &&
-                    ` · ${formatDurationMs(fx.rateLockMsRemaining)} restantes`}
-                </Badge>
+                <Badge variant='secondary'>Sin vencimiento declarado</Badge>
               )}
             </div>
             <div className='grid gap-1 sm:grid-cols-2'>
-              <div className='text-muted-foreground'>BROU venta al bloqueo</div>
-              <div className='tabular-nums sm:text-right'>
-                1 USD = {rateLock.brouVentaRate.toFixed(4)} UYU
-              </div>
-              <div className='text-muted-foreground'>
-                Tipo efectivo (+{rateLock.spreadPercent}% spread)
-              </div>
-              <div className='tabular-nums sm:text-right'>
-                1 USD = {rateLock.lockedRate.toFixed(4)} UYU
-              </div>
-              <div className='text-muted-foreground'>UYU origen</div>
-              <div className='tabular-nums sm:text-right'>
-                {rateLock.originalAmount.toLocaleString('es-UY')} UYU
-              </div>
-              <div className='text-muted-foreground'>USD a pagar</div>
+              <div className='text-muted-foreground'>Origen → destino</div>
               <div className='tabular-nums sm:text-right font-medium'>
-                USD {rateLock.convertedAmount.toFixed(2)}
+                {snap.sourceAmount.toLocaleString('es-UY', {
+                  maximumFractionDigits: 2,
+                })}{' '}
+                {snap.sourceCurrency} →{' '}
+                {snap.destinationAmount.toLocaleString('es-UY', {
+                  maximumFractionDigits: 2,
+                })}{' '}
+                {snap.destinationCurrency}
               </div>
+              {snap.referenceRate != null && (
+                <>
+                  <div className='text-muted-foreground'>Referencia</div>
+                  <div className='tabular-nums sm:text-right'>
+                    {snap.referenceRate.source === 'brou_venta'
+                      ? 'BROU venta'
+                      : snap.referenceRate.source === 'dlocal_quote_reference'
+                        ? 'dLocal (cotización)'
+                        : 'Manual'}{' '}
+                    · {snap.referenceRate.value.toFixed(4)} (
+                    {new Date(snap.referenceRate.fetchedAt).toLocaleString(
+                      'es-UY',
+                    )}
+                    )
+                  </div>
+                </>
+              )}
+              {snap.providerRate != null && (
+                <>
+                  <div className='text-muted-foreground'>Tipo efectivo</div>
+                  <div className='tabular-nums sm:text-right'>
+                    {snap.providerRate.toFixed(4)}
+                    {snap.spreadPercent != null &&
+                      ` (+${snap.spreadPercent}% spread)`}
+                  </div>
+                </>
+              )}
+              {snap.quoteId != null && (
+                <>
+                  <div className='text-muted-foreground'>Quote ID</div>
+                  <div className='font-mono text-xs sm:text-right break-all'>
+                    {snap.quoteId}
+                  </div>
+                </>
+              )}
             </div>
-            {fx.uyuCostAtLockedRate != null && (
+            {fx.uyuCostAtSnapshotRate != null && (
               <p className='text-xs text-muted-foreground pt-1 border-t'>
-                Costo UYU a tipo bloqueado (referencia):{' '}
+                Costo UYU (referencia al snapshot):{' '}
                 <span className='font-medium text-foreground'>
-                  {fx.uyuCostAtLockedRate.toLocaleString('es-UY')} UYU
+                  {fx.uyuCostAtSnapshotRate.toLocaleString('es-UY')} UYU
                 </span>
               </p>
-            )}
-            {canRefresh && (
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='mt-2'
-                onClick={() => refreshMutation.mutate(payoutId)}
-              >
-                {refreshMutation.isPending ? (
-                  <Loader2 className='h-4 w-4 animate-spin' />
-                ) : (
-                  <RefreshCw className='h-4 w-4' />
-                )}
-                <span className='ml-2'>
-                  Refrescar tipo (nuevo bloqueo 72 h)
-                </span>
-              </Button>
             )}
           </div>
         )}
@@ -166,32 +148,44 @@ export function FxDecisionPanel({
         )}
 
         <p className='text-xs text-muted-foreground'>
-          Spread configurado: {fx.spreadPercentConfigured}% · Bloqueo:{' '}
-          {fx.rateLockHoursConfigured} h
+          Spread configurado (manual UY→USD): {fx.spreadPercentConfigured}%
         </p>
 
-        {fx.fxProcessing && (
+        {fx.fxExecution && (
           <div className='rounded-md border border-dashed p-2 text-xs space-y-1'>
-            <p className='font-medium'>Ejecución bancaria (admin)</p>
-            {fx.fxProcessing.actualBankRate != null && (
+            <p className='font-medium'>Ejecución (admin / proveedor)</p>
+            {fx.fxExecution.actualRate != null && (
               <p>
-                TC banco real:{' '}
+                TC efectivo:{' '}
                 <span className='tabular-nums'>
-                  {fx.fxProcessing.actualBankRate}
+                  {fx.fxExecution.actualRate}
                 </span>
               </p>
             )}
-            {fx.fxProcessing.actualUyuCost != null && (
+            {fx.fxExecution.actualSourceAmount != null && (
               <p>
-                UYU gastados:{' '}
+                Monto origen (UYU u otra moneda fuente):{' '}
                 <span className='tabular-nums'>
-                  {fx.fxProcessing.actualUyuCost.toLocaleString('es-UY')}
+                  {fx.fxExecution.actualSourceAmount.toLocaleString('es-UY')}
                 </span>
               </p>
             )}
-            {fx.fxProcessing.rateWasExpired === true && (
+            {fx.fxExecution.providerFees != null && (
+              <p>
+                Comisiones proveedor:{' '}
+                <span className='tabular-nums'>
+                  {fx.fxExecution.providerFees}
+                </span>
+              </p>
+            )}
+            {fx.fxExecution.externalId != null && (
+              <p className='font-mono break-all'>
+                ID externo: {fx.fxExecution.externalId}
+              </p>
+            )}
+            {fx.fxExecution.rateWasExpired === true && (
               <p className='text-amber-700 dark:text-amber-400'>
-                Procesado con bloqueo vencido.
+                Procesado con cotización vencida.
               </p>
             )}
           </div>

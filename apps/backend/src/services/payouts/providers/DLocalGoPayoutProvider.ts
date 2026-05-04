@@ -32,6 +32,25 @@ import type {
 } from './PayoutProvider.interface';
 import {mapUruguayanBankNameToDLocalCode} from './uy-bank-codes-dlocal';
 
+function dLocalPayoutFxHintsFromResponse(
+  raw: Record<string, unknown>,
+): {actualRate?: number; providerFees?: number} | undefined {
+  const details = raw.details;
+  if (details && typeof details === 'object') {
+    const d = details as Record<string, unknown>;
+    const src = Number(d.source_amount ?? d['source_amount']);
+    const dst = Number(d.destination_amount ?? d['destination_amount']);
+    if (Number.isFinite(src) && Number.isFinite(dst) && src > 0) {
+      return {actualRate: dst / src};
+    }
+  }
+  const fee = Number(raw.fee ?? raw['fee']);
+  if (Number.isFinite(fee)) {
+    return {providerFees: fee};
+  }
+  return undefined;
+}
+
 const PURPOSE = 'REMITTANCES';
 const PURPOSE_DESCRIPTION = 'Revendiste pago a vendedor';
 const DESCRIPTOR = 'Revendiste';
@@ -62,16 +81,24 @@ export class DLocalGoPayoutProvider extends BasePayoutProvider {
 
     if (params.payoutType === 'uruguayan_bank') {
       const m = UruguayanBankMetadataSchema.parse(params.payoutMethodMetadata);
-      const id = await this.sendUruguayPayout(params, m, remitter);
-      return {status: 'completed' as PayoutStatus, externalId: String(id.id)};
+      const {id, raw} = await this.sendUruguayPayout(params, m, remitter);
+      return {
+        status: 'completed' as PayoutStatus,
+        externalId: String(id),
+        providerExecutionHints: dLocalPayoutFxHintsFromResponse(raw),
+      };
     }
 
     if (params.payoutType === 'argentinian_bank') {
       const m = ArgentinianBankMetadataSchema.parse(
         params.payoutMethodMetadata,
       );
-      const id = await this.sendArgentinaPayout(params, m, remitter);
-      return {status: 'completed' as PayoutStatus, externalId: String(id.id)};
+      const {id, raw} = await this.sendArgentinaPayout(params, m, remitter);
+      return {
+        status: 'completed' as PayoutStatus,
+        externalId: String(id),
+        providerExecutionHints: dLocalPayoutFxHintsFromResponse(raw),
+      };
     }
 
     const _e: never = params.payoutType;
@@ -128,7 +155,7 @@ export class DLocalGoPayoutProvider extends BasePayoutProvider {
     if (DLOCAL_PAYOUT_REMITTER_EMAIL) {
       beneficiary.email = DLOCAL_PAYOUT_REMITTER_EMAIL;
     }
-    return (await submitDLocalPayout({
+    const raw = (await submitDLocalPayout({
       external_id: `rv_payout_u_${params.payoutId}`,
       payment_method_id: 'BANK_TRANSFER',
       flow_type: 'B2C',
@@ -143,7 +170,8 @@ export class DLocalGoPayoutProvider extends BasePayoutProvider {
       notification_url: this.notificationUrlForPayouts(),
       beneficiary,
       remitter,
-    } as unknown as Record<string, unknown>)) as {id: string};
+    } as unknown as Record<string, unknown>)) as Record<string, unknown>;
+    return {id: String(raw.id ?? ''), raw};
   }
 
   private async sendArgentinaPayout(
@@ -152,7 +180,13 @@ export class DLocalGoPayoutProvider extends BasePayoutProvider {
     remitter: Record<string, unknown>,
   ) {
     const metaPayout = PayoutMetadataSchema.parse(params.payoutMetadata);
-    const quote = metaPayout.dLocalArRateLock;
+    const legacyLock = (
+      metaPayout as unknown as {
+        dLocalArRateLock?: {quoteId?: string};
+      }
+    ).dLocalArRateLock;
+    const quoteId =
+      metaPayout.fxSnapshot?.quoteId ?? legacyLock?.quoteId ?? undefined;
 
     const doc = meta.document;
     const docType =
@@ -193,8 +227,8 @@ export class DLocalGoPayoutProvider extends BasePayoutProvider {
       beneficiary,
       remitter,
     };
-    if (params.payoutMethodCurrency === 'ARS' && quote?.quoteId) {
-      body.quote_id = quote.quoteId;
+    if (params.payoutMethodCurrency === 'ARS' && quoteId) {
+      body.quote_id = quoteId;
       body.currency = 'USD';
       body.currency_to_pay = 'ARS';
       body.amount = params.amount;
@@ -203,9 +237,10 @@ export class DLocalGoPayoutProvider extends BasePayoutProvider {
       body.currency_to_pay = 'USD';
       body.amount = params.amount;
     }
-    return (await submitDLocalPayout(
+    const raw = (await submitDLocalPayout(
       body as unknown as Record<string, unknown>,
-    )) as {id: string};
+    )) as Record<string, unknown>;
+    return {id: String(raw.id ?? ''), raw};
   }
 
   private notificationUrlForPayouts() {

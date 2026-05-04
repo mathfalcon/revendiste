@@ -128,6 +128,7 @@ export enum PayoutEventType {
   AdminProcessed = "admin_processed",
   Cancelled = "cancelled",
   PayoutRequested = "payout_requested",
+  ProviderResponse = "provider_response",
   StatusChange = "status_change",
   TransferCompleted = "transfer_completed",
   TransferFailed = "transfer_failed",
@@ -949,35 +950,68 @@ export type JsonObject = Record<string, JsonValue>;
 
 export type JsonPrimitive = boolean | number | string | null;
 
-export interface RequestPayoutResponse {
-  transactionReference: string | null;
-  /** @format date-time */
-  requestedAt: string;
-  processingFee: string | null;
-  processedBy: string | null;
-  /** @format date-time */
-  processedAt: string | null;
-  payoutProvider: "dlocal_go" | "manual_bank";
-  payoutMethodId: string;
-  notes: string | null;
-  failureReason: string | null;
-  /** @format date-time */
-  failedAt: string | null;
-  amount: string;
-  /** @format date-time */
-  completedAt: string | null;
-  sellerUserId: string;
-  currency: EventTicketCurrency;
-  /** @format date-time */
-  updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
-  id: string;
-  /** @format date-time */
-  deletedAt: string | null;
+/** Construct a type with the properties of T except for those in type K. */
+export interface OmitAwaitedReturnTypePayoutsServiceAtRequestPayoutFxSnapshot {
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  id: string;
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  /** @format date-time */
+  updatedAt: string;
+  currency: EventTicketCurrency;
+  sellerUserId: string;
+  /** @format date-time */
+  completedAt: string | null;
+  amount: string;
+  /** @format date-time */
+  failedAt: string | null;
+  failureReason: string | null;
+  idempotencyKeyHash: string | null;
+  notes: string | null;
+  payoutMethodId: string;
+  payoutProvider: "dlocal_go" | "manual_bank";
+  /** @format date-time */
+  processedAt: string | null;
+  processedBy: string | null;
+  processingFee: string | null;
+  /** @format date-time */
+  requestedAt: string;
+  sourceAmount: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  transactionReference: string | null;
 }
+
+export interface InferTypeofFxSnapshotSchema {
+  quoteExpiresAt?: string;
+  quoteId?: string;
+  /** @format double */
+  spreadPercent?: number;
+  /** @format double */
+  providerRate?: number;
+  referenceRate?: {
+    fetchedAt: string;
+    source: "brou_venta" | "dlocal_quote_reference" | "manual";
+    /** @format double */
+    value: number;
+  } | null;
+  executor: "dlocal_go" | "admin_manual";
+  /** @format double */
+  destinationAmount: number;
+  destinationCurrency: "ARS" | "USD" | "UYU";
+  /** @format double */
+  sourceAmount: number;
+  sourceCurrency: "ARS" | "USD" | "UYU";
+}
+
+export type FxSnapshot = InferTypeofFxSnapshotSchema;
+
+export type RequestPayoutResponse =
+  OmitAwaitedReturnTypePayoutsServiceAtRequestPayoutFxSnapshot & {
+    fxSnapshot: FxSnapshot | null;
+  };
 
 export interface RequestPayoutRouteBody {
   listingIds?: string[];
@@ -1146,6 +1180,8 @@ export interface GetUserPayoutDetailsResponse {
     listingId: string;
   }[];
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1155,6 +1191,7 @@ export interface GetUserPayoutDetailsResponse {
   payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
@@ -1211,46 +1248,64 @@ export interface GetUserPayoutDetailsResponse {
     /** @format date-time */
     createdAt: string;
   }[];
+  fxSnapshot: {
+    quoteExpiresAt?: string;
+    quoteId?: string;
+    /** @format double */
+    spreadPercent?: number;
+    /** @format double */
+    providerRate?: number;
+    referenceRate?: {
+      fetchedAt: string;
+      source: "brou_venta" | "dlocal_quote_reference" | "manual";
+      /** @format double */
+      value: number;
+    } | null;
+    executor: "dlocal_go" | "admin_manual";
+    /** @format double */
+    destinationAmount: number;
+    destinationCurrency: "ARS" | "USD" | "UYU";
+    /** @format double */
+    sourceAmount: number;
+    sourceCurrency: "ARS" | "USD" | "UYU";
+  };
   metadata: {
-    fxProcessing?: {
+    fxExecution?: {
       rateWasExpired?: boolean;
-      processedAt?: string;
+      externalId?: string;
       /** @format double */
-      actualUyuCost?: number;
+      providerFees?: number;
       /** @format double */
-      actualBankRate?: number;
+      actualSourceAmount?: number;
+      /** @format double */
+      actualRate?: number;
+      processedAt: string;
     };
-    dLocalArRateLock?: {
+    fxSnapshot?: {
+      quoteExpiresAt?: string;
+      quoteId?: string;
       /** @format double */
-      rateArsPerUsd: number;
+      spreadPercent?: number;
       /** @format double */
-      destinationAmountArs: number;
+      providerRate?: number;
+      referenceRate?: {
+        fetchedAt: string;
+        source: "brou_venta" | "dlocal_quote_reference" | "manual";
+        /** @format double */
+        value: number;
+      } | null;
+      executor: "dlocal_go" | "admin_manual";
       /** @format double */
-      sourceAmountUsd: number;
-      rateExpiresAt: string;
-      lockedAt: string;
-      quoteId: string;
-    };
-    rateLock?: {
-      convertedCurrency: string;
+      destinationAmount: number;
+      destinationCurrency: "ARS" | "USD" | "UYU";
       /** @format double */
-      convertedAmount: number;
-      originalCurrency: string;
-      /** @format double */
-      originalAmount: number;
-      rateExpiresAt: string;
-      lockedAt: string;
-      /** @format double */
-      spreadPercent: number;
-      /** @format double */
-      brouVentaRate: number;
-      /** @format double */
-      lockedRate: number;
+      sourceAmount: number;
+      sourceCurrency: "ARS" | "USD" | "UYU";
     };
     listingIds: string[];
     listingTicketIds: string[];
     [key: string]: any;
-  } | null;
+  };
 }
 
 export interface GetPayoutsResponse {
@@ -1283,6 +1338,8 @@ export interface GetPayoutsResponse {
       listingId: string;
     }[];
     transactionReference: string | null;
+    sourceCurrency: EventTicketCurrency | null;
+    sourceAmount: string | null;
     /** @format date-time */
     requestedAt: string;
     processingFee: string | null;
@@ -1292,6 +1349,7 @@ export interface GetPayoutsResponse {
     payoutProvider: "dlocal_go" | "manual_bank";
     payoutMethodId: string;
     notes: string | null;
+    idempotencyKeyHash: string | null;
     failureReason: string | null;
     /** @format date-time */
     failedAt: string | null;
@@ -1352,6 +1410,8 @@ export interface GetPayoutDetailsResponse {
     listingId: string;
   }[];
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1361,6 +1421,7 @@ export interface GetPayoutDetailsResponse {
   payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
@@ -1393,36 +1454,42 @@ export interface GetPayoutDetailsResponse {
     /** @format double */
     dLocalAverageExchangeRate: number | null;
     /** @format double */
-    uyuCostAtLockedRate: number | null;
+    uyuCostAtSnapshotRate: number | null;
     /** @format double */
-    rateLockMsRemaining: number | null;
-    rateLockExpired: boolean;
-    fxProcessing: {
+    quoteMsRemaining: number | null;
+    quoteExpired: boolean;
+    fxExecution: {
       rateWasExpired?: boolean;
-      processedAt?: string;
+      externalId?: string;
       /** @format double */
-      actualUyuCost?: number;
+      providerFees?: number;
       /** @format double */
-      actualBankRate?: number;
+      actualSourceAmount?: number;
+      /** @format double */
+      actualRate?: number;
+      processedAt: string;
     } | null;
-    rateLock?: {
-      convertedCurrency: string;
+    fxSnapshot: {
+      quoteExpiresAt?: string;
+      quoteId?: string;
       /** @format double */
-      convertedAmount: number;
-      originalCurrency: string;
+      spreadPercent?: number;
       /** @format double */
-      originalAmount: number;
-      rateExpiresAt: string;
-      lockedAt: string;
+      providerRate?: number;
+      referenceRate?: {
+        fetchedAt: string;
+        source: "brou_venta" | "dlocal_quote_reference" | "manual";
+        /** @format double */
+        value: number;
+      } | null;
+      executor: "dlocal_go" | "admin_manual";
       /** @format double */
-      spreadPercent: number;
+      destinationAmount: number;
+      destinationCurrency: "ARS" | "USD" | "UYU";
       /** @format double */
-      brouVentaRate: number;
-      /** @format double */
-      lockedRate: number;
+      sourceAmount: number;
+      sourceCurrency: "ARS" | "USD" | "UYU";
     };
-    /** @format double */
-    rateLockHoursConfigured: number;
     /** @format double */
     spreadPercentConfigured: number;
     /** @format double */
@@ -1481,49 +1548,48 @@ export interface GetPayoutDetailsResponse {
     url: string;
   }[];
   metadata: {
-    fxProcessing?: {
+    fxExecution?: {
       rateWasExpired?: boolean;
-      processedAt?: string;
+      externalId?: string;
       /** @format double */
-      actualUyuCost?: number;
+      providerFees?: number;
       /** @format double */
-      actualBankRate?: number;
+      actualSourceAmount?: number;
+      /** @format double */
+      actualRate?: number;
+      processedAt: string;
     };
-    dLocalArRateLock?: {
+    fxSnapshot?: {
+      quoteExpiresAt?: string;
+      quoteId?: string;
       /** @format double */
-      rateArsPerUsd: number;
+      spreadPercent?: number;
       /** @format double */
-      destinationAmountArs: number;
+      providerRate?: number;
+      referenceRate?: {
+        fetchedAt: string;
+        source: "brou_venta" | "dlocal_quote_reference" | "manual";
+        /** @format double */
+        value: number;
+      } | null;
+      executor: "dlocal_go" | "admin_manual";
       /** @format double */
-      sourceAmountUsd: number;
-      rateExpiresAt: string;
-      lockedAt: string;
-      quoteId: string;
-    };
-    rateLock?: {
-      convertedCurrency: string;
+      destinationAmount: number;
+      destinationCurrency: "ARS" | "USD" | "UYU";
       /** @format double */
-      convertedAmount: number;
-      originalCurrency: string;
-      /** @format double */
-      originalAmount: number;
-      rateExpiresAt: string;
-      lockedAt: string;
-      /** @format double */
-      spreadPercent: number;
-      /** @format double */
-      brouVentaRate: number;
-      /** @format double */
-      lockedRate: number;
+      sourceAmount: number;
+      sourceCurrency: "ARS" | "USD" | "UYU";
     };
     listingIds: string[];
     listingTicketIds: string[];
     [key: string]: any;
-  } | null;
+  };
 }
 
 export interface ProcessPayoutResponse {
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1533,6 +1599,7 @@ export interface ProcessPayoutResponse {
   payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
@@ -1563,199 +1630,10 @@ export interface ProcessPayoutRouteBody {
   processingFee?: number;
 }
 
-export interface RefreshPayoutRateLockResponse {
-  linkedEarnings: {
-    venueName: string | null;
-    ticketWaveName: string;
-    eventEndDate: string;
-    eventStartDate: string;
-    eventSlug: string;
-    eventName: string;
-    sellerAmount: string;
-    listingTicketId: string;
-    currency: EventTicketCurrency;
-    id: string;
-    createdAt: string;
-    listingId: string;
-  }[];
-  transactionReference: string | null;
-  /** @format date-time */
-  requestedAt: string;
-  processingFee: string | null;
-  processedBy: string | null;
-  /** @format date-time */
-  processedAt: string | null;
-  payoutProvider: "dlocal_go" | "manual_bank";
-  payoutMethodId: string;
-  notes: string | null;
-  failureReason: string | null;
-  /** @format date-time */
-  failedAt: string | null;
-  amount: string;
-  /** @format date-time */
-  completedAt: string | null;
-  sellerUserId: string;
-  currency: EventTicketCurrency;
-  /** @format date-time */
-  updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  id: string;
-  /** @format date-time */
-  createdAt: string;
-  payoutMethod: {
-    metadata: string | number | boolean | JsonArray | JsonObject | null;
-    currency: EventTicketCurrency;
-    accountHolderSurname: string;
-    accountHolderName: string;
-    payoutType: PayoutType;
-    id: string;
-  };
-  seller: {
-    email: string;
-    lastName: string | null;
-    firstName: string | null;
-    id: string;
-  };
-  fxDecisionSupport: {
-    /** @format double */
-    dLocalAverageExchangeRate: number | null;
-    /** @format double */
-    uyuCostAtLockedRate: number | null;
-    /** @format double */
-    rateLockMsRemaining: number | null;
-    rateLockExpired: boolean;
-    fxProcessing: {
-      rateWasExpired?: boolean;
-      processedAt?: string;
-      /** @format double */
-      actualUyuCost?: number;
-      /** @format double */
-      actualBankRate?: number;
-    } | null;
-    rateLock?: {
-      convertedCurrency: string;
-      /** @format double */
-      convertedAmount: number;
-      originalCurrency: string;
-      /** @format double */
-      originalAmount: number;
-      rateExpiresAt: string;
-      lockedAt: string;
-      /** @format double */
-      spreadPercent: number;
-      /** @format double */
-      brouVentaRate: number;
-      /** @format double */
-      lockedRate: number;
-    };
-    /** @format double */
-    rateLockHoursConfigured: number;
-    /** @format double */
-    spreadPercentConfigured: number;
-    /** @format double */
-    currentBrouVentaRate: number | null;
-  };
-  settlementInfo: {
-    linkedProcessorSettlements: {
-      paymentProvider: string;
-      settlementCurrency: string;
-      totalAmount: string;
-      settlementStatus: string;
-      /** @format date-time */
-      settlementDate: string;
-      externalSettlementId: string;
-      id: string;
-    }[];
-    providers: string[];
-    hasExchangeRateData: boolean;
-    settlements: {
-      providers: string[];
-      /** @format double */
-      paymentCount: number;
-      balanceCurrency: string | null;
-      /** @format double */
-      averageExchangeRate: number | null;
-      /** @format double */
-      totalSellerAmount: number;
-      /** @format double */
-      totalBalanceFee: number;
-      /** @format double */
-      totalBalanceAmount: number;
-      /** @format double */
-      totalPaymentAmount: number;
-      currency: string;
-    }[];
-  };
-  documents: {
-    uploadedBy: string;
-    /** @format date-time */
-    uploadedAt: string;
-    storagePath: string;
-    /** @format double */
-    sizeBytes: number;
-    payoutId: string;
-    originalName: string;
-    mimeType: string;
-    fileName: string;
-    documentType: string;
-    /** @format date-time */
-    updatedAt: string;
-    id: string;
-    /** @format date-time */
-    deletedAt: string | null;
-    /** @format date-time */
-    createdAt: string;
-    url: string;
-  }[];
-  metadata: {
-    fxProcessing?: {
-      rateWasExpired?: boolean;
-      processedAt?: string;
-      /** @format double */
-      actualUyuCost?: number;
-      /** @format double */
-      actualBankRate?: number;
-    };
-    dLocalArRateLock?: {
-      /** @format double */
-      rateArsPerUsd: number;
-      /** @format double */
-      destinationAmountArs: number;
-      /** @format double */
-      sourceAmountUsd: number;
-      rateExpiresAt: string;
-      lockedAt: string;
-      quoteId: string;
-    };
-    rateLock?: {
-      convertedCurrency: string;
-      /** @format double */
-      convertedAmount: number;
-      originalCurrency: string;
-      /** @format double */
-      originalAmount: number;
-      rateExpiresAt: string;
-      lockedAt: string;
-      /** @format double */
-      spreadPercent: number;
-      /** @format double */
-      brouVentaRate: number;
-      /** @format double */
-      lockedRate: number;
-    };
-    listingIds: string[];
-    listingTicketIds: string[];
-    [key: string]: any;
-  } | null;
-}
-
-/** Construct a type with a set of properties K of type T */
-export type RecordStringNever = object;
-
-export type RefreshPayoutRateLockRouteBody = RecordStringNever;
-
 export interface FailPayoutResponse {
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1765,6 +1643,7 @@ export interface FailPayoutResponse {
   payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
@@ -1790,6 +1669,8 @@ export interface FailPayoutRouteBody {
 
 export interface CancelPayoutResponse {
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1799,6 +1680,7 @@ export interface CancelPayoutResponse {
   payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
@@ -4661,30 +4543,6 @@ export class Api<
         UnauthorizedError | NotFoundError | ValidationError
       >({
         path: `/admin/payouts/${payoutId}/process`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Admin - Payouts
-     * @name RefreshPayoutRateLock
-     * @request POST:/admin/payouts/{payoutId}/refresh-rate-lock
-     */
-    refreshPayoutRateLock: (
-      payoutId: string,
-      data: RefreshPayoutRateLockRouteBody,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        RefreshPayoutRateLockResponse,
-        UnauthorizedError | NotFoundError | ValidationError
-      >({
-        path: `/admin/payouts/${payoutId}/refresh-rate-lock`,
         method: "POST",
         body: data,
         type: ContentType.Json,

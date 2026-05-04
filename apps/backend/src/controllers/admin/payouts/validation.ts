@@ -4,13 +4,7 @@ import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 
 export const AdminPayoutsQuerySchema = PaginationSchema.extend({
   status: z
-    .enum([
-      'pending',
-      'processing',
-      'completed',
-      'failed',
-      'cancelled',
-    ])
+    .enum(['pending', 'processing', 'completed', 'failed', 'cancelled'])
     .optional(),
 });
 
@@ -29,6 +23,7 @@ export const ProcessPayoutRouteSchema = z.object({
       actualBankRate: z.number().positive().optional(),
       actualUyuCost: z.number().nonnegative().optional(),
     })
+    .strict()
     .default({}), // Default to empty object if body is missing
 });
 
@@ -57,12 +52,4 @@ export const CancelPayoutRouteSchema = z.object({
 
 export type CancelPayoutRouteBody = z.infer<
   typeof CancelPayoutRouteSchema
->['body'];
-
-export const RefreshPayoutRateLockRouteSchema = z.object({
-  body: z.object({}).default({}),
-});
-
-export type RefreshPayoutRateLockRouteBody = z.infer<
-  typeof RefreshPayoutRateLockRouteSchema
 >['body'];

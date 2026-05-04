@@ -64,7 +64,6 @@ const EnvSchema = z.object({
   PAYOUT_MINIMUM_ARS: z.coerce.number().default(25_000),
   PAYOUT_HOLD_PERIOD_HOURS: z.coerce.number().default(48), // 48 hours post-event
   PAYOUT_FX_SPREAD_PERCENT: z.coerce.number().min(0).max(10).default(1),
-  PAYOUT_FX_RATE_LOCK_HOURS: z.coerce.number().min(1).max(168).default(72),
   // dLocal Payouts v3 (overrides DLOCAL_BASE_URL for `/payouts/v3` if needed)
   DLOCAL_PAYOUTS_BASE_URL: z.preprocess(
     v => (v === '' || v == null ? undefined : v),
@@ -166,7 +165,6 @@ export const {
   PAYOUT_MINIMUM_ARS,
   PAYOUT_HOLD_PERIOD_HOURS,
   PAYOUT_FX_SPREAD_PERCENT,
-  PAYOUT_FX_RATE_LOCK_HOURS,
   DLOCAL_PAYOUTS_BASE_URL,
   DLOCAL_PAYOUTS_TIMEOUT_MS,
   DLOCAL_PAYOUT_REMITTER_FIRST_NAME,

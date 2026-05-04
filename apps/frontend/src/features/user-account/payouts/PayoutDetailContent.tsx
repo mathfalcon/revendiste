@@ -1,14 +1,8 @@
-import {useState, useMemo, type ReactNode} from 'react';
+import {useMemo, type ReactNode} from 'react';
 import {isSameDay} from 'date-fns';
 import {Link} from '@tanstack/react-router';
 import {Badge} from '~/components/ui/badge';
 import {Card, CardContent, CardHeader, CardTitle} from '~/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '~/components/ui/dialog';
 import {Button} from '~/components/ui/button';
 import {formatCurrency, formatEventDate, formatSmartDateTime} from '~/utils';
 import {
@@ -30,7 +24,6 @@ import {
 } from 'lucide-react';
 import {formatFileSize} from '~/utils/file-icons';
 import type {GetUserPayoutDetailsResponse} from '~/lib/api/generated';
-import {PayoutEventType, PayoutStatus} from '~/lib/api/generated';
 import {cn} from '~/lib/utils';
 
 function getStatusBadge(status: string) {
@@ -100,6 +93,8 @@ function getEventTypeLabel(eventType: string) {
       return 'Cancelado';
     case 'status_change':
       return 'Cambió el estado';
+    case 'provider_response':
+      return 'Respuesta del proveedor';
     default:
       return eventType;
   }
@@ -110,25 +105,25 @@ function payoutEventWorkflowStep(
   event: GetUserPayoutDetailsResponse['events'][number],
 ): 0 | 1 | 2 | null {
   switch (event.eventType) {
-    case PayoutEventType.PayoutRequested:
+    case 'payout_requested':
       return 0;
-    case PayoutEventType.AdminProcessed:
+    case 'admin_processed':
       return 1;
-    case PayoutEventType.StatusChange: {
+    case 'status_change': {
       const to = event.toStatus;
-      if (to === PayoutStatus.Processing) return 1;
-      if (to === PayoutStatus.Completed || to === PayoutStatus.Failed) {
+      if (to === 'processing') return 1;
+      if (to === 'completed' || to === 'failed') {
         return 2;
       }
-      if (to === PayoutStatus.Cancelled) return 1;
-      if (to === PayoutStatus.Pending) return 0;
+      if (to === 'cancelled') return 1;
+      if (to === 'pending') return 0;
       return null;
     }
-    case PayoutEventType.TransferInitiated:
-    case PayoutEventType.TransferCompleted:
-    case PayoutEventType.TransferFailed:
+    case 'transfer_initiated':
+    case 'transfer_completed':
+    case 'transfer_failed':
       return 2;
-    case PayoutEventType.Cancelled:
+    case 'cancelled':
       return 1;
     default:
       return null;
@@ -140,8 +135,7 @@ const PAYOUT_FLOW_DEFINITIONS = [
   {
     id: 'requested',
     title: 'Pediste el retiro',
-    description:
-      'Registramos tu solicitud y el monto que elegiste retirar.',
+    description: 'Registramos tu solicitud y el monto que elegiste retirar.',
   },
   {
     id: 'review',
@@ -264,8 +258,9 @@ function FlowStepMarker({phase}: {phase: FlowPhase}) {
 const payoutSectionHeaderClass =
   'flex flex-col gap-1 space-y-0 p-0 px-4 py-3 border-b bg-muted/20';
 
-type LinkedEarningRow =
-  NonNullable<GetUserPayoutDetailsResponse['linkedEarnings']>[number];
+type LinkedEarningRow = NonNullable<
+  GetUserPayoutDetailsResponse['linkedEarnings']
+>[number];
 
 function LinkedEarningsSection({
   linkedEarnings,
@@ -304,81 +299,81 @@ function LinkedEarningsSection({
             : `${formatEventDate(start)} – ${formatEventDate(end)}`;
 
           return (
-          <div
-            key={listingId}
-            className='rounded-lg border bg-muted/15 px-3 py-3 space-y-3'
-          >
-            <div className='flex flex-wrap items-start justify-between gap-3 gap-y-2 border-b border-border/40 pb-3'>
-              <div className='min-w-0 space-y-1.5 flex-1'>
-                {meta.eventSlug ? (
-                  <Link
-                    to='/eventos/$slug'
-                    params={{slug: meta.eventSlug}}
-                    preloadDelay={0}
-                    className='text-sm font-semibold leading-snug hover:text-primary hover:underline block'
-                  >
-                    {meta.eventName}
-                  </Link>
-                ) : (
-                  <p className='text-sm font-semibold leading-snug'>
-                    {meta.eventName}
+            <div
+              key={listingId}
+              className='rounded-lg border bg-muted/15 px-3 py-3 space-y-3'
+            >
+              <div className='flex flex-wrap items-start justify-between gap-3 gap-y-2 border-b border-border/40 pb-3'>
+                <div className='min-w-0 space-y-1.5 flex-1'>
+                  {meta.eventSlug ? (
+                    <Link
+                      to='/eventos/$slug'
+                      params={{slug: meta.eventSlug}}
+                      preloadDelay={0}
+                      className='text-sm font-semibold leading-snug hover:text-primary hover:underline block'
+                    >
+                      {meta.eventName}
+                    </Link>
+                  ) : (
+                    <p className='text-sm font-semibold leading-snug'>
+                      {meta.eventName}
+                    </p>
+                  )}
+                  <p className='text-xs text-muted-foreground'>
+                    {meta.ticketWaveName}
                   </p>
-                )}
-                <p className='text-xs text-muted-foreground'>
-                  {meta.ticketWaveName}
-                </p>
-                <div className='flex flex-col gap-1 text-xs text-muted-foreground pt-0.5'>
-                  <span className='inline-flex items-start gap-1.5'>
-                    <Calendar
-                      className='h-3.5 w-3.5 shrink-0 mt-0.5'
-                      aria-hidden
-                    />
-                    <span>{eventDateLabel}</span>
-                  </span>
-                  {meta.venueName ? (
+                  <div className='flex flex-col gap-1 text-xs text-muted-foreground pt-0.5'>
                     <span className='inline-flex items-start gap-1.5'>
-                      <MapPin
+                      <Calendar
                         className='h-3.5 w-3.5 shrink-0 mt-0.5'
                         aria-hidden
                       />
-                      <span className='line-clamp-2'>{meta.venueName}</span>
+                      <span>{eventDateLabel}</span>
                     </span>
-                  ) : null}
+                    {meta.venueName ? (
+                      <span className='inline-flex items-start gap-1.5'>
+                        <MapPin
+                          className='h-3.5 w-3.5 shrink-0 mt-0.5'
+                          aria-hidden
+                        />
+                        <span className='line-clamp-2'>{meta.venueName}</span>
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-              <Link
-                to='/cuenta/publicaciones/$listingId'
-                params={{listingId}}
-                className='text-xs font-medium text-primary inline-flex items-center gap-1 hover:underline shrink-0'
-              >
-                Ir a la publicación
-                <ExternalLink className='h-3 w-3' aria-hidden />
-              </Link>
-            </div>
-            <p className='text-xs text-muted-foreground'>
-              {earnings.length === 1
-                ? 'Una entrada vendida en esta publicación'
-                : `${earnings.length} entradas vendidas en esta publicación`}
-            </p>
-            <ul className='space-y-0'>
-              {earnings.map(earning => (
-                <li
-                  key={earning.id}
-                  className='flex justify-between items-center gap-2 text-sm py-2 border-b border-border/50 last:border-0 last:pb-0 first:pt-0'
+                <Link
+                  to='/cuenta/publicaciones/$listingId'
+                  params={{listingId}}
+                  className='text-xs font-medium text-primary inline-flex items-center gap-1 hover:underline shrink-0'
                 >
-                  <span className='text-muted-foreground truncate min-w-0'>
-                    Ref. entrada{' '}
-                    <span className='font-mono text-xs'>
-                      {earning.listingTicketId.slice(0, 8)}…
+                  Ir a la publicación
+                  <ExternalLink className='h-3 w-3' aria-hidden />
+                </Link>
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                {earnings.length === 1
+                  ? 'Una entrada vendida en esta publicación'
+                  : `${earnings.length} entradas vendidas en esta publicación`}
+              </p>
+              <ul className='space-y-0'>
+                {earnings.map(earning => (
+                  <li
+                    key={earning.id}
+                    className='flex justify-between items-center gap-2 text-sm py-2 border-b border-border/50 last:border-0 last:pb-0 first:pt-0'
+                  >
+                    <span className='text-muted-foreground truncate min-w-0'>
+                      Ref. entrada{' '}
+                      <span className='font-mono text-xs'>
+                        {earning.listingTicketId.slice(0, 8)}…
+                      </span>
                     </span>
-                  </span>
-                  <span className='font-medium tabular-nums shrink-0'>
-                    {formatCurrency(earning.sellerAmount, earning.currency)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
+                    <span className='font-medium tabular-nums shrink-0'>
+                      {formatCurrency(earning.sellerAmount, earning.currency)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           );
         })}
       </CardContent>
@@ -398,9 +393,7 @@ function PayoutStepMovementLines({
   phase: FlowPhase;
 }) {
   const showRequestedFallback =
-    stepIndex === 0 &&
-    stepEvents.length === 0 &&
-    Boolean(payout.requestedAt);
+    stepIndex === 0 && stepEvents.length === 0 && Boolean(payout.requestedAt);
 
   if (stepEvents.length === 0 && !showRequestedFallback) {
     return null;
@@ -485,14 +478,12 @@ function PayoutActivitySection({
           Cómo va tu retiro
         </CardTitle>
         <p className='text-xs text-muted-foreground leading-relaxed'>
-          Las etapas pendientes se muestran atenuadas hasta que el proceso avance.
+          Las etapas pendientes se muestran atenuadas hasta que el proceso
+          avance.
         </p>
       </CardHeader>
       <CardContent className='p-4'>
-        <ol
-          className='relative space-y-0'
-          aria-label='Pasos del retiro'
-        >
+        <ol className='relative space-y-0' aria-label='Pasos del retiro'>
           {PAYOUT_FLOW_DEFINITIONS.map((step, index) => {
             const stepIndex = index as 0 | 1 | 2;
             const phase = phases[index]!;
@@ -562,9 +553,7 @@ function PayoutActivitySection({
                     <div
                       className={cn(
                         'absolute top-8.5 bottom-0 left-1/2 w-px -translate-x-1/2',
-                        phase === 'complete'
-                          ? 'bg-primary/35'
-                          : 'bg-border',
+                        phase === 'complete' ? 'bg-primary/35' : 'bg-border',
                       )}
                       aria-hidden
                     />
@@ -637,13 +626,7 @@ function documentTypeLabel(documentType: string) {
   }
 }
 
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function DetailRow({label, value}: {label: string; value: React.ReactNode}) {
   if (value === null || value === undefined || value === '') {
     return null;
   }
@@ -655,54 +638,27 @@ function DetailRow({
   );
 }
 
-type DocPreview = {
-  url: string;
-  name: string;
-  mimeType: string;
-};
-
 function PayoutDocumentBlock({
   doc,
-  onPreview,
 }: {
   doc: GetUserPayoutDetailsResponse['documents'][number];
-  onPreview: (p: DocPreview) => void;
 }) {
   const isImage = doc.mimeType?.toLowerCase().startsWith('image/');
-  const isPdf = doc.mimeType?.toLowerCase() === 'application/pdf';
   const typeLabel = documentTypeLabel(doc.documentType);
 
   return (
     <div className='rounded-lg border bg-background overflow-hidden'>
       {isImage ? (
-        <button
-          type='button'
-          onClick={() =>
-            onPreview({
-              url: doc.url,
-              name: doc.originalName,
-              mimeType: doc.mimeType,
-            })
-          }
-          className='block w-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset'
-          aria-label={`Ampliar imagen: ${doc.originalName}`}
-        >
-          <img
-            src={doc.url}
-            alt={`${typeLabel}: ${doc.originalName}`}
-            className='w-full max-h-52 object-contain bg-muted/40'
-            loading='lazy'
-          />
-        </button>
+        <img
+          src={doc.url}
+          alt={`${typeLabel}: ${doc.originalName}`}
+          className='w-full max-h-52 object-contain bg-muted/40'
+          loading='lazy'
+        />
       ) : null}
       <div className='p-3 space-y-2'>
         <div className='flex items-start gap-2 min-w-0'>
-          {isPdf ? (
-            <FileText
-              className='h-4 w-4 shrink-0 text-muted-foreground mt-0.5'
-              aria-hidden
-            />
-          ) : isImage ? (
+          {isImage ? (
             <FileImage
               className='h-4 w-4 shrink-0 text-muted-foreground mt-0.5'
               aria-hidden
@@ -717,7 +673,10 @@ function PayoutDocumentBlock({
             <p className='text-xs font-medium text-muted-foreground'>
               {typeLabel}
             </p>
-            <p className='text-sm font-medium truncate' title={doc.originalName}>
+            <p
+              className='text-sm font-medium truncate'
+              title={doc.originalName}
+            >
               {doc.originalName}
             </p>
             <p className='text-xs text-muted-foreground'>
@@ -726,43 +685,9 @@ function PayoutDocumentBlock({
           </div>
         </div>
         <div className='flex flex-wrap gap-2'>
-          {(isPdf || isImage) && (
-            <Button
-              type='button'
-              variant='secondary'
-              size='sm'
-              className='cursor-pointer'
-              onClick={() =>
-                onPreview({
-                  url: doc.url,
-                  name: doc.originalName,
-                  mimeType: doc.mimeType,
-                })
-              }
-            >
-              Ver en esta página
-            </Button>
-          )}
           <Button
             type='button'
             variant='outline'
-            size='sm'
-            className='cursor-pointer'
-            asChild
-          >
-            <a
-              href={doc.url}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='inline-flex items-center gap-1.5'
-            >
-              <ExternalLink className='h-3.5 w-3.5' aria-hidden />
-              Abrir en otra pestaña
-            </a>
-          </Button>
-          <Button
-            type='button'
-            variant='ghost'
             size='sm'
             className='cursor-pointer'
             asChild
@@ -778,64 +703,11 @@ function PayoutDocumentBlock({
   );
 }
 
-function DocumentPreviewDialog({
-  open,
-  onOpenChange,
-  doc,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  doc: DocPreview | null;
-}) {
-  if (!doc) return null;
-  const isImage = doc.mimeType?.toLowerCase().startsWith('image/');
-  const isPdf = doc.mimeType?.toLowerCase() === 'application/pdf';
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-4xl w-[calc(100%-2rem)] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden'>
-        <DialogHeader className='px-6 pt-6 pb-2 shrink-0 text-left'>
-          <DialogTitle className='text-base pr-8 line-clamp-2'>
-            {doc.name}
-          </DialogTitle>
-        </DialogHeader>
-        <div className='flex-1 min-h-0 px-6 pb-6 overflow-auto'>
-          {isImage ? (
-            <img
-              src={doc.url}
-              alt={doc.name}
-              className='max-w-full h-auto rounded-md border mx-auto block'
-            />
-          ) : isPdf ? (
-            <iframe
-              title={doc.name}
-              src={doc.url}
-              className='w-full min-h-[70vh] rounded-md border bg-muted/30'
-            />
-          ) : (
-            <p className='text-sm text-muted-foreground py-8 text-center'>
-              No hay vista previa para este archivo. Podés abrirlo en otra pestaña.
-            </p>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export function PayoutDetailContent({
   payout,
 }: {
   payout: GetUserPayoutDetailsResponse;
 }) {
-  const [previewDoc, setPreviewDoc] = useState<DocPreview | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
-
-  const openPreview = (p: DocPreview) => {
-    setPreviewDoc(p);
-    setPreviewOpen(true);
-  };
-
   const hasUploadedDocs = payout.documents && payout.documents.length > 0;
 
   const methodMeta = payout.payoutMethod?.metadata;
@@ -844,18 +716,18 @@ export function PayoutDetailContent({
     typeof methodMeta === 'object' &&
     methodMeta !== null &&
     ('bankName' in methodMeta || 'bank_name' in methodMeta)
-      ? ('bankName' in methodMeta
-          ? methodMeta.bankName
-          : methodMeta.bank_name)
+      ? 'bankName' in methodMeta
+        ? methodMeta.bankName
+        : methodMeta.bank_name
       : undefined;
   const accountNumber =
     methodMeta &&
     typeof methodMeta === 'object' &&
     methodMeta !== null &&
     ('accountNumber' in methodMeta || 'account_number' in methodMeta)
-      ? ('accountNumber' in methodMeta
-          ? methodMeta.accountNumber
-          : methodMeta.account_number)
+      ? 'accountNumber' in methodMeta
+        ? methodMeta.accountNumber
+        : methodMeta.account_number
       : undefined;
   return (
     <>
@@ -878,11 +750,7 @@ export function PayoutDetailContent({
               ) : (
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                   {payout.documents.map(doc => (
-                    <PayoutDocumentBlock
-                      key={doc.id}
-                      doc={doc}
-                      onPreview={openPreview}
-                    />
+                    <PayoutDocumentBlock key={doc.id} doc={doc} />
                   ))}
                 </div>
               )}
@@ -1015,7 +883,9 @@ export function PayoutDetailContent({
                     <DetailRow
                       label='Cuenta'
                       value={
-                        <span className='font-mono text-xs'>{accountNumber}</span>
+                        <span className='font-mono text-xs'>
+                          {accountNumber}
+                        </span>
                       }
                     />
                   )}
@@ -1029,15 +899,6 @@ export function PayoutDetailContent({
           </Card>
         </div>
       </div>
-
-      <DocumentPreviewDialog
-        open={previewOpen}
-        onOpenChange={open => {
-          setPreviewOpen(open);
-          if (!open) setPreviewDoc(null);
-        }}
-        doc={previewDoc}
-      />
     </>
   );
 }

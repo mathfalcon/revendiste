@@ -1,5 +1,4 @@
 import {Link} from '@tanstack/react-router';
-import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {Badge} from '~/components/ui/badge';
 import {Button} from '~/components/ui/button';
 import {
@@ -19,18 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table';
-import {refreshPayoutRateLockMutation} from '~/lib/api/admin';
 import {formatCurrency} from '~/utils';
 import {formatProvidersList} from '@revendiste/shared';
-import {
-  ArrowRight,
-  ArrowRightLeft,
-  ExternalLink,
-  Info,
-  Loader2,
-  RefreshCw,
-} from 'lucide-react';
-import {toast} from 'sonner';
+import {ArrowRight, ArrowRightLeft, ExternalLink, Info} from 'lucide-react';
 import type {GetPayoutDetailsResponse} from '~/lib/api/generated';
 
 type FxSupport = GetPayoutDetailsResponse['fxDecisionSupport'];
@@ -42,112 +32,65 @@ function formatDurationMs(ms: number) {
   return `${h} h ${m} min`;
 }
 
-interface StepFxReviewProps {
-  payoutId: string;
-  payout: GetPayoutDetailsResponse;
-  onNext: () => void;
-}
-
-function RateLockSection({
-  payoutId,
-  payoutStatus,
-  fx,
-}: {
-  payoutId: string;
-  payoutStatus: string;
-  fx: FxSupport;
-}) {
-  const queryClient = useQueryClient();
-  const refreshMutation = useMutation({
-    ...refreshPayoutRateLockMutation(),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
-      void queryClient.invalidateQueries({
-        queryKey: ['admin', 'payouts', payoutId],
-      });
-      toast.success('Tipo de cambio actualizado');
-    },
-    onError: (error: {response?: {data?: {message?: string}}}) => {
-      toast.error(
-        error.response?.data?.message ||
-          'No se pudo actualizar el tipo de cambio',
-      );
-    },
-  });
-
-  const rateLock = fx.rateLock;
-  const canRefresh =
-    payoutStatus === 'pending' &&
-    rateLock != null &&
-    !refreshMutation.isPending;
-
-  if (!rateLock) return null;
+function FxSnapshotSection({fx}: {fx: FxSupport}) {
+  const snap = fx.fxSnapshot;
+  if (!snap) return null;
 
   return (
     <Card>
       <CardHeader className='pb-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
-          <CardTitle className='text-base'>Bloqueo de tipo de cambio</CardTitle>
-          {fx.rateLockExpired ? (
-            <Badge variant='destructive'>Vencido</Badge>
+          <CardTitle className='text-base'>Cotización del retiro</CardTitle>
+          {snap.quoteExpiresAt != null ? (
+            fx.quoteExpired ? (
+              <Badge variant='destructive'>Cotización vencida</Badge>
+            ) : (
+              <Badge
+                variant='outline'
+                className='border-green-600/50 bg-green-500/10 text-green-700 dark:text-green-400'
+              >
+                Vigente
+                {fx.quoteMsRemaining != null &&
+                  ` · ${formatDurationMs(fx.quoteMsRemaining)} restantes`}
+              </Badge>
+            )
           ) : (
-            <Badge
-              variant='outline'
-              className='border-green-600/50 bg-green-500/10 text-green-700 dark:text-green-400'
-            >
-              Vigente
-              {fx.rateLockMsRemaining != null &&
-                ` · ${formatDurationMs(fx.rateLockMsRemaining)} restantes`}
-            </Badge>
+            <Badge variant='secondary'>Sin vencimiento declarado</Badge>
           )}
         </div>
       </CardHeader>
       <CardContent className='space-y-3'>
         <div className='grid gap-2 text-sm sm:grid-cols-2'>
-          <div className='text-muted-foreground'>BROU venta al bloqueo</div>
-          <div className='tabular-nums font-medium sm:text-right'>
-            1 USD = {rateLock.brouVentaRate.toFixed(4)} UYU
-          </div>
-          <div className='text-muted-foreground'>
-            Tipo efectivo (+{rateLock.spreadPercent}% spread)
-          </div>
-          <div className='tabular-nums font-medium sm:text-right'>
-            1 USD = {rateLock.lockedRate.toFixed(4)} UYU
-          </div>
-          <div className='text-muted-foreground'>UYU origen</div>
-          <div className='tabular-nums sm:text-right'>
-            {rateLock.originalAmount.toLocaleString('es-UY')} UYU
-          </div>
-          <div className='text-muted-foreground'>USD a pagar</div>
+          <div className='text-muted-foreground'>Origen → destino</div>
           <div className='tabular-nums font-semibold sm:text-right'>
-            USD {rateLock.convertedAmount.toFixed(2)}
+            {snap.sourceAmount.toLocaleString('es-UY', {
+              maximumFractionDigits: 2,
+            })}{' '}
+            {snap.sourceCurrency} →{' '}
+            {snap.destinationAmount.toLocaleString('es-UY', {
+              maximumFractionDigits: 2,
+            })}{' '}
+            {snap.destinationCurrency}
           </div>
+          {snap.providerRate != null && (
+            <>
+              <div className='text-muted-foreground'>Tipo efectivo</div>
+              <div className='tabular-nums sm:text-right'>
+                {snap.providerRate.toFixed(4)}
+                {snap.spreadPercent != null &&
+                  ` (+${snap.spreadPercent}% spread)`}
+              </div>
+            </>
+          )}
         </div>
 
-        {fx.uyuCostAtLockedRate != null && (
+        {fx.uyuCostAtSnapshotRate != null && (
           <p className='text-xs text-muted-foreground border-t pt-2'>
-            Costo UYU a tipo bloqueado (ref):{' '}
+            Costo UYU (referencia al snapshot):{' '}
             <span className='font-medium text-foreground'>
-              {fx.uyuCostAtLockedRate.toLocaleString('es-UY')} UYU
+              {fx.uyuCostAtSnapshotRate.toLocaleString('es-UY')} UYU
             </span>
           </p>
-        )}
-
-        {canRefresh && (
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            className='cursor-pointer'
-            onClick={() => refreshMutation.mutate(payoutId)}
-          >
-            {refreshMutation.isPending ? (
-              <Loader2 className='h-4 w-4 animate-spin' />
-            ) : (
-              <RefreshCw className='h-4 w-4' />
-            )}
-            <span className='ml-2'>Refrescar tipo (nuevo bloqueo 72 h)</span>
-          </Button>
         )}
       </CardContent>
     </Card>
@@ -191,20 +134,26 @@ function CurrentRatesSection({fx}: {fx: FxSupport}) {
           </div>
         )}
         <p className='text-xs text-muted-foreground pt-1'>
-          Spread configurado: {fx.spreadPercentConfigured}% · Bloqueo:{' '}
-          {fx.rateLockHoursConfigured} h
+          Spread configurado (manual UY→USD): {fx.spreadPercentConfigured}%
         </p>
       </CardContent>
     </Card>
   );
 }
 
+interface StepFxReviewProps {
+  payoutId: string;
+  payout: GetPayoutDetailsResponse;
+  onNext: () => void;
+}
+
 export function StepFxReview({payoutId, payout, onNext}: StepFxReviewProps) {
+  void payoutId;
   const fx = payout.fxDecisionSupport;
   const hasFxData =
     Number.isFinite(fx.currentBrouVentaRate) ||
     fx.dLocalAverageExchangeRate != null ||
-    fx.rateLock != null;
+    fx.fxSnapshot != null;
 
   return (
     <div className='space-y-4'>
@@ -221,11 +170,7 @@ export function StepFxReview({payoutId, payout, onNext}: StepFxReviewProps) {
 
       {hasFxData && payout.currency !== 'UYU' && (
         <>
-          <RateLockSection
-            payoutId={payoutId}
-            payoutStatus={payout.status}
-            fx={fx}
-          />
+          <FxSnapshotSection fx={fx} />
           <CurrentRatesSection fx={fx} />
         </>
       )}

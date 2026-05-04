@@ -63,7 +63,8 @@ export function PayoutsView() {
           Por ahora los retiros solo se envían a{' '}
           <strong>cuentas bancarias en Uruguay</strong>, en la misma moneda que
           tus ganancias (UYU o USD). Estamos trabajando para habilitar pagos
-          automáticos a cuentas en Uruguay, Argentina y Brasil más adelante.
+          automáticos a cuentas en Uruguay y otros paises de la region más
+          adelante.
         </AlertDescription>
       </Alert>
 

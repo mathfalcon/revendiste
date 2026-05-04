@@ -239,16 +239,38 @@ export function PayoutCompletedSummary({payout}: PayoutCompletedSummaryProps) {
                       {formatFileSize(doc.sizeBytes)}
                     </span>
                   </div>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    className='cursor-pointer'
-                    onClick={() => window.open(doc.url, '_blank')}
-                    aria-label={`Descargar ${doc.originalName}`}
-                  >
-                    <Download className='h-4 w-4' />
-                  </Button>
+                  <div className='flex shrink-0 gap-1'>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      className='cursor-pointer'
+                      onClick={() =>
+                        window.open(doc.url, '_blank', 'noopener,noreferrer')
+                      }
+                      aria-label={`Abrir ${doc.originalName} en nueva pestaña`}
+                      title='Abrir en nueva pestaña'
+                    >
+                      <ExternalLink className='h-4 w-4' />
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      className='cursor-pointer'
+                      asChild
+                      aria-label={`Descargar ${doc.originalName}`}
+                      title='Descargar'
+                    >
+                      <a
+                        href={doc.url}
+                        download={doc.originalName}
+                        rel='noopener noreferrer'
+                      >
+                        <Download className='h-4 w-4' />
+                      </a>
+                    </Button>
+                  </div>
                 </div>
               );
             })}

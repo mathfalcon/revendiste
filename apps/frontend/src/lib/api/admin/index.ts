@@ -2,12 +2,7 @@ import {queryOptions} from '@tanstack/react-query';
 import {api, PaginationQuery} from '../';
 
 export interface AdminPayoutsQueryParams extends PaginationQuery {
-  status?:
-    | 'pending'
-    | 'processing'
-    | 'completed'
-    | 'failed'
-    | 'cancelled';
+  status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 }
 
 export const adminPayoutsQueryOptions = (params: AdminPayoutsQueryParams) => {
@@ -54,15 +49,6 @@ export const processPayoutMutation = () => {
       // Ensure we always send at least an empty object
       const body = Object.keys(updates).length > 0 ? updates : {};
       const response = await api.admin.processPayout(payoutId, body);
-      return response.data;
-    },
-  };
-};
-
-export const refreshPayoutRateLockMutation = () => {
-  return {
-    mutationFn: async (payoutId: string) => {
-      const response = await api.admin.refreshPayoutRateLock(payoutId, {});
       return response.data;
     },
   };
@@ -126,8 +112,7 @@ export const deletePayoutDocumentMutation = () => {
 const CRONJOB_TRIGGER_FNS = {
   syncPaymentsAndExpireOrders: () =>
     api.admin.triggerSyncPaymentsAndExpireOrders(),
-  notifyUploadAvailability: () =>
-    api.admin.triggerNotifyUploadAvailability(),
+  notifyUploadAvailability: () => api.admin.triggerNotifyUploadAvailability(),
   checkPayoutHoldPeriods: () => api.admin.triggerCheckPayoutHoldPeriods(),
   processPendingNotifications: () =>
     api.admin.triggerProcessPendingNotifications(),
@@ -690,12 +675,7 @@ export const adminDashboardRevenueByOrderCurrencyQueryOptions = (
   params: AdminDashboardApiQuery,
 ) => {
   return queryOptions({
-    queryKey: [
-      'admin',
-      'dashboard',
-      'revenueByOrderCurrency',
-      params,
-    ] as const,
+    queryKey: ['admin', 'dashboard', 'revenueByOrderCurrency', params] as const,
     queryFn: async () => {
       const response =
         await api.admin.getDashboardRevenueByOrderCurrency(params);

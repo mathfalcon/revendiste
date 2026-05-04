@@ -9,6 +9,7 @@ export const RequestPayoutRouteSchema = z.object({
       listingTicketIds: z.array(z.uuid()).optional(),
       listingIds: z.array(z.uuid()).optional(),
     })
+    .strict()
     .refine(
       data =>
         (data.listingTicketIds?.length ?? 0) > 0 ||

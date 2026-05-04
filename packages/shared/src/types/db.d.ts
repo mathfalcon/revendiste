@@ -129,6 +129,7 @@ export type PayoutEventType =
   | 'admin_processed'
   | 'cancelled'
   | 'payout_requested'
+  | 'provider_response'
   | 'status_change'
   | 'transfer_completed'
   | 'transfer_failed'
@@ -516,6 +517,7 @@ export interface Payouts {
   createdAt: Generated<Timestamp>;
   currency: EventTicketCurrency;
   deletedAt: Timestamp | null;
+  idempotencyKeyHash: string | null;
   failedAt: Timestamp | null;
   failureReason: string | null;
   id: Generated<string>;
@@ -528,6 +530,8 @@ export interface Payouts {
   processingFee: Numeric | null;
   requestedAt: Generated<Timestamp>;
   sellerUserId: string;
+  sourceAmount: Numeric | null;
+  sourceCurrency: EventTicketCurrency | null;
   status: Generated<PayoutStatus>;
   transactionReference: string | null;
   updatedAt: Generated<Timestamp>;

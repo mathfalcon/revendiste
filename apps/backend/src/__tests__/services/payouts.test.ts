@@ -6,7 +6,7 @@
  * - processPayout: happy path, FX metadata, non-pending rejection
  * - failPayout: earnings cloning for audit trail, notification fire-and-forget
  * - cancelPayout: 'error' vs 'other' reason types, earnings cloning
- * - refreshPayoutRateLock: new rate, below-minimum guard
+ * - Idempotency replay, earnings link race guard
  * - Currency / method compatibility matrix
  */
 import type {Kysely} from 'kysely';
@@ -87,6 +87,9 @@ function makeMockPayoutsRepo(): jest.Mocked<PayoutsRepository> {
     withTransaction: jest.fn().mockReturnThis(),
     getWithLinkedEarnings: jest.fn(),
     getPayoutSettlementInfo: jest.fn(),
+    findRecentBySellerAndIdempotencyKeyHash: jest
+      .fn()
+      .mockResolvedValue(undefined),
     getDb: jest.fn(),
   } as unknown as jest.Mocked<PayoutsRepository>;
 }
@@ -212,6 +215,26 @@ describe('PayoutsService', () => {
       {} as NotificationService,
       payoutDocumentsService as unknown as PayoutDocumentsService,
     );
+
+    earningsRepo.linkSelectedEarningsToPayout.mockImplementation(async () => {
+      const results = earningsRepo.validateEarningsSelection.mock.results;
+      const last = results.at(-1) as
+        | {
+            value:
+              | Promise<{valid: boolean; earnings: Array<unknown>}>
+              | {valid: boolean; earnings: Array<unknown>};
+          }
+        | undefined;
+      if (!last) {
+        return {numUpdatedRows: 0n} as never;
+      }
+      const r = (await Promise.resolve(last.value)) as {
+        valid: boolean;
+        earnings: Array<unknown>;
+      };
+      const n = r.valid ? r.earnings.length : 0;
+      return {numUpdatedRows: BigInt(n)} as never;
+    });
   });
 
   // =========================================================================
@@ -360,9 +383,13 @@ describe('PayoutsService', () => {
       });
       payoutsRepo.create.mockResolvedValue({
         id: 'payout-1',
+        metadata: {
+          listingTicketIds: [],
+          listingIds: ['listing-1'],
+        },
       } as unknown as PayoutCreateResult);
 
-      await service.requestPayout({
+      const result = await service.requestPayout({
         sellerUserId: 'seller-1',
         payoutMethodId: 'pm-uyu',
         listingIds: ['listing-1'],
@@ -377,9 +404,11 @@ describe('PayoutsService', () => {
         }),
       );
 
-      // Metadata should NOT have rateLock
       const createCall = payoutsRepo.create.mock.calls[0][0] as CreatePayoutArg;
       expect(createCall.metadata).not.toHaveProperty('rateLock');
+      expect(createCall.sourceCurrency).toBe('UYU');
+      expect(createCall.sourceAmount).toBe(1200);
+      expect(result.fxSnapshot).toBeNull();
     });
 
     // --- Happy path: USD → USD bank (no conversion) ---
@@ -432,6 +461,83 @@ describe('PayoutsService', () => {
         undefined, // listingTicketIds not provided
         ['listing-1'],
       );
+    });
+
+    it('returns existing payout when idempotency key hash matches', async () => {
+      const existing = {
+        id: 'p-existing',
+        amount: '500',
+        currency: 'UYU',
+        metadata: {
+          listingTicketIds: [],
+          listingIds: ['l-1'],
+        },
+      } as unknown as PayoutRow;
+      payoutsRepo.findRecentBySellerAndIdempotencyKeyHash.mockResolvedValue(
+        existing,
+      );
+
+      const r = await service.requestPayout({
+        sellerUserId: 'seller-1',
+        payoutMethodId: 'pm-uyu',
+        listingIds: ['l-1'],
+        idempotencyKeyHash: 'a'.repeat(64),
+      });
+
+      expect(r.id).toBe('p-existing');
+      expect(payoutsRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('throws when linked earnings count does not match selection', async () => {
+      const earnings = uyuEarnings(2, 500);
+      methodsRepo.getById.mockResolvedValue(UYU_BANK_METHOD);
+      earningsRepo.validateEarningsSelection.mockResolvedValue({
+        valid: true,
+        earnings,
+      });
+      earningsRepo.linkSelectedEarningsToPayout.mockResolvedValueOnce({
+        numUpdatedRows: 1n,
+      } as never);
+      payoutsRepo.create.mockResolvedValue({
+        id: 'p-bad',
+      } as unknown as PayoutCreateResult);
+
+      await expect(
+        service.requestPayout({
+          sellerUserId: 'seller-1',
+          payoutMethodId: 'pm-uyu',
+          listingIds: ['l-1'],
+        }),
+      ).rejects.toMatchObject({
+        message: PAYOUT_ERROR_MESSAGES.EARNINGS_SELECTION_CHANGED,
+      });
+    });
+
+    it('persists fxSnapshot for USD bank (UYU conversion path)', async () => {
+      const earnings = usdEarnings(2, 30);
+      methodsRepo.getById.mockResolvedValue(USD_BANK_METHOD);
+      earningsRepo.validateEarningsSelection.mockResolvedValue({
+        valid: true,
+        earnings,
+      });
+      payoutsRepo.create.mockResolvedValue({
+        id: 'p-usd-fx',
+        metadata: {},
+      } as unknown as PayoutCreateResult);
+
+      await service.requestPayout({
+        sellerUserId: 'seller-1',
+        payoutMethodId: 'pm-usd',
+        listingTicketIds: ['lt-usd-0', 'lt-usd-1'],
+      });
+
+      const createCall = payoutsRepo.create.mock
+        .calls[0][0] as CreatePayoutArg & {
+        metadata: {fxSnapshot?: {executor: string; sourceCurrency: string}};
+      };
+      expect(createCall.metadata.fxSnapshot?.executor).toBe('admin_manual');
+      expect(createCall.metadata.fxSnapshot?.sourceCurrency).toBe('UYU');
+      expect(createCall.sourceCurrency).toBe('UYU');
     });
 
     it('logs payout_requested event', async () => {
@@ -562,7 +668,7 @@ describe('PayoutsService', () => {
       );
     });
 
-    it('stores FX processing metadata when actualBankRate is provided', async () => {
+    it('stores fxExecution when actualBankRate and actualUyuCost are provided', async () => {
       methodsRepo.getById.mockResolvedValue(USD_BANK_METHOD);
       payoutsRepo.getById.mockResolvedValue({
         id: 'p-fx',
@@ -573,16 +679,15 @@ describe('PayoutsService', () => {
         payoutMethodId: 'pm-usd',
         payoutProvider: 'manual_bank',
         metadata: {
-          rateLock: {
-            lockedRate: 41.4605,
-            brouVentaRate: 41.05,
-            spreadPercent: 1,
-            lockedAt: '2026-04-13T00:00:00.000Z',
-            rateExpiresAt: '2026-04-16T00:00:00.000Z',
-            originalAmount: 1400,
-            originalCurrency: 'UYU',
-            convertedAmount: 33.77,
-            convertedCurrency: 'USD',
+          listingTicketIds: [],
+          listingIds: [],
+          fxSnapshot: {
+            sourceCurrency: 'UYU',
+            sourceAmount: 1400,
+            destinationCurrency: 'USD',
+            destinationAmount: 33.77,
+            providerRate: 41.4605,
+            executor: 'admin_manual',
           },
         },
       } as unknown as PayoutRow);
@@ -599,16 +704,17 @@ describe('PayoutsService', () => {
       const metadata = (
         updateCall[2] as unknown as {
           metadata: {
-            fxProcessing: {
-              actualBankRate: number;
-              actualUyuCost: number;
+            fxExecution: {
+              actualRate: number;
+              actualSourceAmount: number;
+              processedAt: string;
             };
           };
         }
       ).metadata;
-      expect(metadata.fxProcessing.actualBankRate).toBe(41.1);
-      expect(metadata.fxProcessing.actualUyuCost).toBe(1388.15);
-      expect(metadata.fxProcessing).toHaveProperty('processedAt');
+      expect(metadata.fxExecution.actualRate).toBe(41.1);
+      expect(metadata.fxExecution.actualSourceAmount).toBe(1388.15);
+      expect(metadata.fxExecution).toHaveProperty('processedAt');
     });
 
     it('does not persist payout metadata when completing without FX fields', async () => {
@@ -823,121 +929,6 @@ describe('PayoutsService', () => {
       expect(eventsRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({eventType: 'cancelled'}),
       );
-    });
-  });
-
-  // =========================================================================
-  // refreshPayoutRateLock
-  // =========================================================================
-  describe('refreshPayoutRateLock', () => {
-    const EXISTING_RATE_LOCK = {
-      lockedRate: 40.0,
-      brouVentaRate: 39.6,
-      spreadPercent: 1,
-      lockedAt: '2026-04-10T00:00:00.000Z',
-      rateExpiresAt: '2026-04-13T00:00:00.000Z',
-      originalAmount: 2000,
-      originalCurrency: 'UYU',
-      convertedAmount: 50.0,
-      convertedCurrency: 'USD',
-    };
-
-    it('throws NotFoundError when payout does not exist', async () => {
-      payoutsRepo.getById.mockResolvedValue(undefined);
-
-      await expect(
-        service.refreshPayoutRateLock('nonexistent', 'admin-1'),
-      ).rejects.toThrow(NotFoundError);
-    });
-
-    it('throws ValidationError when payout is not pending', async () => {
-      payoutsRepo.getById.mockResolvedValue({
-        id: 'p-r',
-        status: 'completed',
-      } as unknown as PayoutRow);
-
-      await expect(
-        service.refreshPayoutRateLock('p-r', 'admin-1'),
-      ).rejects.toThrow(ValidationError);
-    });
-
-    it('throws ValidationError when payout has no rateLock metadata', async () => {
-      payoutsRepo.getById.mockResolvedValue({
-        id: 'p-r',
-        status: 'pending',
-        metadata: {},
-      } as unknown as PayoutRow);
-
-      await expect(
-        service.refreshPayoutRateLock('p-r', 'admin-1'),
-      ).rejects.toMatchObject({
-        message: PAYOUT_ERROR_MESSAGES.PAYOUT_HAS_NO_RATE_LOCK,
-      });
-    });
-
-    it('recalculates USD amount from UYU principal with fresh BROU rate', async () => {
-      payoutsRepo.getById.mockResolvedValue({
-        id: 'p-r',
-        status: 'pending',
-        metadata: {rateLock: EXISTING_RATE_LOCK},
-      } as unknown as PayoutRow);
-      // After refresh, the service calls getPayoutDetailsForAdmin which we need to mock
-      payoutsRepo.getWithLinkedEarnings.mockResolvedValue({
-        id: 'p-r',
-        status: 'pending',
-        metadata: {rateLock: EXISTING_RATE_LOCK},
-        payoutMethodId: 'pm-usd',
-      } as unknown as PayoutWithLinkedEarningsRow);
-      methodsRepo.getById.mockResolvedValue(USD_BANK_METHOD);
-      mockedFetchRate.mockResolvedValue(41.05);
-
-      // mock getPayoutDocuments
-      const mockDocs = {getPayoutDocuments: jest.fn().mockResolvedValue([])};
-      (
-        service as unknown as {payoutDocumentsService: PayoutDocumentsService}
-      ).payoutDocumentsService = mockDocs as unknown as PayoutDocumentsService;
-      payoutsRepo.getPayoutSettlementInfo.mockResolvedValue(null);
-
-      await service.refreshPayoutRateLock('p-r', 'admin-1');
-
-      // New rate = 41.05 * 1.01 = 41.4605
-      // New USD = round(2000 / 41.4605, 2) = 48.24
-      const expectedRate = 41.05 * 1.01;
-      const expectedUsd = Math.round((2000 / expectedRate) * 100) / 100;
-
-      expect(payoutsRepo.updateStatus).toHaveBeenCalledWith(
-        'p-r',
-        'pending',
-        expect.objectContaining({amount: expectedUsd}),
-      );
-
-      const updatedMeta = (
-        payoutsRepo.updateStatus.mock.calls[0][2] as unknown as {
-          metadata: {
-            rateLock: {convertedAmount: number; brouVentaRate: number};
-          };
-        }
-      ).metadata;
-      expect(updatedMeta.rateLock.convertedAmount).toBe(expectedUsd);
-      expect(updatedMeta.rateLock.brouVentaRate).toBe(41.05);
-    });
-
-    it('throws ValidationError if refreshed USD would be below minimum', async () => {
-      payoutsRepo.getById.mockResolvedValue({
-        id: 'p-r',
-        status: 'pending',
-        metadata: {
-          rateLock: {
-            ...EXISTING_RATE_LOCK,
-            originalAmount: 500, // 500 UYU / 41.4605 ≈ 12.06 < 25
-          },
-        },
-      } as unknown as PayoutRow);
-      mockedFetchRate.mockResolvedValue(41.05);
-
-      await expect(
-        service.refreshPayoutRateLock('p-r', 'admin-1'),
-      ).rejects.toThrow(ValidationError);
     });
   });
 

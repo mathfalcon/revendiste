@@ -43,6 +43,11 @@ export interface ProcessPayoutParams {
 export interface ProcessPayoutResult {
   status: PayoutStatus;
   externalId?: string;
+  /** Optional hints from provider submit response (e.g. dLocal Go) merged into fxExecution */
+  providerExecutionHints?: {
+    actualRate?: number;
+    providerFees?: number;
+  };
 }
 
 export interface PayoutStatusResult {

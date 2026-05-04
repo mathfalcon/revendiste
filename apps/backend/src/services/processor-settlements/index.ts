@@ -520,8 +520,7 @@ export class ProcessorSettlementsService {
       });
 
       const sellerSumConverted = sellerEarningsWithConversion.reduce(
-        (acc, e) =>
-          acc + Number(e.sellerAmountConverted ?? e.sellerAmount),
+        (acc, e) => acc + Number(e.sellerAmountConverted ?? e.sellerAmount),
         0,
       );
 
@@ -594,8 +593,24 @@ export class ProcessorSettlementsService {
       const meta = row.metadata
         ? PayoutMetadataSchema.safeParse(row.metadata)
         : {success: false as const};
+      const metaRecord = meta.success
+        ? (meta.data as Record<string, unknown>)
+        : null;
+      const rateLockRaw = metaRecord?.rateLock;
       const rateLock =
-        meta.success && meta.data.rateLock ? meta.data.rateLock : null;
+        rateLockRaw &&
+        typeof rateLockRaw === 'object' &&
+        rateLockRaw !== null &&
+        'lockedRate' in rateLockRaw &&
+        'convertedAmount' in rateLockRaw
+          ? (rateLockRaw as {
+              lockedRate: number;
+              brouVentaRate: number;
+              originalAmount: number;
+              convertedAmount: number;
+              rateExpiresAt: string;
+            })
+          : null;
       const backingUyu = payoutBackedUyu.get(row.id) ?? 0;
       return {
         payoutId: row.id,
@@ -764,9 +779,7 @@ export class ProcessorSettlementsService {
         ? {...(existing.metadata as Record<string, unknown>)}
         : {};
 
-    const mergedForFail = reason
-      ? {...prevMeta, failureReason: reason}
-      : null;
+    const mergedForFail = reason ? {...prevMeta, failureReason: reason} : null;
     const parsedFailMetadata =
       mergedForFail != null
         ? ProcessorSettlementMetadataSchema.safeParse(mergedForFail)
@@ -778,11 +791,9 @@ export class ProcessorSettlementsService {
         status: 'failed',
         ...(reason
           ? {
-              metadata: (
-                parsedFailMetadata?.success
-                  ? parsedFailMetadata.data
-                  : mergedForFail
-              ) as Json,
+              metadata: (parsedFailMetadata?.success
+                ? parsedFailMetadata.data
+                : mergedForFail) as Json,
             }
           : {}),
       },

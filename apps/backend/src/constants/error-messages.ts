@@ -169,10 +169,8 @@ export const PAYOUT_ERROR_MESSAGES = {
     'No podés retirar ganancias en UYU a una cuenta bancaria en USD. Seleccioná un método de retiro en UYU.',
   EARNINGS_WITH_OPEN_REPORTS:
     'Algunas ganancias seleccionadas tienen reportes abiertos y no pueden ser retiradas. Esperá a que se resuelvan los reportes.',
-  PAYOUT_HAS_NO_RATE_LOCK:
-    'Este retiro no tiene un tipo de cambio bloqueado para actualizar.',
-  PAYOUT_RATE_REFRESH_BELOW_MINIMUM: (minimumUsd: number) =>
-    `El nuevo monto en USD quedaría por debajo del mínimo (${minimumUsd} USD) tras actualizar el tipo de cambio.`,
+  EARNINGS_SELECTION_CHANGED:
+    'Las ganancias seleccionadas ya no están disponibles. Actualizá el resumen e intentá de nuevo.',
   USD_UYU_EXCHANGE_RATE_UNAVAILABLE:
     'No pudimos obtener la cotización del dólar (BROU ni Itaú). Probá de nuevo en unos minutos.',
   PAYOUT_PROVIDER_NOT_REGISTERED: (provider: string) =>

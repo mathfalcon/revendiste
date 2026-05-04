@@ -52,26 +52,25 @@ import {
   CancelPayoutRouteSchema,
   AdminPayoutsRouteSchema,
   AdminPayoutsQuery,
-  RefreshPayoutRateLockRouteBody,
-  RefreshPayoutRateLockRouteSchema,
 } from './validation';
 
-type GetPayoutsResponse = Awaited<ReturnType<PayoutsService['getPayoutsForAdmin']>>;
-type GetPayoutDetailsResponse = Awaited<ReturnType<
-  PayoutsService['getPayoutDetailsForAdmin']
->>;
-type ProcessPayoutResponse = Awaited<ReturnType<PayoutsService['processPayout']>>;
+type GetPayoutsResponse = Awaited<
+  ReturnType<PayoutsService['getPayoutsForAdmin']>
+>;
+type GetPayoutDetailsResponse = Awaited<
+  ReturnType<PayoutsService['getPayoutDetailsForAdmin']>
+>;
+type ProcessPayoutResponse = Awaited<
+  ReturnType<PayoutsService['processPayout']>
+>;
 type FailPayoutResponse = Awaited<ReturnType<PayoutsService['failPayout']>>;
 type CancelPayoutResponse = Awaited<ReturnType<PayoutsService['cancelPayout']>>;
-type RefreshPayoutRateLockResponse = Awaited<
-  ReturnType<PayoutsService['refreshPayoutRateLock']>
+type UploadPayoutDocumentResponse = Awaited<
+  ReturnType<PayoutDocumentsService['uploadPayoutDocument']>
 >;
-type UploadPayoutDocumentResponse = Awaited<ReturnType<
-  PayoutDocumentsService['uploadPayoutDocument']
->>;
-type DeletePayoutDocumentResponse = Awaited<ReturnType<
-  PayoutDocumentsService['deletePayoutDocument']
->>;
+type DeletePayoutDocumentResponse = Awaited<
+  ReturnType<PayoutDocumentsService['deletePayoutDocument']>
+>;
 
 // Create shared repositories
 const payoutsRepository = new PayoutsRepository(db);
@@ -145,23 +144,6 @@ export class AdminPayoutsController {
     @Request() request: express.Request,
   ): Promise<ProcessPayoutResponse> {
     return this.payoutsService.processPayout(payoutId, request.user.id, body);
-  }
-
-  @Post('/{payoutId}/refresh-rate-lock')
-  @Response<UnauthorizedError>(401, 'Authentication required')
-  @Response<UnauthorizedError>(403, 'Admin access required')
-  @Response<NotFoundError>(404, 'Payout not found')
-  @Response<ValidationError>(422, 'Invalid payout status or no rate lock')
-  @ValidateBody(RefreshPayoutRateLockRouteSchema)
-  public async refreshPayoutRateLock(
-    @Path() payoutId: string,
-    @Body() _body: RefreshPayoutRateLockRouteBody,
-    @Request() request: express.Request,
-  ): Promise<RefreshPayoutRateLockResponse> {
-    return this.payoutsService.refreshPayoutRateLock(
-      payoutId,
-      request.user.id,
-    );
   }
 
   @Post('/{payoutId}/fail')

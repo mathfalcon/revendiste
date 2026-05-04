@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Download,
+  ExternalLink,
   Loader2,
   Trash2,
   Upload,
@@ -64,6 +65,17 @@ export function StepUploadVoucher({
     },
   });
 
+  const handleNext = async () => {
+    if (selectedFile) {
+      try {
+        await uploadMutation.mutateAsync({payoutId, file: selectedFile});
+      } catch {
+        return;
+      }
+    }
+    onNext();
+  };
+
   const deleteDocMutation = useMutation({
     ...deletePayoutDocumentMutation(),
     onSuccess: () => {
@@ -78,10 +90,12 @@ export function StepUploadVoucher({
     <div className='space-y-4'>
       <Card>
         <CardHeader className='pb-3'>
-          <CardTitle className='text-lg'>Comprobante de transferencia</CardTitle>
+          <CardTitle className='text-lg'>
+            Comprobante de transferencia
+          </CardTitle>
           <CardDescription>
-            Subí el comprobante de la transferencia bancaria. Podés
-            saltear este paso y subir después.
+            Subí el comprobante de la transferencia bancaria. Podés saltear este
+            paso y subir después.
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
@@ -111,6 +125,7 @@ export function StepUploadVoucher({
           {selectedFile ? (
             <Button
               type='button'
+              variant='outline'
               className='cursor-pointer'
               disabled={uploadMutation.isPending}
               onClick={() =>
@@ -122,7 +137,7 @@ export function StepUploadVoucher({
               ) : (
                 <Upload className='mr-2 h-4 w-4' />
               )}
-              Subir comprobante
+              Subir ahora
             </Button>
           ) : null}
 
@@ -154,10 +169,30 @@ export function StepUploadVoucher({
                         variant='ghost'
                         size='sm'
                         className='cursor-pointer'
-                        aria-label={`Descargar ${doc.originalName}`}
-                        onClick={() => window.open(doc.url, '_blank')}
+                        aria-label={`Abrir ${doc.originalName} en nueva pestaña`}
+                        title='Abrir en nueva pestaña'
+                        onClick={() =>
+                          window.open(doc.url, '_blank', 'noopener,noreferrer')
+                        }
                       >
-                        <Download className='h-4 w-4' />
+                        <ExternalLink className='h-4 w-4' />
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='sm'
+                        className='cursor-pointer'
+                        asChild
+                        aria-label={`Descargar ${doc.originalName}`}
+                        title='Descargar'
+                      >
+                        <a
+                          href={doc.url}
+                          download={doc.originalName}
+                          rel='noopener noreferrer'
+                        >
+                          <Download className='h-4 w-4' />
+                        </a>
                       </Button>
                       <Button
                         type='button'
@@ -165,6 +200,7 @@ export function StepUploadVoucher({
                         size='sm'
                         className='cursor-pointer text-destructive'
                         aria-label={`Eliminar ${doc.originalName}`}
+                        title='Eliminar'
                         onClick={() => {
                           if (confirm('¿Eliminar este comprobante?')) {
                             deleteDocMutation.mutate({documentId: doc.id});
@@ -206,9 +242,13 @@ export function StepUploadVoucher({
         <Button
           type='button'
           className='cursor-pointer min-w-[160px]'
-          onClick={onNext}
+          disabled={uploadMutation.isPending}
+          onClick={handleNext}
         >
-          Siguiente
+          {uploadMutation.isPending ? (
+            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+          ) : null}
+          {selectedFile ? 'Subir y continuar' : 'Siguiente'}
           <ArrowRight className='ml-2 h-4 w-4' />
         </Button>
       </div>

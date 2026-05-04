@@ -1,46 +1,53 @@
 import {type ExpressionBuilder, Kysely, sql} from 'kysely';
 import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
-import {DB, EventTicketCurrency, Json, PayoutProvider} from '@revendiste/shared';
+import {
+  DB,
+  EventTicketCurrency,
+  Json,
+  PayoutProvider,
+} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 import {mapToPaginatedResponse} from '~/middleware/pagination';
 import type {PaginationOptions} from '~/types/pagination';
 
 function linkedEarningsForPayout(eb: ExpressionBuilder<DB, 'payouts'>) {
-  return eb
-    .selectFrom('sellerEarnings')
-    .innerJoin(
-      'listingTickets',
-      'listingTickets.id',
-      'sellerEarnings.listingTicketId',
-    )
-    .innerJoin('listings', 'listings.id', 'listingTickets.listingId')
-    .innerJoin(
-      'eventTicketWaves',
-      'eventTicketWaves.id',
-      'listings.ticketWaveId',
-    )
-    .innerJoin('events', 'events.id', 'eventTicketWaves.eventId')
-    .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
-    .select(eb2 => [
-      'sellerEarnings.id',
-      'sellerEarnings.listingTicketId',
-      'listingTickets.listingId',
-      'sellerEarnings.sellerAmount',
-      'sellerEarnings.currency',
-      'sellerEarnings.createdAt',
-      eb2.ref('events.name').as('eventName'),
-      eb2.ref('events.slug').as('eventSlug'),
-      eb2.ref('events.eventStartDate').as('eventStartDate'),
-      eb2.ref('events.eventEndDate').as('eventEndDate'),
-      eb2.ref('eventTicketWaves.name').as('ticketWaveName'),
-      eb2.ref('eventVenues.name').as('venueName'),
-    ])
-    .whereRef('sellerEarnings.payoutId', '=', 'payouts.id')
-    .where('sellerEarnings.deletedAt', 'is', null)
-    .where('listingTickets.deletedAt', 'is', null)
-    .where('listings.deletedAt', 'is', null)
-    .where('eventTicketWaves.deletedAt', 'is', null)
-    .where('events.deletedAt', 'is', null);
+  return (
+    eb
+      .selectFrom('sellerEarnings')
+      .innerJoin(
+        'listingTickets',
+        'listingTickets.id',
+        'sellerEarnings.listingTicketId',
+      )
+      .innerJoin('listings', 'listings.id', 'listingTickets.listingId')
+      .innerJoin(
+        'eventTicketWaves',
+        'eventTicketWaves.id',
+        'listings.ticketWaveId',
+      )
+      .innerJoin('events', 'events.id', 'eventTicketWaves.eventId')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
+      .select(eb2 => [
+        'sellerEarnings.id',
+        'sellerEarnings.listingTicketId',
+        'listingTickets.listingId',
+        'sellerEarnings.sellerAmount',
+        'sellerEarnings.currency',
+        'sellerEarnings.createdAt',
+        eb2.ref('events.name').as('eventName'),
+        eb2.ref('events.slug').as('eventSlug'),
+        eb2.ref('events.eventStartDate').as('eventStartDate'),
+        eb2.ref('events.eventEndDate').as('eventEndDate'),
+        eb2.ref('eventTicketWaves.name').as('ticketWaveName'),
+        eb2.ref('eventVenues.name').as('venueName'),
+      ])
+      // No deletedAt filter on eventTicketWaves/events: payout-linked earnings
+      // must still appear if the event was later soft-deleted (admin/history).
+      .whereRef('sellerEarnings.payoutId', '=', 'payouts.id')
+      .where('sellerEarnings.deletedAt', 'is', null)
+      .where('listingTickets.deletedAt', 'is', null)
+      .where('listings.deletedAt', 'is', null)
+  );
 }
 
 export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
@@ -57,12 +64,35 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
     currency: EventTicketCurrency;
     requestedAt: Date;
     metadata?: Json;
+    sourceCurrency?: EventTicketCurrency | null;
+    sourceAmount?: number | null;
+    idempotencyKeyHash?: string | null;
   }) {
     return await this.db
       .insertInto('payouts')
       .values(payoutData)
       .returningAll()
       .executeTakeFirstOrThrow();
+  }
+
+  /**
+   * Idempotent replay: same seller + idempotency key hash within the last N hours.
+   */
+  async findRecentBySellerAndIdempotencyKeyHash(
+    sellerUserId: string,
+    idempotencyKeyHash: string,
+    hoursWindow = 24,
+  ) {
+    const since = new Date(Date.now() - hoursWindow * 3_600_000);
+    return await this.db
+      .selectFrom('payouts')
+      .selectAll()
+      .where('sellerUserId', '=', sellerUserId)
+      .where('idempotencyKeyHash', '=', idempotencyKeyHash)
+      .where('requestedAt', '>=', since)
+      .where('deletedAt', 'is', null)
+      .orderBy('requestedAt', 'desc')
+      .executeTakeFirst();
   }
 
   async getById(id: string) {
@@ -124,6 +154,9 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         'payouts.transactionReference',
         'payouts.notes',
         'payouts.metadata',
+        'payouts.sourceCurrency',
+        'payouts.sourceAmount',
+        'payouts.idempotencyKeyHash',
         'payouts.createdAt',
         'payouts.updatedAt',
         jsonArrayFrom(linkedEarningsForPayout(eb)).as('linkedEarnings'),
@@ -182,6 +215,9 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         'payouts.transactionReference',
         'payouts.notes',
         'payouts.metadata',
+        'payouts.sourceCurrency',
+        'payouts.sourceAmount',
+        'payouts.idempotencyKeyHash',
         'payouts.createdAt',
         'payouts.updatedAt',
         jsonArrayFrom(linkedEarningsForPayout(eb)).as('linkedEarnings'),
@@ -507,6 +543,9 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         'payouts.transactionReference',
         'payouts.notes',
         'payouts.metadata',
+        'payouts.sourceCurrency',
+        'payouts.sourceAmount',
+        'payouts.idempotencyKeyHash',
         'payouts.createdAt',
         'payouts.updatedAt',
         jsonObjectFrom(
@@ -598,11 +637,7 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
     }
     return await this.db
       .selectFrom('payouts')
-      .innerJoin(
-        'payoutMethods',
-        'payoutMethods.id',
-        'payouts.payoutMethodId',
-      )
+      .innerJoin('payoutMethods', 'payoutMethods.id', 'payouts.payoutMethodId')
       .select(eb => [
         'payouts.id',
         'payouts.sellerUserId',
