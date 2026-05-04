@@ -11,6 +11,7 @@ import {
 import type {PaginationOptions} from '~/types/pagination';
 import {
   ProcessorSettlementMetadataSchema,
+  PayoutMetadataSchema,
   type Json,
   type PaymentProvider,
   type ProcessorSettlementReconciliationSnapshot,
@@ -514,12 +515,12 @@ export class ProcessorSettlementsService {
           sellerUserId: e.sellerUserId,
           status: e.status,
           currency: e.currency,
+          payoutId: e.payoutId,
         };
       });
 
       const sellerSumConverted = sellerEarningsWithConversion.reduce(
-        (acc, e) =>
-          acc + Number(e.sellerAmountConverted ?? e.sellerAmount),
+        (acc, e) => acc + Number(e.sellerAmountConverted ?? e.sellerAmount),
         0,
       );
 
@@ -565,6 +566,90 @@ export class ProcessorSettlementsService {
     const platformRevenue =
       totalProcessorCredits - totalSellerEarningsConverted;
 
+    const payoutBackedUyu = new Map<string, number>();
+    let availableSellerUyuInSettlement = 0;
+
+    for (const item of breakdownItems) {
+      for (const se of item.sellerEarnings) {
+        const conv = Number(se.sellerAmountConverted ?? se.sellerAmount);
+        if (se.payoutId) {
+          payoutBackedUyu.set(
+            se.payoutId,
+            (payoutBackedUyu.get(se.payoutId) ?? 0) + conv,
+          );
+        } else if (se.status === 'available') {
+          availableSellerUyuInSettlement += conv;
+        }
+      }
+    }
+
+    const fundingPayoutIds = [...payoutBackedUyu.keys()];
+    const payoutRows =
+      fundingPayoutIds.length > 0
+        ? await this.payoutsRepository.getByIdsWithPayoutType(fundingPayoutIds)
+        : [];
+
+    const fundedPayouts = payoutRows.map(row => {
+      const meta = row.metadata
+        ? PayoutMetadataSchema.safeParse(row.metadata)
+        : {success: false as const};
+      const metaRecord = meta.success
+        ? (meta.data as Record<string, unknown>)
+        : null;
+      const rateLockRaw = metaRecord?.rateLock;
+      const rateLock =
+        rateLockRaw &&
+        typeof rateLockRaw === 'object' &&
+        rateLockRaw !== null &&
+        'lockedRate' in rateLockRaw &&
+        'convertedAmount' in rateLockRaw
+          ? (rateLockRaw as {
+              lockedRate: number;
+              brouVentaRate: number;
+              originalAmount: number;
+              convertedAmount: number;
+              rateExpiresAt: string;
+            })
+          : null;
+      const backingUyu = payoutBackedUyu.get(row.id) ?? 0;
+      return {
+        payoutId: row.id,
+        sellerUserId: row.sellerUserId,
+        status: row.status,
+        amount: String(row.amount),
+        currency: row.currency,
+        payoutType: row.payoutType,
+        uyuBackedInThisSettlement: String(backingUyu),
+        rateLock: rateLock
+          ? {
+              lockedRate: rateLock.lockedRate,
+              brouVentaRate: rateLock.brouVentaRate,
+              originalAmount: rateLock.originalAmount,
+              convertedAmount: rateLock.convertedAmount,
+              rateExpiresAt: rateLock.rateExpiresAt,
+            }
+          : null,
+      };
+    });
+
+    let bankTransferUyuOut = 0;
+
+    for (const row of payoutRows) {
+      const backing = payoutBackedUyu.get(row.id) ?? 0;
+      bankTransferUyuOut += backing;
+    }
+
+    const attributedToPayoutsUyu = [...payoutBackedUyu.values()].reduce(
+      (a, b) => a + b,
+      0,
+    );
+    const earningsCoverageDifference =
+      totalSellerEarningsConverted -
+      (availableSellerUyuInSettlement + attributedToPayoutsUyu);
+
+    const payoutReconciliationStatus =
+      Math.abs(earningsCoverageDifference) < 0.05 ? 'balanced' : 'mismatch';
+
     return {
       settlement: toSettlementListRow(settlement),
       reconciliation: {
@@ -579,6 +664,17 @@ export class ProcessorSettlementsService {
         hasMultipleCurrencies,
       },
       items: breakdownItems,
+      fundedPayouts,
+      moneyFlowSummary: {
+        availableSellerUyuInSettlement: String(availableSellerUyuInSettlement),
+        attributedToPayoutsUyu: String(attributedToPayoutsUyu),
+        bankTransferUyuOut: String(bankTransferUyuOut),
+        earningsCoverageDifference: String(earningsCoverageDifference),
+      },
+      payoutReconciliation: {
+        status: payoutReconciliationStatus,
+        differenceUyu: String(earningsCoverageDifference),
+      },
     };
   }
 
@@ -683,9 +779,7 @@ export class ProcessorSettlementsService {
         ? {...(existing.metadata as Record<string, unknown>)}
         : {};
 
-    const mergedForFail = reason
-      ? {...prevMeta, failureReason: reason}
-      : null;
+    const mergedForFail = reason ? {...prevMeta, failureReason: reason} : null;
     const parsedFailMetadata =
       mergedForFail != null
         ? ProcessorSettlementMetadataSchema.safeParse(mergedForFail)
@@ -697,11 +791,9 @@ export class ProcessorSettlementsService {
         status: 'failed',
         ...(reason
           ? {
-              metadata: (
-                parsedFailMetadata?.success
-                  ? parsedFailMetadata.data
-                  : mergedForFail
-              ) as Json,
+              metadata: (parsedFailMetadata?.success
+                ? parsedFailMetadata.data
+                : mergedForFail) as Json,
             }
           : {}),
       },

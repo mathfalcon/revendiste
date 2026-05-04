@@ -16,9 +16,11 @@ import {
   getEmailTemplate,
   renderEmail,
   renderEmailToText,
+  type EmailTemplateProps,
 } from '@revendiste/transactional';
 import type {NotificationType} from '@revendiste/shared';
 import {APP_BASE_URL} from '~/config/env';
+import {getFeeRates} from '~/utils/fees';
 
 /**
  * Parse notification metadata using the correct schema based on notification type
@@ -61,12 +63,17 @@ export async function buildEmailTemplate<T extends NotificationType>(
 ): Promise<{html: string; text: string}> {
   const actionsForTemplate = actions ?? undefined;
 
+  const feeRates = getFeeRates();
   const result = getEmailTemplate({
     notificationType: type,
     actions: actionsForTemplate,
     metadata: metadata,
     appBaseUrl: APP_BASE_URL,
-  });
+    orderFeeLabelPercentages: {
+      platformCommissionPercentage: feeRates.platformCommissionPercentage,
+      vatPercentage: feeRates.vatPercentage,
+    },
+  } as EmailTemplateProps<T>);
 
   // renderEmail and renderEmailToText accept ComponentType<any> which includes both
   // function and class components, so we can pass result.Component directly

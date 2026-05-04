@@ -1,5 +1,5 @@
-import {useForm} from 'react-hook-form';
-import {z} from 'zod';
+import {useEffect} from 'react';
+import {type UseFormReturn, useForm} from 'react-hook-form';
 import {standardSchemaResolver} from '@hookform/resolvers/standard-schema';
 import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {
@@ -20,65 +20,143 @@ import {
   getPayoutMethodsQuery,
 } from '~/lib/api/payouts';
 import {Checkbox} from '~/components/ui/checkbox';
-import {PayoutMethodBaseSchema} from '@revendiste/shared';
+import {
+  ArgentinianBankMetadataSchema,
+  UruguayanBankMetadataSchema,
+} from '@revendiste/shared';
 import {UruguayanBankPayoutFormFields} from './UruguayanBankPayoutFormFields';
-import {PayPalPayoutFormFields} from './PayPalPayoutFormFields';
-import {Loader2, Building2, CreditCard} from 'lucide-react';
-import {cn} from '~/lib/utils';
-import {getBankName, getAccountNumber, getEmail} from './payout-method-utils';
+import {ArgentinianBankPayoutFormFields} from './ArgentinianBankPayoutFormFields';
+import {Loader2} from 'lucide-react';
+import {getBankName, getAccountNumber} from './payout-method-utils';
+import {
+  payoutMethodFormSchema,
+  parseBankNameForForm,
+  parsePayoutMethodMetadataForApi,
+  type PayoutMethodFormValues,
+} from './payout-method-form-schema';
+import {useDlocalGoPayoutsEnabled} from '~/lib/dlocal-payout-flags';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select';
+import {
+  type GetPayoutMethodsResponse,
+  type AddPayoutMethodRouteBody,
+  PayoutType,
+} from '~/lib/api/generated';
 
-const payoutMethodSchema = PayoutMethodBaseSchema.and(
-  z.object({
-    accountHolderName: z.string().min(1, 'El nombre es requerido'),
-    accountHolderSurname: z.string().min(1, 'El apellido es requerido'),
-    currency: z.enum(['UYU', 'USD']),
-    isDefault: z.boolean().optional(),
-  }),
-);
+type PayoutMethodListItem = GetPayoutMethodsResponse[number];
 
-export type PayoutMethodFormValues = z.infer<typeof payoutMethodSchema>;
+export type {PayoutMethodFormValues} from './payout-method-form-schema';
 
 interface PayoutMethodFormProps {
   methodId?: string;
   onSuccess?: () => void;
 }
 
-function buildDefaultValues(
-  existingMethod: ReturnType<typeof useExistingMethod>,
+const emptyNewUruguayan = (): Extract<
+  PayoutMethodFormValues,
+  {payoutType: 'uruguayan_bank'}
+> => ({
+  payoutType: 'uruguayan_bank',
+  accountHolderName: '',
+  accountHolderSurname: '',
+  currency: 'UYU',
+  metadata: {bankName: '', accountNumber: ''},
+  isDefault: false,
+});
+
+const emptyNewArgentinian = (): Extract<
+  PayoutMethodFormValues,
+  {payoutType: 'argentinian_bank'}
+> => ({
+  payoutType: 'argentinian_bank',
+  accountHolderName: '',
+  accountHolderSurname: '',
+  currency: 'USD',
+  metadata: {
+    routing: 'cbu_cvu',
+    bankCode: '007',
+    accountOrAlias: '',
+    documentType: 'CUIL',
+    documentId: '',
+  },
+  isDefault: false,
+});
+
+function buildFormValuesFromExisting(
+  m: PayoutMethodListItem,
 ): PayoutMethodFormValues {
-  if (!existingMethod) {
+  if (m.payoutType === PayoutType.ArgentinianBank) {
+    const arParsed = ArgentinianBankMetadataSchema.safeParse(m.metadata);
+    if (!arParsed.success) {
+      return {
+        ...emptyNewArgentinian(),
+        accountHolderName: m.accountHolderName,
+        accountHolderSurname: m.accountHolderSurname,
+        isDefault: Boolean(m.isDefault),
+        currency: m.currency === 'ARS' ? 'ARS' : 'USD',
+      };
+    }
+    const meta = arParsed.data;
+    if (meta.routing === 'cbu_cvu') {
+      return {
+        payoutType: 'argentinian_bank',
+        accountHolderName: m.accountHolderName,
+        accountHolderSurname: m.accountHolderSurname,
+        currency: m.currency === 'ARS' ? 'ARS' : 'USD',
+        isDefault: Boolean(m.isDefault),
+        metadata: {
+          routing: 'cbu_cvu',
+          bankCode: meta.bankCode,
+          accountOrAlias: meta.accountNumber,
+          documentType: meta.document.type,
+          documentId: meta.document.id,
+        },
+      };
+    }
     return {
-      payoutType: 'uruguayan_bank' as const,
-      accountHolderName: '',
-      accountHolderSurname: '',
-      currency: 'UYU',
-      metadata: {bankName: '' as any, accountNumber: ''},
-      isDefault: false,
-    } as any;
+      payoutType: 'argentinian_bank',
+      accountHolderName: m.accountHolderName,
+      accountHolderSurname: m.accountHolderSurname,
+      currency: m.currency === 'ARS' ? 'ARS' : 'USD',
+      isDefault: Boolean(m.isDefault),
+      metadata: {
+        routing: 'alias',
+        bankCode: '000',
+        accountOrAlias: meta.alias,
+        documentType: meta.document.type,
+        documentId: meta.document.id,
+      },
+    };
   }
 
-  if (existingMethod.payoutType === ('paypal' as string)) {
+  const parsed = UruguayanBankMetadataSchema.safeParse(m.metadata);
+  if (parsed.success) {
     return {
-      payoutType: 'paypal' as const,
-      accountHolderName: existingMethod.accountHolderName,
-      accountHolderSurname: existingMethod.accountHolderSurname,
-      currency: 'USD' as const,
-      metadata: {email: getEmail(existingMethod.metadata) ?? ''},
-      isDefault: existingMethod.isDefault,
+      payoutType: 'uruguayan_bank',
+      accountHolderName: m.accountHolderName,
+      accountHolderSurname: m.accountHolderSurname,
+      currency: m.currency === 'USD' ? 'USD' : 'UYU',
+      metadata: parsed.data,
+      isDefault: Boolean(m.isDefault),
     };
   }
 
   return {
-    payoutType: 'uruguayan_bank' as const,
-    accountHolderName: existingMethod.accountHolderName,
-    accountHolderSurname: existingMethod.accountHolderSurname,
-    currency: existingMethod.currency as 'UYU' | 'USD',
+    payoutType: 'uruguayan_bank',
+    accountHolderName: m.accountHolderName,
+    accountHolderSurname: m.accountHolderSurname,
+    currency: m.currency === 'USD' ? 'USD' : 'UYU',
     metadata: {
-      bankName: (getBankName(existingMethod.metadata) ?? '') as any,
-      accountNumber: getAccountNumber(existingMethod.metadata) ?? '',
+      bankName: parseBankNameForForm(getBankName(m.metadata)),
+      accountNumber: getAccountNumber(m.metadata) ?? '',
     },
-    isDefault: existingMethod.isDefault,
-  } as any;
+    isDefault: Boolean(m.isDefault),
+  };
 }
 
 function useExistingMethod(methodId?: string) {
@@ -90,7 +168,9 @@ function useExistingMethod(methodId?: string) {
 
 export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   const queryClient = useQueryClient();
+  const dlocalPayoutsEnabled = useDlocalGoPayoutsEnabled();
   const existingMethod = useExistingMethod(methodId);
+  const showPayoutTypeChoice = dlocalPayoutsEnabled && !methodId;
 
   const addMethod = useMutation({
     ...addPayoutMethodMutation(),
@@ -109,64 +189,75 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   });
 
   const form = useForm<PayoutMethodFormValues>({
-    resolver: standardSchemaResolver(payoutMethodSchema),
-    defaultValues: buildDefaultValues(existingMethod),
+    resolver: standardSchemaResolver(payoutMethodFormSchema),
+    defaultValues: emptyNewUruguayan(),
   });
+
+  useEffect(() => {
+    if (!methodId) {
+      return;
+    }
+    if (!existingMethod) {
+      return;
+    }
+    form.reset(buildFormValuesFromExisting(existingMethod));
+  }, [methodId, existingMethod?.id, existingMethod?.updatedAt, form]);
 
   const payoutType = form.watch('payoutType');
 
-  const handlePayoutTypeChange = (newType: 'uruguayan_bank' | 'paypal') => {
-    form.setValue('payoutType', newType);
-    form.clearErrors();
-    if (newType === 'uruguayan_bank') {
-      form.setValue('currency', 'UYU');
-      form.setValue('metadata', {
-        bankName: '' as any,
-        accountNumber: '',
-      });
-    } else {
-      form.setValue('currency', 'USD');
-      form.setValue('metadata', {email: ''});
-    }
-  };
-
   const onSubmit = async (data: PayoutMethodFormValues) => {
     if (methodId && existingMethod) {
-      await updateMethod.mutateAsync({
-        payoutMethodId: methodId,
-        data: {
+      if (data.payoutType === 'uruguayan_bank') {
+        await updateMethod.mutateAsync({
+          payoutMethodId: methodId,
+          data: {
+            accountHolderName: data.accountHolderName,
+            accountHolderSurname: data.accountHolderSurname,
+            currency: data.currency,
+            metadata: parsePayoutMethodMetadataForApi(data),
+            isDefault: data.isDefault,
+          },
+        });
+      } else {
+        await updateMethod.mutateAsync({
+          payoutMethodId: methodId,
+          data: {
+            accountHolderName: data.accountHolderName,
+            accountHolderSurname: data.accountHolderSurname,
+            currency: data.currency,
+            metadata: parsePayoutMethodMetadataForApi(data),
+            isDefault: data.isDefault,
+          },
+        });
+      }
+    } else {
+      if (data.payoutType === 'uruguayan_bank') {
+        const body: Extract<
+          AddPayoutMethodRouteBody,
+          {payoutType: 'uruguayan_bank'}
+        > = {
+          payoutType: 'uruguayan_bank',
           accountHolderName: data.accountHolderName,
           accountHolderSurname: data.accountHolderSurname,
           currency: data.currency,
-          metadata: data.metadata,
+          metadata: parsePayoutMethodMetadataForApi(data),
           isDefault: data.isDefault,
-        },
-      });
-    } else if (data.payoutType === 'uruguayan_bank') {
-      const metadata = data.metadata as {
-        bankName: string;
-        accountNumber: string;
-      };
-      await addMethod.mutateAsync({
-        payoutType: 'uruguayan_bank',
-        accountHolderName: data.accountHolderName,
-        accountHolderSurname: data.accountHolderSurname,
-        currency: data.currency,
-        metadata: {
-          bankName: metadata.bankName as any,
-          accountNumber: metadata.accountNumber,
-        },
-        isDefault: data.isDefault,
-      });
-    } else {
-      await addMethod.mutateAsync({
-        payoutType: 'paypal',
-        accountHolderName: data.accountHolderName,
-        accountHolderSurname: data.accountHolderSurname,
-        currency: 'USD',
-        metadata: data.metadata as {email: string},
-        isDefault: data.isDefault,
-      });
+        };
+        await addMethod.mutateAsync(body);
+      } else {
+        const body: Extract<
+          AddPayoutMethodRouteBody,
+          {payoutType: 'argentinian_bank'}
+        > = {
+          payoutType: 'argentinian_bank',
+          accountHolderName: data.accountHolderName,
+          accountHolderSurname: data.accountHolderSurname,
+          currency: data.currency,
+          metadata: parsePayoutMethodMetadataForApi(data),
+          isDefault: data.isDefault,
+        };
+        await addMethod.mutateAsync(body);
+      }
     }
     trackEvent(ANALYTICS_EVENTS.PAYOUT_METHOD_ADDED, {
       payout_type: data.payoutType,
@@ -174,7 +265,11 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
       is_default: data.isDefault,
       action: methodId ? 'updated' : 'added',
     });
-    form.reset();
+    if (!methodId) {
+      form.reset(emptyNewUruguayan());
+    } else {
+      form.reset();
+    }
   };
 
   const isPending = addMethod.isPending || updateMethod.isPending;
@@ -182,42 +277,6 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-5'>
-        {/* Payout type selector — card buttons instead of dropdown */}
-        {!methodId && (
-          <div className='space-y-2'>
-            <FormLabel>Tipo de método</FormLabel>
-            <div className='grid grid-cols-2 gap-3'>
-              <button
-                type='button'
-                onClick={() => handlePayoutTypeChange('uruguayan_bank')}
-                className={cn(
-                  'flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors',
-                  payoutType === 'uruguayan_bank'
-                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                    : 'hover:bg-muted/50',
-                )}
-              >
-                <Building2 className='h-5 w-5' />
-                <span className='text-sm font-medium'>Banco uruguayo</span>
-              </button>
-              <button
-                type='button'
-                onClick={() => handlePayoutTypeChange('paypal')}
-                className={cn(
-                  'flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors',
-                  payoutType === 'paypal'
-                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                    : 'hover:bg-muted/50',
-                )}
-              >
-                <CreditCard className='h-5 w-5' />
-                <span className='text-sm font-medium'>PayPal</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Common fields */}
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
           <FormField
             control={form.control}
@@ -247,13 +306,77 @@ export function PayoutMethodForm({methodId, onSuccess}: PayoutMethodFormProps) {
           />
         </div>
 
-        {/* Type-specific fields */}
+        {showPayoutTypeChoice && (
+          <FormField
+            control={form.control}
+            name='payoutType'
+            render={({field}) => (
+              <FormItem>
+                <FormLabel>País de la cuenta bancaria</FormLabel>
+                <Select
+                  onValueChange={v => {
+                    if (v === 'uruguayan_bank') {
+                      const next: Extract<
+                        PayoutMethodFormValues,
+                        {payoutType: 'uruguayan_bank'}
+                      > = {
+                        ...emptyNewUruguayan(),
+                        accountHolderName: form.getValues('accountHolderName'),
+                        accountHolderSurname: form.getValues(
+                          'accountHolderSurname',
+                        ),
+                        isDefault: form.getValues('isDefault'),
+                      };
+                      form.reset(next);
+                    } else {
+                      const next: Extract<
+                        PayoutMethodFormValues,
+                        {payoutType: 'argentinian_bank'}
+                      > = {
+                        ...emptyNewArgentinian(),
+                        accountHolderName: form.getValues('accountHolderName'),
+                        accountHolderSurname: form.getValues(
+                          'accountHolderSurname',
+                        ),
+                        isDefault: form.getValues('isDefault'),
+                      };
+                      form.reset(next);
+                    }
+                  }}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='uruguayan_bank'>Uruguay</SelectItem>
+                    <SelectItem value='argentinian_bank'>Argentina</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         {payoutType === 'uruguayan_bank' && (
           <UruguayanBankPayoutFormFields form={form} />
         )}
-        {payoutType === 'paypal' && <PayPalPayoutFormFields form={form} />}
+        {payoutType === 'argentinian_bank' && (
+          <ArgentinianBankPayoutFormFields
+            form={
+              form as UseFormReturn<
+                Extract<
+                  PayoutMethodFormValues,
+                  {payoutType: 'argentinian_bank'}
+                >
+              >
+            }
+          />
+        )}
 
-        {/* Default method checkbox */}
         <FormField
           control={form.control}
           name='isDefault'

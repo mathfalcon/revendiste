@@ -8,7 +8,7 @@ import {
 import {Badge} from '~/components/ui/badge';
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
-import {AdminEventDetail} from '~/lib/api/generated';
+import type {AdminEventDetail} from '~/lib/api/admin/admin-event-types';
 
 interface EventMetadataCardProps {
   event: AdminEventDetail;
@@ -71,7 +71,7 @@ export function EventMetadataCard({event}: EventMetadataCardProps) {
 
         <div className='space-y-2'>
           <div className='text-sm font-medium text-muted-foreground'>
-            Última raspa
+            Última vez scrapeado
           </div>
           <div className='text-sm'>
             {format(new Date(event.lastScrapedAt), 'd MMM yyyy HH:mm', {

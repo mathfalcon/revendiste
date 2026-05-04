@@ -11,6 +11,7 @@ import type {
   GetDashboardOrdersResponse,
   GetDashboardPayoutsResponse,
   GetDashboardHealthResponse,
+  GetSidebarCountsResponse,
   GetDashboardTopEventsResponse,
   GetDashboardRevenueTimeSeriesResponse,
   GetDashboardOrdersTimeSeriesResponse,
@@ -199,6 +200,10 @@ export class AdminDashboardService {
 
   async getHealthStats(): Promise<GetDashboardHealthResponse> {
     return this.repo.getHealthMetrics();
+  }
+
+  async getSidebarCounts(): Promise<GetSidebarCountsResponse> {
+    return this.repo.getSidebarCounts();
   }
 
   async getTopEventsStats(

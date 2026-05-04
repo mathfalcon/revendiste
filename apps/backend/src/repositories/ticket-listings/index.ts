@@ -215,6 +215,109 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
     return await query.execute();
   }
 
+  async getListingWithTicketsByIdForPublisher(listingId: string, userId: string) {
+    return await this.db
+      .selectFrom('listings')
+      .innerJoin(
+        'eventTicketWaves',
+        'listings.ticketWaveId',
+        'eventTicketWaves.id',
+      )
+      .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
+      .select(eb => [
+        'listings.id',
+        'listings.soldAt',
+        'listings.createdAt',
+        'listings.updatedAt',
+        jsonObjectFrom(
+          eb
+            .selectFrom('eventTicketWaves')
+            .select([
+              'eventTicketWaves.id',
+              'eventTicketWaves.name',
+              'eventTicketWaves.currency',
+              'eventTicketWaves.faceValue',
+            ])
+            .whereRef('eventTicketWaves.id', '=', 'listings.ticketWaveId'),
+        )
+          .$notNull()
+          .as('ticketWave'),
+        jsonObjectFrom(
+          eb
+            .selectFrom('events')
+            .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
+            .select([
+              'events.id',
+              'events.name',
+              'events.slug',
+              'events.platform',
+              'events.eventStartDate',
+              'events.eventEndDate',
+              'eventVenues.name as venueName',
+              'eventVenues.address as venueAddress',
+              'events.description',
+              'events.qrAvailabilityTiming',
+              jsonArrayFrom(
+                eb
+                  .selectFrom('eventImages')
+                  .select(['eventImages.url', 'eventImages.imageType'])
+                  .whereRef('eventImages.eventId', '=', 'events.id')
+                  .where('eventImages.deletedAt', 'is', null)
+                  .orderBy('eventImages.displayOrder'),
+              )
+                .$notNull()
+                .as('eventImages'),
+            ])
+            .whereRef('events.id', '=', 'eventTicketWaves.eventId'),
+        )
+          .$notNull()
+          .as('event'),
+        jsonArrayFrom(
+          eb
+            .selectFrom('listingTickets')
+            .select(eb2 => [
+              'listingTickets.id',
+              'listingTickets.ticketNumber',
+              'listingTickets.price',
+              'listingTickets.soldAt',
+              'listingTickets.deletedAt',
+              'listingTickets.createdAt',
+              'listingTickets.updatedAt',
+              jsonObjectFrom(
+                eb2
+                  .selectFrom('ticketDocuments')
+                  .select([
+                    'ticketDocuments.id',
+                    'ticketDocuments.status',
+                    'ticketDocuments.uploadedAt',
+                  ])
+                  .whereRef(
+                    'ticketDocuments.ticketId',
+                    '=',
+                    'listingTickets.id',
+                  )
+                  .where('ticketDocuments.isPrimary', '=', true)
+                  .where('ticketDocuments.deletedAt', 'is', null),
+              ).as('document'),
+            ])
+            .leftJoin('ticketDocuments', join =>
+              join
+                .onRef('ticketDocuments.ticketId', '=', 'listingTickets.id')
+                .on('ticketDocuments.isPrimary', '=', true)
+                .on('ticketDocuments.deletedAt', 'is', null),
+            )
+            .whereRef('listingTickets.listingId', '=', 'listings.id')
+            .orderBy('listingTickets.ticketNumber', 'asc'),
+        )
+          .$notNull()
+          .as('tickets'),
+      ])
+      .where('listings.id', '=', listingId)
+      .where('listings.publisherUserId', '=', userId)
+      .where('listings.deletedAt', 'is', null)
+      .executeTakeFirst();
+  }
+
   async markListingAsSold(listingId: string) {
     return await this.db
       .updateTable('listings')

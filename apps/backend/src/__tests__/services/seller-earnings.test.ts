@@ -2,6 +2,7 @@
  * SellerEarningsService tests with mocked repositories.
  */
 import {SellerEarningsService} from '~/services/seller-earnings';
+import {PAYOUT_HOLD_PERIOD_HOURS} from '~/config/env';
 import type {
   SellerEarningsRepository,
   OrderTicketReservationsRepository,
@@ -77,6 +78,9 @@ describe('SellerEarningsService', () => {
 
       const result = await service.checkHoldPeriods(100);
 
+      expect(
+        mockSellerEarningsRepository.getEarningsReadyForRelease,
+      ).toHaveBeenCalledWith(PAYOUT_HOLD_PERIOD_HOURS, 100);
       expect(result.released).toBe(60);
       expect(mockSellerEarningsRepository.updateStatus).toHaveBeenCalledTimes(2);
       expect(mockSellerEarningsRepository.updateStatus).toHaveBeenNthCalledWith(

@@ -1,4 +1,4 @@
-import {formatPrice, calculateOrderFees} from '~/utils';
+import {formatPrice, calculateOrderFees, getFeeRates} from '~/utils';
 import type {TicketSelectionFormValues, TicketWave} from './types';
 
 interface OrderSummaryProps {
@@ -20,6 +20,7 @@ export function OrderSummary({
   if (!currency) return null;
 
   const commissionBreakdown = calculateOrderFees(subtotalAmount);
+  const feeRates = getFeeRates();
 
   return (
     <>
@@ -65,14 +66,16 @@ export function OrderSummary({
         </div>
         <div className='flex justify-between items-center text-sm'>
           <span className='text-muted-foreground'>
-            Comisión de plataforma (6%)
+            Comisión de plataforma ({feeRates.platformCommissionPercentage}%)
           </span>
           <span>
             {formatPrice(commissionBreakdown.platformCommission, currency)}
           </span>
         </div>
         <div className='flex justify-between items-center text-sm'>
-          <span className='text-muted-foreground'>IVA sobre comisión (22%)</span>
+          <span className='text-muted-foreground'>
+            IVA sobre comisión ({feeRates.vatPercentage}%)
+          </span>
           <span>
             {formatPrice(commissionBreakdown.vatOnCommission, currency)}
           </span>

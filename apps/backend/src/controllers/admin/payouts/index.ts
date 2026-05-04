@@ -3,7 +3,6 @@ import {
   Route,
   Get,
   Post,
-  Put,
   Delete,
   Tags,
   Middlewares,
@@ -47,35 +46,31 @@ import {ValidateBody, ValidateQuery, Body, Query} from '~/decorators';
 import {
   ProcessPayoutRouteBody,
   ProcessPayoutRouteSchema,
-  CompletePayoutRouteBody,
-  CompletePayoutRouteSchema,
   FailPayoutRouteBody,
   FailPayoutRouteSchema,
-  UpdatePayoutRouteBody,
-  UpdatePayoutRouteSchema,
   CancelPayoutRouteBody,
   CancelPayoutRouteSchema,
   AdminPayoutsRouteSchema,
   AdminPayoutsQuery,
 } from './validation';
 
-type GetPayoutsResponse = Awaited<ReturnType<PayoutsService['getPayoutsForAdmin']>>;
-type GetPayoutDetailsResponse = Awaited<ReturnType<
-  PayoutsService['getPayoutDetailsForAdmin']
->>;
-type ProcessPayoutResponse = Awaited<ReturnType<PayoutsService['processPayout']>>;
-type CompletePayoutResponse = Awaited<ReturnType<PayoutsService['completePayout']>>;
+type GetPayoutsResponse = Awaited<
+  ReturnType<PayoutsService['getPayoutsForAdmin']>
+>;
+type GetPayoutDetailsResponse = Awaited<
+  ReturnType<PayoutsService['getPayoutDetailsForAdmin']>
+>;
+type ProcessPayoutResponse = Awaited<
+  ReturnType<PayoutsService['processPayout']>
+>;
 type FailPayoutResponse = Awaited<ReturnType<PayoutsService['failPayout']>>;
-type UpdatePayoutResponse = Awaited<ReturnType<PayoutsService['updatePayout']>>;
 type CancelPayoutResponse = Awaited<ReturnType<PayoutsService['cancelPayout']>>;
-type UploadPayoutDocumentResponse = Awaited<ReturnType<
-  PayoutDocumentsService['uploadPayoutDocument']
->>;
-type DeletePayoutDocumentResponse = Awaited<ReturnType<
-  PayoutDocumentsService['deletePayoutDocument']
->>;
-
-type TriggerHoldCheckResponse = {success: boolean; message: string};
+type UploadPayoutDocumentResponse = Awaited<
+  ReturnType<PayoutDocumentsService['uploadPayoutDocument']>
+>;
+type DeletePayoutDocumentResponse = Awaited<
+  ReturnType<PayoutDocumentsService['deletePayoutDocument']>
+>;
 
 // Create shared repositories
 const payoutsRepository = new PayoutsRepository(db);
@@ -105,6 +100,7 @@ export class AdminPayoutsController {
     new PayoutEventsRepository(db),
     notificationService,
     payoutDocumentsService,
+    usersRepository,
   );
   private payoutDocumentsService = payoutDocumentsService;
 
@@ -150,20 +146,6 @@ export class AdminPayoutsController {
     return this.payoutsService.processPayout(payoutId, request.user.id, body);
   }
 
-  @Post('/{payoutId}/complete')
-  @Response<UnauthorizedError>(401, 'Authentication required')
-  @Response<UnauthorizedError>(403, 'Admin access required')
-  @Response<NotFoundError>(404, 'Payout not found')
-  @Response<ValidationError>(422, 'Invalid payout status')
-  @ValidateBody(CompletePayoutRouteSchema)
-  public async completePayout(
-    @Path() payoutId: string,
-    @Body() body: CompletePayoutRouteBody,
-    @Request() request: express.Request,
-  ): Promise<CompletePayoutResponse> {
-    return this.payoutsService.completePayout(payoutId, request.user.id, body);
-  }
-
   @Post('/{payoutId}/fail')
   @Response<UnauthorizedError>(401, 'Authentication required')
   @Response<UnauthorizedError>(403, 'Admin access required')
@@ -180,20 +162,6 @@ export class AdminPayoutsController {
       request.user.id,
       body.failureReason,
     );
-  }
-
-  @Put('/{payoutId}')
-  @Response<UnauthorizedError>(401, 'Authentication required')
-  @Response<UnauthorizedError>(403, 'Admin access required')
-  @Response<NotFoundError>(404, 'Payout not found')
-  @Response<ValidationError>(422, 'Validation failed')
-  @ValidateBody(UpdatePayoutRouteSchema)
-  public async updatePayout(
-    @Path() payoutId: string,
-    @Body() body: UpdatePayoutRouteBody,
-    @Request() request: express.Request,
-  ): Promise<UpdatePayoutResponse> {
-    return this.payoutsService.updatePayout(payoutId, request.user.id, body);
   }
 
   @Post('/{payoutId}/cancel')
@@ -254,19 +222,5 @@ export class AdminPayoutsController {
       documentId,
       request.user.id,
     );
-  }
-
-  @Post('/trigger-hold-check')
-  @Response<UnauthorizedError>(401, 'Authentication required')
-  @Response<UnauthorizedError>(403, 'Admin access required')
-  public async triggerHoldCheck(): Promise<TriggerHoldCheckResponse> {
-    const {runCheckPayoutHoldPeriods} = await import(
-      '~/cronjobs/check-payout-hold-periods'
-    );
-    await runCheckPayoutHoldPeriods();
-    return {
-      success: true,
-      message: 'Hold period check triggered successfully',
-    };
   }
 }

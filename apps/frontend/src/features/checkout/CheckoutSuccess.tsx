@@ -2,7 +2,12 @@ import {Suspense, useEffect} from 'react';
 import {useSuspenseQuery} from '@tanstack/react-query';
 import {Link} from '@tanstack/react-router';
 import {getOrderByIdQuery} from '~/lib';
-import {formatPrice, formatEventDate, getEventDisplayImage} from '~/utils';
+import {
+  formatPrice,
+  formatEventDate,
+  getEventDisplayImage,
+  getFeeRates,
+} from '~/utils';
 import {Button} from '~/components/ui/button';
 import {CheckCircle2, Calendar, MapPin, Ticket} from 'lucide-react';
 import {FullScreenLoading, CopyableText, TextEllipsis} from '~/components';
@@ -35,6 +40,7 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
   }, [orderId]);
 
   const currency = order.items[0]!.currency!;
+  const feeRates = getFeeRates();
 
   const eventWithImages = order.event as typeof order.event & {
     images?: Array<{imageType: string; url: string}>;
@@ -197,13 +203,13 @@ export const CheckoutSuccessPage = ({orderId}: CheckoutSuccessPageProps) => {
                 </span>
               </div>
               <div className='flex justify-between text-xs sm:text-sm text-muted-foreground'>
-                <span>Comisión (6%):</span>
+                <span>Comisión ({feeRates.platformCommissionPercentage}%):</span>
                 <span>
                   {formatPrice(Number(order.platformCommission), currency)}
                 </span>
               </div>
               <div className='flex justify-between text-xs sm:text-sm text-muted-foreground'>
-                <span>IVA (22%):</span>
+                <span>IVA ({feeRates.vatPercentage}%):</span>
                 <span>
                   {formatPrice(Number(order.vatOnCommission), currency)}
                 </span>

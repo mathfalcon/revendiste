@@ -77,6 +77,7 @@ export const TICKET_LISTING_ERROR_MESSAGES = {
       currency,
     )} (115% del valor nominal)`,
   INVALID_QUANTITY: 'La cantidad debe ser mayor que 0',
+  LISTING_NOT_FOUND: 'No encontramos esa publicación en tu cuenta.',
   TICKET_NOT_FOUND: 'Entrada no encontrada',
   UNAUTHORIZED_TICKET_ACCESS: 'No estás autorizado para modificar esta entrada',
   TICKET_SOLD: 'No podés modificar una entrada que ya se vendió',
@@ -163,11 +164,25 @@ export const PAYOUT_ERROR_MESSAGES = {
   PAYOUT_NOT_PENDING: (status: string) =>
     `El retiro ya está ${status}. No se puede procesar.`,
   CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS:
-    'No podés retirar ganancias en USD a una cuenta bancaria en UYU. Seleccioná un método de pago en USD o PayPal.',
+    'No podés retirar ganancias en USD a una cuenta bancaria en UYU. Seleccioná un método de retiro en USD.',
   CURRENCY_MISMATCH_USD_METHOD_UYU_EARNINGS:
-    'No podés retirar ganancias en UYU a una cuenta bancaria en USD. Seleccioná un método de pago en UYU o PayPal.',
+    'No podés retirar ganancias en UYU a una cuenta bancaria en USD. Seleccioná un método de retiro en UYU.',
   EARNINGS_WITH_OPEN_REPORTS:
     'Algunas ganancias seleccionadas tienen reportes abiertos y no pueden ser retiradas. Esperá a que se resuelvan los reportes.',
+  EARNINGS_SELECTION_CHANGED:
+    'Las ganancias seleccionadas ya no están disponibles. Actualizá el resumen e intentá de nuevo.',
+  USD_UYU_EXCHANGE_RATE_UNAVAILABLE:
+    'No pudimos obtener la cotización del dólar (BROU ni Itaú). Probá de nuevo en unos minutos.',
+  PAYOUT_PROVIDER_NOT_REGISTERED: (provider: string) =>
+    `Proveedor de retiro no registrado: ${provider}. Contactá a soporte.`,
+  DLOCAL_GO_PAYOUTS_DISABLED:
+    'El retiro a bancos argentinos aún no está activo para tu cuenta. Probá de nuevo más tarde.',
+  ARGENTINIAN_PAYOUT_REQUIRES_USD_EARNINGS:
+    'Solo podés vincular un método argentino cuando tenés saldo a cobrar en dólares (USD).',
+  DLOCAL_PAYOUT_QUOTE_FAILED:
+    'No pudimos obtener la cotización para el retiro en ARS. Probá de nuevo en unos minutos o elegí cobrar en USD al mismo método.',
+  DLOCAL_PAYOUT_REMITTER_NOT_CONFIGURED:
+    'Falta la configuración del emisor dLocal (remitente) en el servidor. Contactá a soporte.',
 } as const;
 
 // Error messages for processor settlements (reconciliation)
@@ -447,6 +462,7 @@ export const NOTIFICATION_BUTTON_LABELS = {
   PUBLISH_TICKETS: 'Publicar entradas',
   RETRY_VERIFICATION: 'Reintentar verificación',
   VIEW_EARNINGS: 'Ver ganancias',
+  REQUEST_WITHDRAWAL: 'Solicitar retiro',
   VIEW_MY_CASE: 'Ver mi caso',
 } as const;
 

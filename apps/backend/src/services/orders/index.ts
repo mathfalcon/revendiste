@@ -5,6 +5,7 @@ import {
   EventTicketWavesRepository,
   ListingTicketsRepository,
   OrderTicketReservationsRepository,
+  PaymentsRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
@@ -19,8 +20,10 @@ import {RESERVATION_WINDOW_MINUTES} from '~/constants/reservation';
 import {calculateOrderFees} from '~/utils/fees';
 import {getStorageProvider} from '~/services/storage';
 import type {PaymentSyncService} from '~/services/payments/sync';
+import type {NotificationService} from '~/services/notifications';
 import type {PaginationOptions} from '~/types/pagination';
 import {createPaginatedResponse} from '~/middleware/pagination';
+import {expireOrderWithoutPaymentLink} from '~/services/orders/reservation-expiry';
 
 export class OrdersService {
   private readonly storageProvider = getStorageProvider();
@@ -33,6 +36,8 @@ export class OrdersService {
     private readonly listingTicketsRepository: ListingTicketsRepository,
     private readonly orderTicketReservationsRepository: OrderTicketReservationsRepository,
     private readonly paymentSyncService: PaymentSyncService,
+    private readonly paymentsRepository: PaymentsRepository,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -105,17 +110,22 @@ export class OrdersService {
         );
       }
 
-      ticketWaveCurrencies.add(ticketWave.currency);
       ticketWaveInfo.set(ticketWaveId, {
         name: ticketWave.name,
         currency: ticketWave.currency,
       });
 
+      let waveHasTickets = false;
       for (const [priceStr, quantity] of Object.entries(priceGroups)) {
         if (quantity <= 0) continue;
+        waveHasTickets = true;
         const price = parseFloat(priceStr);
         totalTickets += quantity;
         subtotalAmount += price * quantity;
+      }
+
+      if (waveHasTickets) {
+        ticketWaveCurrencies.add(ticketWave.currency);
       }
     }
 
@@ -278,7 +288,7 @@ export class OrdersService {
     await this.syncPaymentStatusIfPending(orderId);
 
     // Fetch fresh order data after potential sync
-    const order = await this.ordersRepository.getByIdWithItems(orderId);
+    let order = await this.ordersRepository.getByIdWithItems(orderId);
 
     if (!order) {
       throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
@@ -287,6 +297,28 @@ export class OrdersService {
     // Ensure user can only access their own orders
     if (order.userId !== userId) {
       throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+    }
+
+    const now = new Date();
+    const reservationExpired =
+      order.status === 'pending' &&
+      order.reservationExpiresAt != null &&
+      new Date(order.reservationExpiresAt) < now;
+
+    if (reservationExpired) {
+      const expired = await expireOrderWithoutPaymentLink(orderId, {
+        ordersRepository: this.ordersRepository,
+        orderTicketReservationsRepository:
+          this.orderTicketReservationsRepository,
+        paymentsRepository: this.paymentsRepository,
+        notificationService: this.notificationService,
+      });
+      if (expired) {
+        order = await this.ordersRepository.getByIdWithItems(orderId);
+        if (!order) {
+          throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+        }
+      }
     }
 
     return order;

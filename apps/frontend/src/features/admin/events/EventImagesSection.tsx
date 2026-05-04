@@ -14,7 +14,7 @@ import {
 } from '~/lib/api/admin';
 import {toast} from 'sonner';
 import {Upload, X, Loader2} from 'lucide-react';
-import {AdminEventDetail} from '~/lib/api/generated';
+import type {AdminEventDetail} from '~/lib/api/admin/admin-event-types';
 
 interface EventImagesSectionProps {
   event: AdminEventDetail;

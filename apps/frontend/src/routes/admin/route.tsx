@@ -7,13 +7,18 @@ import {
   Calendar,
   Flag,
   DollarSign,
+  Timer,
+  type LucideIcon,
 } from 'lucide-react';
 import {Link, useLocation} from '@tanstack/react-router';
 import {useState, useEffect} from 'react';
+import {useQuery} from '@tanstack/react-query';
 import {cn} from '~/lib/utils';
 import {getCurrentUserQuery} from '~/lib';
+import {adminSidebarCountsQueryOptions} from '~/lib/api/admin';
 import {seo} from '~/utils/seo';
 import {Button} from '~/components/ui/button';
+import {Badge} from '~/components/ui/badge';
 import {
   Sheet,
   SheetContent,
@@ -53,17 +58,48 @@ export const Route = createFileRoute('/admin')({
   },
 });
 
-const navigation = [
+type AdminSidebarBadgeKey =
+  | 'pendingVerifications'
+  | 'pendingPayouts'
+  | 'reportsAwaitingResponse';
+
+const navigation: Array<{
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  badgeKey?: AdminSidebarBadgeKey;
+}> = [
   {name: 'Panel', href: '/admin/dashboard', icon: LayoutDashboard},
   {name: 'Eventos', href: '/admin/eventos', icon: Calendar},
-  {name: 'Verificaciones', href: '/admin/verificaciones', icon: UserCheck},
-  {name: 'Retiros', href: '/admin/retiros', icon: Wallet},
+  {
+    name: 'Verificaciones',
+    href: '/admin/verificaciones',
+    icon: UserCheck,
+    badgeKey: 'pendingVerifications',
+  },
+  {
+    name: 'Retiros',
+    href: '/admin/retiros',
+    icon: Wallet,
+    badgeKey: 'pendingPayouts',
+  },
   {name: 'Finanzas', href: '/admin/finanzas', icon: DollarSign},
-  {name: 'Reportes', href: '/admin/reportes', icon: Flag},
+  {
+    name: 'Reportes',
+    href: '/admin/reportes',
+    icon: Flag,
+    badgeKey: 'reportsAwaitingResponse',
+  },
+  {
+    name: 'Tareas programadas',
+    href: '/admin/tareas-programadas',
+    icon: Timer,
+  },
 ];
 
 function SidebarNav({onNavigate}: {onNavigate?: () => void}) {
   const location = useLocation();
+  const {data: counts} = useQuery(adminSidebarCountsQueryOptions());
 
   return (
     <nav className='flex-1 space-y-1 px-3 py-4'>
@@ -72,6 +108,10 @@ function SidebarNav({onNavigate}: {onNavigate?: () => void}) {
           item.href === '/admin'
             ? location.pathname === '/admin' || location.pathname === '/admin/'
             : location.pathname.startsWith(item.href);
+        const badgeCount =
+          item.badgeKey && counts
+            ? counts[item.badgeKey]
+            : undefined;
         return (
           <Link
             key={item.name}
@@ -83,8 +123,16 @@ function SidebarNav({onNavigate}: {onNavigate?: () => void}) {
               isActive && 'bg-accent text-accent-foreground',
             )}
           >
-            <item.icon className='h-5 w-5' />
-            {item.name}
+            <item.icon className='h-5 w-5 shrink-0' />
+            <span className='min-w-0 flex-1'>{item.name}</span>
+            {badgeCount !== undefined && badgeCount > 0 ? (
+              <Badge
+                variant='destructive'
+                className='h-5 min-w-5 shrink-0 justify-center px-1 py-0 text-xs tabular-nums leading-none'
+              >
+                {badgeCount}
+              </Badge>
+            ) : null}
           </Link>
         );
       })}

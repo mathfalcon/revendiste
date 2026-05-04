@@ -9,10 +9,10 @@ export const HomeAbout = () => {
           </h2>
           <p className='text-sm md:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed'>
             Revendiste es la plataforma de compra y venta de entradas en Uruguay
-            para conciertos, fiestas y eventos. Si no podés ir a un evento,
-            publicá o vendé tu entrada de forma fácil y segura. Si te pintó ir a
-            último momento, encontrá entradas disponibles. Entre personas, la
-            reventa es segura: custodia de fondos y vendedores verificados.
+            para fiestas, conciertos y eventos. Si no podés ir a un evento,
+            publicá y transferí tu entrada de forma fácil y segura. Si te pintó
+            ir a último momento, encontrá entradas disponibles. Entre personas,
+            la reventa es segura: custodia de fondos y vendedores verificados.
           </p>
           <p className='text-xs md:text-sm text-muted-foreground'>
             Al usar nuestros servicios, aceptás nuestros{' '}

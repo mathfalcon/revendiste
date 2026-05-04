@@ -1,5 +1,9 @@
 import {Suspense, useEffect, useRef, useState} from 'react';
-import {useSuspenseQuery, useMutation} from '@tanstack/react-query';
+import {
+  useSuspenseQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {useNavigate} from '@tanstack/react-router';
 import {toast} from 'sonner';
@@ -13,6 +17,7 @@ import {
   formatEventDate,
   getOrderStatusLabel,
   getEventDisplayImage,
+  getFeeRates,
 } from '~/utils';
 import {useCountdown} from '~/hooks';
 import {Button} from '~/components/ui/button';
@@ -71,6 +76,7 @@ interface CheckoutPageProps {
 
 export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
   const order = useSuspenseQuery(getOrderByIdQuery(orderId)).data;
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -101,8 +107,15 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
   });
 
   const currency = order.items[0]!.currency!;
+  const feeRates = getFeeRates();
   const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasShownToastRef = useRef(false);
+
+  useEffect(() => {
+    if (countdown.isExpired) {
+      void queryClient.invalidateQueries({queryKey: ['orders', orderId]});
+    }
+  }, [countdown.isExpired, orderId, queryClient]);
 
   // Function to handle immediate redirect (clears timeout and navigates)
   const handleImmediateRedirect = () => {
@@ -330,13 +343,15 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                 </span>
               </div>
               <div className='flex justify-between text-xs sm:text-sm text-muted-foreground'>
-                <span>Comisión (6%):</span>
+                <span>
+                  Comisión ({feeRates.platformCommissionPercentage}%):
+                </span>
                 <span>
                   {formatPrice(Number(order.platformCommission), currency)}
                 </span>
               </div>
               <div className='flex justify-between text-xs sm:text-sm text-muted-foreground'>
-                <span>IVA (22%):</span>
+                <span>IVA ({feeRates.vatPercentage}%):</span>
                 <span>
                   {formatPrice(Number(order.vatOnCommission), currency)}
                 </span>

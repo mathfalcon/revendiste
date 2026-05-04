@@ -1,0 +1,145 @@
+name: Cleanup Stale DB Access Resources
+
+# Auto-cleans SSM VPC endpoints and bastion instances left running after a
+# database access session. The toggle-database-access workflow creates these
+# on-demand; if the operator forgets to run the Stop step, endpoints sit at
+# ~$8/mo each and eat the budget. This workflow catches those leaks.
+#
+# Cleans:
+#   - VPC endpoints tagged ManagedBy=github-actions older than CLEANUP_AGE_HOURS
+#   - Bastion EC2 instances (Name=revendiste-{dev,prod}-bastion) running for
+#     longer than CLEANUP_AGE_HOURS (stopped, never terminated)
+
+on:
+  schedule:
+    # Every 2 hours
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (list resources but do not delete/stop)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  AWS_REGION: sa-east-1
+  CLEANUP_AGE_HOURS: 2
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    # Use the production environment for credentials — the IAM user has access
+    # to both prod and dev resources in the same account.
+    environment: production
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Cleanup stale SSM VPC endpoints
+        run: |
+          set -euo pipefail
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+
+          echo "=== Looking for SSM VPC endpoints older than ${CLEANUP_AGE_HOURS}h ==="
+
+          # Cutoff: anything created before NOW - CLEANUP_AGE_HOURS is fair game
+          CUTOFF_EPOCH=$(date -u -d "${CLEANUP_AGE_HOURS} hours ago" +%s)
+          CUTOFF_ISO=$(date -u -d "${CLEANUP_AGE_HOURS} hours ago" +%Y-%m-%dT%H:%M:%SZ)
+          echo "Cutoff: $CUTOFF_ISO ($CUTOFF_EPOCH)"
+
+          # Filter: managed by this same github-actions workflow chain.
+          # toggle-database-access.yml tags endpoints with ManagedBy=github-actions.
+          ENDPOINTS_JSON=$(aws ec2 describe-vpc-endpoints \
+            --filters \
+              "Name=tag:ManagedBy,Values=github-actions" \
+              "Name=vpc-endpoint-state,Values=available,pending" \
+            --region "$AWS_REGION" \
+            --output json)
+
+          # AWS returns timestamps like "2026-04-12T03:29:07+00:00" or
+          # "2026-04-12T03:29:07.123+00:00". jq's fromdate requires strict
+          # ISO 8601 with "Z" suffix, so we strip subseconds and rewrite TZ.
+          STALE_IDS=$(echo "$ENDPOINTS_JSON" | jq -r --argjson cutoff "$CUTOFF_EPOCH" '
+            .VpcEndpoints[]
+            | select((.CreationTimestamp | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdate) < $cutoff)
+            | .VpcEndpointId
+          ')
+
+          if [ -z "$STALE_IDS" ]; then
+            echo "No stale VPC endpoints to clean up."
+          else
+            COUNT=$(echo "$STALE_IDS" | wc -l | tr -d ' ')
+            echo "Found $COUNT stale endpoint(s):"
+            echo "$ENDPOINTS_JSON" | jq -r --argjson cutoff "$CUTOFF_EPOCH" '
+              .VpcEndpoints[]
+              | select((.CreationTimestamp | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdate) < $cutoff)
+              | "  \(.VpcEndpointId)  \(.ServiceName)  created=\(.CreationTimestamp)  tags=\([.Tags[]? | select(.Key=="Name") | .Value] | first // "—")"
+            '
+
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "DRY RUN — skipping deletion."
+            else
+              IDS_LIST=$(echo "$STALE_IDS" | tr '\n' ' ')
+              aws ec2 delete-vpc-endpoints \
+                --vpc-endpoint-ids $IDS_LIST \
+                --region "$AWS_REGION" \
+                --no-cli-pager
+              echo "Deleted: $IDS_LIST"
+            fi
+          fi
+
+      - name: Stop stale bastion instances
+        run: |
+          set -euo pipefail
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+
+          echo "=== Looking for bastions running longer than ${CLEANUP_AGE_HOURS}h ==="
+
+          CUTOFF_EPOCH=$(date -u -d "${CLEANUP_AGE_HOURS} hours ago" +%s)
+
+          # The LaunchTime on a stopped-then-started instance reflects the most
+          # recent start time, so it correctly represents "running since".
+          INSTANCES_JSON=$(aws ec2 describe-instances \
+            --filters \
+              "Name=tag:Name,Values=revendiste-dev-bastion,revendiste-prod-bastion" \
+              "Name=instance-state-name,Values=running" \
+            --region "$AWS_REGION" \
+            --output json)
+
+          # AWS LaunchTime format quirk: see VPC endpoints step above.
+          STALE_IDS=$(echo "$INSTANCES_JSON" | jq -r --argjson cutoff "$CUTOFF_EPOCH" '
+            .Reservations[].Instances[]
+            | select((.LaunchTime | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdate) < $cutoff)
+            | .InstanceId
+          ')
+
+          if [ -z "$STALE_IDS" ]; then
+            echo "No stale bastion instances to stop."
+          else
+            COUNT=$(echo "$STALE_IDS" | wc -l | tr -d ' ')
+            echo "Found $COUNT stale bastion(s):"
+            echo "$INSTANCES_JSON" | jq -r --argjson cutoff "$CUTOFF_EPOCH" '
+              .Reservations[].Instances[]
+              | select((.LaunchTime | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdate) < $cutoff)
+              | "  \(.InstanceId)  launched=\(.LaunchTime)  name=\([.Tags[]? | select(.Key=="Name") | .Value] | first // "—")"
+            '
+
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "DRY RUN — skipping stop."
+            else
+              IDS_LIST=$(echo "$STALE_IDS" | tr '\n' ' ')
+              # Stop, do NOT terminate — bastions are Terraform-managed.
+              aws ec2 stop-instances \
+                --instance-ids $IDS_LIST \
+                --region "$AWS_REGION" \
+                --no-cli-pager
+              echo "Stopped: $IDS_LIST"
+            fi
+          fi
+
+          echo "=== Cleanup complete ==="

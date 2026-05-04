@@ -14,11 +14,72 @@ import type {EventTicketCurrency} from '@revendiste/shared';
 import {NotificationService} from '~/services/notifications';
 import {
   notifySellerEarningsRetained,
+  notifySellerEarningsAvailable,
   notifyBuyerTicketCancelled,
 } from '~/services/notifications/helpers';
 import type {Kysely} from 'kysely';
 import type {DB} from '@revendiste/shared';
 import type {TicketReportsService} from '~/services/ticket-reports';
+
+function aggregateReleasedEarningsBySeller(
+  rows: Array<{
+    sellerUserId: string;
+    sellerAmount: string | number;
+    currency: EventTicketCurrency;
+  }>,
+): Array<{
+  sellerUserId: string;
+  lines: Array<{
+    currency: EventTicketCurrency;
+    amount: string;
+    earningCount: number;
+  }>;
+}> {
+  const bySeller = new Map<
+    string,
+    Map<EventTicketCurrency, {total: number; count: number}>
+  >();
+
+  for (const row of rows) {
+    let currencyMap = bySeller.get(row.sellerUserId);
+    if (!currencyMap) {
+      currencyMap = new Map();
+      bySeller.set(row.sellerUserId, currencyMap);
+    }
+    const currency = row.currency;
+    const prev = currencyMap.get(currency) ?? {total: 0, count: 0};
+    currencyMap.set(currency, {
+      total: roundOrderAmount(prev.total + Number(row.sellerAmount)),
+      count: prev.count + 1,
+    });
+  }
+
+  const result: Array<{
+    sellerUserId: string;
+    lines: Array<{
+      currency: EventTicketCurrency;
+      amount: string;
+      earningCount: number;
+    }>;
+  }> = [];
+
+  for (const [sellerUserId, currencyMap] of bySeller) {
+    const lines = Array.from(currencyMap.entries()).map(([currency, v]) => ({
+      currency,
+      amount: v.total.toFixed(2),
+      earningCount: v.count,
+    }));
+    result.push({sellerUserId, lines});
+  }
+
+  return result;
+}
+
+function computeHoldEndsAt(eventEndDate: Date, holdPeriodHours: number): Date {
+  const d = new Date(eventEndDate);
+  d.setHours(d.getHours() + holdPeriodHours);
+  return d;
+}
 
 interface BalanceByCurrency {
   currency: EventTicketCurrency;
@@ -122,17 +183,12 @@ export class SellerEarningsService {
     const sellerAmountCalc = calculateSellerAmount(Number(ticketData.price));
     const sellerAmount = roundOrderAmount(sellerAmountCalc.totalAmount);
 
-    // Calculate hold_until (event_end_date + 48 hours)
-    const holdUntil = new Date(ticketData.eventEndDate);
-    holdUntil.setHours(holdUntil.getHours() + PAYOUT_HOLD_PERIOD_HOURS);
-
-    // Create earnings record
+    // Create earnings record (hold ends at event end + PAYOUT_HOLD_PERIOD_HOURS; derived in queries)
     await earningsRepo.create({
       sellerUserId: listing.publisherUserId,
       listingTicketId,
       sellerAmount,
       currency: ticketData.currency,
-      holdUntil,
       status: 'pending',
     });
 
@@ -141,7 +197,7 @@ export class SellerEarningsService {
       sellerUserId: listing.publisherUserId,
       sellerAmount,
       currency: ticketData.currency,
-      holdUntil,
+      eventEndDate: ticketData.eventEndDate,
     });
   }
 
@@ -223,7 +279,10 @@ export class SellerEarningsService {
         listingTicketId: ticket.listingTicketId,
         sellerAmount: ticket.sellerAmount,
         currency: ticket.currency,
-        holdUntil: ticket.holdUntil,
+        holdUntil: computeHoldEndsAt(
+          ticket.eventEndDate,
+          PAYOUT_HOLD_PERIOD_HOURS,
+        ),
         listingId: ticket.listingId,
         publisherUserId: ticket.publisherUserId,
         eventName: ticket.eventName,
@@ -234,7 +293,7 @@ export class SellerEarningsService {
 
   /**
    * Background job logic to release holds
-   * Finds earnings where hold_until <= NOW() and status = 'pending'
+   * Finds pending earnings where event end + hold period has passed (see repository SQL)
    * Updates to 'available' if no reports, 'retained' if reports exist
    * Processes in batches to avoid transactional issues
    */
@@ -245,7 +304,10 @@ export class SellerEarningsService {
     retained: number;
   }> {
     const earningsReady =
-      await this.sellerEarningsRepository.getEarningsReadyForRelease(limit);
+      await this.sellerEarningsRepository.getEarningsReadyForRelease(
+        PAYOUT_HOLD_PERIOD_HOURS,
+        limit,
+      );
 
     if (earningsReady.length === 0) {
       logger.debug('No earnings ready for release');
@@ -261,14 +323,29 @@ export class SellerEarningsService {
 
     for (let i = 0; i < earningsToRelease.length; i += BATCH_SIZE) {
       const batch = earningsToRelease.slice(i, i + BATCH_SIZE);
+      const batchRows = earningsReady.filter(e => batch.includes(e.id));
 
-      // Update each batch in a transaction
       await this.sellerEarningsRepository.executeTransaction(async trx => {
         const repo = this.sellerEarningsRepository.withTransaction(trx);
         await repo.updateStatus(batch, 'available');
       });
 
       totalReleased += batch.length;
+
+      if (this.notificationService && batchRows.length > 0) {
+        const grouped = aggregateReleasedEarningsBySeller(batchRows);
+        for (const g of grouped) {
+          notifySellerEarningsAvailable(this.notificationService, {
+            sellerUserId: g.sellerUserId,
+            lines: g.lines,
+          }).catch(error => {
+            logger.error('Failed to notify seller earnings available', {
+              sellerUserId: g.sellerUserId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          });
+        }
+      }
     }
 
     logger.info('Released earnings from hold period', {

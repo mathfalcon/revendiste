@@ -17,7 +17,7 @@ Welcome to the Revendiste backend documentation! This directory contains compreh
 
 2. **[Adding Payment Providers](./adding-payment-providers.md)**
    - Step-by-step guide for new providers
-   - Code examples (Stripe, PayPal)
+   - Code examples (Stripe, etc.)
    - Testing strategies
    - Common pitfalls
 
@@ -27,6 +27,11 @@ Welcome to the Revendiste backend documentation! This directory contains compreh
    - Fraud detection strategies
    - Compliance requirements (PCI-DSS, GDPR, SOC 2)
    - Incident response procedures
+
+4. **[USD / UYU exchange for payouts](./usd-uyu-payout-exchange.md)**
+   - BROU eBROU + Itaú `cotiz.xml` fallback
+   - Rate lock metadata, `PayoutsService` touchpoints
+   - `ExchangeRateService` cache behavior and failure semantics
 
 ---
 
@@ -94,7 +99,7 @@ Welcome to the Revendiste backend documentation! This directory contains compreh
 
 ### Provider Pattern
 - Abstraction layer for payment providers
-- Easy to add new providers (Stripe, PayPal, etc.)
+- Easy to add new providers (Stripe, etc.)
 - Standardized types across providers
 
 ### Immutable Audit Log

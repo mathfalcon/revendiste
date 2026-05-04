@@ -36,6 +36,14 @@ export const getMyListingsQuery = () =>
     staleTime: 60_000,
   });
 
+export const getMyListingByIdQuery = (listingId: string) =>
+  queryOptions({
+    queryKey: ['listings', 'detail', listingId],
+    queryFn: () =>
+      api.ticketListings.getMyListingById(listingId).then(res => res.data),
+    staleTime: 60_000,
+  });
+
 export const uploadTicketDocumentMutation = (ticketId: string) =>
   mutationOptions({
     mutationKey: ['upload-ticket-document', ticketId],

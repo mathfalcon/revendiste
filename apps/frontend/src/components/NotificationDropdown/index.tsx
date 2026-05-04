@@ -16,6 +16,7 @@ import {
   XCircle,
   CreditCard,
   Ticket,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 import {useInfiniteScroll} from '~/hooks';
@@ -45,6 +46,8 @@ const getNotificationIcon = (type: NotificationType): LucideIcon => {
       return CreditCard;
     case 'ticket_sold_seller':
       return Ticket;
+    case 'seller_earnings_available':
+      return Wallet;
     default:
       return FileText;
   }
@@ -62,6 +65,8 @@ const getNotificationIconColor = (type: NotificationType): string => {
       return 'text-blue-600';
     case 'ticket_sold_seller':
       return 'text-purple-600';
+    case 'seller_earnings_available':
+      return 'text-emerald-600';
     default:
       return 'text-muted-foreground';
   }

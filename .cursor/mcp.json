@@ -16,6 +16,15 @@
       "type": "stdio",
       "command": "engram",
       "args": ["mcp", "--tools=agent"]
+    },
+    "awslabs.aws-documentation-mcp-server": {
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "env": {
+        "AWS_PROFILE": "revendiste",
+        "AWS_REGION": "sa-east-1",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
     }
   }
 }

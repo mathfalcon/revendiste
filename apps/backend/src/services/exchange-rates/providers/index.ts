@@ -1,3 +1,3 @@
-export * from './ExchangeRateAPIProvider';
+export * from './UruguayBankProvider';
 export * from './UruguayBankProvider';
 

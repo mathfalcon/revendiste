@@ -19,6 +19,7 @@ import {NotificationService} from '~/services/notifications';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {SellerEarningsService} from '~/services/seller-earnings';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
+import {expireOrderWithoutPaymentLink} from '~/services/orders/reservation-expiry';
 import {logger} from '~/utils';
 import {Payment} from '~/types';
 import {getJobQueueService} from '~/services/job-queue';
@@ -58,6 +59,13 @@ const sellerEarningsService = new SellerEarningsService(
   sellerEarningsRepository,
   orderTicketReservationsRepository,
 );
+
+const orderReservationExpiryDeps = {
+  ordersRepository,
+  orderTicketReservationsRepository,
+  paymentsRepository,
+  notificationService,
+};
 
 // Create adapter factory function for payment sync
 const createPaymentWebhookAdapter = (
@@ -168,77 +176,6 @@ async function expireOrder(
 }
 
 /**
- * Expires an order that has no payment link created (abandoned checkout)
- * Uses a transaction with row locking to prevent race conditions
- */
-async function expireOrderWithoutPayment(orderId: string): Promise<boolean> {
-  let expired = false;
-
-  await ordersRepository.executeTransaction(async trx => {
-    const ordersRepo = ordersRepository.withTransaction(trx);
-    const reservationsRepo =
-      orderTicketReservationsRepository.withTransaction(trx);
-    const paymentsRepo = paymentsRepository.withTransaction(trx);
-
-    // Lock the order row and re-check status inside transaction
-    const order = await trx
-      .selectFrom('orders')
-      .select(['id', 'status'])
-      .where('id', '=', orderId)
-      .where('status', '=', 'pending')
-      .where('deletedAt', 'is', null)
-      .forUpdate()
-      .executeTakeFirst();
-
-    if (!order) {
-      // Order no longer pending (status changed or deleted)
-      logger.debug('Order no longer pending, skipping expiration', {orderId});
-      return;
-    }
-
-    // Double-check no payments exist inside the transaction
-    const payments = await paymentsRepo.getAllByOrderId(orderId);
-    if (payments.length > 0) {
-      // Payment was created between our check and this transaction
-      logger.debug('Payment found during transaction, skipping expiration', {
-        orderId,
-        paymentCount: payments.length,
-      });
-      return;
-    }
-
-    // Safe to expire - no payments and order is still pending
-    await ordersRepo.updateStatus(orderId, 'expired', {
-      cancelledAt: new Date(),
-    });
-    await reservationsRepo.releaseByOrderId(orderId);
-
-    expired = true;
-    logger.info('Order expired (no payment link created)', {orderId});
-  });
-
-  // Send notification outside transaction (fire-and-forget)
-  if (expired) {
-    const orderWithItems = await ordersRepository.getByIdWithItems(orderId);
-
-    if (orderWithItems && orderWithItems.event) {
-      notifyOrderExpired(notificationService, {
-        buyerUserId: orderWithItems.userId,
-        orderId: orderWithItems.id,
-        eventName: orderWithItems.event.name || 'el evento',
-      }).catch(error => {
-        logger.error('Failed to send order expired notification', {
-          orderId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      });
-    }
-  }
-
-  return expired;
-}
-
-/**
  * Runs the sync payments and expire orders job logic once
  * Used by production EventBridge + ECS RunTask
  */
@@ -340,7 +277,10 @@ export async function runSyncPaymentsAndExpireOrders() {
               },
             );
 
-            const expired = await expireOrderWithoutPayment(order.id);
+            const expired = await expireOrderWithoutPaymentLink(
+              order.id,
+              orderReservationExpiryDeps,
+            );
             if (expired) {
               expiredOrderIds.push(order.id);
               expiredNoPaymentCount++;

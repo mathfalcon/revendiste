@@ -1,5 +1,6 @@
 import {useNavigate, Link} from '@tanstack/react-router';
 import {
+  type GetMyListingByIdResponse,
   type GetUserListingsResponse,
   EventImageType,
 } from '~/lib/api/generated';
@@ -17,13 +18,26 @@ import {CopyableText} from '~/components/ui/copyable-text';
 import {copyToClipboard} from '~/utils/clipboard';
 import {toast} from 'sonner';
 
+type ListingCardModel =
+  | GetUserListingsResponse['data'][number]
+  | GetMyListingByIdResponse;
+
+type PublicationsNavigateFrom =
+  | '/cuenta/publicaciones/'
+  | '/cuenta/publicaciones/$listingId';
+
 interface ListingCardProps {
-  listing: GetUserListingsResponse['data'][number];
+  listing: ListingCardModel;
+  /** Search-param navigation (subirTicket, etc.); default is the list route. */
+  navigateFrom?: PublicationsNavigateFrom;
 }
 
-export function ListingCard({listing}: ListingCardProps) {
+export function ListingCard({
+  listing,
+  navigateFrom = '/cuenta/publicaciones/',
+}: ListingCardProps) {
   const {event, ticketWave, tickets} = listing;
-  const navigate = useNavigate({from: '/cuenta/publicaciones'});
+  const navigate = useNavigate({from: navigateFrom});
 
   const startDate = new Date(event.eventStartDate);
   const endDate = new Date(event.eventEndDate);
@@ -99,7 +113,10 @@ export function ListingCard({listing}: ListingCardProps) {
     : 'border-blue-500/20 bg-blue-500/5';
 
   return (
-    <Card className={`w-full overflow-hidden ${cardBgClass}`}>
+    <Card
+      id={`listing-card-${listing.id}`}
+      className={`w-full scroll-mt-24 overflow-hidden ${cardBgClass}`}
+    >
       <CardContent className='p-0'>
         <div className='flex'>
           {/* Left accent bar */}

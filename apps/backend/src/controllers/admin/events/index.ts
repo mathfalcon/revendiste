@@ -32,7 +32,7 @@ import {
   UnauthorizedError,
   BadRequestError,
 } from '~/errors';
-import {ValidateBody, ValidateQuery, Body, Query} from '~/decorators';
+import {ValidateBody, ValidateQuery, Body} from '~/decorators';
 import {
   AdminEventsQuery,
   AdminEventsRouteSchema,
@@ -46,30 +46,37 @@ import {
   UpdateTicketWaveRouteSchema,
 } from './validation';
 import {AdminEventsService} from '~/services/admin-events';
-import type {
-  PaginatedAdminEventsResponse,
-  AdminEventDetail,
-  UpdatedEvent,
-  DeletedEvent,
-  CreatedTicketWave,
-  UpdatedTicketWave,
-  DeletedTicketWave,
-  UploadEventImageResponse as UploadImageResponse,
-  DeleteEventImageResponse as DeleteImageResponse,
-} from './types';
 
-type GetEventsResponse = Promise<PaginatedAdminEventsResponse>;
-type GetEventDetailsResponse = Promise<AdminEventDetail>;
-type UpdateEventResponse = Promise<UpdatedEvent>;
-type DeleteEventResponse = Promise<DeletedEvent>;
-type CreateEventResponse = Promise<UpdatedEvent>;
-type CreateTicketWaveResponse = Promise<CreatedTicketWave>;
-type UpdateTicketWaveResponse = Promise<UpdatedTicketWave>;
-type DeleteTicketWaveResponse = Promise<DeletedTicketWave>;
-type UploadEventImageResponse = Promise<UploadImageResponse>;
-type DeleteEventImageResponse = Promise<DeleteImageResponse>;
-type SearchVenuesResponse = Promise<
-  Array<{id: string; name: string; address: string; city: string}>
+type GetEventsResponse = Awaited<ReturnType<AdminEventsService['getEvents']>>;
+type GetEventDetailsResponse = Awaited<
+  ReturnType<AdminEventsService['getEventDetails']>
+>;
+type CreateEventResponse = Awaited<
+  ReturnType<AdminEventsService['createEvent']>
+>;
+type UpdateEventResponse = Awaited<
+  ReturnType<AdminEventsService['updateEvent']>
+>;
+type DeleteEventResponse = Awaited<
+  ReturnType<AdminEventsService['deleteEvent']>
+>;
+type CreateTicketWaveResponse = Awaited<
+  ReturnType<AdminEventsService['createTicketWave']>
+>;
+type UpdateTicketWaveResponse = Awaited<
+  ReturnType<AdminEventsService['updateTicketWave']>
+>;
+type DeleteTicketWaveResponse = Awaited<
+  ReturnType<AdminEventsService['deleteTicketWave']>
+>;
+type UploadEventImageResponse = Awaited<
+  ReturnType<AdminEventsService['uploadEventImage']>
+>;
+type DeleteEventImageResponse = Awaited<
+  ReturnType<AdminEventsService['deleteEventImage']>
+>;
+type SearchVenuesResponse = Awaited<
+  ReturnType<VenuesRepository['searchByName']>
 >;
 
 @Route('admin/events')

@@ -4,7 +4,7 @@ import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 
 export const AdminPayoutsQuerySchema = PaginationSchema.extend({
   status: z
-    .enum(['pending', 'completed', 'failed', 'cancelled'])
+    .enum(['pending', 'processing', 'completed', 'failed', 'cancelled'])
     .optional(),
 });
 
@@ -20,24 +20,15 @@ export const ProcessPayoutRouteSchema = z.object({
       processingFee: z.number().optional(),
       transactionReference: z.string().optional(),
       notes: z.string().optional(),
-      voucherUrl: z.string().url().optional(),
+      actualBankRate: z.number().positive().optional(),
+      actualUyuCost: z.number().nonnegative().optional(),
     })
+    .strict()
     .default({}), // Default to empty object if body is missing
 });
 
 export type ProcessPayoutRouteBody = z.infer<
   typeof ProcessPayoutRouteSchema
->['body'];
-
-export const CompletePayoutRouteSchema = z.object({
-  body: z.object({
-    transactionReference: z.string().optional(),
-    voucherUrl: z.string().url().optional(),
-  }),
-});
-
-export type CompletePayoutRouteBody = z.infer<
-  typeof CompletePayoutRouteSchema
 >['body'];
 
 export const FailPayoutRouteSchema = z.object({
@@ -49,22 +40,6 @@ export const FailPayoutRouteSchema = z.object({
 });
 
 export type FailPayoutRouteBody = z.infer<typeof FailPayoutRouteSchema>['body'];
-
-export const UpdatePayoutRouteSchema = z.object({
-  body: z.object({
-    status: z
-      .enum(['pending', 'completed', 'failed', 'cancelled'])
-      .optional(),
-    processingFee: z.number().optional(),
-    notes: z.string().optional(),
-    voucherUrl: z.string().url().optional(),
-    transactionReference: z.string().optional(),
-  }),
-});
-
-export type UpdatePayoutRouteBody = z.infer<
-  typeof UpdatePayoutRouteSchema
->['body'];
 
 export const CancelPayoutRouteSchema = z.object({
   body: z.object({

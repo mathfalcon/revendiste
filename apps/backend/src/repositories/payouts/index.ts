@@ -1,9 +1,54 @@
-import {Kysely, sql} from 'kysely';
+import {type ExpressionBuilder, Kysely, sql} from 'kysely';
 import {jsonArrayFrom, jsonObjectFrom} from 'kysely/helpers/postgres';
-import {DB, EventTicketCurrency, Json} from '@revendiste/shared';
+import {
+  DB,
+  EventTicketCurrency,
+  Json,
+  PayoutProvider,
+} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 import {mapToPaginatedResponse} from '~/middleware/pagination';
 import type {PaginationOptions} from '~/types/pagination';
+
+function linkedEarningsForPayout(eb: ExpressionBuilder<DB, 'payouts'>) {
+  return (
+    eb
+      .selectFrom('sellerEarnings')
+      .innerJoin(
+        'listingTickets',
+        'listingTickets.id',
+        'sellerEarnings.listingTicketId',
+      )
+      .innerJoin('listings', 'listings.id', 'listingTickets.listingId')
+      .innerJoin(
+        'eventTicketWaves',
+        'eventTicketWaves.id',
+        'listings.ticketWaveId',
+      )
+      .innerJoin('events', 'events.id', 'eventTicketWaves.eventId')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
+      .select(eb2 => [
+        'sellerEarnings.id',
+        'sellerEarnings.listingTicketId',
+        'listingTickets.listingId',
+        'sellerEarnings.sellerAmount',
+        'sellerEarnings.currency',
+        'sellerEarnings.createdAt',
+        eb2.ref('events.name').as('eventName'),
+        eb2.ref('events.slug').as('eventSlug'),
+        eb2.ref('events.eventStartDate').as('eventStartDate'),
+        eb2.ref('events.eventEndDate').as('eventEndDate'),
+        eb2.ref('eventTicketWaves.name').as('ticketWaveName'),
+        eb2.ref('eventVenues.name').as('venueName'),
+      ])
+      // No deletedAt filter on eventTicketWaves/events: payout-linked earnings
+      // must still appear if the event was later soft-deleted (admin/history).
+      .whereRef('sellerEarnings.payoutId', '=', 'payouts.id')
+      .where('sellerEarnings.deletedAt', 'is', null)
+      .where('listingTickets.deletedAt', 'is', null)
+      .where('listings.deletedAt', 'is', null)
+  );
+}
 
 export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
   withTransaction(trx: Kysely<DB>): PayoutsRepository {
@@ -13,17 +58,41 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
   async create(payoutData: {
     sellerUserId: string;
     payoutMethodId: string;
+    payoutProvider: PayoutProvider;
     status: 'pending';
     amount: number;
     currency: EventTicketCurrency;
     requestedAt: Date;
     metadata?: Json;
+    sourceCurrency?: EventTicketCurrency | null;
+    sourceAmount?: number | null;
+    idempotencyKeyHash?: string | null;
   }) {
     return await this.db
       .insertInto('payouts')
       .values(payoutData)
       .returningAll()
       .executeTakeFirstOrThrow();
+  }
+
+  /**
+   * Idempotent replay: same seller + idempotency key hash within the last N hours.
+   */
+  async findRecentBySellerAndIdempotencyKeyHash(
+    sellerUserId: string,
+    idempotencyKeyHash: string,
+    hoursWindow = 24,
+  ) {
+    const since = new Date(Date.now() - hoursWindow * 3_600_000);
+    return await this.db
+      .selectFrom('payouts')
+      .selectAll()
+      .where('sellerUserId', '=', sellerUserId)
+      .where('idempotencyKeyHash', '=', idempotencyKeyHash)
+      .where('requestedAt', '>=', since)
+      .where('deletedAt', 'is', null)
+      .orderBy('requestedAt', 'desc')
+      .executeTakeFirst();
   }
 
   async getById(id: string) {
@@ -71,6 +140,7 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         'payouts.id',
         'payouts.sellerUserId',
         'payouts.payoutMethodId',
+        'payouts.payoutProvider',
         'payouts.status',
         'payouts.amount',
         'payouts.currency',
@@ -84,21 +154,12 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         'payouts.transactionReference',
         'payouts.notes',
         'payouts.metadata',
+        'payouts.sourceCurrency',
+        'payouts.sourceAmount',
+        'payouts.idempotencyKeyHash',
         'payouts.createdAt',
         'payouts.updatedAt',
-        jsonArrayFrom(
-          eb
-            .selectFrom('sellerEarnings')
-            .select([
-              'sellerEarnings.id',
-              'sellerEarnings.listingTicketId',
-              'sellerEarnings.sellerAmount',
-              'sellerEarnings.currency',
-              'sellerEarnings.createdAt',
-            ])
-            .whereRef('sellerEarnings.payoutId', '=', 'payouts.id')
-            .where('sellerEarnings.deletedAt', 'is', null),
-        ).as('linkedEarnings'),
+        jsonArrayFrom(linkedEarningsForPayout(eb)).as('linkedEarnings'),
       ])
       .where('payouts.sellerUserId', '=', sellerUserId)
       .where('payouts.deletedAt', 'is', null);
@@ -140,6 +201,7 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         'payouts.id',
         'payouts.sellerUserId',
         'payouts.payoutMethodId',
+        'payouts.payoutProvider',
         'payouts.status',
         'payouts.amount',
         'payouts.currency',
@@ -153,21 +215,12 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         'payouts.transactionReference',
         'payouts.notes',
         'payouts.metadata',
+        'payouts.sourceCurrency',
+        'payouts.sourceAmount',
+        'payouts.idempotencyKeyHash',
         'payouts.createdAt',
         'payouts.updatedAt',
-        jsonArrayFrom(
-          eb
-            .selectFrom('sellerEarnings')
-            .select([
-              'sellerEarnings.id',
-              'sellerEarnings.listingTicketId',
-              'sellerEarnings.sellerAmount',
-              'sellerEarnings.currency',
-              'sellerEarnings.createdAt',
-            ])
-            .whereRef('sellerEarnings.payoutId', '=', 'payouts.id')
-            .where('sellerEarnings.deletedAt', 'is', null),
-        ).as('linkedEarnings'),
+        jsonArrayFrom(linkedEarningsForPayout(eb)).as('linkedEarnings'),
       ])
       .where('payouts.id', '=', id)
       .where('payouts.deletedAt', 'is', null)
@@ -186,13 +239,16 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
       transactionReference?: string;
       notes?: string;
       metadata?: Json;
+      amount?: number;
     },
   ) {
+    const {amount, ...rest} = updates ?? {};
     return await this.db
       .updateTable('payouts')
       .set({
         status,
-        ...updates,
+        ...rest,
+        ...(amount !== undefined ? {amount: String(amount)} : {}),
         updatedAt: new Date(),
       })
       .where('id', '=', id)
@@ -372,12 +428,64 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
       }
     }
 
+    const paymentIds = [...uniquePayments.keys()];
+    const linkedProcessorSettlementsMap = new Map<
+      string,
+      {
+        id: string;
+        externalSettlementId: string;
+        settlementDate: Date;
+        settlementStatus: string;
+        totalAmount: string;
+        settlementCurrency: string;
+        paymentProvider: string;
+      }
+    >();
+
+    if (paymentIds.length > 0) {
+      const batchRows = await this.db
+        .selectFrom('processorSettlementItems')
+        .innerJoin(
+          'processorSettlements',
+          'processorSettlementItems.settlementId',
+          'processorSettlements.id',
+        )
+        .select([
+          'processorSettlements.id as processorSettlementRowId',
+          'processorSettlements.settlementId as externalSettlementId',
+          'processorSettlements.settlementDate',
+          'processorSettlements.status as settlementStatus',
+          'processorSettlements.totalAmount',
+          'processorSettlements.currency as settlementCurrency',
+          'processorSettlements.paymentProvider',
+        ])
+        .where('processorSettlementItems.paymentId', 'in', paymentIds)
+        .execute();
+
+      for (const row of batchRows) {
+        if (!linkedProcessorSettlementsMap.has(row.processorSettlementRowId)) {
+          linkedProcessorSettlementsMap.set(row.processorSettlementRowId, {
+            id: row.processorSettlementRowId,
+            externalSettlementId: row.externalSettlementId,
+            settlementDate: row.settlementDate,
+            settlementStatus: row.settlementStatus,
+            totalAmount: String(row.totalAmount),
+            settlementCurrency: row.settlementCurrency,
+            paymentProvider: row.paymentProvider,
+          });
+        }
+      }
+    }
+
     return {
       settlements,
       hasExchangeRateData: settlements.some(
         s => s.averageExchangeRate !== null,
       ),
       providers: Array.from(allProviders),
+      linkedProcessorSettlements: Array.from(
+        linkedProcessorSettlementsMap.values(),
+      ),
     };
   }
 
@@ -421,6 +529,7 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         'payouts.id',
         'payouts.sellerUserId',
         'payouts.payoutMethodId',
+        'payouts.payoutProvider',
         'payouts.status',
         'payouts.amount',
         'payouts.currency',
@@ -434,6 +543,9 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
         'payouts.transactionReference',
         'payouts.notes',
         'payouts.metadata',
+        'payouts.sourceCurrency',
+        'payouts.sourceAmount',
+        'payouts.idempotencyKeyHash',
         'payouts.createdAt',
         'payouts.updatedAt',
         jsonObjectFrom(
@@ -458,19 +570,7 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
             ])
             .whereRef('payoutMethods.id', '=', 'payouts.payoutMethodId'),
         ).as('payoutMethod'),
-        jsonArrayFrom(
-          eb
-            .selectFrom('sellerEarnings')
-            .select([
-              'sellerEarnings.id',
-              'sellerEarnings.listingTicketId',
-              'sellerEarnings.sellerAmount',
-              'sellerEarnings.currency',
-              'sellerEarnings.createdAt',
-            ])
-            .whereRef('sellerEarnings.payoutId', '=', 'payouts.id')
-            .where('sellerEarnings.deletedAt', 'is', null),
-        ).as('linkedEarnings'),
+        jsonArrayFrom(linkedEarningsForPayout(eb)).as('linkedEarnings'),
       ])
       .where('payouts.deletedAt', 'is', null);
 
@@ -516,5 +616,103 @@ export class PayoutsRepository extends BaseRepository<PayoutsRepository> {
       hasNext,
       hasPrev,
     });
+  }
+
+  async getByIds(ids: string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+    return await this.db
+      .selectFrom('payouts')
+      .selectAll()
+      .where('id', 'in', ids)
+      .where('deletedAt', 'is', null)
+      .execute();
+  }
+
+  /** Payout rows with payout method type (settlement / audit views). */
+  async getByIdsWithPayoutType(ids: string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+    return await this.db
+      .selectFrom('payouts')
+      .innerJoin('payoutMethods', 'payoutMethods.id', 'payouts.payoutMethodId')
+      .select(eb => [
+        'payouts.id',
+        'payouts.sellerUserId',
+        'payouts.status',
+        'payouts.amount',
+        'payouts.currency',
+        'payouts.metadata',
+        'payoutMethods.payoutType',
+      ])
+      .where('payouts.id', 'in', ids)
+      .where('payouts.deletedAt', 'is', null)
+      .execute();
+  }
+
+  /** Aggregate stats for admin payouts dashboard (single round-trip). */
+  async getAdminPayoutsSummary() {
+    type SummaryRow = {
+      pendingCount: number;
+      pendingTotalUyu: string;
+      pendingTotalUsd: string;
+      processingCount: number;
+      failedCount: number;
+      completedThisMonthCount: number;
+      completedThisMonthTotalUyu: string;
+      completedThisMonthTotalUsd: string;
+    };
+
+    const row = await sql<SummaryRow>`
+      SELECT
+        COUNT(*) FILTER (WHERE status = 'pending')::int AS "pendingCount",
+        COALESCE(
+          SUM(CASE WHEN status = 'pending' AND currency = 'UYU' THEN amount::numeric ELSE 0 END),
+          0
+        )::text AS "pendingTotalUyu",
+        COALESCE(
+          SUM(CASE WHEN status = 'pending' AND currency = 'USD' THEN amount::numeric ELSE 0 END),
+          0
+        )::text AS "pendingTotalUsd",
+        COUNT(*) FILTER (WHERE status = 'processing')::int AS "processingCount",
+        COUNT(*) FILTER (WHERE status = 'failed')::int AS "failedCount",
+        COUNT(*) FILTER (
+          WHERE status = 'completed'
+            AND completed_at IS NOT NULL
+            AND completed_at >= date_trunc('month', NOW() AT TIME ZONE 'UTC')
+        )::int AS "completedThisMonthCount",
+        COALESCE(
+          SUM(
+            CASE
+              WHEN status = 'completed'
+                AND currency = 'UYU'
+                AND completed_at IS NOT NULL
+                AND completed_at >= date_trunc('month', NOW() AT TIME ZONE 'UTC')
+              THEN amount::numeric
+              ELSE 0
+            END
+          ),
+          0
+        )::text AS "completedThisMonthTotalUyu",
+        COALESCE(
+          SUM(
+            CASE
+              WHEN status = 'completed'
+                AND currency = 'USD'
+                AND completed_at IS NOT NULL
+                AND completed_at >= date_trunc('month', NOW() AT TIME ZONE 'UTC')
+              THEN amount::numeric
+              ELSE 0
+            END
+          ),
+          0
+        )::text AS "completedThisMonthTotalUsd"
+      FROM payouts
+      WHERE deleted_at IS NULL
+    `.execute(this.db);
+
+    return row.rows[0]!;
   }
 }

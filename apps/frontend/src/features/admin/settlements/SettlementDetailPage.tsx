@@ -77,7 +77,14 @@ export function SettlementDetailPage({settlementId}: SettlementDetailPageProps) 
     adminSettlementBreakdownQueryOptions(settlementId),
   );
 
-  const {settlement, reconciliation, items} = data;
+  const {
+    settlement,
+    reconciliation,
+    items,
+    fundedPayouts,
+    moneyFlowSummary,
+    payoutReconciliation,
+  } = data;
 
   const settlementMetadata = settlement.metadata;
   const parsedSettlementMetadata =
@@ -416,6 +423,127 @@ export function SettlementDetailPage({settlementId}: SettlementDetailPageProps) 
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Flujo de fondos (vendedores)</CardTitle>
+          <CardDescription>
+            Conciliación entre ganancias en esta liquidación y retiros
+            vinculados.
+            {payoutReconciliation.status === 'balanced' ? (
+              <span className='ml-2 inline-flex items-center gap-1 text-green-700 dark:text-green-400'>
+                ✓ Cuadre OK
+              </span>
+            ) : (
+              <span className='ml-2 inline-flex items-center gap-1 text-amber-800 dark:text-amber-300'>
+                ⚠ Revisar diferencia
+              </span>
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='grid gap-2 sm:grid-cols-2 text-sm'>
+          <div className='flex justify-between gap-4 border-b pb-2'>
+            <span className='text-muted-foreground'>
+              Ganancias aún disponibles (est.)
+            </span>
+            <span className='font-medium tabular-nums'>
+              {formatCurrency(
+                moneyFlowSummary.availableSellerUyuInSettlement,
+                settlement.currency,
+              )}
+            </span>
+          </div>
+          <div className='flex justify-between gap-4 border-b pb-2'>
+            <span className='text-muted-foreground'>
+              Atribuido a retiros (UYU est.)
+            </span>
+            <span className='font-medium tabular-nums'>
+              {formatCurrency(
+                moneyFlowSummary.attributedToPayoutsUyu,
+                settlement.currency,
+              )}
+            </span>
+          </div>
+          <div className='flex justify-between gap-4 border-b pb-2'>
+            <span className='text-muted-foreground'>
+              Transferencias banco (UYU)
+            </span>
+            <span className='font-medium tabular-nums'>
+              {formatCurrency(
+                moneyFlowSummary.bankTransferUyuOut,
+                settlement.currency,
+              )}
+            </span>
+          </div>
+          <div className='flex justify-between gap-4'>
+            <span className='text-muted-foreground'>
+              Diferencia cobertura ganancias
+            </span>
+            <span className='font-medium tabular-nums'>
+              {formatCurrency(
+                moneyFlowSummary.earningsCoverageDifference,
+                settlement.currency,
+              )}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {fundedPayouts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Retiros financiados</CardTitle>
+            <CardDescription>
+              Retiros que incluyen ganancias de pagos de esta liquidación.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className='rounded-md border'>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Retiro</TableHead>
+                    <TableHead>Método</TableHead>
+                    <TableHead>Monto</TableHead>
+                    <TableHead>UYU en batch</TableHead>
+                    <TableHead>Estado</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fundedPayouts.map(row => (
+                    <TableRow key={row.payoutId}>
+                      <TableCell>
+                        <Link
+                          to='/admin/retiros/$payoutId'
+                          params={{payoutId: row.payoutId}}
+                          className='font-mono text-xs text-primary hover:underline'
+                        >
+                          {row.payoutId.slice(0, 8)}…
+                        </Link>
+                      </TableCell>
+                      <TableCell className='capitalize text-sm'>
+                        {row.payoutType}
+                      </TableCell>
+                      <TableCell className='tabular-nums'>
+                        {formatCurrency(row.amount, row.currency)}
+                      </TableCell>
+                      <TableCell className='tabular-nums text-muted-foreground'>
+                        {formatCurrency(
+                          row.uyuBackedInThisSettlement,
+                          settlement.currency,
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant='outline'>{row.status}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

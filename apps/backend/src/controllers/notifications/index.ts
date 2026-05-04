@@ -30,7 +30,7 @@ import {
   PushSubscriptionsRepository,
 } from '~/repositories';
 import {getWebPushProvider} from '~/services/notifications/providers/WebPushProviderFactory';
-import {NODE_ENV} from '~/config/env';
+import {NODE_ENV, APP_BASE_URL} from '~/config/env';
 import {ValidateBody, Body} from '~/decorators';
 import {
   SubscribePushRouteSchema,
@@ -53,6 +53,7 @@ type DeleteNotificationResponse = TypedNotification | null;
 type SubscribePushResponse = {success: boolean};
 type UnsubscribePushResponse = {success: boolean};
 type TestPushDevResponse = {sent: number; failed: number};
+type TestInAppDevResponse = {notificationId: string};
 
 @Route('notifications')
 @Middlewares(requireAuthMiddleware)
@@ -204,5 +205,45 @@ export class NotificationsController {
       r => r.status === 'fulfilled' && r.value.success,
     ).length;
     return {sent, failed: subs.length - sent};
+  }
+
+  /**
+   * DEV ONLY — Create a test in-app notification for the current user.
+   * Goes through the full notification pipeline so it's picked up by polling.
+   */
+  @Post('/test-in-app')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  public async testInApp(
+    @Request() request: express.Request,
+  ): Promise<TestInAppDevResponse> {
+    if (NODE_ENV === 'production') {
+      throw new UnauthorizedError('Not available in production');
+    }
+
+    const notification = await this.service.createNotification({
+      userId: request.user.id,
+      type: 'ticket_sold_seller',
+      channels: ['in_app'],
+      metadata: {
+        type: 'ticket_sold_seller',
+        listingId: '00000000-0000-0000-0000-000000000000',
+        eventName: 'Evento de prueba',
+        eventStartDate: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+        ticketCount: 2,
+        platform: 'test',
+        shouldPromptUpload: true,
+      },
+      actions: [
+        {
+          type: 'upload_documents',
+          label: 'Subir documentos',
+          url: `${APP_BASE_URL}/cuenta`,
+        },
+      ],
+    });
+
+    return {notificationId: notification.id};
   }
 }

@@ -14,6 +14,8 @@ import {
   TicketSelectionFormValues,
   FORM_DATA_STORAGE_KEY,
   TicketWave,
+  getLockedCurrencyFromSelection,
+  trimSelectionToSingleCurrency,
 } from './types';
 import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 
@@ -43,7 +45,7 @@ export function useTicketSelection({
     onDataRestored: restoredData => {
       // Validate restored data against current ticket waves
       // Remove selections for ticket waves or price groups that no longer exist
-      const validatedData: TicketSelectionFormValues = {};
+      let validatedData: TicketSelectionFormValues = {};
       let hasInvalidSelections = false;
 
       for (const [ticketWaveId, priceGroups] of Object.entries(restoredData)) {
@@ -59,9 +61,8 @@ export function useTicketSelection({
         for (const [price, quantity] of Object.entries(
           priceGroups as Record<string, number>,
         )) {
-          // Check if this price still exists in the ticket wave's price groups
           const priceGroupExists = ticketWave.priceGroups.some(
-            pg => pg.price === price && Number(pg.availableTickets) > 0,
+            pg => String(pg.price) === price && Number(pg.availableTickets) > 0,
           );
           if (priceGroupExists && quantity > 0) {
             validPriceGroups[price] = quantity;
@@ -75,9 +76,17 @@ export function useTicketSelection({
         }
       }
 
-      // If there were invalid selections, reset the form with only valid data
-      if (hasInvalidSelections) {
+      const trimmed = trimSelectionToSingleCurrency(validatedData, ticketWaves);
+      if (trimmed.wasTrimmed) {
+        validatedData = trimmed.data;
+      }
+
+      const shouldResetForm = hasInvalidSelections || trimmed.wasTrimmed;
+      if (shouldResetForm) {
         form.reset(validatedData);
+      }
+
+      if (hasInvalidSelections) {
         if (Object.keys(validatedData).length > 0) {
           toast.info('Algunas selecciones ya no están disponibles', {
             description: 'Hemos mantenido las que siguen disponibles.',
@@ -89,6 +98,12 @@ export function useTicketSelection({
             duration: 4000,
           });
         }
+      } else if (trimmed.wasTrimmed && Object.keys(validatedData).length > 0) {
+        toast.info('Ajustamos tu selección', {
+          description:
+            'En una misma compra solo podés elegir entradas en una moneda. Dejamos las que coinciden.',
+          duration: 5000,
+        });
       } else if (Object.keys(validatedData).length > 0) {
         toast.info('Tus selecciones han sido restauradas', {
           description: 'Continúa con tu compra.',
@@ -155,6 +170,25 @@ export function useTicketSelection({
       return;
     }
 
+    if (delta > 0) {
+      const wave = ticketWaves.find(w => w.id === ticketWaveId);
+      if (wave) {
+        const otherCurrency = ticketWaves
+          .filter(tw => tw.id !== ticketWaveId)
+          .find(tw => {
+            const g = ticketSelection[tw.id];
+            return g && Object.values(g).some(q => q > 0);
+          })?.currency;
+        if (otherCurrency !== undefined && otherCurrency !== wave.currency) {
+          toast.warning('No podés combinar monedas en la misma compra', {
+            description: `Ya seleccionaste entradas en ${otherCurrency}. Quitá esas cantidades para poder agregar entradas en ${wave.currency}.`,
+            duration: 5000,
+          });
+          return;
+        }
+      }
+    }
+
     // Set the whole wave object: price keys can contain '.' or ',' (e.g. 379.50),
     // so we must not use setValue(ticketWaveId + '.' + priceGroupPrice) as RHF
     // treats dots as path separators and would corrupt the form state.
@@ -189,9 +223,20 @@ export function useTicketSelection({
       currency,
     });
 
+    const cleanedSelections: TicketSelectionFormValues = {};
+    for (const [waveId, priceGroups] of Object.entries(data)) {
+      const nonZero: Record<string, number> = {};
+      for (const [price, qty] of Object.entries(priceGroups)) {
+        if (qty > 0) nonZero[price] = qty;
+      }
+      if (Object.keys(nonZero).length > 0) {
+        cleanedSelections[waveId] = nonZero;
+      }
+    }
+
     createOrderMutation.mutate({
       eventId: eventId,
-      ticketSelections: data,
+      ticketSelections: cleanedSelections,
     });
   };
 
@@ -222,10 +267,16 @@ export function useTicketSelection({
     return {subtotalAmount, currency};
   };
 
+  const lockedCurrency = getLockedCurrencyFromSelection(
+    ticketSelection,
+    ticketWaves,
+  );
+
   return {
     form,
     ticketSelection,
     totalSelectedTickets,
+    lockedCurrency,
     updateTicketCount,
     onSubmit,
     calculateTotals,

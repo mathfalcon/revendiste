@@ -278,8 +278,11 @@ export const UserProfile = () => {
       }}
     >
       <SheetTrigger asChild>{avatarButton}</SheetTrigger>
-      <SheetContent side='right' className='w-[85vw] sm:max-w-sm'>
-        <SheetHeader className='text-left'>
+      <SheetContent
+        side='right'
+        className='flex h-full max-h-dvh w-[85vw] flex-col overflow-hidden sm:max-w-sm'
+      >
+        <SheetHeader className='shrink-0 text-left'>
           <div className='flex items-center gap-3'>
             <Avatar className='h-12 w-12'>
               <AvatarImage src={avatarUrl} alt={user?.fullName || ''} />
@@ -294,7 +297,8 @@ export const UserProfile = () => {
           </div>
         </SheetHeader>
 
-        <nav className='mt-6 flex flex-col gap-1'>
+        <div className='min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]'>
+          <nav className='mt-6 flex flex-col gap-1 pb-2'>
           {MENU_ITEMS.map(item => (
             <Link
               key={item.to}
@@ -420,6 +424,7 @@ export const UserProfile = () => {
             Cerrar sesión
           </button>
         </nav>
+        </div>
       </SheetContent>
     </Sheet>
   );

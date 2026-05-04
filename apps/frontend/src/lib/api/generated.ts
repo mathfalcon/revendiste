@@ -13,7 +13,6 @@
 export enum PaymentProvider {
   Dlocal = "dlocal",
   Mercadopago = "mercadopago",
-  Paypal = "paypal",
   Stripe = "stripe",
 }
 
@@ -49,6 +48,7 @@ export enum NotificationType {
   PayoutCompleted = "payout_completed",
   PayoutFailed = "payout_failed",
   PayoutProcessing = "payout_processing",
+  SellerEarningsAvailable = "seller_earnings_available",
   SellerEarningsRetained = "seller_earnings_retained",
   TicketReportActionAdded = "ticket_report_action_added",
   TicketReportClosed = "ticket_report_closed",
@@ -128,6 +128,7 @@ export enum PayoutEventType {
   AdminProcessed = "admin_processed",
   Cancelled = "cancelled",
   PayoutRequested = "payout_requested",
+  ProviderResponse = "provider_response",
   StatusChange = "status_change",
   TransferCompleted = "transfer_completed",
   TransferFailed = "transfer_failed",
@@ -135,7 +136,7 @@ export enum PayoutEventType {
 }
 
 export enum PayoutType {
-  Paypal = "paypal",
+  ArgentinianBank = "argentinian_bank",
   UruguayanBank = "uruguayan_bank",
 }
 
@@ -146,6 +147,7 @@ export enum UploadAvailabilityReason {
 }
 
 export enum EventTicketCurrency {
+  ARS = "ARS",
   USD = "USD",
   UYU = "UYU",
 }
@@ -525,6 +527,57 @@ export interface PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBo
 export type GetUserListingsResponse =
   PaginatedResponseTickets58HasDocumentBooleanCanUploadDocumentBooleanUploadUnavailableReasonUploadAvailabilityReasonOrUndefinedUploadAvailableAtStringOrUndefinedCreatedAtStringDeletedAtStringOrNullIdStringUpdatedAtStringSoldAtStringOrNullPriceStringTicketNumberNumberDocument58IdStringStatusStringUploadedAtStringOrNullArrayCreatedAtDateIdStringUpdatedAtDateSoldAtDateOrNullTicketWave58IdStringNameStringCurrencyEventTicketCurrencyFaceValueStringEvent58DescriptionStringOrNullEventEndDateStringEventStartDateStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringVenueNameStringOrNullVenueAddressStringOrNullEventImages58UrlStringImageTypeEventImageTypeArray;
 
+export interface GetMyListingByIdResponse {
+  event: {
+    eventImages: {
+      imageType: EventImageType;
+      url: string;
+    }[];
+    venueAddress: string | null;
+    venueName: string | null;
+    slug: string;
+    qrAvailabilityTiming: QrAvailabilityTiming | null;
+    platform: string;
+    name: string;
+    id: string;
+    eventStartDate: string;
+    eventEndDate: string;
+    description: string | null;
+  };
+  ticketWave: {
+    faceValue: string;
+    currency: EventTicketCurrency;
+    name: string;
+    id: string;
+  };
+  /** @format date-time */
+  soldAt: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  id: string;
+  /** @format date-time */
+  createdAt: string;
+  tickets: {
+    document: {
+      uploadedAt: string;
+      status: string;
+      id: string;
+    } | null;
+    /** @format double */
+    ticketNumber: number;
+    price: string;
+    soldAt: string | null;
+    updatedAt: string;
+    id: string;
+    deletedAt: string | null;
+    createdAt: string;
+    uploadAvailableAt?: string;
+    uploadUnavailableReason?: UploadAvailabilityReason;
+    canUploadDocument: boolean;
+    hasDocument: boolean;
+  }[];
+}
+
 export interface UploadDocumentResponse {
   documentUrl: string;
   document?: {
@@ -861,9 +914,16 @@ export interface GetPayoutHistoryResponse {
   pagination: PaginationMeta;
   data: {
     linkedEarnings: {
+      venueName: string | null;
+      ticketWaveName: string;
+      eventEndDate: string;
+      eventStartDate: string;
+      eventSlug: string;
+      eventName: string;
       createdAt: string;
       currency: EventTicketCurrency;
       sellerAmount: string;
+      listingId: string;
       listingTicketId: string;
       id: string;
     }[];
@@ -890,34 +950,68 @@ export type JsonObject = Record<string, JsonValue>;
 
 export type JsonPrimitive = boolean | number | string | null;
 
-export interface RequestPayoutResponse {
-  transactionReference: string | null;
-  /** @format date-time */
-  requestedAt: string;
-  processingFee: string | null;
-  processedBy: string | null;
-  /** @format date-time */
-  processedAt: string | null;
-  payoutMethodId: string;
-  notes: string | null;
-  failureReason: string | null;
-  /** @format date-time */
-  failedAt: string | null;
-  /** @format date-time */
-  completedAt: string | null;
-  sellerUserId: string;
-  currency: EventTicketCurrency;
-  amount: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
-  id: string;
-  /** @format date-time */
-  deletedAt: string | null;
+/** Construct a type with the properties of T except for those in type K. */
+export interface OmitAwaitedReturnTypePayoutsServiceAtRequestPayoutFxSnapshot {
   /** @format date-time */
   createdAt: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  id: string;
+  metadata: string | number | boolean | JsonArray | JsonObject | null;
+  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+  /** @format date-time */
+  updatedAt: string;
+  currency: EventTicketCurrency;
+  sellerUserId: string;
+  /** @format date-time */
+  completedAt: string | null;
+  amount: string;
+  /** @format date-time */
+  failedAt: string | null;
+  failureReason: string | null;
+  idempotencyKeyHash: string | null;
+  notes: string | null;
+  payoutMethodId: string;
+  payoutProvider: "dlocal_go" | "manual_bank";
+  /** @format date-time */
+  processedAt: string | null;
+  processedBy: string | null;
+  processingFee: string | null;
+  /** @format date-time */
+  requestedAt: string;
+  sourceAmount: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  transactionReference: string | null;
 }
+
+export interface InferTypeofFxSnapshotSchema {
+  quoteExpiresAt?: string;
+  quoteId?: string;
+  /** @format double */
+  spreadPercent?: number;
+  /** @format double */
+  providerRate?: number;
+  referenceRate?: {
+    fetchedAt: string;
+    source: "brou_venta" | "dlocal_quote_reference" | "manual";
+    /** @format double */
+    value: number;
+  } | null;
+  executor: "dlocal_go" | "admin_manual";
+  /** @format double */
+  destinationAmount: number;
+  destinationCurrency: "ARS" | "USD" | "UYU";
+  /** @format double */
+  sourceAmount: number;
+  sourceCurrency: "ARS" | "USD" | "UYU";
+}
+
+export type FxSnapshot = InferTypeofFxSnapshotSchema;
+
+export type RequestPayoutResponse =
+  OmitAwaitedReturnTypePayoutsServiceAtRequestPayoutFxSnapshot & {
+    fxSnapshot: FxSnapshot | null;
+  };
 
 export interface RequestPayoutRouteBody {
   listingIds?: string[];
@@ -964,23 +1058,7 @@ export type AddPayoutMethodRouteBody = (
       metadata:
         | {
             accountNumber: string;
-            bankName: "Itau";
-          }
-        | {
-            accountNumber: string;
-            bankName: "OCA Blue";
-          }
-        | {
-            accountNumber: string;
-            bankName: "PREX";
-          }
-        | {
-            accountNumber: string;
             bankName: "Banco Nacion Arg";
-          }
-        | {
-            accountNumber: string;
-            bankName: "Bandes";
           }
         | {
             accountNumber: string;
@@ -1000,22 +1078,6 @@ export type AddPayoutMethodRouteBody = (
           }
         | {
             accountNumber: string;
-            bankName: "Dinero Electronico ANDA";
-          }
-        | {
-            accountNumber: string;
-            bankName: "FUCAC";
-          }
-        | {
-            accountNumber: string;
-            bankName: "FUCEREP";
-          }
-        | {
-            accountNumber: string;
-            bankName: "GRIN";
-          }
-        | {
-            accountNumber: string;
             bankName: "Heritage";
           }
         | {
@@ -1024,11 +1086,19 @@ export type AddPayoutMethodRouteBody = (
           }
         | {
             accountNumber: string;
-            bankName: "Mercadopago";
+            bankName: "Itau";
           }
         | {
             accountNumber: string;
             bankName: "Midinero";
+          }
+        | {
+            accountNumber: string;
+            bankName: "OCA Blue";
+          }
+        | {
+            accountNumber: string;
+            bankName: "PREX";
           }
         | {
             accountNumber: string;
@@ -1041,14 +1111,30 @@ export type AddPayoutMethodRouteBody = (
       payoutType: "uruguayan_bank";
     }
   | {
-      metadata: {
-        email: string;
-      };
-      payoutType: "paypal";
+      metadata:
+        | {
+            document: {
+              id: string;
+              type: "CUIT" | "CUIL" | "DNI";
+            };
+            accountNumber: string;
+            bankCode: string;
+            routing: "cbu_cvu";
+          }
+        | {
+            document: {
+              id: string;
+              type: "CUIT" | "CUIL" | "DNI";
+            };
+            alias: string;
+            bankCode: "000";
+            routing: "alias";
+          };
+      payoutType: "argentinian_bank";
     }
 ) & {
   isDefault?: boolean;
-  currency: "USD" | "UYU";
+  currency: "ARS" | "USD" | "UYU";
   accountHolderSurname: string;
   accountHolderName: string;
 };
@@ -1073,36 +1159,47 @@ export interface UpdatePayoutMethodResponse {
 export interface UpdatePayoutMethodRouteBody {
   isDefault?: boolean;
   metadata?: any;
-  currency?: "USD" | "UYU";
+  currency?: "ARS" | "USD" | "UYU";
   accountHolderSurname?: string;
   accountHolderName?: string;
 }
 
 export interface GetUserPayoutDetailsResponse {
   linkedEarnings: {
+    venueName: string | null;
+    ticketWaveName: string;
+    eventEndDate: string;
+    eventStartDate: string;
+    eventSlug: string;
+    eventName: string;
     sellerAmount: string;
     listingTicketId: string;
     currency: EventTicketCurrency;
     id: string;
     createdAt: string;
+    listingId: string;
   }[];
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
-  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1124,11 +1221,11 @@ export interface GetUserPayoutDetailsResponse {
     storagePath: string;
     /** @format double */
     sizeBytes: number;
+    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
     documentType: string;
-    payoutId: string;
     /** @format date-time */
     updatedAt: string;
     id: string;
@@ -1140,33 +1237,79 @@ export interface GetUserPayoutDetailsResponse {
   }[];
   events: {
     createdBy: string | null;
+    payoutId: string;
     userAgent: string | null;
     toStatus: PayoutStatus | null;
     ipAddress: string | null;
     fromStatus: PayoutStatus | null;
     eventType: PayoutEventType;
     eventData: string | number | boolean | JsonArray | JsonObject | null;
-    payoutId: string;
     id: string;
     /** @format date-time */
     createdAt: string;
   }[];
+  fxSnapshot: {
+    quoteExpiresAt?: string;
+    quoteId?: string;
+    /** @format double */
+    spreadPercent?: number;
+    /** @format double */
+    providerRate?: number;
+    referenceRate?: {
+      fetchedAt: string;
+      source: "brou_venta" | "dlocal_quote_reference" | "manual";
+      /** @format double */
+      value: number;
+    } | null;
+    executor: "dlocal_go" | "admin_manual";
+    /** @format double */
+    destinationAmount: number;
+    destinationCurrency: "ARS" | "USD" | "UYU";
+    /** @format double */
+    sourceAmount: number;
+    sourceCurrency: "ARS" | "USD" | "UYU";
+  };
   metadata: {
-    voucherUrl?: string;
-    currencyConversion?: {
-      convertedAt: string;
+    fxExecution?: {
+      rateWasExpired?: boolean;
+      externalId?: string;
       /** @format double */
-      exchangeRate: number;
-      originalCurrency: string;
+      providerFees?: number;
       /** @format double */
-      originalAmount: number;
+      actualSourceAmount?: number;
+      /** @format double */
+      actualRate?: number;
+      processedAt: string;
+    };
+    fxSnapshot?: {
+      quoteExpiresAt?: string;
+      quoteId?: string;
+      /** @format double */
+      spreadPercent?: number;
+      /** @format double */
+      providerRate?: number;
+      referenceRate?: {
+        fetchedAt: string;
+        source: "brou_venta" | "dlocal_quote_reference" | "manual";
+        /** @format double */
+        value: number;
+      } | null;
+      executor: "dlocal_go" | "admin_manual";
+      /** @format double */
+      destinationAmount: number;
+      destinationCurrency: "ARS" | "USD" | "UYU";
+      /** @format double */
+      sourceAmount: number;
+      sourceCurrency: "ARS" | "USD" | "UYU";
     };
     listingIds: string[];
     listingTicketIds: string[];
-  } | null;
+    [key: string]: any;
+  };
 }
 
-export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateAmountStringCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull {
+export interface GetPayoutsResponse {
+  pagination: PaginationMeta;
   data: {
     payoutMethod: {
       payoutType: PayoutType;
@@ -1181,29 +1324,40 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
       id: string;
     };
     linkedEarnings: {
+      venueName: string | null;
+      ticketWaveName: string;
+      eventEndDate: string;
+      eventStartDate: string;
+      eventSlug: string;
+      eventName: string;
       sellerAmount: string;
       listingTicketId: string;
       currency: EventTicketCurrency;
       id: string;
       createdAt: string;
+      listingId: string;
     }[];
     transactionReference: string | null;
+    sourceCurrency: EventTicketCurrency | null;
+    sourceAmount: string | null;
     /** @format date-time */
     requestedAt: string;
     processingFee: string | null;
     processedBy: string | null;
     /** @format date-time */
     processedAt: string | null;
+    payoutProvider: "dlocal_go" | "manual_bank";
     payoutMethodId: string;
     notes: string | null;
+    idempotencyKeyHash: string | null;
     failureReason: string | null;
     /** @format date-time */
     failedAt: string | null;
+    amount: string;
     /** @format date-time */
     completedAt: string | null;
     sellerUserId: string;
     currency: EventTicketCurrency;
-    amount: string;
     /** @format date-time */
     updatedAt: string;
     status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1212,14 +1366,24 @@ export interface PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrB
     /** @format date-time */
     createdAt: string;
   }[];
-  pagination: PaginationMeta;
+  summary: {
+    completedThisMonthTotalUsd: string;
+    completedThisMonthTotalUyu: string;
+    /** @format double */
+    completedThisMonthCount: number;
+    /** @format double */
+    failedCount: number;
+    /** @format double */
+    processingCount: number;
+    pendingTotalUsd: string;
+    pendingTotalUyu: string;
+    /** @format double */
+    pendingCount: number;
+  };
 }
 
-export type GetPayoutsResponse =
-  PaginatedResponseCreatedAtDateIdStringMetadataStringOrNumberOrBooleanOrJsonArrayOrJsonObjectOrNullStatusCancelledOrPendingOrCompletedOrFailedOrProcessingUpdatedAtDateAmountStringCurrencyEventTicketCurrencySellerUserIdStringCompletedAtDateOrNullFailedAtDateOrNullFailureReasonStringOrNullNotesStringOrNullPayoutMethodIdStringProcessedAtDateOrNullProcessedByStringOrNullProcessingFeeStringOrNullRequestedAtDateTransactionReferenceStringOrNullLinkedEarnings58CreatedAtStringIdStringCurrencyEventTicketCurrencyListingTicketIdStringSellerAmountStringArraySeller58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullOrNullPayoutMethod58IdStringAccountHolderNameStringAccountHolderSurnameStringPayoutTypePayoutTypeOrNull;
-
 export interface InferTypeofAdminPayoutsQuerySchema {
-  status?: "cancelled" | "pending" | "completed" | "failed";
+  status?: "cancelled" | "pending" | "completed" | "failed" | "processing";
   sortOrder?: "asc" | "desc";
   sortBy?: string;
   /** @format double */
@@ -1232,29 +1396,40 @@ export type AdminPayoutsQuery = InferTypeofAdminPayoutsQuerySchema;
 
 export interface GetPayoutDetailsResponse {
   linkedEarnings: {
+    venueName: string | null;
+    ticketWaveName: string;
+    eventEndDate: string;
+    eventStartDate: string;
+    eventSlug: string;
+    eventName: string;
     sellerAmount: string;
     listingTicketId: string;
     currency: EventTicketCurrency;
     id: string;
     createdAt: string;
+    listingId: string;
   }[];
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
-  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1269,7 +1444,68 @@ export interface GetPayoutDetailsResponse {
     payoutType: PayoutType;
     id: string;
   };
+  seller: {
+    email: string;
+    lastName: string | null;
+    firstName: string | null;
+    id: string;
+  };
+  fxDecisionSupport: {
+    /** @format double */
+    dLocalAverageExchangeRate: number | null;
+    /** @format double */
+    uyuCostAtSnapshotRate: number | null;
+    /** @format double */
+    quoteMsRemaining: number | null;
+    quoteExpired: boolean;
+    fxExecution: {
+      rateWasExpired?: boolean;
+      externalId?: string;
+      /** @format double */
+      providerFees?: number;
+      /** @format double */
+      actualSourceAmount?: number;
+      /** @format double */
+      actualRate?: number;
+      processedAt: string;
+    } | null;
+    fxSnapshot: {
+      quoteExpiresAt?: string;
+      quoteId?: string;
+      /** @format double */
+      spreadPercent?: number;
+      /** @format double */
+      providerRate?: number;
+      referenceRate?: {
+        fetchedAt: string;
+        source: "brou_venta" | "dlocal_quote_reference" | "manual";
+        /** @format double */
+        value: number;
+      } | null;
+      executor: "dlocal_go" | "admin_manual";
+      /** @format double */
+      destinationAmount: number;
+      destinationCurrency: "ARS" | "USD" | "UYU";
+      /** @format double */
+      sourceAmount: number;
+      sourceCurrency: "ARS" | "USD" | "UYU";
+    };
+    /** @format double */
+    spreadPercentConfigured: number;
+    /** @format double */
+    currentBrouVentaRate: number | null;
+  };
   settlementInfo: {
+    linkedProcessorSettlements: {
+      paymentProvider: string;
+      settlementCurrency: string;
+      totalAmount: string;
+      settlementStatus: string;
+      /** @format date-time */
+      settlementDate: string;
+      externalSettlementId: string;
+      id: string;
+    }[];
     providers: string[];
     hasExchangeRateData: boolean;
     settlements: {
@@ -1297,11 +1533,11 @@ export interface GetPayoutDetailsResponse {
     storagePath: string;
     /** @format double */
     sizeBytes: number;
+    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
     documentType: string;
-    payoutId: string;
     /** @format date-time */
     updatedAt: string;
     id: string;
@@ -1312,38 +1548,66 @@ export interface GetPayoutDetailsResponse {
     url: string;
   }[];
   metadata: {
-    voucherUrl?: string;
-    currencyConversion?: {
-      convertedAt: string;
+    fxExecution?: {
+      rateWasExpired?: boolean;
+      externalId?: string;
       /** @format double */
-      exchangeRate: number;
-      originalCurrency: string;
+      providerFees?: number;
       /** @format double */
-      originalAmount: number;
+      actualSourceAmount?: number;
+      /** @format double */
+      actualRate?: number;
+      processedAt: string;
+    };
+    fxSnapshot?: {
+      quoteExpiresAt?: string;
+      quoteId?: string;
+      /** @format double */
+      spreadPercent?: number;
+      /** @format double */
+      providerRate?: number;
+      referenceRate?: {
+        fetchedAt: string;
+        source: "brou_venta" | "dlocal_quote_reference" | "manual";
+        /** @format double */
+        value: number;
+      } | null;
+      executor: "dlocal_go" | "admin_manual";
+      /** @format double */
+      destinationAmount: number;
+      destinationCurrency: "ARS" | "USD" | "UYU";
+      /** @format double */
+      sourceAmount: number;
+      sourceCurrency: "ARS" | "USD" | "UYU";
     };
     listingIds: string[];
     listingTicketIds: string[];
-  } | null;
+    [key: string]: any;
+  };
 }
 
 export interface ProcessPayoutResponse {
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
-  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1356,65 +1620,38 @@ export interface ProcessPayoutResponse {
 }
 
 export interface ProcessPayoutRouteBody {
-  voucherUrl?: string;
+  /** @format double */
+  actualUyuCost?: number;
+  /** @format double */
+  actualBankRate?: number;
   notes?: string;
   transactionReference?: string;
   /** @format double */
   processingFee?: number;
 }
 
-export interface CompletePayoutResponse {
-  transactionReference: string | null;
-  /** @format date-time */
-  requestedAt: string;
-  processingFee: string | null;
-  processedBy: string | null;
-  /** @format date-time */
-  processedAt: string | null;
-  payoutMethodId: string;
-  notes: string | null;
-  failureReason: string | null;
-  /** @format date-time */
-  failedAt: string | null;
-  /** @format date-time */
-  completedAt: string | null;
-  sellerUserId: string;
-  currency: EventTicketCurrency;
-  amount: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
-  id: string;
-  /** @format date-time */
-  deletedAt: string | null;
-  /** @format date-time */
-  createdAt: string;
-}
-
-export interface CompletePayoutRouteBody {
-  voucherUrl?: string;
-  transactionReference?: string;
-}
-
 export interface FailPayoutResponse {
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
-  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1430,62 +1667,28 @@ export interface FailPayoutRouteBody {
   failureReason: string;
 }
 
-export interface UpdatePayoutResponse {
-  transactionReference: string | null;
-  /** @format date-time */
-  requestedAt: string;
-  processingFee: string | null;
-  processedBy: string | null;
-  /** @format date-time */
-  processedAt: string | null;
-  payoutMethodId: string;
-  notes: string | null;
-  failureReason: string | null;
-  /** @format date-time */
-  failedAt: string | null;
-  /** @format date-time */
-  completedAt: string | null;
-  sellerUserId: string;
-  currency: EventTicketCurrency;
-  amount: string;
-  /** @format date-time */
-  updatedAt: string;
-  status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-  metadata: string | number | boolean | JsonArray | JsonObject | null;
-  id: string;
-  /** @format date-time */
-  deletedAt: string | null;
-  /** @format date-time */
-  createdAt: string;
-}
-
-export interface UpdatePayoutRouteBody {
-  transactionReference?: string;
-  voucherUrl?: string;
-  notes?: string;
-  /** @format double */
-  processingFee?: number;
-  status?: "cancelled" | "pending" | "completed" | "failed";
-}
-
 export interface CancelPayoutResponse {
   transactionReference: string | null;
+  sourceCurrency: EventTicketCurrency | null;
+  sourceAmount: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
   processedBy: string | null;
   /** @format date-time */
   processedAt: string | null;
+  payoutProvider: "dlocal_go" | "manual_bank";
   payoutMethodId: string;
   notes: string | null;
+  idempotencyKeyHash: string | null;
   failureReason: string | null;
   /** @format date-time */
   failedAt: string | null;
+  amount: string;
   /** @format date-time */
   completedAt: string | null;
   sellerUserId: string;
   currency: EventTicketCurrency;
-  amount: string;
   /** @format date-time */
   updatedAt: string;
   status: "cancelled" | "pending" | "completed" | "failed" | "processing";
@@ -1511,11 +1714,11 @@ export interface UploadPayoutDocumentResponse {
     storagePath: string;
     /** @format double */
     sizeBytes: number;
+    payoutId: string;
     originalName: string;
     mimeType: string;
     fileName: string;
     documentType: string;
-    payoutId: string;
     /** @format date-time */
     updatedAt: string;
     id: string;
@@ -1527,11 +1730,6 @@ export interface UploadPayoutDocumentResponse {
 }
 
 export interface DeletePayoutDocumentResponse {
-  success: boolean;
-}
-
-export interface TriggerHoldCheckResponse {
-  message: string;
   success: boolean;
 }
 
@@ -1684,80 +1882,54 @@ export interface GetVerificationAuditHistoryResponse {
   }[];
 }
 
-/**
- * Explicit response types for the Admin Events controller
- * These are needed because Kysely's inferred types are too complex for TSOA
- */
-export interface AdminEventImage {
-  id: string;
-  url: string;
-  imageType: string;
-  /** @format double */
-  displayOrder: number;
-  createdAt?: string;
+export interface PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray {
+  data: {
+    ticketWaves: {
+      isSoldOut: boolean;
+      isAvailable: boolean;
+      faceValue: string;
+      currency: EventTicketCurrency;
+      status: string;
+      name: string;
+      id: string;
+      externalId: string;
+      description: string | null;
+    }[];
+    images: {
+      imageType: EventImageType;
+      /** @format double */
+      displayOrder: number;
+      id: string;
+      url: string;
+    }[];
+    venueCity: string | null;
+    venueAddress: string | null;
+    venueName: string | null;
+    /** @format date-time */
+    updatedAt: string;
+    status: string;
+    slug: string;
+    qrAvailabilityTiming: QrAvailabilityTiming | null;
+    platform: string;
+    name: string;
+    id: string;
+    externalUrl: string;
+    externalId: string;
+    /** @format date-time */
+    eventStartDate: string;
+    /** @format date-time */
+    eventEndDate: string;
+    description: string | null;
+    /** @format date-time */
+    deletedAt: string | null;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+  pagination: PaginationMeta;
 }
 
-export interface AdminTicketWave {
-  id: string;
-  name: string;
-  description: string | null;
-  faceValue: string;
-  currency: string;
-  isSoldOut: boolean;
-  isAvailable: boolean;
-  externalId: string;
-  status: string;
-  deletedAt?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface AdminEvent {
-  id: string;
-  name: string;
-  description: string | null;
-  /** @format date-time */
-  eventStartDate: string;
-  /** @format date-time */
-  eventEndDate: string;
-  venueName: string | null;
-  venueAddress: string | null;
-  venueCity: string | null;
-  externalUrl: string;
-  externalId: string;
-  platform: string;
-  qrAvailabilityTiming: string | null;
-  status: string;
-  /**
-   * Present when the event was soft-deleted (e.g. scraper cleanup)
-   * @format date-time
-   */
-  deletedAt: string | null;
-  /** @format date-time */
-  createdAt: string;
-  /** @format date-time */
-  updatedAt: string;
-  images: AdminEventImage[];
-  ticketWaves: AdminTicketWave[];
-}
-
-export interface PaginatedAdminEventsResponse {
-  data: AdminEvent[];
-  pagination: {
-    hasPrev: boolean;
-    hasNext: boolean;
-    /** @format double */
-    totalPages: number;
-    /** @format double */
-    total: number;
-    /** @format double */
-    limit: number;
-    /** @format double */
-    page: number;
-  };
-}
-
-export type GetEventsResponse = PaginatedAdminEventsResponse;
+export type GetEventsResponse =
+  PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray;
 
 export interface InferTypeofAdminEventsQuerySchema {
   status?: "active" | "inactive";
@@ -1774,66 +1946,57 @@ export interface InferTypeofAdminEventsQuerySchema {
 
 export type AdminEventsQuery = InferTypeofAdminEventsQuerySchema;
 
-export interface AdminEventDetail {
-  id: string;
-  name: string;
-  description: string | null;
-  /** @format date-time */
-  eventStartDate: string;
-  /** @format date-time */
-  eventEndDate: string;
-  venueName: string | null;
-  venueAddress: string | null;
+export interface GetEventDetailsResponse {
+  ticketWaves: {
+    isSoldOut: boolean;
+    isAvailable: boolean;
+    faceValue: string;
+    currency: EventTicketCurrency;
+    updatedAt: string;
+    status: string;
+    name: string;
+    id: string;
+    externalId: string;
+    description: string | null;
+    deletedAt: string | null;
+    createdAt: string;
+  }[];
+  images: {
+    imageType: EventImageType;
+    /** @format double */
+    displayOrder: number;
+    id: string;
+    createdAt: string;
+    url: string;
+  }[];
   venueCity: string | null;
-  externalUrl: string;
-  externalId: string;
-  platform: string;
-  qrAvailabilityTiming: string | null;
-  status: string;
-  /**
-   * Present when the event was soft-deleted (e.g. scraper cleanup)
-   * @format date-time
-   */
-  deletedAt: string | null;
-  /** @format date-time */
-  createdAt: string;
+  venueAddress: string | null;
+  venueName: string | null;
   /** @format date-time */
   updatedAt: string;
-  images: AdminEventImage[];
-  ticketWaves: AdminTicketWave[];
-  metadata: any;
+  status: string;
+  slug: string;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  platform: string;
+  name: string;
+  metadata: JsonValue;
   /** @format date-time */
   lastScrapedAt: string;
-}
-
-export type GetEventDetailsResponse = AdminEventDetail;
-
-export interface UpdatedEvent {
   id: string;
-  name: string;
-  description: string | null;
+  externalUrl: string;
+  externalId: string;
   /** @format date-time */
   eventStartDate: string;
   /** @format date-time */
   eventEndDate: string;
-  venueId: string | null;
-  externalUrl: string;
-  externalId: string;
-  platform: string;
-  qrAvailabilityTiming: string | null;
-  status: string;
-  metadata: any;
-  /** @format date-time */
-  createdAt: string;
-  /** @format date-time */
-  updatedAt: string;
-  /** @format date-time */
-  lastScrapedAt: string;
+  description: string | null;
   /** @format date-time */
   deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
 }
 
-export type CreateEventResponse = UpdatedEvent;
+export type CreateEventResponse = any;
 
 export interface CreateEventRouteBody {
   ticketWaves?: {
@@ -1858,7 +2021,31 @@ export interface CreateEventRouteBody {
   name: string;
 }
 
-export type UpdateEventResponse = UpdatedEvent;
+export interface UpdateEventResponse {
+  venueId: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  slug: string;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  platform: string;
+  name: string;
+  metadata: JsonValue;
+  /** @format date-time */
+  lastScrapedAt: string;
+  id: string;
+  externalUrl: string;
+  externalId: string;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  description: string | null;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
 
 export interface UpdateEventRouteBody {
   clearDeletion?: boolean;
@@ -1871,56 +2058,53 @@ export interface UpdateEventRouteBody {
   name?: string;
 }
 
-export interface DeletedEvent {
-  id: string;
+export interface DeleteEventResponse {
+  venueId: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  slug: string;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  platform: string;
   name: string;
-  description: string | null;
+  metadata: JsonValue;
+  /** @format date-time */
+  lastScrapedAt: string;
+  id: string;
+  externalUrl: string;
+  externalId: string;
   /** @format date-time */
   eventStartDate: string;
   /** @format date-time */
   eventEndDate: string;
-  venueId: string | null;
-  externalUrl: string;
-  externalId: string;
-  platform: string;
-  qrAvailabilityTiming: string | null;
-  status: string;
-  metadata: any;
-  /** @format date-time */
-  createdAt: string;
-  /** @format date-time */
-  updatedAt: string;
-  /** @format date-time */
-  lastScrapedAt: string;
+  description: string | null;
   /** @format date-time */
   deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
 }
 
-export type DeleteEventResponse = DeletedEvent;
-
-export interface CreatedTicketWave {
-  id: string;
-  eventId: string;
-  externalId: string;
-  name: string;
-  description: string | null;
-  faceValue: string;
-  currency: string;
+export interface CreateTicketWaveResponse {
   isSoldOut: boolean;
   isAvailable: boolean;
-  status: string;
-  metadata: any;
-  /** @format date-time */
-  createdAt: string;
+  faceValue: string;
+  currency: EventTicketCurrency;
+  eventId: string;
   /** @format date-time */
   updatedAt: string;
+  status: string;
+  name: string;
+  metadata: JsonValue;
   /** @format date-time */
   lastScrapedAt: string;
+  id: string;
+  externalId: string;
+  description: string | null;
   /** @format date-time */
   deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
 }
-
-export type CreateTicketWaveResponse = CreatedTicketWave;
 
 export interface CreateTicketWaveRouteBody {
   externalId?: string;
@@ -1933,29 +2117,27 @@ export interface CreateTicketWaveRouteBody {
   name: string;
 }
 
-export interface UpdatedTicketWave {
-  id: string;
-  eventId: string;
-  externalId: string;
-  name: string;
-  description: string | null;
-  faceValue: string;
-  currency: string;
+export interface UpdateTicketWaveResponse {
   isSoldOut: boolean;
   isAvailable: boolean;
-  status: string;
-  metadata: any;
-  /** @format date-time */
-  createdAt: string;
+  faceValue: string;
+  currency: EventTicketCurrency;
+  eventId: string;
   /** @format date-time */
   updatedAt: string;
+  status: string;
+  name: string;
+  metadata: JsonValue;
   /** @format date-time */
   lastScrapedAt: string;
+  id: string;
+  externalId: string;
+  description: string | null;
   /** @format date-time */
   deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
 }
-
-export type UpdateTicketWaveResponse = UpdatedTicketWave;
 
 export interface UpdateTicketWaveRouteBody {
   isAvailable?: boolean;
@@ -1967,43 +2149,37 @@ export interface UpdateTicketWaveRouteBody {
   name?: string;
 }
 
-export interface DeletedTicketWave {
-  id: string;
-  eventId: string;
-  externalId: string;
-  name: string;
-  description: string | null;
-  faceValue: string;
-  currency: string;
+export interface DeleteTicketWaveResponse {
   isSoldOut: boolean;
   isAvailable: boolean;
-  status: string;
-  metadata: any;
-  /** @format date-time */
-  createdAt: string;
+  faceValue: string;
+  currency: EventTicketCurrency;
+  eventId: string;
   /** @format date-time */
   updatedAt: string;
+  status: string;
+  name: string;
+  metadata: JsonValue;
   /** @format date-time */
   lastScrapedAt: string;
+  id: string;
+  externalId: string;
+  description: string | null;
   /** @format date-time */
   deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
 }
 
-export type DeleteTicketWaveResponse = DeletedTicketWave;
-
-export interface UploadImageResponse {
-  id: string;
+export interface UploadEventImageResponse {
+  imageType: "flyer" | "hero";
   url: string;
-  imageType: string;
+  id: string;
 }
 
-export type UploadEventImageResponse = UploadImageResponse;
-
-export interface DeleteImageResponse {
+export interface DeleteEventImageResponse {
   success: boolean;
 }
-
-export type DeleteEventImageResponse = DeleteImageResponse;
 
 export type SearchVenuesResponse = {
   city: string;
@@ -2677,6 +2853,10 @@ export interface TestPushDevResponse {
   sent: number;
 }
 
+export interface TestInAppDevResponse {
+  notificationId: string;
+}
+
 export interface InitiateVerificationResponse {
   message: "Verificación iniciada";
   success: boolean;
@@ -2918,7 +3098,7 @@ export type ListSettlementsResponse =
   PaginatedResponseProcessorSettlementListRow;
 
 export interface InferTypeofAdminSettlementsQuerySchema {
-  paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  paymentProvider?: "dlocal" | "mercadopago" | "stripe";
   status?: "pending" | "completed" | "failed";
   sortOrder?: "asc" | "desc";
   sortBy?: string;
@@ -2967,7 +3147,7 @@ export interface CreateSettlementResponse {
 export interface CreateSettlementRouteBody {
   /** Construct a type with a set of properties K of type T */
   metadata?: RecordStringUnknown;
-  paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+  paymentProvider?: "dlocal" | "mercadopago" | "stripe";
   currency: "USD" | "UYU";
   totalAmount: string;
   settlementDate: string;
@@ -3049,9 +3229,40 @@ export type PreviewSettlementResponse =
     };
 
 export interface SettlementBreakdownResponse {
+  payoutReconciliation: {
+    differenceUyu: string;
+    status: string;
+  };
+  moneyFlowSummary: {
+    earningsCoverageDifference: string;
+    bankTransferUyuOut: string;
+    attributedToPayoutsUyu: string;
+    availableSellerUyuInSettlement: string;
+  };
+  fundedPayouts: {
+    rateLock: {
+      rateExpiresAt: string;
+      /** @format double */
+      convertedAmount: number;
+      /** @format double */
+      originalAmount: number;
+      /** @format double */
+      brouVentaRate: number;
+      /** @format double */
+      lockedRate: number;
+    } | null;
+    uyuBackedInThisSettlement: string;
+    payoutType: PayoutType;
+    currency: EventTicketCurrency;
+    amount: string;
+    status: "cancelled" | "pending" | "completed" | "failed" | "processing";
+    sellerUserId: string;
+    payoutId: string;
+  }[];
   items: {
     platformShare: string;
     sellerEarnings: {
+      payoutId: string | null;
       currency: EventTicketCurrency;
       status:
         | "pending"
@@ -3305,6 +3516,15 @@ export interface GetDashboardHealthResponse {
   activeEvents: number;
 }
 
+export interface GetSidebarCountsResponse {
+  /** @format double */
+  pendingVerifications: number;
+  /** @format double */
+  pendingPayouts: number;
+  /** @format double */
+  reportsAwaitingResponse: number;
+}
+
 export interface DashboardTopEventRow {
   eventId: string;
   eventName: string;
@@ -3331,6 +3551,11 @@ export interface OrderCurrencyBreakdownRow {
 
 export interface GetDashboardRevenueByOrderCurrencyResponse {
   rows: OrderCurrencyBreakdownRow[];
+}
+
+export interface TriggerCronjobResponse {
+  message: string;
+  success: boolean;
 }
 
 import type {
@@ -3900,6 +4125,23 @@ export class Api<
       }),
 
     /**
+     * No description
+     *
+     * @tags Ticket Listings
+     * @name GetMyListingById
+     * @request GET:/ticket-listings/my-listings/{listingId}
+     */
+    getMyListingById: (listingId: string, params: RequestParams = {}) =>
+      this.request<GetMyListingByIdResponse, UnauthorizedError | NotFoundError>(
+        {
+          path: `/ticket-listings/my-listings/${listingId}`,
+          method: "GET",
+          format: "json",
+          ...params,
+        },
+      ),
+
+    /**
      * @description Upload a ticket document Sellers can upload PDF/image documents for their sold tickets. Documents must be uploaded before the event ends.
      *
      * @tags Ticket Listings
@@ -4278,7 +4520,12 @@ export class Api<
      */
     getPayouts: (
       query: {
-        status?: "cancelled" | "pending" | "completed" | "failed";
+        status?:
+          | "cancelled"
+          | "pending"
+          | "completed"
+          | "failed"
+          | "processing";
         sortOrder?: "asc" | "desc";
         sortBy?: string;
         /** @format double */
@@ -4317,30 +4564,6 @@ export class Api<
      * No description
      *
      * @tags Admin - Payouts
-     * @name UpdatePayout
-     * @request PUT:/admin/payouts/{payoutId}
-     */
-    updatePayout: (
-      payoutId: string,
-      data: UpdatePayoutRouteBody,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        UpdatePayoutResponse,
-        UnauthorizedError | NotFoundError | ValidationError
-      >({
-        path: `/admin/payouts/${payoutId}`,
-        method: "PUT",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Admin - Payouts
      * @name ProcessPayout
      * @request POST:/admin/payouts/{payoutId}/process
      */
@@ -4354,30 +4577,6 @@ export class Api<
         UnauthorizedError | NotFoundError | ValidationError
       >({
         path: `/admin/payouts/${payoutId}/process`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Admin - Payouts
-     * @name CompletePayout
-     * @request POST:/admin/payouts/{payoutId}/complete
-     */
-    completePayout: (
-      payoutId: string,
-      data: CompletePayoutRouteBody,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        CompletePayoutResponse,
-        UnauthorizedError | NotFoundError | ValidationError
-      >({
-        path: `/admin/payouts/${payoutId}/complete`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -4474,21 +4673,6 @@ export class Api<
       >({
         path: `/admin/payouts/documents/${documentId}`,
         method: "DELETE",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Admin - Payouts
-     * @name TriggerHoldCheck
-     * @request POST:/admin/payouts/trigger-hold-check
-     */
-    triggerHoldCheck: (params: RequestParams = {}) =>
-      this.request<TriggerHoldCheckResponse, UnauthorizedError>({
-        path: `/admin/payouts/trigger-hold-check`,
-        method: "POST",
         format: "json",
         ...params,
       }),
@@ -5018,7 +5202,7 @@ export class Api<
      */
     listSettlements: (
       query: {
-        paymentProvider?: "paypal" | "dlocal" | "mercadopago" | "stripe";
+        paymentProvider?: "dlocal" | "mercadopago" | "stripe";
         status?: "pending" | "completed" | "failed";
         sortOrder?: "asc" | "desc";
         sortBy?: string;
@@ -5387,6 +5571,21 @@ export class Api<
      * No description
      *
      * @tags Admin - Dashboard
+     * @name GetDashboardSidebarCounts
+     * @request GET:/admin/dashboard/sidebar-counts
+     */
+    getDashboardSidebarCounts: (params: RequestParams = {}) =>
+      this.request<GetSidebarCountsResponse, UnauthorizedError>({
+        path: `/admin/dashboard/sidebar-counts`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Dashboard
      * @name GetDashboardTopEvents
      * @request GET:/admin/dashboard/top-events
      */
@@ -5428,6 +5627,96 @@ export class Api<
         path: `/admin/dashboard/revenue-by-order-currency`,
         method: "GET",
         query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Cronjobs
+     * @name TriggerSyncPaymentsAndExpireOrders
+     * @request POST:/admin/cronjobs/sync-payments-and-expire-orders
+     */
+    triggerSyncPaymentsAndExpireOrders: (params: RequestParams = {}) =>
+      this.request<TriggerCronjobResponse, UnauthorizedError>({
+        path: `/admin/cronjobs/sync-payments-and-expire-orders`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Cronjobs
+     * @name TriggerNotifyUploadAvailability
+     * @request POST:/admin/cronjobs/notify-upload-availability
+     */
+    triggerNotifyUploadAvailability: (params: RequestParams = {}) =>
+      this.request<TriggerCronjobResponse, UnauthorizedError>({
+        path: `/admin/cronjobs/notify-upload-availability`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Cronjobs
+     * @name TriggerCheckPayoutHoldPeriods
+     * @request POST:/admin/cronjobs/check-payout-hold-periods
+     */
+    triggerCheckPayoutHoldPeriods: (params: RequestParams = {}) =>
+      this.request<TriggerCronjobResponse, UnauthorizedError>({
+        path: `/admin/cronjobs/check-payout-hold-periods`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Cronjobs
+     * @name TriggerProcessPendingNotifications
+     * @request POST:/admin/cronjobs/process-pending-notifications
+     */
+    triggerProcessPendingNotifications: (params: RequestParams = {}) =>
+      this.request<TriggerCronjobResponse, UnauthorizedError>({
+        path: `/admin/cronjobs/process-pending-notifications`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Cronjobs
+     * @name TriggerProcessPendingJobs
+     * @request POST:/admin/cronjobs/process-pending-jobs
+     */
+    triggerProcessPendingJobs: (params: RequestParams = {}) =>
+      this.request<TriggerCronjobResponse, UnauthorizedError>({
+        path: `/admin/cronjobs/process-pending-jobs`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Cronjobs
+     * @name TriggerScrapeEvents
+     * @request POST:/admin/cronjobs/scrape-events
+     */
+    triggerScrapeEvents: (params: RequestParams = {}) =>
+      this.request<TriggerCronjobResponse, UnauthorizedError>({
+        path: `/admin/cronjobs/scrape-events`,
+        method: "POST",
         format: "json",
         ...params,
       }),
@@ -6159,6 +6448,21 @@ export class Api<
     testPush: (params: RequestParams = {}) =>
       this.request<TestPushDevResponse, UnauthorizedError>({
         path: `/notifications/test-push`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description DEV ONLY — Create a test in-app notification for the current user. Goes through the full notification pipeline so it's picked up by polling.
+     *
+     * @tags Notifications
+     * @name TestInApp
+     * @request POST:/notifications/test-in-app
+     */
+    testInApp: (params: RequestParams = {}) =>
+      this.request<TestInAppDevResponse, UnauthorizedError>({
+        path: `/notifications/test-in-app`,
         method: "POST",
         format: "json",
         ...params,
