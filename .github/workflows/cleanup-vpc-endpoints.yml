@@ -29,9 +29,11 @@ env:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
-    # Use the production environment for credentials — the IAM user has access
-    # to both prod and dev resources in the same account.
-    environment: production
+    # Pick an environment the current branch is allowed to use. The production
+    # environment often only allows `main`; scheduled runs use the default
+    # branch (usually main). Manual runs from `development` must use the
+    # development environment. Same AWS IAM user in both — cleans prod + dev.
+    environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
