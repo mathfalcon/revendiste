@@ -11,7 +11,8 @@
     "fix": "gts fix",
     "dev": "turbo run dev --filter=@revendiste/frontend --filter=@revendiste/backend",
     "dev:all": "turbo run dev",
-    "build": "turbo run build"
+    "build": "turbo run build",
+    "type-check": "turbo run type-check"
   },
   "keywords": [],
   "author": "",

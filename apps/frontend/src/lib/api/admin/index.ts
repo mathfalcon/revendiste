@@ -687,3 +687,37 @@ export const adminDashboardRevenueByOrderCurrencyQueryOptions = (
     refetchInterval: DASHBOARD_POLL_FAST_MS,
   });
 };
+
+export interface AdminUsersListDeps {
+  page: number;
+  limit: number;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  buscar?: string;
+}
+
+export const adminUsersListQueryOptions = (params: AdminUsersListDeps) => {
+  return queryOptions({
+    queryKey: ['admin', 'users', params] as const,
+    queryFn: async () => {
+      const response = await api.admin.listUsers({
+        page: params.page,
+        limit: params.limit,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+        search: params.buscar,
+      });
+      return response.data;
+    },
+  });
+};
+
+export const createActorTokenMutationOptions = () => ({
+  mutationFn: async (args: {targetUserId: string; reason?: string}) => {
+    const response = await api.admin.createActorToken({
+      targetUserId: args.targetUserId,
+      reason: args.reason,
+    });
+    return response.data;
+  },
+});

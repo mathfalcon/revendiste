@@ -168,6 +168,15 @@ export interface EventViewsDaily {
   viewCount: Generated<number>;
 }
 
+export interface ImpersonationLogs {
+  adminUserId: string;
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  ipAddress: string;
+  reason: string | null;
+  targetUserId: string;
+}
+
 export interface Invoices {
   baseAmount: Numeric;
   createdAt: Generated<Timestamp>;
@@ -611,6 +620,7 @@ export interface DB {
   eventTicketWaves: EventTicketWaves;
   eventVenues: EventVenues;
   eventViewsDaily: EventViewsDaily;
+  impersonationLogs: ImpersonationLogs;
   invoices: Invoices;
   jobs: Jobs;
   listings: Listings;

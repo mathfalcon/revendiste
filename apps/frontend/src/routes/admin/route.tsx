@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Wallet,
   UserCheck,
+  Users,
   Menu,
   Calendar,
   Flag,
@@ -70,6 +71,7 @@ const navigation: Array<{
   badgeKey?: AdminSidebarBadgeKey;
 }> = [
   {name: 'Panel', href: '/admin/dashboard', icon: LayoutDashboard},
+  {name: 'Usuarios', href: '/admin/usuarios', icon: Users},
   {name: 'Eventos', href: '/admin/eventos', icon: Calendar},
   {
     name: 'Verificaciones',
