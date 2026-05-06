@@ -2936,7 +2936,7 @@ export interface InferTypeofAdminUsersListQuerySchema {
 
 export type AdminUsersListQuery = InferTypeofAdminUsersListQuerySchema;
 
-export interface CreateActorTokenResponse {
+export interface CreateSignInTokenResponse {
   impersonationUrl: string;
 }
 
@@ -5141,18 +5141,18 @@ export class Api<
      * No description
      *
      * @tags Admin - Users
-     * @name CreateActorToken
-     * @request POST:/admin/users/impersonation/actor-token
+     * @name CreateSignInToken
+     * @request POST:/admin/users/impersonation/sign-in-token
      */
-    createActorToken: (
+    createSignInToken: (
       data: CreateImpersonationRouteBody,
       params: RequestParams = {},
     ) =>
       this.request<
-        CreateActorTokenResponse,
+        CreateSignInTokenResponse,
         UnauthorizedError | NotFoundError | ValidationError
       >({
-        path: `/admin/users/impersonation/actor-token`,
+        path: `/admin/users/impersonation/sign-in-token`,
         method: "POST",
         body: data,
         type: ContentType.Json,

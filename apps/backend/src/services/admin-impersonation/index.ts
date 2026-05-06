@@ -10,7 +10,7 @@ export class AdminImpersonationService {
     private impersonationLogsRepository: ImpersonationLogsRepository,
   ) {}
 
-  async createActorToken(args: {
+  async createSignInToken(args: {
     adminUser: User;
     targetUserId: string;
     reason: string | null | undefined;
@@ -46,15 +46,13 @@ export class AdminImpersonationService {
       ipAddress: args.ipAddress,
     });
 
-    const actorToken = await clerkClient.actorTokens.create({
+    const signInToken = await clerkClient.signInTokens.createSignInToken({
       userId: target.clerkId,
-      actor: {sub: args.adminUser.clerkId},
       expiresInSeconds: 600,
-      sessionMaxDurationInSeconds: 1800,
     });
 
     // Clerk Frontend API URL: signs out existing session, then redirects to
-    // CLERK_SIGN_IN_URL (/ingresar) with __clerk_ticket to complete impersonation.
-    return {impersonationUrl: actorToken.url!};
+    // CLERK_SIGN_IN_URL (/ingresar) with __clerk_ticket to complete sign-in.
+    return {impersonationUrl: signInToken.url!};
   }
 }
