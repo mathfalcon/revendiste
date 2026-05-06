@@ -94,6 +94,23 @@ function PostHogIdentify() {
   return null;
 }
 
+function QueryCacheReset() {
+  const {user, isLoaded} = useUser();
+  const queryClient = Route.useRouteContext({select: s => s.queryClient});
+  const prevUserId = React.useRef<string | null | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (!isLoaded) return;
+    const currentId = user?.id ?? null;
+    if (prevUserId.current !== undefined && prevUserId.current !== currentId) {
+      queryClient.clear();
+    }
+    prevUserId.current = currentId;
+  }, [isLoaded, user?.id, queryClient]);
+
+  return null;
+}
+
 function RootDocument({children}: {children: React.ReactNode}) {
   const location = useLocation();
 
@@ -328,6 +345,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
             }}
           >
             <PostHogIdentify />
+            <QueryCacheReset />
             <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
               <ThemeColorSync />
               <StickyBarProvider>

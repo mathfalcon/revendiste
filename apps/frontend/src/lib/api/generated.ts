@@ -1240,10 +1240,10 @@ export interface GetUserPayoutDetailsResponse {
     payoutId: string;
     userAgent: string | null;
     toStatus: PayoutStatus | null;
-    ipAddress: string | null;
     fromStatus: PayoutStatus | null;
     eventType: PayoutEventType;
     eventData: string | number | boolean | JsonArray | JsonObject | null;
+    ipAddress: string | null;
     id: string;
     /** @format date-time */
     createdAt: string;
@@ -2903,6 +2903,46 @@ export interface GetLivenessCredentialsResponse {
   sessionToken: string;
   secretAccessKey: string;
   accessKeyId: string;
+}
+
+export interface PaginatedResponseUser58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullImageUrlStringOrNullRoleAdminOrOrganizerOrUserLastActiveAtDateOrNull {
+  data: {
+    user: {
+      /** @format date-time */
+      lastActiveAt: string | null;
+      role: "admin" | "organizer" | "user";
+      imageUrl: string | null;
+      lastName: string | null;
+      firstName: string | null;
+      email: string;
+      id: string;
+    };
+  }[];
+  pagination: PaginationMeta;
+}
+
+export type ListUsersResponse =
+  PaginatedResponseUser58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullImageUrlStringOrNullRoleAdminOrOrganizerOrUserLastActiveAtDateOrNull;
+
+export interface InferTypeofAdminUsersListQuerySchema {
+  search?: string;
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  /** @format double */
+  limit: number;
+  /** @format double */
+  page: number;
+}
+
+export type AdminUsersListQuery = InferTypeofAdminUsersListQuerySchema;
+
+export interface CreateActorTokenResponse {
+  impersonationUrl: string;
+}
+
+export interface CreateImpersonationRouteBody {
+  reason?: string;
+  targetUserId: string;
 }
 
 export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullIdStringStatusAwaitingCustomerOrAwaitingSupportOrClosedUpdatedAtDateCaseTypeTicketReportCaseTypeClosedAtDateOrNullEntityIdStringEntityTypeTicketReportEntityTypeReportedByUserIdStringOrNullSourceAutoMissingDocumentOrUserReportReporterEmailStringOrNullReporterFirstNameStringOrNullReporterLastNameStringOrNull {
@@ -5066,6 +5106,56 @@ export class Api<
         path: `/admin/events/venues/search`,
         method: "GET",
         query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Users
+     * @name ListUsers
+     * @request GET:/admin/users
+     */
+    listUsers: (
+      query: {
+        search?: string;
+        sortOrder?: "asc" | "desc";
+        sortBy?: string;
+        /** @format double */
+        limit: number;
+        /** @format double */
+        page: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ListUsersResponse, UnauthorizedError>({
+        path: `/admin/users`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Users
+     * @name CreateActorToken
+     * @request POST:/admin/users/impersonation/actor-token
+     */
+    createActorToken: (
+      data: CreateImpersonationRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CreateActorTokenResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/users/impersonation/actor-token`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

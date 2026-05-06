@@ -31,6 +31,7 @@ import { Route as CuentaEstadoVerificacionRouteImport } from './routes/cuenta/es
 import { Route as CuentaEntradasRouteImport } from './routes/cuenta/entradas'
 import { Route as CuentaConfiguracionRouteImport } from './routes/cuenta/configuracion'
 import { Route as AdminVerificacionesRouteImport } from './routes/admin/verificaciones'
+import { Route as AdminUsuariosRouteImport } from './routes/admin/usuarios'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as CuentaRetiroRouteRouteImport } from './routes/cuenta/retiro/route'
 import { Route as AdminRetirosRouteRouteImport } from './routes/admin/retiros/route'
@@ -164,6 +165,11 @@ const CuentaConfiguracionRoute = CuentaConfiguracionRouteImport.update({
 const AdminVerificacionesRoute = AdminVerificacionesRouteImport.update({
   id: '/verificaciones',
   path: '/verificaciones',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
@@ -301,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/admin/retiros': typeof AdminRetirosRouteRouteWithChildren
   '/cuenta/retiro': typeof CuentaRetiroRouteRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/configuracion': typeof CuentaConfiguracionRoute
   '/cuenta/entradas': typeof CuentaEntradasRoute
@@ -343,6 +350,7 @@ export interface FileRoutesByTo {
   '/sitemap': typeof SitemapRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/configuracion': typeof CuentaConfiguracionRoute
   '/cuenta/entradas': typeof CuentaEntradasRoute
@@ -391,6 +399,7 @@ export interface FileRoutesById {
   '/admin/retiros': typeof AdminRetirosRouteRouteWithChildren
   '/cuenta/retiro': typeof CuentaRetiroRouteRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/verificaciones': typeof AdminVerificacionesRoute
   '/cuenta/configuracion': typeof CuentaConfiguracionRoute
   '/cuenta/entradas': typeof CuentaEntradasRoute
@@ -440,6 +449,7 @@ export interface FileRouteTypes {
     | '/admin/retiros'
     | '/cuenta/retiro'
     | '/admin/dashboard'
+    | '/admin/usuarios'
     | '/admin/verificaciones'
     | '/cuenta/configuracion'
     | '/cuenta/entradas'
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/sitemap'
     | '/terminos-y-condiciones'
     | '/admin/dashboard'
+    | '/admin/usuarios'
     | '/admin/verificaciones'
     | '/cuenta/configuracion'
     | '/cuenta/entradas'
@@ -529,6 +540,7 @@ export interface FileRouteTypes {
     | '/admin/retiros'
     | '/cuenta/retiro'
     | '/admin/dashboard'
+    | '/admin/usuarios'
     | '/admin/verificaciones'
     | '/cuenta/configuracion'
     | '/cuenta/entradas'
@@ -737,6 +749,13 @@ declare module '@tanstack/react-router' {
       path: '/verificaciones'
       fullPath: '/admin/verificaciones'
       preLoaderRoute: typeof AdminVerificacionesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/usuarios': {
+      id: '/admin/usuarios'
+      path: '/usuarios'
+      fullPath: '/admin/usuarios'
+      preLoaderRoute: typeof AdminUsuariosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/dashboard': {
@@ -948,6 +967,7 @@ interface AdminRouteRouteChildren {
   AdminFinanzasRouteRoute: typeof AdminFinanzasRouteRouteWithChildren
   AdminRetirosRouteRoute: typeof AdminRetirosRouteRouteWithChildren
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminUsuariosRoute: typeof AdminUsuariosRoute
   AdminVerificacionesRoute: typeof AdminVerificacionesRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminReportesReportIdRoute: typeof AdminReportesReportIdRoute
@@ -960,6 +980,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminFinanzasRouteRoute: AdminFinanzasRouteRouteWithChildren,
   AdminRetirosRouteRoute: AdminRetirosRouteRouteWithChildren,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminUsuariosRoute: AdminUsuariosRoute,
   AdminVerificacionesRoute: AdminVerificacionesRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminReportesReportIdRoute: AdminReportesReportIdRoute,

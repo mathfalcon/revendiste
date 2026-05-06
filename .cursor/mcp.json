@@ -25,6 +25,9 @@
         "AWS_REGION": "sa-east-1",
         "FASTMCP_LOG_LEVEL": "ERROR"
       }
+    },
+    "clerk": {
+      "url": "https://mcp.clerk.com/mcp"
     }
   }
 }

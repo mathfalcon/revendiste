@@ -248,6 +248,11 @@ export const PAYOUT_DOCUMENT_ERROR_MESSAGES = {
 export const ADMIN_ERROR_MESSAGES = {
   ADMIN_ONLY: 'Solo los administradores pueden acceder a esta funcionalidad',
   INVALID_ROLE: 'Rol de usuario inválido',
+  IMPERSONATION_SELF_NOT_ALLOWED:
+    'No podés iniciar sesión como tu propio usuario desde esta herramienta',
+  IMPERSONATION_TARGET_ADMIN_NOT_ALLOWED:
+    'No podés impersonar a otro administrador',
+  IMPERSONATION_TARGET_NOT_FOUND: 'Usuario no encontrado',
 } as const;
 
 // Error messages for identity verification
