@@ -10212,7 +10212,7 @@
 			"AdminUsersListQuery": {
 				"$ref": "#/components/schemas/infer_typeofAdminUsersListQuerySchema_"
 			},
-			"CreateActorTokenResponse": {
+			"CreateSignInTokenResponse": {
 				"properties": {
 					"impersonationUrl": {
 						"type": "string"
@@ -18488,16 +18488,16 @@
 				]
 			}
 		},
-		"/admin/users/impersonation/actor-token": {
+		"/admin/users/impersonation/sign-in-token": {
 			"post": {
-				"operationId": "CreateActorToken",
+				"operationId": "CreateSignInToken",
 				"responses": {
 					"200": {
 						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/CreateActorTokenResponse"
+									"$ref": "#/components/schemas/CreateSignInTokenResponse"
 								}
 							}
 						}

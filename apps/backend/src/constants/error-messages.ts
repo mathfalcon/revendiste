@@ -253,6 +253,8 @@ export const ADMIN_ERROR_MESSAGES = {
   IMPERSONATION_TARGET_ADMIN_NOT_ALLOWED:
     'No podés impersonar a otro administrador',
   IMPERSONATION_TARGET_NOT_FOUND: 'Usuario no encontrado',
+  IMPERSONATION_LIMIT_EXCEEDED:
+    'Se alcanzó el límite de impersonaciones del plan actual. El límite se restablece al inicio del próximo período de facturación.',
 } as const;
 
 // Error messages for identity verification

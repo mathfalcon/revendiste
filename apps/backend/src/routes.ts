@@ -1186,7 +1186,7 @@ const models: TsoaRoute.Models = {
         "type": {"ref":"infer_typeofAdminUsersListQuerySchema_","validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "CreateActorTokenResponse": {
+    "CreateSignInTokenResponse": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"impersonationUrl":{"dataType":"string","required":true}},"validators":{}},
     },
@@ -4956,26 +4956,26 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsAdminUsersController_createActorToken: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsAdminUsersController_createSignInToken: Record<string, TsoaRoute.ParameterSchema> = {
                 body: {"in":"body","name":"body","required":true,"ref":"CreateImpersonationRouteBody"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.post('/admin/users/impersonation/actor-token',
+        app.post('/admin/users/impersonation/sign-in-token',
             ...(fetchMiddlewares<RequestHandler>(AdminUsersController)),
-            ...(fetchMiddlewares<RequestHandler>(AdminUsersController.prototype.createActorToken)),
+            ...(fetchMiddlewares<RequestHandler>(AdminUsersController.prototype.createSignInToken)),
 
-            async function AdminUsersController_createActorToken(request: ExRequest, response: ExResponse, next: any) {
+            async function AdminUsersController_createSignInToken(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsAdminUsersController_createActorToken, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsAdminUsersController_createSignInToken, request, response });
 
                 const controller = new AdminUsersController();
 
               await templateService.apiHandler({
-                methodName: 'createActorToken',
+                methodName: 'createSignInToken',
                 controller,
                 response,
                 next,

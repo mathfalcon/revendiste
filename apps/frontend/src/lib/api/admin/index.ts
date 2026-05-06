@@ -712,9 +712,9 @@ export const adminUsersListQueryOptions = (params: AdminUsersListDeps) => {
   });
 };
 
-export const createActorTokenMutationOptions = () => ({
+export const createSignInTokenMutationOptions = () => ({
   mutationFn: async (args: {targetUserId: string; reason?: string}) => {
-    const response = await api.admin.createActorToken({
+    const response = await api.admin.createSignInToken({
       targetUserId: args.targetUserId,
       reason: args.reason,
     });

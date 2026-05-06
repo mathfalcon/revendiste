@@ -32,7 +32,7 @@ import {Textarea} from '~/components/ui/textarea';
 import {Avatar, AvatarFallback, AvatarImage} from '~/components/ui/avatar';
 import {
   adminUsersListQueryOptions,
-  createActorTokenMutationOptions,
+  createSignInTokenMutationOptions,
 } from '~/lib/api/admin';
 import {Skeleton} from '~/components/ui/skeleton';
 import {toast} from 'sonner';
@@ -100,7 +100,7 @@ export function AdminUsersPage() {
   });
 
   const impersonationMutation = useMutation({
-    ...createActorTokenMutationOptions(),
+    ...createSignInTokenMutationOptions(),
     onSuccess: res => {
       setImpersonateUserId(null);
       setReasonDraft('');

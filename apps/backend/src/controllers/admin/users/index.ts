@@ -35,8 +35,8 @@ type ListUsersResponse = Awaited<
   ReturnType<AdminUsersService['listUsers']>
 >;
 
-type CreateActorTokenResponse = Awaited<
-  ReturnType<AdminImpersonationService['createActorToken']>
+type CreateSignInTokenResponse = Awaited<
+  ReturnType<AdminImpersonationService['createSignInToken']>
 >;
 
 function getClientIp(request: express.Request): string {
@@ -74,17 +74,17 @@ export class AdminUsersController {
     });
   }
 
-  @Post('/impersonation/actor-token')
+  @Post('/impersonation/sign-in-token')
   @ValidateBody(CreateImpersonationRouteSchema)
   @Response<UnauthorizedError>(401, 'Authentication required')
   @Response<UnauthorizedError>(403, 'Admin access required')
   @Response<ValidationError>(422, 'Validation failed')
   @Response<NotFoundError>(404, 'Not found')
-  public async createActorToken(
+  public async createSignInToken(
     @Body() body: CreateImpersonationRouteBody,
     @Request() request: express.Request,
-  ): Promise<CreateActorTokenResponse> {
-    return this.impersonationService.createActorToken({
+  ): Promise<CreateSignInTokenResponse> {
+    return this.impersonationService.createSignInToken({
       adminUser: request.user,
       targetUserId: body.targetUserId,
       reason: body.reason,
