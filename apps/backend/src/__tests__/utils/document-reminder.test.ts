@@ -1,6 +1,7 @@
 import {
   MILESTONE_THRESHOLDS,
   getNotificationMilestone,
+  resolveDocumentReminderMilestone,
   shouldSendDocumentReminder,
   parseQrAvailabilityTiming,
   calculateHoursUntilEvent,
@@ -244,9 +245,25 @@ describe('Document Reminder Utilities', () => {
         expect(shouldSendDocumentReminder(47.67, null)).toBe(true);
       });
 
-      it('event in 5 hours, 12h QR window - should NOT trigger (between milestones)', () => {
-        expect(shouldSendDocumentReminder(5, 12)).toBe(false);
+      it('event in 5 hours, 12h QR window - catch-up inside upload window (missed 12h ±30m band)', () => {
+        expect(shouldSendDocumentReminder(5, 12)).toBe(true);
+        expect(resolveDocumentReminderMilestone(5, 12)).toBe(12);
       });
+
+      it('6h QR window, ~4.33h before event - catch-up uses 6h milestone for dedupe', () => {
+        expect(shouldSendDocumentReminder(4.338, 6)).toBe(true);
+        expect(resolveDocumentReminderMilestone(4.338, 6)).toBe(6);
+      });
+    });
+  });
+
+  describe('resolveDocumentReminderMilestone', () => {
+    it('returns null outside QR window when QR is set', () => {
+      expect(resolveDocumentReminderMilestone(8, 6)).toBeNull();
+    });
+
+    it('narrow band still wins before catch-up', () => {
+      expect(resolveDocumentReminderMilestone(6, 6)).toBe(6);
     });
   });
 

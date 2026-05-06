@@ -26,12 +26,16 @@ import {
 } from '~/lib';
 import {format} from 'date-fns';
 import {es} from 'date-fns/locale';
-import {formatPrice, calculateSellerAmount, calculateMaxResalePrice} from '~/utils';
+import {
+  formatPrice,
+  calculateSellerAmount,
+  calculateMaxResalePrice,
+} from '~/utils';
 import {Link, useNavigate} from '@tanstack/react-router';
 import {Checkbox} from '~/components/ui/checkbox';
 import {MobilePublishBar} from './MobilePublishBar';
 import {toast} from 'sonner';
-import {usePostHog} from 'posthog-js/react';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {Alert, AlertDescription} from '~/components/ui/alert';
 import {isWithinUploadWindow} from '@revendiste/shared';
 import {DocumentUploadStep} from './DocumentUploadStep';
@@ -124,7 +128,6 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
   const form = useFormContext<TicketListingFormValues>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const posthog = usePostHog();
   const [eventSearchValue, setEventSearchValue] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [step, setStep] = useState<'form' | 'documents' | 'upload-info'>(
@@ -136,7 +139,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
   );
 
   useEffect(() => {
-    posthog.capture('listing_form_started');
+    trackEvent(ANALYTICS_EVENTS.LISTING_FORM_STARTED);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -268,15 +271,17 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
         quantity: data.quantity,
         documents: isUploadWindowActive ? data.documents : undefined,
       });
-      posthog.capture('ticket_listing_created', {
+      trackEvent(ANALYTICS_EVENTS.TICKET_LISTING_CREATED, {
         event_id: data.eventId,
         event_name: eventDetailsQuery.data?.name,
         ticket_wave_id: data.eventTicketWaveId,
         ticket_wave_name: selectedEventTicketWave?.name,
         price: data.price,
+        value: Number(data.price),
         quantity: data.quantity,
         currency: selectedEventTicketWave?.currency,
-        with_document: isUploadWindowActive && (data.documents?.length ?? 0) > 0,
+        with_document:
+          isUploadWindowActive && (data.documents?.length ?? 0) > 0,
       });
       void queryClient.invalidateQueries({
         queryKey: getMyListingsQuery().queryKey,
@@ -450,9 +455,7 @@ export const TicketListingFormRight = ({mode}: TicketListingFormProps) => {
               <TicketWaveOption option={option} isSelected={isSelected} />
             )}
             disabled={
-              isLimitReached ||
-              !watchEventId ||
-              ticketWaveOptions.length === 0
+              isLimitReached || !watchEventId || ticketWaveOptions.length === 0
             }
           />
         )}

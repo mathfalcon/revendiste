@@ -16,8 +16,14 @@ export class PayoutEventsRepository extends BaseRepository<PayoutEventsRepositor
       | 'transfer_initiated'
       | 'transfer_completed'
       | 'transfer_failed'
+      | 'cancelled'
+      | 'provider_response';
+    fromStatus?:
+      | 'pending'
+      | 'processing'
+      | 'completed'
+      | 'failed'
       | 'cancelled';
-    fromStatus?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
     toStatus?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
     eventData?: JsonValue;
     createdBy?: string;
@@ -40,4 +46,3 @@ export class PayoutEventsRepository extends BaseRepository<PayoutEventsRepositor
       .execute();
   }
 }
-

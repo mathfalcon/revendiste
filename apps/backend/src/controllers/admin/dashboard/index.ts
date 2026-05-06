@@ -26,6 +26,7 @@ import type {
   GetDashboardOrdersResponse,
   GetDashboardPayoutsResponse,
   GetDashboardHealthResponse,
+  GetSidebarCountsResponse,
   GetDashboardTopEventsResponse,
   GetDashboardRevenueTimeSeriesResponse,
   GetDashboardOrdersTimeSeriesResponse,
@@ -116,6 +117,13 @@ export class AdminDashboardController {
   @Response<UnauthorizedError>(403, 'Admin access required')
   public async getDashboardHealth(): Promise<GetDashboardHealthResponse> {
     return this.service.getHealthStats();
+  }
+
+  @Get('/sidebar-counts')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  public async getDashboardSidebarCounts(): Promise<GetSidebarCountsResponse> {
+    return this.service.getSidebarCounts();
   }
 
   @Get('/top-events')

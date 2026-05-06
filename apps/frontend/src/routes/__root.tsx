@@ -17,7 +17,8 @@ import {esUY} from '@clerk/localizations';
 import {Toaster} from '~/components/ui/sonner';
 import {WhatsAppOptInModal} from '~/components/WhatsAppOptInModal';
 import {PwaInstallBanner} from '~/components/PwaInstallBanner';
-import {VITE_APP_ENV} from '~/config/env';
+import {VITE_APP_ENV, VITE_GTM_ID} from '~/config/env';
+import {setAnalyticsUser} from '~/lib/analytics';
 import {StickyBarProvider} from '~/contexts';
 import {createServerFn} from '@tanstack/react-start';
 import {auth} from '@clerk/tanstack-react-start/server';
@@ -83,10 +84,29 @@ function PostHogIdentify() {
         email: user.primaryEmailAddress?.emailAddress,
         name: user.fullName,
       });
+      setAnalyticsUser(user.id);
     } else {
       posthog.reset();
+      setAnalyticsUser(null);
     }
   }, [isLoaded, isSignedIn, user]);
+
+  return null;
+}
+
+function QueryCacheReset() {
+  const {user, isLoaded} = useUser();
+  const queryClient = Route.useRouteContext({select: s => s.queryClient});
+  const prevUserId = React.useRef<string | null | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (!isLoaded) return;
+    const currentId = user?.id ?? null;
+    if (prevUserId.current !== undefined && prevUserId.current !== currentId) {
+      queryClient.clear();
+    }
+    prevUserId.current = currentId;
+  }, [isLoaded, user?.id, queryClient]);
 
   return null;
 }
@@ -286,6 +306,15 @@ function RootDocument({children}: {children: React.ReactNode}) {
         <HeadContent />
       </head>
       <body>
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${VITE_GTM_ID}`}
+            height='0'
+            width='0'
+            style={{display: 'none', visibility: 'hidden'}}
+            title='Google Tag Manager'
+          />
+        </noscript>
         <PostHogProvider
           apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN}
           options={{
@@ -316,6 +345,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
             }}
           >
             <PostHogIdentify />
+            <QueryCacheReset />
             <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
               <ThemeColorSync />
               <StickyBarProvider>

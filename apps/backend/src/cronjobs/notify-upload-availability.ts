@@ -8,7 +8,10 @@ import {
 } from '~/repositories';
 import {notifyDocumentReminder} from '~/services/notifications/helpers';
 import {logger} from '~/utils';
-import {getNotificationMilestone} from '~/utils/document-reminder';
+import {
+  parseQrAvailabilityTiming,
+  resolveDocumentReminderMilestone,
+} from '~/utils/document-reminder';
 import {getTimezoneForCountry} from '@revendiste/shared';
 
 // Create shared repositories and services
@@ -25,33 +28,39 @@ const notificationService = new NotificationService(
  * Used by production EventBridge + ECS RunTask
  *
  * Logic:
+ * - Targets listing tickets without a primary document (sold or unsold), same milestone rules.
  * - For events WITHOUT qrAvailabilityTiming: send at any milestone (72h, 48h, 24h, 12h, 6h, 3h, 2h, 1h)
  * - For events WITH qrAvailabilityTiming: only send at milestones within the QR availability window
  */
 export async function runNotifyUploadAvailability() {
+  const job = 'notify-upload-availability';
   try {
-    logger.info('Starting scheduled notification of upload availability...');
+    const startedAt = new Date();
+    logger.info(`${job}: job start`, {
+      startedAtIso: startedAt.toISOString(),
+    });
 
     // Get tickets at milestone times (repository handles qrAvailability filtering)
     const tickets =
       await listingTicketsRepository.getTicketsEnteringUploadWindow();
 
     if (tickets.length === 0) {
-      logger.debug('No tickets at milestone times needing notifications');
+      logger.info(`${job}: no tickets matched milestone windows (see prior repo logs for DB candidates and per-ticket diagnostics)`);
       return;
     }
 
-    logger.info('Found tickets needing upload reminders', {
+    logger.info(`${job}: found tickets past milestone filter`, {
       count: tickets.length,
     });
 
-    // Group tickets by seller and listing to send one notification per seller per listing
+    // One notification per listing (not per ticket): same seller + listingId → one reminder, ticketCount = tickets missing docs
     const ticketsBySellerAndListing = new Map<
       string,
       {
         sellerUserId: string;
         listingId: string;
         venueCountry: string | null;
+        qrAvailabilityTiming: string | null;
         tickets: Array<{
           ticketId: string;
           eventName: string;
@@ -67,6 +76,7 @@ export async function runNotifyUploadAvailability() {
           sellerUserId: ticket.sellerUserId,
           listingId: ticket.listingId,
           venueCountry: ticket.venueCountry,
+          qrAvailabilityTiming: ticket.qrAvailabilityTiming ?? null,
           tickets: [],
         });
       }
@@ -77,8 +87,7 @@ export async function runNotifyUploadAvailability() {
       });
     }
 
-    // Send notifications for each seller/listing group
-    let notificationCount = 0;
+    let listingsNotified = 0;
     const now = new Date();
 
     for (const [, group] of ticketsBySellerAndListing.entries()) {
@@ -90,11 +99,26 @@ export async function runNotifyUploadAvailability() {
         (firstTicket.eventStartDate.getTime() - now.getTime()) /
         (1000 * 60 * 60);
 
-      // Get the current milestone we're at
-      const milestone = getNotificationMilestone(hoursUntilEvent);
+      const qrAvailabilityHours = parseQrAvailabilityTiming(
+        group.qrAvailabilityTiming,
+      );
+      const milestone = resolveDocumentReminderMilestone(
+        hoursUntilEvent,
+        qrAvailabilityHours,
+      );
 
       if (milestone === null) {
-        // Not at a milestone (shouldn't happen since repository already filtered)
+        logger.warn(`${job}: milestone null after repo filter (unexpected)`, {
+          sellerUserId,
+          listingId,
+          hoursUntilEvent:
+            Math.round(
+              ((firstTicket.eventStartDate.getTime() - now.getTime()) /
+                (1000 * 60 * 60)) *
+                1000,
+            ) / 1000,
+          qrAvailabilityHours,
+        });
         continue;
       }
 
@@ -107,7 +131,7 @@ export async function runNotifyUploadAvailability() {
         );
 
       if (alreadySent) {
-        logger.debug('Notification already sent for this milestone', {
+        logger.info(`${job}: skipping — document reminder already sent for milestone`, {
           sellerUserId,
           listingId,
           milestone,
@@ -115,7 +139,7 @@ export async function runNotifyUploadAvailability() {
         continue;
       }
 
-      // Send notification (fire-and-forget)
+      // One createNotification per listing (channels send in-process unless helper opts into job deferral)
       notifyDocumentReminder(notificationService, {
         sellerUserId,
         listingId,
@@ -133,13 +157,21 @@ export async function runNotifyUploadAvailability() {
         });
       });
 
-      notificationCount++;
+      logger.info(`${job}: document reminder dispatched (per listing)`, {
+        sellerUserId,
+        listingId,
+        milestone,
+        ticketsWithoutDocInListing: ticketGroup.length,
+      });
+
+      listingsNotified++;
     }
 
-    logger.info('Upload availability notifications sent', {
-      ticketsFound: tickets.length,
-      groupsProcessed: ticketsBySellerAndListing.size,
-      notificationsSent: notificationCount,
+    logger.info(`${job}: job finished`, {
+      ticketsScanned: tickets.length,
+      distinctListingsProcessed: ticketsBySellerAndListing.size,
+      documentRemindersDispatched: listingsNotified,
+      durationMs: Date.now() - startedAt.getTime(),
     });
   } catch (error) {
     logger.error('Error in scheduled upload availability notification:', error);

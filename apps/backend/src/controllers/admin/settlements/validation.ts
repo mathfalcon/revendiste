@@ -2,12 +2,7 @@ import {z} from 'zod';
 import {PaginationSchema} from '~/middleware';
 import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 
-const PaymentProviderEnum = z.enum([
-  'dlocal',
-  'mercadopago',
-  'paypal',
-  'stripe',
-]);
+const PaymentProviderEnum = z.enum(['dlocal', 'mercadopago', 'stripe']);
 
 export const AdminSettlementsQuerySchema = PaginationSchema.extend({
   status: z.enum(['pending', 'completed', 'failed']).optional(),

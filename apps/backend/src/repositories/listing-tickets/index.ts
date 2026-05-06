@@ -5,7 +5,9 @@ import {
   shouldSendDocumentReminder,
   parseQrAvailabilityTiming,
   calculateHoursUntilEvent,
+  getDocumentReminderMilestoneDiagnostics,
 } from '~/utils/document-reminder';
+import {logger} from '~/utils';
 
 export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepository> {
   withTransaction(trx: Kysely<DB>): ListingTicketsRepository {
@@ -249,12 +251,15 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
   }
 
   /**
-   * Get sold tickets that need document upload reminders.
+   * Get listing tickets that need document upload reminders (sold or not).
    *
    * Returns tickets that:
-   * - Are sold and don't have documents yet
+   * - Belong to a non-deleted listing and have no primary ticket document yet
    * - Event hasn't started yet
    * - Are at a milestone time (72h, 48h, 24h, 12h, 6h, 3h, 2h, 1h ±30min before event)
+   *
+   * Unsold tickets are included so sellers are nudged to upload before sale, consistent
+   * with listing flows that require upload when already inside the upload window.
    *
    * For events WITH qrAvailabilityTiming:
    * - Only include if we're within the QR availability window (milestone <= qrAvailabilityHours)
@@ -290,7 +295,6 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'events.qrAvailabilityTiming',
         'eventVenues.country as venueCountry',
       ])
-      .where('listingTickets.soldAt', 'is not', null) // Sold tickets only
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
       .where('ticketDocuments.id', 'is', null) // No documents yet
@@ -298,8 +302,22 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('events.eventStartDate', '>', now) // Event hasn't started yet
       .execute()
       .then(tickets => {
-        // Filter tickets that are at milestone times using utility functions
-        return tickets.filter(ticket => {
+        const job = 'notify-upload-availability';
+        logger.info(`${job}: DB query returned candidate rows (no primary doc, future event; sold or unsold)`, {
+          nowIso: now.toISOString(),
+          candidateCount: tickets.length,
+        });
+
+        const maxDetailLogs = 50;
+        const ticketsForDetail =
+          tickets.length > maxDetailLogs ? tickets.slice(0, maxDetailLogs) : tickets;
+        if (tickets.length > maxDetailLogs) {
+          logger.warn(`${job}: logging diagnostics for first ${maxDetailLogs} candidates only`, {
+            totalCandidates: tickets.length,
+          });
+        }
+
+        const matched = tickets.filter(ticket => {
           if (!ticket.eventStartDate) {
             return false;
           }
@@ -310,11 +328,40 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
             ticket.qrAvailabilityTiming,
           );
 
-          return shouldSendDocumentReminder(
+          const passes = shouldSendDocumentReminder(
             hoursUntilEvent,
             qrAvailabilityHours,
           );
+
+          const isDetailRow = ticketsForDetail.some(
+            r => r.ticketId === ticket.ticketId,
+          );
+          if (isDetailRow) {
+            const diagnostics = getDocumentReminderMilestoneDiagnostics(
+              hoursUntilEvent,
+              qrAvailabilityHours,
+            );
+            logger.info(`${job}: candidate ticket milestone evaluation`, {
+              ticketId: ticket.ticketId,
+              listingId: ticket.listingId,
+              sellerUserId: ticket.sellerUserId,
+              eventName: ticket.eventName,
+              eventStartIso: eventStartDate.toISOString(),
+              qrAvailabilityTimingRaw: ticket.qrAvailabilityTiming,
+              passesMilestoneFilter: passes,
+              ...diagnostics,
+            });
+          }
+
+          return passes;
         });
+
+        logger.info(`${job}: after milestone filter`, {
+          matchedCount: matched.length,
+          skippedCount: tickets.length - matched.length,
+        });
+
+        return matched;
       });
   }
 

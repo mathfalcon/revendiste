@@ -209,7 +209,6 @@ export class PaymentWebhookAdapter {
         dlocal: this.normalizeDLocalPayment.bind(this),
         // Future providers:
         // stripe: this.normalizeStripePayment.bind(this),
-        // paypal: this.normalizePayPalPayment.bind(this),
       };
 
     const normalizer = normalizers[this.provider.name];

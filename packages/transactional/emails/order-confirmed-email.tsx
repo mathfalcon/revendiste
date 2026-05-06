@@ -35,6 +35,9 @@ export interface OrderConfirmedEmailProps {
   items: OrderItem[];
   orderUrl: string;
   appBaseUrl?: string;
+  /** Whole-number percentages for labels (from PLATFORM_COMMISSION_RATE / VAT_RATE at send time). */
+  platformCommissionPercentage: number;
+  vatPercentage: number;
 }
 
 function formatDate(dateString?: string, timeZone?: string): string {
@@ -73,6 +76,8 @@ export const OrderConfirmedEmail = ({
   items,
   orderUrl,
   appBaseUrl,
+  platformCommissionPercentage,
+  vatPercentage,
 }: OrderConfirmedEmailProps) => (
   <BaseEmail
     title="¡Pago confirmado!"
@@ -257,10 +262,12 @@ export const OrderConfirmedEmail = ({
         Subtotal: {formatPrice(subtotalAmount, currency)}
       </Text>
       <Text className="text-sm text-muted-foreground m-0 mb-1">
-        Comisión de plataforma (6%): {formatPrice(platformCommission, currency)}
+        Comisión de plataforma ({platformCommissionPercentage}%):{' '}
+        {formatPrice(platformCommission, currency)}
       </Text>
       <Text className="text-sm text-muted-foreground m-0 mb-3">
-        IVA sobre comisión (22%): {formatPrice(vatOnCommission, currency)}
+        IVA sobre comisión ({vatPercentage}%):{' '}
+        {formatPrice(vatOnCommission, currency)}
       </Text>
       <Hr className="border-border my-3" />
       <Text className="text-lg font-bold text-foreground m-0">
@@ -322,6 +329,8 @@ OrderConfirmedEmail.PreviewProps = {
     },
   ],
   orderUrl: 'https://revendiste.com/cuenta/tickets?orderId=123',
+  platformCommissionPercentage: 6,
+  vatPercentage: 22,
 } as OrderConfirmedEmailProps;
 
 export default OrderConfirmedEmail;

@@ -2,7 +2,7 @@ import {useRef, useState, useEffect, useCallback} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {useDebounceCallback, useOnClickOutside} from 'usehooks-ts';
 import {getEventBySearchQuery} from '~/lib';
-import posthog from 'posthog-js';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {Command, CommandList, CommandItem, CommandInput} from '../ui/command';
 import {Link, useNavigate} from '@tanstack/react-router';
 import {TextEllipsis} from '../ui/text-ellipsis';
@@ -24,7 +24,7 @@ export const EventSearchModal = ({
   const debouncedSetSearchValue = useDebounceCallback((value: string) => {
     setDebouncedSearchValue(value);
     if (value.trim()) {
-      posthog.capture('search_performed', {query: value.trim()});
+      trackEvent(ANALYTICS_EVENTS.SEARCH_PERFORMED, {query: value.trim()});
     }
   }, 500);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +85,7 @@ export const EventSearchModal = ({
 
   const handleEventSelect = async (eventSlug: string) => {
     isSelectingRef.current = true;
-    posthog.capture('search_result_clicked', {
+    trackEvent(ANALYTICS_EVENTS.SEARCH_RESULT_CLICKED, {
       query: debouncedSearchValue,
       event_slug: eventSlug,
       result_count: events.length,

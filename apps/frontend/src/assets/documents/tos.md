@@ -2,6 +2,14 @@
 
 **Última actualización:** 30 de Abril de 2026
 
+<!--
+  MAINTENANCE (comisión de plataforma): Los porcentajes y montos de ejemplo en este documento
+  deben alinearse con la comisión vigente. La aplicación usa las variables de entorno
+  PLATFORM_COMMISSION_RATE (backend) y VITE_PLATFORM_COMMISSION_RATE (frontend); al cambiarlas,
+  actualizá manualmente las secciones que mencionan comisión e IVA (p. ej. 8.2, 9 y 9.1).
+  Ver: apps/backend/docs/platform-commission-rate.md
+-->
+
 ---
 
 # PARTE I: Términos y Condiciones para Compradores
@@ -567,7 +575,7 @@ El Vendedor autoriza a Revendiste a retener el dinero pagado por el Comprador ha
 
 ### 8.1. Plazo de Retención
 
-Revendiste retendrá los fondos correspondientes al Vendedor por un plazo de hasta **10 (diez) días hábiles posteriores a la fecha del Evento**.
+Revendiste retendrá los fondos correspondientes al Vendedor por un plazo de hasta **7 (diez) días hábiles posteriores a la fecha del Evento**.
 
 ### 8.2. Condiciones para la Liquidación
 
@@ -583,7 +591,7 @@ Si existe un reclamo o contracargo pendiente, Revendiste podrá retener los fond
 
 ### 8.4. Forma de Liquidación
 
-La liquidación se realizará mediante transferencia bancaria a través del procesador de pagos **dLocal**, conforme los datos declarados por el Vendedor en su perfil de usuario. Los plazos efectivos de acreditación dependerán del banco receptor y de los tiempos operativos de dLocal.
+La liquidación se realizará mediante transferencia a la cuenta bancaria en Uruguay declarada por el Vendedor en su perfil de usuario. El Vendedor podrá elegir su método de liquidación preferido al configurar su perfil.
 
 ### 8.5. Monto a Liquidar
 
@@ -814,7 +822,7 @@ En protección del consumidor, **el precio máximo de transferencia está limita
 **Esta regla existe para:**
 
 - **Proteger a los compradores** de sobreprecios excesivos y especulación.
-- **Permitir a los publicadores recuperar su inversión**, incluyendo los costos de adquisición (comisiones de plataformas originales, típicamente 10-12%).
+- **Permitir a los publicadores recuperar su inversión**, incluyendo los costos de adquisición (comisiones de plataformas originales, típicamente 10-15%).
 - **Evitar la generación de ganancias** a través de la reventa de entradas.
 
 Esta regla es obligatoria para todas las operaciones en la Plataforma. Exceder el precio máximo permitido resultará en la cancelación de publicaciones, operaciones y/o cuentas.

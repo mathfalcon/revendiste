@@ -168,9 +168,9 @@ app.use(errorHandler);
 app.listen(PORT, '0.0.0.0', () => {
   logger.info(`🚀 API listening on http://localhost:${PORT}/api`);
 
-  // Start scheduled jobs only in development/local environments
+  // Start scheduled jobs only in local environments
   // In production, jobs run via EventBridge + ECS RunTask using scripts/run-job.ts
-  if (NODE_ENV === 'local' || NODE_ENV === 'development') {
+  if (NODE_ENV === 'local') {
     logger.info('Starting cronjob schedulers (dev/local mode)...');
     startSyncPaymentsAndExpireOrdersJob();
     startNotifyUploadAvailabilityJob();

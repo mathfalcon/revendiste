@@ -52,7 +52,7 @@ export interface CreatePaymentResult {
  */
 export interface PaymentProvider {
   /**
-   * Unique identifier for this provider (e.g., 'dlocal', 'stripe', 'paypal')
+   * Unique identifier for this provider (e.g., 'dlocal', 'mercadopago')
    */
   readonly name: PaymentProviderEnum;
 

@@ -1,7 +1,12 @@
 /**
  * OrdersService tests with mocked repositories.
  */
+jest.mock('~/services/orders/reservation-expiry', () => ({
+  expireOrderWithoutPaymentLink: jest.fn(),
+}));
+
 import {OrdersService} from '~/services/orders';
+import {expireOrderWithoutPaymentLink} from '~/services/orders/reservation-expiry';
 import type {
   OrdersRepository,
   OrderItemsRepository,
@@ -9,10 +14,17 @@ import type {
   EventTicketWavesRepository,
   ListingTicketsRepository,
   OrderTicketReservationsRepository,
+  PaymentsRepository,
 } from '~/repositories';
 import type {PaymentSyncService} from '~/services/payments/sync';
+import type {NotificationService} from '~/services/notifications';
 import {ValidationError, NotFoundError} from '~/errors';
 import {ORDER_ERROR_MESSAGES} from '~/constants/error-messages';
+
+const mockExpireOrderWithoutPaymentLink =
+  expireOrderWithoutPaymentLink as jest.MockedFunction<
+    typeof expireOrderWithoutPaymentLink
+  >;
 
 describe('OrdersService', () => {
   let service: OrdersService;
@@ -23,8 +35,12 @@ describe('OrdersService', () => {
   let mockListingTicketsRepository: jest.Mocked<ListingTicketsRepository>;
   let mockOrderTicketReservationsRepository: jest.Mocked<OrderTicketReservationsRepository>;
   let mockPaymentSyncService: jest.Mocked<PaymentSyncService>;
+  let mockPaymentsRepository: jest.Mocked<PaymentsRepository>;
+  let mockNotificationService: jest.Mocked<NotificationService>;
 
   beforeEach(() => {
+    mockExpireOrderWithoutPaymentLink.mockReset();
+    mockExpireOrderWithoutPaymentLink.mockResolvedValue(false);
     mockOrdersRepository = {
       getPendingOrderByUserAndEvent: jest.fn(),
       getByIdWithItems: jest.fn(),
@@ -93,6 +109,17 @@ describe('OrdersService', () => {
       syncPendingOrderPayment: jest.fn(),
     } as unknown as jest.Mocked<PaymentSyncService>;
 
+    mockPaymentsRepository = {
+      getAllByOrderId: jest.fn(),
+      withTransaction: jest.fn(),
+      getDb: jest.fn(),
+    } as unknown as jest.Mocked<PaymentsRepository>;
+    mockPaymentsRepository.withTransaction.mockReturnValue(mockPaymentsRepository);
+
+    mockNotificationService = {
+      createNotification: jest.fn(),
+    } as unknown as jest.Mocked<NotificationService>;
+
     service = new OrdersService(
       mockOrdersRepository,
       mockOrderItemsRepository,
@@ -101,6 +128,8 @@ describe('OrdersService', () => {
       mockListingTicketsRepository,
       mockOrderTicketReservationsRepository,
       mockPaymentSyncService,
+      mockPaymentsRepository,
+      mockNotificationService,
     );
   });
 
@@ -262,6 +291,51 @@ describe('OrdersService', () => {
       ).rejects.toMatchObject({
         message: ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND,
       });
+    });
+
+    it('does not expire when reservation is still valid', async () => {
+      const future = new Date(Date.now() + 60_000);
+      mockOrdersRepository.getByIdWithItems.mockResolvedValue({
+        id: 'order-1',
+        userId: 'user-1',
+        status: 'pending',
+        reservationExpiresAt: future,
+      } as any);
+
+      await service.getOrderById('order-1', 'user-1');
+
+      expect(mockExpireOrderWithoutPaymentLink).not.toHaveBeenCalled();
+    });
+
+    it('refetches after inline expiry when reservation passed and helper expires', async () => {
+      mockExpireOrderWithoutPaymentLink.mockResolvedValue(true);
+      const past = new Date(Date.now() - 60_000);
+      const pendingOrder = {
+        id: 'order-1',
+        userId: 'user-1',
+        status: 'pending',
+        reservationExpiresAt: past,
+        event: {name: 'E', slug: 'e'},
+      };
+      const expiredOrder = {...pendingOrder, status: 'expired'};
+      mockOrdersRepository.getByIdWithItems
+        .mockResolvedValueOnce(pendingOrder as any)
+        .mockResolvedValueOnce(pendingOrder as any)
+        .mockResolvedValueOnce(expiredOrder as any);
+
+      const result = await service.getOrderById('order-1', 'user-1');
+
+      expect(result.status).toBe('expired');
+      expect(mockExpireOrderWithoutPaymentLink).toHaveBeenCalledWith(
+        'order-1',
+        expect.objectContaining({
+          ordersRepository: mockOrdersRepository,
+          orderTicketReservationsRepository:
+            mockOrderTicketReservationsRepository,
+          paymentsRepository: mockPaymentsRepository,
+          notificationService: mockNotificationService,
+        }),
+      );
     });
   });
 });

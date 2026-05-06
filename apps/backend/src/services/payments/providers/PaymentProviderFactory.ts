@@ -15,8 +15,6 @@ export function getPaymentProvider(
     // Future providers:
     // case 'stripe':
     //   return new StripeService();
-    // case 'paypal':
-    //   return new PayPalService();
     default:
       throw new Error(`Unknown payment provider: ${providerName}`);
   }

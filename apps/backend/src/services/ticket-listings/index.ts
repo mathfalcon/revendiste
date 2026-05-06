@@ -259,6 +259,43 @@ export class TicketListingsService {
     return createdListings;
   }
 
+  private enrichListingRow(
+    listing: Awaited<
+      ReturnType<
+        TicketListingsRepository['getListingsWithTicketsByUserId']
+      >
+    >[number],
+  ) {
+    const eventStartDate = new Date(listing.event.eventStartDate);
+    const eventEndDate = new Date(listing.event.eventEndDate);
+    const platform = listing.event.platform;
+    const qrAvailabilityTiming = listing.event.qrAvailabilityTiming || null;
+
+    const enrichedTickets = listing.tickets.map(ticket => {
+      const hasDocument = !!ticket.document;
+      const uploadAvailability = canUploadDocumentForPlatform(
+        platform,
+        eventStartDate,
+        eventEndDate,
+        hasDocument,
+        qrAvailabilityTiming,
+      );
+
+      return {
+        ...ticket,
+        hasDocument,
+        canUploadDocument: uploadAvailability.canUpload,
+        uploadUnavailableReason: uploadAvailability.reason,
+        uploadAvailableAt: uploadAvailability.uploadAvailableAt?.toISOString(),
+      };
+    });
+
+    return {
+      ...listing,
+      tickets: enrichedTickets,
+    };
+  }
+
   async getUserListingsWithTickets(
     userId: string,
     pagination: PaginationOptions,
@@ -273,39 +310,28 @@ export class TicketListingsService {
 
     logger.info(`Retrieved ${listings.length} listings for user ${userId}`);
 
-    // Enrich each ticket with upload availability based on QR availability timing
-    const enrichedListings = listings.map(listing => {
-      const eventStartDate = new Date(listing.event.eventStartDate);
-      const eventEndDate = new Date(listing.event.eventEndDate);
-      const platform = listing.event.platform;
-      const qrAvailabilityTiming = listing.event.qrAvailabilityTiming || null;
-
-      const enrichedTickets = listing.tickets.map(ticket => {
-        const hasDocument = !!ticket.document;
-        const uploadAvailability = canUploadDocumentForPlatform(
-          platform,
-          eventStartDate,
-          eventEndDate,
-          hasDocument,
-          qrAvailabilityTiming,
-        );
-
-        return {
-          ...ticket,
-          hasDocument,
-          canUploadDocument: uploadAvailability.canUpload,
-          uploadUnavailableReason: uploadAvailability.reason,
-          uploadAvailableAt: uploadAvailability.uploadAvailableAt?.toISOString(),
-        };
-      });
-
-      return {
-        ...listing,
-        tickets: enrichedTickets,
-      };
-    });
+    const enrichedListings = listings.map(listing =>
+      this.enrichListingRow(listing),
+    );
 
     return createPaginatedResponse(enrichedListings, total, pagination);
+  }
+
+  /**
+   * One seller listing by id (full ticket rows + upload flags). 404 if not owned or missing.
+   */
+  async getUserListingWithTicketsById(userId: string, listingId: string) {
+    const listing =
+      await this.ticketListingsRepository.getListingWithTicketsByIdForPublisher(
+        listingId,
+        userId,
+      );
+
+    if (!listing) {
+      throw new NotFoundError(TICKET_LISTING_ERROR_MESSAGES.LISTING_NOT_FOUND);
+    }
+
+    return this.enrichListingRow(listing);
   }
 
   /**

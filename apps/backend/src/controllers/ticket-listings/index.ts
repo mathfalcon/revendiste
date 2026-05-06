@@ -59,6 +59,10 @@ type GetUserListingsResponse = Awaited<ReturnType<
   TicketListingsService['getUserListingsWithTickets']
 >>;
 
+type GetMyListingByIdResponse = Awaited<
+  ReturnType<TicketListingsService['getUserListingWithTicketsById']>
+>;
+
 type UploadDocumentResponse = Awaited<
   ReturnType<TicketDocumentService['uploadTicketDocument']>
 >;
@@ -194,6 +198,20 @@ export class TicketListingsController {
     return this.service.getUserListingsWithTickets(
       request.user.id,
       request.pagination!,
+    );
+  }
+
+  @Get('/my-listings/{listingId}')
+  @Middlewares(requireAuthMiddleware)
+  @Response<NotFoundError>(404, 'Listing not found')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  public async getMyListingById(
+    @Request() request: express.Request,
+    @Path() listingId: string,
+  ): Promise<GetMyListingByIdResponse> {
+    return this.service.getUserListingWithTicketsById(
+      request.user.id,
+      listingId,
     );
   }
 

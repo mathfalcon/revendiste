@@ -1,33 +1,76 @@
 import {PayoutMethodsRepository} from '~/repositories';
 import {NotFoundError, ValidationError} from '~/errors';
 import {PAYOUT_ERROR_MESSAGES} from '~/constants/error-messages';
+import {isDLocalGoPayoutsEnabled} from '~/lib/feature-flags';
 import {
   UruguayanBankPayoutMethodSchema,
-  PayPalPayoutMethodSchema,
-  type UruguayanBankMetadata,
-  type PayPalMetadata,
+  ArgentinianBankPayoutMethodSchema,
+  type EventTicketCurrency,
   type JsonValue,
+  type PayoutType,
 } from '@revendiste/shared';
 import {logger} from '~/utils';
-import type {EventTicketCurrency} from '@revendiste/shared';
 
-interface AddPayoutMethodParams {
+type UruguayanAdd = {
   userId: string;
-  payoutType: 'uruguayan_bank' | 'paypal';
+  payoutType: 'uruguayan_bank';
   accountHolderName: string;
   accountHolderSurname: string;
   currency: EventTicketCurrency;
-  metadata: UruguayanBankMetadata | PayPalMetadata;
+  metadata: unknown;
   isDefault?: boolean;
-}
+};
+
+type ArgentinianAdd = {
+  userId: string;
+  payoutType: 'argentinian_bank';
+  accountHolderName: string;
+  accountHolderSurname: string;
+  currency: EventTicketCurrency;
+  metadata: unknown;
+  isDefault?: boolean;
+};
+
+type AddPayoutMethodParams = UruguayanAdd | ArgentinianAdd;
 
 interface UpdatePayoutMethodParams {
   accountHolderName?: string;
   accountHolderSurname?: string;
   currency?: EventTicketCurrency;
-  // metadata is validated in the service layer using the existing payout method's payoutType
   metadata?: unknown;
   isDefault?: boolean;
+}
+
+function validatePayoutMethodMetadata(
+  payoutType: PayoutType,
+  metadata: unknown,
+) {
+  if (payoutType === 'uruguayan_bank') {
+    const result = UruguayanBankPayoutMethodSchema.safeParse({
+      type: 'uruguayan_bank',
+      metadata,
+    });
+    if (!result.success) {
+      throw new ValidationError(
+        `Formato de datos de banco (Uruguay) inválido: ${String(result.error)}`,
+      );
+    }
+    return result.data.metadata;
+  }
+  if (payoutType === 'argentinian_bank') {
+    const result = ArgentinianBankPayoutMethodSchema.safeParse({
+      type: 'argentinian_bank',
+      metadata,
+    });
+    if (!result.success) {
+      throw new ValidationError(
+        `Formato de datos de banco (Argentina) inválido: ${String(result.error)}`,
+      );
+    }
+    return result.data.metadata;
+  }
+  const _e: never = payoutType;
+  return _e;
 }
 
 export class PayoutMethodsService {
@@ -35,74 +78,64 @@ export class PayoutMethodsService {
     private readonly payoutMethodsRepository: PayoutMethodsRepository,
   ) {}
 
-  /**
-   * Validates payout method metadata using Zod discriminated union schema
-   */
-  validatePayoutMethodMetadata(
-    payoutType: 'uruguayan_bank' | 'paypal',
-    metadata: unknown,
-  ): UruguayanBankMetadata | PayPalMetadata {
-    if (payoutType === 'uruguayan_bank') {
-      // Validate using the full payout method schema, then extract metadata
-      const result = UruguayanBankPayoutMethodSchema.safeParse({
-        type: 'uruguayan_bank',
-        metadata,
-      });
-      if (!result.success) {
-        throw new ValidationError(
-          `Invalid uruguayan_bank metadata: ${result.error.message}`,
-        );
-      }
-      return result.data.metadata;
-    }
-
-    if (payoutType === 'paypal') {
-      // Validate using the full payout method schema, then extract metadata
-      const result = PayPalPayoutMethodSchema.safeParse({
-        type: 'paypal',
-        metadata,
-      });
-      if (!result.success) {
-        throw new ValidationError(
-          `Invalid paypal metadata: ${result.error.message}`,
-        );
-      }
-      return result.data.metadata;
-    }
-
-    throw new ValidationError(`Unsupported payout type: ${payoutType}`);
-  }
-
-  /**
-   * Add payout method (MVP: only uruguayan_bank)
-   * Validates metadata with Zod
-   */
   async addPayoutMethod(params: AddPayoutMethodParams) {
-    const {userId, payoutType, metadata, isDefault = false, ...rest} = params;
+    if (params.payoutType === 'argentinian_bank') {
+      const enabled = await isDLocalGoPayoutsEnabled(params.userId);
+      if (!enabled) {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.DLOCAL_GO_PAYOUTS_DISABLED,
+        );
+      }
+    }
 
-    // Validate metadata using Zod
-    const validatedMetadata = this.validatePayoutMethodMetadata(
+    const {userId, metadata, isDefault = false, ...rest} = params;
+    const payoutType: PayoutType = params.payoutType;
+
+    const validatedMetadata = validatePayoutMethodMetadata(
       payoutType,
       metadata,
     );
 
-    // Create payout method (don't set isDefault yet - we'll handle it after creation)
+    const currency = (
+      rest as {currency: EventTicketCurrency; accountHolderName: string}
+    ).currency;
+    if (
+      payoutType === 'uruguayan_bank' &&
+      currency !== 'UYU' &&
+      currency !== 'USD'
+    ) {
+      throw new ValidationError('La moneda debe ser UYU o USD');
+    }
+    if (
+      payoutType === 'argentinian_bank' &&
+      currency !== 'ARS' &&
+      currency !== 'USD'
+    ) {
+      throw new ValidationError('La moneda debe ser ARS o USD');
+    }
+
+    const accountHolderName = (
+      rest as {accountHolderName: string; accountHolderSurname: string}
+    ).accountHolderName;
+    const accountHolderSurname = (
+      rest as {accountHolderName: string; accountHolderSurname: string}
+    ).accountHolderSurname;
+
     const payoutMethod = await this.payoutMethodsRepository.create({
       userId,
       payoutType,
-      ...rest,
-      isDefault: false, // Always create as non-default first
+      accountHolderName,
+      accountHolderSurname,
+      currency,
+      isDefault: false,
       metadata: validatedMetadata as unknown as JsonValue,
     });
 
-    // If setting as default, set it as default after creation
     if (isDefault) {
       await this.payoutMethodsRepository.setDefault(userId, payoutMethod.id);
     } else {
-      // If this is the first payout method, set it as default automatically
-      const existingMethods = await this.payoutMethodsRepository.getByUserId(
-        userId,
-      );
+      const existingMethods =
+        await this.payoutMethodsRepository.getByUserId(userId);
       if (existingMethods.length === 1) {
         await this.payoutMethodsRepository.setDefault(userId, payoutMethod.id);
       }
@@ -117,17 +150,13 @@ export class PayoutMethodsService {
     return payoutMethod;
   }
 
-  /**
-   * Update payout method
-   */
   async updatePayoutMethod(
     payoutMethodId: string,
     userId: string,
     updates: UpdatePayoutMethodParams,
   ) {
-    const payoutMethod = await this.payoutMethodsRepository.getById(
-      payoutMethodId,
-    );
+    const payoutMethod =
+      await this.payoutMethodsRepository.getById(payoutMethodId);
     if (!payoutMethod) {
       throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_METHOD_NOT_FOUND);
     }
@@ -136,27 +165,44 @@ export class PayoutMethodsService {
       throw new ValidationError(PAYOUT_ERROR_MESSAGES.UNAUTHORIZED_ACCESS);
     }
 
-    // Validate metadata if provided
+    if (payoutMethod.payoutType === 'argentinian_bank') {
+      const enabled = await isDLocalGoPayoutsEnabled(userId);
+      if (!enabled) {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.DLOCAL_GO_PAYOUTS_DISABLED,
+        );
+      }
+    }
+
+    if (updates.currency) {
+      if (payoutMethod.payoutType === 'uruguayan_bank') {
+        if (updates.currency !== 'UYU' && updates.currency !== 'USD') {
+          throw new ValidationError('La moneda debe ser UYU o USD');
+        }
+      } else {
+        if (updates.currency !== 'ARS' && updates.currency !== 'USD') {
+          throw new ValidationError('La moneda debe ser ARS o USD');
+        }
+      }
+    }
+
     let validatedMetadata: JsonValue | undefined;
     if (updates.metadata) {
-      const validated = this.validatePayoutMethodMetadata(
+      const validated = validatePayoutMethodMetadata(
         payoutMethod.payoutType,
         updates.metadata,
       );
       validatedMetadata = validated as unknown as JsonValue;
     }
 
-    // Extract isDefault from updates to handle separately
     const {isDefault, ...updateFields} = updates;
 
-    // Update payout method (don't set isDefault yet - we'll handle it after update)
     const updated = await this.payoutMethodsRepository.update(payoutMethodId, {
       ...updateFields,
       metadata: validatedMetadata,
-      isDefault: false, // Always update as non-default first
+      isDefault: false,
     });
 
-    // If setting as default, set it as default after update
     if (isDefault) {
       await this.payoutMethodsRepository.setDefault(userId, payoutMethodId);
     }
@@ -169,13 +215,9 @@ export class PayoutMethodsService {
     return updated;
   }
 
-  /**
-   * Delete payout method
-   */
   async deletePayoutMethod(payoutMethodId: string, userId: string) {
-    const payoutMethod = await this.payoutMethodsRepository.getById(
-      payoutMethodId,
-    );
+    const payoutMethod =
+      await this.payoutMethodsRepository.getById(payoutMethodId);
     if (!payoutMethod) {
       throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_METHOD_NOT_FOUND);
     }
@@ -192,16 +234,10 @@ export class PayoutMethodsService {
     });
   }
 
-  /**
-   * Get payout methods for user
-   */
   async getPayoutMethods(userId: string) {
     return await this.payoutMethodsRepository.getByUserId(userId);
   }
 
-  /**
-   * Get default payout method for user
-   */
   async getDefaultPayoutMethod(userId: string) {
     return await this.payoutMethodsRepository.getDefault(userId);
   }

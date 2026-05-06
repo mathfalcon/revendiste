@@ -3,28 +3,50 @@ import {
   PayoutMethodsRepository,
   SellerEarningsRepository,
   PayoutEventsRepository,
+  UsersRepository,
 } from '~/repositories';
 import {PayoutDocumentsService} from '~/services/payout-documents';
 import {NotFoundError, ValidationError} from '~/errors';
 import {PAYOUT_ERROR_MESSAGES} from '~/constants/error-messages';
-import {PAYOUT_MINIMUM_UYU, PAYOUT_MINIMUM_USD} from '~/config/env';
+import {
+  PAYOUT_MINIMUM_ARS,
+  PAYOUT_MINIMUM_UYU,
+  PAYOUT_MINIMUM_USD,
+  PAYOUT_FX_SPREAD_PERCENT,
+} from '~/config/env';
 import {logger} from '~/utils';
-import type {EventTicketCurrency, Json, PayoutStatus} from '@revendiste/shared';
-import {PayoutMetadataSchema} from '@revendiste/shared';
+import type {
+  EventTicketCurrency,
+  FxSnapshot,
+  Json,
+  PayoutProvider,
+  PayoutStatus,
+} from '@revendiste/shared';
+import {PayoutMetadataSchema, roundToDecimals} from '@revendiste/shared';
+import {createDLocalPayoutQuote} from '~/services/payouts/providers/dlocal-payouts/client';
+import {isDLocalGoPayoutsEnabled} from '~/lib/feature-flags';
 import type {PaginationOptions} from '~/types/pagination';
-import {ExchangeRateService} from '~/services/exchange-rates';
+import {fetchBrouEbrouVentaRate} from '~/services/exchange-rates/providers/UruguayBankProvider';
 import {NotificationService} from '~/services/notifications';
+import {
+  getPayoutProviderByName,
+  resolvePayoutProviderName,
+} from '~/services/payouts/providers/PayoutProviderRegistry';
+import type {PayoutProviderName} from '~/services/payouts/providers/PayoutProvider.interface';
 import {
   notifyPayoutCompleted,
   notifyPayoutFailed,
   notifyPayoutCancelled,
 } from '~/services/notifications/helpers';
+import {selectPayoutFxStrategy} from '~/services/payouts/fx/selectPayoutFxStrategy';
 
 interface RequestPayoutParams {
   sellerUserId: string;
   payoutMethodId: string;
   listingTicketIds?: string[];
   listingIds?: string[];
+  /** SHA-256 hex of optional client Idempotency-Key header */
+  idempotencyKeyHash?: string | null;
 }
 
 interface PayoutHistoryItem {
@@ -38,9 +60,16 @@ interface PayoutHistoryItem {
   linkedEarnings: Array<{
     id: string;
     listingTicketId: string;
+    listingId: string;
     sellerAmount: string;
     currency: EventTicketCurrency;
     createdAt: Date;
+    eventName: string;
+    eventSlug: string;
+    eventStartDate: Date;
+    eventEndDate: Date;
+    ticketWaveName: string;
+    venueName: string | null;
   }>;
 }
 
@@ -52,6 +81,7 @@ export class PayoutsService {
     private readonly payoutEventsRepository: PayoutEventsRepository,
     private readonly notificationService: NotificationService,
     private readonly payoutDocumentsService: PayoutDocumentsService,
+    private readonly usersRepository?: UsersRepository,
   ) {}
 
   /**
@@ -59,12 +89,31 @@ export class PayoutsService {
    * Validates selected tickets, creates payout, links selected earnings
    */
   async requestPayout(params: RequestPayoutParams) {
-    const {sellerUserId, payoutMethodId, listingTicketIds, listingIds} = params;
-
-    // Validate payout method exists and belongs to seller
-    const payoutMethod = await this.payoutMethodsRepository.getById(
+    const {
+      sellerUserId,
       payoutMethodId,
-    );
+      listingTicketIds,
+      listingIds,
+      idempotencyKeyHash,
+    } = params;
+
+    if (idempotencyKeyHash) {
+      const existing =
+        await this.payoutsRepository.findRecentBySellerAndIdempotencyKeyHash(
+          sellerUserId,
+          idempotencyKeyHash,
+        );
+      if (existing) {
+        const parsed = PayoutMetadataSchema.safeParse(existing.metadata);
+        return {
+          ...existing,
+          fxSnapshot: parsed.success ? (parsed.data.fxSnapshot ?? null) : null,
+        };
+      }
+    }
+
+    const payoutMethod =
+      await this.payoutMethodsRepository.getById(payoutMethodId);
     if (!payoutMethod) {
       throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_METHOD_NOT_FOUND);
     }
@@ -72,7 +121,6 @@ export class PayoutsService {
       throw new ValidationError(PAYOUT_ERROR_MESSAGES.UNAUTHORIZED_ACCESS);
     }
 
-    // Validate at least one selection
     if (
       (!listingTicketIds || listingTicketIds.length === 0) &&
       (!listingIds || listingIds.length === 0)
@@ -80,42 +128,43 @@ export class PayoutsService {
       throw new ValidationError(PAYOUT_ERROR_MESSAGES.NO_EARNINGS_SELECTED);
     }
 
-    // Validate earnings selection
-    const validation =
+    const dlocalGoEnabled = await isDLocalGoPayoutsEnabled(sellerUserId);
+    if (payoutMethod.payoutType === 'argentinian_bank' && !dlocalGoEnabled) {
+      throw new ValidationError(
+        PAYOUT_ERROR_MESSAGES.DLOCAL_GO_PAYOUTS_DISABLED,
+      );
+    }
+
+    const preValidate =
       await this.sellerEarningsRepository.validateEarningsSelection(
         sellerUserId,
         listingTicketIds,
         listingIds,
       );
-
-    if (!validation.valid) {
+    if (!preValidate.valid) {
       throw new ValidationError(
-        validation.error || 'Invalid earnings selection',
+        preValidate.error || 'Invalid earnings selection',
       );
     }
 
-    const {earnings} = validation;
-
-    // Calculate total amount
-    const totalAmount = earnings.reduce(
+    const payoutMethodCurrency = payoutMethod.currency;
+    const usdPrincipal = preValidate.earnings.reduce(
       (sum, e) => sum + Number(e.sellerAmount),
       0,
     );
+    let finalAmount = usdPrincipal;
+    let finalCurrency = preValidate.earnings[0].currency;
 
-    // Determine final amount and currency (may need conversion for PayPal)
-    let finalAmount = totalAmount;
-    let finalCurrency = earnings[0].currency;
-    let conversionInfo = null;
+    if (
+      payoutMethod.payoutType === 'argentinian_bank' &&
+      finalCurrency !== 'USD'
+    ) {
+      throw new ValidationError(
+        PAYOUT_ERROR_MESSAGES.ARGENTINIAN_PAYOUT_REQUIRES_USD_EARNINGS,
+      );
+    }
 
-    // Validate currency compatibility between earnings and payout method
-    // - PayPal (USD) can receive both USD and UYU (UYU will be converted)
-    // - UYU bank account can only receive UYU earnings
-    // - USD bank account can only receive USD earnings
-    const isPayPal = payoutMethod.payoutType === 'paypal';
-    const payoutMethodCurrency = payoutMethod.currency;
-
-    if (!isPayPal) {
-      // For non-PayPal methods, currency must match
+    if (payoutMethod.payoutType === 'uruguayan_bank') {
       if (payoutMethodCurrency === 'UYU' && finalCurrency === 'USD') {
         throw new ValidationError(
           PAYOUT_ERROR_MESSAGES.CURRENCY_MISMATCH_UYU_METHOD_USD_EARNINGS,
@@ -128,101 +177,242 @@ export class PayoutsService {
       }
     }
 
-    // If PayPal method and earnings are in UYU, convert to USD
-    if (isPayPal && finalCurrency === 'UYU') {
-      const exchangeRateService = new ExchangeRateService();
-      const conversion = await exchangeRateService.convertAmount(
-        totalAmount,
-        'UYU',
-        'USD',
-      );
-      finalAmount = conversion.convertedAmount;
-      finalCurrency = 'USD';
-      conversionInfo = {
-        originalAmount: totalAmount,
-        originalCurrency: 'UYU',
-        exchangeRate: conversion.exchangeRate,
-        convertedAt: new Date().toISOString(),
+    let arFxSnapshot: FxSnapshot | undefined;
+    if (
+      payoutMethod.payoutType === 'argentinian_bank' &&
+      payoutMethodCurrency === 'ARS' &&
+      dlocalGoEnabled
+    ) {
+      let quote: Awaited<ReturnType<typeof createDLocalPayoutQuote>>;
+      try {
+        quote = await createDLocalPayoutQuote({
+          country: 'AR',
+          sourceCurrency: 'USD',
+          destinationCurrency: 'ARS',
+          sourceAmount: usdPrincipal,
+        });
+      } catch {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.DLOCAL_PAYOUT_QUOTE_FAILED,
+        );
+      }
+      const dest = quote.details?.destination_amount;
+      if (dest == null || !Number.isFinite(dest)) {
+        throw new ValidationError(
+          PAYOUT_ERROR_MESSAGES.DLOCAL_PAYOUT_QUOTE_FAILED,
+        );
+      }
+      const nowIso = new Date().toISOString();
+      const exp =
+        typeof quote.expiration_date === 'string' && quote.expiration_date
+          ? quote.expiration_date
+          : new Date(Date.now() + 24 * 3_600_000).toISOString();
+      arFxSnapshot = {
+        sourceCurrency: 'USD',
+        sourceAmount: usdPrincipal,
+        destinationCurrency: 'ARS',
+        destinationAmount: dest,
+        providerRate: usdPrincipal > 0 ? dest / usdPrincipal : 0,
+        quoteId: quote.quote_id,
+        quoteExpiresAt: exp,
+        executor: 'dlocal_go',
+        referenceRate: {
+          value: usdPrincipal > 0 ? dest / usdPrincipal : 0,
+          source: 'dlocal_quote_reference',
+          fetchedAt: nowIso,
+        },
       };
-
-      logger.info('Currency conversion for PayPal payout', {
-        originalAmount: totalAmount,
-        originalCurrency: 'UYU',
-        convertedAmount: finalAmount,
-        exchangeRate: conversion.exchangeRate,
-      });
+      finalAmount = dest;
+      finalCurrency = 'ARS' as EventTicketCurrency;
     }
 
-    // Validate minimum threshold in final currency
+    const minimumUyu = PAYOUT_MINIMUM_UYU;
+    const minimumUsd = PAYOUT_MINIMUM_USD;
+    const minimumArs = PAYOUT_MINIMUM_ARS;
     const minimum =
-      finalCurrency === 'UYU' ? PAYOUT_MINIMUM_UYU : PAYOUT_MINIMUM_USD;
+      finalCurrency === 'UYU'
+        ? minimumUyu
+        : finalCurrency === 'ARS'
+          ? minimumArs
+          : minimumUsd;
     if (finalAmount < minimum) {
       throw new ValidationError(
-        PAYOUT_ERROR_MESSAGES.BELOW_MINIMUM_THRESHOLD(finalCurrency, minimum),
+        PAYOUT_ERROR_MESSAGES.BELOW_MINIMUM_THRESHOLD(
+          String(finalCurrency),
+          minimum,
+        ),
       );
     }
 
-    // Create payout and link earnings in transaction
-    return await this.payoutsRepository.executeTransaction(async trx => {
-      const payoutsRepo = this.payoutsRepository.withTransaction(trx);
-      const earningsRepo = this.sellerEarningsRepository.withTransaction(trx);
-      const payoutEventsRepo = this.payoutEventsRepository.withTransaction(trx);
+    const provider = getPayoutProviderByName(
+      resolvePayoutProviderName({
+        payoutType: payoutMethod.payoutType,
+        dlocalGoEnabled,
+      }),
+    );
 
-      // Build payout metadata with conversion info if applicable
-      const payoutMetadata: Json = {
-        listingTicketIds: listingTicketIds || [],
-        listingIds: listingIds || [],
-        ...(conversionInfo && {currencyConversion: conversionInfo}),
-      } as Json;
+    const payout = await this.payoutsRepository.executeTransaction(
+      async trx => {
+        const payoutsRepo = this.payoutsRepository.withTransaction(trx);
+        const earningsRepo = this.sellerEarningsRepository.withTransaction(trx);
+        const payoutEventsRepo =
+          this.payoutEventsRepository.withTransaction(trx);
 
-      // Create payout record
-      const payout = await payoutsRepo.create({
-        sellerUserId,
-        payoutMethodId,
-        status: 'pending',
-        amount: finalAmount,
-        currency: finalCurrency,
-        requestedAt: new Date(),
-        metadata: payoutMetadata,
-      });
+        const validation = await earningsRepo.validateEarningsSelection(
+          sellerUserId,
+          listingTicketIds,
+          listingIds,
+        );
+        if (!validation.valid) {
+          throw new ValidationError(
+            validation.error || 'Invalid earnings selection',
+          );
+        }
+        const earnings = validation.earnings;
 
-      // Link selected earnings to payout
-      await earningsRepo.linkSelectedEarningsToPayout(
-        payout.id,
-        listingTicketIds,
-        listingIds,
-      );
+        const totalInTxn = earnings.reduce(
+          (sum, e) => sum + Number(e.sellerAmount),
+          0,
+        );
+        let finalAmt = totalInTxn;
+        let finalCcy = earnings[0].currency;
+        if (
+          payoutMethod.payoutType === 'argentinian_bank' &&
+          payoutMethodCurrency === 'ARS' &&
+          dlocalGoEnabled &&
+          arFxSnapshot
+        ) {
+          finalAmt = arFxSnapshot.destinationAmount;
+          finalCcy = arFxSnapshot.destinationCurrency as EventTicketCurrency;
+        }
 
-      // Log payout requested event
-      await payoutEventsRepo.create({
-        payoutId: payout.id,
-        eventType: 'payout_requested',
-        eventData: {
+        if (finalAmt < minimum) {
+          throw new ValidationError(
+            PAYOUT_ERROR_MESSAGES.BELOW_MINIMUM_THRESHOLD(
+              String(finalCcy),
+              minimum,
+            ),
+          );
+        }
+
+        let fxSnapshot: FxSnapshot | undefined = arFxSnapshot;
+        let sourceCurrency: EventTicketCurrency = finalCcy;
+        let sourceAmount = finalAmt;
+
+        if (!fxSnapshot && payoutMethod.payoutType === 'uruguayan_bank') {
+          const strategySourceCurrency: EventTicketCurrency =
+            finalCcy === 'USD' && earnings[0].currency === 'USD'
+              ? 'UYU'
+              : earnings[0].currency;
+
+          const strategy = selectPayoutFxStrategy({
+            payoutType: 'uruguayan_bank',
+            providerName: provider.name,
+            destinationCurrency: finalCcy,
+            sourceCurrency: strategySourceCurrency,
+          });
+
+          const snap = await strategy.buildSnapshot({
+            providerName: provider.name,
+            payoutType: 'uruguayan_bank',
+            destinationCurrency: finalCcy,
+            destinationAmount: finalAmt,
+            sourceCurrency: strategySourceCurrency,
+            sourceAmount: 0,
+          });
+          if (snap) {
+            fxSnapshot = snap;
+            sourceCurrency = snap.sourceCurrency as EventTicketCurrency;
+            sourceAmount = snap.sourceAmount;
+          }
+        } else if (fxSnapshot) {
+          sourceCurrency = fxSnapshot.sourceCurrency as EventTicketCurrency;
+          sourceAmount = fxSnapshot.sourceAmount;
+        }
+
+        const baseMeta = PayoutMetadataSchema.parse({
+          listingTicketIds: listingTicketIds || [],
+          listingIds: listingIds || [],
+          ...(fxSnapshot ? {fxSnapshot} : {}),
+        });
+
+        const created = await payoutsRepo.create({
           sellerUserId,
           payoutMethodId,
-          amount: finalAmount,
-          currency: finalCurrency,
-          originalAmount: conversionInfo?.originalAmount,
-          originalCurrency: conversionInfo?.originalCurrency,
-          exchangeRate: conversionInfo?.exchangeRate,
+          payoutProvider: provider.name as PayoutProvider,
+          status: 'pending',
+          amount: finalAmt,
+          currency: finalCcy,
+          requestedAt: new Date(),
+          metadata: baseMeta as unknown as Json,
+          sourceCurrency,
+          sourceAmount,
+          idempotencyKeyHash: idempotencyKeyHash ?? null,
+        });
+
+        const linkResult = await earningsRepo.linkSelectedEarningsToPayout(
+          created.id,
+          listingTicketIds,
+          listingIds,
+        );
+        const linkRow = Array.isArray(linkResult) ? linkResult[0] : linkResult;
+        const linked = Number(
+          (linkRow as {numUpdatedRows?: bigint})?.numUpdatedRows ?? 0,
+        );
+        if (linked !== earnings.length) {
+          throw new ValidationError(
+            PAYOUT_ERROR_MESSAGES.EARNINGS_SELECTION_CHANGED,
+          );
+        }
+
+        await payoutEventsRepo.create({
+          payoutId: created.id,
+          eventType: 'payout_requested',
+          eventData: {
+            sellerUserId,
+            payoutMethodId,
+            amount: finalAmt,
+            currency: finalCcy,
+            earningsCount: earnings.length,
+          },
+          createdBy: sellerUserId,
+        });
+
+        logger.info('Payout requested', {
+          payoutId: created.id,
+          sellerUserId,
+          amount: finalAmt,
+          currency: finalCcy,
           earningsCount: earnings.length,
-        },
-        createdBy: sellerUserId,
-      });
+        });
 
-      logger.info('Payout requested', {
-        payoutId: payout.id,
-        sellerUserId,
-        amount: finalAmount,
-        currency: finalCurrency,
-        originalAmount: conversionInfo?.originalAmount,
-        originalCurrency: conversionInfo?.originalCurrency,
-        exchangeRate: conversionInfo?.exchangeRate,
-        earningsCount: earnings.length,
-      });
+        return created;
+      },
+    );
 
-      return payout;
+    const initiateResult = await provider.initiatePayout({
+      payoutId: payout.id,
+      amount: Number(payout.amount),
+      currency: payout.currency as EventTicketCurrency,
+      payoutType: payoutMethod.payoutType,
+      payoutMethodCurrency: payoutMethod.currency as EventTicketCurrency,
+      payoutMethodMetadata: payoutMethod.metadata,
+      accountHolderName: payoutMethod.accountHolderName,
+      accountHolderSurname: payoutMethod.accountHolderSurname,
     });
+
+    logger.info('Payout provider initiate completed', {
+      payoutId: payout.id,
+      provider: provider.name,
+      externalId: initiateResult.externalId,
+      instructionsSummary: initiateResult.instructions.summary,
+    });
+
+    const metaOut = PayoutMetadataSchema.safeParse(payout.metadata);
+    return {
+      ...payout,
+      fxSnapshot: metaOut.success ? (metaOut.data.fxSnapshot ?? null) : null,
+    };
   }
 
   /**
@@ -249,17 +439,25 @@ export class PayoutsService {
         linkedEarnings: (payout.linkedEarnings || []).map(earning => ({
           id: earning.id,
           listingTicketId: earning.listingTicketId,
+          listingId: earning.listingId,
           sellerAmount: earning.sellerAmount,
           currency: earning.currency,
           createdAt: earning.createdAt,
+          eventName: earning.eventName,
+          eventSlug: earning.eventSlug,
+          eventStartDate: earning.eventStartDate,
+          eventEndDate: earning.eventEndDate,
+          ticketWaveName: earning.ticketWaveName,
+          venueName: earning.venueName,
         })),
       })),
     };
   }
 
   /**
-   * Admin processing of payout
-   * Includes processing_fee update and optional voucherUrl
+   * Admin processing of payout (marks completed).
+   * Optional processing fee, FX actuals, transaction reference, and notes.
+   * Bank vouchers are stored in `payout_documents` only.
    */
   async processPayout(
     payoutId: string,
@@ -268,7 +466,8 @@ export class PayoutsService {
       processingFee?: number;
       transactionReference?: string;
       notes?: string;
-      voucherUrl?: string;
+      actualBankRate?: number;
+      actualUyuCost?: number;
     },
   ) {
     const payout = await this.payoutsRepository.getById(payoutId);
@@ -282,14 +481,67 @@ export class PayoutsService {
       );
     }
 
-    // Update metadata if voucherUrl is provided
-    let updatedMetadata = payout.metadata;
-    if (updates.voucherUrl) {
-      const currentMetadata = PayoutMetadataSchema.parse(payout.metadata || {});
-      updatedMetadata = {
+    const payoutMethod = await this.payoutMethodsRepository.getById(
+      payout.payoutMethodId,
+    );
+    if (!payoutMethod) {
+      throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_METHOD_NOT_FOUND);
+    }
+
+    const payoutProvider = getPayoutProviderByName(
+      payout.payoutProvider as PayoutProviderName,
+    );
+    const procResult = await payoutProvider.processPayout({
+      payoutId,
+      amount: Number(payout.amount),
+      currency: payout.currency as EventTicketCurrency,
+      payoutType: payoutMethod.payoutType,
+      payoutMethodCurrency: payoutMethod.currency as EventTicketCurrency,
+      payoutMetadata: payout.metadata,
+      payoutMethodMetadata: payoutMethod.metadata,
+      accountHolderName: payoutMethod.accountHolderName,
+      accountHolderSurname: payoutMethod.accountHolderSurname,
+    });
+
+    const currentMetadata = PayoutMetadataSchema.parse(payout.metadata || {});
+    const quoteMeta = currentMetadata.fxSnapshot;
+    const rateWasExpired =
+      quoteMeta?.quoteExpiresAt != null
+        ? Date.now() > new Date(quoteMeta.quoteExpiresAt).getTime()
+        : false;
+
+    const hints = procResult.providerExecutionHints;
+    const shouldPersistFxExecution =
+      updates.actualBankRate !== undefined ||
+      updates.actualUyuCost !== undefined ||
+      hints != null ||
+      Boolean(procResult.externalId);
+
+    let updatedMetadata: Json | undefined;
+    if (shouldPersistFxExecution) {
+      const fxExecution = {
+        ...currentMetadata.fxExecution,
+        ...(updates.actualBankRate !== undefined && {
+          actualRate: updates.actualBankRate,
+        }),
+        ...(hints?.actualRate !== undefined &&
+          updates.actualBankRate === undefined && {
+            actualRate: hints.actualRate,
+          }),
+        ...(updates.actualUyuCost !== undefined && {
+          actualSourceAmount: updates.actualUyuCost,
+        }),
+        ...(hints?.providerFees !== undefined && {
+          providerFees: hints.providerFees,
+        }),
+        processedAt: new Date().toISOString(),
+        ...(rateWasExpired ? {rateWasExpired: true} : {}),
+        ...(procResult.externalId && {externalId: procResult.externalId}),
+      };
+      updatedMetadata = PayoutMetadataSchema.parse({
         ...currentMetadata,
-        voucherUrl: updates.voucherUrl,
-      } as Json;
+        fxExecution,
+      }) as unknown as Json;
     }
 
     // Update to completed (directly, no processing status needed)
@@ -302,7 +554,7 @@ export class PayoutsService {
         completedAt: new Date(),
         transactionReference: updates.transactionReference,
         notes: updates.notes,
-        ...(updatedMetadata && {metadata: updatedMetadata}),
+        ...(updatedMetadata !== undefined && {metadata: updatedMetadata}),
       },
     );
 
@@ -318,6 +570,10 @@ export class PayoutsService {
     await this.sellerEarningsRepository.markEarningsAsPaidOut(payoutId);
 
     // Log transfer completed event
+    const persistedMeta = updatedMetadata
+      ? PayoutMetadataSchema.parse(updatedMetadata)
+      : currentMetadata;
+
     await this.payoutEventsRepository.create({
       payoutId,
       eventType: 'transfer_completed',
@@ -327,7 +583,8 @@ export class PayoutsService {
         adminUserId,
         processingFee: updates.processingFee,
         transactionReference: updates.transactionReference,
-        voucherUrl: updates.voucherUrl,
+        fxExecution: persistedMeta.fxExecution ?? null,
+        rateWasExpired,
       },
       createdBy: adminUserId,
     });
@@ -336,7 +593,7 @@ export class PayoutsService {
       payoutId,
       adminUserId,
       processingFee: updates.processingFee,
-      voucherUrl: updates.voucherUrl,
+      fxExecution: persistedMeta.fxExecution,
     });
 
     // Send notification (fire-and-forget, outside transaction)
@@ -346,93 +603,6 @@ export class PayoutsService {
       amount: payout.amount,
       currency: payout.currency as 'UYU' | 'USD',
       transactionReference: updates.transactionReference,
-      completedAt: new Date(),
-    }).catch(error => {
-      logger.error('Failed to send payout completed notification', {
-        payoutId,
-        error,
-      });
-    });
-
-    return updatedPayout;
-  }
-
-  /**
-   * Mark payout as completed (after bank transfer)
-   * Includes optional voucherUrl for bank transfer voucher
-   * Note: This method is now mostly redundant since processPayout completes payouts directly
-   * Kept for backward compatibility and manual completion if needed
-   */
-  async completePayout(
-    payoutId: string,
-    adminUserId: string,
-    options?: {
-      transactionReference?: string;
-      voucherUrl?: string;
-    },
-  ) {
-    const payout = await this.payoutsRepository.getById(payoutId);
-    if (!payout) {
-      throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
-    }
-
-    if (payout.status !== 'pending') {
-      throw new ValidationError(
-        PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_PENDING(payout.status),
-      );
-    }
-
-    // Update metadata if voucherUrl is provided
-    let updatedMetadata = payout.metadata;
-    if (options?.voucherUrl) {
-      const currentMetadata = PayoutMetadataSchema.parse(payout.metadata || {});
-      updatedMetadata = {
-        ...currentMetadata,
-        voucherUrl: options.voucherUrl,
-      } as Json;
-    }
-
-    const updatedPayout = await this.payoutsRepository.updateStatus(
-      payoutId,
-      'completed',
-      {
-        completedAt: new Date(),
-        transactionReference: options?.transactionReference,
-        ...(updatedMetadata && {metadata: updatedMetadata}),
-      },
-    );
-
-    // Mark linked earnings as paid_out (they were 'payout_requested' while pending)
-    await this.sellerEarningsRepository.markEarningsAsPaidOut(payoutId);
-
-    // Log transfer completed event
-    await this.payoutEventsRepository.create({
-      payoutId,
-      eventType: 'transfer_completed',
-      fromStatus: 'pending',
-      toStatus: 'completed',
-      eventData: {
-        adminUserId,
-        transactionReference: options?.transactionReference,
-        voucherUrl: options?.voucherUrl,
-      },
-      createdBy: adminUserId,
-    });
-
-    logger.info('Payout completed', {
-      payoutId,
-      adminUserId,
-      transactionReference: options?.transactionReference,
-      voucherUrl: options?.voucherUrl,
-    });
-
-    // Send notification (fire-and-forget, outside transaction)
-    notifyPayoutCompleted(this.notificationService, {
-      sellerUserId: payout.sellerUserId,
-      payoutId,
-      amount: payout.amount,
-      currency: payout.currency as 'UYU' | 'USD',
-      transactionReference: options?.transactionReference,
       completedAt: new Date(),
     }).catch(error => {
       logger.error('Failed to send payout completed notification', {
@@ -644,10 +814,25 @@ export class PayoutsService {
     pagination: PaginationOptions,
     options?: {status?: PayoutStatus},
   ) {
-    return await this.payoutsRepository.getPayoutsForAdminPaginated(
-      pagination,
-      options,
-    );
+    const [summary, page] = await Promise.all([
+      this.payoutsRepository.getAdminPayoutsSummary(),
+      this.payoutsRepository.getPayoutsForAdminPaginated(pagination, options),
+    ]);
+
+    return {
+      summary: {
+        pendingCount: summary.pendingCount,
+        pendingTotalUyu: summary.pendingTotalUyu,
+        pendingTotalUsd: summary.pendingTotalUsd,
+        processingCount: summary.processingCount,
+        failedCount: summary.failedCount,
+        completedThisMonthCount: summary.completedThisMonthCount,
+        completedThisMonthTotalUyu: summary.completedThisMonthTotalUyu,
+        completedThisMonthTotalUsd: summary.completedThisMonthTotalUsd,
+      },
+      data: page.data,
+      pagination: page.pagination,
+    };
   }
 
   /**
@@ -679,15 +864,75 @@ export class PayoutsService {
 
     // Get settlement information (exchange rates, balance amounts from dLocal)
     // This helps admin understand what we actually received vs what seller is owed
-    const settlementInfo = await this.payoutsRepository.getPayoutSettlementInfo(
-      payoutId,
-    );
+    const settlementInfo =
+      await this.payoutsRepository.getPayoutSettlementInfo(payoutId);
+
+    let currentBrouVentaRate: number | null = null;
+    try {
+      currentBrouVentaRate = await fetchBrouEbrouVentaRate();
+    } catch (err) {
+      logger.warn(
+        'BROU eBROU venta rate unavailable; admin payout details show null rate',
+        {
+          payoutId,
+          err,
+        },
+      );
+    }
+
+    const nowMs = Date.now();
+    const fxSnap = metadata?.fxSnapshot ?? null;
+    const fxExec = metadata?.fxExecution ?? null;
+    const quoteExpiresAtMs = fxSnap?.quoteExpiresAt
+      ? new Date(fxSnap.quoteExpiresAt).getTime()
+      : null;
+    const quoteExpired = quoteExpiresAtMs != null && nowMs > quoteExpiresAtMs;
+    const quoteMsRemaining =
+      quoteExpiresAtMs != null && !quoteExpired
+        ? Math.max(0, quoteExpiresAtMs - nowMs)
+        : null;
+
+    const uyuCostAtSnapshotRate =
+      fxSnap != null &&
+      fxSnap.destinationCurrency === 'USD' &&
+      fxSnap.sourceCurrency === 'UYU' &&
+      fxSnap.providerRate != null
+        ? roundToDecimals(fxSnap.destinationAmount * fxSnap.providerRate, 2)
+        : fxSnap?.sourceCurrency === 'UYU' && fxSnap.sourceAmount != null
+          ? roundToDecimals(fxSnap.sourceAmount, 2)
+          : null;
+
+    const fxDecisionSupport = {
+      currentBrouVentaRate,
+      spreadPercentConfigured: PAYOUT_FX_SPREAD_PERCENT,
+      fxSnapshot: fxSnap,
+      fxExecution: fxExec,
+      quoteExpired,
+      quoteMsRemaining,
+      uyuCostAtSnapshotRate,
+      dLocalAverageExchangeRate:
+        settlementInfo?.settlements?.find(s => s.averageExchangeRate != null)
+          ?.averageExchangeRate ?? null,
+    };
+
+    const sellerUser = this.usersRepository
+      ? await this.usersRepository.getById(payout.sellerUserId)
+      : null;
 
     return {
       ...payout,
       metadata,
       documents,
       settlementInfo,
+      fxDecisionSupport,
+      seller: sellerUser
+        ? {
+            id: sellerUser.id,
+            firstName: sellerUser.firstName,
+            lastName: sellerUser.lastName,
+            email: sellerUser.email,
+          }
+        : null,
       payoutMethod: payoutMethod
         ? {
             id: payoutMethod.id,
@@ -739,6 +984,7 @@ export class PayoutsService {
     return {
       ...payout,
       metadata,
+      fxSnapshot: metadata?.fxSnapshot ?? null,
       events,
       documents,
       payoutMethod: payoutMethod
@@ -752,108 +998,5 @@ export class PayoutsService {
           }
         : null,
     };
-  }
-
-  /**
-   * Update payout (admin only)
-   * Allows updating status, processing fee, notes, and voucher URL
-   */
-  async updatePayout(
-    payoutId: string,
-    adminUserId: string,
-    updates: {
-      status?: 'pending' | 'completed' | 'failed' | 'cancelled';
-      processingFee?: number;
-      notes?: string;
-      voucherUrl?: string;
-      transactionReference?: string;
-    },
-  ) {
-    const payout = await this.payoutsRepository.getById(payoutId);
-    if (!payout) {
-      throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
-    }
-
-    // Update metadata if voucherUrl is provided
-    let updatedMetadata = payout.metadata;
-    if (updates.voucherUrl !== undefined) {
-      const currentMetadata = PayoutMetadataSchema.parse(payout.metadata || {});
-      updatedMetadata = {
-        ...currentMetadata,
-        voucherUrl: updates.voucherUrl || undefined,
-      } as Json;
-    }
-
-    // Build update object
-    const updateData: {
-      status?: 'pending' | 'completed' | 'failed' | 'cancelled';
-      notes?: string;
-      transactionReference?: string;
-      metadata?: Json;
-      processedAt?: Date;
-      processedBy?: string;
-      completedAt?: Date;
-      failedAt?: Date;
-      failureReason?: string;
-    } = {};
-
-    if (updates.status) {
-      updateData.status = updates.status;
-      // Set appropriate timestamps based on status
-      if (updates.status === 'completed') {
-        updateData.completedAt = new Date();
-      } else if (updates.status === 'failed') {
-        updateData.failedAt = new Date();
-      }
-    }
-
-    if (updates.notes !== undefined) {
-      updateData.notes = updates.notes;
-    }
-
-    if (updates.transactionReference !== undefined) {
-      updateData.transactionReference = updates.transactionReference;
-    }
-
-    if (updatedMetadata) {
-      updateData.metadata = updatedMetadata;
-    }
-
-    const updatedPayout = await this.payoutsRepository.updateStatus(
-      payoutId,
-      updates.status || payout.status,
-      updateData,
-    );
-
-    // Update processing fee if provided
-    if (updates.processingFee !== undefined) {
-      await this.payoutsRepository.updateProcessingFee(
-        payoutId,
-        updates.processingFee,
-      );
-    }
-
-    // Log status change event
-    await this.payoutEventsRepository.create({
-      payoutId,
-      eventType: 'status_change',
-      fromStatus: payout.status,
-      toStatus: updates.status || payout.status,
-      eventData: {
-        adminUserId,
-        processingFee: updates.processingFee,
-        voucherUrl: updates.voucherUrl,
-        transactionReference: updates.transactionReference,
-      },
-      createdBy: adminUserId,
-    });
-
-    logger.info('Payout updated by admin', {
-      payoutId,
-      adminUserId,
-      updates,
-    });
-
-    return updatedPayout;
   }
 }

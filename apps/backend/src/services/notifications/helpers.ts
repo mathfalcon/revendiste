@@ -1,7 +1,14 @@
 import {NotificationService, type CreateNotificationParams} from './index';
 import {APP_BASE_URL} from '~/config/env';
 import {NOTIFICATION_BUTTON_LABELS} from '~/constants/error-messages';
-import type {QrAvailabilityTiming, TicketReportCaseType, TicketReportEntityType, TicketReportActionType, TicketReportStatus} from '@revendiste/shared';
+import type {
+  EventTicketCurrency,
+  QrAvailabilityTiming,
+  TicketReportActionType,
+  TicketReportCaseType,
+  TicketReportEntityType,
+  TicketReportStatus,
+} from '@revendiste/shared';
 
 /**
  * Helper functions for creating common notification types
@@ -663,6 +670,38 @@ export async function notifyIdentityVerificationManualReview(
  * Notify seller when their earnings are retained due to missing documents
  * Sent via email + in_app (high value - seller needs to know)
  */
+/**
+ * Notify seller when hold period ends and earnings become available to withdraw
+ */
+export async function notifySellerEarningsAvailable(
+  service: NotificationService,
+  params: {
+    sellerUserId: string;
+    lines: Array<{
+      currency: EventTicketCurrency;
+      amount: string;
+      earningCount: number;
+    }>;
+  },
+) {
+  return await service.createNotification({
+    userId: params.sellerUserId,
+    type: 'seller_earnings_available',
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'view_earnings',
+        label: NOTIFICATION_BUTTON_LABELS.REQUEST_WITHDRAWAL,
+        url: `${APP_BASE_URL}/cuenta/retiro`,
+      },
+    ],
+    metadata: {
+      type: 'seller_earnings_available',
+      lines: params.lines,
+    },
+  });
+}
+
 export async function notifySellerEarningsRetained(
   service: NotificationService,
   params: {

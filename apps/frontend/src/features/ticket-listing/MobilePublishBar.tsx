@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 import {Button} from '~/components/ui/button';
 import {ChevronUp} from 'lucide-react';
-import {formatPrice} from '~/utils';
+import {formatPrice, getFeeRates} from '~/utils';
 import {cn} from '~/lib/utils';
 import {useStickyBar} from '~/contexts';
 import {Separator} from '~/components/ui/separator';
@@ -78,6 +78,7 @@ export function MobilePublishBar({
 
   const toggleSummary = () => setIsSummaryExpanded(!isSummaryExpanded);
 
+  const feeRates = getFeeRates();
   const totalSellerAmount = sellerAmountCalculation.sellerAmount * quantity;
 
   return (
@@ -122,14 +123,16 @@ export function MobilePublishBar({
                   </span>
                 </div>
                 <div className='flex justify-between items-center text-sm'>
-                  <span className='text-muted-foreground'>Comisión (6%)</span>
+                  <span className='text-muted-foreground'>
+                    Comisión ({feeRates.platformCommissionPercentage}%)
+                  </span>
                   <span className='text-muted-foreground'>
                     -{formatPrice(sellerAmountCalculation.platformCommission, currency)}
                   </span>
                 </div>
                 <div className='flex justify-between items-center text-sm'>
                   <span className='text-muted-foreground'>
-                    IVA sobre comisión (22%)
+                    IVA sobre comisión ({feeRates.vatPercentage}%)
                   </span>
                   <span className='text-muted-foreground'>
                     -{formatPrice(sellerAmountCalculation.vatOnCommission, currency)}

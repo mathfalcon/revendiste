@@ -1,6 +1,6 @@
 import {useQuery} from '@tanstack/react-query';
 import {Link, useNavigate} from '@tanstack/react-router';
-import posthog from 'posthog-js';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {
   Dialog,
   DialogContent,
@@ -23,12 +23,7 @@ import {
   CarouselItem,
   type CarouselApi,
 } from '~/components/ui/carousel';
-import {
-  AlertCircle,
-  Ticket,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import {AlertCircle, Ticket, ChevronLeft, ChevronRight} from 'lucide-react';
 import {Button} from '~/components/ui/button';
 import {getOrderTicketsQuery} from '~/lib/api/order';
 
@@ -123,7 +118,7 @@ export function TicketViewModal({
 
   const handleDownload = (ticket: OrderTicket) => {
     if (ticket?.document?.url) {
-      posthog.capture('ticket_document_downloaded', {
+      trackEvent(ANALYTICS_EVENTS.TICKET_DOCUMENT_DOWNLOADED, {
         ticket_id: ticket.id,
         order_id: orderId,
         mime_type: ticket.document.mimeType,
@@ -257,7 +252,12 @@ export function TicketViewModal({
             {hasMultipleTickets ? (
               <Carousel
                 setApi={setCarouselApi}
-                opts={{align: 'start', loop: false, dragFree: false, watchDrag: (_, event) => 'touches' in event}}
+                opts={{
+                  align: 'start',
+                  loop: false,
+                  dragFree: false,
+                  watchDrag: (_, event) => 'touches' in event,
+                }}
                 className='w-full'
               >
                 <CarouselContent className='-ml-4'>

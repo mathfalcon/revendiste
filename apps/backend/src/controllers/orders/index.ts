@@ -139,6 +139,8 @@ export class OrdersController {
     listingTicketsRepository,
     orderTicketReservationsRepository,
     new PaymentSyncService(paymentsRepository, syncWithProvider),
+    paymentsRepository,
+    notificationService,
   );
 
   @Post('/')

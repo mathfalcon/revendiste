@@ -1,5 +1,9 @@
-import {queryOptions, mutationOptions} from '@tanstack/react-query';
-import {AddPayoutMethodRouteBody, api} from '..';
+import {
+  infiniteQueryOptions,
+  queryOptions,
+  mutationOptions,
+} from '@tanstack/react-query';
+import {AddPayoutMethodRouteBody, UpdatePayoutMethodRouteBody, api} from '..';
 import {toast} from 'sonner';
 
 export const getBalanceQuery = () =>
@@ -26,6 +30,25 @@ export const getPayoutHistoryQuery = (page: number = 1, limit: number = 20) =>
           sortOrder: 'desc',
         })
         .then(res => res.data),
+  });
+
+const PAYOUT_HISTORY_PAGE = 20;
+
+export const getPayoutHistoryInfiniteQuery = () =>
+  infiniteQueryOptions({
+    queryKey: ['payouts', 'history', 'infinite', PAYOUT_HISTORY_PAGE] as const,
+    initialPageParam: 1,
+    queryFn: ({pageParam}) =>
+      api.payouts
+        .getPayoutHistory({
+          page: pageParam,
+          limit: PAYOUT_HISTORY_PAGE,
+          sortBy: 'requestedAt',
+          sortOrder: 'desc',
+        })
+        .then(res => res.data),
+    getNextPageParam: lastPage =>
+      lastPage.pagination.hasNext ? lastPage.pagination.page + 1 : undefined,
   });
 
 export const getPayoutDetailsQuery = (payoutId: string) =>
@@ -71,20 +94,7 @@ export const updatePayoutMethodMutation = () =>
       data,
     }: {
       payoutMethodId: string;
-      data: {
-        accountHolderName?: string;
-        accountHolderSurname?: string;
-        currency?: 'UYU' | 'USD';
-        metadata?:
-          | {
-              bankName: string;
-              accountNumber: string;
-            }
-          | {
-              email: string;
-            };
-        isDefault?: boolean;
-      };
+      data: UpdatePayoutMethodRouteBody;
     }) =>
       api.payouts
         .updatePayoutMethod(payoutMethodId, data)
