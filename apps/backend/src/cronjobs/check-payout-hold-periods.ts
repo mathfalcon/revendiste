@@ -23,6 +23,7 @@ import {
   SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
 } from '~/constants/limits';
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {getStorageProvider} from '~/services/storage/StorageFactory';
 
 /**
@@ -34,6 +35,9 @@ import {getStorageProvider} from '~/services/storage/StorageFactory';
  * 2. Release hold periods for pending earnings (marks as available)
  */
 export async function runCheckPayoutHoldPeriods() {
+  const jobStartedAt = Date.now();
+  const jobName = 'check-payout-hold-periods';
+
   const sellerEarningsRepository = new SellerEarningsRepository(db);
   const orderTicketReservationsRepository =
     new OrderTicketReservationsRepository(db);
@@ -70,34 +74,60 @@ export async function runCheckPayoutHoldPeriods() {
   );
 
   try {
-    logger.info('Starting scheduled check of payout hold periods...');
-
     // Check 1: Handle missing documents immediately at event end
     // This MUST run before checkHoldPeriods() so retained earnings are skipped
     const missingDocsResult =
       await sellerEarningsService.checkMissingDocumentsAfterEventEnd(
-      SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
-    );
+        SELLER_EARNINGS_MISSING_DOCS_BATCH_SIZE,
+      );
 
     if (missingDocsResult.processed > 0) {
-      logger.info('Processed missing documents after event end', {
+      logger.debug('Processed missing documents after event end', {
         processed: missingDocsResult.processed,
       });
     }
 
     // Check 2: Release hold periods (existing logic)
-    const holdPeriodsResult =
-      await sellerEarningsService.checkHoldPeriods(
-        SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
-      );
+    const holdPeriodsResult = await sellerEarningsService.checkHoldPeriods(
+      SELLER_EARNINGS_HOLD_PERIOD_BATCH_SIZE,
+    );
 
-    logger.info('Payout hold periods check completed', {
-      missingDocsCancelled: missingDocsResult.processed,
-      earningsReleased: holdPeriodsResult.released,
-      earningsRetained: holdPeriodsResult.retained,
-    });
+    const itemsProcessed =
+      missingDocsResult.processed +
+      holdPeriodsResult.released +
+      holdPeriodsResult.retained;
+
+    logger.info(
+      'cron.check-payout-hold-periods',
+      wideEvent('cron.check-payout-hold-periods', {
+        jobName,
+        itemsProcessed,
+        itemsSucceeded: itemsProcessed,
+        itemsFailed: 0,
+        missingDocsProcessed: missingDocsResult.processed,
+        earningsReleased: holdPeriodsResult.released,
+        earningsRetained: holdPeriodsResult.retained,
+        ...withDuration(jobStartedAt),
+        outcome: 'success',
+      }),
+    );
   } catch (error) {
-    logger.error('Error in scheduled payout hold periods check:', error);
+    logger.error(
+      'cron.check-payout-hold-periods',
+      wideEvent('cron.check-payout-hold-periods', {
+        jobName,
+        itemsProcessed: 0,
+        itemsSucceeded: 0,
+        itemsFailed: 1,
+        error: redactKnownSecrets(
+          error instanceof Error
+            ? {message: error.message, stack: error.stack}
+            : {message: String(error)},
+        ),
+        ...withDuration(jobStartedAt),
+        outcome: 'failure',
+      }),
+    );
     throw error;
   }
 }
@@ -116,10 +146,7 @@ export function startCheckPayoutHoldPeriodsJob() {
     }
   });
 
-  logger.info(
-    'Scheduled job: check-payout-hold-periods started (runs hourly)',
-  );
+  logger.info('Scheduled job: check-payout-hold-periods started (runs hourly)');
 
   return job;
 }
-

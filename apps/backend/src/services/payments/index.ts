@@ -7,6 +7,7 @@ import {
 import {NotFoundError, ValidationError} from '~/errors';
 import {API_BASE_URL, APP_BASE_URL} from '~/config/env';
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {DLocalService} from '~/services/dlocal';
 import type {PaymentProvider} from './providers';
 import {
@@ -63,6 +64,7 @@ export class PaymentsService {
   async createPaymentLink(
     params: CreatePaymentLinkParams,
   ): Promise<CreatePaymentLinkResult> {
+    const start = Date.now();
     const {
       orderId,
       userId,
@@ -110,13 +112,19 @@ export class PaymentsService {
       existingPayment.redirectUrl &&
       existingPayment.status === 'pending'
     ) {
-      logger.debug(
-        'Existing pending payment found, redirecting to existing payment link',
-        {
+      logger.info(
+        'payments.link.created',
+        wideEvent('payments.link.created', {
           orderId,
-          paymentId: existingPayment.id,
-          status: existingPayment.status,
-        },
+          internalPaymentId: String(existingPayment.id),
+          provider: this.paymentProvider.name,
+          providerPaymentId: existingPayment.providerPaymentId,
+          amount: Number(existingPayment.amount),
+          currency: existingPayment.currency,
+          reused: true,
+          ...withDuration(start),
+          outcome: 'success',
+        }),
       );
 
       return {
@@ -127,8 +135,7 @@ export class PaymentsService {
 
     // Extend reservation time to give user enough time to complete payment
     const newReservationExpiresAt = new Date(
-      now.getTime() +
-        PAYMENT_EXTENSION_WINDOW_MINUTES * 60 * 1000,
+      now.getTime() + PAYMENT_EXTENSION_WINDOW_MINUTES * 60 * 1000,
     );
 
     // Extend order and ticket reservations in a single transaction
@@ -149,7 +156,7 @@ export class PaymentsService {
         newReservationExpiresAt,
       );
 
-      logger.info('Extended reservation time for payment window', {
+      logger.debug('Extended reservation time for payment window', {
         orderId,
         newExpiresAt: newReservationExpiresAt,
         windowMinutes: PAYMENT_EXTENSION_WINDOW_MINUTES,
@@ -188,10 +195,7 @@ export class PaymentsService {
         orderId: order.id,
         amount: Number(order.totalAmount),
         currency: order.currency,
-        description: buildPaymentLinkDescription(
-          order.event?.name,
-          order.id,
-        ),
+        description: buildPaymentLinkDescription(order.event?.name, order.id),
         expirationMinutes: PAYMENT_EXTENSION_WINDOW_MINUTES,
         ...urls,
         ...payerData, // Include payer data if provider supports it
@@ -199,11 +203,16 @@ export class PaymentsService {
 
       // Validate provider payment response before saving
       if (!providerPayment.id) {
-        logger.error('Provider payment missing id', {
-          orderId: order.id,
-          provider: this.paymentProvider.name,
-          providerPayment,
-        });
+        logger.error(
+          'payments.link.created',
+          wideEvent('payments.link.created', {
+            orderId: order.id,
+            provider: this.paymentProvider.name,
+            validationError: 'provider_missing_id',
+            ...withDuration(start),
+            outcome: 'failure',
+          }),
+        );
         throw new ValidationError(
           PAYMENT_ERROR_MESSAGES.PAYMENT_CREATION_FAILED(
             'Provider payment response missing id',
@@ -245,16 +254,23 @@ export class PaymentsService {
             }),
           });
 
-          logger.info('Payment record created in transaction', {
-            paymentId: payment.id,
-            provider: this.paymentProvider.name,
-            providerPaymentId: providerPayment.id,
-            orderId: order.id,
-            amount: order.totalAmount,
-          });
-
           return payment;
         },
+      );
+
+      logger.info(
+        'payments.link.created',
+        wideEvent('payments.link.created', {
+          orderId: order.id,
+          internalPaymentId: String(paymentRecord.id),
+          provider: this.paymentProvider.name,
+          providerPaymentId: providerPayment.id,
+          amount: Number(order.totalAmount),
+          currency: order.currency,
+          reused: false,
+          ...withDuration(start),
+          outcome: 'success',
+        }),
       );
 
       return {
@@ -262,12 +278,19 @@ export class PaymentsService {
         paymentId: String(paymentRecord.id),
       };
     } catch (error: any) {
-      logger.error('Failed to create payment link', {
-        orderId,
-        userId,
-        error: error.message,
-        stack: error.stack,
-      });
+      logger.error(
+        'payments.link.created',
+        wideEvent('payments.link.created', {
+          orderId,
+          userId,
+          error: redactKnownSecrets({
+            message: error?.message,
+            stack: error?.stack,
+          }),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
       throw new ValidationError(
         PAYMENT_ERROR_MESSAGES.PAYMENT_CREATION_FAILED(error.message),
       );

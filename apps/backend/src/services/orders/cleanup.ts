@@ -5,6 +5,7 @@ import {
   PaymentsRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {NotificationService} from '~/services/notifications';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
 
@@ -23,6 +24,10 @@ export type SyncPaymentFunction = (
  * Handles expiration of orders and cleanup of associated reservations.
  * Follows the same transactional pattern as payment webhooks to ensure
  * order state and ticket reservations stay in sync.
+ *
+ * @remarks Not wired to any cron or routes in this codebase (dead code path).
+ * Production expiration uses `runSyncPaymentsAndExpireOrders` + `expireOrderWithoutPaymentLink`.
+ * Kept for reference; safe to remove in a dedicated cleanup PR.
  */
 export class OrderCleanupService {
   constructor(
@@ -45,9 +50,8 @@ export class OrderCleanupService {
     processedCount: number;
     orderIds: string[];
   }> {
+    const batchStartedAt = Date.now();
     try {
-      logger.info('Processing expired orders...');
-
       // Get all expired orders
       const expiredOrders = await this.ordersRepository.getExpiredOrders();
 
@@ -63,30 +67,45 @@ export class OrderCleanupService {
         try {
           await this.expireOrder(order.id);
           processedOrderIds.push(order.id);
-        } catch (error: any) {
-          logger.error('Error expiring individual order', {
-            orderId: order.id,
-            error: error.message,
-            stack: error.stack,
-          });
+        } catch (error: unknown) {
+          logger.error(
+            'orders.expired',
+            wideEvent('orders.expired', {
+              orderId: order.id,
+              reason: 'all_payments_terminal' as const,
+              paymentIds: [] as string[],
+              error: redactKnownSecrets(
+                error instanceof Error
+                  ? {message: error.message, stack: error.stack}
+                  : {message: String(error)},
+              ),
+              ...withDuration(batchStartedAt),
+              outcome: 'failure',
+            }),
+          );
           // Continue processing other orders even if one fails
         }
       }
 
-      logger.info('Expired orders processed successfully', {
+      logger.info('orderCleanup.processExpiredOrders.batch', {
         totalFound: expiredOrders.length,
         successfullyProcessed: processedOrderIds.length,
         failedCount: expiredOrders.length - processedOrderIds.length,
+        ...withDuration(batchStartedAt),
       });
 
       return {
         processedCount: processedOrderIds.length,
         orderIds: processedOrderIds,
       };
-    } catch (error: any) {
-      logger.error('Error in processExpiredOrders', {
-        error: error.message,
-        stack: error.stack,
+    } catch (error: unknown) {
+      logger.error('orderCleanup.processExpiredOrders.failed', {
+        error: redactKnownSecrets(
+          error instanceof Error
+            ? {message: error.message, stack: error.stack}
+            : {message: String(error)},
+        ),
+        ...withDuration(batchStartedAt),
       });
       throw error;
     }
@@ -100,6 +119,7 @@ export class OrderCleanupService {
    * we don't expire orders that have actually been paid (e.g., if webhook was missed)
    */
   private async expireOrder(orderId: string): Promise<void> {
+    const expireStartedAt = Date.now();
     const payments = await this.paymentsRepository.getAllByOrderId(orderId);
     const pendingPayments = payments.filter(
       p => p.status === 'pending' || p.status === 'processing',
@@ -107,7 +127,7 @@ export class OrderCleanupService {
 
     // If there are pending payments, sync their status with the provider first
     if (pendingPayments.length > 0) {
-      logger.info('Found pending payments for expired order, syncing status', {
+      logger.debug('Found pending payments for expired order, syncing status', {
         orderId,
         paymentCount: pendingPayments.length,
       });
@@ -141,16 +161,15 @@ export class OrderCleanupService {
         }
       }
 
-      const orderAfterSync = await this.ordersRepository.getByIdWithItems(
-        orderId,
-      );
+      const orderAfterSync =
+        await this.ordersRepository.getByIdWithItems(orderId);
       if (!orderAfterSync) {
         logger.warn('Order not found after payment sync', {orderId});
         return;
       }
 
       if (orderAfterSync.status !== 'pending') {
-        logger.info(
+        logger.debug(
           'Order status changed after payment sync, skipping expiration',
           {
             orderId,
@@ -160,9 +179,8 @@ export class OrderCleanupService {
         return;
       }
 
-      const paymentsAfterSync = await this.paymentsRepository.getAllByOrderId(
-        orderId,
-      );
+      const paymentsAfterSync =
+        await this.paymentsRepository.getAllByOrderId(orderId);
       const paidPayments = paymentsAfterSync.filter(p => p.status === 'paid');
 
       if (paidPayments.length > 0) {
@@ -190,18 +208,27 @@ export class OrderCleanupService {
 
       // Release ticket reservations
       await reservationsRepo.releaseByOrderId(orderId);
-
-      logger.info('Order expired successfully', {
-        orderId,
-        timestamp: new Date().toISOString(),
-      });
     });
+
+    const paymentIdsAfter = (
+      await this.paymentsRepository.getAllByOrderId(orderId)
+    ).map(p => p.id);
+
+    logger.info(
+      'orders.expired',
+      wideEvent('orders.expired', {
+        orderId,
+        reason: 'all_payments_terminal' as const,
+        paymentIds: paymentIdsAfter,
+        ...withDuration(expireStartedAt),
+        outcome: 'success',
+      }),
+    );
 
     // Send notification to buyer (outside transaction - fire-and-forget)
     // Get order data with event name for notification
-    const orderWithItems = await this.ordersRepository.getByIdWithItems(
-      orderId,
-    );
+    const orderWithItems =
+      await this.ordersRepository.getByIdWithItems(orderId);
 
     if (orderWithItems && orderWithItems.event) {
       // Fire-and-forget notification (don't await to avoid blocking)
@@ -209,6 +236,7 @@ export class OrderCleanupService {
         buyerUserId: orderWithItems.userId,
         orderId: orderWithItems.id,
         eventName: orderWithItems.event.name || 'el evento',
+        eventEndDate: orderWithItems.event.eventEndDate ?? null,
       }).catch(error => {
         logger.error('Failed to send order expired notification', {
           orderId,

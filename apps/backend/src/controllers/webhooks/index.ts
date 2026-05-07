@@ -31,7 +31,6 @@ import {
 import {db} from '~/db';
 import {getJobQueueService} from '~/services/job-queue';
 import {ValidateBody, Body} from '~/decorators';
-import {logger} from '~/utils';
 import {
   DLocalWebhookrRouteBody,
   DLocalWebhookValidationSchema,
@@ -157,19 +156,10 @@ export class WebhooksController {
       (request.headers['x-forwarded-for'] as string) || request.ip;
     const userAgent = request.headers['user-agent'];
 
-    // Process webhook asynchronously (fire-and-forget pattern)
-    this.webhooksService
-      .handleClerkWebhook(body, {
-        ipAddress,
-        userAgent,
-      })
-      .then(() => logger.info('Clerk webhook processed', {type: body.type}))
-      .catch(error =>
-        logger.error('Error processing Clerk webhook', {
-          type: body.type,
-          error: error.message,
-        }),
-      );
+    this.webhooksService.handleClerkWebhook(body, {
+      ipAddress,
+      userAgent,
+    });
 
     // Return immediately to acknowledge receipt
     return {received: true};

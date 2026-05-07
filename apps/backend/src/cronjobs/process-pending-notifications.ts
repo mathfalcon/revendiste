@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import {db} from '~/db';
 import {NotificationService} from '~/services/notifications';
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {
   UsersRepository,
   NotificationsRepository,
@@ -27,9 +28,10 @@ const notificationService = new NotificationService(
  * 2. Pending individual notifications (retry logic for failed sends)
  */
 export async function runProcessPendingNotifications() {
-  try {
-    logger.info('Starting scheduled processing of pending notifications...');
+  const jobStartedAt = Date.now();
+  const jobName = 'process-pending-notifications';
 
+  try {
     // 1. Process pending notification batches first
     // These are debounced notifications that have been waiting for their time window to end
     const batchesProcessed = await notificationService.processPendingBatches(
@@ -37,7 +39,7 @@ export async function runProcessPendingNotifications() {
     );
 
     if (batchesProcessed > 0) {
-      logger.info('Pending notification batches processed', {
+      logger.debug('Pending notification batches processed', {
         batchesProcessed,
       });
     } else {
@@ -51,19 +53,45 @@ export async function runProcessPendingNotifications() {
       );
 
     if (notificationsProcessed > 0) {
-      logger.info('Pending notifications processing completed', {
+      logger.debug('Pending notifications processing completed', {
         notificationsProcessed,
       });
     } else {
       logger.debug('No pending notifications to process');
     }
 
-    logger.info('All pending notification processing completed', {
-      batchesProcessed,
-      notificationsProcessed,
-    });
+    const itemsProcessed = batchesProcessed + notificationsProcessed;
+
+    logger.info(
+      'cron.process-pending-notifications',
+      wideEvent('cron.process-pending-notifications', {
+        jobName,
+        itemsProcessed,
+        itemsSucceeded: itemsProcessed,
+        itemsFailed: 0,
+        batchesProcessed,
+        notificationsProcessed,
+        ...withDuration(jobStartedAt),
+        outcome: 'success',
+      }),
+    );
   } catch (error) {
-    logger.error('Error in scheduled pending notifications processing:', error);
+    logger.error(
+      'cron.process-pending-notifications',
+      wideEvent('cron.process-pending-notifications', {
+        jobName,
+        itemsProcessed: 0,
+        itemsSucceeded: 0,
+        itemsFailed: 1,
+        error: redactKnownSecrets(
+          error instanceof Error
+            ? {message: error.message, stack: error.stack}
+            : {message: String(error)},
+        ),
+        ...withDuration(jobStartedAt),
+        outcome: 'failure',
+      }),
+    );
     throw error;
   }
 }

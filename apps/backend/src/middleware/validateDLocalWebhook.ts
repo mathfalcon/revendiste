@@ -2,6 +2,7 @@ import {Request, Response, NextFunction} from 'express';
 import crypto from 'crypto';
 import {DLOCAL_API_KEY, DLOCAL_SECRET_KEY} from '~/config/env';
 import {logger} from '~/utils';
+import {wideEvent} from '~/utils/logFields';
 import {UnauthorizedError} from '~/errors';
 
 /**
@@ -20,7 +21,15 @@ export const validateDLocalWebhook = (
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      logger.warn('dLocal webhook received without Authorization header');
+      logger.warn(
+        'webhooks.payment.signature',
+        wideEvent('webhooks.payment.signature', {
+          hasAuthHeader: false,
+          headerLooksValid: false,
+          paymentId: req.body?.payment_id,
+          outcome: 'failure',
+        }),
+      );
       throw new UnauthorizedError('Missing Authorization header');
     }
 
@@ -29,9 +38,15 @@ export const validateDLocalWebhook = (
     const signatureMatch = authHeader.match(/Signature:\s*([a-f0-9]+)/i);
 
     if (!signatureMatch || !signatureMatch[1]) {
-      logger.warn('dLocal webhook has invalid Authorization header format', {
-        authHeader,
-      });
+      logger.warn(
+        'webhooks.payment.signature',
+        wideEvent('webhooks.payment.signature', {
+          hasAuthHeader: true,
+          headerLooksValid: false,
+          paymentId: req.body?.payment_id,
+          outcome: 'failure',
+        }),
+      );
       throw new UnauthorizedError('Invalid Authorization header format');
     }
 
@@ -56,15 +71,27 @@ export const validateDLocalWebhook = (
     );
 
     if (!isValid) {
-      logger.warn('dLocal webhook signature validation failed', {
-        paymentId: req.body?.payment_id ?? undefined,
-      });
+      logger.warn(
+        'webhooks.payment.signature',
+        wideEvent('webhooks.payment.signature', {
+          hasAuthHeader: true,
+          headerLooksValid: true,
+          paymentId: req.body?.payment_id,
+          outcome: 'failure',
+        }),
+      );
       throw new UnauthorizedError('Invalid webhook signature');
     }
 
-    logger.info('dLocal webhook signature validated successfully', {
-      paymentId: req.body.payment_id,
-    });
+    logger.info(
+      'webhooks.payment.signature',
+      wideEvent('webhooks.payment.signature', {
+        hasAuthHeader: true,
+        headerLooksValid: true,
+        paymentId: req.body.payment_id,
+        outcome: 'success',
+      }),
+    );
 
     return next();
   } catch (error) {
@@ -76,7 +103,14 @@ export const validateDLocalWebhook = (
       return;
     }
 
-    logger.error('Error validating dLocal webhook', {error});
+    logger.error(
+      'webhooks.payment.signature',
+      wideEvent('webhooks.payment.signature', {
+        paymentId: req.body?.payment_id,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        outcome: 'failure',
+      }),
+    );
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to validate webhook',

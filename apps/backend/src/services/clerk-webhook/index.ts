@@ -10,6 +10,7 @@ import {buildEmailTemplate} from '~/services/notifications/email-template-builde
 import {generateNotificationText} from '@revendiste/shared';
 import {EMAIL_FROM, APP_BASE_URL} from '~/config/env';
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {CLERK_AUTH_NOTIFICATION_TITLES} from '~/constants/error-messages';
 import type {
   ClerkWebhookRouteBody,
@@ -48,28 +49,64 @@ export class ClerkWebhookService {
     webhookBody: ClerkWebhookRouteBody,
     metadata: WebhookMetadata,
   ): Promise<void> {
-    logger.info('Clerk webhook received', {
-      eventType: webhookBody.type,
-      emailSlug: webhookBody.data.slug,
-      instanceId: webhookBody.instance_id,
-      ipAddress: metadata.ipAddress,
-      userAgent: metadata.userAgent,
-    });
+    const start = Date.now();
+    try {
+      if (webhookBody.type !== 'email.created') {
+        logger.info(
+          'webhooks.clerk.processed',
+          wideEvent('webhooks.clerk.processed', {
+            eventType: webhookBody.type,
+            skippedReason: 'event_type_not_handled',
+            ...withDuration(start),
+            outcome: 'skipped',
+          }),
+        );
+        return;
+      }
 
-    if (webhookBody.type === 'email.created') {
-      await this.handleEmailCreated(webhookBody.data);
+      const clerkEmailOutcome = await this.handleEmailCreated(webhookBody.data);
+      const outcome =
+        clerkEmailOutcome === 'sent' ? 'success' : ('skipped' as const);
+
+      logger.info(
+        'webhooks.clerk.processed',
+        wideEvent('webhooks.clerk.processed', {
+          eventType: webhookBody.type,
+          emailSlug: webhookBody.data.slug,
+          emailId: webhookBody.data.id,
+          clerkEmailOutcome,
+          ipAddress: metadata.ipAddress,
+          ...withDuration(start),
+          outcome,
+        }),
+      );
+    } catch (error: unknown) {
+      logger.error(
+        'webhooks.clerk.processed',
+        wideEvent('webhooks.clerk.processed', {
+          eventType: webhookBody.type,
+          emailSlug: webhookBody.data.slug,
+          error: redactKnownSecrets(
+            error instanceof Error
+              ? {message: error.message, stack: error.stack}
+              : {message: String(error)},
+          ),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
     }
   }
 
   private async handleEmailCreated(
     emailData: ClerkWebhookRouteBody['data'],
-  ): Promise<void> {
+  ): Promise<'sent' | 'skipped_no_recipient' | 'skipped_unmapped_slug'> {
     const toEmail = emailData.to_email_address;
     if (!toEmail) {
       logger.warn('Email created but no recipient email found', {
         emailId: emailData.id,
       });
-      return;
+      return 'skipped_no_recipient';
     }
 
     const slug = emailData.slug as ClerkEmailSlug;
@@ -80,14 +117,13 @@ export class ClerkWebhookService {
         emailId: emailData.id,
         slug,
       });
-      return;
+      return 'skipped_unmapped_slug';
     }
 
-    logger.info('Processing Clerk email', {
+    logger.debug('Processing Clerk email', {
       emailId: emailData.id,
       slug,
       notificationType,
-      toEmail,
     });
 
     const metadata = this.buildMetadataFromClerkData(
@@ -111,11 +147,7 @@ export class ClerkWebhookService {
       from: EMAIL_FROM,
     });
 
-    logger.info('Clerk auth email sent', {
-      emailId: emailData.id,
-      notificationType,
-      email: toEmail,
-    });
+    return 'sent';
   }
 
   private buildMetadataFromClerkData(

@@ -6,6 +6,7 @@ import type {
 import type {NotificationService} from '~/services/notifications';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
 import {logger} from '~/utils';
+import {wideEvent, withDuration} from '~/utils/logFields';
 
 export type OrderReservationExpiryDeps = {
   ordersRepository: OrdersRepository;
@@ -22,6 +23,7 @@ export async function expireOrderWithoutPaymentLink(
   orderId: string,
   deps: OrderReservationExpiryDeps,
 ): Promise<boolean> {
+  const startedAt = Date.now();
   const {
     ordersRepository,
     orderTicketReservationsRepository,
@@ -66,10 +68,20 @@ export async function expireOrderWithoutPaymentLink(
     await reservationsRepo.releaseByOrderId(orderId);
 
     expired = true;
-    logger.info('Order expired (no payment link created)', {orderId});
   });
 
   if (expired) {
+    logger.info(
+      'orders.expired',
+      wideEvent('orders.expired', {
+        orderId,
+        reason: 'no_payment_link' as const,
+        paymentIds: [] as string[],
+        ...withDuration(startedAt),
+        outcome: 'success',
+      }),
+    );
+
     const orderWithItems = await ordersRepository.getByIdWithItems(orderId);
 
     if (orderWithItems && orderWithItems.event) {
@@ -77,6 +89,7 @@ export async function expireOrderWithoutPaymentLink(
         buyerUserId: orderWithItems.userId,
         orderId: orderWithItems.id,
         eventName: orderWithItems.event.name || 'el evento',
+        eventEndDate: orderWithItems.event.eventEndDate ?? null,
       }).catch(error => {
         logger.error('Failed to send order expired notification', {
           orderId,

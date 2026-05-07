@@ -5,3 +5,6 @@
  */
 export const RESERVATION_WINDOW_MINUTES = 10;
 export const PAYMENT_EXTENSION_WINDOW_MINUTES = 10;
+
+/** Grace after payment window before pinging provider to force expiration webhook (dLocal). */
+export const FORCE_EXPIRATION_GRACE_MINUTES = 5;

@@ -13,7 +13,6 @@ const EnvSchema = z.object({
   // Backend IP for direct access during SSR (bypasses Cloudflare)
   // Optional - if not set, will use VITE_APP_API_URL even during SSR
   BACKEND_IP: z.string().optional(),
-  NODE_ENV: z.enum(['local', 'development', 'production']).default('local'),
   // Web Push (VAPID public key — safe to expose)
   VITE_VAPID_PUBLIC_KEY: z.string().min(1),
   // Google Tag Manager (web container)
@@ -37,7 +36,6 @@ export const {
   BACKEND_IP,
   VITE_PLATFORM_COMMISSION_RATE,
   VITE_VAT_RATE,
-  NODE_ENV,
   VITE_VAPID_PUBLIC_KEY,
   VITE_GTM_ID,
   VITE_META_PIXEL_ID,
