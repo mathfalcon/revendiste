@@ -23,6 +23,10 @@ import {expireOrderWithoutPaymentLink} from '~/services/orders/reservation-expir
 import {logger} from '~/utils';
 import {Payment} from '~/types';
 import {getJobQueueService} from '~/services/job-queue';
+import {
+  FORCE_EXPIRATION_GRACE_MINUTES,
+  PAYMENT_EXTENSION_WINDOW_MINUTES,
+} from '~/constants/reservation';
 
 // Create shared repositories
 const ordersRepository = new OrdersRepository(db);
@@ -97,6 +101,24 @@ async function processPaymentSync(
     const adapter = createPaymentWebhookAdapter(payment.provider);
     await adapter.syncPaymentStatus(payment.providerPaymentId);
 
+    const fresh = await paymentsRepository.getById(payment.id);
+    if (fresh?.providerPaymentId) {
+      const isStillPending =
+        fresh.status === 'pending' || fresh.status === 'processing';
+      if (isStillPending) {
+        const createdAt = new Date(fresh.createdAt).getTime();
+        const minAgeMs =
+          (PAYMENT_EXTENSION_WINDOW_MINUTES + FORCE_EXPIRATION_GRACE_MINUTES) *
+          60 *
+          1000;
+        if (Date.now() - createdAt >= minAgeMs) {
+          const provider = getPaymentProvider(payment.provider);
+          const raw = await provider.getPayment(fresh.providerPaymentId);
+          await provider.forceExpirationCheck?.(raw);
+        }
+      }
+    }
+
     logger.debug('Payment status synced successfully', {
       paymentId: payment.id,
       provider: payment.provider,
@@ -142,9 +164,12 @@ async function expireOrder(
       .executeTakeFirst();
 
     if (!order) {
-      logger.debug('Order no longer pending (e.g. already cancelled), skipping expiration', {
-        orderId,
-      });
+      logger.debug(
+        'Order no longer pending (e.g. already cancelled), skipping expiration',
+        {
+          orderId,
+        },
+      );
       return;
     }
 
@@ -166,6 +191,7 @@ async function expireOrder(
       buyerUserId: orderWithItems.userId,
       orderId: orderWithItems.id,
       eventName: orderWithItems.event.name || 'el evento',
+      eventEndDate: orderWithItems.event.eventEndDate ?? null,
     }).catch(error => {
       logger.error('Failed to send order expired notification', {
         orderId,

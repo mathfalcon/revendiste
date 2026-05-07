@@ -42,10 +42,12 @@ pnpm dev                          # Preview email templates on :3003
 ```
 
 ### After API Changes Workflow
+
 1. `cd apps/backend && pnpm tsoa:both` (regenerate routes + spec)
 2. `cd apps/frontend && pnpm generate:api` (regenerate TS client)
 
 ### After Migration Workflow
+
 1. `cd apps/backend && pnpm kysely:migrate` (apply migration)
 2. `cd apps/backend && pnpm generate:db` (regenerate types)
 
@@ -91,6 +93,37 @@ Key files: `packages/shared/src/schemas/notifications.ts`, `packages/shared/src/
 ### Infrastructure (Terraform)
 
 All in `infrastructure/`. Core (shared DNS), environment folders (staging/production), reusable modules. Terraform Cloud for state. All resources tagged with Environment, Project, ManagedBy. See `.claude/skills/revendiste-infrastructure/SKILL.md` for full patterns.
+
+## Logging & PostHog (OTel)
+
+Canonical PostHog guidance: [Logging best practices](https://posthog.com/docs/logs/best-practices) and [Node installation](https://posthog.com/docs/logs/installation). Logs are system telemetry (retries, errors, latency); user behavior funnels belong in `posthog.capture()` / analytics.
+
+### Stack (backend)
+
+- **`apps/backend/src/lib/otel.ts`**: `NodeSDK` with `OTLPLogExporter` → PostHog **`https://us.i.posthog.com/i/v1/logs`** (override with `POSTHOG_OTLP_LOGS_URL`; EU: `https://eu.i.posthog.com/i/v1/logs`). Resource attributes: `service.name`, `deployment.environment`. **`NODE_ENV=local` skips PostHog entirely** (no SDK, no export). Elsewhere, `POSTHOG_KEY` (`phc_…`) is required to export; **`POSTHOG_OTEL_DEBUG`** enables diag + export tracing.
+- **`apps/backend/src/utils/logger.ts`**: Winston → `OTelTransport` → `@opentelemetry/api-logs` `emit()`. Metadata from `logger.info('msg', { key: value })` becomes **log attributes**; non-scalars are `safeStringify`’d (PostHog recommends **scalars** where possible—prefer explicit fields over dumping objects).
+- **`server.ts`**: Call **`initOtel()`** before other code logs at startup. Morgan HTTP lines use `logger.info` (skip `/api/health`).
+
+### Alignment vs PostHog best practices
+
+| Topic                                     | Status      | Notes                                                                                                                                                                                                               |
+| ----------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Centralized logs (PostHog Logs)           | **Yes**     | When `POSTHOG_KEY` is set and `NODE_ENV` is not `local`, Winston logs export to PostHog.                                                                                                                            |
+| Structured / queryable fields             | **Partial** | Use `logger.info('msg', { … })` with **scalar** attributes for best search. Objects become JSON strings in attributes.                                                                                              |
+| Resource attributes (`service.name`, env) | **Yes**     | Set in `initOtel`. Consider adding `service.version` (e.g. git SHA) for release correlation.                                                                                                                        |
+| Wide events (one rich log per request)    | **Gap**     | Much of the codebase emits many small `info` lines (startup, jobs). Prefer **one** outcome log with accumulated context on hot paths; keep step noise at **`debug`**.                                               |
+| Log levels                                | **Partial** | `http` maps to OTel DEBUG2. Use **`error` / `warn` / `info` / `debug`** deliberately—`ERROR` should be actionable. Do not run `LOG_LEVEL=debug` in production by default.                                           |
+| Trace + session context                   | **Gap**     | NodeSDK is logs-only (no trace provider). No automatic `posthog_distinct_id` / `session_id`—add **explicit** attributes where needed ([Session Replay linking](https://posthog.com/docs/logs/link-session-replay)). |
+| Health noise                              | **Partial** | Morgan skips `/api/health`; apply the same idea to other noisy endpoints if needed.                                                                                                                                 |
+| Sampling                                  | **Gap**     | No tail/head sampling yet—add when volume/cost requires it (Collector or app-level).                                                                                                                                |
+| Security (secrets, bodies, PII)           | **Ongoing** | Never log tokens, passwords, or full request/response bodies. Errors already include `requestId`; avoid raw PII in log messages.                                                                                    |
+
+### Conventions for new / changed code
+
+1. **Structured search fields**: `logger.warn('payments.dlocal.timeout', { paymentId, orderId, durationMs })` with scalars.
+2. **INFO** = durable outcomes; **DEBUG** = inner steps; **ERROR** = needs action or alerts.
+3. Never log secrets (`phc_`, `phx_`, Clerk/dLocal keys) or full payloads.
+4. Treat log **attribute names** like a small API—rename with care (saved searches / alerts).
 
 ## Testing (Backend)
 

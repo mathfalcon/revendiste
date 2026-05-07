@@ -63,14 +63,17 @@ export function CancelOrderDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>¿Cancelar orden?</AlertDialogTitle>
-          <AlertDialogDescription className='space-y-2'>
+          <AlertDialogDescription className='space-y-3'>
             <p>
-              Esta acción liberará las entradas reservadas y no podrás
-              recuperarlas. Las entradas volverán a estar disponibles para otros
-              compradores.
+              Al cancelar esta orden liberamos las entradas asociadas. Si querés
+              volver a comprar, tenés que crear una nueva orden desde la página
+              del evento.
             </p>
-            <p className='font-medium text-foreground'>
-              ¿Estás seguro de que deseas cancelar esta orden?
+            <p>
+              Si ya iniciaste un pago con un método alternativo (por ejemplo,
+              transferencia bancaria o efectivo) y querés usar otro medio, no
+              completes ese pago y cancelá esta orden para poder empezar de
+              nuevo.
             </p>
           </AlertDialogDescription>
         </AlertDialogHeader>

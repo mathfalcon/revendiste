@@ -141,9 +141,8 @@ export class OrderCleanupService {
         }
       }
 
-      const orderAfterSync = await this.ordersRepository.getByIdWithItems(
-        orderId,
-      );
+      const orderAfterSync =
+        await this.ordersRepository.getByIdWithItems(orderId);
       if (!orderAfterSync) {
         logger.warn('Order not found after payment sync', {orderId});
         return;
@@ -160,9 +159,8 @@ export class OrderCleanupService {
         return;
       }
 
-      const paymentsAfterSync = await this.paymentsRepository.getAllByOrderId(
-        orderId,
-      );
+      const paymentsAfterSync =
+        await this.paymentsRepository.getAllByOrderId(orderId);
       const paidPayments = paymentsAfterSync.filter(p => p.status === 'paid');
 
       if (paidPayments.length > 0) {
@@ -199,9 +197,8 @@ export class OrderCleanupService {
 
     // Send notification to buyer (outside transaction - fire-and-forget)
     // Get order data with event name for notification
-    const orderWithItems = await this.ordersRepository.getByIdWithItems(
-      orderId,
-    );
+    const orderWithItems =
+      await this.ordersRepository.getByIdWithItems(orderId);
 
     if (orderWithItems && orderWithItems.event) {
       // Fire-and-forget notification (don't await to avoid blocking)
@@ -209,6 +206,7 @@ export class OrderCleanupService {
         buyerUserId: orderWithItems.userId,
         orderId: orderWithItems.id,
         eventName: orderWithItems.event.name || 'el evento',
+        eventEndDate: orderWithItems.event.eventEndDate ?? null,
       }).catch(error => {
         logger.error('Failed to send order expired notification', {
           orderId,

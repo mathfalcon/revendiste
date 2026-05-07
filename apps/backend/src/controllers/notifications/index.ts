@@ -20,7 +20,7 @@ import {
   PaginationQuery,
 } from '~/middleware';
 import {db} from '~/db';
-import {NotFoundError, UnauthorizedError} from '~/errors';
+import {BadRequestError, NotFoundError, UnauthorizedError} from '~/errors';
 import {NOTIFICATION_ERROR_MESSAGES} from '~/constants/error-messages';
 import type {TypedNotification} from '~/services/notifications/types';
 import {
@@ -243,6 +243,12 @@ export class NotificationsController {
         },
       ],
     });
+
+    if (!notification) {
+      throw new BadRequestError(
+        NOTIFICATION_ERROR_MESSAGES.TEST_NOTIFICATION_CREATION_FAILED,
+      );
+    }
 
     return {notificationId: notification.id};
   }

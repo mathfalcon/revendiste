@@ -27,8 +27,8 @@ import {
   notifyPaymentFailed,
   notifySellerTicketSold,
 } from '~/services/notifications/helpers';
-import type { JobQueueService } from '~/services/job-queue';
-import type { SellerNotificationData } from '~/services/ticket-listings';
+import type {JobQueueService} from '~/services/job-queue';
+import type {SellerNotificationData} from '~/services/ticket-listings';
 import {getPostHog} from '~/lib/posthog';
 
 /**
@@ -234,9 +234,10 @@ export class PaymentWebhookAdapter {
       balanceAmount: payment.balance_amount,
       balanceFee: payment.balance_fee,
       balanceCurrency: payment.balance_currency,
-      approvedAt: payment.approved_date
-        ? new Date(payment.approved_date)
-        : undefined,
+      approvedAt:
+        payment.status === 'PAID' && payment.approved_date
+          ? new Date(payment.approved_date)
+          : undefined,
       rejectedReason: payment.rejected_reason,
       payer: payment.payer
         ? {
@@ -316,7 +317,8 @@ export class PaymentWebhookAdapter {
       paymentData.balanceCurrency &&
       paymentData.currency !== paymentData.balanceCurrency
     ) {
-      const totalSettlement = paymentData.balanceAmount + paymentData.balanceFee;
+      const totalSettlement =
+        paymentData.balanceAmount + paymentData.balanceFee;
       const calculatedRate = totalSettlement / paymentData.amount;
       exchangeRate = String(calculatedRate);
 
@@ -346,7 +348,8 @@ export class PaymentWebhookAdapter {
         balanceCurrency: paymentData.balanceCurrency,
         // Store exchange rate if currencies differ (dLocal settles in UYU even for USD orders)
         exchangeRate,
-        paymentMethod: (paymentData.paymentMethod as PaymentMethod) ?? undefined,
+        paymentMethod:
+          (paymentData.paymentMethod as PaymentMethod) ?? undefined,
         payerEmail: paymentData.payer?.email,
         payerFirstName: paymentData.payer?.firstName,
         payerLastName: paymentData.payer?.lastName,
@@ -354,7 +357,8 @@ export class PaymentWebhookAdapter {
         payerDocument: paymentData.payer?.document,
         payerCountry: paymentData.payer?.country,
         failureReason: paymentData.rejectedReason,
-        approvedAt: paymentData.approvedAt,
+        approvedAt:
+          newStatus === 'paid' ? (paymentData.approvedAt ?? null) : null,
         failedAt: newStatus === 'failed' ? new Date() : undefined,
         cancelledAt: newStatus === 'cancelled' ? new Date() : undefined,
         expiredAt: newStatus === 'expired' ? new Date() : undefined,
@@ -433,8 +437,7 @@ export class PaymentWebhookAdapter {
     paymentData: NormalizedPaymentData,
   ): Promise<void> {
     // Idempotency: skip if order already confirmed (duplicate webhook or retry)
-    const existingOrder =
-      await this.ordersRepository.getByIdWithItems(orderId);
+    const existingOrder = await this.ordersRepository.getByIdWithItems(orderId);
     if (existingOrder?.status === 'confirmed') {
       logger.info('Order already confirmed, skipping successful payment flow', {
         orderId,
@@ -476,9 +479,7 @@ export class PaymentWebhookAdapter {
         ...new Set(soldTickets.map(ticket => ticket.listingId)),
       ];
       const soldListings =
-        await ticketListingsRepo.checkAndMarkListingsAsSold(
-          uniqueListingIds,
-        );
+        await ticketListingsRepo.checkAndMarkListingsAsSold(uniqueListingIds);
 
       logger.info('Order confirmed successfully', {
         orderId,
@@ -490,9 +491,8 @@ export class PaymentWebhookAdapter {
       });
     });
 
-    const orderWithItems = await this.ordersRepository.getByIdWithItems(
-      orderId,
-    );
+    const orderWithItems =
+      await this.ordersRepository.getByIdWithItems(orderId);
     if (!orderWithItems?.event) return;
 
     getPostHog()?.capture({
@@ -567,18 +567,22 @@ export class PaymentWebhookAdapter {
         deferSendToJob: false,
       }),
       ...sellerNotifications.map(seller =>
-        notifySellerTicketSold(this.notificationService, {
-          sellerUserId: seller.sellerUserId,
-          listingId: seller.listingId,
-          eventName: seller.eventName,
-          eventStartDate: seller.eventStartDate,
-          eventEndDate: seller.eventEndDate,
-          eventTimezone: seller.eventTimezone,
-          platform: seller.platform,
-          qrAvailabilityTiming: seller.qrAvailabilityTiming,
-          ticketCount: seller.ticketCount,
-          allDocumentsUploaded: seller.allDocumentsUploaded,
-        }, { channels: ['email'], deferSendToJob: false }),
+        notifySellerTicketSold(
+          this.notificationService,
+          {
+            sellerUserId: seller.sellerUserId,
+            listingId: seller.listingId,
+            eventName: seller.eventName,
+            eventStartDate: seller.eventStartDate,
+            eventEndDate: seller.eventEndDate,
+            eventTimezone: seller.eventTimezone,
+            platform: seller.platform,
+            qrAvailabilityTiming: seller.qrAvailabilityTiming,
+            ticketCount: seller.ticketCount,
+            allDocumentsUploaded: seller.allDocumentsUploaded,
+          },
+          {channels: ['email'], deferSendToJob: false},
+        ),
       ),
     ]).then(results => {
       results.forEach((result, i) => {
@@ -586,7 +590,10 @@ export class PaymentWebhookAdapter {
           logger.error('Instant confirmation email failed', {
             orderId: order.id,
             index: i,
-            error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+            error:
+              result.reason instanceof Error
+                ? result.reason.message
+                : String(result.reason),
           });
         }
       });
@@ -600,10 +607,11 @@ export class PaymentWebhookAdapter {
     sellerNotifications: SellerNotificationData[],
   ): Promise<void> {
     // Avoid duplicate order_confirmed in-app when webhook and sync-on-order-access both run
-    const alreadySent = await this.notificationService.hasOrderConfirmedInAppForOrder(
-      order.userId,
-      order.id,
-    );
+    const alreadySent =
+      await this.notificationService.hasOrderConfirmedInAppForOrder(
+        order.userId,
+        order.id,
+      );
     if (alreadySent) {
       logger.debug('Skipping duplicate order_confirmed in_app', {
         orderId: order.id,
@@ -642,7 +650,7 @@ export class PaymentWebhookAdapter {
             currency: item.currency || undefined,
           })),
       },
-      { channels: ['in_app'] },
+      {channels: ['in_app']},
     ).catch(err => {
       logger.error('Failed to send buyer in_app notification', {
         orderId: order.id,
@@ -665,7 +673,7 @@ export class PaymentWebhookAdapter {
           ticketCount: seller.ticketCount,
           allDocumentsUploaded: seller.allDocumentsUploaded,
         },
-        { channels: ['in_app'] },
+        {channels: ['in_app']},
       ).catch(err => {
         logger.error('Failed to send seller in_app notification', {
           orderId: order.id,
@@ -740,7 +748,7 @@ export class PaymentWebhookAdapter {
         );
       }
 
-      logger.info('Email notification jobs enqueued', { orderId: order.id });
+      logger.info('Email notification jobs enqueued', {orderId: order.id});
     } catch (error) {
       logger.error('Failed to enqueue email notification jobs', {
         orderId: order.id,
@@ -779,9 +787,8 @@ export class PaymentWebhookAdapter {
 
     // Send notification to buyer (outside transaction - fire-and-forget)
     // Get order data with event name for notification
-    const orderWithItems = await this.ordersRepository.getByIdWithItems(
-      orderId,
-    );
+    const orderWithItems =
+      await this.ordersRepository.getByIdWithItems(orderId);
 
     if (orderWithItems && orderWithItems.event) {
       getPostHog()?.capture({
@@ -803,6 +810,7 @@ export class PaymentWebhookAdapter {
         buyerUserId: orderWithItems.userId,
         orderId: orderWithItems.id,
         eventName: orderWithItems.event.name || 'el evento',
+        eventEndDate: orderWithItems.event.eventEndDate ?? null,
         errorMessage: paymentData.rejectedReason,
       }).catch(error => {
         logger.error('Failed to send payment failed notification', {
@@ -842,9 +850,8 @@ export class PaymentWebhookAdapter {
 
     // Send notification to buyer (outside transaction - fire-and-forget)
     // Get order data with event name for notification
-    const orderWithItems = await this.ordersRepository.getByIdWithItems(
-      orderId,
-    );
+    const orderWithItems =
+      await this.ordersRepository.getByIdWithItems(orderId);
 
     if (orderWithItems && orderWithItems.event) {
       getPostHog()?.capture({
@@ -865,6 +872,7 @@ export class PaymentWebhookAdapter {
         buyerUserId: orderWithItems.userId,
         orderId: orderWithItems.id,
         eventName: orderWithItems.event.name || 'el evento',
+        eventEndDate: orderWithItems.event.eventEndDate ?? null,
       }).catch(error => {
         logger.error('Failed to send order expired notification', {
           orderId,

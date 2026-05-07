@@ -74,15 +74,18 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
             FROM listing_tickets
             INNER JOIN listings ON listings.id = listing_tickets.listing_id
             INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-            LEFT JOIN order_ticket_reservations ON 
-              order_ticket_reservations.listing_ticket_id = listing_tickets.id
-              AND order_ticket_reservations.deleted_at IS NULL
-              AND order_ticket_reservations.reserved_until > NOW()
             WHERE event_ticket_waves.event_id = events.id
               AND listing_tickets.sold_at IS NULL
               AND listing_tickets.deleted_at IS NULL
               AND listings.deleted_at IS NULL
-              AND order_ticket_reservations.id IS NULL
+              AND NOT EXISTS (
+                SELECT 1 FROM order_ticket_reservations otr
+                INNER JOIN orders o ON o.id = otr.order_id
+                  AND o.status = 'pending'
+                  AND o.deleted_at IS NULL
+                WHERE otr.listing_ticket_id = listing_tickets.id
+                  AND otr.deleted_at IS NULL
+              )
             ORDER BY listing_tickets.price ASC
             LIMIT 1
           )
@@ -94,15 +97,18 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
             FROM listing_tickets
             INNER JOIN listings ON listings.id = listing_tickets.listing_id
             INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-            LEFT JOIN order_ticket_reservations ON 
-              order_ticket_reservations.listing_ticket_id = listing_tickets.id
-              AND order_ticket_reservations.deleted_at IS NULL
-              AND order_ticket_reservations.reserved_until > NOW()
             WHERE event_ticket_waves.event_id = events.id
               AND listing_tickets.sold_at IS NULL
               AND listing_tickets.deleted_at IS NULL
               AND listings.deleted_at IS NULL
-              AND order_ticket_reservations.id IS NULL
+              AND NOT EXISTS (
+                SELECT 1 FROM order_ticket_reservations otr
+                INNER JOIN orders o ON o.id = otr.order_id
+                  AND o.status = 'pending'
+                  AND o.deleted_at IS NULL
+                WHERE otr.listing_ticket_id = listing_tickets.id
+                  AND otr.deleted_at IS NULL
+              )
             ORDER BY listing_tickets.price ASC
             LIMIT 1
           )
@@ -144,10 +150,26 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
         return qb
           .where('eventVenues.latitude', 'is not', null)
           .where('eventVenues.longitude', 'is not', null)
-          .where('eventVenues.latitude', '>=', (locationFilter!.lat! - radiusDegrees).toString())
-          .where('eventVenues.latitude', '<=', (locationFilter!.lat! + radiusDegrees).toString())
-          .where('eventVenues.longitude', '>=', (locationFilter!.lng! - radiusDegrees).toString())
-          .where('eventVenues.longitude', '<=', (locationFilter!.lng! + radiusDegrees).toString())
+          .where(
+            'eventVenues.latitude',
+            '>=',
+            (locationFilter!.lat! - radiusDegrees).toString(),
+          )
+          .where(
+            'eventVenues.latitude',
+            '<=',
+            (locationFilter!.lat! + radiusDegrees).toString(),
+          )
+          .where(
+            'eventVenues.longitude',
+            '>=',
+            (locationFilter!.lng! - radiusDegrees).toString(),
+          )
+          .where(
+            'eventVenues.longitude',
+            '<=',
+            (locationFilter!.lng! + radiusDegrees).toString(),
+          )
           .where(
             sql<boolean>`6371000 * 2 * ASIN(SQRT(
               POWER(SIN((RADIANS(${locationFilter!.lat!}) - RADIANS(event_venues.latitude)) / 2), 2) +
@@ -156,7 +178,8 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
             )) <= ${radiusMeters}`,
           );
       })
-      .orderBy(sql`COALESCE(
+      .orderBy(
+        sql`COALESCE(
         (
           SELECT SUM(view_count)::int
           FROM event_views_daily
@@ -164,7 +187,9 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
             AND event_views_daily.date >= CURRENT_DATE - INTERVAL '${sql.raw(String(days))} days'
         ),
         0
-      )`, 'desc')
+      )`,
+        'desc',
+      )
       .orderBy('events.eventStartDate', 'asc') // Secondary sort by date
       .limit(limit)
       .execute();
@@ -180,7 +205,9 @@ export class EventViewsRepository extends BaseRepository<EventViewsRepository> {
       .selectFrom('eventViewsDaily')
       .select(sql<number>`COALESCE(SUM(view_count), 0)::int`.as('totalViews'))
       .where('eventId', '=', eventId)
-      .where(sql<boolean>`date >= CURRENT_DATE - INTERVAL '${sql.raw(String(days))} days'`)
+      .where(
+        sql<boolean>`date >= CURRENT_DATE - INTERVAL '${sql.raw(String(days))} days'`,
+      )
       .executeTakeFirst();
 
     return result?.totalViews ?? 0;

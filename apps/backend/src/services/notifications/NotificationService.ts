@@ -37,6 +37,7 @@ import {
 import {buildWhatsAppTemplate} from './whatsapp-template-builder';
 import {generateNotificationText} from '@revendiste/shared';
 import {getJobQueueService} from '~/services/job-queue';
+import {shouldSkipBuyerNotificationForPastEvent} from './skip-notification-if-event-past';
 import type {
   PostSendAction,
   SendNotificationAttachmentRef,
@@ -49,6 +50,8 @@ export interface EmailAttachmentParam {
 }
 
 export interface CreateNotificationParams extends CreateNotificationData {
+  /** Skip email/in_app when the linked event has already ended (buyer notifications only). */
+  skipIfEventPast?: {eventEndDate: Date | string | null};
   /** When true, enqueue send-notification job (cronjob sends later). When false/undefined, send immediately (fire-and-forget). Use job for heavy/attachments, immediate for low-latency. */
   deferSendToJob?: boolean;
   /** In-memory attachments; used when deferSendToJob is false/undefined (immediate send) */
@@ -124,6 +127,15 @@ export class NotificationService {
    * Validates the notification data before creating it
    */
   async createNotification(params: CreateNotificationParams) {
+    if (shouldSkipBuyerNotificationForPastEvent(params.skipIfEventPast)) {
+      logger.debug('Skipping notification: event has already ended', {
+        userId: params.userId,
+        type: params.type,
+        eventEndDate: params.skipIfEventPast?.eventEndDate,
+      });
+      return null;
+    }
+
     // Validate metadata if provided
     let validatedMetadata = params.metadata;
     if (params.metadata) {
@@ -1003,6 +1015,15 @@ export class NotificationService {
       metadata: mergedMetadata,
       actions: mergedActions,
     });
+
+    if (!notification) {
+      logger.warn(
+        'Final batched notification was skipped (e.g. event already ended); cancelling batch',
+        {batchId},
+      );
+      await this.notificationBatchesRepository.cancelBatch(batchId);
+      return;
+    }
 
     // Mark batch as processed
     await this.notificationBatchesRepository.markBatchProcessed(

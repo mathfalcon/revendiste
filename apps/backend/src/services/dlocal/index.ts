@@ -168,6 +168,33 @@ export class DLocalService implements PaymentProvider {
     return await this.getDLocalPayment(paymentId);
   }
 
+  /**
+   * dLocal Go may not emit expiration webhooks until the checkout URL is hit.
+   * GET redirect_url triggers server-side evaluation so the next sync/webhook sees terminal status.
+   */
+  async forceExpirationCheck(payment: ProviderPaymentData): Promise<void> {
+    const status = (payment as {status?: string}).status;
+    const redirectUrl = (payment as {redirect_url?: string}).redirect_url;
+    if (status !== 'PENDING' || !redirectUrl) {
+      return;
+    }
+    try {
+      await axios.get(redirectUrl, {
+        timeout: 5000,
+        maxRedirects: 0,
+        validateStatus: () => true,
+      });
+      logger.info('Pinged dLocal redirect_url to force expiration check', {
+        paymentId: payment.id,
+      });
+    } catch (error) {
+      logger.warn('forceExpirationCheck ping failed', {
+        paymentId: payment.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   // ========================================================================
   // DLocal-Specific Methods
   // ========================================================================

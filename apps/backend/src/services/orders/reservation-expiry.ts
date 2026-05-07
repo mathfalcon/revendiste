@@ -77,6 +77,7 @@ export async function expireOrderWithoutPaymentLink(
         buyerUserId: orderWithItems.userId,
         orderId: orderWithItems.id,
         eventName: orderWithItems.event.name || 'el evento',
+        eventEndDate: orderWithItems.event.eventEndDate ?? null,
       }).catch(error => {
         logger.error('Failed to send order expired notification', {
           orderId,

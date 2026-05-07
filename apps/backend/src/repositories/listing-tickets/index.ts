@@ -22,15 +22,26 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
     return await this.db
       .selectFrom('listingTickets')
       .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
-      .leftJoin('orderTicketReservations', join =>
-        join
-          .onRef(
-            'orderTicketReservations.listingTicketId',
-            '=',
-            'listingTickets.id',
-          )
-          .on('orderTicketReservations.deletedAt', 'is', null)
-          .on('orderTicketReservations.reservedUntil', '>', new Date()),
+      .where(eb =>
+        eb.not(
+          eb.exists(
+            eb
+              .selectFrom('orderTicketReservations')
+              .innerJoin(
+                'orders',
+                'orders.id',
+                'orderTicketReservations.orderId',
+              )
+              .whereRef(
+                'orderTicketReservations.listingTicketId',
+                '=',
+                'listingTickets.id',
+              )
+              .where('orderTicketReservations.deletedAt', 'is', null)
+              .where('orders.status', '=', 'pending')
+              .where('orders.deletedAt', 'is', null),
+          ),
+        ),
       )
       .select([
         'listingTickets.id',
@@ -43,7 +54,6 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('listingTickets.soldAt', 'is', null)
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
-      .where('orderTicketReservations.id', 'is', null) // Not reserved
       .orderBy('listingTickets.updatedAt', 'asc')
       .limit(quantity)
       .execute();
@@ -63,15 +73,26 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
     return await this.db
       .selectFrom('listingTickets')
       .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
-      .leftJoin('orderTicketReservations', join =>
-        join
-          .onRef(
-            'orderTicketReservations.listingTicketId',
-            '=',
-            'listingTickets.id',
-          )
-          .on('orderTicketReservations.deletedAt', 'is', null)
-          .on('orderTicketReservations.reservedUntil', '>', new Date()),
+      .where(eb =>
+        eb.not(
+          eb.exists(
+            eb
+              .selectFrom('orderTicketReservations')
+              .innerJoin(
+                'orders',
+                'orders.id',
+                'orderTicketReservations.orderId',
+              )
+              .whereRef(
+                'orderTicketReservations.listingTicketId',
+                '=',
+                'listingTickets.id',
+              )
+              .where('orderTicketReservations.deletedAt', 'is', null)
+              .where('orders.status', '=', 'pending')
+              .where('orders.deletedAt', 'is', null),
+          ),
+        ),
       )
       .select([
         'listingTickets.id',
@@ -84,7 +105,6 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('listingTickets.soldAt', 'is', null)
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
-      .where('orderTicketReservations.id', 'is', null)
       .orderBy('listingTickets.updatedAt', 'asc')
       .limit(quantity)
       .forUpdate('listingTickets')
@@ -173,21 +193,31 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
   async getTicketWithReservationStatus(ticketId: string) {
     return await this.db
       .selectFrom('listingTickets')
-      .leftJoin('orderTicketReservations', join =>
-        join
-          .onRef(
-            'orderTicketReservations.listingTicketId',
+      .leftJoin(
+        eb =>
+          eb
+            .selectFrom('orderTicketReservations')
+            .innerJoin('orders', 'orders.id', 'orderTicketReservations.orderId')
+            .where('orderTicketReservations.deletedAt', 'is', null)
+            .where('orders.status', '=', 'pending')
+            .where('orders.deletedAt', 'is', null)
+            .select([
+              'orderTicketReservations.id',
+              'orderTicketReservations.listingTicketId',
+            ])
+            .as('activeReservation'),
+        join =>
+          join.onRef(
+            'activeReservation.listingTicketId',
             '=',
             'listingTickets.id',
-          )
-          .on('orderTicketReservations.deletedAt', 'is', null)
-          .on('orderTicketReservations.reservedUntil', '>', new Date()),
+          ),
       )
       .select([
         'listingTickets.id',
         'listingTickets.soldAt',
         'listingTickets.deletedAt',
-        'orderTicketReservations.id as reservationId',
+        'activeReservation.id as reservationId',
       ])
       .where('listingTickets.id', '=', ticketId)
       .executeTakeFirst();
@@ -303,18 +333,26 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .execute()
       .then(tickets => {
         const job = 'notify-upload-availability';
-        logger.info(`${job}: DB query returned candidate rows (no primary doc, future event; sold or unsold)`, {
-          nowIso: now.toISOString(),
-          candidateCount: tickets.length,
-        });
+        logger.info(
+          `${job}: DB query returned candidate rows (no primary doc, future event; sold or unsold)`,
+          {
+            nowIso: now.toISOString(),
+            candidateCount: tickets.length,
+          },
+        );
 
         const maxDetailLogs = 50;
         const ticketsForDetail =
-          tickets.length > maxDetailLogs ? tickets.slice(0, maxDetailLogs) : tickets;
+          tickets.length > maxDetailLogs
+            ? tickets.slice(0, maxDetailLogs)
+            : tickets;
         if (tickets.length > maxDetailLogs) {
-          logger.warn(`${job}: logging diagnostics for first ${maxDetailLogs} candidates only`, {
-            totalCandidates: tickets.length,
-          });
+          logger.warn(
+            `${job}: logging diagnostics for first ${maxDetailLogs} candidates only`,
+            {
+              totalCandidates: tickets.length,
+            },
+          );
         }
 
         const matched = tickets.filter(ticket => {
@@ -394,5 +432,4 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('tl.deletedAt', 'is', null)
       .execute();
   }
-
 }
