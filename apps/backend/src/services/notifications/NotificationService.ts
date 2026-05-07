@@ -1,5 +1,6 @@
 import {PaginatedResponse} from '~/types';
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {
   NotificationsRepository,
   UsersRepository,
@@ -442,8 +443,12 @@ export class NotificationService {
     > = {};
 
     // Send through each channel and track status individually
+    const attempt = (notification.retryCount ?? 0) + 1;
+
     await Promise.allSettled(
       notification.channels.map(async channel => {
+        const channelStartedAt = Date.now();
+
         try {
           if (channel === 'email') {
             await this.sendEmailNotification(
@@ -455,12 +460,38 @@ export class NotificationService {
               status: 'sent',
               sentAt: new Date().toISOString(),
             };
+            logger.info(
+              'notifications.sent',
+              wideEvent('notifications.sent', {
+                notificationId: notification.id,
+                type: notification.type,
+                channel,
+                userId: notification.userId,
+                attempt,
+                providerStatus: 'sent',
+                ...withDuration(channelStartedAt),
+                outcome: 'success',
+              }),
+            );
           } else if (channel === 'in_app') {
             // In-app notifications are automatically "sent" when created
             channelStatus[channel] = {
               status: 'sent',
               sentAt: new Date().toISOString(),
             };
+            logger.info(
+              'notifications.sent',
+              wideEvent('notifications.sent', {
+                notificationId: notification.id,
+                type: notification.type,
+                channel,
+                userId: notification.userId,
+                attempt,
+                providerStatus: 'in_app',
+                ...withDuration(channelStartedAt),
+                outcome: 'success',
+              }),
+            );
             // Fire-and-forget push to subscribed devices
             this.sendWebPush(notification).catch(err =>
               logger.error('Web push dispatch failed', {
@@ -475,6 +506,20 @@ export class NotificationService {
                 status: 'failed',
                 error: 'User has no phone number',
               };
+              logger.info(
+                'notifications.sent',
+                wideEvent('notifications.sent', {
+                  notificationId: notification.id,
+                  type: notification.type,
+                  channel,
+                  userId: notification.userId,
+                  attempt,
+                  providerStatus: 'skipped',
+                  skipReason: 'no_phone',
+                  ...withDuration(channelStartedAt),
+                  outcome: 'skipped',
+                }),
+              );
               return;
             }
             await this.sendWhatsAppNotification(
@@ -485,12 +530,43 @@ export class NotificationService {
               status: 'sent',
               sentAt: new Date().toISOString(),
             };
+            logger.info(
+              'notifications.sent',
+              wideEvent('notifications.sent', {
+                notificationId: notification.id,
+                type: notification.type,
+                channel,
+                userId: notification.userId,
+                attempt,
+                providerStatus: 'sent',
+                ...withDuration(channelStartedAt),
+                outcome: 'success',
+              }),
+            );
           }
         } catch (error) {
           channelStatus[channel] = {
             status: 'failed',
             error: error instanceof Error ? error.message : String(error),
           };
+          logger.info(
+            'notifications.sent',
+            wideEvent('notifications.sent', {
+              notificationId: notification.id,
+              type: notification.type,
+              channel,
+              userId: notification.userId,
+              attempt,
+              providerStatus: 'failed',
+              error: redactKnownSecrets(
+                error instanceof Error
+                  ? {message: error.message, stack: error.stack}
+                  : {message: String(error)},
+              ),
+              ...withDuration(channelStartedAt),
+              outcome: 'failure',
+            }),
+          );
           throw error; // Re-throw to mark Promise as rejected
         }
       }),

@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { db } from '~/db';
+import {db} from '~/db';
 import {
   JobsRepository,
   InvoicesRepository,
@@ -14,18 +14,19 @@ import {
   getJobQueueService,
   setJobQueueInstance,
 } from '~/services/job-queue';
-import { getFeuAuthService, FeuClient } from '~/services/feu';
-import { InvoiceService } from '~/services/invoices';
-import { NotificationService } from '~/services/notifications';
+import {getFeuAuthService, FeuClient} from '~/services/feu';
+import {InvoiceService} from '~/services/invoices';
+import {NotificationService} from '~/services/notifications';
 import {
   createNotifyOrderConfirmedHandler,
   createNotifySellerTicketSoldHandler,
   createSendNotificationHandler,
 } from '~/services/job-handlers';
-import { createPostSendActionRunners } from '~/services/job-handlers/post-send-action-runners';
-import { getStorageProvider } from '~/services/storage';
-import { logger } from '~/utils';
-import { FEU_AUTH_URL, FEU_API_BASE_URL } from '~/config/env';
+import {createPostSendActionRunners} from '~/services/job-handlers/post-send-action-runners';
+import {getStorageProvider} from '~/services/storage';
+import {logger} from '~/utils';
+import {wideEvent, withDuration} from '~/utils/logFields';
+import {FEU_AUTH_URL, FEU_API_BASE_URL} from '~/config/env';
 
 let jobQueueService: JobQueueService | null = null;
 
@@ -100,7 +101,7 @@ export function initializeJobQueue(): JobQueueService {
 }
 
 /** Re-export so callers can use one place; instance is set in initializeJobQueue() */
-export { getJobQueueService } from '~/services/job-queue';
+export {getJobQueueService} from '~/services/job-queue';
 
 /**
  * Process all pending jobs.
@@ -109,14 +110,27 @@ export { getJobQueueService } from '~/services/job-queue';
 export async function runProcessPendingJobs(options?: {
   maxJobsPerRun?: number;
 }): Promise<number> {
+  const startedAt = Date.now();
+  const jobName = 'process-pending-jobs';
   initializeJobQueue();
   const service = getJobQueueService();
   const processedCount = await service.processJobs({
     maxJobsPerRun: options?.maxJobsPerRun ?? 50,
   });
 
+  const payload = wideEvent('cron.process-pending-jobs', {
+    jobName,
+    itemsProcessed: processedCount,
+    itemsSucceeded: processedCount,
+    itemsFailed: 0,
+    ...withDuration(startedAt),
+    outcome: 'success' as const,
+  });
+
   if (processedCount > 0) {
-    logger.info('Processed pending jobs', { count: processedCount });
+    logger.info('cron.process-pending-jobs', payload);
+  } else {
+    logger.debug('cron.process-pending-jobs', payload);
   }
 
   return processedCount;

@@ -1,6 +1,7 @@
 import type {PaymentProvider as PaymentProviderEnum} from '@revendiste/shared';
 import {PaymentsRepository} from '~/repositories';
 import {logger} from '~/utils';
+import {wideEvent, withDuration} from '~/utils/logFields';
 
 /**
  * Function signature for syncing payment status with a provider.
@@ -41,29 +42,42 @@ export class PaymentSyncService {
       return false;
     }
 
+    const start = Date.now();
+    const previousStatus = payment.status;
     try {
-      logger.info('Syncing payment status on order access', {
-        orderId,
-        paymentId: payment.id,
-        provider: payment.provider,
-        providerPaymentId: payment.providerPaymentId,
-      });
-
       await this.syncWithProvider(payment.providerPaymentId, payment.provider);
 
-      logger.info('Payment status synced successfully on order access', {
-        orderId,
-        paymentId: payment.id,
-      });
+      logger.info(
+        'payments.sync',
+        wideEvent('payments.sync', {
+          orderId,
+          internalPaymentId: payment.id,
+          provider: payment.provider,
+          providerPaymentId: payment.providerPaymentId,
+          previousStatus,
+          trigger: 'order_access',
+          ...withDuration(start),
+          outcome: 'success',
+        }),
+      );
 
       return true;
     } catch (error) {
       // Log error but don't fail - the cronjob will retry later if needed
-      logger.error('Failed to sync payment status on order access', {
-        orderId,
-        paymentId: payment.id,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logger.error(
+        'payments.sync',
+        wideEvent('payments.sync', {
+          orderId,
+          internalPaymentId: payment.id,
+          provider: payment.provider,
+          providerPaymentId: payment.providerPaymentId,
+          previousStatus,
+          trigger: 'order_access',
+          errorMessage: error instanceof Error ? error.message : String(error),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
       return false;
     }
   }

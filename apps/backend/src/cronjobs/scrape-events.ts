@@ -10,6 +10,7 @@ import {GooglePlacesService} from '~/services/google-places';
 import {EventsRepository, VenuesRepository} from '~/repositories';
 import {db} from '~/db';
 import {logger, startMemoryMonitor, logMemoryUsage} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 
 const ALL_SCRAPERS: BaseScraper[] = [
   new EntrasteScraper(),
@@ -24,6 +25,9 @@ const ALL_SCRAPERS: BaseScraper[] = [
  * @param platforms - Optional list of platform names to scrape. If empty/undefined, all platforms are scraped.
  */
 export async function runScrapeEvents(platforms?: Platform[]) {
+  const jobStartedAt = Date.now();
+  const jobName = 'scrape-events';
+
   const scrapers =
     platforms && platforms.length > 0
       ? ALL_SCRAPERS.filter(s => platforms.includes(s.getPlatformName()))
@@ -53,17 +57,41 @@ export async function runScrapeEvents(platforms?: Platform[]) {
   const stopMemoryMonitor = startMemoryMonitor(10000);
 
   try {
-    logger.info('Starting event scraping...');
     logMemoryUsage('before-scrape');
 
     const result = await scrapingService.scrapeEvents();
 
     logMemoryUsage('after-scrape');
-    logger.info('Event scraping completed', {
-      eventsScraped: result.length,
-    });
+
+    logger.info(
+      'cron.scrape-events',
+      wideEvent('cron.scrape-events', {
+        jobName,
+        itemsProcessed: result.length,
+        itemsSucceeded: result.length,
+        itemsFailed: 0,
+        eventsScraped: result.length,
+        ...withDuration(jobStartedAt),
+        outcome: 'success',
+      }),
+    );
   } catch (error) {
-    logger.error('Error scraping events:', error);
+    logger.error(
+      'cron.scrape-events',
+      wideEvent('cron.scrape-events', {
+        jobName,
+        itemsProcessed: 0,
+        itemsSucceeded: 0,
+        itemsFailed: 1,
+        error: redactKnownSecrets(
+          error instanceof Error
+            ? {message: error.message, stack: error.stack}
+            : {message: String(error)},
+        ),
+        ...withDuration(jobStartedAt),
+        outcome: 'failure',
+      }),
+    );
     throw error;
   } finally {
     stopMemoryMonitor();

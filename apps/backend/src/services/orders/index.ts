@@ -8,6 +8,7 @@ import {
   PaymentsRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
+import {wideEvent, withDuration} from '~/utils/logFields';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateOrderRouteBody} from '~/controllers/orders/validation';
 import type {EventTicketCurrency} from '@revendiste/shared';
@@ -62,6 +63,7 @@ export class OrdersService {
   }
 
   async createOrder(data: CreateOrderRouteBody, userId: string) {
+    const createOrderStartedAt = Date.now();
     // Check if user already has a pending order for this event.
     // If the reservation timer elapsed but cron hasn't expired it yet, try to
     // expire it inline so a stale pending order doesn't permanently block the
@@ -303,7 +305,17 @@ export class OrdersService {
       }
 
       logger.info(
-        `Created order ${order.id} for user ${userId} with ${totalTickets} tickets`,
+        'orders.created',
+        wideEvent('orders.created', {
+          orderId: order.id,
+          userId,
+          eventId: data.eventId,
+          ticketCount: totalTickets,
+          amountCents: Math.round(Number(feeCalculation.totalAmount) * 100),
+          currency,
+          ...withDuration(createOrderStartedAt),
+          outcome: 'success',
+        }),
       );
 
       return order;
@@ -387,6 +399,7 @@ export class OrdersService {
   }
 
   async cancelOrder(orderId: string, userId: string) {
+    const cancelStartedAt = Date.now();
     // Verify order exists and belongs to user
     const order = await this.ordersRepository.getByIdWithItems(orderId);
     if (!order) {
@@ -420,7 +433,22 @@ export class OrdersService {
         },
       );
 
-      logger.info(`Order ${orderId} cancelled by user ${userId}`);
+      logger.info(
+        'orders.cancelled',
+        wideEvent('orders.cancelled', {
+          orderId,
+          userId,
+          eventId: order.eventId,
+          ticketCount:
+            order.items?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
+            0,
+          amountCents: Math.round(Number(order.totalAmount) * 100),
+          currency: order.currency,
+          cancelReason: 'user_requested',
+          ...withDuration(cancelStartedAt),
+          outcome: 'success',
+        }),
+      );
 
       return {
         id: cancelledOrder.id,

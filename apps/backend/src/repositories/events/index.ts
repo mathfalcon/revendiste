@@ -169,7 +169,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         const result = await this.upsertScrapedEvent(event);
         results.push(result);
       } catch (error) {
-        console.log(error);
         // Log error but continue processing other events
         logger.error(`Failed to upsert event ${event.externalId}:`, error);
       }

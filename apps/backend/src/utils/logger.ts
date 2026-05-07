@@ -3,6 +3,7 @@ import TransportStream from 'winston-transport';
 import {logs, SeverityNumber} from '@opentelemetry/api-logs';
 import {NODE_ENV, POSTHOG_KEY, POSTHOG_OTEL_DEBUG} from '~/config/env';
 import {getLoggingConfig} from '../config/logging';
+import {posthogRequestLogContext} from '~/utils/posthogRequestLogContext';
 
 /** Winston colorize() adds escapes; OTLP/PostHog need plain strings */
 const ANSI_ESCAPE = /\x1B\[[0-9;]*m/g;
@@ -88,6 +89,14 @@ class OTelTransport extends TransportStream {
       } else if (value !== undefined && value !== null) {
         attributes[key] = safeStringify(value);
       }
+    }
+
+    const phCtx = posthogRequestLogContext.get();
+    if (phCtx?.sessionId) {
+      attributes.sessionId = phCtx.sessionId;
+    }
+    if (phCtx?.posthogDistinctId) {
+      attributes.posthogDistinctId = phCtx.posthogDistinctId;
     }
 
     otelLogger.emit({
