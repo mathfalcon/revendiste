@@ -166,6 +166,22 @@ const faqCompradoresBase: FAQItem[] = [
       'Es muy sencillo: buscás el evento que te interesa, elegís la entrada que querés, pagás con el medio de pago disponible y listo. Recibís la entrada por email o podés descargarla desde tu cuenta. Todo el proceso es digital, sin necesidad de coordinación presencial.',
   },
   {
+    question: '¿Cuánto tiempo tengo para pagar desde el checkout?',
+    answer:
+      'En la pantalla de checkout ves un cronómetro con el tiempo que tenés para completar el pago en Revendiste. Cuando ese tiempo se cumple, la reserva de las entradas puede liberarse y tendrías que crear una nueva orden si querés seguir comprando. Por eso conviene terminar el pago dentro de ese margen. Si ya iniciaste un pago y la procesadora de pagos sigue confirmándolo, la página puede actualizarse sola hasta que haya un resultado.',
+  },
+  {
+    question:
+      '¿Cuánto tiempo tengo para pagar en efectivo o en una red como RedPagos?',
+    answer:
+      'Además del tiempo que ves en el checkout de Revendiste, la procesadora de pagos te muestra su propio plazo para completar el pago en el punto habilitado (por ejemplo una red de cobranzas). Revisá el cupón, el código o las instrucciones que aparecen al elegir ese medio: ahí figura hasta cuándo podés pagar en la agencia o lugar indicado. Si tenés dudas sobre fechas o montos del cupón, podés contactarnos en ayuda@revendiste.com.',
+  },
+  {
+    question: '¿Puedo cambiar el medio de pago después de iniciar la compra?',
+    answer:
+      'Para usar otro medio tenés que cancelar la orden desde el checkout y empezar una compra nueva. Si ya iniciaste un pago alternativo (por ejemplo transferencia o efectivo) y querés cambiar de opción, no completes ese pago en la red del proveedor y cancelá la orden en Revendiste. Así liberás la reserva y podés volver a intentar con la opción que prefieras.',
+  },
+  {
     question: BUYER_COMMISSION_FAQ_QUESTION,
     answer: '',
   },
@@ -212,9 +228,20 @@ const faqVendedoresBase: FAQItem[] = [
       'Sí. Las imágenes de tu documento y verificación facial se almacenan con cifrado AES-256, el mismo estándar que utilizan bancos y entidades financieras. Solo personal autorizado puede acceder a esta información en casos excepcionales de revisión de seguridad. Conservamos los datos de forma segura para la prevención de fraudes, el cumplimiento de obligaciones legales y la realización de auditorías de seguridad.',
   },
   {
+    question: '¿Me avisan cuando compran mis entradas?',
+    answer:
+      'Sí. Cuando alguien compra tus entradas te enviamos un correo electrónico y también vas a ver notificaciones en tu cuenta. Desde ahí seguís los pasos para cargar los documentos que necesita el comprador según el tipo de entrada y el evento.',
+  },
+  {
     question: '¿Cuándo me pagan?',
     answer:
       'Tus ganancias pasan a estar disponibles para retirar después de que termina el evento y se cumple un período de custodia (ventana para que el comprador pueda reportar un problema). No es un pago automático: tenés que ir a Cuenta → Retiros, elegir las ganancias y pedir el retiro. El equipo procesa los retiros manualmente en días hábiles a tu cuenta bancaria en Uruguay; en general podés esperar 1 a 3 días hábiles desde que lo pedís.',
+  },
+  {
+    question:
+      '¿Cuando venden mis entradas recibo el dinero en mi cuenta al instante?',
+    answer:
+      'No. Cuando la venta se confirma, el monto queda en custodia en Revendiste: es una garantía para el comprador hasta que termina el evento y pasa el período en el que puede reportar un problema si algo falló. Recién después ese saldo queda disponible para que solicites el retiro a tu cuenta bancaria en Uruguay. No es un ingreso inmediato en tu cuenta el mismo día de la venta.',
   },
   {
     question: '¿Cómo solicito un retiro?',
@@ -263,7 +290,7 @@ const faqPagos: FAQItem[] = [
   {
     question: '¿Qué métodos de pago aceptan?',
     answer:
-      'Aceptamos los medios de pago que se muestran habilitados al momento del checkout, generalmente tarjetas de crédito y débito. Estamos trabajando para incorporar más opciones de pago próximamente.',
+      'Los medios disponibles dependen del país que seleccionás en el checkout y de lo que habilita nuestra procesadora de pagos en ese momento: suele incluir tarjetas y, cuando corresponde, opciones como transferencia o pago en efectivo o en redes de cobranzas (según región). Solo ves lo que aplica a tu caso en la pantalla de pago. Si tu pregunta es cuánto tenés para pagar en una red como RedPagos, el plazo concreto figura en el cupón o las instrucciones que te muestra la procesadora además del tiempo del checkout en Revendiste.',
   },
   {
     question: '¿Cómo retiro mi dinero si soy vendedor?',

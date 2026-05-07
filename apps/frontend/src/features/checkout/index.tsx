@@ -12,6 +12,7 @@ import {
   EventTicketCurrency,
   createPaymentLinkMutation,
 } from '~/lib';
+import {ExpiredCheckoutCard} from './ExpiredCheckoutCard';
 import {
   formatPrice,
   formatEventDate,
@@ -75,7 +76,6 @@ interface CheckoutPageProps {
 }
 
 export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
-  const order = useSuspenseQuery(getOrderByIdQuery(orderId)).data;
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -85,9 +85,51 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
   const [countryTouched, setCountryTouched] = useState(false);
   const countryRef = useRef<HTMLDivElement>(null);
 
+  // Read order with optional polling. While the timer is alive we don't poll;
+  // once it expires and the order is still pending we poll the backend so the
+  // UI can react to webhook/cron decisions (confirm / expire / cancel) without
+  // the user having to refresh.
+  const orderQuery = useSuspenseQuery({
+    ...getOrderByIdQuery(orderId),
+    refetchInterval: query => {
+      const data = query.state.data;
+      if (!data) return false;
+      const reservationPassed =
+        data.reservationExpiresAt != null &&
+        new Date(data.reservationExpiresAt) < new Date();
+      if (data.status === 'pending' && reservationPassed) {
+        return 7000;
+      }
+      return false;
+    },
+  });
+  const order = orderQuery.data;
+
   const countdown = useCountdown(
     order.reservationExpiresAt ? new Date(order.reservationExpiresAt) : null,
   );
+
+  /**
+   * Resolves the current expiration variant for the UI:
+   *  - confirmed orders are routed away by the loader, so we don't model that here.
+   *  - status `expired` / `cancelled` are server-confirmed terminal failure states.
+   *  - status `pending` + countdown elapsed: split by `hasActivePaymentAttempt`.
+   *  - otherwise, the regular checkout UI is shown.
+   */
+  const expirationVariant:
+    | null
+    | 'released'
+    | 'pendingPayment'
+    | 'expired'
+    | 'cancelled' = (() => {
+    if (order.status === 'expired') return 'expired';
+    if (order.status === 'cancelled') return 'cancelled';
+    if (order.status === 'pending' && countdown.isExpired) {
+      return order.hasActivePaymentAttempt ? 'pendingPayment' : 'released';
+    }
+    return null;
+  })();
+  const showExpiredCard = expirationVariant !== null;
 
   const createPaymentLink = useMutation({
     ...createPaymentLinkMutation(orderId),
@@ -108,60 +150,39 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
 
   const currency = order.items[0]!.currency!;
   const feeRates = getFeeRates();
-  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasShownToastRef = useRef(false);
+  const hasShownExpiryToastRef = useRef(false);
 
+  // When the timer crosses zero, refresh the order once to pull the latest
+  // server status (confirmed / expired / cancelled / still pending). The
+  // refetchInterval above takes over from there for the pendingPayment case.
   useEffect(() => {
     if (countdown.isExpired) {
       void queryClient.invalidateQueries({queryKey: ['orders', orderId]});
     }
   }, [countdown.isExpired, orderId, queryClient]);
 
-  // Function to handle immediate redirect (clears timeout and navigates)
-  const handleImmediateRedirect = () => {
-    if (redirectTimeoutRef.current) {
-      clearTimeout(redirectTimeoutRef.current);
-      redirectTimeoutRef.current = null;
-    }
-    if (order.event?.slug) {
-      navigate({
-        to: '/eventos/$slug',
-        params: {slug: order.event.slug},
-      });
-    }
-  };
-
-  // Redirect to event page if booking is expired (with toast notification)
+  // Single, non-blocking notice when the timer first elapses. We do NOT
+  // auto-navigate; the user stays on the page and the expired card explains
+  // what's going on (released / waiting for payment confirmation).
   useEffect(() => {
-    if (countdown.isExpired && order.event?.slug && !hasShownToastRef.current) {
-      hasShownToastRef.current = true;
-
-      // Show toast notification with action button
-      toast.error('Tu reserva ha expirado', {
-        description: 'Serás redirigido al evento en unos segundos...',
-        duration: 7000,
-        action: {
-          label: 'Ir ahora',
-          onClick: handleImmediateRedirect,
-        },
-      });
-
-      // Redirect after 7 seconds (middle of 5-10 seconds range)
-      redirectTimeoutRef.current = setTimeout(() => {
-        navigate({
-          to: '/eventos/$slug',
-          params: {slug: order.event!.slug!},
+    if (
+      countdown.isExpired &&
+      order.status === 'pending' &&
+      !hasShownExpiryToastRef.current
+    ) {
+      hasShownExpiryToastRef.current = true;
+      if (order.hasActivePaymentAttempt) {
+        toast('Estamos confirmando tu pago', {
+          description: 'Esta página se actualiza sola.',
         });
-      }, 7000);
-    }
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current);
+      } else {
+        toast.error('Se liberó tu reserva', {
+          description:
+            'Se cumplió el tiempo para completar el pago. Para seguir, creá una nueva orden desde el evento.',
+        });
       }
-    };
-  }, [countdown.isExpired, order.eventId, navigate]);
+    }
+  }, [countdown.isExpired, order.status, order.hasActivePaymentAttempt]);
 
   const eventWithImages = order.event as typeof order.event & {
     images?: Array<{imageType: string; url: string}>;
@@ -197,6 +218,36 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
     createPaymentLink.mutate({country: payerCountry});
   };
 
+  // When the checkout has reached an expired-style state, render a focused
+  // recovery view instead of the regular pay UI. We keep the page (no
+  // auto-redirect) so the user has clear next steps and the pendingPayment
+  // case can resolve itself via the polling above.
+  if (showExpiredCard && expirationVariant) {
+    return (
+      <div className='container mx-auto px-2 py-4 sm:py-6'>
+        <div className='max-w-3xl mx-auto space-y-4 sm:space-y-6'>
+          <div>
+            <h1 className='text-2xl sm:text-3xl font-bold mb-1 sm:mb-2'>
+              Checkout
+            </h1>
+            <p className='text-sm sm:text-base text-muted-foreground'>
+              Estado de tu reserva
+            </p>
+          </div>
+
+          <ExpiredCheckoutCard
+            orderId={orderId}
+            eventSlug={order.event?.slug ?? null}
+            variant={expirationVariant}
+            isRefreshing={orderQuery.isFetching}
+            cancelDialogOpen={showCancelDialog}
+            onCancelDialogOpenChange={setShowCancelDialog}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Suspense fallback={<FullScreenLoading />}>
       {/* Add padding at bottom on mobile to account for sticky bar */}
@@ -212,28 +263,16 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
             </p>
           </div>
 
-          {/* Reservation Timer Alert */}
-          {!countdown.isExpired && (
-            <Alert className='border-orange-500/30 bg-orange-500/5 hidden sm:block'>
-              <ClockIcon className='h-4 w-4 text-orange-500 dark:text-orange-400' />
-              <AlertTitle className='text-orange-500'>
-                Tiempo restante para completar el pago
-              </AlertTitle>
-              <AlertDescription className='text-orange-500/80'>
-                {countdown.formatted}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {countdown.isExpired && (
-            <Alert variant='destructive'>
-              <AlertTitle>Reserva expirada</AlertTitle>
-              <AlertDescription>
-                El tiempo para completar el pago expiró. Volvé al evento para
-                crear una nueva orden.
-              </AlertDescription>
-            </Alert>
-          )}
+          {/* Reservation Timer */}
+          <Alert className='border-orange-500/30 bg-orange-500/5 hidden sm:block'>
+            <ClockIcon className='h-4 w-4 text-orange-500 dark:text-orange-400' />
+            <AlertTitle className='text-orange-500'>
+              Tiempo restante para completar el pago
+            </AlertTitle>
+            <AlertDescription className='text-orange-500/80'>
+              {countdown.formatted}
+            </AlertDescription>
+          </Alert>
 
           {/* Order Details */}
           <div className='rounded-lg border bg-card p-4 sm:p-6 space-y-4 sm:space-y-6'>
@@ -503,22 +542,14 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
       <StickyBottomBar>
         <div className='flex flex-col gap-2'>
           {/* Countdown Timer Row */}
-          {!countdown.isExpired && (
-            <div className='flex items-center justify-center gap-2 text-orange-500'>
-              <ClockIcon className='h-3.5 w-3.5' />
-              <span className='text-xs font-medium'>
-                Expira en {countdown.formatted}
-              </span>
-            </div>
-          )}
-          {countdown.isExpired && (
-            <div className='flex items-center justify-center gap-2 text-destructive'>
-              <ClockIcon className='h-3.5 w-3.5' />
-              <span className='text-xs font-medium'>Reserva expirada</span>
-            </div>
-          )}
+          <div className='flex items-center justify-center gap-2 text-orange-500'>
+            <ClockIcon className='h-3.5 w-3.5' />
+            <span className='text-xs font-medium'>
+              Expira en {countdown.formatted}
+            </span>
+          </div>
           {/* Country warning for mobile */}
-          {!isCountrySelected && !countdown.isExpired && (
+          {!isCountrySelected && (
             <button
               type='button'
               onClick={() =>
@@ -540,15 +571,13 @@ export const CheckoutPage = ({orderId}: CheckoutPageProps) => {
                 <span className='text-xs text-muted-foreground'>
                   Total a pagar
                 </span>
-                {!countdown.isExpired && (
-                  <button
-                    type='button'
-                    onClick={() => setShowCancelDialog(true)}
-                    className='text-xs text-muted-foreground hover:text-destructive underline'
-                  >
-                    Cancelar
-                  </button>
-                )}
+                <button
+                  type='button'
+                  onClick={() => setShowCancelDialog(true)}
+                  className='text-xs text-muted-foreground hover:text-destructive underline'
+                >
+                  Cancelar
+                </button>
               </div>
               <span className='font-bold text-lg text-primary'>
                 {formatPrice(Number(order.totalAmount), currency)}

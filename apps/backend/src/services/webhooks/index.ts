@@ -21,21 +21,12 @@ export class WebhooksService {
     paymentId: string,
     metadata: WebhookMetadata,
   ): Promise<void> {
-    logger.info('dLocal webhook received', {
-      paymentId,
-      ipAddress: metadata.ipAddress,
-      userAgent: metadata.userAgent,
-    });
-
-    this.dlocalAdapter
-      .processWebhook(paymentId, metadata)
-      .then(() => logger.info('dLocal webhook processed', {paymentId}))
-      .catch(error =>
-        logger.error('Error processing dLocal webhook', {
-          paymentId,
-          error: error.message,
-        }),
-      );
+    this.dlocalAdapter.processWebhook(paymentId, metadata).catch(error =>
+      logger.error('Error processing dLocal webhook', {
+        paymentId,
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
   }
 
   /**
@@ -46,21 +37,6 @@ export class WebhooksService {
     webhookBody: ClerkWebhookRouteBody,
     metadata: WebhookMetadata,
   ): Promise<void> {
-    // Fire-and-forget: process asynchronously and don't wait
-    this.clerkWebhookService
-      .handleWebhook(webhookBody, metadata)
-      .then(() =>
-        logger.info('Clerk webhook processed successfully', {
-          eventType: webhookBody.type,
-          emailSlug: webhookBody.data.slug,
-        }),
-      )
-      .catch(error =>
-        logger.error('Error processing Clerk webhook', {
-          eventType: webhookBody.type,
-          emailSlug: webhookBody.data.slug,
-          error: error instanceof Error ? error.message : String(error),
-        }),
-      );
+    void this.clerkWebhookService.handleWebhook(webhookBody, metadata);
   }
 }

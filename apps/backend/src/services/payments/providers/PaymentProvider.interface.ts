@@ -73,4 +73,11 @@ export interface PaymentProvider {
    * Each provider must implement this to map their statuses to our standard ones
    */
   normalizeStatus(providerStatus: string): PaymentStatus;
+
+  /**
+   * Optional: nudge the provider so pending payments past their window get re-evaluated
+   * (e.g. dLocal may only fire expiration webhooks after checkout URL is visited).
+   * Implementations must be idempotent and best-effort (failures swallowed).
+   */
+  forceExpirationCheck?(payment: ProviderPaymentData): Promise<void>;
 }

@@ -142,6 +142,8 @@ export const NOTIFICATION_ERROR_MESSAGES = {
   NOTIFICATION_NOT_FOUND: 'Notificación no encontrada',
   UNAUTHORIZED_ACCESS: 'No estás autorizado para acceder a esta notificación',
   INVALID_CHANNELS: 'Los canales de notificación especificados no son válidos',
+  TEST_NOTIFICATION_CREATION_FAILED:
+    'No se pudo crear la notificación de prueba',
   USER_NOT_FOUND: 'Usuario no encontrado',
   EMAIL_SEND_FAILED: (error: string) =>
     `Error al enviar el correo electrónico: ${error}`,

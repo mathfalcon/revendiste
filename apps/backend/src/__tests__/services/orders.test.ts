@@ -88,7 +88,6 @@ describe('OrdersService', () => {
 
     mockOrderTicketReservationsRepository = {
       createReservations: jest.fn(),
-      cleanupExpiredReservationsForTickets: jest.fn(),
       releaseByOrderId: jest.fn(),
       getByOrderId: jest.fn(),
       withTransaction: jest.fn(),
@@ -110,11 +109,13 @@ describe('OrdersService', () => {
     } as unknown as jest.Mocked<PaymentSyncService>;
 
     mockPaymentsRepository = {
-      getAllByOrderId: jest.fn(),
+      getAllByOrderId: jest.fn().mockResolvedValue([]),
       withTransaction: jest.fn(),
       getDb: jest.fn(),
     } as unknown as jest.Mocked<PaymentsRepository>;
-    mockPaymentsRepository.withTransaction.mockReturnValue(mockPaymentsRepository);
+    mockPaymentsRepository.withTransaction.mockReturnValue(
+      mockPaymentsRepository,
+    );
 
     mockNotificationService = {
       createNotification: jest.fn(),
@@ -145,7 +146,7 @@ describe('OrdersService', () => {
       const data = {
         eventId,
         ticketSelections: {
-          'wave-1': { '100': 1 },
+          'wave-1': {'100': 1},
         },
       };
 
@@ -171,17 +172,19 @@ describe('OrdersService', () => {
 
       const data = {
         eventId: 'event-missing',
-        ticketSelections: { 'wave-1': { '100': 1 } },
+        ticketSelections: {'wave-1': {'100': 1}},
       };
 
-      await expect(
-        service.createOrder(data, 'user-1'),
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.createOrder(data, 'user-1')).rejects.toThrow(
+        NotFoundError,
+      );
       await expect(service.createOrder(data, 'user-1')).rejects.toMatchObject({
         message: ORDER_ERROR_MESSAGES.EVENT_NOT_FOUND,
       });
 
-      expect(mockEventsRepository.getById).toHaveBeenCalledWith('event-missing');
+      expect(mockEventsRepository.getById).toHaveBeenCalledWith(
+        'event-missing',
+      );
     });
 
     it('throws ValidationError when insufficient tickets available', async () => {
@@ -202,12 +205,15 @@ describe('OrdersService', () => {
       mockEventTicketWavesRepository.getById.mockResolvedValue(wave as any);
       // User wants 3 tickets but only 2 available (locked inside tx via ForUpdate)
       mockListingTicketsRepository.findAvailableTicketsByPriceGroupForUpdate.mockResolvedValue(
-        [{ id: 't1', listingId: 'l1' }, { id: 't2', listingId: 'l1' }] as any,
+        [
+          {id: 't1', listingId: 'l1'},
+          {id: 't2', listingId: 'l1'},
+        ] as any,
       );
 
       const data = {
         eventId: 'event-1',
-        ticketSelections: { 'wave-1': { '100': 3 } },
+        ticketSelections: {'wave-1': {'100': 3}},
       };
 
       await expect(service.createOrder(data, 'user-1')).rejects.toThrow(
@@ -234,16 +240,19 @@ describe('OrdersService', () => {
         currency: 'UYU',
       } as any);
       mockListingTicketsRepository.findAvailableTicketsByPriceGroupForUpdate.mockResolvedValue(
-        [{ id: 't1', listingId: 'l1' }, { id: 't2', listingId: 'l1' }] as any,
+        [
+          {id: 't1', listingId: 'l1'},
+          {id: 't2', listingId: 'l1'},
+        ] as any,
       );
       // Listings belong to user-1 (the buyer)
       mockListingTicketsRepository.getListingsByIds.mockResolvedValue([
-        { id: 'l1', publisherUserId: 'user-1' },
+        {id: 'l1', publisherUserId: 'user-1'},
       ] as any);
 
       const data = {
         eventId: 'event-1',
-        ticketSelections: { 'wave-1': { '100': 2 } },
+        ticketSelections: {'wave-1': {'100': 2}},
       };
 
       await expect(service.createOrder(data, 'user-1')).rejects.toThrow(
@@ -251,6 +260,189 @@ describe('OrdersService', () => {
       );
       await expect(service.createOrder(data, 'user-1')).rejects.toMatchObject({
         message: ORDER_ERROR_MESSAGES.CANNOT_BUY_OWN_TICKETS,
+      });
+    });
+
+    it('creates order and reservations without cleanupExpiredReservationsForTickets', async () => {
+      mockOrdersRepository.getPendingOrderByUserAndEvent.mockResolvedValue(
+        undefined,
+      );
+      mockEventsRepository.getById.mockResolvedValue({
+        id: 'event-1',
+        eventEndDate: new Date(Date.now() + 86400000),
+      } as any);
+      mockEventTicketWavesRepository.getById.mockResolvedValue({
+        id: 'wave-1',
+        eventId: 'event-1',
+        name: 'General',
+        currency: 'UYU',
+      } as any);
+      mockListingTicketsRepository.findAvailableTicketsByPriceGroupForUpdate.mockResolvedValue(
+        [{id: 't1', listingId: 'l1'}] as any,
+      );
+      mockListingTicketsRepository.getListingsByIds.mockResolvedValue([
+        {id: 'l1', publisherUserId: 'seller-1'},
+      ] as any);
+      mockOrdersRepository.create.mockResolvedValue({
+        id: 'order-new',
+        userId: 'user-1',
+        eventId: 'event-1',
+        status: 'pending',
+        totalAmount: '100',
+        subtotalAmount: '100',
+        platformCommission: '0',
+        vatOnCommission: '0',
+        currency: 'UYU',
+      } as any);
+      mockOrderTicketReservationsRepository.createReservations.mockResolvedValue(
+        [] as any,
+      );
+
+      const data = {
+        eventId: 'event-1',
+        ticketSelections: {'wave-1': {'100': 1}},
+      };
+
+      const result = await service.createOrder(data, 'user-1');
+
+      expect(result.id).toBe('order-new');
+      expect(
+        mockOrderTicketReservationsRepository.createReservations,
+      ).toHaveBeenCalledWith('order-new', ['t1'], expect.any(Date));
+    });
+
+    it('throws PENDING_ORDER_EXISTS when an existing pending order has a stale timer but cannot be expired (payment exists)', async () => {
+      const past = new Date(Date.now() - 60_000);
+      mockOrdersRepository.getPendingOrderByUserAndEvent
+        .mockResolvedValueOnce({
+          id: 'order-stale',
+          reservationExpiresAt: past,
+        })
+        // After failed inline expiry, the pending order is still there
+        .mockResolvedValueOnce({
+          id: 'order-stale',
+          reservationExpiresAt: past,
+        });
+      // Inline expiry returns false (e.g. payment row exists, helper bails)
+      mockExpireOrderWithoutPaymentLink.mockResolvedValue(false);
+
+      const data = {
+        eventId: 'event-1',
+        ticketSelections: {'wave-1': {'100': 1}},
+      };
+
+      await expect(service.createOrder(data, 'user-1')).rejects.toMatchObject({
+        message: ORDER_ERROR_MESSAGES.PENDING_ORDER_EXISTS('order-stale'),
+        metadata: {orderId: 'order-stale'},
+      });
+
+      expect(mockExpireOrderWithoutPaymentLink).toHaveBeenCalledWith(
+        'order-stale',
+        expect.any(Object),
+      );
+      expect(mockEventsRepository.getById).not.toHaveBeenCalled();
+    });
+
+    it('expires a stale pending order inline and proceeds to create a new one', async () => {
+      const past = new Date(Date.now() - 60_000);
+      // First call returns the stale pending order; after expiry the second
+      // call returns undefined so createOrder proceeds.
+      mockOrdersRepository.getPendingOrderByUserAndEvent
+        .mockResolvedValueOnce({
+          id: 'order-stale',
+          reservationExpiresAt: past,
+        })
+        .mockResolvedValueOnce(undefined);
+      mockExpireOrderWithoutPaymentLink.mockResolvedValue(true);
+
+      mockEventsRepository.getById.mockResolvedValue({
+        id: 'event-1',
+        eventEndDate: new Date(Date.now() + 86_400_000),
+      } as any);
+      mockEventTicketWavesRepository.getById.mockResolvedValue({
+        id: 'wave-1',
+        eventId: 'event-1',
+        name: 'General',
+        currency: 'UYU',
+      } as any);
+      mockListingTicketsRepository.findAvailableTicketsByPriceGroupForUpdate.mockResolvedValue(
+        [{id: 't1', listingId: 'l1'}] as any,
+      );
+      mockListingTicketsRepository.getListingsByIds.mockResolvedValue([
+        {id: 'l1', publisherUserId: 'seller-1'},
+      ] as any);
+      mockOrdersRepository.create.mockResolvedValue({
+        id: 'order-new',
+        userId: 'user-1',
+        eventId: 'event-1',
+        status: 'pending',
+        totalAmount: '100',
+        subtotalAmount: '100',
+        platformCommission: '0',
+        vatOnCommission: '0',
+        currency: 'UYU',
+      } as any);
+      mockOrderTicketReservationsRepository.createReservations.mockResolvedValue(
+        [] as any,
+      );
+
+      const data = {
+        eventId: 'event-1',
+        ticketSelections: {'wave-1': {'100': 1}},
+      };
+
+      const result = await service.createOrder(data, 'user-1');
+
+      expect(result.id).toBe('order-new');
+      expect(mockExpireOrderWithoutPaymentLink).toHaveBeenCalledWith(
+        'order-stale',
+        expect.any(Object),
+      );
+    });
+
+    it('throws TICKETS_NO_LONGER_AVAILABLE when createReservations hits unique violation', async () => {
+      mockOrdersRepository.getPendingOrderByUserAndEvent.mockResolvedValue(
+        undefined,
+      );
+      mockEventsRepository.getById.mockResolvedValue({
+        id: 'event-1',
+        eventEndDate: new Date(Date.now() + 86400000),
+      } as any);
+      mockEventTicketWavesRepository.getById.mockResolvedValue({
+        id: 'wave-1',
+        eventId: 'event-1',
+        name: 'General',
+        currency: 'UYU',
+      } as any);
+      mockListingTicketsRepository.findAvailableTicketsByPriceGroupForUpdate.mockResolvedValue(
+        [{id: 't1', listingId: 'l1'}] as any,
+      );
+      mockListingTicketsRepository.getListingsByIds.mockResolvedValue([
+        {id: 'l1', publisherUserId: 'seller-1'},
+      ] as any);
+      mockOrdersRepository.create.mockResolvedValue({
+        id: 'order-new',
+        userId: 'user-1',
+        eventId: 'event-1',
+        status: 'pending',
+        totalAmount: '100',
+        subtotalAmount: '100',
+        platformCommission: '0',
+        vatOnCommission: '0',
+        currency: 'UYU',
+      } as any);
+      const dbErr = Object.assign(new Error('duplicate key'), {code: '23505'});
+      mockOrderTicketReservationsRepository.createReservations.mockRejectedValue(
+        dbErr,
+      );
+
+      const data = {
+        eventId: 'event-1',
+        ticketSelections: {'wave-1': {'100': 1}},
+      };
+
+      await expect(service.createOrder(data, 'user-1')).rejects.toMatchObject({
+        message: ORDER_ERROR_MESSAGES.TICKETS_NO_LONGER_AVAILABLE,
       });
     });
   });
@@ -263,9 +455,9 @@ describe('OrdersService', () => {
         status: 'confirmed',
       } as any);
 
-      await expect(
-        service.cancelOrder('order-1', 'user-1'),
-      ).rejects.toThrow(ValidationError);
+      await expect(service.cancelOrder('order-1', 'user-1')).rejects.toThrow(
+        ValidationError,
+      );
       await expect(
         service.cancelOrder('order-1', 'user-1'),
       ).rejects.toMatchObject({
@@ -283,9 +475,9 @@ describe('OrdersService', () => {
         status: 'pending',
       } as any);
 
-      await expect(
-        service.getOrderById('order-1', 'user-1'),
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.getOrderById('order-1', 'user-1')).rejects.toThrow(
+        NotFoundError,
+      );
       await expect(
         service.getOrderById('order-1', 'user-1'),
       ).rejects.toMatchObject({
@@ -305,6 +497,57 @@ describe('OrdersService', () => {
       await service.getOrderById('order-1', 'user-1');
 
       expect(mockExpireOrderWithoutPaymentLink).not.toHaveBeenCalled();
+    });
+
+    it('returns hasActivePaymentAttempt=false when there are no payment rows', async () => {
+      const future = new Date(Date.now() + 60_000);
+      mockOrdersRepository.getByIdWithItems.mockResolvedValue({
+        id: 'order-1',
+        userId: 'user-1',
+        status: 'pending',
+        reservationExpiresAt: future,
+      } as any);
+      mockPaymentsRepository.getAllByOrderId.mockResolvedValue([]);
+
+      const result = await service.getOrderById('order-1', 'user-1');
+
+      expect(result.hasActivePaymentAttempt).toBe(false);
+    });
+
+    it('returns hasActivePaymentAttempt=true when a non-terminal payment exists', async () => {
+      const future = new Date(Date.now() + 60_000);
+      mockOrdersRepository.getByIdWithItems.mockResolvedValue({
+        id: 'order-1',
+        userId: 'user-1',
+        status: 'pending',
+        reservationExpiresAt: future,
+      } as any);
+      mockPaymentsRepository.getAllByOrderId.mockResolvedValue([
+        {id: 'pay-1', status: 'pending'} as any,
+      ]);
+
+      const result = await service.getOrderById('order-1', 'user-1');
+
+      expect(result.hasActivePaymentAttempt).toBe(true);
+    });
+
+    it('returns hasActivePaymentAttempt=false when all payments are in terminal failure states', async () => {
+      const future = new Date(Date.now() + 60_000);
+      mockOrdersRepository.getByIdWithItems.mockResolvedValue({
+        id: 'order-1',
+        userId: 'user-1',
+        status: 'pending',
+        reservationExpiresAt: future,
+      } as any);
+      mockPaymentsRepository.getAllByOrderId.mockResolvedValue([
+        {id: 'pay-1', status: 'failed'} as any,
+        {id: 'pay-2', status: 'cancelled'} as any,
+        {id: 'pay-3', status: 'expired'} as any,
+      ]);
+
+      const result = await service.getOrderById('order-1', 'user-1');
+
+      expect(result.hasActivePaymentAttempt).toBe(false);
     });
 
     it('refetches after inline expiry when reservation passed and helper expires', async () => {

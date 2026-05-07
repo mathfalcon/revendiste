@@ -1,5 +1,6 @@
 import {PaginatedResponse} from '~/types';
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {
   NotificationsRepository,
   UsersRepository,
@@ -37,6 +38,7 @@ import {
 import {buildWhatsAppTemplate} from './whatsapp-template-builder';
 import {generateNotificationText} from '@revendiste/shared';
 import {getJobQueueService} from '~/services/job-queue';
+import {shouldSkipBuyerNotificationForPastEvent} from './skip-notification-if-event-past';
 import type {
   PostSendAction,
   SendNotificationAttachmentRef,
@@ -49,6 +51,8 @@ export interface EmailAttachmentParam {
 }
 
 export interface CreateNotificationParams extends CreateNotificationData {
+  /** Skip email/in_app when the linked event has already ended (buyer notifications only). */
+  skipIfEventPast?: {eventEndDate: Date | string | null};
   /** When true, enqueue send-notification job (cronjob sends later). When false/undefined, send immediately (fire-and-forget). Use job for heavy/attachments, immediate for low-latency. */
   deferSendToJob?: boolean;
   /** In-memory attachments; used when deferSendToJob is false/undefined (immediate send) */
@@ -124,6 +128,15 @@ export class NotificationService {
    * Validates the notification data before creating it
    */
   async createNotification(params: CreateNotificationParams) {
+    if (shouldSkipBuyerNotificationForPastEvent(params.skipIfEventPast)) {
+      logger.debug('Skipping notification: event has already ended', {
+        userId: params.userId,
+        type: params.type,
+        eventEndDate: params.skipIfEventPast?.eventEndDate,
+      });
+      return null;
+    }
+
     // Validate metadata if provided
     let validatedMetadata = params.metadata;
     if (params.metadata) {
@@ -430,8 +443,12 @@ export class NotificationService {
     > = {};
 
     // Send through each channel and track status individually
+    const attempt = (notification.retryCount ?? 0) + 1;
+
     await Promise.allSettled(
       notification.channels.map(async channel => {
+        const channelStartedAt = Date.now();
+
         try {
           if (channel === 'email') {
             await this.sendEmailNotification(
@@ -443,12 +460,38 @@ export class NotificationService {
               status: 'sent',
               sentAt: new Date().toISOString(),
             };
+            logger.info(
+              'notifications.sent',
+              wideEvent('notifications.sent', {
+                notificationId: notification.id,
+                type: notification.type,
+                channel,
+                userId: notification.userId,
+                attempt,
+                providerStatus: 'sent',
+                ...withDuration(channelStartedAt),
+                outcome: 'success',
+              }),
+            );
           } else if (channel === 'in_app') {
             // In-app notifications are automatically "sent" when created
             channelStatus[channel] = {
               status: 'sent',
               sentAt: new Date().toISOString(),
             };
+            logger.info(
+              'notifications.sent',
+              wideEvent('notifications.sent', {
+                notificationId: notification.id,
+                type: notification.type,
+                channel,
+                userId: notification.userId,
+                attempt,
+                providerStatus: 'in_app',
+                ...withDuration(channelStartedAt),
+                outcome: 'success',
+              }),
+            );
             // Fire-and-forget push to subscribed devices
             this.sendWebPush(notification).catch(err =>
               logger.error('Web push dispatch failed', {
@@ -463,6 +506,20 @@ export class NotificationService {
                 status: 'failed',
                 error: 'User has no phone number',
               };
+              logger.info(
+                'notifications.sent',
+                wideEvent('notifications.sent', {
+                  notificationId: notification.id,
+                  type: notification.type,
+                  channel,
+                  userId: notification.userId,
+                  attempt,
+                  providerStatus: 'skipped',
+                  skipReason: 'no_phone',
+                  ...withDuration(channelStartedAt),
+                  outcome: 'skipped',
+                }),
+              );
               return;
             }
             await this.sendWhatsAppNotification(
@@ -473,12 +530,43 @@ export class NotificationService {
               status: 'sent',
               sentAt: new Date().toISOString(),
             };
+            logger.info(
+              'notifications.sent',
+              wideEvent('notifications.sent', {
+                notificationId: notification.id,
+                type: notification.type,
+                channel,
+                userId: notification.userId,
+                attempt,
+                providerStatus: 'sent',
+                ...withDuration(channelStartedAt),
+                outcome: 'success',
+              }),
+            );
           }
         } catch (error) {
           channelStatus[channel] = {
             status: 'failed',
             error: error instanceof Error ? error.message : String(error),
           };
+          logger.info(
+            'notifications.sent',
+            wideEvent('notifications.sent', {
+              notificationId: notification.id,
+              type: notification.type,
+              channel,
+              userId: notification.userId,
+              attempt,
+              providerStatus: 'failed',
+              error: redactKnownSecrets(
+                error instanceof Error
+                  ? {message: error.message, stack: error.stack}
+                  : {message: String(error)},
+              ),
+              ...withDuration(channelStartedAt),
+              outcome: 'failure',
+            }),
+          );
           throw error; // Re-throw to mark Promise as rejected
         }
       }),
@@ -1003,6 +1091,15 @@ export class NotificationService {
       metadata: mergedMetadata,
       actions: mergedActions,
     });
+
+    if (!notification) {
+      logger.warn(
+        'Final batched notification was skipped (e.g. event already ended); cancelling batch',
+        {batchId},
+      );
+      await this.notificationBatchesRepository.cancelBatch(batchId);
+      return;
+    }
 
     // Mark batch as processed
     await this.notificationBatchesRepository.markBatchProcessed(

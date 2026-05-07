@@ -90,6 +90,14 @@ const EnvSchema = z.object({
   // PostHog analytics
   POSTHOG_KEY: z.string().optional(),
   POSTHOG_HOST: z.string().optional().default('https://e-proxy.revendiste.com'),
+  /** When true: OTel diag to stderr, per-export result logging, SimpleLogRecordProcessor (no batching delay) */
+  POSTHOG_OTEL_DEBUG: z.preprocess(v => {
+    if (v === undefined || v === '' || v === false) return false;
+    const s = String(v).toLowerCase();
+    return s === '1' || s === 'true' || s === 'yes';
+  }, z.boolean()),
+  /** Override PostHog log ingest URL (e.g. EU: https://eu.i.posthog.com/i/v1/logs) */
+  POSTHOG_OTLP_LOGS_URL: z.string().url().optional(),
   // Rate limiting (Postgres-backed; optional, defaults apply to /api)
   RATE_LIMIT_WINDOW_MS: z.coerce.number().optional().default(60_000), // 1 minute
   RATE_LIMIT_MAX: z.coerce.number().optional().default(100), // max requests per window per IP
@@ -179,6 +187,8 @@ export const {
   GOOGLE_PLACES_API_KEY,
   POSTHOG_KEY,
   POSTHOG_HOST,
+  POSTHOG_OTEL_DEBUG,
+  POSTHOG_OTLP_LOGS_URL,
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_MAX,
   FEU_ENV,

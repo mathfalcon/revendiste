@@ -116,27 +116,6 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
       .execute();
   }
 
-  async getExpiredReservations() {
-    return await this.db
-      .selectFrom('orderTicketReservations')
-      .selectAll()
-      .where('reservedUntil', '<', new Date())
-      .where('deletedAt', 'is', null)
-      .execute();
-  }
-
-  async cleanupExpiredReservations() {
-    return await this.db
-      .updateTable('orderTicketReservations')
-      .set({
-        deletedAt: new Date(),
-      })
-      .where('reservedUntil', '<', new Date())
-      .where('deletedAt', 'is', null)
-      .returningAll()
-      .execute();
-  }
-
   async confirmOrderReservations(orderId: string) {
     // Mark reservations as deleted (they're now confirmed)
     return await this.db
@@ -146,20 +125,6 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
       })
       .where('orderId', '=', orderId)
       .where('deletedAt', 'is', null)
-      .returningAll()
-      .execute();
-  }
-
-  async cleanupExpiredReservationsForTickets(ticketIds: string[]) {
-    // Soft-delete expired reservations for specific tickets
-    // Used on-demand when creating new reservations to ensure expired ones don't block
-    const now = new Date();
-    return await this.db
-      .updateTable('orderTicketReservations')
-      .set({deletedAt: now})
-      .where('listingTicketId', 'in', ticketIds)
-      .where('deletedAt', 'is', null)
-      .where('reservedUntil', '<', now)
       .returningAll()
       .execute();
   }
@@ -256,11 +221,7 @@ export class OrderTicketReservationsRepository extends BaseRepository<OrderTicke
     return await this.db
       .selectFrom('orderTicketReservations')
       .innerJoin('orders', 'orderTicketReservations.orderId', 'orders.id')
-      .select([
-        'orders.id as orderId',
-        'orders.userId',
-        'orders.status',
-      ])
+      .select(['orders.id as orderId', 'orders.userId', 'orders.status'])
       .where('orderTicketReservations.listingTicketId', '=', ticketId)
       .where('orders.status', '=', 'confirmed')
       .where('orders.deletedAt', 'is', null)

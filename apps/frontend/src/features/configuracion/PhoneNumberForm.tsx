@@ -22,7 +22,6 @@ import {
   verifyWhatsappOtpMutation,
 } from '~/lib/api/profile';
 import {toast} from 'sonner';
-import {NODE_ENV} from '~/config/env';
 
 const phoneSchema = z.object({
   phoneNumber: z

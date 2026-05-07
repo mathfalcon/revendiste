@@ -18,6 +18,7 @@ import {
   generateNotificationText,
 } from '@revendiste/shared';
 import type {Notification} from '~/types/models';
+import {logger} from '~/utils';
 
 /**
  * Typed notification response with parsed metadata and actions
@@ -103,7 +104,9 @@ export function parseNotification(
           : notification.metadata;
       parsedMetadata = NotificationMetadataSchema.parse(metadataObj);
     } catch (error) {
-      console.error('Failed to parse notification metadata', error);
+      logger.error('Failed to parse notification metadata', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -119,7 +122,9 @@ export function parseNotification(
           : notification.actions;
       parsedActions = validateNotificationActions(actionsObj);
     } catch (error) {
-      console.error('Failed to parse notification actions', error);
+      logger.error('Failed to parse notification actions', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -135,7 +140,9 @@ export function parseNotification(
       title = text.title;
       description = text.description;
     } catch (error) {
-      console.error('Failed to generate notification text', error);
+      logger.error('Failed to generate notification text', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -153,7 +160,9 @@ export function parseNotification(
     return validated as TypedNotification;
   } catch (error) {
     // If validation fails, return with parsed metadata/actions but without full validation
-    console.error('Failed to validate full notification', error);
+    logger.error('Failed to validate full notification', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       ...notification,
       title,

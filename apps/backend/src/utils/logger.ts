@@ -1,7 +1,15 @@
 import winston from 'winston';
 import TransportStream from 'winston-transport';
 import {logs, SeverityNumber} from '@opentelemetry/api-logs';
+import {NODE_ENV, POSTHOG_KEY, POSTHOG_OTEL_DEBUG} from '~/config/env';
 import {getLoggingConfig} from '../config/logging';
+import {posthogRequestLogContext} from '~/utils/posthogRequestLogContext';
+
+/** Winston colorize() adds escapes; OTLP/PostHog need plain strings */
+const ANSI_ESCAPE = /\x1B\[[0-9;]*m/g;
+function stripAnsi(value: string): string {
+  return value.replace(ANSI_ESCAPE, '');
+}
 
 /**
  * Safe JSON stringify that handles circular references
@@ -39,6 +47,8 @@ const WINSTON_TO_OTEL_SEVERITY: Record<string, SeverityNumber> = {
   debug: SeverityNumber.DEBUG,
 };
 
+let loggedFirstOtelForward = false;
+
 /**
  * Winston transport that forwards log records to OpenTelemetry,
  * which then exports them to PostHog via OTLP.
@@ -46,7 +56,17 @@ const WINSTON_TO_OTEL_SEVERITY: Record<string, SeverityNumber> = {
 class OTelTransport extends TransportStream {
   log(info: any, callback: () => void) {
     const otelLogger = logs.getLogger('revendiste-backend');
-    const {level, message, timestamp: _ts, ...metadata} = info;
+    const {
+      level: rawLevel,
+      message: rawMessage,
+      timestamp: _ts,
+      ...metadata
+    } = info;
+
+    const level =
+      typeof rawLevel === 'string' ? stripAnsi(rawLevel) : String(rawLevel);
+    const message =
+      typeof rawMessage === 'string' ? stripAnsi(rawMessage) : rawMessage;
 
     // Filter out Winston internal properties
     const attributes: Record<string, string | number | boolean> = {};
@@ -65,10 +85,18 @@ class OTelTransport extends TransportStream {
         typeof value === 'number' ||
         typeof value === 'boolean'
       ) {
-        attributes[key] = value;
+        attributes[key] = typeof value === 'string' ? stripAnsi(value) : value;
       } else if (value !== undefined && value !== null) {
         attributes[key] = safeStringify(value);
       }
+    }
+
+    const phCtx = posthogRequestLogContext.get();
+    if (phCtx?.sessionId) {
+      attributes.sessionId = phCtx.sessionId;
+    }
+    if (phCtx?.posthogDistinctId) {
+      attributes.posthogDistinctId = phCtx.posthogDistinctId;
     }
 
     otelLogger.emit({
@@ -77,6 +105,16 @@ class OTelTransport extends TransportStream {
       body: message,
       attributes,
     });
+
+    if (POSTHOG_KEY && POSTHOG_OTEL_DEBUG && !loggedFirstOtelForward) {
+      loggedFirstOtelForward = true;
+      const preview =
+        typeof message === 'string' ? message.slice(0, 120) : String(message);
+      console.error(
+        '[PostHog OTel] first log forwarded from Winston → api-logs.emit',
+        {level, messagePreview: preview},
+      );
+    }
 
     callback();
   }
@@ -175,9 +213,10 @@ if (config.logToFile) {
   );
 }
 
-// Add OpenTelemetry transport (forwards logs to PostHog via OTLP)
-// Only active when OTel SDK is initialized (i.e. POSTHOG_KEY is set)
-transports.push(new OTelTransport());
+// PostHog (OTel): not attached on NODE_ENV=local — no network export; console/file transports unchanged
+if (NODE_ENV !== 'local') {
+  transports.push(new OTelTransport());
+}
 
 // Create the logger
 const logger = winston.createLogger({

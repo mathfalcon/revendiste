@@ -8,6 +8,7 @@ import {
   PaymentsRepository,
 } from '~/repositories';
 import {logger} from '~/utils';
+import {wideEvent, withDuration} from '~/utils/logFields';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateOrderRouteBody} from '~/controllers/orders/validation';
 import type {EventTicketCurrency} from '@revendiste/shared';
@@ -62,17 +63,47 @@ export class OrdersService {
   }
 
   async createOrder(data: CreateOrderRouteBody, userId: string) {
-    // Check if user already has a pending order for this event
+    const createOrderStartedAt = Date.now();
+    // Check if user already has a pending order for this event.
+    // If the reservation timer elapsed but cron hasn't expired it yet, try to
+    // expire it inline so a stale pending order doesn't permanently block the
+    // user from creating a new one.
     const existingOrder =
       await this.ordersRepository.getPendingOrderByUserAndEvent(
         userId,
         data.eventId,
       );
     if (existingOrder) {
-      throw new ValidationError(
-        ORDER_ERROR_MESSAGES.PENDING_ORDER_EXISTS(existingOrder.id),
-        {orderId: existingOrder.id},
-      );
+      const reservationElapsed =
+        existingOrder.reservationExpiresAt != null &&
+        new Date(existingOrder.reservationExpiresAt) < new Date();
+
+      if (reservationElapsed) {
+        await expireOrderWithoutPaymentLink(existingOrder.id, {
+          ordersRepository: this.ordersRepository,
+          orderTicketReservationsRepository:
+            this.orderTicketReservationsRepository,
+          paymentsRepository: this.paymentsRepository,
+          notificationService: this.notificationService,
+        });
+
+        const stillPending =
+          await this.ordersRepository.getPendingOrderByUserAndEvent(
+            userId,
+            data.eventId,
+          );
+        if (stillPending) {
+          throw new ValidationError(
+            ORDER_ERROR_MESSAGES.PENDING_ORDER_EXISTS(stillPending.id),
+            {orderId: stillPending.id},
+          );
+        }
+      } else {
+        throw new ValidationError(
+          ORDER_ERROR_MESSAGES.PENDING_ORDER_EXISTS(existingOrder.id),
+          {orderId: existingOrder.id},
+        );
+      }
     }
 
     // Validate that the event exists and hasn't finished
@@ -91,7 +122,7 @@ export class OrdersService {
     const ticketWaveCurrencies = new Set<string>();
     const ticketWaveInfo = new Map<
       string,
-      { name: string; currency: EventTicketCurrency }
+      {name: string; currency: EventTicketCurrency}
     >();
 
     for (const [ticketWaveId, priceGroups] of Object.entries(
@@ -246,11 +277,10 @@ export class OrdersService {
       });
 
       await orderItemsRepo.createBatch(
-        orderItems.map(item => ({ ...item, orderId: order.id })),
+        orderItems.map(item => ({...item, orderId: order.id})),
       );
 
       const allTicketIds = ticketsToReserve.flatMap(r => r.ticketIds);
-      await reservationsRepo.cleanupExpiredReservationsForTickets(allTicketIds);
 
       const reservedUntil = new Date(
         Date.now() + RESERVATION_WINDOW_MINUTES * 60 * 1000,
@@ -265,7 +295,7 @@ export class OrdersService {
       } catch (error: unknown) {
         // PostgreSQL unique violation (23505). We're in createReservations, so this is our index.
         // Some drivers report constraint name, others don't for unique indexes; 23505 is sufficient.
-        const code = (error as { code?: string })?.code;
+        const code = (error as {code?: string})?.code;
         if (code === '23505') {
           throw new ValidationError(
             ORDER_ERROR_MESSAGES.TICKETS_NO_LONGER_AVAILABLE,
@@ -275,7 +305,17 @@ export class OrdersService {
       }
 
       logger.info(
-        `Created order ${order.id} for user ${userId} with ${totalTickets} tickets`,
+        'orders.created',
+        wideEvent('orders.created', {
+          orderId: order.id,
+          userId,
+          eventId: data.eventId,
+          ticketCount: totalTickets,
+          amountCents: Math.round(Number(feeCalculation.totalAmount) * 100),
+          currency,
+          ...withDuration(createOrderStartedAt),
+          outcome: 'success',
+        }),
       );
 
       return order;
@@ -321,7 +361,33 @@ export class OrdersService {
       }
     }
 
-    return order;
+    // Surface whether a non-terminal payment attempt exists so the checkout UI
+    // can differentiate "your hold expired and nothing was attempted" from
+    // "your hold expired but a payment is still being decided" (long-tail
+    // dLocal voucher / async card auth, etc).
+    const hasActivePaymentAttempt =
+      await this.computeHasActivePaymentAttempt(orderId);
+
+    return {...order, hasActivePaymentAttempt};
+  }
+
+  /**
+   * True when at least one payments row exists for the order whose status is
+   * NOT a terminal failure ('failed' | 'cancelled' | 'expired'). 'paid' /
+   * 'refunded' / 'partially_refunded' also count as "an attempt happened" but
+   * normally the order will already be confirmed in those cases; we return
+   * true defensively so the UI never tells the user "nothing was attempted"
+   * when in fact something was.
+   */
+  private async computeHasActivePaymentAttempt(
+    orderId: string,
+  ): Promise<boolean> {
+    const payments = await this.paymentsRepository.getAllByOrderId(orderId);
+    if (payments.length === 0) {
+      return false;
+    }
+    const terminalFailureStates = new Set(['failed', 'cancelled', 'expired']);
+    return payments.some(p => !terminalFailureStates.has(p.status));
   }
 
   async getUserOrders(userId: string, pagination: PaginationOptions) {
@@ -333,6 +399,7 @@ export class OrdersService {
   }
 
   async cancelOrder(orderId: string, userId: string) {
+    const cancelStartedAt = Date.now();
     // Verify order exists and belongs to user
     const order = await this.ordersRepository.getByIdWithItems(orderId);
     if (!order) {
@@ -366,7 +433,22 @@ export class OrdersService {
         },
       );
 
-      logger.info(`Order ${orderId} cancelled by user ${userId}`);
+      logger.info(
+        'orders.cancelled',
+        wideEvent('orders.cancelled', {
+          orderId,
+          userId,
+          eventId: order.eventId,
+          ticketCount:
+            order.items?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
+            0,
+          amountCents: Math.round(Number(order.totalAmount) * 100),
+          currency: order.currency,
+          cancelReason: 'user_requested',
+          ...withDuration(cancelStartedAt),
+          outcome: 'success',
+        }),
+      );
 
       return {
         id: cancelledOrder.id,

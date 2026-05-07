@@ -145,6 +145,12 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       .execute();
   }
 
+  /**
+   * Returns the user's pending order for an event, ignoring whether the
+   * reservation timer has elapsed. Lifecycle (status) is the source of truth;
+   * stale-but-still-pending orders should be expired by the caller, not hidden
+   * by this query (otherwise the user could create a duplicate pending order).
+   */
   async getPendingOrderByUserAndEvent(
     userId: string,
     eventId: string,
@@ -155,7 +161,6 @@ export class OrdersRepository extends BaseRepository<OrdersRepository> {
       .where('userId', '=', userId)
       .where('eventId', '=', eventId)
       .where('status', '=', 'pending')
-      .where('reservationExpiresAt', '>', new Date()) // Not expired
       .where('deletedAt', 'is', null)
       .executeTakeFirst();
   }

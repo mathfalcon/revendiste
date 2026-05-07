@@ -42,12 +42,18 @@ export function createOptionalAuthMiddleware(
           distinctId: user.id,
           properties: {
             email: user.email,
-            name: [user.firstName, user.lastName].filter(Boolean).join(' ') || undefined,
+            name:
+              [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+              undefined,
             role: user.role,
           },
         });
       } catch (error) {
-        logger.warn('Failed to populate user from auth', {error});
+        logger.warn('Failed to populate user from auth', {
+          error,
+          requestId: req.id,
+          route: req.path,
+        });
       }
     }
 
@@ -64,7 +70,10 @@ export const requireAuthMiddleware = async (
   next: NextFunction,
 ) => {
   if (!req.user) {
-    logger.error('User not authenticated');
+    logger.error('User not authenticated', {
+      requestId: req.id,
+      route: req.path,
+    });
     throw new UnauthorizedError();
   }
 

@@ -200,6 +200,7 @@ export async function notifyOrderExpired(
     buyerUserId: string;
     orderId: string;
     eventName: string;
+    eventEndDate: Date | string | null;
   },
 ) {
   return await service.createNotification({
@@ -212,6 +213,7 @@ export async function notifyOrderExpired(
       orderId: params.orderId,
       eventName: params.eventName,
     },
+    skipIfEventPast: {eventEndDate: params.eventEndDate},
   });
 }
 
@@ -224,6 +226,7 @@ export async function notifyPaymentFailed(
     buyerUserId: string;
     orderId: string;
     eventName: string;
+    eventEndDate: Date | string | null;
     errorMessage?: string;
   },
 ) {
@@ -244,6 +247,7 @@ export async function notifyPaymentFailed(
       eventName: params.eventName,
       errorMessage: params.errorMessage,
     },
+    skipIfEventPast: {eventEndDate: params.eventEndDate},
   });
 }
 

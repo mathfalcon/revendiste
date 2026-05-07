@@ -1,5 +1,9 @@
 import {logger} from '~/utils';
-import type {IWhatsAppProvider, WhatsAppTemplateComponent} from './IWhatsAppProvider';
+import {withDuration} from '~/utils/logFields';
+import type {
+  IWhatsAppProvider,
+  WhatsAppTemplateComponent,
+} from './IWhatsAppProvider';
 import {
   WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_ACCESS_TOKEN,
@@ -66,6 +70,7 @@ export class WhatsAppBusinessProvider implements IWhatsAppProvider {
     templateLanguage: string;
     components?: WhatsAppTemplateComponent[];
   }): Promise<void> {
+    const sendStartedAt = Date.now();
     await this.throttle();
 
     const url = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -92,23 +97,36 @@ export class WhatsAppBusinessProvider implements IWhatsAppProvider {
 
     if (!response.ok) {
       const errorBody = await response.text();
+      let providerErrorCode: string | undefined;
+      try {
+        const parsed = JSON.parse(errorBody) as {error?: {code?: number}};
+        if (parsed?.error?.code != null) {
+          providerErrorCode = String(parsed.error.code);
+        }
+      } catch {
+        /* ignore */
+      }
       logger.error('WhatsApp API error', {
-        status: response.status,
-        body: errorBody,
+        statusCode: response.status,
+        providerErrorCode,
         to: params.to,
-        template: params.templateName,
+        templateName: params.templateName,
+        errorBodyPreview: errorBody.slice(0, 240),
+        ...withDuration(sendStartedAt),
+        outcome: 'failure',
       });
       throw new Error(
-        `WhatsApp API error (${response.status}): ${errorBody}`,
+        `WhatsApp API error (${response.status}): ${errorBody.slice(0, 500)}`,
       );
     }
 
     const result = (await response.json()) as {messages?: Array<{id: string}>};
 
-    logger.info('WhatsApp message sent', {
+    logger.debug('WhatsApp message sent', {
       messageId: result.messages?.[0]?.id,
-      to: params.to,
-      template: params.templateName,
+      templateName: params.templateName,
+      ...withDuration(sendStartedAt),
+      outcome: 'success',
     });
   }
 }

@@ -1,5 +1,6 @@
 import {Resend} from 'resend';
 import {logger} from '~/utils';
+import {withDuration} from '~/utils/logFields';
 import type {IEmailProvider} from './IEmailProvider';
 import {RESEND_API_KEY, EMAIL_FROM} from '~/config/env';
 
@@ -21,8 +22,7 @@ function sleep(ms: number): Promise<void> {
  */
 function getRetryAfterSeconds(headers: Record<string, string> | null): number {
   if (!headers) return DEFAULT_RETRY_AFTER_SECONDS;
-  const raw =
-    headers['retry-after'] ?? headers['ratelimit-reset'] ?? '';
+  const raw = headers['retry-after'] ?? headers['ratelimit-reset'] ?? '';
   const sec = parseInt(raw, 10);
   if (!Number.isFinite(sec) || sec < 0) return DEFAULT_RETRY_AFTER_SECONDS;
   return Math.min(sec, 60);
@@ -118,14 +118,16 @@ export class ResendEmailProvider implements IEmailProvider {
       replyTo: 'ayuda@revendiste.com' as const,
       attachments: params.attachments?.map(a => ({
         filename: a.filename,
-        content:
-          Buffer.isBuffer(a.content) ? a.content.toString('base64') : a.content,
+        content: Buffer.isBuffer(a.content)
+          ? a.content.toString('base64')
+          : a.content,
       })),
     };
 
     const maxAttempts = MAX_RETRIES_ON_RATE_LIMIT + 1;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const sendStartedAt = Date.now();
       try {
         await this.throttle();
 
@@ -138,13 +140,16 @@ export class ResendEmailProvider implements IEmailProvider {
 
           if (isRateLimit && attempt < maxAttempts - 1) {
             const waitSec = getRetryAfterSeconds(result.headers);
-            logger.warn('Resend rate limit (429), retrying after header delay', {
-              retryAfterSeconds: waitSec,
-              attempt: attempt + 1,
-              maxAttempts,
-              to: params.to,
-              subject: params.subject,
-            });
+            logger.warn(
+              'Resend rate limit (429), retrying after header delay',
+              {
+                retryAfterSeconds: waitSec,
+                attempt: attempt + 1,
+                maxAttempts,
+                to: params.to,
+                subject: params.subject,
+              },
+            );
             await sleep(waitSec * 1000);
             continue;
           }
@@ -159,10 +164,10 @@ export class ResendEmailProvider implements IEmailProvider {
           );
         }
 
-        logger.info('Email sent via Resend', {
-          emailId: result.data?.id,
-          to: params.to,
-          subject: params.subject,
+        logger.debug('Resend email delivered', {
+          messageId: result.data?.id,
+          ...withDuration(sendStartedAt),
+          outcome: 'success',
         });
         return;
       } catch (error) {
