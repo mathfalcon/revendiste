@@ -1,0 +1,19 @@
+{
+  "logos": {
+    "full-color": {"path": "logos/logo-full-color.svg"},
+    "white": {"path": "logos/logo-full-white.svg"},
+    "isotype": {"path": "logos/logo-isotype.svg"}
+  },
+  "backgrounds": {
+    "spritz-outro-crowd-pink": {
+      "path": "backgrounds/spritz-outro-crowd-pink.png"
+    },
+    "spritz-outro-crowd-red": {
+      "path": "backgrounds/spritz-outro-crowd-red.png"
+    }
+  },
+  "fonts": {},
+  "audio": {},
+  "references": [],
+  "products": []
+}

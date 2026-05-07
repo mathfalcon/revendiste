@@ -1,0 +1,12 @@
+{
+  "primary": "#de2486",
+  "primaryHighlight": "#ee46a7",
+  "primary50": "#fdf2f9",
+  "gradient": ["#ff00f8", "#fe6525"],
+  "background": "#0b0b0c",
+  "foreground": "#ffffff",
+  "neutral": {
+    "50": "#fafafa",
+    "900": "#0b0b0c"
+  }
+}

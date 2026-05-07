@@ -1,0 +1,9 @@
+node_modules
+dist
+.output
+output
+.env
+*.log
+.DS_Store
+brand/originals/**
+!brand/originals/README.md
