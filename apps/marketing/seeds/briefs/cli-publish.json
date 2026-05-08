@@ -1,0 +1,10 @@
+{
+  "slug": "cli-publish",
+  "title": "CLI / upload externo (CapCut)",
+  "kind": "video_kinetic",
+  "status": "ready",
+  "prompt": "Brief placeholder para publicar archivos MP4 locales sin pasar por Remotion.",
+  "props": {},
+  "tags": ["cli", "capcut"],
+  "targetPlatforms": ["meta", "tiktok"]
+}

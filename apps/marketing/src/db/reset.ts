@@ -11,10 +11,12 @@ const marketingRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
  * Truncates all marketing data tables and re-runs seed (keeps migration history).
  */
 async function main() {
-  await sql`TRUNCATE TABLE publish_logs, campaigns, renders, briefs CASCADE`.execute(
+  await sql`TRUNCATE TABLE publish_logs, campaigns, renders, briefs, audiences_cache CASCADE`.execute(
     db,
   );
-  console.info('Truncated briefs, renders, campaigns, publish_logs.');
+  console.info(
+    'Truncated briefs, renders, campaigns, publish_logs, audiences_cache.',
+  );
   await destroyDb();
 
   const r = spawnSync('pnpm', ['db:seed'], {

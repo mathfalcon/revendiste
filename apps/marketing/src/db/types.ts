@@ -53,7 +53,20 @@ export interface CampaignsTable {
   /** numeric from Postgres (node-pg often returns string) */
   budgetUsd: string | number | null;
   status: string;
+  name: string | null;
+  objective: string | null;
+  destinationUrl: string | null;
+  utm: Record<string, unknown> | null;
+  pausedAt: Date | null;
   createdAt: Date;
+}
+
+export interface AudiencesCacheTable {
+  id: Generated<string>;
+  platform: string;
+  adAccountId: string;
+  payload: Record<string, unknown> | null;
+  fetchedAt: Date;
 }
 
 export interface PublishLogsTable {
@@ -71,4 +84,5 @@ export interface MarketingDatabase {
   renders: RendersTable;
   campaigns: CampaignsTable;
   publishLogs: PublishLogsTable;
+  audiencesCache: AudiencesCacheTable;
 }

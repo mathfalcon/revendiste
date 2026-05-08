@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { logger } from '~/utils';
-import { withRetry } from '~/utils/retry';
+import {logger} from '~/utils';
+import {withRetry} from '~/utils/retry';
 import {
   FEU_API_BASE_URL,
   FEU_EMISOR_RUT,
@@ -11,11 +11,56 @@ import type {
   FeuComprobantePayload,
   FeuPdfResponse,
 } from './types';
-import { INVOICE_ERROR_MESSAGES } from '~/constants/error-messages';
-import type { FeuAuthService } from './FeuAuthService';
+import {INVOICE_ERROR_MESSAGES} from '~/constants/error-messages';
+import type {FeuAuthService} from './FeuAuthService';
 
 /** Optional PDF format: A4 (default) or ticket 80mm thermal */
 export type FeuPdfTipo = 'A4' | 'ticket80';
+
+function stringifyForFeuLog(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+/**
+ * Logs FEU HTTP failures with response body (axios strips this from Error.message).
+ * Includes JSON body for Postman replay of crear comprobante.
+ */
+function logFeuHttpFailure(
+  operation: 'createComprobante' | 'getPdfByCfeId',
+  ctx: {
+    method: string;
+    url: string;
+    /** Raw JSON string for copy-paste into Postman body */
+    requestBodyJson?: string;
+    /** Postman header X-Emisor (same as env FEU_EMISOR_RUT) */
+    xEmisorRut?: string;
+    cfeId?: number;
+    pdfTipo?: FeuPdfTipo;
+  },
+  error: unknown,
+): void {
+  if (!axios.isAxiosError(error)) {
+    logger.error(`feu.${operation}.failed`, {
+      ...ctx,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return;
+  }
+
+  const data = error.response?.data;
+  logger.error(`feu.${operation}.failed`, {
+    ...ctx,
+    responseStatus: error.response?.status,
+    responseBody: data,
+    responseBodyText: stringifyForFeuLog(data),
+  });
+}
 
 /**
  * FEU API client: create comprobante and get PDF by CFE id.
@@ -36,35 +81,48 @@ export class FeuClient {
 
     const token = await this.auth.getAccessToken();
     const url = `${FEU_API_BASE_URL.replace(/\/$/, '')}/comprobantes/crear`;
+    const requestBodyJson = JSON.stringify(payload);
 
-    const response = await withRetry(
-      () =>
-        axios.post<FeuCreateComprobanteResponse>(url, payload, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-Emisor': FEU_EMISOR_RUT,
-            'Content-Type': 'application/json',
-          },
-          timeout: FEU_REQUEST_TIMEOUT_MS ?? 30_000,
-        }),
-      {
-        maxAttempts: 2,
-        shouldRetry: err =>
-          !axios.isAxiosError(err) || (err.response?.status ?? 0) >= 500,
-      },
-    );
+    try {
+      const response = await withRetry(
+        () =>
+          axios.post<FeuCreateComprobanteResponse>(url, payload, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'X-Emisor': FEU_EMISOR_RUT,
+              'Content-Type': 'application/json',
+            },
+            timeout: FEU_REQUEST_TIMEOUT_MS ?? 30_000,
+          }),
+        {
+          maxAttempts: 2,
+          shouldRetry: err =>
+            !axios.isAxiosError(err) || (err.response?.status ?? 0) >= 500,
+        },
+      );
 
-    return response.data;
+      return response.data;
+    } catch (error) {
+      logFeuHttpFailure(
+        'createComprobante',
+        {
+          method: 'POST',
+          url,
+          requestBodyJson,
+          /** Same value as Postman header X-Emisor (from env FEU_EMISOR_RUT) */
+          xEmisorRut: FEU_EMISOR_RUT,
+        },
+        error,
+      );
+      throw error;
+    }
   }
 
   /**
    * Get PDF for a comprobante by its CFE id (id returned by crear comprobante).
    * The URL in the create response points to DGI; this endpoint returns the actual PDF.
    */
-  async getPdfByCfeId(
-    cfeId: number,
-    tipo: FeuPdfTipo = 'A4',
-  ): Promise<Buffer> {
+  async getPdfByCfeId(cfeId: number, tipo: FeuPdfTipo = 'A4'): Promise<Buffer> {
     if (!FEU_API_BASE_URL || !FEU_EMISOR_RUT) {
       throw new Error(INVOICE_ERROR_MESSAGES.FEU_AUTH_FAILED);
     }
@@ -73,26 +131,41 @@ export class FeuClient {
     const base = FEU_API_BASE_URL.replace(/\/$/, '');
     const url = `${base}/comprobantes/${cfeId}/pdf${tipo === 'ticket80' ? '?tipo=ticket80' : ''}`;
 
-    const response = await withRetry(
-      () =>
-        axios.get<FeuPdfResponse>(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-Emisor': FEU_EMISOR_RUT,
-          },
-          timeout: FEU_REQUEST_TIMEOUT_MS ?? 30_000,
-        }),
-      {
-        maxAttempts: 2,
-        shouldRetry: err =>
-          !axios.isAxiosError(err) || (err.response?.status ?? 0) >= 500,
-      },
-    );
+    try {
+      const response = await withRetry(
+        () =>
+          axios.get<FeuPdfResponse>(url, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'X-Emisor': FEU_EMISOR_RUT,
+            },
+            timeout: FEU_REQUEST_TIMEOUT_MS ?? 30_000,
+          }),
+        {
+          maxAttempts: 2,
+          shouldRetry: err =>
+            !axios.isAxiosError(err) || (err.response?.status ?? 0) >= 500,
+        },
+      );
 
-    const { data: base64Data } = response.data;
-    if (!base64Data || response.data.format !== 'base64') {
-      throw new Error(INVOICE_ERROR_MESSAGES.FEU_PDF_DOWNLOAD_FAILED);
+      const {data: base64Data} = response.data;
+      if (!base64Data || response.data.format !== 'base64') {
+        throw new Error(INVOICE_ERROR_MESSAGES.FEU_PDF_DOWNLOAD_FAILED);
+      }
+      return Buffer.from(base64Data, 'base64');
+    } catch (error) {
+      logFeuHttpFailure(
+        'getPdfByCfeId',
+        {
+          method: 'GET',
+          url,
+          cfeId,
+          pdfTipo: tipo,
+          xEmisorRut: FEU_EMISOR_RUT,
+        },
+        error,
+      );
+      throw error;
     }
-    return Buffer.from(base64Data, 'base64');
   }
 }

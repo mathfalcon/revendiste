@@ -2858,6 +2858,49 @@ export interface TestInAppDevResponse {
   notificationId: string;
 }
 
+/** Recursively unwraps the "awaited type" of a type. Non-promise "thenables" should resolve to `never`. This emulates the behavior of `await`. */
+export interface AwaitedReturnTypeTypeofforwardMetaCapi {
+  body: any;
+  /** @format double */
+  status: number;
+  ok: boolean;
+}
+
+export type MetaCapiResponse = AwaitedReturnTypeTypeofforwardMetaCapi;
+
+export interface MetaCapiRouteBody {
+  /** @format double */
+  value?: number;
+  currency?: string;
+  phone?: string;
+  email?: string;
+  eventSourceUrl: string;
+  eventId: string;
+  eventName: "Purchase" | "InitiateCheckout" | "ViewContent";
+}
+
+/** Recursively unwraps the "awaited type" of a type. Non-promise "thenables" should resolve to `never`. This emulates the behavior of `await`. */
+export interface AwaitedReturnTypeTypeofforwardTikTokEvent {
+  body: any;
+  /** @format double */
+  status: number;
+  ok: boolean;
+}
+
+export type TikTokEventsResponse = AwaitedReturnTypeTypeofforwardTikTokEvent;
+
+export interface TikTokEventsRouteBody {
+  currency?: string;
+  /** @format double */
+  value?: number;
+  phone?: string;
+  email?: string;
+  timestamp?: string;
+  eventSourceUrl: string;
+  eventId: string;
+  event: string;
+}
+
 export interface InitiateVerificationResponse {
   message: "Verificación iniciada";
   success: boolean;
@@ -6555,6 +6598,41 @@ export class Api<
       this.request<TestInAppDevResponse, UnauthorizedError>({
         path: `/notifications/test-in-app`,
         method: "POST",
+        format: "json",
+        ...params,
+      }),
+  };
+  marketing = {
+    /**
+     * No description
+     *
+     * @tags Marketing tracking
+     * @name MetaCapi
+     * @request POST:/marketing/tracking/meta-capi
+     */
+    metaCapi: (data: MetaCapiRouteBody, params: RequestParams = {}) =>
+      this.request<MetaCapiResponse, any>({
+        path: `/marketing/tracking/meta-capi`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Marketing tracking
+     * @name TiktokEvents
+     * @request POST:/marketing/tracking/tiktok-events
+     */
+    tiktokEvents: (data: TikTokEventsRouteBody, params: RequestParams = {}) =>
+      this.request<TikTokEventsResponse, any>({
+        path: `/marketing/tracking/tiktok-events`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

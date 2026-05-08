@@ -33,6 +33,8 @@ import { PaymentsController } from './controllers/payments/index';
 // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { NotificationsController } from './controllers/notifications/index';
 // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { MarketingTrackingController } from './controllers/marketing-tracking/index';
+// WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { IdentityVerificationController } from './controllers/identity-verification/index';
 // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { AdminUsersController } from './controllers/admin/users/index';
@@ -1120,6 +1122,36 @@ const models: TsoaRoute.Models = {
     "TestInAppDevResponse": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"notificationId":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Awaited_ReturnType_typeofforwardMetaCapi__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"body":{"dataType":"any","required":true},"status":{"dataType":"double","required":true},"ok":{"dataType":"boolean","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "MetaCapiResponse": {
+        "dataType": "refAlias",
+        "type": {"ref":"Awaited_ReturnType_typeofforwardMetaCapi__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "MetaCapiRouteBody": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},"currency":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"phone":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"email":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"eventSourceUrl":{"dataType":"string","required":true},"eventId":{"dataType":"string","required":true},"eventName":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["Purchase"]},{"dataType":"enum","enums":["InitiateCheckout"]},{"dataType":"enum","enums":["ViewContent"]}],"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Awaited_ReturnType_typeofforwardTikTokEvent__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"body":{"dataType":"any","required":true},"status":{"dataType":"double","required":true},"ok":{"dataType":"boolean","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TikTokEventsResponse": {
+        "dataType": "refAlias",
+        "type": {"ref":"Awaited_ReturnType_typeofforwardTikTokEvent__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TikTokEventsRouteBody": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"currency":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"value":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},"phone":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"email":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"timestamp":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},"eventSourceUrl":{"dataType":"string","required":true},"eventId":{"dataType":"string","required":true},"event":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InitiateVerificationResponse": {
@@ -4754,6 +4786,66 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'testInApp',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMarketingTrackingController_metaCapi: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"MetaCapiRouteBody"},
+        };
+        app.post('/marketing/tracking/meta-capi',
+            ...(fetchMiddlewares<RequestHandler>(MarketingTrackingController)),
+            ...(fetchMiddlewares<RequestHandler>(MarketingTrackingController.prototype.metaCapi)),
+
+            async function MarketingTrackingController_metaCapi(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMarketingTrackingController_metaCapi, request, response });
+
+                const controller = new MarketingTrackingController();
+
+              await templateService.apiHandler({
+                methodName: 'metaCapi',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsMarketingTrackingController_tiktokEvents: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"TikTokEventsRouteBody"},
+        };
+        app.post('/marketing/tracking/tiktok-events',
+            ...(fetchMiddlewares<RequestHandler>(MarketingTrackingController)),
+            ...(fetchMiddlewares<RequestHandler>(MarketingTrackingController.prototype.tiktokEvents)),
+
+            async function MarketingTrackingController_tiktokEvents(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with @mathfalcon/tsoa. Please do not modify it. Re-run @mathfalcon/tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsMarketingTrackingController_tiktokEvents, request, response });
+
+                const controller = new MarketingTrackingController();
+
+              await templateService.apiHandler({
+                methodName: 'tiktokEvents',
                 controller,
                 response,
                 next,

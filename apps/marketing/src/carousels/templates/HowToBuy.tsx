@@ -1,18 +1,19 @@
 /** @jsxImportSource react */
 import type {ReactNode} from 'react';
-import type {CarouselSlide} from './HowToSell';
-import {HowToSellSlide} from './HowToSell';
+import type {ContentSlide} from '../types';
+import {ContentSlideTemplate} from './ContentSlide';
 
 export function HowToBuySlide(props: {
-  slide: CarouselSlide;
+  slide: ContentSlide;
   index: number;
   total: number;
 }): ReactNode {
   return (
-    <HowToSellSlide
-      slide={{...props.slide, badge: props.slide.badge ?? 'Cómo comprar'}}
+    <ContentSlideTemplate
+      slide={props.slide}
       index={props.index}
       total={props.total}
+      defaultBadge='Cómo comprar'
     />
   );
 }

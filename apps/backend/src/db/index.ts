@@ -1,7 +1,6 @@
 import {CamelCasePlugin, Kysely, PostgresDialect} from 'kysely';
 import {Pool} from 'pg';
 import {
-  DATABASE_URL,
   POSTGRES_HOST,
   POSTGRES_PORT,
   POSTGRES_USER,

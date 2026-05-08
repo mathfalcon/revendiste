@@ -1,5 +1,7 @@
 # Marketing workspace — agent charter
 
+**Human/docs:** start with [README.md](./README.md) for setup, commands, MCP, CLI, env, and troubleshooting.
+
 ## What this is
 
 `@revendiste/marketing` is a **local-only** tool (never deployed). It orchestrates:

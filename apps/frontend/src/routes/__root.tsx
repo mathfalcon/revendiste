@@ -356,7 +356,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
                   </main>
                   {!shouldHideNavbar && <Footer />}
                   {/* <TanStackRouterDevtools position='bottom-right' /> */}
-                  <ReactQueryDevtools buttonPosition='bottom-left' />
+                  {/* <ReactQueryDevtools buttonPosition='bottom-left' /> */}
                   <Scripts />
                   <Toaster position='top-center' />
                   <Show when='signed-in'>

@@ -1,5 +1,6 @@
-import { FEU_SUCURSAL } from '~/config/env';
-import type { FeuComprobantePayload } from './types';
+import {roundOrderAmount} from '@revendiste/shared';
+import {FEU_SUCURSAL} from '~/config/env';
+import type {FeuComprobantePayload} from './types';
 
 /**
  * Emisión de e-ticket sin receptor identificado (consumidor final).
@@ -13,6 +14,8 @@ import type { FeuComprobantePayload } from './types';
  * - We store platformCommission (base) and vatOnCommission = round(base × VAT_RATE).
  * - With cod_montos_brutos 1, FEU treats item precio as TOTAL (IVA incluido). It back-derives
  *   subtotal = total/1.22. So we send precio = base + VAT so the PDF "total" matches what we charge.
+ * - precio is always roundOrderAmount(...) so JSON never sends float noise (e.g. 556.3199999999999),
+ *   which some FEU/DGI stacks reject with 400.
  */
 
 /** Doc: fecha_comprobante AAAA-MM-DD, válida 01/10/2011 a 31/12/2050, ≤ hoy + 60 días */
@@ -36,7 +39,7 @@ export interface OrderWithCommission {
   currency: string;
   platformCommission: string | number;
   vatOnCommission: string | number;
-  event?: { name?: string | null } | null;
+  event?: {name?: string | null} | null;
 }
 
 /**
@@ -47,8 +50,9 @@ export interface OrderWithCommission {
 export function buildBuyerInvoicePayload(
   order: OrderWithCommission,
 ): FeuComprobantePayload {
-  const total =
-    Number(order.platformCommission) + Number(order.vatOnCommission);
+  const total = roundOrderAmount(
+    Number(order.platformCommission) + Number(order.vatOnCommission),
+  );
   return {
     sucursal: FEU_SUCURSAL ?? 1,
     tipo_comprobante: 101,
@@ -87,7 +91,7 @@ export function buildSellerInvoicePayload(
   baseAmount: number,
   vatAmount: number,
 ): FeuComprobantePayload {
-  const total = baseAmount + vatAmount;
+  const total = roundOrderAmount(baseAmount + vatAmount);
   return {
     sucursal: FEU_SUCURSAL ?? 1,
     tipo_comprobante: 101, // Doc: 101 = eTicket

@@ -83,6 +83,7 @@ export const Navbar = () => {
 
           <div
             className='items-center gap-2 hidden md:flex w-full max-w-[400px] cursor-pointer'
+            data-testid='navbar-open-event-search-desktop'
             onClick={() => setIsSearchOpen(true)}
           >
             <EventSearchInput className='pointer-events-none' />
@@ -90,9 +91,11 @@ export const Navbar = () => {
 
           <div className='flex items-center gap-2 md:gap-3'>
             <Button
+              type='button'
               variant='ghost'
               size='sm'
               className='md:hidden p-2 h-9 w-9'
+              data-testid='navbar-open-event-search'
               onClick={() => setIsSearchOpen(true)}
             >
               <Search className='h-5 w-5' />

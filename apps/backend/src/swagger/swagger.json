@@ -9946,6 +9946,122 @@
 				],
 				"type": "object"
 			},
+			"Awaited_ReturnType_typeofforwardMetaCapi__": {
+				"properties": {
+					"body": {},
+					"status": {
+						"type": "number",
+						"format": "double"
+					},
+					"ok": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"body",
+					"status",
+					"ok"
+				],
+				"type": "object",
+				"description": "Recursively unwraps the \"awaited type\" of a type. Non-promise \"thenables\" should resolve to `never`. This emulates the behavior of `await`."
+			},
+			"MetaCapiResponse": {
+				"$ref": "#/components/schemas/Awaited_ReturnType_typeofforwardMetaCapi__"
+			},
+			"MetaCapiRouteBody": {
+				"properties": {
+					"value": {
+						"type": "number",
+						"format": "double"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"phone": {
+						"type": "string"
+					},
+					"email": {
+						"type": "string"
+					},
+					"eventSourceUrl": {
+						"type": "string"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"eventName": {
+						"type": "string",
+						"enum": [
+							"Purchase",
+							"InitiateCheckout",
+							"ViewContent"
+						]
+					}
+				},
+				"required": [
+					"eventSourceUrl",
+					"eventId",
+					"eventName"
+				],
+				"type": "object"
+			},
+			"Awaited_ReturnType_typeofforwardTikTokEvent__": {
+				"properties": {
+					"body": {},
+					"status": {
+						"type": "number",
+						"format": "double"
+					},
+					"ok": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"body",
+					"status",
+					"ok"
+				],
+				"type": "object",
+				"description": "Recursively unwraps the \"awaited type\" of a type. Non-promise \"thenables\" should resolve to `never`. This emulates the behavior of `await`."
+			},
+			"TikTokEventsResponse": {
+				"$ref": "#/components/schemas/Awaited_ReturnType_typeofforwardTikTokEvent__"
+			},
+			"TikTokEventsRouteBody": {
+				"properties": {
+					"currency": {
+						"type": "string"
+					},
+					"value": {
+						"type": "number",
+						"format": "double"
+					},
+					"phone": {
+						"type": "string"
+					},
+					"email": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					},
+					"eventSourceUrl": {
+						"type": "string"
+					},
+					"eventId": {
+						"type": "string"
+					},
+					"event": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"eventSourceUrl",
+					"eventId",
+					"event"
+				],
+				"type": "object"
+			},
 			"InitiateVerificationResponse": {
 				"properties": {
 					"message": {
@@ -18118,6 +18234,70 @@
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/marketing/tracking/meta-capi": {
+			"post": {
+				"operationId": "MetaCapi",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MetaCapiResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Marketing tracking"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MetaCapiRouteBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/marketing/tracking/tiktok-events": {
+			"post": {
+				"operationId": "TiktokEvents",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TikTokEventsResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Marketing tracking"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TikTokEventsRouteBody"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/identity-verification/initiate": {

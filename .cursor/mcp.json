@@ -28,6 +28,10 @@
     },
     "clerk": {
       "url": "https://mcp.clerk.com/mcp"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
     }
   }
 }
