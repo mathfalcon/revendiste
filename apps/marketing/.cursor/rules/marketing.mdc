@@ -1,0 +1,15 @@
+---
+description: Invariants for apps/marketing (local marketing pipeline)
+globs: apps/marketing/**/*
+alwaysApply: false
+---
+
+# Marketing workspace rules
+
+- **Brief identity**: upsert briefs by **`slug`** (kebab-case, unique), not by title.
+- **Database**: Kysely + `CamelCasePlugin`; SQL columns are `snake_case`; TypeScript uses **camelCase** (`targetPlatforms`, `briefId`, …).
+- **Migrations**: use `gen_random_uuid()` for PK defaults; new tables live under `apps/marketing/src/db/migrations/` via `pnpm db:migrate:make`.
+- **Brand**: colors from `brand/palettes/colors.json` / `src/brand/tokens.ts`; files via `src/brand/assets.ts` + `brand/manifest.json` — avoid hardcoded asset paths.
+- **Copy**: user-facing text in **Spanish (Uruguay)**; align with `revendiste-ux-writing` for product tone.
+- **Git**: never commit `apps/marketing/output/`, `apps/marketing/.env`, or `apps/marketing/brand/originals/**` (except `brand/originals/README.md`).
+- **Spend**: do not add auto-launch paths without explicit human confirmation flags (see `src/cli/publish.ts`).

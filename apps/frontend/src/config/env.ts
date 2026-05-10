@@ -19,6 +19,8 @@ const EnvSchema = z.object({
   VITE_GTM_ID: z.string().min(1),
   // Meta Pixel ID — also configured in GTM; required here for parity per env / future use
   VITE_META_PIXEL_ID: z.string().min(1),
+  // TikTok Pixel — configured in GTM container; optional until container is wired
+  VITE_TIKTOK_PIXEL_ID: z.string().optional(),
 });
 export const env = EnvSchema.safeParse(import.meta.env);
 
@@ -39,6 +41,7 @@ export const {
   VITE_VAPID_PUBLIC_KEY,
   VITE_GTM_ID,
   VITE_META_PIXEL_ID,
+  VITE_TIKTOK_PIXEL_ID,
 } = env.data;
 
 // Helper function to get base URL

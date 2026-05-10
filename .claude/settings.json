@@ -32,6 +32,10 @@
       "type": "stdio",
       "command": "engram",
       "args": ["mcp", "--tools=agent"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
     }
   }
 }

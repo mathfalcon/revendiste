@@ -1,18 +1,18 @@
-import { roundOrderAmount } from '@revendiste/shared';
-import { logger } from '~/utils';
+import {roundOrderAmount} from '@revendiste/shared';
+import {logger} from '~/utils';
 import {
   InvoicesRepository,
   OrderTicketReservationsRepository,
   OrdersRepository,
 } from '~/repositories';
-import { FeuClient } from '~/services/feu';
+import {FeuClient} from '~/services/feu';
 import {
   buildBuyerInvoicePayload,
   buildSellerInvoicePayload,
 } from '~/services/feu/builders';
-import { calculateSellerAmount } from '~/utils/fees';
-import type { IStorageProvider } from '~/services/storage/IStorageProvider';
-import type { Invoices } from '@revendiste/shared';
+import {calculateSellerAmount} from '~/utils/fees';
+import type {IStorageProvider} from '~/services/storage/IStorageProvider';
+import type {Invoices} from '@revendiste/shared';
 
 export interface InvoiceServiceDeps {
   invoicesRepository: InvoicesRepository;
@@ -68,12 +68,9 @@ export class InvoiceService {
       sellerIdForQuery ?? undefined,
     );
 
-    if (
-      invoice?.status === 'issued' &&
-      invoice.pdfStoragePath
-    ) {
+    if (invoice?.status === 'issued' && invoice.pdfStoragePath) {
       const pdfBuffer = await storageProvider.getBuffer(invoice.pdfStoragePath);
-      return { pdfBuffer, invoice: invoice as unknown as Invoices };
+      return {pdfBuffer, invoice: invoice as unknown as Invoices};
     }
 
     const order = await ordersRepository.getByIdWithItems(orderId);
@@ -92,7 +89,9 @@ export class InvoiceService {
           baseAmount: order.platformCommission,
           vatAmount: order.vatOnCommission,
           totalAmount: String(
-            Number(order.platformCommission) + Number(order.vatOnCommission),
+            roundOrderAmount(
+              Number(order.platformCommission) + Number(order.vatOnCommission),
+            ),
           ),
           currency: order.currency,
         });
@@ -142,8 +141,12 @@ export class InvoiceService {
     sellerBaseAmount = Number(roundOrderAmount(String(sellerBaseAmount)));
     sellerVatAmount = Number(roundOrderAmount(String(sellerVatAmount)));
     const sellerTotal = sellerBaseAmount + sellerVatAmount;
-    const sellerSubtotalRounded = Number(roundOrderAmount(String(sellerSubtotalSum)));
-    const sellerAmountRounded = Number(roundOrderAmount(String(sellerAmountSum)));
+    const sellerSubtotalRounded = Number(
+      roundOrderAmount(String(sellerSubtotalSum)),
+    );
+    const sellerAmountRounded = Number(
+      roundOrderAmount(String(sellerAmountSum)),
+    );
 
     if (!invoice) {
       invoice = await invoicesRepository.create({
@@ -202,7 +205,7 @@ export class InvoiceService {
     payload: Parameters<FeuClient['createComprobante']>[0],
     party: 'buyer' | 'seller',
     filename: string,
-  ): Promise<{ pdfBuffer: Buffer; invoice: Invoices }> {
+  ): Promise<{pdfBuffer: Buffer; invoice: Invoices}> {
     const feuResponse = await feuClient.createComprobante(payload);
     const pdfBuffer = await feuClient.getPdfByCfeId(feuResponse.id);
 
@@ -216,7 +219,7 @@ export class InvoiceService {
 
     const updated = await invoicesRepository.update(invoice.id, {
       status: 'issued',
-      providerResponse: { ...feuResponse },
+      providerResponse: {...feuResponse},
       pdfStoragePath: uploadResult.path,
       issuedAt: new Date(),
     });
@@ -234,7 +237,7 @@ export class InvoiceService {
       numero: feuResponse.numero,
     });
 
-    return { pdfBuffer, invoice: updated as unknown as Invoices };
+    return {pdfBuffer, invoice: updated as unknown as Invoices};
   }
 
   /**
