@@ -14,29 +14,49 @@ import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {Readable} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
+import {brandTokens} from '../brand/tokens';
 import {higgsfieldGenerateCreate} from './higgsfield';
 
 const marketingRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const COVERS_DIR = join(marketingRoot, 'brand', 'covers');
 
-export type CoverDeck = 'how-to-buy' | 'how-to-sell' | 'how-to-post';
+export type CoverDeck =
+  | 'how-to-buy'
+  | 'how-to-sell'
+  | 'what-is-revendiste';
+
+/**
+ * GPT Image 2 prompts for carousel covers. English reads reliably on image
+ * models; on-slide copy stays Spanish in Satori. Palette from `brandTokens`.
+ */
+function buildCarouselCoverPrompt(deckMotif: string): string {
+  const [mag, orn] = brandTokens.gradient;
+  const deep = brandTokens.background;
+  const primary = brandTokens.primary;
+
+  return [
+    'Tall portrait hero background for an Instagram carousel first slide (final canvas 1080x1350; headlines added later in design).',
+    `Brand palette: electric magenta (${mag}) dissolving into hot orange (${orn}), with ${deep} anchoring shadows; hero magenta accent ${primary} (logo primary, not pastel pink); occasional rim light in the same hue family.`,
+    'Mood: premium Latin American live-music night, trustworthy resale marketplace—confident, not gimmicky; avoid crypto / meme-stock clichés.',
+    'Look: cinematic haze, soft stage bokeh, gentle anamorphic streaks; abstract crowd as color and silhouette only—no recognizable faces or celebrities.',
+    'Motifs: frosted glass shards suggesting a ticket stub, soft hex dot grids evoking QR energy—nothing readable, no real QR codes, no app UI.',
+    'Hard rules: no text, letters, numbers, logos, watermarks, or phone screen mockups.',
+    `Composition: vertical color momentum; bottom 42% is clearly darker (deep ${deep} translucent wash) so white display type can sit on top.`,
+    `Deck focus: ${deckMotif}`,
+    'Finish: ultra-clean editorial ad plate, subtle fine grain optional, high dynamic range.',
+  ].join(' ');
+}
 
 const DEFAULT_PROMPTS: Record<CoverDeck, string> = {
-  'how-to-buy':
-    'Editorial poster, vertical 4:5, vivid magenta-to-orange brand gradient, ' +
-    'bold typographic mood, abstract concert lighting, ticket QR motifs ' +
-    'subtle, premium ad aesthetic, no text, leave bottom 40% darker for ' +
-    'overlay text. Instagram carousel cover.',
-  'how-to-sell':
-    'Editorial poster, vertical 4:5, magenta-to-orange brand gradient, ' +
-    'bold confident mood, hand passing a glowing concert ticket, abstract ' +
-    'energy lines, premium ad aesthetic, no text, leave bottom 40% darker ' +
-    'for overlay text. Instagram carousel cover.',
-  'how-to-post':
-    'Editorial poster, vertical 4:5, magenta-to-orange brand gradient, ' +
-    'phone in hand uploading a ticket, soft neon glow, premium ad ' +
-    'aesthetic, no text, leave bottom 40% darker for overlay text. ' +
-    'Instagram carousel cover.',
+  'how-to-buy': buildCarouselCoverPrompt(
+    'Buyer journey—warm spotlight opening like a door to the pit, anticipation and safety, "your night is sorted" energy without literal tickets.',
+  ),
+  'how-to-sell': buildCarouselCoverPrompt(
+    'Seller empowerment—abstract hands-off exchange of light (not literal hands), upward flowing particles, reclaim your night confident glow.',
+  ),
+  'what-is-revendiste': buildCarouselCoverPrompt(
+    'Ticket marketplace introduction—welcoming trust hub, protected payments, verified accounts, clear rules, event-night confidence without implying only resale.',
+  ),
 };
 
 export function coverPath(deck: CoverDeck): string {
@@ -68,7 +88,8 @@ export async function generateCover(
   options?: {prompt?: string; aspectRatio?: string; resolution?: string},
 ): Promise<string> {
   const prompt = options?.prompt ?? DEFAULT_PROMPTS[deck];
-  const aspectRatio = options?.aspectRatio ?? '4:5';
+  // gpt_image_2 allows 3:4 (closest portrait to 1080x1350); 4:5 is not valid on current API.
+  const aspectRatio = options?.aspectRatio ?? '3:4';
   const resolution = options?.resolution ?? '2k';
 
   console.info(`Higgsfield: rendering cover for ${deck} (${aspectRatio}, ${resolution})…`);
@@ -82,9 +103,12 @@ export async function generateCover(
   ]);
 
   if (result.code !== 0) {
-    const hint = /not found|command not found/i.test(result.stderr)
-      ? '¿Está instalado el CLI de Higgsfield? https://github.com/higgsfield-ai/cli'
-      : /session expired|not authenticated/i.test(result.stderr)
+    const stderr = `${result.stderr}\n${result.stdout}`;
+    const hint = /not found|command not found|not recognized as an internal or external command/i.test(
+      stderr,
+    )
+      ? '¿Instalaste el CLI? https://github.com/higgsfield-ai/cli — En Windows, si no está en el PATH, definí HIGGSFIELD_CLI con la ruta completa al ejecutable.'
+      : /session expired|not authenticated/i.test(stderr)
         ? 'Corré `higgsfield auth login` y volvé a intentar.'
         : '';
     throw new Error(

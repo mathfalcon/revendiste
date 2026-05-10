@@ -7,10 +7,14 @@ import sharp from 'sharp';
 import type {ReactNode} from 'react';
 import {coverPath, type CoverDeck} from '../ai/cover-image';
 import {screenshotPath} from '../screenshots/targets';
-import {buildPhoneFramePng} from './phone-frame';
+import {buildPhoneFramePng, type PhoneFramePng} from './phone-frame';
+import {qrCodeToPngDataUrl} from './qr-data-url';
+import {CardsSlideTemplate} from './templates/CardsSlide';
+import {ClosingSlideTemplate} from './templates/ClosingSlide';
 import {ContentSlideTemplate} from './templates/ContentSlide';
 import {CoverSlideTemplate} from './templates/CoverSlide';
 import {ScreenshotSlideTemplate} from './templates/ScreenshotSlide';
+import {StepperSlideTemplate} from './templates/StepperSlide';
 import type {CarouselSlide} from './types';
 
 const W = 1080;
@@ -29,12 +33,15 @@ function loadPoppins(weight: 700 | 800 | 900): Buffer {
   return readFileSync(require.resolve(file));
 }
 
-export type CarouselKind = 'how-to-sell' | 'how-to-buy' | 'how-to-post';
+export type CarouselKind =
+  | 'how-to-sell'
+  | 'how-to-buy'
+  | 'what-is-revendiste';
 
 const DEFAULT_BADGE: Record<CarouselKind, string> = {
   'how-to-sell': 'Cómo vender',
   'how-to-buy': 'Cómo comprar',
-  'how-to-post': 'Cómo publicar',
+  'what-is-revendiste': 'Revendiste',
 };
 
 function defaultCoverPath(kind: CarouselKind): string {
@@ -53,47 +60,74 @@ async function renderSlideToNode(
       const path = slide.backgroundImagePath ?? defaultCoverPath(kind);
       return CoverSlideTemplate({
         slide: {...slide, backgroundImagePath: path},
-        total,
       });
     }
     case 'screenshot': {
       const filePath = screenshotPath(slide.screenshotKey);
       let imageDataUrl: string | null = null;
-      let frame = await buildPhoneFramePng(
-        // Build a 1×1 transparent placeholder when no capture exists, so we
-        // still know the frame dimensions for the template.
-        existsSync(filePath)
-          ? filePath
-          : await sharp({
-              create: {
-                width: 2,
-                height: 2,
-                channels: 4,
-                background: {r: 0, g: 0, b: 0, alpha: 0},
-              },
-            })
-              .png()
-              .toBuffer(),
-      );
-      if (existsSync(filePath)) {
-        imageDataUrl = `data:image/png;base64,${frame.buffer.toString('base64')}`;
+      let qrDataUrl: string | null = null;
+      let frame: PhoneFramePng = {width: 760, height: 1000, buffer: Buffer.alloc(0)};
+
+      if (slide.bodyQrUrl?.trim()) {
+        try {
+          qrDataUrl = await qrCodeToPngDataUrl(slide.bodyQrUrl.trim(), 512);
+        } catch (e) {
+          console.warn(
+            '[carousel] QR generation failed',
+            slide.bodyQrUrl,
+            e instanceof Error ? e.message : e,
+          );
+        }
+      }
+
+      if (slide.presentation === 'desktop') {
+        if (existsSync(filePath)) {
+          imageDataUrl = `data:image/png;base64,${readFileSync(filePath).toString('base64')}`;
+        }
+        frame = {width: 920, height: 575, buffer: Buffer.alloc(0)};
       } else {
-        // Reset so the template renders the "Captura no disponible" fallback,
-        // but keep `frame` dims to keep the slide layout consistent.
-        imageDataUrl = null;
-        frame = {...frame, buffer: Buffer.alloc(0)};
+        frame = await buildPhoneFramePng(
+          // Build a 1×1 transparent placeholder when no capture exists, so we
+          // still know the frame dimensions for the template.
+          existsSync(filePath)
+            ? filePath
+            : await sharp({
+                create: {
+                  width: 2,
+                  height: 2,
+                  channels: 4,
+                  background: {r: 0, g: 0, b: 0, alpha: 0},
+                },
+              })
+                .png()
+                .toBuffer(),
+        );
+        if (existsSync(filePath)) {
+          imageDataUrl = `data:image/png;base64,${frame.buffer.toString('base64')}`;
+        } else {
+          // Reset so the template renders the "Captura no disponible" fallback,
+          // but keep `frame` dims to keep the slide layout consistent.
+          imageDataUrl = null;
+          frame = {...frame, buffer: Buffer.alloc(0)};
+        }
       }
       return ScreenshotSlideTemplate({
         slide,
         index,
         total,
         imageDataUrl,
+        qrDataUrl,
         frameWidth: frame.width,
         frameHeight: frame.height,
       });
     }
+    case 'cards':
+      return CardsSlideTemplate({slide, index, total});
+    case 'stepper':
+      return StepperSlideTemplate({slide, index, total});
+    case 'closing':
+      return ClosingSlideTemplate({index, total});
     case 'content':
-    default:
       return ContentSlideTemplate({
         slide,
         index,

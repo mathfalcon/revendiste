@@ -12,6 +12,7 @@ import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {howToBuySlides} from '../carousels/data/how-to-buy';
 import {howToSellSlides} from '../carousels/data/how-to-sell';
+import {whatIsRevendisteSlides} from '../carousels/data/what-is-revendiste';
 import {
   renderCarouselSlideAtIndex,
   type CarouselKind,
@@ -23,10 +24,14 @@ const marketingRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const SLIDES: Record<CarouselKind, CarouselSlide[]> = {
   'how-to-sell': howToSellSlides,
   'how-to-buy': howToBuySlides,
-  'how-to-post': howToSellSlides,
+  'what-is-revendiste': whatIsRevendisteSlides,
 };
 
-const VALID_KINDS: CarouselKind[] = ['how-to-sell', 'how-to-buy', 'how-to-post'];
+const VALID_KINDS: CarouselKind[] = [
+  'how-to-sell',
+  'how-to-buy',
+  'what-is-revendiste',
+];
 
 function parseKind(argv: string[]): CarouselKind {
   const i = argv.indexOf('--kind');

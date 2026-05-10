@@ -31,9 +31,8 @@ Submit jobs to any Higgsfield model. Wraps the `higgsfield` CLI. Covers generic 
 Before any other command, make sure the CLI is installed and authenticated:
 
 1. If `higgsfield` is not on `$PATH`, install it:
-   ```bash
-   curl -fsSL https://raw.githubusercontent.com/higgsfield-ai/cli/main/install.sh | sh
-   ```
+   - **macOS / Linux:** `curl -fsSL https://raw.githubusercontent.com/higgsfield-ai/cli/main/install.sh | sh`
+   - **Windows** (PowerShell, cmd, Git Bash): the curl installer is **not** supported (`Unsupported OS: mingw64…` in Git Bash). Use **`npm install -g @higgsfield/cli`** ([upstream README](https://github.com/higgsfield-ai/cli#install)), then ensure the global npm `bin` folder is on `PATH`, or invoke via full path.
 2. If `higgsfield account status` fails with `Session expired` / `Not authenticated`, ask the user to run `higgsfield auth login` (interactive, opens a browser) and wait for them to confirm before continuing.
 
 Skip both checks if `higgsfield account status` already prints account info.

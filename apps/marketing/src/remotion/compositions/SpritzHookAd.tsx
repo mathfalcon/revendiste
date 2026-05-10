@@ -12,10 +12,11 @@ import {
   buildSpritzSequencePlan,
   type SpritzAdProps,
 } from '../computeSpritzDuration';
+import {brandTokens} from '../../brand/tokens';
 
-const bg = '#0b0b0c';
-const text = '#ffffff';
-const primary = '#ee46a7';
+const bg = brandTokens.background;
+const text = brandTokens.foreground;
+const primary = brandTokens.primary;
 
 export function SpritzHookAd(props: SpritzAdProps) {
   const {fps} = useVideoConfig();

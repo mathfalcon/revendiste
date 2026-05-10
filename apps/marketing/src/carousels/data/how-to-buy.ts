@@ -1,64 +1,96 @@
 import type {CarouselSlide} from '../types';
+import {sharedClosingSlide} from './shared-closing-slide';
 
-/**
- * "How to buy" carousel for IG/TikTok (1080x1350).
- *
- * Source of truth: apps/frontend/src/routes/preguntas-frecuentes.tsx
- * (faqCompradoresBase + faqGeneral + faqPagos).
- *
- * Slide structure:
- *   1) cover         — eye-catching hook
- *   2) content       — value prop
- *   3) screenshot    — captured /eventos/hoy on mobile
- *   4) content       — payment timer
- *   5) screenshot    — captured /preguntas-frecuentes?seccion=compradores
- *   6) content       — protection / 48h reports
- *   7) content       — CTA
- */
+/** Buyer carousel for Instagram/TikTok pinned posts. */
 export const howToBuySlides: CarouselSlide[] = [
   {
     kind: 'cover',
-    eyebrow: 'Comprar en Revendiste',
-    title: 'Pagás. Disfrutás. Después cobra el vendedor.',
+    eyebrow: 'Cómo comprar',
+    title: 'No te quedes afuera, todos ya están adentro',
     subtitle:
-      'Tu plata queda en custodia hasta que entres al evento. Si algo falla, te devolvemos.',
+      'Buscás el evento, elegís la entrada y pagás dentro de Revendiste.',
   },
   {
-    kind: 'content',
-    badge: '1 · Buscar',
-    title: 'Buscá tu evento y elegí la entrada',
-    body: 'Filtrá por evento, sector y tanda. Antes de pagar ves el precio, la comisión y el total final, sin sorpresas.',
+    kind: 'stepper',
+    badge: 'Comprar',
+    title: 'Así funciona la compra',
+    intro:
+      'Todo pasa dentro de la plataforma, con el precio final visible antes de pagar.',
+    steps: [
+      {label: 'Buscás el evento', icon: 'calendar'},
+      {label: 'Elegís la entrada', icon: 'ticket'},
+      {
+        label: 'Revisás el total',
+        icon: 'tag',
+        detail: 'Precio, comisión y total final antes de confirmar.',
+      },
+      {
+        label: 'Pagás con protección',
+        icon: 'wallet',
+        detail:
+          'El dinero queda en custodia mientras se completa la operación.',
+      },
+      {
+        label: 'Recibís la entrada',
+        icon: 'circleCheck',
+        detail:
+          'Si el QR todavía no está disponible, te avisamos cuando el vendedor lo suba.',
+      },
+    ],
   },
   {
     kind: 'screenshot',
-    badge: 'Vista real',
-    title: 'Eventos disponibles cerca tuyo',
-    body: 'Buscás, comparás precios y ves disponibilidad en tiempo real. Todo desde el celular.',
-    screenshotKey: 'eventos-hoy',
+    badge: 'En la web',
+    title: 'Encontrá eventos y entradas disponibles',
+    body: 'Podés explorar eventos, comparar opciones y revisar disponibilidad antes de elegir.',
+    screenshotKey: 'eventos-hoy-desktop',
+    presentation: 'desktop',
+    icon: 'ticket',
   },
   {
-    kind: 'content',
-    badge: '2 · Pagar',
-    title: 'Pagá con el medio que más te sirva',
-    body: 'Tarjeta, transferencia o efectivo en redes como RedPagos. En el checkout corre un cronómetro: completá el pago a tiempo o la reserva se libera.',
+    kind: 'cards',
+    badge: 'Pago protegido',
+    title: 'Comprás sin coordinar con desconocidos',
+    cards: [
+      {
+        title: 'Reserva con tiempo',
+        body: 'En el checkout tenés un tiempo para completar el pago antes de que la entrada vuelva a estar disponible.',
+        icon: 'clock',
+      },
+      {
+        title: 'Custodia',
+        body: 'El pago queda protegido hasta que pase el evento y la ventana de revisión.',
+        icon: 'wallet',
+      },
+      {
+        title: 'Caso si algo falla',
+        body: 'Si la entrada no funciona por culpa del vendedor, podés abrir un caso y lo revisamos.',
+        icon: 'verify',
+      },
+    ],
   },
   {
     kind: 'screenshot',
-    badge: 'Preguntas frecuentes',
-    title: 'Resolvemos tus dudas en la web',
-    body: 'Comisiones, plazos, devoluciones, custodia: todo está documentado en preguntas-frecuentes.',
-    screenshotKey: 'faq-compradores',
+    badge: 'Dudas frecuentes',
+    title: 'Lo importante para comprar está explicado',
+    body: 'Comisiones, plazos, entrega de QR, custodia y casos: está todo en la sección Compradores.',
+    screenshotKey: 'faq-compradores-desktop',
+    presentation: 'desktop',
+    icon: 'scrollText',
   },
   {
     kind: 'content',
-    badge: 'Si algo falla',
-    title: 'Tenés 48h después del evento para reportarlo',
-    body: 'Si la entrada no funcionó por culpa del vendedor, abrís un reporte desde "Mis Entradas" con la evidencia. Revisamos y, si corresponde, te devolvemos la plata.',
+    badge: 'Si algo no sale bien',
+    title: 'Tenés una ventana para abrir un caso',
+    body: 'Si la entrada no funciona por responsabilidad del vendedor, podés abrir un caso desde tu cuenta con la evidencia. Revisamos la situación y, si corresponde, procesamos la devolución.',
+    icon: 'verify',
   },
   {
     kind: 'content',
-    badge: 'Empezá ahora',
-    title: 'Compra segura, sin coordinar con desconocidos',
-    body: 'Entrá a revendiste.com, buscá tu evento y comprá tranquilo. Tu plata está protegida hasta que disfrutes el show.',
+    badge: 'Listo para tu evento',
+    title: 'Buscá tu entrada y comprá con más tranquilidad',
+    body: 'Entrá a revendiste.com, elegí el evento y seguí la compra desde tu cuenta. Si tenés dudas, ayuda@revendiste.com.',
+    icon: 'sparkles',
   },
+  sharedClosingSlide,
 ];

@@ -5,6 +5,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
+import {brandTokens} from '../../brand/tokens';
 
 export function BeforeAfterAd() {
   const frame = useCurrentFrame();
@@ -15,7 +16,7 @@ export function BeforeAfterAd() {
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: '#0b0b0c',
+        backgroundColor: brandTokens.background,
         justifyContent: 'center',
         alignItems: 'center',
         opacity,
@@ -36,7 +37,7 @@ export function BeforeAfterAd() {
             marginTop: 16,
             fontSize: 22,
             fontWeight: 500,
-            color: '#ee46a7',
+            color: brandTokens.primary,
           }}
         >
           Plantilla — reemplazá el copy

@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {generateCover, type CoverDeck} from '../ai/cover-image';
 import {howToBuySlides} from '../carousels/data/how-to-buy';
 import {howToSellSlides} from '../carousels/data/how-to-sell';
+import {whatIsRevendisteSlides} from '../carousels/data/what-is-revendiste';
 import {
   describeAssets,
   renderCarouselToPngs,
@@ -17,10 +18,14 @@ const marketingRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const SLIDES: Record<CarouselKind, CarouselSlide[]> = {
   'how-to-sell': howToSellSlides,
   'how-to-buy': howToBuySlides,
-  'how-to-post': howToSellSlides,
+  'what-is-revendiste': whatIsRevendisteSlides,
 };
 
-const VALID_KINDS: CarouselKind[] = ['how-to-sell', 'how-to-buy', 'how-to-post'];
+export const VALID_KINDS: CarouselKind[] = [
+  'how-to-sell',
+  'how-to-buy',
+  'what-is-revendiste',
+];
 
 type CliOpts = {
   kind: CarouselKind;
@@ -40,8 +45,9 @@ function parseArgs(argv: string[]): CliOpts {
   };
 }
 
-async function main() {
-  const opts = parseArgs(process.argv.slice(2));
+/** Shared entry for `generate-carousel.ts` and `carousel-pipeline.ts`. */
+export async function runGenerateCarousel(argv: string[]): Promise<void> {
+  const opts = parseArgs(argv);
   const slides = SLIDES[opts.kind];
   const out = join(marketingRoot, 'output', `carousel-${opts.kind}`);
 
@@ -77,9 +83,10 @@ async function main() {
   // Diagnostic: tell the user which optional assets are missing.
   const assets = describeAssets(opts.kind, slides);
   if (!assets.coverExists) {
-    console.warn(
-      `! Cover faltante: ${assets.coverPath}\n  Ejecutá con --cover para generarlo, o subí un PNG manualmente.`,
-    );
+    const hint = opts.cover
+      ? 'El intento con --cover falló (¿instalaste el CLI y está en el PATH, o definiste HIGGSFIELD_CLI?). Podés subir un PNG manual en esa ruta.'
+      : 'Ejecutá con --cover (requiere CLI de Higgsfield) o subí un PNG manualmente en esa ruta.';
+    console.warn(`! Cover faltante: ${assets.coverPath}\n  ${hint}`);
   }
   for (const s of assets.screenshots) {
     if (!s.exists) {
@@ -95,7 +102,18 @@ async function main() {
   );
 }
 
-main().catch(e => {
-  console.error(e);
-  process.exit(1);
-});
+function isGenerateCarouselMain(): boolean {
+  const arg = process.argv[1];
+  if (!arg) {
+    return false;
+  }
+  const norm = arg.replaceAll('\\', '/');
+  return norm.endsWith('/generate-carousel.ts') || norm.endsWith('generate-carousel.ts');
+}
+
+if (isGenerateCarouselMain()) {
+  runGenerateCarousel(process.argv.slice(2)).catch(e => {
+    console.error(e);
+    process.exit(1);
+  });
+}

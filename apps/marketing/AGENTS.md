@@ -40,6 +40,7 @@ pnpm db:migrate && pnpm db:seed
 pnpm dev                              # UI :4001
 pnpm remotion:studio                  # Visual iteration
 pnpm carousel                         # Satori PNGs
+pnpm carousel:pipeline -- --kind …    # Default: capture + cover + render (see skill)
 pnpm generate-ad -- --brief-slug spritz-hook-10s
 pnpm db:export                        # briefs → seeds/briefs/
 ```
@@ -50,7 +51,8 @@ Under [`.claude/skills/`](./.claude/skills/) (this package) — load the relevan
 
 - Authoring brief JSON → `marketing-brief-author`
 - Remotion compositions → `marketing-remotion`
-- Satori carousels → `marketing-carousel`
+- **Carousel end-to-end** (capture, cover, render, paths) → **`marketing-carousel-pipeline`**
+- Satori slide types / layout details → `marketing-carousel`
 - Higgsfield CLI (project deltas) → `marketing-higgsfield`
 - Meta/TikTok publish → `marketing-publish`
 

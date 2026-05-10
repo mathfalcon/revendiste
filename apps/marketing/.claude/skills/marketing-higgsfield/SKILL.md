@@ -21,6 +21,10 @@ description: Revendiste-specific Higgsfield CLI usage for @revendiste/marketing 
 
 Requires `higgsfield` on PATH and a valid session (`higgsfield account status`). Interactive login: `higgsfield auth login`.
 
+## Node spawn (Windows)
+
+Marketing wraps the CLI with **`shell: false`** and resolves the executable via `where higgsfield` on Windows so long `--prompt` values are not split into extra positionals (`Too many positional args`). Override with **`HIGGSFIELD_CLI`** (full path to the `.cmd` / binary) if needed.
+
 ## Global skill
 
 CLI mechanics, model catalog, and Marketing Studio flows: use repo/global skill **higgsfield-generate** — this skill only adds **Revendiste marketing** defaults on top.

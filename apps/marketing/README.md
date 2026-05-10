@@ -6,7 +6,14 @@ Local marketing studio for Revendiste: **briefs** → **renders** (Remotion, Sat
 
 - Docker
 - Node 20+ and pnpm (repo root)
-- Optional: `higgsfield` CLI for AI video ([Higgsfield install](https://github.com/higgsfield-ai/cli))
+- Optional: **Higgsfield CLI** for AI carousel covers / video ([repo](https://github.com/higgsfield-ai/cli)). The **`curl … | install.sh`** flow is **macOS/Linux only**; on **Windows** (including Git Bash) it fails with `Unsupported OS: mingw64…`. Use the **npm** build instead, then ensure `higgsfield` is on your PATH (or set **`HIGGSFIELD_CLI`** to the full path to the shim, e.g. under your global npm folder):
+
+  ```bash
+  npm install -g @higgsfield/cli
+  higgsfield auth login
+  ```
+
+  If you skip this entirely, use **`pnpm carousel:capture`** (screenshots + gradient cover) — no Higgsfield required.
 
 ## Quick start
 
@@ -99,6 +106,10 @@ Set backend env: `META_PIXEL_ID`, `META_CAPI_TOKEN` (or reuse `META_ACCESS_TOKEN
 | `pnpm remotion:studio` | Remotion Studio                                 |
 | `pnpm render:spritz`   | CLI render Spritz → `output/spritz-preview.mp4` |
 | `pnpm carousel`        | Satori carousels → `output/carousel-*`          |
+| `pnpm carousel:capture` | **Screenshots-only full run**: Playwright captures + Satori PNGs; first slide stays **gradient** (no `--cover` / no Higgsfield) |
+| `pnpm carousel:full` | Same as above **plus** `--cover` (Higgsfield AI cover when CLI is available) |
+| `pnpm carousel:pipeline` | **Recommended**: `--capture` + `--cover` + render in one go; pass `--kind <deck>` (or `--render-only` / `--no-cover`). See [`.claude/skills/marketing-carousel-pipeline/SKILL.md`](./.claude/skills/marketing-carousel-pipeline/SKILL.md). |
+| **Iterate without new AI cover** | Use `--no-cover` or `--render-only`; existing `brand/covers/<kind>.png` is reused until you delete it or run with `--cover` again. |
 | `pnpm generate-ad`     | Spritz pipeline + DB / MinIO                    |
 | `pnpm publish -- ...`  | Meta / TikTok unified publisher                 |
 | `pnpm capture`         | Playwright flows (`FRONTEND_URL`)               |
@@ -140,6 +151,7 @@ See [.env.example](./.env.example).
 - **Render `done` but no preview URL** — worker must finish uploading; check `assetUrls.mp4Key`.
 - **BullMQ stuck** — Redis host/port must match `MARKETING_REDIS_URL` and Docker.
 - **TikTok location errors** — set `TIKTOK_LOCATION_UY_ID` to TikTok’s Uruguay location id(s) from Audience / targeting tools.
+- **Higgsfield `Too many positional args`** (carousel `--cover` on Windows) — fixed by not using `shell: true` (prompt must stay one argv). **`spawn ENOENT` / `EINVAL`** on Windows — the wrapper resolves `higgsfield.cmd` → runs **`node …/@higgsfield/cli/bin/higgsfield.js`** instead of spawning `.cmd` directly. Set **`HIGGSFIELD_CLI`** to a full path to `higgsfield.cmd`, `.exe`, or `higgsfield.js` if needed.
 
 ## Brand & agents
 

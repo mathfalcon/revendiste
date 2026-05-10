@@ -1,0 +1,15 @@
+---
+description: Carousel PNG pipeline in apps/marketing — load marketing-carousel-pipeline skill for end-to-end deck build, capture, Higgsfield covers, and file map
+globs: apps/marketing/src/carousels/**/*, apps/marketing/src/cli/generate-carousel.ts, apps/marketing/src/cli/carousel-pipeline.ts, apps/marketing/src/cli/debug-carousel-slide.ts, apps/marketing/src/ai/cover-image.ts, apps/marketing/src/screenshots/**/*.ts
+alwaysApply: false
+---
+
+# Marketing carousels
+
+When editing or generating **Satori carousel** code, data, CLI, screenshots, or **Higgsfield cover** prompts under `apps/marketing`:
+
+1. Load **`apps/marketing/.claude/skills/marketing-carousel-pipeline/SKILL.md`** for the full workflow and commands.
+2. Slide layout / Satori rules: **`apps/marketing/.claude/skills/marketing-carousel/SKILL.md`**.
+3. Workspace charter: **`apps/marketing/AGENTS.md`**.
+
+Prefer **`pnpm carousel:pipeline`** from `apps/marketing` for the default **capture + cover + render** flow (`--render-only` when assets already exist).

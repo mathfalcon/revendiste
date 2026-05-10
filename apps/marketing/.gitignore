@@ -9,3 +9,4 @@ brand/originals/**
 !brand/originals/README.md
 brand/covers/**
 !brand/covers/README.md
+.auth/

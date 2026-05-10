@@ -27,6 +27,13 @@ export type ScreenshotTarget = {
   settleMs?: number;
   /** Passed to Playwright `colorScheme` (carousel shots default to dark). */
   colorScheme?: 'light' | 'dark';
+  /**
+   * If true, this capture needs a logged-in user (e.g. `/entradas/publicar`).
+   * Provide a Playwright storage state JSON via `STORAGE_STATE_PATH` env var
+   * (or the default `apps/marketing/.auth/state.json`) — see
+   * `pnpm capture:auth` to record one with Clerk credentials.
+   */
+  requiresAuth?: boolean;
 };
 
 /**
@@ -54,9 +61,33 @@ export const SCREENSHOT_TARGETS: ScreenshotTarget[] = [
     colorScheme: 'dark',
   },
   {
+    key: 'faq-general',
+    path: '/preguntas-frecuentes?seccion=general',
+    viewport: 'mobile',
+    waitForSelector: 'main, [role="main"], [role="tablist"]',
+    settleMs: 1200,
+    colorScheme: 'dark',
+  },
+  {
+    key: 'faq-general-desktop',
+    path: '/preguntas-frecuentes?seccion=general',
+    viewport: 'desktop',
+    waitForSelector: 'main, [role="main"], [role="tablist"]',
+    settleMs: 1200,
+    colorScheme: 'dark',
+  },
+  {
     key: 'faq-compradores',
     path: '/preguntas-frecuentes?seccion=compradores',
     viewport: 'mobile',
+    waitForSelector: 'main, [role="main"], [role="tablist"]',
+    settleMs: 1200,
+    colorScheme: 'dark',
+  },
+  {
+    key: 'faq-compradores-desktop',
+    path: '/preguntas-frecuentes?seccion=compradores',
+    viewport: 'desktop',
     waitForSelector: 'main, [role="main"], [role="tablist"]',
     settleMs: 1200,
     colorScheme: 'dark',
@@ -70,9 +101,25 @@ export const SCREENSHOT_TARGETS: ScreenshotTarget[] = [
     colorScheme: 'dark',
   },
   {
+    key: 'faq-publicadores-desktop',
+    path: '/preguntas-frecuentes?seccion=publicadores',
+    viewport: 'desktop',
+    waitForSelector: 'main, [role="main"], [role="tablist"]',
+    settleMs: 1200,
+    colorScheme: 'dark',
+  },
+  {
     key: 'faq-pagos',
     path: '/preguntas-frecuentes?seccion=pagos',
     viewport: 'mobile',
+    waitForSelector: 'main, [role="main"], [role="tablist"]',
+    settleMs: 1200,
+    colorScheme: 'dark',
+  },
+  {
+    key: 'faq-pagos-desktop',
+    path: '/preguntas-frecuentes?seccion=pagos',
+    viewport: 'desktop',
     waitForSelector: 'main, [role="main"], [role="tablist"]',
     settleMs: 1200,
     colorScheme: 'dark',
@@ -85,11 +132,36 @@ export const SCREENSHOT_TARGETS: ScreenshotTarget[] = [
     colorScheme: 'dark',
   },
   {
+    key: 'eventos-hoy-desktop',
+    path: '/eventos/hoy',
+    viewport: 'desktop',
+    settleMs: 800,
+    colorScheme: 'dark',
+  },
+  {
     key: 'garantia',
     path: '/garantia',
     viewport: 'mobile',
     settleMs: 600,
     colorScheme: 'dark',
+  },
+  {
+    key: 'entradas-publicar',
+    path: '/entradas/publicar',
+    viewport: 'mobile',
+    settleMs: 1500,
+    colorScheme: 'dark',
+    requiresAuth: true,
+    waitForSelector: 'main, [role="main"], form',
+  },
+  {
+    key: 'entradas-publicar-desktop',
+    path: '/entradas/publicar',
+    viewport: 'desktop',
+    settleMs: 1500,
+    colorScheme: 'dark',
+    requiresAuth: true,
+    waitForSelector: 'main, [role="main"], form',
   },
 ];
 

@@ -1,6 +1,6 @@
 # Carousel covers
 
-Generated cover images for IG/TikTok carousel decks (1080×1350, vertical 4:5).
+Generated cover images for IG/TikTok carousel decks (1080×1350 on export; Higgsfield `gpt_image_2` uses **3:4** — closest allowed portrait — then fits the slide).
 
 These are produced by `pnpm carousel -- --kind <deck> --cover`, which calls
 the Higgsfield CLI (`gpt_image_2`) and writes the result here as

@@ -13,7 +13,9 @@
  *   pnpm capture -- --only home,faq-*   # captures matching keys (glob-like)
  */
 import 'dotenv/config';
-import {mkdirSync} from 'node:fs';
+import {existsSync, mkdirSync} from 'node:fs';
+import {dirname, join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {chromium, type Browser, type Page} from 'playwright';
 import {
   SCREENSHOTS_DIR,
@@ -23,6 +25,26 @@ import {
   type ScreenshotPrepare,
   type ScreenshotTarget,
 } from './targets';
+
+const marketingRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
+
+/**
+ * Default Playwright storage-state location. Override with `STORAGE_STATE_PATH`.
+ * Folder is gitignored — never commit Clerk session cookies.
+ */
+export const DEFAULT_STORAGE_STATE_PATH = join(
+  marketingRoot,
+  '.auth',
+  'state.json',
+);
+
+function resolveStorageStatePath(): string {
+  return process.env.STORAGE_STATE_PATH ?? DEFAULT_STORAGE_STATE_PATH;
+}
+
+function hasUsableStorageState(): boolean {
+  return existsSync(resolveStorageStatePath());
+}
 
 type CaptureOptions = {
   baseUrl: string;
@@ -139,13 +161,23 @@ async function captureOne(
   target: ScreenshotTarget,
 ): Promise<string> {
   const viewport = VIEWPORTS[target.viewport ?? 'mobile'];
+  const storageStatePath = resolveStorageStatePath();
+  const useAuth = target.requiresAuth === true && existsSync(storageStatePath);
+
+  if (target.requiresAuth && !useAuth) {
+    throw new Error(
+      `Target "${target.key}" requires a logged-in session but no storage state was found at ${storageStatePath}.\n` +
+        '  Run `pnpm capture:auth` once to record one (Chromium will open so you can log in with Clerk).',
+    );
+  }
+
   const ctx = await browser.newContext({
     viewport,
     deviceScaleFactor: 2,
     locale: 'es-UY',
     colorScheme: target.colorScheme ?? 'dark',
-    // mkcert HTTPS dev cert is self-signed in CI / fresh checkouts.
     ignoreHTTPSErrors: true,
+    ...(useAuth ? {storageState: storageStatePath} : {}),
   });
 
   const page: Page = await ctx.newPage();
@@ -189,6 +221,13 @@ export async function capture(options: CaptureOptions): Promise<string[]> {
   if (targets.length === 0) {
     console.warn('No screenshot targets matched the --only filter.');
     return [];
+  }
+
+  const needsAuth = targets.some(t => t.requiresAuth);
+  if (needsAuth && !hasUsableStorageState()) {
+    console.warn(
+      `! Some targets need auth but no storage state at ${resolveStorageStatePath()}.\n  Run \`pnpm capture:auth\` once to record one.`,
+    );
   }
 
   const browser = await chromium.launch();
