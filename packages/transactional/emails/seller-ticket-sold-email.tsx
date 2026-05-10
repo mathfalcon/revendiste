@@ -16,6 +16,7 @@ export interface SellerTicketSoldEmailProps {
   ticketCount: number;
   uploadUrl?: string;
   hoursUntilAvailable?: number;
+  allDocumentsUploaded?: boolean;
   appBaseUrl?: string;
 }
 
@@ -26,6 +27,7 @@ export const SellerTicketSoldEmail = ({
   ticketCount,
   uploadUrl,
   hoursUntilAvailable,
+  allDocumentsUploaded,
   appBaseUrl,
 }: SellerTicketSoldEmailProps) => {
   const canUpload = !!uploadUrl;
@@ -71,7 +73,18 @@ export const SellerTicketSoldEmail = ({
         </Text>
       </Section>
 
-      {canUpload ? (
+      {allDocumentsUploaded ? (
+        <Section className="bg-secondary p-4 rounded-md mb-6">
+          <Text className="text-sm text-foreground m-0 font-semibold mb-1">
+            Documentos ya subidos
+          </Text>
+          <Text className="text-sm text-muted-foreground m-0">
+            Ya subiste los documentos de estas entradas, así que no tenés que
+            hacer nada más. Te avisaremos cuando llegue en el que puedas retirar
+            tu dinero.
+          </Text>
+        </Section>
+      ) : canUpload ? (
         <>
           <Text className="text-foreground mb-4">
             Para completar la venta, subí los documentos de tus entradas cuanto
@@ -107,9 +120,11 @@ export const SellerTicketSoldEmail = ({
         </Text>
       )}
 
-      <Text className="text-sm text-muted-foreground mb-0">
-        Subir los documentos es obligatorio para completar la venta y cobrar.
-      </Text>
+      {!allDocumentsUploaded && (
+        <Text className="text-sm text-muted-foreground mb-0">
+          Subir los documentos es obligatorio para completar la venta y cobrar.
+        </Text>
+      )}
     </BaseEmail>
   );
 };

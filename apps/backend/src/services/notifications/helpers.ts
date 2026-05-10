@@ -193,6 +193,12 @@ export async function notifyOrderInvoice(
 
 /**
  * Notify buyer when order expires
+ *
+ * If the order was created more than `skipEmailAfterMinutes` ago (default 60),
+ * we drop the `email` channel and keep `in_app` only. This handles alternative
+ * payment methods (bank transfer, cash) where dLocal can keep the order in
+ * PENDING for up to 72h: the user already moved on and an "expired" email
+ * after they paid by transfer would be confusing.
  */
 export async function notifyOrderExpired(
   service: NotificationService,
@@ -201,12 +207,27 @@ export async function notifyOrderExpired(
     orderId: string;
     eventName: string;
     eventEndDate: Date | string | null;
+    orderCreatedAt?: Date | string | null;
+    skipEmailAfterMinutes?: number;
   },
 ) {
+  const skipEmailAfterMinutes = params.skipEmailAfterMinutes ?? 60;
+  let channels: Array<'in_app' | 'email'> = ['in_app', 'email'];
+  if (params.orderCreatedAt) {
+    const createdAt =
+      params.orderCreatedAt instanceof Date
+        ? params.orderCreatedAt
+        : new Date(params.orderCreatedAt);
+    const elapsedMs = Date.now() - createdAt.getTime();
+    if (elapsedMs > skipEmailAfterMinutes * 60 * 1000) {
+      channels = ['in_app'];
+    }
+  }
+
   return await service.createNotification({
     userId: params.buyerUserId,
     type: 'order_expired',
-    channels: ['in_app', 'email'],
+    channels,
     actions: null, // Order expired notifications have no actions
     metadata: {
       type: 'order_expired',
@@ -424,6 +445,7 @@ export async function notifySellerTicketSold(
       platform: params.platform,
       qrAvailabilityTiming: params.qrAvailabilityTiming,
       shouldPromptUpload: shouldPrompt,
+      allDocumentsUploaded: params.allDocumentsUploaded,
     },
     deferSendToJob: options?.deferSendToJob,
     attachmentRefs: options?.attachmentRefs,

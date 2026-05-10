@@ -68,6 +68,7 @@ export const TicketSoldSellerMetadataSchema = z.object({
   platform: z.string(),
   qrAvailabilityTiming: z.custom<QrAvailabilityTiming>().nullable().optional(),
   shouldPromptUpload: z.boolean(),
+  allDocumentsUploaded: z.boolean().optional(),
 });
 
 export const DocumentReminderMetadataSchema = z.object({

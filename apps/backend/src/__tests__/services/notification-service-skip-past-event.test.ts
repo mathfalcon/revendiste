@@ -67,4 +67,65 @@ describe('notifyOrderExpired / notifyPaymentFailed', () => {
       }),
     );
   });
+
+  it('keeps in_app + email channels when order is fresh', async () => {
+    const createNotification = jest.fn().mockResolvedValue(null);
+    const svc = {createNotification} as unknown as NotificationService;
+
+    await notifyOrderExpired(svc, {
+      buyerUserId: 'u1',
+      orderId: 'o1',
+      eventName: 'E',
+      eventEndDate: null,
+      orderCreatedAt: new Date(Date.now() - 5 * 60 * 1000), // 5 min ago
+    });
+
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'order_expired',
+        channels: ['in_app', 'email'],
+      }),
+    );
+  });
+
+  it('drops the email channel when order was created more than 1h ago', async () => {
+    const createNotification = jest.fn().mockResolvedValue(null);
+    const svc = {createNotification} as unknown as NotificationService;
+
+    await notifyOrderExpired(svc, {
+      buyerUserId: 'u1',
+      orderId: 'o1',
+      eventName: 'E',
+      eventEndDate: null,
+      orderCreatedAt: new Date(Date.now() - 90 * 60 * 1000), // 90 min ago
+    });
+
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'order_expired',
+        channels: ['in_app'],
+      }),
+    );
+  });
+
+  it('respects custom skipEmailAfterMinutes threshold', async () => {
+    const createNotification = jest.fn().mockResolvedValue(null);
+    const svc = {createNotification} as unknown as NotificationService;
+
+    await notifyOrderExpired(svc, {
+      buyerUserId: 'u1',
+      orderId: 'o1',
+      eventName: 'E',
+      eventEndDate: null,
+      orderCreatedAt: new Date(Date.now() - 10 * 60 * 1000), // 10 min ago
+      skipEmailAfterMinutes: 5,
+    });
+
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'order_expired',
+        channels: ['in_app'],
+      }),
+    );
+  });
 });

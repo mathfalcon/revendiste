@@ -46,7 +46,15 @@ export function PwaInstallBanner() {
 
   const visible = hasEnoughNavigations && canPrompt && isSignedIn;
 
-  if (!visible) {
+  // Routes that render their own floating bottom bar on mobile would visually
+  // collide with the install banner (which is also bottom-fixed). Hide the
+  // banner on mobile for those routes; the desktop variant is unaffected.
+  const hideOnMobileForBottomBar =
+    isMobile &&
+    (location.pathname.startsWith('/checkout') ||
+      location.pathname.startsWith('/eventos/'));
+
+  if (!visible || hideOnMobileForBottomBar) {
     return <IosInstructionsSheet open={showIosSheet} onClose={closeIosSheet} />;
   }
 
