@@ -6,18 +6,21 @@ import {TicketWaveCard} from './TicketWaveCard';
 import {DesktopSummaryCard} from './DesktopSummaryCard';
 import {MobilePurchaseBar} from './MobilePurchaseBar';
 import {NoTicketsAvailable} from './NoTicketsAvailable';
+import {MyListingsBanner} from './MyListingsBanner';
 import {Link} from '@tanstack/react-router';
 
 interface TicketSelectionProps {
   ticketWaves: GetEventByIdResponse['ticketWaves'];
   eventId: string;
   userListingsCount?: number;
+  userListings?: GetEventByIdResponse['userListings'];
 }
 
 export function TicketSelection({
   ticketWaves,
   eventId,
   userListingsCount,
+  userListings,
 }: TicketSelectionProps) {
   const {
     form,
@@ -48,8 +51,13 @@ export function TicketSelection({
     );
   }
 
+  const hasUserListings = (userListings?.length ?? 0) > 0;
+
   return (
     <>
+      {hasUserListings && userListings && (
+        <MyListingsBanner userListings={userListings} />
+      )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}

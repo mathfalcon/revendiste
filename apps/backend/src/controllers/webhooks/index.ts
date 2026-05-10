@@ -27,6 +27,7 @@ import {
   SellerEarningsRepository,
   UsersRepository,
   NotificationsRepository,
+  ImpersonationLogsRepository,
 } from '~/repositories';
 import {db} from '~/db';
 import {getJobQueueService} from '~/services/job-queue';
@@ -57,6 +58,7 @@ export function createWebhookDependencies(database: Kysely<DB> = db) {
   const usersRepository = new UsersRepository(database);
   const notificationsRepository = new NotificationsRepository(database);
   const sellerEarningsRepository = new SellerEarningsRepository(database);
+  const impersonationLogsRepository = new ImpersonationLogsRepository(database);
 
   const notificationService = new NotificationService(
     notificationsRepository,
@@ -94,7 +96,7 @@ export function createWebhookDependencies(database: Kysely<DB> = db) {
 
   const webhooksService = new WebhooksService(
     dlocalAdapter,
-    new ClerkWebhookService(),
+    new ClerkWebhookService(usersRepository, impersonationLogsRepository),
   );
 
   return {webhooksService, dlocalAdapter};

@@ -910,6 +910,7 @@ export class PaymentWebhookAdapter {
         orderId: orderWithItems.id,
         eventName: orderWithItems.event.name || 'el evento',
         eventEndDate: orderWithItems.event.eventEndDate ?? null,
+        orderCreatedAt: orderWithItems.createdAt,
       }).catch(error => {
         logger.error('Failed to send order expired notification', {
           orderId,

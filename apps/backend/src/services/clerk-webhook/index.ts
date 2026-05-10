@@ -13,6 +13,10 @@ import {logger} from '~/utils';
 import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {CLERK_AUTH_NOTIFICATION_TITLES} from '~/constants/error-messages';
 import type {
+  ImpersonationLogsRepository,
+  UsersRepository,
+} from '~/repositories';
+import type {
   ClerkWebhookRouteBody,
   ClerkEmailSlug,
 } from '~/controllers/webhooks/validation';
@@ -20,6 +24,11 @@ import type {
   NotificationType,
   TypedNotificationMetadata,
 } from '@revendiste/shared';
+
+/** How recently an impersonation log must exist to suppress the new-device email.
+ * Clerk actor tokens have a max session of 30min; we use a slightly larger
+ * window to be safe (the email arrives shortly after sign-in). */
+const IMPERSONATION_LOOKBACK_MINUTES = 30;
 
 interface WebhookMetadata {
   ipAddress?: string;
@@ -45,6 +54,11 @@ const CLERK_SLUG_TO_NOTIFICATION_TYPE: Record<
 export class ClerkWebhookService {
   private emailProvider = getEmailProvider();
 
+  constructor(
+    private usersRepository?: UsersRepository,
+    private impersonationLogsRepository?: ImpersonationLogsRepository,
+  ) {}
+
   async handleWebhook(
     webhookBody: ClerkWebhookRouteBody,
     metadata: WebhookMetadata,
@@ -65,8 +79,8 @@ export class ClerkWebhookService {
       }
 
       const clerkEmailOutcome = await this.handleEmailCreated(webhookBody.data);
-      const outcome =
-        clerkEmailOutcome === 'sent' ? 'success' : ('skipped' as const);
+      const outcome: 'success' | 'skipped' =
+        clerkEmailOutcome === 'sent' ? 'success' : 'skipped';
 
       logger.info(
         'webhooks.clerk.processed',
@@ -100,7 +114,12 @@ export class ClerkWebhookService {
 
   private async handleEmailCreated(
     emailData: ClerkWebhookRouteBody['data'],
-  ): Promise<'sent' | 'skipped_no_recipient' | 'skipped_unmapped_slug'> {
+  ): Promise<
+    | 'sent'
+    | 'skipped_no_recipient'
+    | 'skipped_unmapped_slug'
+    | 'skipped_impersonation'
+  > {
     const toEmail = emailData.to_email_address;
     if (!toEmail) {
       logger.warn('Email created but no recipient email found', {
@@ -118,6 +137,26 @@ export class ClerkWebhookService {
         slug,
       });
       return 'skipped_unmapped_slug';
+    }
+
+    // Suppress the "new device sign in" email when an admin just started
+    // impersonating this user — Clerk's actor-token sign-in fires this email
+    // for a session the user didn't actually create.
+    if (notificationType === 'auth_new_device_sign_in') {
+      const isImpersonation = await this.isRecentImpersonation(toEmail);
+      if (isImpersonation) {
+        logger.info(
+          'webhooks.clerk.processed',
+          wideEvent('webhooks.clerk.processed', {
+            eventType: 'email.created',
+            emailId: emailData.id,
+            emailSlug: slug,
+            skippedReason: 'impersonation_active',
+            outcome: 'skipped',
+          }),
+        );
+        return 'skipped_impersonation';
+      }
     }
 
     logger.debug('Processing Clerk email', {
@@ -148,6 +187,33 @@ export class ClerkWebhookService {
     });
 
     return 'sent';
+  }
+
+  /**
+   * Returns true if there's a recent impersonation log entry for the user
+   * whose email matches `toEmail`. Used to suppress the new-device-sign-in
+   * email when an admin starts an impersonation session.
+   *
+   * Falls back to `false` if the repositories aren't injected (kept optional
+   * to avoid breaking older instantiation sites).
+   */
+  private async isRecentImpersonation(toEmail: string): Promise<boolean> {
+    if (!this.usersRepository || !this.impersonationLogsRepository) {
+      return false;
+    }
+    try {
+      const user = await this.usersRepository.findByEmail(toEmail);
+      if (!user) return false;
+      return await this.impersonationLogsRepository.hasRecentByTargetUserId(
+        user.id,
+        IMPERSONATION_LOOKBACK_MINUTES,
+      );
+    } catch (error) {
+      logger.warn('Failed to check recent impersonation', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
   }
 
   private buildMetadataFromClerkData(

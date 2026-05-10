@@ -271,6 +271,7 @@ export function getEmailTemplate<T extends NotificationType>(
               `${appBaseUrl}/cuenta/publicaciones?subirTicket=${meta?.listingId}`
             : undefined,
           hoursUntilAvailable: undefined,
+          allDocumentsUploaded: meta?.allDocumentsUploaded,
           appBaseUrl,
         },
       };

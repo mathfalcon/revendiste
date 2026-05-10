@@ -27,7 +27,11 @@ export function generateNotificationText<T extends NotificationType>(
       const meta = metadata as TypedNotificationMetadata<'ticket_sold_seller'>;
       let description: string;
 
-      if (meta.shouldPromptUpload) {
+      if (meta.allDocumentsUploaded) {
+        description = `Se ${
+          meta.ticketCount === 1 ? 'vendió tu entrada' : `vendieron tus ${meta.ticketCount} entradas`
+        } para ${meta.eventName}. Ya tenés los documentos subidos, así que está todo listo.`;
+      } else if (meta.shouldPromptUpload) {
         description = `Se ${
           meta.ticketCount === 1 ? 'vendió tu entrada' : `vendieron tus ${meta.ticketCount} entradas`
         } para ${meta.eventName}. Subí los documentos para completar la venta.`;

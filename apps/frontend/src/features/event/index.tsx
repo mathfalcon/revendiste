@@ -132,6 +132,7 @@ export const EventPage = () => {
                 ticketWaves={event.ticketWaves}
                 eventId={event.id}
                 userListingsCount={event.userListingsCount}
+                userListings={event.userListings}
               />
             </div>
           </div>
