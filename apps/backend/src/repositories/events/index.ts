@@ -742,7 +742,8 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
   }
 
   // Retrieve event information with ticket waves and images
-  async getById(eventId: string, userId?: string) {
+  // Pass includePast=true to return events regardless of status/end date (for SEO — past event pages)
+  async getById(eventId: string, userId?: string, includePast = false) {
     const event = await this.db
       .selectFrom('events')
       .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
@@ -947,8 +948,11 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         ).as('ticketWaves'),
       ])
       .where('events.id', '=', eventId)
-      .where('events.deletedAt', 'is', null)
-      .where('events.status', '=', 'active')
+      .$if(!includePast, qb =>
+        qb
+          .where('events.deletedAt', 'is', null)
+          .where('events.status', '=', 'active'),
+      )
       .orderBy('events.eventStartDate', 'asc')
       .executeTakeFirst();
 
@@ -956,15 +960,85 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
   }
 
   async findBySlug(slug: string, userId?: string) {
+    // SEO: return events by slug regardless of deletedAt/status. Only return null
+    // if the slug doesn't exist at all. Past or admin-deleted events still render
+    // a static page (with PastEventBanner + RelatedUpcomingEvents) so Google
+    // doesn't see soft-404s for URLs it has previously indexed.
     const event = await this.db
       .selectFrom('events')
       .select('id')
       .where('slug', '=', slug)
-      .where('deletedAt', 'is', null)
       .executeTakeFirst();
 
     if (!event) return null;
-    return this.getById(event.id, userId);
+    return this.getById(event.id, userId, true);
+  }
+
+  // Returns upcoming events from the same city as the given event, falling back to any upcoming events.
+  // Used to populate the "Próximos eventos" section on past-event pages (important for internal linking).
+  async findRelatedUpcomingEvents(eventId: string, limit: number = 6) {
+    const now = new Date();
+
+    // Get the city of the source event
+    const sourceEvent = await this.db
+      .selectFrom('events')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
+      .select(['eventVenues.city as venueCity'])
+      .where('events.id', '=', eventId)
+      .where('events.deletedAt', 'is', null)
+      .executeTakeFirst();
+
+    const city = sourceEvent?.venueCity ?? null;
+
+    const baseQuery = this.db
+      .selectFrom('events')
+      .leftJoin('eventVenues', 'eventVenues.id', 'events.venueId')
+      .select(eb => [
+        'events.id',
+        'events.name',
+        'events.slug',
+        'events.eventStartDate',
+        'events.eventEndDate',
+        'eventVenues.name as venueName',
+        'eventVenues.city as venueCity',
+        jsonArrayFrom(
+          eb
+            .selectFrom('eventImages')
+            .select([
+              'eventImages.url',
+              'eventImages.imageType',
+              'eventImages.thumbnailUrl',
+            ])
+            .whereRef('eventImages.eventId', '=', 'events.id')
+            .where('eventImages.imageType', 'in', ['flyer', 'hero'])
+            .orderBy('eventImages.imageType', 'asc')
+            .orderBy('eventImages.displayOrder'),
+        ).as('images'),
+      ])
+      .where('events.deletedAt', 'is', null)
+      .where('events.status', '=', 'active')
+      .where('events.eventEndDate', '>', now)
+      .where('events.id', '!=', eventId)
+      .orderBy('events.eventStartDate', 'asc')
+      .limit(limit);
+
+    // Prefer same city; fall back to any upcoming
+    const sameCityEvents = city
+      ? await baseQuery.where('eventVenues.city', '=', city).execute()
+      : [];
+
+    if (sameCityEvents.length >= limit) return sameCityEvents;
+
+    const needed = limit - sameCityEvents.length;
+    const sameCityIds = sameCityEvents.map(e => e.id);
+
+    const fallbackQuery =
+      sameCityIds.length > 0
+        ? baseQuery.where('events.id', 'not in', sameCityIds).limit(needed)
+        : baseQuery.limit(needed);
+
+    const fallbackEvents = await fallbackQuery.execute();
+    return [...sameCityEvents, ...fallbackEvents];
   }
 
   // Get upcoming events ordered by start date (includes in-progress events)

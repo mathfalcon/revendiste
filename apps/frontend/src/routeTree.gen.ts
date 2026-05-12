@@ -10,11 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TerminosYCondicionesRouteImport } from './routes/terminos-y-condiciones'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SitemapStaticDotxmlRouteImport } from './routes/sitemap-static[.]xml'
+import { Route as SitemapLocationsDotxmlRouteImport } from './routes/sitemap-locations[.]xml'
+import { Route as SitemapEventsDotxmlRouteImport } from './routes/sitemap-events[.]xml'
 import { Route as SitemapRouteImport } from './routes/sitemap'
 import { Route as PreguntasFrecuentesRouteImport } from './routes/preguntas-frecuentes'
 import { Route as PoliticaDePrivacidadRouteImport } from './routes/politica-de-privacidad'
 import { Route as GarantiaRouteImport } from './routes/garantia'
 import { Route as ContactoRouteImport } from './routes/contacto'
+import { Route as IndexnowKeyDottxtRouteImport } from './routes/$indexnowKey[.]txt'
 import { Route as CuentaRouteRouteImport } from './routes/cuenta/route'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -61,6 +66,26 @@ const TerminosYCondicionesRoute = TerminosYCondicionesRouteImport.update({
   path: '/terminos-y-condiciones',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapStaticDotxmlRoute = SitemapStaticDotxmlRouteImport.update({
+  id: '/sitemap-static.xml',
+  path: '/sitemap-static.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapLocationsDotxmlRoute = SitemapLocationsDotxmlRouteImport.update({
+  id: '/sitemap-locations.xml',
+  path: '/sitemap-locations.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapEventsDotxmlRoute = SitemapEventsDotxmlRouteImport.update({
+  id: '/sitemap-events.xml',
+  path: '/sitemap-events.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapRoute = SitemapRouteImport.update({
   id: '/sitemap',
   path: '/sitemap',
@@ -84,6 +109,11 @@ const GarantiaRoute = GarantiaRouteImport.update({
 const ContactoRoute = ContactoRouteImport.update({
   id: '/contacto',
   path: '/contacto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexnowKeyDottxtRoute = IndexnowKeyDottxtRouteImport.update({
+  id: '/$indexnowKey.txt',
+  path: '/$indexnowKey.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CuentaRouteRoute = CuentaRouteRouteImport.update({
@@ -296,11 +326,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/$indexnowKey.txt': typeof IndexnowKeyDottxtRoute
   '/contacto': typeof ContactoRoute
   '/garantia': typeof GarantiaRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
+  '/sitemap-events.xml': typeof SitemapEventsDotxmlRoute
+  '/sitemap-locations.xml': typeof SitemapLocationsDotxmlRoute
+  '/sitemap-static.xml': typeof SitemapStaticDotxmlRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/eventos': typeof AdminEventosRouteRouteWithChildren
   '/admin/finanzas': typeof AdminFinanzasRouteRouteWithChildren
@@ -343,11 +378,16 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/$indexnowKey.txt': typeof IndexnowKeyDottxtRoute
   '/contacto': typeof ContactoRoute
   '/garantia': typeof GarantiaRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
+  '/sitemap-events.xml': typeof SitemapEventsDotxmlRoute
+  '/sitemap-locations.xml': typeof SitemapLocationsDotxmlRoute
+  '/sitemap-static.xml': typeof SitemapStaticDotxmlRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -388,11 +428,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/cuenta': typeof CuentaRouteRouteWithChildren
+  '/$indexnowKey.txt': typeof IndexnowKeyDottxtRoute
   '/contacto': typeof ContactoRoute
   '/garantia': typeof GarantiaRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/preguntas-frecuentes': typeof PreguntasFrecuentesRoute
   '/sitemap': typeof SitemapRoute
+  '/sitemap-events.xml': typeof SitemapEventsDotxmlRoute
+  '/sitemap-locations.xml': typeof SitemapLocationsDotxmlRoute
+  '/sitemap-static.xml': typeof SitemapStaticDotxmlRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/admin/eventos': typeof AdminEventosRouteRouteWithChildren
   '/admin/finanzas': typeof AdminFinanzasRouteRouteWithChildren
@@ -438,11 +483,16 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/cuenta'
+    | '/$indexnowKey.txt'
     | '/contacto'
     | '/garantia'
     | '/politica-de-privacidad'
     | '/preguntas-frecuentes'
     | '/sitemap'
+    | '/sitemap-events.xml'
+    | '/sitemap-locations.xml'
+    | '/sitemap-static.xml'
+    | '/sitemap.xml'
     | '/terminos-y-condiciones'
     | '/admin/eventos'
     | '/admin/finanzas'
@@ -485,11 +535,16 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cuenta'
+    | '/$indexnowKey.txt'
     | '/contacto'
     | '/garantia'
     | '/politica-de-privacidad'
     | '/preguntas-frecuentes'
     | '/sitemap'
+    | '/sitemap-events.xml'
+    | '/sitemap-locations.xml'
+    | '/sitemap-static.xml'
+    | '/sitemap.xml'
     | '/terminos-y-condiciones'
     | '/admin/dashboard'
     | '/admin/usuarios'
@@ -529,11 +584,16 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/cuenta'
+    | '/$indexnowKey.txt'
     | '/contacto'
     | '/garantia'
     | '/politica-de-privacidad'
     | '/preguntas-frecuentes'
     | '/sitemap'
+    | '/sitemap-events.xml'
+    | '/sitemap-locations.xml'
+    | '/sitemap-static.xml'
+    | '/sitemap.xml'
     | '/terminos-y-condiciones'
     | '/admin/eventos'
     | '/admin/finanzas'
@@ -578,11 +638,16 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   CuentaRouteRoute: typeof CuentaRouteRouteWithChildren
+  IndexnowKeyDottxtRoute: typeof IndexnowKeyDottxtRoute
   ContactoRoute: typeof ContactoRoute
   GarantiaRoute: typeof GarantiaRoute
   PoliticaDePrivacidadRoute: typeof PoliticaDePrivacidadRoute
   PreguntasFrecuentesRoute: typeof PreguntasFrecuentesRoute
   SitemapRoute: typeof SitemapRoute
+  SitemapEventsDotxmlRoute: typeof SitemapEventsDotxmlRoute
+  SitemapLocationsDotxmlRoute: typeof SitemapLocationsDotxmlRoute
+  SitemapStaticDotxmlRoute: typeof SitemapStaticDotxmlRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TerminosYCondicionesRoute: typeof TerminosYCondicionesRoute
   EntradasPublicarRoute: typeof EntradasPublicarRoute
   EventosSlugRoute: typeof EventosSlugRoute
@@ -602,6 +667,34 @@ declare module '@tanstack/react-router' {
       path: '/terminos-y-condiciones'
       fullPath: '/terminos-y-condiciones'
       preLoaderRoute: typeof TerminosYCondicionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-static.xml': {
+      id: '/sitemap-static.xml'
+      path: '/sitemap-static.xml'
+      fullPath: '/sitemap-static.xml'
+      preLoaderRoute: typeof SitemapStaticDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-locations.xml': {
+      id: '/sitemap-locations.xml'
+      path: '/sitemap-locations.xml'
+      fullPath: '/sitemap-locations.xml'
+      preLoaderRoute: typeof SitemapLocationsDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-events.xml': {
+      id: '/sitemap-events.xml'
+      path: '/sitemap-events.xml'
+      fullPath: '/sitemap-events.xml'
+      preLoaderRoute: typeof SitemapEventsDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap': {
@@ -637,6 +730,13 @@ declare module '@tanstack/react-router' {
       path: '/contacto'
       fullPath: '/contacto'
       preLoaderRoute: typeof ContactoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$indexnowKey.txt': {
+      id: '/$indexnowKey.txt'
+      path: '/$indexnowKey.txt'
+      fullPath: '/$indexnowKey.txt'
+      preLoaderRoute: typeof IndexnowKeyDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cuenta': {
@@ -1039,11 +1139,16 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   CuentaRouteRoute: CuentaRouteRouteWithChildren,
+  IndexnowKeyDottxtRoute: IndexnowKeyDottxtRoute,
   ContactoRoute: ContactoRoute,
   GarantiaRoute: GarantiaRoute,
   PoliticaDePrivacidadRoute: PoliticaDePrivacidadRoute,
   PreguntasFrecuentesRoute: PreguntasFrecuentesRoute,
   SitemapRoute: SitemapRoute,
+  SitemapEventsDotxmlRoute: SitemapEventsDotxmlRoute,
+  SitemapLocationsDotxmlRoute: SitemapLocationsDotxmlRoute,
+  SitemapStaticDotxmlRoute: SitemapStaticDotxmlRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TerminosYCondicionesRoute: TerminosYCondicionesRoute,
   EntradasPublicarRoute: EntradasPublicarRoute,
   EventosSlugRoute: EventosSlugRoute,

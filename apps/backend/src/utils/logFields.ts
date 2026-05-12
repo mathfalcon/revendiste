@@ -23,7 +23,8 @@ export type LogEvent =
   | 'cron.process-pending-notifications'
   | 'cron.process-pending-jobs'
   | 'cron.scrape-events'
-  | 'notifications.sent';
+  | 'notifications.sent'
+  | 'indexnow.pinged';
 
 export type LogOutcome =
   | 'success'

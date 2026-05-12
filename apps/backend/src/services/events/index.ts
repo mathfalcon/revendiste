@@ -11,6 +11,8 @@ import {
 } from '~/utils';
 import {VenuesService} from '../venues';
 import {GooglePlacesService} from '../google-places';
+import {pingIndexNow} from '~/lib/indexnow';
+import {APP_BASE_URL} from '~/config/env';
 
 export class EventsService {
   private readonly imageService = new EventImageService();
@@ -83,9 +85,8 @@ export class EventsService {
     }));
 
     // Process venues for all events first (in parallel batches)
-    const eventsWithVenues = await this.processVenuesForEvents(
-      eventsWithPaidWaves,
-    );
+    const eventsWithVenues =
+      await this.processVenuesForEvents(eventsWithPaidWaves);
 
     // Generate slugs for events
     const eventsWithSlugs = await this.generateSlugsForEvents(eventsWithVenues);
@@ -95,9 +96,8 @@ export class EventsService {
       images: [],
     }));
 
-    const upsertedEvents = await this.eventsRepository.upsertEventsBatch(
-      eventsWithoutImages,
-    );
+    const upsertedEvents =
+      await this.eventsRepository.upsertEventsBatch(eventsWithoutImages);
 
     // Create a map from externalId to original event to handle cases where
     // some events failed to upsert (indices won't match)
@@ -144,6 +144,10 @@ export class EventsService {
         }
       }),
     );
+
+    // Ping IndexNow so Bing/Yandex/DDG discover new and updated events immediately
+    const urls = upsertedEvents.map(e => `${APP_BASE_URL}/eventos/${e.slug}`);
+    pingIndexNow(urls);
 
     return upsertedEvents;
   }
@@ -431,7 +435,17 @@ export class EventsService {
     if (!event) {
       throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
     }
-    return event;
+
+    const now = new Date();
+    const isPast = event.eventEndDate
+      ? new Date(event.eventEndDate) < now
+      : false;
+
+    const relatedUpcomingEvents = isPast
+      ? await this.eventsRepository.findRelatedUpcomingEvents(event.id, 6)
+      : [];
+
+    return {...event, relatedUpcomingEvents};
   }
 
   async getBySearch(query: string, limit: number = 20) {

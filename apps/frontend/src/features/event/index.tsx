@@ -4,6 +4,8 @@ import {EventDescription} from './EventDescription';
 import {TicketSelection} from './tickets';
 import {EventInfoCards} from './EventInfoCards';
 import {VenueMapLazy} from './VenueMapLazy';
+import {PastEventBanner} from './PastEventBanner';
+import {RelatedUpcomingEvents} from './RelatedUpcomingEvents';
 import {EventImageType, getEventBySlugQuery} from '~/lib';
 import {useParams} from '@tanstack/react-router';
 import {useEffect, useState} from 'react';
@@ -17,6 +19,10 @@ export const EventPage = () => {
   const response = useSuspenseQuery(getEventBySlugQuery(params.slug));
 
   const event = response.data;
+  const isPast = event.eventEndDate
+    ? new Date(event.eventEndDate) < new Date()
+    : false;
+
   const heroImage = event.eventImages.find(
     i => i.imageType === EventImageType.Hero,
   );
@@ -128,12 +134,19 @@ export const EventPage = () => {
               />
             </div>
             <div className='order-3 flex flex-col gap-4'>
-              <TicketSelection
-                ticketWaves={event.ticketWaves}
-                eventId={event.id}
-                userListingsCount={event.userListingsCount}
-                userListings={event.userListings}
-              />
+              {isPast ? (
+                <>
+                  <PastEventBanner />
+                  <RelatedUpcomingEvents events={event.relatedUpcomingEvents} />
+                </>
+              ) : (
+                <TicketSelection
+                  ticketWaves={event.ticketWaves}
+                  eventId={event.id}
+                  userListingsCount={event.userListingsCount}
+                  userListings={event.userListings}
+                />
+              )}
             </div>
           </div>
         </div>

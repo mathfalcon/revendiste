@@ -1,5 +1,6 @@
 import {createFileRoute, redirect} from '@tanstack/react-router';
 import {FullScreenLoading} from '~/components';
+import {NotFound} from '~/components/NotFound';
 import {EventPage} from '~/features/event';
 import {
   getEventBySlugQuery,
@@ -10,10 +11,11 @@ import {
 import {isAxiosError} from 'axios';
 import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
-import {EventEnded} from '~/components/EventEnded';
 import type {ErrorComponentProps} from '@tanstack/react-router';
 import {createServerFn} from '@tanstack/react-start';
 import {auth} from '@clerk/tanstack-react-start/server';
+
+const PAST_EVENT_NOINDEX_DAYS = 180;
 
 /**
  * Server-only function to fetch event data and track views.
@@ -78,20 +80,15 @@ function EventPageSkeleton() {
 export const Route = createFileRoute('/eventos/$slug')({
   component: RouteComponent,
   pendingComponent: EventPageSkeleton,
-  notFoundComponent: () => <EventEnded />,
+  notFoundComponent: () => (
+    <NotFound>Este evento no existe o fue eliminado</NotFound>
+  ),
   errorComponent: ({error}: ErrorComponentProps) => {
-    if (isAxiosError(error) && error.response?.status === 404) {
-      return <EventEnded />;
-    }
-
-    if (
-      error &&
-      typeof error === 'object' &&
-      'message' in error &&
-      typeof error.message === 'string' &&
-      error.message.includes('404')
-    ) {
-      return <EventEnded />;
+    const is404 =
+      (isAxiosError(error) && error.response?.status === 404) ||
+      (error instanceof Error && error.message.includes('404'));
+    if (is404) {
+      return <NotFound>Este evento no existe o fue eliminado</NotFound>;
     }
     throw error;
   },
@@ -143,6 +140,17 @@ export const Route = createFileRoute('/eventos/$slug')({
     }
 
     const event = loaderData;
+
+    const now = new Date();
+    const isPast = event.eventEndDate
+      ? new Date(event.eventEndDate) < now
+      : false;
+    const daysSinceEnd = event.eventEndDate
+      ? (now.getTime() - new Date(event.eventEndDate).getTime()) /
+        (1000 * 60 * 60 * 24)
+      : 0;
+    const shouldNoindex = isPast && daysSinceEnd > PAST_EVENT_NOINDEX_DAYS;
+
     // Prefer og_hero (watermarked) for meta tags, fall back to hero
     const ogHeroImage = event.eventImages.find(
       img => img.imageType === EventImageType.OgHero,
@@ -165,16 +173,13 @@ export const Route = createFileRoute('/eventos/$slug')({
         })
       : null;
 
-    // Always use a marketing-friendly meta description so the Google snippet
-    // stays consistent across events and doesn't depend on whatever copy the
-    // organizer pasted into event.description (which can be ALL CAPS, truncated
-    // mid-sentence, etc.). The organizer's description is still rendered on the
-    // page and used in the Event JSON-LD below.
-    const description = `Comprá o vendé entradas para ${event.name}${
-      eventDate ? ` el ${eventDate}` : ''
-    }${
-      event.venueName ? ` en ${event.venueName}` : ''
-    }. Compra y venta con garantía en Revendiste.`;
+    const description = isPast
+      ? `${event.name}${eventDate ? ` — ${eventDate}` : ''}${event.venueName ? ` en ${event.venueName}` : ''}. Este evento ya finalizó. Descubrí próximos eventos similares en Revendiste.`
+      : `Comprá o vendé entradas para ${event.name}${
+          eventDate ? ` el ${eventDate}` : ''
+        }${
+          event.venueName ? ` en ${event.venueName}` : ''
+        }. Compra y venta con garantía en Revendiste.`;
 
     // Get absolute URL for image (required for Open Graph)
     const imageUrl = metaImage?.url
@@ -219,12 +224,14 @@ export const Route = createFileRoute('/eventos/$slug')({
       return tag;
     });
 
-    // Compute price range from available ticket waves
-    const allPrices = event.ticketWaves
-      .flatMap(wave => wave.priceGroups)
-      .filter(group => Number(group.availableTickets) > 0)
-      .map(group => parseFloat(group.price))
-      .filter(p => !isNaN(p) && p > 0);
+    // Compute price range from available ticket waves (only meaningful for active events)
+    const allPrices = isPast
+      ? []
+      : event.ticketWaves
+          .flatMap(wave => wave.priceGroups)
+          .filter(group => Number(group.availableTickets) > 0)
+          .map(group => parseFloat(group.price))
+          .filter(p => !isNaN(p) && p > 0);
 
     const hasAvailableTickets = allPrices.length > 0;
     const lowPrice = hasAvailableTickets ? Math.min(...allPrices) : undefined;
@@ -240,7 +247,9 @@ export const Route = createFileRoute('/eventos/$slug')({
         .trim(),
       startDate: event.eventStartDate,
       endDate: event.eventEndDate || event.eventStartDate,
-      eventStatus: 'https://schema.org/EventScheduled',
+      eventStatus: isPast
+        ? 'https://schema.org/EventCompleted'
+        : 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       location: {
         '@type': 'Place',
@@ -261,17 +270,19 @@ export const Route = createFileRoute('/eventos/$slug')({
           : {}),
       },
       image: imageUrl ? [imageUrl] : undefined,
-      offers: {
-        '@type': 'AggregateOffer',
-        availability: hasAvailableTickets
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
-        priceCurrency: 'UYU',
-        url: canonicalUrl,
-        validFrom: event.createdAt,
-        ...(lowPrice !== undefined ? {lowPrice} : {}),
-        ...(highPrice !== undefined ? {highPrice} : {}),
-      },
+      ...(!isPast && {
+        offers: {
+          '@type': 'AggregateOffer',
+          availability: hasAvailableTickets
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          priceCurrency: 'UYU',
+          url: canonicalUrl,
+          validFrom: event.createdAt,
+          ...(lowPrice !== undefined ? {lowPrice} : {}),
+          ...(highPrice !== undefined ? {highPrice} : {}),
+        },
+      }),
       performer: {
         '@type': 'PerformingGroup',
         name: event.name,
@@ -286,6 +297,8 @@ export const Route = createFileRoute('/eventos/$slug')({
     return {
       meta: [
         ...seoTags,
+        // Noindex past events older than the threshold; still follow links so PageRank flows
+        ...(shouldNoindex ? [{name: 'robots', content: 'noindex,follow'}] : []),
         // Additional event-specific meta tags (using property for OG tags)
         {
           property: 'og:url',

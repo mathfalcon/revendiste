@@ -325,6 +325,77 @@ export type GetDistinctRegionsResponse = {
   country: string;
 }[];
 
+export interface GetEventBySlugResponse {
+  userListings: {
+    maxPrice: string | null;
+    minPrice: string | null;
+    availableTicketCount: string | number | null;
+    ticketWaveName: string;
+    id: string;
+    currency: EventTicketCurrency;
+  }[];
+  ticketWaves: {
+    priceGroups: {
+      availableTickets: string | number;
+      price: string;
+    }[];
+    faceValue: string;
+    currency: EventTicketCurrency;
+    name: string;
+    id: string;
+    description: string | null;
+  }[];
+  /** @format double */
+  userActiveTicketCount: number;
+  /** @format double */
+  userListingsCount: number;
+  venueLongitude: string | null;
+  venueLatitude: string | null;
+  venueCountry: string | null;
+  eventImages: {
+    imageType: EventImageType;
+    url: string;
+  }[];
+  venueCity: string | null;
+  venueAddress: string | null;
+  venueName: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  status: string;
+  slug: string;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  name: string;
+  id: string;
+  externalUrl: string;
+  /** @format date-time */
+  eventStartDate: string;
+  /** @format date-time */
+  eventEndDate: string;
+  description: string | null;
+  /** @format date-time */
+  createdAt: string;
+  relatedUpcomingEvents: {
+    images: {
+      thumbnailUrl: string | null;
+      imageType: EventImageType;
+      url: string;
+    }[];
+    venueCity: string | null;
+    venueName: string | null;
+    slug: string;
+    name: string;
+    id: string;
+    /** @format date-time */
+    eventStartDate: string;
+    /** @format date-time */
+    eventEndDate: string;
+  }[];
+}
+
+export interface TrackViewResponse {
+  success: boolean;
+}
+
 export interface GetEventByIdResponse {
   userListings: {
     maxPrice: string | null;
@@ -374,12 +445,6 @@ export interface GetEventByIdResponse {
   description: string | null;
   /** @format date-time */
   createdAt: string;
-}
-
-export type GetEventBySlugResponse = GetEventByIdResponse;
-
-export interface TrackViewResponse {
-  success: boolean;
 }
 
 /** Construct a type with a set of properties K of type T */
