@@ -11,6 +11,7 @@ function truncateDLocalDescription(text: string) {
   return text.slice(0, DLOCAL_PAYMENT_DESCRIPTION_MAX_LENGTH);
 }
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {withRetry} from '~/utils/retry';
 import type {PaymentStatus} from '@revendiste/shared';
 import {roundOrderAmount} from '@revendiste/shared';
@@ -109,19 +110,29 @@ export class DLocalService implements PaymentProvider {
 
     // Validate that required fields exist
     if (!result.id) {
-      logger.error('dLocal payment response missing id', {
-        orderId: params.orderId,
-        response: result,
-        responseString: JSON.stringify(result),
-      });
+      logger.error(
+        'payments.dlocal.create',
+        wideEvent('payments.dlocal.create', {
+          orderId: params.orderId,
+          provider: 'dlocal',
+          validationError: 'missing_id',
+          outcome: 'failure',
+        }),
+      );
       throw new Error('dLocal payment response missing required id field');
     }
 
     if (!result.redirect_url) {
-      logger.error('dLocal payment response missing redirect_url', {
-        orderId: params.orderId,
-        response: result,
-      });
+      logger.error(
+        'payments.dlocal.create',
+        wideEvent('payments.dlocal.create', {
+          orderId: params.orderId,
+          provider: 'dlocal',
+          providerPaymentId: result.id,
+          validationError: 'missing_redirect_url',
+          outcome: 'failure',
+        }),
+      );
       throw new Error(
         'dLocal payment response missing required redirect_url field',
       );
@@ -168,6 +179,44 @@ export class DLocalService implements PaymentProvider {
     return await this.getDLocalPayment(paymentId);
   }
 
+  /**
+   * dLocal Go may not emit expiration webhooks until the checkout URL is hit.
+   * GET redirect_url triggers server-side evaluation so the next sync/webhook sees terminal status.
+   */
+  async forceExpirationCheck(payment: ProviderPaymentData): Promise<void> {
+    const status = (payment as {status?: string}).status;
+    const redirectUrl = (payment as {redirect_url?: string}).redirect_url;
+    if (status !== 'PENDING' || !redirectUrl) {
+      return;
+    }
+    const start = Date.now();
+    try {
+      await axios.get(redirectUrl, {
+        timeout: 5000,
+        maxRedirects: 0,
+        validateStatus: () => true,
+      });
+      logger.info(
+        'payments.dlocal.force_expiration',
+        wideEvent('payments.dlocal.force_expiration', {
+          paymentId: payment.id,
+          ...withDuration(start),
+          outcome: 'success',
+        }),
+      );
+    } catch (error) {
+      logger.warn(
+        'payments.dlocal.force_expiration',
+        wideEvent('payments.dlocal.force_expiration', {
+          paymentId: payment.id,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
+    }
+  }
+
   // ========================================================================
   // DLocal-Specific Methods
   // ========================================================================
@@ -179,6 +228,7 @@ export class DLocalService implements PaymentProvider {
   async createDLocalPayment(
     params: DLocalCreatePaymentParams,
   ): Promise<DLocalPaymentResponse> {
+    const start = Date.now();
     try {
       // Build request body with only provided parameters
       const requestBody: Record<string, unknown> = {
@@ -189,11 +239,6 @@ export class DLocalService implements PaymentProvider {
         expiration_type: params.expirationType,
         expiration_value: params.expirationValue,
       };
-
-      logger.info('Creating dLocal payment', {
-        orderId: params.orderId,
-        requestBody,
-      });
 
       // Add optional fields only if provided
       if (params.country) requestBody.country = params.country;
@@ -224,18 +269,20 @@ export class DLocalService implements PaymentProvider {
         },
       ).then(r => r.data);
 
-      logger.info('dLocal payment created successfully', {
-        paymentId: response.id,
-        orderId: params.orderId,
-        redirectUrl: response.redirect_url,
-      });
-
-      logger.debug('dLocal payment response structure', {
-        hasId: !!response.id,
-        idValue: response.id,
-        idType: typeof response.id,
-        responseKeys: Object.keys(response),
-      });
+      logger.info(
+        'payments.dlocal.create',
+        wideEvent('payments.dlocal.create', {
+          orderId: params.orderId,
+          provider: 'dlocal',
+          providerPaymentId: response.id,
+          amount: params.amount,
+          currency: params.currency,
+          expirationMinutes: params.expirationValue,
+          hasPayer: Boolean(params.payer),
+          ...withDuration(start),
+          outcome: 'success',
+        }),
+      );
 
       return response;
     } catch (error: unknown) {
@@ -246,12 +293,25 @@ export class DLocalService implements PaymentProvider {
           : error instanceof Error
             ? error.message
             : String(error);
-      logger.error('Failed to create dLocal payment', {
-        orderId: params.orderId,
-        error: axios.isAxiosError(error)
-          ? (error.response?.data ?? error.message)
-          : error,
-      });
+      logger.error(
+        'payments.dlocal.create',
+        wideEvent('payments.dlocal.create', {
+          orderId: params.orderId,
+          provider: 'dlocal',
+          amount: params.amount,
+          currency: params.currency,
+          hasPayer: Boolean(params.payer),
+          error: redactKnownSecrets(
+            axios.isAxiosError(error)
+              ? (error.response?.data ?? {message: error.message})
+              : error instanceof Error
+                ? {message: error.message, name: error.name}
+                : {message: String(error)},
+          ),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
       throw new Error(`Failed to create payment: ${msg}`);
     }
   }
@@ -270,12 +330,8 @@ export class DLocalService implements PaymentProvider {
     currency?: string;
     reason?: string;
   }): Promise<DLocalRefundResponse> {
+    const start = Date.now();
     try {
-      logger.info('Creating dLocal refund', {
-        paymentId: params.paymentId,
-        amount: params.amount,
-      });
-
       const requestBody: Record<string, unknown> = {
         payment_id: params.paymentId,
       };
@@ -296,11 +352,18 @@ export class DLocalService implements PaymentProvider {
         },
       ).then(r => r.data);
 
-      logger.info('dLocal refund created successfully', {
-        refundId: response.id,
-        paymentId: params.paymentId,
-        status: response.status,
-      });
+      logger.info(
+        'payments.dlocal.refund',
+        wideEvent('payments.dlocal.refund', {
+          paymentId: params.paymentId,
+          refundId: response.id,
+          amount: params.amount,
+          currency: params.currency,
+          refundStatus: response.status,
+          ...withDuration(start),
+          outcome: 'success',
+        }),
+      );
 
       return response;
     } catch (error: unknown) {
@@ -311,12 +374,22 @@ export class DLocalService implements PaymentProvider {
           : error instanceof Error
             ? error.message
             : String(error);
-      logger.error('Failed to create dLocal refund', {
-        paymentId: params.paymentId,
-        error: axios.isAxiosError(error)
-          ? (error.response?.data ?? error.message)
-          : error,
-      });
+      logger.error(
+        'payments.dlocal.refund',
+        wideEvent('payments.dlocal.refund', {
+          paymentId: params.paymentId,
+          amount: params.amount,
+          error: redactKnownSecrets(
+            axios.isAxiosError(error)
+              ? (error.response?.data ?? {message: error.message})
+              : error instanceof Error
+                ? {message: error.message, name: error.name}
+                : {message: String(error)},
+          ),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
       throw new Error(`Failed to create refund: ${msg}`);
     }
   }
@@ -325,6 +398,7 @@ export class DLocalService implements PaymentProvider {
    * Gets refund details from dLocal
    */
   async getRefund(refundId: string): Promise<DLocalRefundResponse> {
+    const start = Date.now();
     try {
       const response = await withRetry(
         () => this.client.get<DLocalRefundResponse>(`/v1/refunds/${refundId}`),
@@ -338,6 +412,16 @@ export class DLocalService implements PaymentProvider {
         },
       ).then(r => r.data);
 
+      logger.debug(
+        'payments.dlocal.refund_lookup',
+        wideEvent('payments.dlocal.refund_lookup', {
+          refundId,
+          refundStatus: response.status,
+          ...withDuration(start),
+          outcome: 'success',
+        }),
+      );
+
       return response;
     } catch (error: unknown) {
       const msg =
@@ -347,12 +431,21 @@ export class DLocalService implements PaymentProvider {
           : error instanceof Error
             ? error.message
             : String(error);
-      logger.error('Failed to retrieve dLocal refund', {
-        refundId,
-        error: axios.isAxiosError(error)
-          ? (error.response?.data ?? error.message)
-          : error,
-      });
+      logger.error(
+        'payments.dlocal.refund_lookup',
+        wideEvent('payments.dlocal.refund_lookup', {
+          refundId,
+          error: redactKnownSecrets(
+            axios.isAxiosError(error)
+              ? (error.response?.data ?? {message: error.message})
+              : error instanceof Error
+                ? {message: error.message, name: error.name}
+                : {message: String(error)},
+          ),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
       throw new Error(`Failed to retrieve refund: ${msg}`);
     }
   }
@@ -361,6 +454,7 @@ export class DLocalService implements PaymentProvider {
    * Gets payment details from dLocal
    */
   async getDLocalPayment(paymentId: string): Promise<DLocalPaymentResponse> {
+    const start = Date.now();
     try {
       const response = await withRetry(
         () =>
@@ -375,6 +469,16 @@ export class DLocalService implements PaymentProvider {
         },
       ).then(r => r.data);
 
+      logger.debug(
+        'payments.dlocal.fetch',
+        wideEvent('payments.dlocal.fetch', {
+          providerPaymentId: paymentId,
+          paymentStatus: response.status,
+          ...withDuration(start),
+          outcome: 'success',
+        }),
+      );
+
       return response;
     } catch (error: unknown) {
       const msg =
@@ -384,12 +488,21 @@ export class DLocalService implements PaymentProvider {
           : error instanceof Error
             ? error.message
             : String(error);
-      logger.error('Failed to retrieve dLocal payment', {
-        paymentId,
-        error: axios.isAxiosError(error)
-          ? (error.response?.data ?? error.message)
-          : error,
-      });
+      logger.error(
+        'payments.dlocal.fetch',
+        wideEvent('payments.dlocal.fetch', {
+          providerPaymentId: paymentId,
+          error: redactKnownSecrets(
+            axios.isAxiosError(error)
+              ? (error.response?.data ?? {message: error.message})
+              : error instanceof Error
+                ? {message: error.message, name: error.name}
+                : {message: String(error)},
+          ),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
       throw new Error(`Failed to retrieve payment: ${msg}`);
     }
   }

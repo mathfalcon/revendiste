@@ -64,6 +64,22 @@ api.instance.interceptors.request.use(
       return config;
     }
 
+    try {
+      const {default: posthog} = await import('posthog-js');
+      const sessionId = posthog.get_session_id?.();
+      if (sessionId) {
+        config.headers = config.headers ?? {};
+        config.headers['X-PostHog-Session-Id'] = sessionId;
+      }
+      const distinctId = posthog.get_distinct_id?.();
+      if (distinctId) {
+        config.headers = config.headers ?? {};
+        config.headers['X-PostHog-Distinct-Id'] = distinctId;
+      }
+    } catch {
+      /* PostHog not available (e.g. tests); omit headers */
+    }
+
     return config;
   },
   error => Promise.reject(error),

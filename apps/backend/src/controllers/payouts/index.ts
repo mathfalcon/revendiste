@@ -44,26 +44,37 @@ import {
   UpdatePayoutMethodRouteSchema,
 } from './validation';
 import {ValidateBody, Body} from '~/decorators';
+import {createHash} from 'node:crypto';
 import {getPostHog} from '~/lib/posthog';
+import type {FxSnapshot} from '@revendiste/shared';
 
-type GetBalanceResponse = Awaited<ReturnType<SellerEarningsService['getSellerBalance']>>;
-type GetAvailableEarningsResponse = Awaited<ReturnType<
-  SellerEarningsService['getAvailableEarningsForSelection']
->>;
-type GetPayoutHistoryResponse = Awaited<ReturnType<PayoutsService['getPayoutHistory']>>;
-type GetUserPayoutDetailsResponse = Awaited<ReturnType<
-  PayoutsService['getPayoutDetailsForUser']
->>;
-type RequestPayoutResponse = Awaited<ReturnType<PayoutsService['requestPayout']>>;
-type GetPayoutMethodsResponse = Awaited<ReturnType<
-  PayoutMethodsService['getPayoutMethods']
->>;
-type AddPayoutMethodResponse = Awaited<ReturnType<
-  PayoutMethodsService['addPayoutMethod']
->>;
-type UpdatePayoutMethodResponse = Awaited<ReturnType<
-  PayoutMethodsService['updatePayoutMethod']
->>;
+type GetBalanceResponse = Awaited<
+  ReturnType<SellerEarningsService['getSellerBalance']>
+>;
+type GetAvailableEarningsResponse = Awaited<
+  ReturnType<SellerEarningsService['getAvailableEarningsForSelection']>
+>;
+type GetPayoutHistoryResponse = Awaited<
+  ReturnType<PayoutsService['getPayoutHistory']>
+>;
+type GetUserPayoutDetailsResponse = Awaited<
+  ReturnType<PayoutsService['getPayoutDetailsForUser']>
+>;
+type RequestPayoutResponse = Omit<
+  Awaited<ReturnType<PayoutsService['requestPayout']>>,
+  'fxSnapshot'
+> & {
+  fxSnapshot: FxSnapshot | null;
+};
+type GetPayoutMethodsResponse = Awaited<
+  ReturnType<PayoutMethodsService['getPayoutMethods']>
+>;
+type AddPayoutMethodResponse = Awaited<
+  ReturnType<PayoutMethodsService['addPayoutMethod']>
+>;
+type UpdatePayoutMethodResponse = Awaited<
+  ReturnType<PayoutMethodsService['updatePayoutMethod']>
+>;
 
 // Create shared repositories
 const payoutsRepository = new PayoutsRepository(db);
@@ -146,11 +157,17 @@ export class PayoutsController {
     @Body() body: RequestPayoutRouteBody,
     @Request() request: express.Request,
   ): Promise<RequestPayoutResponse> {
+    const idemRaw = request.get('Idempotency-Key')?.trim();
+    const idempotencyKeyHash = idemRaw
+      ? createHash('sha256').update(idemRaw, 'utf8').digest('hex')
+      : undefined;
+
     const result = await this.payoutsService.requestPayout({
       sellerUserId: request.user.id,
       payoutMethodId: body.payoutMethodId,
       listingTicketIds: body.listingTicketIds,
       listingIds: body.listingIds,
+      idempotencyKeyHash,
     });
     getPostHog()?.capture({
       distinctId: request.user.id,

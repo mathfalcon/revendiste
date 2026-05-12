@@ -8,10 +8,15 @@
 
 import {logger} from '~/utils';
 import {initOtel, shutdownOtel} from '~/lib/otel';
+import {
+  isScheduledCronjobName,
+  runScheduledJobOnce,
+  type ScheduledCronjobName,
+} from '~/services/cronjobs/runScheduledJobOnce';
 
-const jobName = process.argv[2];
+const rawJobName = process.argv[2];
 
-if (!jobName) {
+if (rawJobName === undefined || !isScheduledCronjobName(rawJobName)) {
   logger.error('Job name is required');
   logger.info('Usage: node dist/scripts/run-job.js <job-name>');
   logger.info('Available jobs:');
@@ -23,6 +28,8 @@ if (!jobName) {
   logger.info('  - scrape-events');
   process.exit(1);
 }
+
+const jobName: ScheduledCronjobName = rawJobName;
 
 /**
  * Format duration in a human-readable way
@@ -45,59 +52,7 @@ async function runJob() {
   try {
     logger.info(`Starting job: ${jobName}`);
 
-    switch (jobName) {
-      case 'sync-payments-and-expire-orders': {
-        const {runSyncPaymentsAndExpireOrders} = await import(
-          '~/cronjobs/sync-payments-and-expire-orders'
-        );
-        await runSyncPaymentsAndExpireOrders();
-        break;
-      }
-
-      case 'notify-upload-availability': {
-        const {runNotifyUploadAvailability} = await import(
-          '~/cronjobs/notify-upload-availability'
-        );
-        await runNotifyUploadAvailability();
-        break;
-      }
-
-      case 'check-payout-hold-periods': {
-        const {runCheckPayoutHoldPeriods} = await import(
-          '~/cronjobs/check-payout-hold-periods'
-        );
-        await runCheckPayoutHoldPeriods();
-        break;
-      }
-
-      case 'process-pending-notifications': {
-        const {runProcessPendingNotifications} = await import(
-          '~/cronjobs/process-pending-notifications'
-        );
-        await runProcessPendingNotifications();
-        break;
-      }
-
-      case 'process-pending-jobs': {
-        const {
-          initializeJobQueue,
-          runProcessPendingJobs,
-        } = await import('~/cronjobs/process-pending-jobs');
-        initializeJobQueue();
-        await runProcessPendingJobs();
-        break;
-      }
-
-      case 'scrape-events': {
-        const {runScrapeEvents} = await import('~/cronjobs/scrape-events');
-        await runScrapeEvents();
-        break;
-      }
-
-      default:
-        logger.error(`Unknown job: ${jobName}`);
-        process.exit(1);
-    }
+    await runScheduledJobOnce(jobName);
 
     const duration = Date.now() - startTime;
     logger.info(`Job completed successfully: ${jobName}`, {

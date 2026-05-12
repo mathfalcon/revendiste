@@ -1,7 +1,7 @@
 import type {AnyRouteMatch} from '@tanstack/react-router';
 import appCss from '~/styles/app.css?url';
 import {seo} from '~/utils/seo';
-import {getBaseUrl} from '~/config/env';
+import {getBaseUrl, VITE_GTM_ID} from '~/config/env';
 
 type RootHead = {
   links?: AnyRouteMatch['links'];
@@ -95,6 +95,11 @@ export function getRootHead(): RootHead {
       {
         rel: 'preconnect',
         href: 'https://clerk.revendiste.com',
+        crossOrigin: 'anonymous' as const,
+      },
+      {
+        rel: 'preconnect',
+        href: 'https://www.googletagmanager.com',
         crossOrigin: 'anonymous' as const,
       },
       {rel: 'preload', href: POPPINS_URL, as: 'style'},

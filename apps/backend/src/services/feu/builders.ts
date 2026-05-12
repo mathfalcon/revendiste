@@ -8,8 +8,9 @@ import type { FeuComprobantePayload } from './types';
  * fecha_comprobante, items[], adenda (opcional). id_externo opcional para idempotencia.
  *
  * Number alignment (order ↔ UI ↔ charge ↔ FEU):
- * - Order/UI/charge use @revendiste/shared: calculateOrderFees (6% commission, 22% VAT on commission).
- * - We store platformCommission (base) and vatOnCommission = round(base × 0.22).
+ * - Order/UI/charge use @revendiste/shared: calculateOrderFees with rates from env
+ *   (PLATFORM_COMMISSION_RATE, VAT_RATE).
+ * - We store platformCommission (base) and vatOnCommission = round(base × VAT_RATE).
  * - With cod_montos_brutos 1, FEU treats item precio as TOTAL (IVA incluido). It back-derives
  *   subtotal = total/1.22. So we send precio = base + VAT so the PDF "total" matches what we charge.
  */

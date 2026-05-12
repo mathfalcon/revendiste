@@ -14,6 +14,8 @@ import {useEffect, useMemo, useRef, useState} from 'react';
 import {cn} from '~/lib/utils';
 import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
+import {EventTicketCurrency} from '~/lib';
+import {calculateOrderFees, calculateSellerAmount, getFeeRates} from '~/utils';
 import {
   HelpCircle,
   ShoppingCart,
@@ -46,8 +48,8 @@ export const Route = createFileRoute('/preguntas-frecuentes')({
 
     const allFaqItems = [
       ...faqGeneral,
-      ...faqCompradores,
-      ...faqVendedores,
+      ...getFaqCompradores(),
+      ...getFaqVendedores(),
       ...faqPagos,
     ];
     const faqSchema = {
@@ -65,8 +67,7 @@ export const Route = createFileRoute('/preguntas-frecuentes')({
 
     return {
       meta: seo({
-        title:
-          'Preguntas Frecuentes | Revendiste - Compra y venta de entradas',
+        title: 'Preguntas Frecuentes | Revendiste - Compra y venta de entradas',
         description:
           'Dudas sobre cómo comprar o vender entradas en Revendiste? Acá te explicamos todo: comisiones, pagos, plazos de entrega, garantías y más.',
         baseUrl,
@@ -89,6 +90,46 @@ interface FAQItem {
   question: string;
   answer: string;
 }
+
+const FAQ_EXAMPLE_TICKET_PRICE = 1000;
+
+function formatMoneyEsUy(amount: number): string {
+  return amount.toLocaleString('es-UY', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatIntegerEsUy(amount: number): string {
+  return amount.toLocaleString('es-UY', {
+    maximumFractionDigits: 0,
+  });
+}
+
+/** Copy for FAQ examples; rates from VITE_PLATFORM_COMMISSION_RATE / VITE_VAT_RATE. */
+function buildCommissionFaqAnswers(): {buyer: string; seller: string} {
+  const feeRates = getFeeRates();
+  const buyerBreakdown = calculateOrderFees(FAQ_EXAMPLE_TICKET_PRICE);
+  const sellerBreakdown = calculateSellerAmount(
+    FAQ_EXAMPLE_TICKET_PRICE,
+    EventTicketCurrency.UYU,
+  );
+  const commissionPlusVat =
+    buyerBreakdown.platformCommission + buyerBreakdown.vatOnCommission;
+  const sellerDeductions =
+    sellerBreakdown.platformCommission + sellerBreakdown.vatOnCommission;
+  const priceLabel = `$${formatIntegerEsUy(FAQ_EXAMPLE_TICKET_PRICE)}`;
+
+  const buyer = `La comisión es del ${feeRates.platformCommissionPercentage}% sobre el precio de la entrada, más el IVA correspondiente (${feeRates.vatPercentage}%). Por ejemplo, si la entrada cuesta ${priceLabel}, la comisión es $${formatMoneyEsUy(buyerBreakdown.platformCommission)} + IVA ($${formatMoneyEsUy(buyerBreakdown.vatOnCommission)}) = $${formatMoneyEsUy(commissionPlusVat)}. Total a pagar: $${formatMoneyEsUy(buyerBreakdown.totalAmount)}. Siempre vas a ver el desglose completo antes de confirmar la compra, sin costos ocultos.`;
+
+  const seller = `La comisión es del ${feeRates.platformCommissionPercentage}% más IVA (${feeRates.vatPercentage}%), igual que para los compradores. Si vendés una entrada de ${priceLabel}, se te descuentan $${formatMoneyEsUy(sellerDeductions)} y recibís $${formatMoneyEsUy(sellerBreakdown.sellerAmount)}. El descuento se aplica automáticamente al momento de la liquidación.`;
+
+  return {buyer, seller};
+}
+
+const BUYER_COMMISSION_FAQ_QUESTION = '¿Cuánto me cobran de comisión?';
+const SELLER_COMMISSION_FAQ_QUESTION =
+  '¿Cuánto me cobran de comisión como vendedor?';
 
 const faqGeneral: FAQItem[] = [
   {
@@ -118,16 +159,31 @@ const faqGeneral: FAQItem[] = [
   },
 ];
 
-const faqCompradores: FAQItem[] = [
+const faqCompradoresBase: FAQItem[] = [
   {
     question: '¿Cómo compro una entrada?',
     answer:
       'Es muy sencillo: buscás el evento que te interesa, elegís la entrada que querés, pagás con el medio de pago disponible y listo. Recibís la entrada por email o podés descargarla desde tu cuenta. Todo el proceso es digital, sin necesidad de coordinación presencial.',
   },
   {
-    question: '¿Cuánto me cobran de comisión?',
+    question: '¿Cuánto tiempo tengo para pagar desde el checkout?',
     answer:
-      'La comisión es del 6% sobre el precio de la entrada, más el IVA correspondiente. Por ejemplo, si la entrada cuesta $1.000, la comisión es $60 + IVA ($13,20) = $73,20. Total a pagar: $1.073,20. Siempre vas a ver el desglose completo antes de confirmar la compra, sin costos ocultos.',
+      'En la pantalla de checkout ves un cronómetro con el tiempo que tenés para completar el pago en Revendiste. Cuando ese tiempo se cumple, la reserva de las entradas puede liberarse y tendrías que crear una nueva orden si querés seguir comprando. Por eso conviene terminar el pago dentro de ese margen. Si ya iniciaste un pago y la procesadora de pagos sigue confirmándolo, la página puede actualizarse sola hasta que haya un resultado.',
+  },
+  {
+    question:
+      '¿Cuánto tiempo tengo para pagar en efectivo o en una red como RedPagos?',
+    answer:
+      'Además del tiempo que ves en el checkout de Revendiste, la procesadora de pagos te muestra su propio plazo para completar el pago en el punto habilitado (por ejemplo una red de cobranzas). Revisá el cupón, el código o las instrucciones que aparecen al elegir ese medio: ahí figura hasta cuándo podés pagar en la agencia o lugar indicado. Si tenés dudas sobre fechas o montos del cupón, podés contactarnos en ayuda@revendiste.com.',
+  },
+  {
+    question: '¿Puedo cambiar el medio de pago después de iniciar la compra?',
+    answer:
+      'Para usar otro medio tenés que cancelar la orden desde el checkout y empezar una compra nueva. Si ya iniciaste un pago alternativo (por ejemplo transferencia o efectivo) y querés cambiar de opción, no completes ese pago en la red del proveedor y cancelá la orden en Revendiste. Así liberás la reserva y podés volver a intentar con la opción que prefieras.',
+  },
+  {
+    question: BUYER_COMMISSION_FAQ_QUESTION,
+    answer: '',
   },
   {
     question: '¿Qué pasa si la entrada no funciona?',
@@ -146,7 +202,16 @@ const faqCompradores: FAQItem[] = [
   },
 ];
 
-const faqVendedores: FAQItem[] = [
+function getFaqCompradores(): FAQItem[] {
+  const {buyer} = buildCommissionFaqAnswers();
+  return faqCompradoresBase.map(item =>
+    item.question === BUYER_COMMISSION_FAQ_QUESTION
+      ? {...item, answer: buyer}
+      : item,
+  );
+}
+
+const faqVendedoresBase: FAQItem[] = [
   {
     question: '¿Cómo publico mi entrada?',
     answer:
@@ -163,14 +228,34 @@ const faqVendedores: FAQItem[] = [
       'Sí. Las imágenes de tu documento y verificación facial se almacenan con cifrado AES-256, el mismo estándar que utilizan bancos y entidades financieras. Solo personal autorizado puede acceder a esta información en casos excepcionales de revisión de seguridad. Conservamos los datos de forma segura para la prevención de fraudes, el cumplimiento de obligaciones legales y la realización de auditorías de seguridad.',
   },
   {
-    question: '¿Cuándo me pagan?',
+    question: '¿Me avisan cuando compran mis entradas?',
     answer:
-      'El pago se libera hasta 10 días hábiles después de la fecha del evento. Este plazo existe para dar tiempo al comprador a presentar un reclamo si hubo algún inconveniente. Si no se registran reclamos ni problemas, te transferimos el dinero a tu cuenta bancaria o PayPal.',
+      'Sí. Cuando alguien compra tus entradas te enviamos un correo electrónico y también vas a ver notificaciones en tu cuenta. Desde ahí seguís los pasos para cargar los documentos que necesita el comprador según el tipo de entrada y el evento.',
   },
   {
-    question: '¿Cuánto me cobran de comisión como vendedor?',
+    question: '¿Cuándo me pagan?',
     answer:
-      'La comisión es del 6% más IVA, igual que para los compradores. Si vendés una entrada de $1.000, se te descuentan $73,20 y recibís $926,80. El descuento se aplica automáticamente al momento de la liquidación.',
+      'Tus ganancias pasan a estar disponibles para retirar después de que termina el evento y se cumple un período de custodia (ventana para que el comprador pueda reportar un problema). No es un pago automático: tenés que ir a Cuenta → Retiros, elegir las ganancias y pedir el retiro. El equipo procesa los retiros manualmente en días hábiles a tu cuenta bancaria en Uruguay; en general podés esperar 1 a 3 días hábiles desde que lo pedís.',
+  },
+  {
+    question:
+      '¿Cuando venden mis entradas recibo el dinero en mi cuenta al instante?',
+    answer:
+      'No. Cuando la venta se confirma, el monto queda en custodia en Revendiste: es una garantía para el comprador hasta que termina el evento y pasa el período en el que puede reportar un problema si algo falló. Recién después ese saldo queda disponible para que solicites el retiro a tu cuenta bancaria en Uruguay. No es un ingreso inmediato en tu cuenta el mismo día de la venta.',
+  },
+  {
+    question: '¿Cómo solicito un retiro?',
+    answer:
+      'Entrá a tu cuenta, sección Retiros. Seleccioná las ganancias que querés retirar (por publicación o por entrada). Elegí un método de cobro compatible (cuenta bancaria en Uruguay en la misma moneda que tus ganancias: UYU o USD), confirmá la solicitud y listo. Te avisamos cuando el retiro esté procesado. Por ahora no ofrecemos cuentas del exterior ni otros canales de cobro.',
+  },
+  {
+    question: 'Soy extranjero, ¿puedo vender en Revendiste?',
+    answer:
+      'Sí, podés vender si completás la verificación de identidad como cualquier vendedor. Para cobrar necesitás una cuenta bancaria en Uruguay en la misma moneda que tus ganancias (UYU o USD). No ofrecemos transferencias bancarias internacionales ni otros canales de cobro por fuera de Uruguay. Estamos trabajando para habilitar cobros a cuentas en Argentina y Brasil próximamente.',
+  },
+  {
+    question: SELLER_COMMISSION_FAQ_QUESTION,
+    answer: '',
   },
   {
     question:
@@ -192,16 +277,30 @@ const faqVendedores: FAQItem[] = [
   },
 ];
 
+function getFaqVendedores(): FAQItem[] {
+  const {seller} = buildCommissionFaqAnswers();
+  return faqVendedoresBase.map(item =>
+    item.question === SELLER_COMMISSION_FAQ_QUESTION
+      ? {...item, answer: seller}
+      : item,
+  );
+}
+
 const faqPagos: FAQItem[] = [
   {
     question: '¿Qué métodos de pago aceptan?',
     answer:
-      'Aceptamos los medios de pago que se muestran habilitados al momento del checkout, generalmente tarjetas de crédito y débito. Estamos trabajando para incorporar más opciones de pago próximamente.',
+      'Los medios disponibles dependen del país que seleccionás en el checkout y de lo que habilita nuestra procesadora de pagos en ese momento: suele incluir tarjetas y, cuando corresponde, opciones como transferencia o pago en efectivo o en redes de cobranzas (según región). Solo ves lo que aplica a tu caso en la pantalla de pago. Si tu pregunta es cuánto tenés para pagar en una red como RedPagos, el plazo concreto figura en el cupón o las instrucciones que te muestra la procesadora además del tiempo del checkout en Revendiste.',
   },
   {
-    question: '¿Cómo recibo mi plata si soy vendedor?',
+    question: '¿Cómo retiro mi dinero si soy vendedor?',
     answer:
-      'Podés elegir entre transferencia bancaria o PayPal. Configurás tu método de cobro preferido desde tu perfil y, al momento de la liquidación, te enviamos el dinero al medio que hayas seleccionado.',
+      'Configurás tus métodos en Cuenta → Retiros. Por ahora solo podés cobrar por transferencia a una cuenta bancaria en Uruguay, en la misma moneda que tus ganancias (UYU o USD, según la cuenta). Elegís el método al momento de solicitar cada retiro.',
+  },
+  {
+    question: '¿Hay un monto mínimo para retirar?',
+    answer:
+      'Sí. El mínimo es 1.000 UYU para retiros en pesos uruguayos y 25 USD para retiros en dólares.',
   },
   {
     question: '¿Qué es la custodia de fondos?',
@@ -213,17 +312,32 @@ const faqPagos: FAQItem[] = [
     answer:
       'La comisión de Revendiste corresponde al servicio de intermediación ya prestado (verificación, custodia, entrega, etc.), por lo que no es reembolsable. Lo que sí se reembolsa es el precio de la entrada en caso de que exista un reclamo válido. Para iniciar un reclamo, abrí un reporte desde la sección "Mis Entradas" en tu cuenta. Si tenés dudas sobre el proceso, visitá nuestra página de contacto.',
   },
+  {
+    question: '¿Van a sumar más formas de cobrar?',
+    answer:
+      'Sí. Por ahora los retiros se procesan manualmente y solo a cuentas bancarias en Uruguay (UYU o USD). Estamos trabajando para habilitar pagos automáticos a cuentas bancarias en Uruguay, Argentina y Brasil. No usamos PayPal ni ofrecemos transferencias internacionales.',
+  },
 ];
 
-const sectionConfig: Record<
+function getSectionConfig(): Record<
   FAQSection,
   {label: string; icon: typeof HelpCircle; items: FAQItem[]}
-> = {
-  general: {label: 'General', icon: HelpCircle, items: faqGeneral},
-  compradores: {label: 'Compradores', icon: ShoppingCart, items: faqCompradores},
-  publicadores: {label: 'Publicadores', icon: Tag, items: faqVendedores},
-  pagos: {label: 'Pagos', icon: CreditCard, items: faqPagos},
-};
+> {
+  return {
+    general: {label: 'General', icon: HelpCircle, items: faqGeneral},
+    compradores: {
+      label: 'Compradores',
+      icon: ShoppingCart,
+      items: getFaqCompradores(),
+    },
+    publicadores: {
+      label: 'Publicadores',
+      icon: Tag,
+      items: getFaqVendedores(),
+    },
+    pagos: {label: 'Pagos', icon: CreditCard, items: faqPagos},
+  };
+}
 
 interface FAQSectionProps {
   items: FAQItem[];
@@ -299,6 +413,8 @@ function FAQPage() {
   const navigate = useNavigate({from: Route.fullPath});
   const [searchQuery, setSearchQuery] = useState('');
 
+  const sectionConfig = useMemo(() => getSectionConfig(), []);
+
   // Determine active tab - default to 'general'
   const activeTab = seccion ?? 'general';
 
@@ -341,7 +457,7 @@ function FAQPage() {
     }
 
     return results;
-  }, [searchQuery]);
+  }, [searchQuery, sectionConfig]);
 
   const handleTabChange = (value: string) => {
     setSearchQuery('');
@@ -480,9 +596,7 @@ function FAQPage() {
                     <TabsContent key={section} value={section} className='mt-0'>
                       <FAQSectionAccordion
                         items={sectionConfig[section].items}
-                        openItem={
-                          activeTab === section ? openItem : undefined
-                        }
+                        openItem={activeTab === section ? openItem : undefined}
                         highlightedItem={
                           activeTab === section ? validPregunta : undefined
                         }

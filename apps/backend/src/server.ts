@@ -10,11 +10,13 @@ import {apiRateLimitMiddleware} from './middleware/rateLimit';
 import {
   errorHandler,
   optionalAuthMiddleware,
+  posthogRequestLogContextMiddleware,
   requestIdMiddleware,
 } from './middleware';
 import {registerSwaggerRoutes} from './swagger';
 import {RegisterRoutes} from './routes';
 import {logger} from './utils';
+import {isHealthCheckPath} from './utils/logFields';
 import {clerkMiddleware} from '@clerk/express';
 import {startSyncPaymentsAndExpireOrdersJob} from './cronjobs/sync-payments-and-expire-orders';
 import {startNotifyUploadAvailabilityJob} from './cronjobs/notify-upload-availability';
@@ -52,7 +54,13 @@ app.use(
     ].filter(Boolean), // Remove any undefined values
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-PostHog-Session-Id',
+      'X-PostHog-Distinct-Id',
+    ],
   }),
 );
 
@@ -75,6 +83,9 @@ app.use(clerkMiddleware());
 // Optional authentication middleware - populates req.user when available
 app.use(optionalAuthMiddleware);
 
+// PostHog log ↔ session replay (reads client headers; OTel transport merges from ALS)
+app.use(posthogRequestLogContextMiddleware);
+
 // HTTP request logging with Morgan
 // Create a stream object with a 'write' function that will be used by Morgan
 const morganStream = {
@@ -90,8 +101,8 @@ app.use(
     ':method :url :status :response-time ms - :res[content-length] bytes',
     {
       stream: morganStream,
-      // Skip logging for health check endpoints to reduce noise (optional)
-      skip: (req, res) => req.path === '/api/health',
+      // Skip health probes (Morgan runs on `app` before `/api` mount — paths are /health/* or /api/health*)
+      skip: (req, _res) => isHealthCheckPath(req.path),
     },
   ),
 );
@@ -168,9 +179,9 @@ app.use(errorHandler);
 app.listen(PORT, '0.0.0.0', () => {
   logger.info(`🚀 API listening on http://localhost:${PORT}/api`);
 
-  // Start scheduled jobs only in development/local environments
+  // Start scheduled jobs only in local environments
   // In production, jobs run via EventBridge + ECS RunTask using scripts/run-job.ts
-  if (NODE_ENV === 'local' || NODE_ENV === 'development') {
+  if (NODE_ENV === 'local') {
     logger.info('Starting cronjob schedulers (dev/local mode)...');
     startSyncPaymentsAndExpireOrdersJob();
     startNotifyUploadAvailabilityJob();

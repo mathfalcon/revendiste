@@ -6,7 +6,6 @@ import type {PaymentProvider} from '../types/db';
 export const PAYMENT_PROVIDER_DISPLAY_NAMES: Record<PaymentProvider, string> = {
   dlocal: 'dLocal',
   mercadopago: 'Mercado Pago',
-  paypal: 'PayPal',
   stripe: 'Stripe',
 };
 
@@ -26,7 +25,7 @@ export function getPaymentProviderDisplayName(
 /**
  * Format a list of providers into a human-readable string
  * @param providers - Array of provider codes
- * @returns Formatted string (e.g., "dLocal", "dLocal y Mercado Pago", "dLocal, Stripe y PayPal")
+ * @returns Formatted string (e.g., "dLocal", "dLocal y Mercado Pago")
  */
 export function formatProvidersList(providers: string[]): string {
   if (providers.length === 0) {

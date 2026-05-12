@@ -27,7 +27,11 @@ export function generateNotificationText<T extends NotificationType>(
       const meta = metadata as TypedNotificationMetadata<'ticket_sold_seller'>;
       let description: string;
 
-      if (meta.shouldPromptUpload) {
+      if (meta.allDocumentsUploaded) {
+        description = `Se ${
+          meta.ticketCount === 1 ? 'vendió tu entrada' : `vendieron tus ${meta.ticketCount} entradas`
+        } para ${meta.eventName}. Ya tenés los documentos subidos, así que está todo listo.`;
+      } else if (meta.shouldPromptUpload) {
         description = `Se ${
           meta.ticketCount === 1 ? 'vendió tu entrada' : `vendieron tus ${meta.ticketCount} entradas`
         } para ${meta.eventName}. Subí los documentos para completar la venta.`;
@@ -328,6 +332,25 @@ export function generateNotificationText<T extends NotificationType>(
       return {
         title: 'Ganancias retenidas',
         description: `Tus ganancias por ${ticketText} de ${meta.eventName} fueron retenidas porque ${reasonText}. Soporte va a revisar tu caso.`,
+      };
+    }
+
+    case 'seller_earnings_available': {
+      const meta =
+        metadata as TypedNotificationMetadata<'seller_earnings_available'>;
+      const detailParts = meta.lines.map(l => {
+        const num = parseFloat(l.amount);
+        const formatted = `${num.toLocaleString('es-UY', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} ${l.currency}`;
+        return l.earningCount === 1
+          ? `${formatted} (1 venta)`
+          : `${formatted} (${l.earningCount} ventas)`;
+      });
+      return {
+        title: 'Ganancias disponibles para retirar',
+        description: `Tus ganancias ya están disponibles para retirar: ${detailParts.join(' · ')}. Ingresá a Retiro para solicitar el envío.`,
       };
     }
 

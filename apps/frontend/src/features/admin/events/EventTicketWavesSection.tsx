@@ -31,7 +31,7 @@ import {deleteTicketWaveMutation} from '~/lib/api/admin';
 import {TicketWaveEditDialog} from './TicketWaveEditDialog';
 import {toast} from 'sonner';
 import {Edit, Trash2, Plus, Loader2} from 'lucide-react';
-import {AdminEventDetail} from '~/lib/api/generated';
+import type {AdminEventDetail} from '~/lib/api/admin/admin-event-types';
 
 interface EventTicketWavesSectionProps {
   event: AdminEventDetail;

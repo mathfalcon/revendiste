@@ -56,7 +56,7 @@
   },
   {
     "event": "payout_method_added",
-    "description": "Seller adds a new payout method (bank account, PayPal, etc.)",
+    "description": "Seller adds a new payout method (Uruguayan bank account)",
     "file": "apps/backend/src/controllers/payouts/index.ts"
   },
   {

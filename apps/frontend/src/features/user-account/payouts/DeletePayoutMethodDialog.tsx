@@ -10,7 +10,7 @@ import {Button} from '~/components/ui/button';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {deletePayoutMethodMutation} from '~/lib/api/payouts';
 import {AlertTriangle} from 'lucide-react';
-import posthog from 'posthog-js';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {getPayoutMethodDisplayName} from './payout-method-utils';
 import type {GetPayoutMethodsResponse} from '~/lib/api/generated';
 
@@ -31,7 +31,7 @@ export function DeletePayoutMethodDialog({
   const deleteMethod = useMutation({
     ...deletePayoutMethodMutation(),
     onSuccess: () => {
-      posthog.capture('payout_method_deleted', {
+      trackEvent(ANALYTICS_EVENTS.PAYOUT_METHOD_DELETED, {
         payout_type: method.payoutType,
         currency: method.currency,
       });
@@ -84,4 +84,3 @@ export function DeletePayoutMethodDialog({
     </Dialog>
   );
 }
-

@@ -27,11 +27,11 @@ import {
   SellerEarningsRepository,
   UsersRepository,
   NotificationsRepository,
+  ImpersonationLogsRepository,
 } from '~/repositories';
 import {db} from '~/db';
 import {getJobQueueService} from '~/services/job-queue';
 import {ValidateBody, Body} from '~/decorators';
-import {logger} from '~/utils';
 import {
   DLocalWebhookrRouteBody,
   DLocalWebhookValidationSchema,
@@ -58,6 +58,7 @@ export function createWebhookDependencies(database: Kysely<DB> = db) {
   const usersRepository = new UsersRepository(database);
   const notificationsRepository = new NotificationsRepository(database);
   const sellerEarningsRepository = new SellerEarningsRepository(database);
+  const impersonationLogsRepository = new ImpersonationLogsRepository(database);
 
   const notificationService = new NotificationService(
     notificationsRepository,
@@ -95,7 +96,7 @@ export function createWebhookDependencies(database: Kysely<DB> = db) {
 
   const webhooksService = new WebhooksService(
     dlocalAdapter,
-    new ClerkWebhookService(),
+    new ClerkWebhookService(usersRepository, impersonationLogsRepository),
   );
 
   return {webhooksService, dlocalAdapter};
@@ -157,19 +158,10 @@ export class WebhooksController {
       (request.headers['x-forwarded-for'] as string) || request.ip;
     const userAgent = request.headers['user-agent'];
 
-    // Process webhook asynchronously (fire-and-forget pattern)
-    this.webhooksService
-      .handleClerkWebhook(body, {
-        ipAddress,
-        userAgent,
-      })
-      .then(() => logger.info('Clerk webhook processed', {type: body.type}))
-      .catch(error =>
-        logger.error('Error processing Clerk webhook', {
-          type: body.type,
-          error: error.message,
-        }),
-      );
+    this.webhooksService.handleClerkWebhook(body, {
+      ipAddress,
+      userAgent,
+    });
 
     // Return immediately to acknowledge receipt
     return {received: true};

@@ -1,6 +1,6 @@
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {useNavigate} from '@tanstack/react-router';
-import posthog from 'posthog-js';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +32,7 @@ export function CancelOrderDialog({
   const mutation = useMutation({
     ...cancelOrderMutation(orderId),
     onSuccess: () => {
-      posthog.capture('checkout_abandoned', {
+      trackEvent(ANALYTICS_EVENTS.CHECKOUT_ABANDONED, {
         order_id: orderId,
         event_slug: eventSlug,
       });
@@ -41,7 +41,9 @@ export function CancelOrderDialog({
 
       // If we have a slug, also invalidate the event query to refresh ticket availability
       if (eventSlug) {
-        queryClient.invalidateQueries({queryKey: ['events', 'slug', eventSlug]});
+        queryClient.invalidateQueries({
+          queryKey: ['events', 'slug', eventSlug],
+        });
       }
 
       onOpenChange(false);
@@ -61,14 +63,17 @@ export function CancelOrderDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>¿Cancelar orden?</AlertDialogTitle>
-          <AlertDialogDescription className='space-y-2'>
+          <AlertDialogDescription className='space-y-3'>
             <p>
-              Esta acción liberará las entradas reservadas y no podrás
-              recuperarlas. Las entradas volverán a estar disponibles para otros
-              compradores.
+              Al cancelar esta orden liberamos las entradas asociadas. Si querés
+              volver a comprar, tenés que crear una nueva orden desde la página
+              del evento.
             </p>
-            <p className='font-medium text-foreground'>
-              ¿Estás seguro de que deseas cancelar esta orden?
+            <p>
+              Si ya iniciaste un pago con un método alternativo (por ejemplo,
+              transferencia bancaria o efectivo) y querés usar otro medio, no
+              completes ese pago y cancelá esta orden para poder empezar de
+              nuevo.
             </p>
           </AlertDialogDescription>
         </AlertDialogHeader>

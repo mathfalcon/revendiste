@@ -49,6 +49,7 @@ export * from '../emails/identity-verification-rejected-email';
 
 // Missing document refund email templates
 export * from '../emails/seller-earnings-retained-email';
+export * from '../emails/seller-earnings-available-email';
 export * from '../emails/buyer-ticket-cancelled-email';
 
 // Ticket report email templates
@@ -89,6 +90,7 @@ export type {IdentityVerificationRejectedEmailProps} from '../emails/identity-ve
 
 // Missing document refund email prop types
 export type {SellerEarningsRetainedEmailProps} from '../emails/seller-earnings-retained-email';
+export type {SellerEarningsAvailableEmailProps} from '../emails/seller-earnings-available-email';
 export type {BuyerTicketCancelledEmailProps} from '../emails/buyer-ticket-cancelled-email';
 
 // Ticket report email prop types

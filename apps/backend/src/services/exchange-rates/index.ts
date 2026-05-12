@@ -10,9 +10,7 @@ interface CachedRate {
 }
 
 /**
- * Exchange rate service for converting between UYU and USD
- * Uses provider pattern to support multiple exchange rate sources
- * (ExchangeRate-API, Uruguay's National Bank, etc.)
+ * Exchange rate service for converting between UYU and USD (BROU eBROU, Itaú XML fallback).
  */
 export class ExchangeRateService {
   private cache: Map<string, CachedRate> = new Map();
@@ -67,20 +65,11 @@ export class ExchangeRateService {
 
       return rate;
     } catch (error) {
-      logger.error(
-        `Failed to fetch exchange rate from ${this.provider.name}, using cached rate if available`,
-        {error, from, to},
-      );
-
-      // If we have a cached rate (even if expired), use it as fallback
-      if (cached) {
-        logger.warn(
-          `Using expired cached rate for ${cacheKey}: ${cached.rate}`,
-        );
-        return cached.rate;
-      }
-
-      // If no cache and provider fails, rethrow the error
+      logger.error(`Failed to fetch exchange rate from ${this.provider.name}`, {
+        error,
+        from,
+        to,
+      });
       throw error;
     }
   }

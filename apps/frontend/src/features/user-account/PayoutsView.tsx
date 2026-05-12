@@ -1,14 +1,21 @@
-import {useState, Suspense} from 'react';
+import {useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {getBalanceQuery, getAvailableEarningsQuery} from '~/lib/api/payouts';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '~/components/ui/tabs';
 import {Skeleton} from '~/components/ui/skeleton';
-import {Clock, CreditCard} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '~/components/ui/card';
+import {Alert, AlertDescription} from '~/components/ui/alert';
+import {Clock, CreditCard, Info} from 'lucide-react';
 import {BalanceHero} from './payouts/BalanceHero';
 import {WithdrawalSheet} from './payouts/WithdrawalSheet';
 import {PayoutHistorySection} from './payouts/PayoutHistorySection';
 import {PayoutMethodsSection} from './payouts/PayoutMethodsSection';
-import {PayoutDetailsModal} from './payouts/PayoutDetailsModal';
 import type {EventTicketCurrency} from '@revendiste/shared';
 
 function BalanceHeroSkeleton() {
@@ -50,6 +57,17 @@ export function PayoutsView() {
         </p>
       </div>
 
+      <Alert>
+        <Info className='h-4 w-4' />
+        <AlertDescription>
+          Por ahora los retiros solo se envían a{' '}
+          <strong>cuentas bancarias en Uruguay</strong>, en la misma moneda que
+          tus ganancias (UYU o USD). Estamos trabajando para habilitar pagos
+          automáticos a cuentas en Uruguay y otros paises de la region más
+          adelante.
+        </AlertDescription>
+      </Alert>
+
       {/* Balance Hero */}
       {balancePending || !balance ? (
         <BalanceHeroSkeleton />
@@ -65,38 +83,47 @@ export function PayoutsView() {
         />
       )}
 
-      {/* Tabs: History & Methods */}
-      <Tabs defaultValue='history'>
-        <TabsList className='grid w-full grid-cols-2'>
-          <TabsTrigger value='history' className='flex items-center gap-2'>
-            <Clock className='h-4 w-4' />
-            Historial
-          </TabsTrigger>
-          <TabsTrigger value='methods' className='flex items-center gap-2'>
-            <CreditCard className='h-4 w-4' />
-            <span className='hidden sm:inline'>Métodos de pago</span>
-            <span className='sm:hidden'>Métodos</span>
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value='history' className='mt-4'>
-          <PayoutHistorySection />
-        </TabsContent>
-        <TabsContent value='methods' className='mt-4'>
-          <PayoutMethodsSection />
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader className='pb-2'>
+          <CardTitle className='text-lg'>Historial y métodos</CardTitle>
+          <CardDescription>
+            Consultá tus retiros anteriores y administrá dónde recibís el dinero
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='pt-2'>
+          <Tabs defaultValue='history'>
+            <TabsList className='grid w-full grid-cols-2'>
+              <TabsTrigger
+                value='history'
+                className='flex items-center gap-2 cursor-pointer'
+              >
+                <Clock className='h-4 w-4 shrink-0' aria-hidden />
+                Historial
+              </TabsTrigger>
+              <TabsTrigger
+                value='methods'
+                className='flex items-center gap-2 cursor-pointer'
+              >
+                <CreditCard className='h-4 w-4 shrink-0' aria-hidden />
+                <span className='hidden sm:inline'>Métodos de pago</span>
+                <span className='sm:hidden'>Métodos</span>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value='history' className='mt-4'>
+              <PayoutHistorySection />
+            </TabsContent>
+            <TabsContent value='methods' className='mt-4'>
+              <PayoutMethodsSection />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
-      {/* Withdrawal Sheet */}
       <WithdrawalSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         initialCurrency={sheetCurrency}
       />
-
-      {/* Payout Details Modal */}
-      <Suspense fallback={null}>
-        <PayoutDetailsModal />
-      </Suspense>
     </div>
   );
 }

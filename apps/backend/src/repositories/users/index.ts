@@ -279,4 +279,83 @@ export class UsersRepository extends BaseRepository<UsersRepository> {
     const result = await query.executeTakeFirst();
     return Number(result?.count || 0);
   }
+
+  async listUsersForAdmin(params: {
+    search?: string;
+    limit: number;
+    offset: number;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  }) {
+    const trimmed = params.search?.trim().slice(0, 200);
+    let query = this.db
+      .selectFrom('users')
+      .select([
+        'users.id',
+        'users.email',
+        'users.firstName',
+        'users.lastName',
+        'users.imageUrl',
+        'users.role',
+        'users.lastActiveAt',
+      ])
+      .where('users.deletedAt', 'is', null);
+
+    if (trimmed) {
+      const escaped = trimmed
+        .replace(/\\/g, '\\\\')
+        .replace(/%/g, '\\%')
+        .replace(/_/g, '\\_');
+      const pattern = `%${escaped}%`;
+      query = query.where(eb =>
+        eb.or([
+          eb('users.email', 'ilike', pattern),
+          eb('users.firstName', 'ilike', pattern),
+          eb('users.lastName', 'ilike', pattern),
+        ]),
+      );
+    }
+
+    const sortColumn =
+      params.sortBy === 'email' ||
+      params.sortBy === 'lastActiveAt' ||
+      params.sortBy === 'createdAt'
+        ? params.sortBy
+        : 'createdAt';
+
+    return await query
+      .orderBy(
+        sortColumn as 'email' | 'lastActiveAt' | 'createdAt',
+        params.sortOrder,
+      )
+      .limit(params.limit)
+      .offset(params.offset)
+      .execute();
+  }
+
+  async countUsersForAdmin(params: {search?: string}) {
+    const trimmed = params.search?.trim().slice(0, 200);
+    let query = this.db
+      .selectFrom('users')
+      .select(eb => eb.fn.countAll<number>().as('count'))
+      .where('deletedAt', 'is', null);
+
+    if (trimmed) {
+      const escaped = trimmed
+        .replace(/\\/g, '\\\\')
+        .replace(/%/g, '\\%')
+        .replace(/_/g, '\\_');
+      const pattern = `%${escaped}%`;
+      query = query.where(eb =>
+        eb.or([
+          eb('email', 'ilike', pattern),
+          eb('firstName', 'ilike', pattern),
+          eb('lastName', 'ilike', pattern),
+        ]),
+      );
+    }
+
+    const result = await query.executeTakeFirst();
+    return Number(result?.count ?? 0);
+  }
 }

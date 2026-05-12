@@ -19,9 +19,15 @@ import {NotificationService} from '~/services/notifications';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {SellerEarningsService} from '~/services/seller-earnings';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
+import {expireOrderWithoutPaymentLink} from '~/services/orders/reservation-expiry';
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import {Payment} from '~/types';
 import {getJobQueueService} from '~/services/job-queue';
+import {
+  FORCE_EXPIRATION_GRACE_MINUTES,
+  PAYMENT_EXTENSION_WINDOW_MINUTES,
+} from '~/constants/reservation';
 
 // Create shared repositories
 const ordersRepository = new OrdersRepository(db);
@@ -59,6 +65,13 @@ const sellerEarningsService = new SellerEarningsService(
   orderTicketReservationsRepository,
 );
 
+const orderReservationExpiryDeps = {
+  ordersRepository,
+  orderTicketReservationsRepository,
+  paymentsRepository,
+  notificationService,
+};
+
 // Create adapter factory function for payment sync
 const createPaymentWebhookAdapter = (
   provider: Parameters<typeof getPaymentProvider>[0],
@@ -89,6 +102,24 @@ async function processPaymentSync(
     const adapter = createPaymentWebhookAdapter(payment.provider);
     await adapter.syncPaymentStatus(payment.providerPaymentId);
 
+    const fresh = await paymentsRepository.getById(payment.id);
+    if (fresh?.providerPaymentId) {
+      const isStillPending =
+        fresh.status === 'pending' || fresh.status === 'processing';
+      if (isStillPending) {
+        const createdAt = new Date(fresh.createdAt).getTime();
+        const minAgeMs =
+          (PAYMENT_EXTENSION_WINDOW_MINUTES + FORCE_EXPIRATION_GRACE_MINUTES) *
+          60 *
+          1000;
+        if (Date.now() - createdAt >= minAgeMs) {
+          const provider = getPaymentProvider(payment.provider);
+          const raw = await provider.getPayment(fresh.providerPaymentId);
+          await provider.forceExpirationCheck?.(raw);
+        }
+      }
+    }
+
     logger.debug('Payment status synced successfully', {
       paymentId: payment.id,
       provider: payment.provider,
@@ -115,7 +146,9 @@ async function processPaymentSync(
 async function expireOrder(
   orderId: string,
   reason: 'all_payments_failed' | 'no_payment_created',
+  paymentIds: string[],
 ): Promise<void> {
+  const expireStartedAt = Date.now();
   let didExpire = false;
 
   await ordersRepository.executeTransaction(async trx => {
@@ -134,9 +167,12 @@ async function expireOrder(
       .executeTakeFirst();
 
     if (!order) {
-      logger.debug('Order no longer pending (e.g. already cancelled), skipping expiration', {
-        orderId,
-      });
+      logger.debug(
+        'Order no longer pending (e.g. already cancelled), skipping expiration',
+        {
+          orderId,
+        },
+      );
       return;
     }
 
@@ -146,10 +182,23 @@ async function expireOrder(
     await reservationsRepo.releaseByOrderId(orderId);
 
     didExpire = true;
-    logger.info('Order expired successfully', {orderId, reason});
   });
 
   if (!didExpire) return;
+
+  logger.info(
+    'orders.expired',
+    wideEvent('orders.expired', {
+      orderId,
+      reason:
+        reason === 'all_payments_failed'
+          ? ('all_payments_terminal' as const)
+          : ('no_payment_link' as const),
+      paymentIds,
+      ...withDuration(expireStartedAt),
+      outcome: 'success',
+    }),
+  );
 
   const orderWithItems = await ordersRepository.getByIdWithItems(orderId);
 
@@ -158,6 +207,8 @@ async function expireOrder(
       buyerUserId: orderWithItems.userId,
       orderId: orderWithItems.id,
       eventName: orderWithItems.event.name || 'el evento',
+      eventEndDate: orderWithItems.event.eventEndDate ?? null,
+      orderCreatedAt: orderWithItems.createdAt,
     }).catch(error => {
       logger.error('Failed to send order expired notification', {
         orderId,
@@ -168,97 +219,28 @@ async function expireOrder(
 }
 
 /**
- * Expires an order that has no payment link created (abandoned checkout)
- * Uses a transaction with row locking to prevent race conditions
- */
-async function expireOrderWithoutPayment(orderId: string): Promise<boolean> {
-  let expired = false;
-
-  await ordersRepository.executeTransaction(async trx => {
-    const ordersRepo = ordersRepository.withTransaction(trx);
-    const reservationsRepo =
-      orderTicketReservationsRepository.withTransaction(trx);
-    const paymentsRepo = paymentsRepository.withTransaction(trx);
-
-    // Lock the order row and re-check status inside transaction
-    const order = await trx
-      .selectFrom('orders')
-      .select(['id', 'status'])
-      .where('id', '=', orderId)
-      .where('status', '=', 'pending')
-      .where('deletedAt', 'is', null)
-      .forUpdate()
-      .executeTakeFirst();
-
-    if (!order) {
-      // Order no longer pending (status changed or deleted)
-      logger.debug('Order no longer pending, skipping expiration', {orderId});
-      return;
-    }
-
-    // Double-check no payments exist inside the transaction
-    const payments = await paymentsRepo.getAllByOrderId(orderId);
-    if (payments.length > 0) {
-      // Payment was created between our check and this transaction
-      logger.debug('Payment found during transaction, skipping expiration', {
-        orderId,
-        paymentCount: payments.length,
-      });
-      return;
-    }
-
-    // Safe to expire - no payments and order is still pending
-    await ordersRepo.updateStatus(orderId, 'expired', {
-      cancelledAt: new Date(),
-    });
-    await reservationsRepo.releaseByOrderId(orderId);
-
-    expired = true;
-    logger.info('Order expired (no payment link created)', {orderId});
-  });
-
-  // Send notification outside transaction (fire-and-forget)
-  if (expired) {
-    const orderWithItems = await ordersRepository.getByIdWithItems(orderId);
-
-    if (orderWithItems && orderWithItems.event) {
-      notifyOrderExpired(notificationService, {
-        buyerUserId: orderWithItems.userId,
-        orderId: orderWithItems.id,
-        eventName: orderWithItems.event.name || 'el evento',
-      }).catch(error => {
-        logger.error('Failed to send order expired notification', {
-          orderId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      });
-    }
-  }
-
-  return expired;
-}
-
-/**
  * Runs the sync payments and expire orders job logic once
  * Used by production EventBridge + ECS RunTask
  */
 export async function runSyncPaymentsAndExpireOrders() {
-  try {
-    logger.info('Starting payment status sync and order expiration...');
+  const jobStartedAt = Date.now();
+  const jobName = 'sync-payments-and-expire-orders';
 
+  let syncSuccessCount = 0;
+  let syncErrorCount = 0;
+  let expiredCount = 0;
+  let orderCheckErrors = 0;
+  let pendingPaymentsCount = 0;
+  let pendingOrdersCount = 0;
+
+  try {
     const pendingPayments = await paymentsRepository.getPendingPaymentsForSync({
       minAgeMinutes: 5,
       limit: 500,
     });
-
-    let syncSuccessCount = 0;
-    let syncErrorCount = 0;
+    pendingPaymentsCount = pendingPayments.length;
 
     if (pendingPayments.length > 0) {
-      logger.info('Found pending payments to sync', {
-        count: pendingPayments.length,
-      });
-
       const BATCH_SIZE = 25;
 
       for (let i = 0; i < pendingPayments.length; i += BATCH_SIZE) {
@@ -277,7 +259,7 @@ export async function runSyncPaymentsAndExpireOrders() {
           } else {
             syncErrorCount++;
             logger.error('Payment sync promise rejected', {
-              error: result.reason,
+              error: redactKnownSecrets(result.reason),
             });
           }
         }
@@ -288,12 +270,6 @@ export async function runSyncPaymentsAndExpireOrders() {
           totalBatches: Math.ceil(pendingPayments.length / BATCH_SIZE),
         });
       }
-
-      logger.info('Payment status sync completed', {
-        total: pendingPayments.length,
-        successful: syncSuccessCount,
-        errors: syncErrorCount,
-      });
     } else {
       logger.debug('No pending payments to sync');
     }
@@ -306,96 +282,126 @@ export async function runSyncPaymentsAndExpireOrders() {
       .where('status', '=', 'pending')
       .where('deletedAt', 'is', null)
       .execute();
+    pendingOrdersCount = pendingOrders.length;
 
-    if (pendingOrders.length === 0) {
-      logger.debug('No pending orders to check for expiration');
-      return;
-    }
+    if (pendingOrders.length > 0) {
+      logger.debug('Checking pending orders for expiration', {
+        count: pendingOrders.length,
+      });
 
-    logger.debug('Checking pending orders for expiration', {
-      count: pendingOrders.length,
-    });
+      for (const order of pendingOrders) {
+        try {
+          const payments = await paymentsRepository.getAllByOrderId(order.id);
 
-    let expiredCount = 0;
-    let expiredNoPaymentCount = 0;
-    const expiredOrderIds: string[] = [];
+          if (payments.length === 0) {
+            const reservationExpired =
+              order.reservationExpiresAt &&
+              new Date(order.reservationExpiresAt) < now;
 
-    for (const order of pendingOrders) {
-      try {
-        const payments = await paymentsRepository.getAllByOrderId(order.id);
+            if (reservationExpired) {
+              logger.debug(
+                'Expiring order with no payment link (reservation expired)',
+                {
+                  orderId: order.id,
+                  reservationExpiresAt: order.reservationExpiresAt,
+                },
+              );
 
-        // Handle orders without any payment link
-        if (payments.length === 0) {
-          // Check if reservation has expired
-          const reservationExpired =
-            order.reservationExpiresAt &&
-            new Date(order.reservationExpiresAt) < now;
-
-          if (reservationExpired) {
-            logger.info(
-              'Expiring order with no payment link (reservation expired)',
-              {
+              const expired = await expireOrderWithoutPaymentLink(
+                order.id,
+                orderReservationExpiryDeps,
+              );
+              if (expired) {
+                expiredCount++;
+              }
+            } else {
+              logger.debug('Order without payment, reservation still valid', {
                 orderId: order.id,
                 reservationExpiresAt: order.reservationExpiresAt,
-              },
-            );
-
-            const expired = await expireOrderWithoutPayment(order.id);
-            if (expired) {
-              expiredOrderIds.push(order.id);
-              expiredNoPaymentCount++;
-              expiredCount++;
+              });
             }
-          } else {
-            logger.debug('Order without payment, reservation still valid', {
-              orderId: order.id,
-              reservationExpiresAt: order.reservationExpiresAt,
-            });
+            continue;
           }
-          continue;
-        }
 
-        // Handle orders with payments - check if all payments failed
-        const terminalFailureStates = ['expired', 'failed', 'cancelled'];
-        const allPaymentsTerminal = payments.every(p =>
-          terminalFailureStates.includes(p.status),
-        );
-        const hasPaidPayment = payments.some(p => p.status === 'paid');
+          const terminalFailureStates = ['expired', 'failed', 'cancelled'];
+          const allPaymentsTerminal = payments.every(p =>
+            terminalFailureStates.includes(p.status),
+          );
+          const hasPaidPayment = payments.some(p => p.status === 'paid');
 
-        if (allPaymentsTerminal && !hasPaidPayment) {
-          logger.info('Expiring order based on payment provider status', {
+          if (allPaymentsTerminal && !hasPaidPayment) {
+            logger.debug('Expiring order based on payment provider status', {
+              orderId: order.id,
+            });
+
+            await expireOrder(
+              order.id,
+              'all_payments_failed',
+              payments.map(p => p.id),
+            );
+            expiredCount++;
+          }
+        } catch (error: unknown) {
+          orderCheckErrors++;
+          logger.error('Error checking order for expiration', {
             orderId: order.id,
-            paymentStatuses: payments.map(p => ({
-              id: p.id,
-              status: p.status,
-              provider: p.provider,
-            })),
+            error:
+              error instanceof Error
+                ? error.message
+                : redactKnownSecrets(error),
           });
-
-          await expireOrder(order.id, 'all_payments_failed');
-          expiredOrderIds.push(order.id);
-          expiredCount++;
         }
-      } catch (error: any) {
-        logger.error('Error checking order for expiration', {
-          orderId: order.id,
-          error: error.message,
-        });
       }
+
+      if (expiredCount === 0) {
+        logger.debug('No orders expired');
+      }
+    } else {
+      logger.debug('No pending orders to check for expiration');
     }
 
-    if (expiredCount > 0) {
-      logger.info('Order expiration completed', {
+    const itemsProcessed = pendingPaymentsCount + pendingOrdersCount;
+    const itemsSucceeded = syncSuccessCount + expiredCount;
+    const itemsFailed = syncErrorCount + orderCheckErrors;
+
+    logger.info(
+      'cron.sync-payments-and-expire-orders',
+      wideEvent('cron.sync-payments-and-expire-orders', {
+        jobName,
+        itemsProcessed,
+        itemsSucceeded,
+        itemsFailed,
+        pendingPaymentsCount,
+        pendingOrdersCount,
+        syncSuccessCount,
+        syncErrorCount,
         expiredCount,
-        expiredNoPaymentCount,
-        expiredFailedPaymentCount: expiredCount - expiredNoPaymentCount,
-        orderIds: expiredOrderIds,
-      });
-    } else {
-      logger.debug('No orders expired');
-    }
+        orderCheckErrors,
+        ...withDuration(jobStartedAt),
+        outcome: itemsFailed > 0 ? 'failure' : 'success',
+      }),
+    );
   } catch (error) {
-    logger.error('Error in payment sync and order expiration job:', error);
+    const itemsProcessed = pendingPaymentsCount + pendingOrdersCount;
+    const itemsSucceeded = syncSuccessCount + expiredCount;
+    const itemsFailed = syncErrorCount + orderCheckErrors + 1;
+
+    logger.error(
+      'cron.sync-payments-and-expire-orders',
+      wideEvent('cron.sync-payments-and-expire-orders', {
+        jobName,
+        itemsProcessed,
+        itemsSucceeded,
+        itemsFailed,
+        error: redactKnownSecrets(
+          error instanceof Error
+            ? {message: error.message, stack: error.stack}
+            : {message: String(error)},
+        ),
+        ...withDuration(jobStartedAt),
+        outcome: 'failure',
+      }),
+    );
     throw error;
   }
 }

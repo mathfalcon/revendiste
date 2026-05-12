@@ -9,6 +9,7 @@ import {
 } from '~/repositories';
 import {NotFoundError, ValidationError} from '~/errors';
 import {logger} from '~/utils';
+import {redactKnownSecrets, wideEvent, withDuration} from '~/utils/logFields';
 import type {
   PaymentProvider,
   ProviderPaymentData,
@@ -27,8 +28,8 @@ import {
   notifyPaymentFailed,
   notifySellerTicketSold,
 } from '~/services/notifications/helpers';
-import type { JobQueueService } from '~/services/job-queue';
-import type { SellerNotificationData } from '~/services/ticket-listings';
+import type {JobQueueService} from '~/services/job-queue';
+import type {SellerNotificationData} from '~/services/ticket-listings';
 import {getPostHog} from '~/lib/posthog';
 
 /**
@@ -68,6 +69,10 @@ interface PaymentUpdateResult {
   paymentId: string;
   status: string;
   metadata: Record<string, unknown>;
+  orderId: string;
+  previousPaymentStatus: string;
+  newPaymentStatus: string;
+  idempotencyOutcome: 'duplicate_confirmed' | 'fresh' | 'ignored_in_progress';
 }
 
 /**
@@ -117,13 +122,10 @@ export class PaymentWebhookAdapter {
     paymentId: string,
     webhookMetadata?: WebhookMetadata,
   ): Promise<void> {
+    const start = Date.now();
+    const providerPaymentId = paymentId;
     try {
-      logger.info('Processing webhook', {
-        provider: this.provider.name,
-        paymentId,
-      });
-
-      const result = await this.fetchAndProcessPayment(paymentId);
+      const result = await this.fetchAndProcessPayment(providerPaymentId);
 
       await this.paymentEventsRepository.logWebhookReceived(
         result.paymentId,
@@ -131,18 +133,34 @@ export class PaymentWebhookAdapter {
         webhookMetadata,
       );
 
-      logger.info('Webhook processed successfully', {
-        provider: this.provider.name,
-        paymentId: result.paymentId,
-        status: result.status,
-      });
+      logger.info(
+        'webhooks.payment.processed',
+        wideEvent('webhooks.payment.processed', {
+          provider: this.provider.name,
+          providerPaymentId,
+          internalPaymentId: result.paymentId,
+          orderId: result.orderId,
+          previousStatus: result.previousPaymentStatus,
+          newStatus: result.newPaymentStatus,
+          idempotencyOutcome: result.idempotencyOutcome,
+          ...withDuration(start),
+          outcome: 'success',
+        }),
+      );
     } catch (error: any) {
-      logger.error('Error processing webhook', {
-        provider: this.provider.name,
-        paymentId,
-        error: error.message,
-        stack: error.stack,
-      });
+      logger.error(
+        'webhooks.payment.processed',
+        wideEvent('webhooks.payment.processed', {
+          provider: this.provider.name,
+          providerPaymentId,
+          error: redactKnownSecrets({
+            message: error?.message,
+            stack: error?.stack,
+          }),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
       throw error;
     }
   }
@@ -155,31 +173,46 @@ export class PaymentWebhookAdapter {
    * @param paymentId - The provider's payment ID
    */
   async syncPaymentStatus(paymentId: string): Promise<void> {
+    const start = Date.now();
+    const providerPaymentId = paymentId;
     try {
-      logger.info('Syncing payment status', {
-        provider: this.provider.name,
-        paymentId,
-      });
-
-      const result = await this.fetchAndProcessPayment(paymentId);
+      const result = await this.fetchAndProcessPayment(providerPaymentId);
 
       await this.paymentEventsRepository.logStatusSynced(
         result.paymentId,
         result.metadata,
       );
 
-      logger.info('Payment status synced successfully', {
-        provider: this.provider.name,
-        paymentId: result.paymentId,
-        status: result.status,
-      });
+      logger.info(
+        'webhooks.payment.processed',
+        wideEvent('webhooks.payment.processed', {
+          provider: this.provider.name,
+          providerPaymentId,
+          internalPaymentId: result.paymentId,
+          orderId: result.orderId,
+          previousStatus: result.previousPaymentStatus,
+          newStatus: result.newPaymentStatus,
+          idempotencyOutcome: result.idempotencyOutcome,
+          trigger: 'status_sync',
+          ...withDuration(start),
+          outcome: 'success',
+        }),
+      );
     } catch (error: any) {
-      logger.error('Error syncing payment status', {
-        provider: this.provider.name,
-        paymentId,
-        error: error.message,
-        stack: error.stack,
-      });
+      logger.error(
+        'webhooks.payment.processed',
+        wideEvent('webhooks.payment.processed', {
+          provider: this.provider.name,
+          providerPaymentId,
+          trigger: 'status_sync',
+          error: redactKnownSecrets({
+            message: error?.message,
+            stack: error?.stack,
+          }),
+          ...withDuration(start),
+          outcome: 'failure',
+        }),
+      );
       throw error;
     }
   }
@@ -189,13 +222,7 @@ export class PaymentWebhookAdapter {
   ): Promise<PaymentUpdateResult> {
     const providerPayment = await this.provider.getPayment(paymentId);
     const normalized = this.normalizePaymentData(providerPayment);
-    const internalPaymentId = await this.processNormalizedPayment(normalized);
-
-    return {
-      paymentId: internalPaymentId,
-      status: normalized.status,
-      metadata: normalized.metadata,
-    };
+    return await this.processNormalizedPayment(normalized);
   }
 
   /**
@@ -209,7 +236,6 @@ export class PaymentWebhookAdapter {
         dlocal: this.normalizeDLocalPayment.bind(this),
         // Future providers:
         // stripe: this.normalizeStripePayment.bind(this),
-        // paypal: this.normalizePayPalPayment.bind(this),
       };
 
     const normalizer = normalizers[this.provider.name];
@@ -235,9 +261,10 @@ export class PaymentWebhookAdapter {
       balanceAmount: payment.balance_amount,
       balanceFee: payment.balance_fee,
       balanceCurrency: payment.balance_currency,
-      approvedAt: payment.approved_date
-        ? new Date(payment.approved_date)
-        : undefined,
+      approvedAt:
+        payment.status === 'PAID' && payment.approved_date
+          ? new Date(payment.approved_date)
+          : undefined,
       rejectedReason: payment.rejected_reason,
       payer: payment.payer
         ? {
@@ -261,7 +288,7 @@ export class PaymentWebhookAdapter {
    */
   private async processNormalizedPayment(
     paymentData: NormalizedPaymentData,
-  ): Promise<string> {
+  ): Promise<PaymentUpdateResult> {
     const {providerPaymentId} = paymentData;
 
     // Find payment record in database
@@ -317,7 +344,8 @@ export class PaymentWebhookAdapter {
       paymentData.balanceCurrency &&
       paymentData.currency !== paymentData.balanceCurrency
     ) {
-      const totalSettlement = paymentData.balanceAmount + paymentData.balanceFee;
+      const totalSettlement =
+        paymentData.balanceAmount + paymentData.balanceFee;
       const calculatedRate = totalSettlement / paymentData.amount;
       exchangeRate = String(calculatedRate);
 
@@ -347,7 +375,8 @@ export class PaymentWebhookAdapter {
         balanceCurrency: paymentData.balanceCurrency,
         // Store exchange rate if currencies differ (dLocal settles in UYU even for USD orders)
         exchangeRate,
-        paymentMethod: (paymentData.paymentMethod as PaymentMethod) ?? undefined,
+        paymentMethod:
+          (paymentData.paymentMethod as PaymentMethod) ?? undefined,
         payerEmail: paymentData.payer?.email,
         payerFirstName: paymentData.payer?.firstName,
         payerLastName: paymentData.payer?.lastName,
@@ -355,7 +384,8 @@ export class PaymentWebhookAdapter {
         payerDocument: paymentData.payer?.document,
         payerCountry: paymentData.payer?.country,
         failureReason: paymentData.rejectedReason,
-        approvedAt: paymentData.approvedAt,
+        approvedAt:
+          newStatus === 'paid' ? (paymentData.approvedAt ?? null) : null,
         failedAt: newStatus === 'failed' ? new Date() : undefined,
         cancelledAt: newStatus === 'cancelled' ? new Date() : undefined,
         expiredAt: newStatus === 'expired' ? new Date() : undefined,
@@ -374,9 +404,21 @@ export class PaymentWebhookAdapter {
     }
 
     // Handle order status based on payment status
-    await this.handleOrderStatusUpdate(order.id, newStatus, paymentData);
+    const idempotencyOutcome = await this.handleOrderStatusUpdate(
+      order.id,
+      newStatus,
+      paymentData,
+    );
 
-    return String(paymentRecord.id);
+    return {
+      paymentId: String(paymentRecord.id),
+      status: String(newStatus),
+      metadata: paymentData.metadata,
+      orderId: order.id,
+      previousPaymentStatus: String(oldStatus),
+      newPaymentStatus: String(newStatus),
+      idempotencyOutcome,
+    };
   }
 
   /**
@@ -389,32 +431,31 @@ export class PaymentWebhookAdapter {
     orderId: string,
     status: string,
     paymentData: NormalizedPaymentData,
-  ): Promise<void> {
+  ): Promise<PaymentUpdateResult['idempotencyOutcome']> {
     switch (status) {
       case 'paid':
-        await this.handleSuccessfulPayment(orderId, paymentData);
-        break;
+        return await this.handleSuccessfulPayment(orderId, paymentData);
 
       case 'failed':
       case 'cancelled':
         await this.handleFailedPayment(orderId, status, paymentData);
-        break;
+        return 'fresh';
 
       case 'expired':
         await this.handleExpiredPayment(orderId, paymentData);
-        break;
+        return 'fresh';
 
       case 'pending':
       case 'processing':
         // Payment is still in progress - order remains 'pending'
         // No order status change needed (order is already 'pending' when created)
         // Payment record has already been updated with latest status
-        logger.info('Payment still in progress, order remains pending', {
+        logger.debug('Payment still in progress, order remains pending', {
           orderId,
           paymentStatus: status,
           paymentId: paymentData.providerPaymentId,
         });
-        break;
+        return 'ignored_in_progress';
 
       default:
         logger.warn('Unknown payment status received', {
@@ -422,6 +463,7 @@ export class PaymentWebhookAdapter {
           paymentStatus: status,
           paymentId: paymentData.providerPaymentId,
         });
+        return 'fresh';
     }
   }
 
@@ -432,16 +474,11 @@ export class PaymentWebhookAdapter {
   private async handleSuccessfulPayment(
     orderId: string,
     paymentData: NormalizedPaymentData,
-  ): Promise<void> {
+  ): Promise<'duplicate_confirmed' | 'fresh'> {
     // Idempotency: skip if order already confirmed (duplicate webhook or retry)
-    const existingOrder =
-      await this.ordersRepository.getByIdWithItems(orderId);
+    const existingOrder = await this.ordersRepository.getByIdWithItems(orderId);
     if (existingOrder?.status === 'confirmed') {
-      logger.info('Order already confirmed, skipping successful payment flow', {
-        orderId,
-        paymentId: paymentData.providerPaymentId,
-      });
-      return;
+      return 'duplicate_confirmed';
     }
 
     let sellerNotifications: SellerNotificationData[] = [];
@@ -477,11 +514,9 @@ export class PaymentWebhookAdapter {
         ...new Set(soldTickets.map(ticket => ticket.listingId)),
       ];
       const soldListings =
-        await ticketListingsRepo.checkAndMarkListingsAsSold(
-          uniqueListingIds,
-        );
+        await ticketListingsRepo.checkAndMarkListingsAsSold(uniqueListingIds);
 
-      logger.info('Order confirmed successfully', {
+      logger.debug('Order confirmed successfully', {
         orderId,
         paymentId: paymentData.providerPaymentId,
         paymentMethod: paymentData.paymentMethod,
@@ -491,10 +526,9 @@ export class PaymentWebhookAdapter {
       });
     });
 
-    const orderWithItems = await this.ordersRepository.getByIdWithItems(
-      orderId,
-    );
-    if (!orderWithItems?.event) return;
+    const orderWithItems =
+      await this.ordersRepository.getByIdWithItems(orderId);
+    if (!orderWithItems?.event) return 'fresh';
 
     getPostHog()?.capture({
       distinctId: orderWithItems.userId,
@@ -519,6 +553,8 @@ export class PaymentWebhookAdapter {
       orderWithItems,
       sellerNotifications,
     );
+
+    return 'fresh';
   }
 
   /**
@@ -568,18 +604,22 @@ export class PaymentWebhookAdapter {
         deferSendToJob: false,
       }),
       ...sellerNotifications.map(seller =>
-        notifySellerTicketSold(this.notificationService, {
-          sellerUserId: seller.sellerUserId,
-          listingId: seller.listingId,
-          eventName: seller.eventName,
-          eventStartDate: seller.eventStartDate,
-          eventEndDate: seller.eventEndDate,
-          eventTimezone: seller.eventTimezone,
-          platform: seller.platform,
-          qrAvailabilityTiming: seller.qrAvailabilityTiming,
-          ticketCount: seller.ticketCount,
-          allDocumentsUploaded: seller.allDocumentsUploaded,
-        }, { channels: ['email'], deferSendToJob: false }),
+        notifySellerTicketSold(
+          this.notificationService,
+          {
+            sellerUserId: seller.sellerUserId,
+            listingId: seller.listingId,
+            eventName: seller.eventName,
+            eventStartDate: seller.eventStartDate,
+            eventEndDate: seller.eventEndDate,
+            eventTimezone: seller.eventTimezone,
+            platform: seller.platform,
+            qrAvailabilityTiming: seller.qrAvailabilityTiming,
+            ticketCount: seller.ticketCount,
+            allDocumentsUploaded: seller.allDocumentsUploaded,
+          },
+          {channels: ['email'], deferSendToJob: false},
+        ),
       ),
     ]).then(results => {
       results.forEach((result, i) => {
@@ -587,7 +627,10 @@ export class PaymentWebhookAdapter {
           logger.error('Instant confirmation email failed', {
             orderId: order.id,
             index: i,
-            error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+            error:
+              result.reason instanceof Error
+                ? result.reason.message
+                : String(result.reason),
           });
         }
       });
@@ -601,10 +644,11 @@ export class PaymentWebhookAdapter {
     sellerNotifications: SellerNotificationData[],
   ): Promise<void> {
     // Avoid duplicate order_confirmed in-app when webhook and sync-on-order-access both run
-    const alreadySent = await this.notificationService.hasOrderConfirmedInAppForOrder(
-      order.userId,
-      order.id,
-    );
+    const alreadySent =
+      await this.notificationService.hasOrderConfirmedInAppForOrder(
+        order.userId,
+        order.id,
+      );
     if (alreadySent) {
       logger.debug('Skipping duplicate order_confirmed in_app', {
         orderId: order.id,
@@ -643,7 +687,7 @@ export class PaymentWebhookAdapter {
             currency: item.currency || undefined,
           })),
       },
-      { channels: ['in_app'] },
+      {channels: ['in_app']},
     ).catch(err => {
       logger.error('Failed to send buyer in_app notification', {
         orderId: order.id,
@@ -666,7 +710,7 @@ export class PaymentWebhookAdapter {
           ticketCount: seller.ticketCount,
           allDocumentsUploaded: seller.allDocumentsUploaded,
         },
-        { channels: ['in_app'] },
+        {channels: ['in_app']},
       ).catch(err => {
         logger.error('Failed to send seller in_app notification', {
           orderId: order.id,
@@ -741,7 +785,7 @@ export class PaymentWebhookAdapter {
         );
       }
 
-      logger.info('Email notification jobs enqueued', { orderId: order.id });
+      logger.info('Email notification jobs enqueued', {orderId: order.id});
     } catch (error) {
       logger.error('Failed to enqueue email notification jobs', {
         orderId: order.id,
@@ -780,9 +824,8 @@ export class PaymentWebhookAdapter {
 
     // Send notification to buyer (outside transaction - fire-and-forget)
     // Get order data with event name for notification
-    const orderWithItems = await this.ordersRepository.getByIdWithItems(
-      orderId,
-    );
+    const orderWithItems =
+      await this.ordersRepository.getByIdWithItems(orderId);
 
     if (orderWithItems && orderWithItems.event) {
       getPostHog()?.capture({
@@ -804,6 +847,7 @@ export class PaymentWebhookAdapter {
         buyerUserId: orderWithItems.userId,
         orderId: orderWithItems.id,
         eventName: orderWithItems.event.name || 'el evento',
+        eventEndDate: orderWithItems.event.eventEndDate ?? null,
         errorMessage: paymentData.rejectedReason,
       }).catch(error => {
         logger.error('Failed to send payment failed notification', {
@@ -843,9 +887,8 @@ export class PaymentWebhookAdapter {
 
     // Send notification to buyer (outside transaction - fire-and-forget)
     // Get order data with event name for notification
-    const orderWithItems = await this.ordersRepository.getByIdWithItems(
-      orderId,
-    );
+    const orderWithItems =
+      await this.ordersRepository.getByIdWithItems(orderId);
 
     if (orderWithItems && orderWithItems.event) {
       getPostHog()?.capture({
@@ -866,6 +909,8 @@ export class PaymentWebhookAdapter {
         buyerUserId: orderWithItems.userId,
         orderId: orderWithItems.id,
         eventName: orderWithItems.event.name || 'el evento',
+        eventEndDate: orderWithItems.event.eventEndDate ?? null,
+        orderCreatedAt: orderWithItems.createdAt,
       }).catch(error => {
         logger.error('Failed to send order expired notification', {
           orderId,

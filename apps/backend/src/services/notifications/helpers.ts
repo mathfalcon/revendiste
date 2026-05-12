@@ -1,7 +1,14 @@
 import {NotificationService, type CreateNotificationParams} from './index';
 import {APP_BASE_URL} from '~/config/env';
 import {NOTIFICATION_BUTTON_LABELS} from '~/constants/error-messages';
-import type {QrAvailabilityTiming, TicketReportCaseType, TicketReportEntityType, TicketReportActionType, TicketReportStatus} from '@revendiste/shared';
+import type {
+  EventTicketCurrency,
+  QrAvailabilityTiming,
+  TicketReportActionType,
+  TicketReportCaseType,
+  TicketReportEntityType,
+  TicketReportStatus,
+} from '@revendiste/shared';
 
 /**
  * Helper functions for creating common notification types
@@ -186,6 +193,12 @@ export async function notifyOrderInvoice(
 
 /**
  * Notify buyer when order expires
+ *
+ * If the order was created more than `skipEmailAfterMinutes` ago (default 60),
+ * we drop the `email` channel and keep `in_app` only. This handles alternative
+ * payment methods (bank transfer, cash) where dLocal can keep the order in
+ * PENDING for up to 72h: the user already moved on and an "expired" email
+ * after they paid by transfer would be confusing.
  */
 export async function notifyOrderExpired(
   service: NotificationService,
@@ -193,18 +206,35 @@ export async function notifyOrderExpired(
     buyerUserId: string;
     orderId: string;
     eventName: string;
+    eventEndDate: Date | string | null;
+    orderCreatedAt?: Date | string | null;
+    skipEmailAfterMinutes?: number;
   },
 ) {
+  const skipEmailAfterMinutes = params.skipEmailAfterMinutes ?? 60;
+  let channels: Array<'in_app' | 'email'> = ['in_app', 'email'];
+  if (params.orderCreatedAt) {
+    const createdAt =
+      params.orderCreatedAt instanceof Date
+        ? params.orderCreatedAt
+        : new Date(params.orderCreatedAt);
+    const elapsedMs = Date.now() - createdAt.getTime();
+    if (elapsedMs > skipEmailAfterMinutes * 60 * 1000) {
+      channels = ['in_app'];
+    }
+  }
+
   return await service.createNotification({
     userId: params.buyerUserId,
     type: 'order_expired',
-    channels: ['in_app', 'email'],
+    channels,
     actions: null, // Order expired notifications have no actions
     metadata: {
       type: 'order_expired',
       orderId: params.orderId,
       eventName: params.eventName,
     },
+    skipIfEventPast: {eventEndDate: params.eventEndDate},
   });
 }
 
@@ -217,6 +247,7 @@ export async function notifyPaymentFailed(
     buyerUserId: string;
     orderId: string;
     eventName: string;
+    eventEndDate: Date | string | null;
     errorMessage?: string;
   },
 ) {
@@ -237,6 +268,7 @@ export async function notifyPaymentFailed(
       eventName: params.eventName,
       errorMessage: params.errorMessage,
     },
+    skipIfEventPast: {eventEndDate: params.eventEndDate},
   });
 }
 
@@ -413,6 +445,7 @@ export async function notifySellerTicketSold(
       platform: params.platform,
       qrAvailabilityTiming: params.qrAvailabilityTiming,
       shouldPromptUpload: shouldPrompt,
+      allDocumentsUploaded: params.allDocumentsUploaded,
     },
     deferSendToJob: options?.deferSendToJob,
     attachmentRefs: options?.attachmentRefs,
@@ -663,6 +696,38 @@ export async function notifyIdentityVerificationManualReview(
  * Notify seller when their earnings are retained due to missing documents
  * Sent via email + in_app (high value - seller needs to know)
  */
+/**
+ * Notify seller when hold period ends and earnings become available to withdraw
+ */
+export async function notifySellerEarningsAvailable(
+  service: NotificationService,
+  params: {
+    sellerUserId: string;
+    lines: Array<{
+      currency: EventTicketCurrency;
+      amount: string;
+      earningCount: number;
+    }>;
+  },
+) {
+  return await service.createNotification({
+    userId: params.sellerUserId,
+    type: 'seller_earnings_available',
+    channels: ['in_app', 'email'],
+    actions: [
+      {
+        type: 'view_earnings',
+        label: NOTIFICATION_BUTTON_LABELS.REQUEST_WITHDRAWAL,
+        url: `${APP_BASE_URL}/cuenta/retiro`,
+      },
+    ],
+    metadata: {
+      type: 'seller_earnings_available',
+      lines: params.lines,
+    },
+  });
+}
+
 export async function notifySellerEarningsRetained(
   service: NotificationService,
   params: {

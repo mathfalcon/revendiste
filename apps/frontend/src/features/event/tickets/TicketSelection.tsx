@@ -6,23 +6,27 @@ import {TicketWaveCard} from './TicketWaveCard';
 import {DesktopSummaryCard} from './DesktopSummaryCard';
 import {MobilePurchaseBar} from './MobilePurchaseBar';
 import {NoTicketsAvailable} from './NoTicketsAvailable';
+import {MyListingsBanner} from './MyListingsBanner';
 import {Link} from '@tanstack/react-router';
 
 interface TicketSelectionProps {
   ticketWaves: GetEventByIdResponse['ticketWaves'];
   eventId: string;
   userListingsCount?: number;
+  userListings?: GetEventByIdResponse['userListings'];
 }
 
 export function TicketSelection({
   ticketWaves,
   eventId,
   userListingsCount,
+  userListings,
 }: TicketSelectionProps) {
   const {
     form,
     ticketSelection,
     totalSelectedTickets,
+    lockedCurrency,
     updateTicketCount,
     onSubmit,
     isLoaded,
@@ -34,6 +38,10 @@ export function TicketSelection({
     ticketWave.priceGroups.some(group => Number(group.availableTickets) > 0),
   );
 
+  const eventHasMultipleCurrencies = new Set(
+    availableTicketWaves.map(w => w.currency),
+  ).size > 1;
+
   if (availableTicketWaves.length === 0) {
     return (
       <NoTicketsAvailable
@@ -43,17 +51,29 @@ export function TicketSelection({
     );
   }
 
+  const hasUserListings = (userListings?.length ?? 0) > 0;
+
   return (
     <>
+      {hasUserListings && userListings && (
+        <MyListingsBanner userListings={userListings} />
+      )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className='flex flex-col gap-6'
         >
           <div className='flex flex-col gap-4'>
-            <div className='flex items-center gap-2'>
-              <Ticket className='w-5 h-5 text-primary' />
-              <h2 className='font-semibold text-lg'>Entradas disponibles</h2>
+            <div className='flex flex-col gap-1'>
+              <div className='flex items-center gap-2'>
+                <Ticket className='w-5 h-5 text-primary' />
+                <h2 className='font-semibold text-lg'>Entradas disponibles</h2>
+              </div>
+              {eventHasMultipleCurrencies && (
+                <p className='text-sm text-muted-foreground pl-7'>
+                  En cada compra solo podés elegir entradas en una moneda.
+                </p>
+              )}
             </div>
             <div className='space-y-3'>
               {availableTicketWaves.map(ticketWave => (
@@ -61,6 +81,7 @@ export function TicketSelection({
                   key={ticketWave.id}
                   mode='form'
                   ticketWave={ticketWave}
+                  lockedCurrency={lockedCurrency}
                   updateTicketCount={updateTicketCount}
                 />
               ))}

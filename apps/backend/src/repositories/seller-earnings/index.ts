@@ -23,6 +23,34 @@ interface EarningsByListing {
   eventStartDate: Date;
 }
 
+/**
+ * Raw SQL EXISTS check for open ticket reports on any reservation linked to
+ * the given listing-ticket column.
+ *
+ * This replaces the previous INNER JOIN on orderTicketReservations which
+ * caused a cartesian product (and inflated sums/counts) when a listing
+ * ticket had multiple reservations.
+ */
+const NO_OPEN_TICKET_REPORT = sql<boolean>`NOT EXISTS (
+  SELECT 1
+  FROM order_ticket_reservations otr_rpt
+  WHERE otr_rpt.listing_ticket_id = seller_earnings.listing_ticket_id
+    AND (
+      EXISTS (
+        SELECT 1 FROM ticket_reports tr
+        WHERE tr.entity_id = otr_rpt.order_id
+          AND tr.entity_type = 'order'
+          AND tr.status != 'closed'
+      )
+      OR EXISTS (
+        SELECT 1 FROM ticket_reports tr
+        WHERE tr.entity_id = otr_rpt.id
+          AND tr.entity_type = 'order_ticket_reservation'
+          AND tr.status != 'closed'
+      )
+    )
+)`;
+
 export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepository> {
   withTransaction(trx: Kysely<DB>): SellerEarningsRepository {
     return new SellerEarningsRepository(trx);
@@ -33,7 +61,6 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
     listingTicketId: string;
     sellerAmount: number;
     currency: EventTicketCurrency;
-    holdUntil: Date;
     status: 'pending';
   }) {
     return await this.db
@@ -131,11 +158,6 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'eventTicketWaves.id',
       )
       .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
-      .innerJoin(
-        'orderTicketReservations',
-        'orderTicketReservations.listingTicketId',
-        'sellerEarnings.listingTicketId',
-      )
       .select(eb => [
         'listings.id as listingId',
         'listings.publisherUserId',
@@ -149,29 +171,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .where('sellerEarnings.status', '=', 'available')
       .where('sellerEarnings.payoutId', 'is', null)
       .where('sellerEarnings.deletedAt', 'is', null)
-      // Exclude earnings with open ticket reports
-      .where(eb =>
-        eb.not(
-          eb.or([
-            eb.exists(
-              eb
-                .selectFrom('ticketReports')
-                .select('ticketReports.id')
-                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.orderId')
-                .where('ticketReports.entityType', '=', 'order')
-                .where('ticketReports.status', '!=', 'closed'),
-            ),
-            eb.exists(
-              eb
-                .selectFrom('ticketReports')
-                .select('ticketReports.id')
-                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.id')
-                .where('ticketReports.entityType', '=', 'order_ticket_reservation')
-                .where('ticketReports.status', '!=', 'closed'),
-            ),
-          ]),
-        ),
-      )
+      .where(NO_OPEN_TICKET_REPORT)
       .groupBy([
         'listings.id',
         'listings.publisherUserId',
@@ -197,17 +197,12 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'eventTicketWaves.id',
       )
       .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
-      .innerJoin(
-        'orderTicketReservations',
-        'orderTicketReservations.listingTicketId',
-        'sellerEarnings.listingTicketId',
-      )
       .select([
         'sellerEarnings.id',
         'sellerEarnings.listingTicketId',
         'sellerEarnings.sellerAmount',
         'sellerEarnings.currency',
-        'sellerEarnings.holdUntil',
+        'events.eventEndDate',
         'listings.id as listingId',
         'listings.publisherUserId',
         'events.name as eventName',
@@ -217,29 +212,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .where('sellerEarnings.status', '=', 'available')
       .where('sellerEarnings.payoutId', 'is', null)
       .where('sellerEarnings.deletedAt', 'is', null)
-      // Exclude earnings with open ticket reports
-      .where(eb =>
-        eb.not(
-          eb.or([
-            eb.exists(
-              eb
-                .selectFrom('ticketReports')
-                .select('ticketReports.id')
-                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.orderId')
-                .where('ticketReports.entityType', '=', 'order')
-                .where('ticketReports.status', '!=', 'closed'),
-            ),
-            eb.exists(
-              eb
-                .selectFrom('ticketReports')
-                .select('ticketReports.id')
-                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.id')
-                .where('ticketReports.entityType', '=', 'order_ticket_reservation')
-                .where('ticketReports.status', '!=', 'closed'),
-            ),
-          ]),
-        ),
-      )
+      .where(NO_OPEN_TICKET_REPORT)
       .orderBy('sellerEarnings.createdAt', 'desc')
       .execute();
   }
@@ -314,11 +287,6 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
   }> {
     let query = this.db
       .selectFrom('sellerEarnings')
-      .innerJoin(
-        'orderTicketReservations',
-        'orderTicketReservations.listingTicketId',
-        'sellerEarnings.listingTicketId',
-      )
       .select([
         'sellerEarnings.id',
         'sellerEarnings.listingTicketId',
@@ -329,29 +297,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .where('sellerEarnings.status', '=', 'available')
       .where('sellerEarnings.payoutId', 'is', null)
       .where('sellerEarnings.deletedAt', 'is', null)
-      // Exclude earnings with open ticket reports
-      .where(eb =>
-        eb.not(
-          eb.or([
-            eb.exists(
-              eb
-                .selectFrom('ticketReports')
-                .select('ticketReports.id')
-                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.orderId')
-                .where('ticketReports.entityType', '=', 'order')
-                .where('ticketReports.status', '!=', 'closed'),
-            ),
-            eb.exists(
-              eb
-                .selectFrom('ticketReports')
-                .select('ticketReports.id')
-                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.id')
-                .where('ticketReports.entityType', '=', 'order_ticket_reservation')
-                .where('ticketReports.status', '!=', 'closed'),
-            ),
-          ]),
-        ),
-      );
+      .where(NO_OPEN_TICKET_REPORT);
 
     if (listingTicketIds && listingTicketIds.length > 0) {
       query = query.where(
@@ -526,15 +472,26 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .execute();
   }
 
-  async getEarningsReadyForRelease(limit: number = 100) {
+  async getEarningsReadyForRelease(
+    holdPeriodHours: number,
+    limit: number = 100,
+  ) {
     const now = new Date();
+
     return await this.db
       .selectFrom('sellerEarnings')
       .innerJoin(
-        'orderTicketReservations',
-        'orderTicketReservations.listingTicketId',
+        'listingTickets',
+        'listingTickets.id',
         'sellerEarnings.listingTicketId',
       )
+      .innerJoin('listings', 'listings.id', 'listingTickets.listingId')
+      .innerJoin(
+        'eventTicketWaves',
+        'eventTicketWaves.id',
+        'listings.ticketWaveId',
+      )
+      .innerJoin('events', 'events.id', 'eventTicketWaves.eventId')
       .select([
         'sellerEarnings.id',
         'sellerEarnings.sellerUserId',
@@ -542,36 +499,18 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'sellerEarnings.sellerAmount',
         'sellerEarnings.currency',
         'sellerEarnings.status',
-        'sellerEarnings.holdUntil',
-        'orderTicketReservations.orderId',
       ])
-      // Skip earnings with an open ticket report (on the order or the specific reservation)
-      .where(eb =>
-        eb.not(
-          eb.or([
-            eb.exists(
-              eb
-                .selectFrom('ticketReports')
-                .select('ticketReports.id')
-                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.orderId')
-                .where('ticketReports.entityType', '=', 'order')
-                .where('ticketReports.status', '!=', 'closed'),
-            ),
-            eb.exists(
-              eb
-                .selectFrom('ticketReports')
-                .select('ticketReports.id')
-                .whereRef('ticketReports.entityId', '=', 'orderTicketReservations.id')
-                .where('ticketReports.entityType', '=', 'order_ticket_reservation')
-                .where('ticketReports.status', '!=', 'closed'),
-            ),
-          ]),
-        ),
+      .where(NO_OPEN_TICKET_REPORT)
+      .where(
+        sql<boolean>`events.event_end_date + (${sql.lit(holdPeriodHours)} * interval '1 hour') <= ${now}`,
       )
-      .where('sellerEarnings.holdUntil', '<=', now)
       .where('sellerEarnings.status', '=', 'pending')
       .where('sellerEarnings.deletedAt', 'is', null)
-      .orderBy('sellerEarnings.holdUntil', 'asc')
+      .where('listingTickets.deletedAt', 'is', null)
+      .orderBy(
+        sql`events.event_end_date + (${sql.lit(holdPeriodHours)} * interval '1 hour')`,
+        'asc',
+      )
       .limit(limit)
       .execute();
   }
@@ -700,7 +639,6 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       listingTicketId: earning.listingTicketId,
       sellerAmount: earning.sellerAmount,
       currency: earning.currency,
-      holdUntil: earning.holdUntil,
       status: 'available' as const,
       payoutId: null,
       createdAt: now,
@@ -786,52 +724,65 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
 
     return await this.db
       .selectFrom('sellerEarnings')
-      .innerJoin(
-        'listingTickets',
-        'listingTickets.id',
-        'sellerEarnings.listingTicketId',
+      .innerJoin('listingTickets', join =>
+        join.onRef('listingTickets.id', '=', 'sellerEarnings.listingTicketId'),
       )
-      .innerJoin('listings', 'listings.id', 'listingTickets.listingId')
-      .innerJoin(
-        'eventTicketWaves',
-        'eventTicketWaves.id',
-        'listings.ticketWaveId',
+      .innerJoin('listings', join =>
+        join.onRef('listings.id', '=', 'listingTickets.listingId'),
       )
-      .innerJoin('events', 'events.id', 'eventTicketWaves.eventId')
-      .innerJoin(
-        'orderTicketReservations',
-        'orderTicketReservations.listingTicketId',
-        'listingTickets.id',
+      .innerJoin('eventTicketWaves', join =>
+        join.onRef('eventTicketWaves.id', '=', 'listings.ticketWaveId'),
       )
-      .innerJoin('orders', 'orders.id', 'orderTicketReservations.orderId')
+      .innerJoin('events', join =>
+        join.onRef('events.id', '=', 'eventTicketWaves.eventId'),
+      )
+      .innerJoin('orderTicketReservations', join =>
+        join
+          .onRef(
+            'orderTicketReservations.listingTicketId',
+            '=',
+            'listingTickets.id',
+          )
+          .on('orderTicketReservations.status', '=', 'active'),
+      )
+      .innerJoin('orders', join =>
+        join
+          .onRef('orders.id', '=', 'orderTicketReservations.orderId')
+          .on('orders.status', '=', 'confirmed'),
+      )
       .leftJoin('ticketDocuments', join =>
         join
           .onRef('ticketDocuments.ticketId', '=', 'listingTickets.id')
           .on('ticketDocuments.isPrimary', '=', true)
           .on('ticketDocuments.deletedAt', 'is', null),
       )
-      .select([
-        'sellerEarnings.id as earningsId',
-        'sellerEarnings.sellerUserId',
-        'listingTickets.id as ticketId',
-        'orderTicketReservations.id as reservationId',
-        'orderTicketReservations.orderId',
-        'orders.userId as buyerUserId',
-        'events.name as eventName',
-      ])
       .where('events.eventEndDate', '<=', now)
-      .where('ticketDocuments.id', 'is', null) // No document uploaded
-      .where('orderTicketReservations.status', '=', 'active') // Not already processed
-      .where('sellerEarnings.status', '=', 'pending') // Not already retained
+      .where('ticketDocuments.id', 'is', null)
+      .where('sellerEarnings.status', '=', 'pending')
       .where('sellerEarnings.deletedAt', 'is', null)
       .where('listingTickets.deletedAt', 'is', null)
-      .where('orders.status', '=', 'confirmed') // Only confirmed orders
+      .distinctOn('sellerEarnings.id')
+      .select(eb => [
+        eb.ref('sellerEarnings.id').as('earningsId'),
+        eb.ref('sellerEarnings.sellerUserId').as('sellerUserId'),
+        eb.ref('listingTickets.id').as('ticketId'),
+        eb.ref('orderTicketReservations.id').as('reservationId'),
+        eb.ref('orderTicketReservations.orderId').as('orderId'),
+        eb.ref('orders.userId').as('buyerUserId'),
+        eb.ref('events.name').as('eventName'),
+      ])
+      // DISTINCT ON requires ORDER BY to start with the same columns; tie-break
+      // so multiple active reservations for one ticket pick a stable row.
+      .orderBy('sellerEarnings.id')
+      .orderBy('orderTicketReservations.id')
       .limit(limit)
       .execute();
   }
 
   /**
    * Seller earnings for all tickets in the given orders (settlement breakdown / reconciliation).
+   * DISTINCT ON keeps one row per earning when a listing ticket has multiple reservations
+   * tied to the queried orders.
    */
   async getSellerEarningsForOrderIds(orderIds: string[]) {
     if (orderIds.length === 0) {
@@ -840,21 +791,27 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
 
     return await this.db
       .selectFrom('sellerEarnings')
-      .innerJoin(
-        'orderTicketReservations',
-        'orderTicketReservations.listingTicketId',
-        'sellerEarnings.listingTicketId',
+      .innerJoin('orderTicketReservations', join =>
+        join
+          .onRef(
+            'orderTicketReservations.listingTicketId',
+            '=',
+            'sellerEarnings.listingTicketId',
+          )
+          .on('orderTicketReservations.orderId', 'in', orderIds),
       )
-      .select([
+      .where('sellerEarnings.deletedAt', 'is', null)
+      .distinctOn('sellerEarnings.id')
+      .select(eb => [
         'sellerEarnings.id',
         'sellerEarnings.sellerAmount',
         'sellerEarnings.sellerUserId',
         'sellerEarnings.status',
         'sellerEarnings.currency',
-        'orderTicketReservations.orderId',
+        'sellerEarnings.payoutId',
+        eb.ref('orderTicketReservations.orderId').as('orderId'),
       ])
-      .where('orderTicketReservations.orderId', 'in', orderIds)
-      .where('sellerEarnings.deletedAt', 'is', null)
+      .orderBy('sellerEarnings.id')
       .execute();
   }
 }

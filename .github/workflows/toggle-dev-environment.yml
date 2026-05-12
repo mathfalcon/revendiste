@@ -17,6 +17,9 @@ env:
   BACKEND_SERVICE: revendiste-dev-backend
   FRONTEND_SERVICE: revendiste-dev-frontend
   RDS_INSTANCE: revendiste-dev-postgres
+  ALB_NAME: revendiste-dev-alb
+  TFC_ORG: revendiste
+  TFC_WORKSPACE: revendiste-development
   EVENTBRIDGE_RULES: >-
     revendiste-dev-sync-payments
     revendiste-dev-notify-upload
@@ -68,9 +71,39 @@ jobs:
             echo "  Disabled: $RULE"
           done
 
+      - name: Stop — delete dev ALB
+        if: github.event.inputs.action == 'Stop'
+        run: |
+          echo "=== Deleting dev ALB to save ~\$22/mo ==="
+
+          ALB_ARN=$(aws elbv2 describe-load-balancers \
+            --names $ALB_NAME \
+            --region $AWS_REGION \
+            --query 'LoadBalancers[0].LoadBalancerArn' \
+            --output text 2>/dev/null || echo "None")
+
+          if [ -z "$ALB_ARN" ] || [ "$ALB_ARN" = "None" ]; then
+            echo "Dev ALB not found — already deleted."
+          else
+            echo "Found ALB: $ALB_ARN"
+
+            # Disable deletion protection (no-op if already disabled in dev)
+            aws elbv2 modify-load-balancer-attributes \
+              --load-balancer-arn "$ALB_ARN" \
+              --attributes Key=deletion_protection.enabled,Value=false \
+              --region $AWS_REGION \
+              --no-cli-pager > /dev/null
+
+            aws elbv2 delete-load-balancer \
+              --load-balancer-arn "$ALB_ARN" \
+              --region $AWS_REGION \
+              --no-cli-pager
+            echo "Dev ALB deletion initiated."
+          fi
+
           echo "=== Dev environment stopped ==="
 
-      - name: Start dev environment
+      - name: Start — start RDS instance
         if: github.event.inputs.action == 'Start'
         run: |
           echo "=== Starting dev environment ==="
@@ -87,6 +120,110 @@ jobs:
             --region $AWS_REGION
           echo "RDS is available!"
 
+      - name: Start — recreate dev ALB via Terraform Cloud
+        if: github.event.inputs.action == 'Start'
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+        run: |
+          echo "=== Checking if dev ALB needs to be recreated ==="
+
+          ALB_EXISTS=$(aws elbv2 describe-load-balancers \
+            --names $ALB_NAME \
+            --region $AWS_REGION \
+            --query 'LoadBalancers[0].LoadBalancerArn' \
+            --output text 2>/dev/null || echo "None")
+
+          if [ -n "$ALB_EXISTS" ] && [ "$ALB_EXISTS" != "None" ]; then
+            echo "Dev ALB already exists ($ALB_EXISTS) — skipping Terraform apply."
+            exit 0
+          fi
+
+          if [ -z "$TF_API_TOKEN" ]; then
+            echo "::error::TF_API_TOKEN secret is not set in the development environment. Cannot recreate dev ALB. Add a Terraform Cloud team or user API token with apply permission on the ${TFC_WORKSPACE} workspace."
+            exit 1
+          fi
+
+          echo "=== Triggering targeted Terraform Cloud apply for module.alb + module.cloudflare_dns ==="
+
+          # 1. Resolve workspace ID from name
+          WORKSPACE_ID=$(curl -s \
+            --header "Authorization: Bearer ${TF_API_TOKEN}" \
+            --header "Content-Type: application/vnd.api+json" \
+            "https://app.terraform.io/api/v2/organizations/${TFC_ORG}/workspaces/${TFC_WORKSPACE}" \
+            | jq -r '.data.id')
+
+          if [ -z "$WORKSPACE_ID" ] || [ "$WORKSPACE_ID" = "null" ]; then
+            echo "::error::Could not resolve TFC workspace ID for ${TFC_ORG}/${TFC_WORKSPACE}. Check TF_API_TOKEN permissions."
+            exit 1
+          fi
+          echo "Workspace ID: $WORKSPACE_ID"
+
+          # 2. Create a targeted run (-target=module.alb -target=module.cloudflare_dns)
+          RUN_PAYLOAD=$(jq -n \
+            --arg ws "$WORKSPACE_ID" \
+            '{
+              data: {
+                attributes: {
+                  message: "Auto: recreate dev ALB after toggle-dev-environment Stop",
+                  "auto-apply": true,
+                  "target-addrs": ["module.alb", "module.cloudflare_dns"]
+                },
+                type: "runs",
+                relationships: {
+                  workspace: {
+                    data: { type: "workspaces", id: $ws }
+                  }
+                }
+              }
+            }')
+
+          RUN_RESPONSE=$(curl -s \
+            --header "Authorization: Bearer ${TF_API_TOKEN}" \
+            --header "Content-Type: application/vnd.api+json" \
+            --request POST \
+            --data "$RUN_PAYLOAD" \
+            "https://app.terraform.io/api/v2/runs")
+
+          RUN_ID=$(echo "$RUN_RESPONSE" | jq -r '.data.id')
+
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo "::error::Failed to create TFC run. Response:"
+            echo "$RUN_RESPONSE" | jq .
+            exit 1
+          fi
+
+          echo "Created run: $RUN_ID"
+          echo "URL: https://app.terraform.io/app/${TFC_ORG}/workspaces/${TFC_WORKSPACE}/runs/${RUN_ID}"
+
+          # 3. Poll until applied or errored (max ~10 min)
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s \
+              --header "Authorization: Bearer ${TF_API_TOKEN}" \
+              "https://app.terraform.io/api/v2/runs/${RUN_ID}" \
+              | jq -r '.data.attributes.status')
+
+            case "$STATUS" in
+              applied)
+                echo "Run completed successfully (applied)."
+                exit 0
+                ;;
+              errored|canceled|discarded|force_canceled)
+                echo "::error::Run ended with status: $STATUS. Check the run URL above for details."
+                exit 1
+                ;;
+              *)
+                echo "  [$i/60] Status: $STATUS — waiting 10s..."
+                sleep 10
+                ;;
+            esac
+          done
+
+          echo "::error::Run did not complete within 10 minutes. Last status: $STATUS"
+          exit 1
+
+      - name: Start — enable cronjobs and scale ECS
+        if: github.event.inputs.action == 'Start'
+        run: |
           echo "Enabling EventBridge cronjob rules..."
           for RULE in $EVENTBRIDGE_RULES; do
             aws events enable-rule --name "$RULE" --region $AWS_REGION

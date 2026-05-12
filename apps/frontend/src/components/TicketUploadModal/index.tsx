@@ -1,6 +1,6 @@
 import {useState, useEffect, useCallback, useRef} from 'react';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
-import {usePostHog} from 'posthog-js/react';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {
   Dialog,
   DialogContent,
@@ -63,8 +63,6 @@ export function TicketUploadModal({
   );
   const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
-  const posthog = usePostHog();
-
   // Use captured tickets for the session (stable reference)
   const uploadableTickets = capturedTickets;
   const initialTotal = capturedTickets.length;
@@ -122,7 +120,7 @@ export function TicketUploadModal({
   const handleMutationSuccess = useCallback(() => {
     if (!currentTicket) return;
 
-    posthog.capture('ticket_document_uploaded', {
+    trackEvent(ANALYTICS_EVENTS.TICKET_DOCUMENT_UPLOADED, {
       ticket_id: currentTicket.id,
       is_update: currentTicket.hasDocument,
       is_batch: isBatchMode,
@@ -194,7 +192,6 @@ export function TicketUploadModal({
     currentIndex,
     queryClient,
     onOpenChange,
-    posthog,
   ]);
 
   const uploadMutation = useMutation({

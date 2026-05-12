@@ -45,12 +45,14 @@ interface CancelPayoutDialogProps {
   payoutId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCancelled?: () => void;
 }
 
 export function CancelPayoutDialog({
   payoutId,
   open,
   onOpenChange,
+  onCancelled,
 }: CancelPayoutDialogProps) {
   const queryClient = useQueryClient();
 
@@ -69,9 +71,11 @@ export function CancelPayoutDialog({
     ...cancelPayoutMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['admin', 'payouts']});
+      queryClient.invalidateQueries({queryKey: ['admin', 'payouts', payoutId]});
       toast.success('Retiro cancelado');
       form.reset();
       onOpenChange(false);
+      onCancelled?.();
     },
     onError: (error: any) => {
       toast.error(

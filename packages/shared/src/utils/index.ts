@@ -6,3 +6,4 @@ export * from './notification-text';
 export * from './upload-window';
 export * from './pricing';
 export * from './timezone';
+export * from './uruguayan-banks';

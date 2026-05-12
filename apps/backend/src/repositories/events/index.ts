@@ -1,5 +1,10 @@
 import {type Kysely, type Updateable, type Insertable} from 'kysely';
-import type {DB, EventImageType, Events} from '@revendiste/shared';
+import type {
+  DB,
+  EventImageType,
+  Events,
+  EventTicketCurrency,
+} from '@revendiste/shared';
 import type {ScrapedEventData} from '../../services/scraping';
 import {logger} from '~/utils';
 import {jsonArrayFrom} from 'kysely/helpers/postgres';
@@ -169,7 +174,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         const result = await this.upsertScrapedEvent(event);
         results.push(result);
       } catch (error) {
-        console.log(error);
         // Log error but continue processing other events
         logger.error(`Failed to upsert event ${event.externalId}:`, error);
       }
@@ -231,13 +235,15 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       (filters?.lat != null && filters?.lng != null);
     // tzOffset from browser: minutes from UTC (e.g. 180 for UTC-3). Convert to hours. Default to UTC-3 (Uruguay).
     const tzOffsetHours = filters?.tzOffset != null ? filters.tzOffset / 60 : 3;
+    const now = new Date();
 
     // Get total count
     let countQuery = this.db
       .selectFrom('events')
       .select(this.db.fn.count('events.id').as('total'))
       .where('events.deletedAt', 'is', null)
-      .where('events.status', '=', 'active');
+      .where('events.status', '=', 'active')
+      .where('events.eventEndDate', '>', now);
 
     // Join venues and apply location filters to count query
     if (hasLocationFilter) {
@@ -311,15 +317,18 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
           SELECT 1 FROM listing_tickets
           INNER JOIN listings ON listings.id = listing_tickets.listing_id
           INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-          LEFT JOIN order_ticket_reservations ON
-            order_ticket_reservations.listing_ticket_id = listing_tickets.id
-            AND order_ticket_reservations.deleted_at IS NULL
-            AND order_ticket_reservations.reserved_until > NOW()
           WHERE event_ticket_waves.event_id = events.id
             AND listing_tickets.sold_at IS NULL
             AND listing_tickets.deleted_at IS NULL
             AND listings.deleted_at IS NULL
-            AND order_ticket_reservations.id IS NULL
+            AND NOT EXISTS (
+              SELECT 1 FROM order_ticket_reservations otr
+              INNER JOIN orders o ON o.id = otr.order_id
+                AND o.status = 'pending'
+                AND o.deleted_at IS NULL
+              WHERE otr.listing_ticket_id = listing_tickets.id
+                AND otr.deleted_at IS NULL
+            )
             ${userId ? sql`AND listings.publisher_user_id != ${userId}` : sql``}
         )`,
       );
@@ -355,15 +364,18 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                 FROM listing_tickets
                 INNER JOIN listings ON listings.id = listing_tickets.listing_id
                 INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-                LEFT JOIN order_ticket_reservations ON 
-                  order_ticket_reservations.listing_ticket_id = listing_tickets.id
-                  AND order_ticket_reservations.deleted_at IS NULL
-                  AND order_ticket_reservations.reserved_until > NOW()
                 WHERE event_ticket_waves.event_id = events.id
                   AND listing_tickets.sold_at IS NULL
                   AND listing_tickets.deleted_at IS NULL
                   AND listings.deleted_at IS NULL
-                  AND order_ticket_reservations.id IS NULL
+                  AND NOT EXISTS (
+                    SELECT 1 FROM order_ticket_reservations otr
+                    INNER JOIN orders o ON o.id = otr.order_id
+                      AND o.status = 'pending'
+                      AND o.deleted_at IS NULL
+                    WHERE otr.listing_ticket_id = listing_tickets.id
+                      AND otr.deleted_at IS NULL
+                  )
                   AND listings.publisher_user_id != ${userId}
                 ORDER BY listing_tickets.price ASC
                 LIMIT 1
@@ -375,15 +387,18 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                 FROM listing_tickets
                 INNER JOIN listings ON listings.id = listing_tickets.listing_id
                 INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-                LEFT JOIN order_ticket_reservations ON 
-                  order_ticket_reservations.listing_ticket_id = listing_tickets.id
-                  AND order_ticket_reservations.deleted_at IS NULL
-                  AND order_ticket_reservations.reserved_until > NOW()
                 WHERE event_ticket_waves.event_id = events.id
                   AND listing_tickets.sold_at IS NULL
                   AND listing_tickets.deleted_at IS NULL
                   AND listings.deleted_at IS NULL
-                  AND order_ticket_reservations.id IS NULL
+                  AND NOT EXISTS (
+                    SELECT 1 FROM order_ticket_reservations otr
+                    INNER JOIN orders o ON o.id = otr.order_id
+                      AND o.status = 'pending'
+                      AND o.deleted_at IS NULL
+                    WHERE otr.listing_ticket_id = listing_tickets.id
+                      AND otr.deleted_at IS NULL
+                  )
                 ORDER BY listing_tickets.price ASC
                 LIMIT 1
               )
@@ -396,15 +411,18 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                 FROM listing_tickets
                 INNER JOIN listings ON listings.id = listing_tickets.listing_id
                 INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-                LEFT JOIN order_ticket_reservations ON 
-                  order_ticket_reservations.listing_ticket_id = listing_tickets.id
-                  AND order_ticket_reservations.deleted_at IS NULL
-                  AND order_ticket_reservations.reserved_until > NOW()
                 WHERE event_ticket_waves.event_id = events.id
                   AND listing_tickets.sold_at IS NULL
                   AND listing_tickets.deleted_at IS NULL
                   AND listings.deleted_at IS NULL
-                  AND order_ticket_reservations.id IS NULL
+                  AND NOT EXISTS (
+                    SELECT 1 FROM order_ticket_reservations otr
+                    INNER JOIN orders o ON o.id = otr.order_id
+                      AND o.status = 'pending'
+                      AND o.deleted_at IS NULL
+                    WHERE otr.listing_ticket_id = listing_tickets.id
+                      AND otr.deleted_at IS NULL
+                  )
                   AND listings.publisher_user_id != ${userId}
                 ORDER BY listing_tickets.price ASC
                 LIMIT 1
@@ -416,15 +434,18 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                 FROM listing_tickets
                 INNER JOIN listings ON listings.id = listing_tickets.listing_id
                 INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-                LEFT JOIN order_ticket_reservations ON 
-                  order_ticket_reservations.listing_ticket_id = listing_tickets.id
-                  AND order_ticket_reservations.deleted_at IS NULL
-                  AND order_ticket_reservations.reserved_until > NOW()
                 WHERE event_ticket_waves.event_id = events.id
                   AND listing_tickets.sold_at IS NULL
                   AND listing_tickets.deleted_at IS NULL
                   AND listings.deleted_at IS NULL
-                  AND order_ticket_reservations.id IS NULL
+                  AND NOT EXISTS (
+                    SELECT 1 FROM order_ticket_reservations otr
+                    INNER JOIN orders o ON o.id = otr.order_id
+                      AND o.status = 'pending'
+                      AND o.deleted_at IS NULL
+                    WHERE otr.listing_ticket_id = listing_tickets.id
+                      AND otr.deleted_at IS NULL
+                  )
                 ORDER BY listing_tickets.price ASC
                 LIMIT 1
               )
@@ -444,6 +465,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       ])
       .where('events.deletedAt', 'is', null)
       .where('events.status', '=', 'active')
+      .where('events.eventEndDate', '>', now)
       .$if(!!filters?.city, qb =>
         qb.where('eventVenues.city', '=', filters!.city!),
       )
@@ -507,15 +529,18 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             SELECT 1 FROM listing_tickets
             INNER JOIN listings ON listings.id = listing_tickets.listing_id
             INNER JOIN event_ticket_waves ON event_ticket_waves.id = listings.ticket_wave_id
-            LEFT JOIN order_ticket_reservations ON
-              order_ticket_reservations.listing_ticket_id = listing_tickets.id
-              AND order_ticket_reservations.deleted_at IS NULL
-              AND order_ticket_reservations.reserved_until > NOW()
             WHERE event_ticket_waves.event_id = events.id
               AND listing_tickets.sold_at IS NULL
               AND listing_tickets.deleted_at IS NULL
               AND listings.deleted_at IS NULL
-              AND order_ticket_reservations.id IS NULL
+              AND NOT EXISTS (
+                SELECT 1 FROM order_ticket_reservations otr
+                INNER JOIN orders o ON o.id = otr.order_id
+                  AND o.status = 'pending'
+                  AND o.deleted_at IS NULL
+                WHERE otr.listing_ticket_id = listing_tickets.id
+                  AND otr.deleted_at IS NULL
+              )
               ${userId ? sql`AND listings.publisher_user_id != ${userId}` : sql``}
           )`,
         ),
@@ -775,6 +800,92 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
             .whereRef('eventImages.eventId', '=', 'events.id')
             .orderBy('eventImages.displayOrder'),
         ).as('eventImages'),
+        // Current user's active listings for this event with summary info
+        // (used to show a contextual disclaimer when seller views their own event)
+        userId
+          ? jsonArrayFrom(
+              eb
+                .selectFrom('listings')
+                .innerJoin(
+                  'eventTicketWaves',
+                  'eventTicketWaves.id',
+                  'listings.ticketWaveId',
+                )
+                .select(eb2 => [
+                  'listings.id',
+                  'eventTicketWaves.name as ticketWaveName',
+                  'eventTicketWaves.currency',
+                  // Count of available tickets (not sold, not deleted, not reserved by pending order)
+                  eb2
+                    .selectFrom('listingTickets')
+                    .select(eb3 =>
+                      eb3.fn.count('listingTickets.id').as('count'),
+                    )
+                    .whereRef('listingTickets.listingId', '=', 'listings.id')
+                    .where('listingTickets.soldAt', 'is', null)
+                    .where('listingTickets.deletedAt', 'is', null)
+                    .where(eb3 =>
+                      eb3.not(
+                        eb3.exists(
+                          eb3
+                            .selectFrom('orderTicketReservations')
+                            .innerJoin(
+                              'orders',
+                              'orders.id',
+                              'orderTicketReservations.orderId',
+                            )
+                            .whereRef(
+                              'orderTicketReservations.listingTicketId',
+                              '=',
+                              'listingTickets.id',
+                            )
+                            .where(
+                              'orderTicketReservations.deletedAt',
+                              'is',
+                              null,
+                            )
+                            .where('orders.status', '=', 'pending')
+                            .where('orders.deletedAt', 'is', null),
+                        ),
+                      ),
+                    )
+                    .as('availableTicketCount'),
+                  eb2
+                    .selectFrom('listingTickets')
+                    .select(eb3 =>
+                      eb3.fn.min('listingTickets.price').as('min'),
+                    )
+                    .whereRef('listingTickets.listingId', '=', 'listings.id')
+                    .where('listingTickets.soldAt', 'is', null)
+                    .where('listingTickets.deletedAt', 'is', null)
+                    .as('minPrice'),
+                  eb2
+                    .selectFrom('listingTickets')
+                    .select(eb3 =>
+                      eb3.fn.max('listingTickets.price').as('max'),
+                    )
+                    .whereRef('listingTickets.listingId', '=', 'listings.id')
+                    .where('listingTickets.soldAt', 'is', null)
+                    .where('listingTickets.deletedAt', 'is', null)
+                    .as('maxPrice'),
+                ])
+                .where('listings.publisherUserId', '=', userId)
+                .where('listings.deletedAt', 'is', null)
+                .whereRef('eventTicketWaves.eventId', '=', 'events.id')
+                .orderBy('listings.createdAt', 'desc'),
+            )
+              .$notNull()
+              .as('userListings')
+          : sql<
+              Array<{
+                id: string;
+                ticketWaveName: string;
+                currency: EventTicketCurrency;
+                availableTicketCount: string | number;
+                minPrice: string | null;
+                maxPrice: string | null;
+              }>
+            >`'[]'::json`.as('userListings'),
         jsonArrayFrom(
           eb
             .selectFrom('eventTicketWaves')
@@ -792,19 +903,30 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                     'listings.id',
                     'listingTickets.listingId',
                   )
-                  .leftJoin('orderTicketReservations', join =>
-                    join
-                      .onRef(
-                        'orderTicketReservations.listingTicketId',
-                        '=',
-                        'listingTickets.id',
-                      )
-                      .on('orderTicketReservations.deletedAt', 'is', null)
-                      .on(
-                        'orderTicketReservations.reservedUntil',
-                        '>',
-                        new Date(),
+                  .where(eb =>
+                    eb.not(
+                      eb.exists(
+                        eb
+                          .selectFrom('orderTicketReservations')
+                          .innerJoin(
+                            'orders',
+                            'orders.id',
+                            'orderTicketReservations.orderId',
+                          )
+                          .whereRef(
+                            'orderTicketReservations.listingTicketId',
+                            '=',
+                            'listingTickets.id',
+                          )
+                          .where(
+                            'orderTicketReservations.deletedAt',
+                            'is',
+                            null,
+                          )
+                          .where('orders.status', '=', 'pending')
+                          .where('orders.deletedAt', 'is', null),
                       ),
+                    ),
                   )
                   .select(eb => [
                     'listingTickets.price',
@@ -813,7 +935,6 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
                   .where('listingTickets.soldAt', 'is', null)
                   .where('listingTickets.deletedAt', 'is', null)
                   .where('listings.deletedAt', 'is', null)
-                  .where('orderTicketReservations.id', 'is', null) // Not reserved
                   .$if(!!userId, eb =>
                     eb.where('listings.publisherUserId', '!=', userId!),
                   )

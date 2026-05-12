@@ -5,7 +5,9 @@ import {
   shouldSendDocumentReminder,
   parseQrAvailabilityTiming,
   calculateHoursUntilEvent,
+  getDocumentReminderMilestoneDiagnostics,
 } from '~/utils/document-reminder';
+import {logger} from '~/utils';
 
 export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepository> {
   withTransaction(trx: Kysely<DB>): ListingTicketsRepository {
@@ -20,15 +22,26 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
     return await this.db
       .selectFrom('listingTickets')
       .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
-      .leftJoin('orderTicketReservations', join =>
-        join
-          .onRef(
-            'orderTicketReservations.listingTicketId',
-            '=',
-            'listingTickets.id',
-          )
-          .on('orderTicketReservations.deletedAt', 'is', null)
-          .on('orderTicketReservations.reservedUntil', '>', new Date()),
+      .where(eb =>
+        eb.not(
+          eb.exists(
+            eb
+              .selectFrom('orderTicketReservations')
+              .innerJoin(
+                'orders',
+                'orders.id',
+                'orderTicketReservations.orderId',
+              )
+              .whereRef(
+                'orderTicketReservations.listingTicketId',
+                '=',
+                'listingTickets.id',
+              )
+              .where('orderTicketReservations.deletedAt', 'is', null)
+              .where('orders.status', '=', 'pending')
+              .where('orders.deletedAt', 'is', null),
+          ),
+        ),
       )
       .select([
         'listingTickets.id',
@@ -41,7 +54,6 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('listingTickets.soldAt', 'is', null)
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
-      .where('orderTicketReservations.id', 'is', null) // Not reserved
       .orderBy('listingTickets.updatedAt', 'asc')
       .limit(quantity)
       .execute();
@@ -61,15 +73,26 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
     return await this.db
       .selectFrom('listingTickets')
       .innerJoin('listings', 'listingTickets.listingId', 'listings.id')
-      .leftJoin('orderTicketReservations', join =>
-        join
-          .onRef(
-            'orderTicketReservations.listingTicketId',
-            '=',
-            'listingTickets.id',
-          )
-          .on('orderTicketReservations.deletedAt', 'is', null)
-          .on('orderTicketReservations.reservedUntil', '>', new Date()),
+      .where(eb =>
+        eb.not(
+          eb.exists(
+            eb
+              .selectFrom('orderTicketReservations')
+              .innerJoin(
+                'orders',
+                'orders.id',
+                'orderTicketReservations.orderId',
+              )
+              .whereRef(
+                'orderTicketReservations.listingTicketId',
+                '=',
+                'listingTickets.id',
+              )
+              .where('orderTicketReservations.deletedAt', 'is', null)
+              .where('orders.status', '=', 'pending')
+              .where('orders.deletedAt', 'is', null),
+          ),
+        ),
       )
       .select([
         'listingTickets.id',
@@ -82,7 +105,6 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('listingTickets.soldAt', 'is', null)
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
-      .where('orderTicketReservations.id', 'is', null)
       .orderBy('listingTickets.updatedAt', 'asc')
       .limit(quantity)
       .forUpdate('listingTickets')
@@ -171,21 +193,31 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
   async getTicketWithReservationStatus(ticketId: string) {
     return await this.db
       .selectFrom('listingTickets')
-      .leftJoin('orderTicketReservations', join =>
-        join
-          .onRef(
-            'orderTicketReservations.listingTicketId',
+      .leftJoin(
+        eb =>
+          eb
+            .selectFrom('orderTicketReservations')
+            .innerJoin('orders', 'orders.id', 'orderTicketReservations.orderId')
+            .where('orderTicketReservations.deletedAt', 'is', null)
+            .where('orders.status', '=', 'pending')
+            .where('orders.deletedAt', 'is', null)
+            .select([
+              'orderTicketReservations.id',
+              'orderTicketReservations.listingTicketId',
+            ])
+            .as('activeReservation'),
+        join =>
+          join.onRef(
+            'activeReservation.listingTicketId',
             '=',
             'listingTickets.id',
-          )
-          .on('orderTicketReservations.deletedAt', 'is', null)
-          .on('orderTicketReservations.reservedUntil', '>', new Date()),
+          ),
       )
       .select([
         'listingTickets.id',
         'listingTickets.soldAt',
         'listingTickets.deletedAt',
-        'orderTicketReservations.id as reservationId',
+        'activeReservation.id as reservationId',
       ])
       .where('listingTickets.id', '=', ticketId)
       .executeTakeFirst();
@@ -249,12 +281,15 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
   }
 
   /**
-   * Get sold tickets that need document upload reminders.
+   * Get listing tickets that need document upload reminders (sold or not).
    *
    * Returns tickets that:
-   * - Are sold and don't have documents yet
+   * - Belong to a non-deleted listing and have no primary ticket document yet
    * - Event hasn't started yet
    * - Are at a milestone time (72h, 48h, 24h, 12h, 6h, 3h, 2h, 1h ±30min before event)
+   *
+   * Unsold tickets are included so sellers are nudged to upload before sale, consistent
+   * with listing flows that require upload when already inside the upload window.
    *
    * For events WITH qrAvailabilityTiming:
    * - Only include if we're within the QR availability window (milestone <= qrAvailabilityHours)
@@ -290,7 +325,6 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
         'events.qrAvailabilityTiming',
         'eventVenues.country as venueCountry',
       ])
-      .where('listingTickets.soldAt', 'is not', null) // Sold tickets only
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
       .where('ticketDocuments.id', 'is', null) // No documents yet
@@ -298,8 +332,30 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('events.eventStartDate', '>', now) // Event hasn't started yet
       .execute()
       .then(tickets => {
-        // Filter tickets that are at milestone times using utility functions
-        return tickets.filter(ticket => {
+        const job = 'notify-upload-availability';
+        logger.info(
+          `${job}: DB query returned candidate rows (no primary doc, future event; sold or unsold)`,
+          {
+            nowIso: now.toISOString(),
+            candidateCount: tickets.length,
+          },
+        );
+
+        const maxDetailLogs = 50;
+        const ticketsForDetail =
+          tickets.length > maxDetailLogs
+            ? tickets.slice(0, maxDetailLogs)
+            : tickets;
+        if (tickets.length > maxDetailLogs) {
+          logger.warn(
+            `${job}: logging diagnostics for first ${maxDetailLogs} candidates only`,
+            {
+              totalCandidates: tickets.length,
+            },
+          );
+        }
+
+        const matched = tickets.filter(ticket => {
           if (!ticket.eventStartDate) {
             return false;
           }
@@ -310,11 +366,40 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
             ticket.qrAvailabilityTiming,
           );
 
-          return shouldSendDocumentReminder(
+          const passes = shouldSendDocumentReminder(
             hoursUntilEvent,
             qrAvailabilityHours,
           );
+
+          const isDetailRow = ticketsForDetail.some(
+            r => r.ticketId === ticket.ticketId,
+          );
+          if (isDetailRow) {
+            const diagnostics = getDocumentReminderMilestoneDiagnostics(
+              hoursUntilEvent,
+              qrAvailabilityHours,
+            );
+            logger.info(`${job}: candidate ticket milestone evaluation`, {
+              ticketId: ticket.ticketId,
+              listingId: ticket.listingId,
+              sellerUserId: ticket.sellerUserId,
+              eventName: ticket.eventName,
+              eventStartIso: eventStartDate.toISOString(),
+              qrAvailabilityTimingRaw: ticket.qrAvailabilityTiming,
+              passesMilestoneFilter: passes,
+              ...diagnostics,
+            });
+          }
+
+          return passes;
         });
+
+        logger.info(`${job}: after milestone filter`, {
+          matchedCount: matched.length,
+          skippedCount: tickets.length - matched.length,
+        });
+
+        return matched;
       });
   }
 
@@ -347,5 +432,4 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .where('tl.deletedAt', 'is', null)
       .execute();
   }
-
 }

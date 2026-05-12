@@ -1,6 +1,6 @@
-import {useQuery} from '@tanstack/react-query';
+import {useInfiniteQuery} from '@tanstack/react-query';
 import {useNavigate} from '@tanstack/react-router';
-import {getPayoutHistoryQuery} from '~/lib/api/payouts';
+import {getPayoutHistoryInfiniteQuery} from '~/lib/api/payouts';
 import {Badge} from '~/components/ui/badge';
 import {Button} from '~/components/ui/button';
 import {Skeleton} from '~/components/ui/skeleton';
@@ -13,7 +13,15 @@ import {
   TableRow,
 } from '~/components/ui/table';
 import {formatCurrency, formatDate} from '~/utils';
-import {CheckCircle, Clock, XCircle, AlertCircle, Eye, Ban} from 'lucide-react';
+import {
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertCircle,
+  Ban,
+  ChevronRight,
+} from 'lucide-react';
+import {AccountEmptyState} from '../AccountEmptyState';
 
 function HistorySkeleton() {
   return (
@@ -23,7 +31,7 @@ function HistorySkeleton() {
           <Skeleton className='h-5 w-20' />
           <Skeleton className='h-5 w-24 flex-1' />
           <Skeleton className='h-5 w-20' />
-          <Skeleton className='h-8 w-8' />
+          <Skeleton className='h-5 w-8' />
         </div>
       ))}
     </div>
@@ -68,89 +76,113 @@ function StatusBadge({status}: {status: string}) {
   const Icon = config.icon;
   return (
     <Badge variant='outline' className={config.className}>
-      <Icon className='h-3 w-3 mr-1' />
+      <Icon className='h-3 w-3 mr-1' aria-hidden />
       {config.label}
     </Badge>
   );
 }
 
 export function PayoutHistorySection() {
-  const {data: history, isPending} = useQuery(getPayoutHistoryQuery(1, 20));
-  const navigate = useNavigate({from: '/cuenta/retiro'});
+  const {
+    data,
+    isPending,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery(getPayoutHistoryInfiniteQuery());
+  const navigate = useNavigate({from: '/cuenta/retiro/'});
 
-  const handleViewDetails = (payoutId: string) => {
+  const goToDetail = (payoutId: string) => {
     navigate({
-      search: prev => ({...prev, payoutId}),
-      resetScroll: false,
+      to: '/cuenta/retiro/$payoutId',
+      params: {payoutId},
     });
   };
+
+  const rows = data?.pages.flatMap(p => p.data) ?? [];
 
   if (isPending) {
     return <HistorySkeleton />;
   }
 
-  if (!history || history.data.length === 0) {
+  if (rows.length === 0) {
     return (
-      <div className='rounded-lg border border-dashed p-8 text-center'>
-        <p className='text-muted-foreground'>
-          Todavía no solicitaste ningún retiro
-        </p>
-      </div>
+      <AccountEmptyState
+        icon={<Clock className='h-8 w-8 text-muted-foreground' aria-hidden />}
+        title='Sin retiros todavía'
+        description='Cuando solicites un retiro, vas a ver el estado y el detalle acá.'
+      />
     );
   }
 
   return (
     <>
-      {/* Desktop table */}
-      <div className='hidden md:block rounded-lg border'>
+      <p className='text-sm text-muted-foreground mb-3 md:mb-4'>
+        Tocá una fila o tarjeta para ver fechas, comprobantes y el historial del
+        retiro.
+      </p>
+
+      <div className='hidden md:block rounded-lg border overflow-hidden'>
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className='hover:bg-transparent'>
               <TableHead>Estado</TableHead>
               <TableHead>Monto</TableHead>
               <TableHead>Fecha</TableHead>
-              <TableHead className='w-[50px]' />
+              <TableHead className='w-12' aria-hidden />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {history.data.map(payout => (
-              <TableRow key={payout.id}>
-                <TableCell>
-                  <StatusBadge status={payout.status} />
-                </TableCell>
-                <TableCell className='font-medium'>
-                  {formatCurrency(payout.amount, payout.currency)}
-                </TableCell>
-                <TableCell className='text-muted-foreground'>
-                  {formatDate(payout.requestedAt)}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    onClick={() => handleViewDetails(payout.id)}
-                    className='h-8 w-8'
-                  >
-                    <Eye className='h-4 w-4' />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {rows.map(payout => {
+              const amountLabel = formatCurrency(
+                payout.amount,
+                payout.currency,
+              );
+              return (
+                <TableRow
+                  key={payout.id}
+                  tabIndex={0}
+                  role='link'
+                  aria-label={`Ver detalle del retiro de ${amountLabel}, ${STATUS_CONFIG[payout.status as keyof typeof STATUS_CONFIG]?.label ?? payout.status}`}
+                  className='cursor-pointer transition-colors duration-200 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset'
+                  onClick={() => goToDetail(payout.id)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      goToDetail(payout.id);
+                    }
+                  }}
+                >
+                  <TableCell>
+                    <StatusBadge status={payout.status} />
+                  </TableCell>
+                  <TableCell className='font-medium tabular-nums'>
+                    {amountLabel}
+                  </TableCell>
+                  <TableCell className='text-muted-foreground'>
+                    {formatDate(payout.requestedAt)}
+                  </TableCell>
+                  <TableCell className='text-muted-foreground'>
+                    <ChevronRight className='h-4 w-4 shrink-0' aria-hidden />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
 
-      {/* Mobile stacked list */}
       <div className='md:hidden space-y-2'>
-        {history.data.map(payout => (
+        {rows.map(payout => (
           <button
             key={payout.id}
-            onClick={() => handleViewDetails(payout.id)}
-            className='w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left'
+            type='button'
+            onClick={() => goToDetail(payout.id)}
+            className='w-full flex items-center gap-3 p-4 min-h-12 rounded-lg border text-left cursor-pointer transition-colors duration-200 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
           >
             <div className='flex-1 min-w-0 space-y-1'>
               <div className='flex items-center justify-between gap-2'>
-                <span className='font-medium'>
+                <span className='font-medium tabular-nums'>
                   {formatCurrency(payout.amount, payout.currency)}
                 </span>
                 <StatusBadge status={payout.status} />
@@ -159,9 +191,27 @@ export function PayoutHistorySection() {
                 {formatDate(payout.requestedAt)}
               </p>
             </div>
+            <ChevronRight
+              className='h-5 w-5 text-muted-foreground shrink-0'
+              aria-hidden
+            />
           </button>
         ))}
       </div>
+
+      {hasNextPage && (
+        <div className='flex justify-center pt-4'>
+          <Button
+            type='button'
+            variant='outline'
+            className='cursor-pointer min-h-11'
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? 'Cargando…' : 'Cargar más'}
+          </Button>
+        </div>
+      )}
     </>
   );
 }

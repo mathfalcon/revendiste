@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {getRegionsQuery} from '~/lib';
-import posthog from 'posthog-js';
+import {ANALYTICS_EVENTS, trackEvent} from '~/lib/analytics';
 import {useGeolocation} from '~/hooks';
 import {
   Navigation,
@@ -91,7 +91,10 @@ export const LocationFilterBar = ({
       return;
     }
     if (coords) {
-      posthog.capture('filter_applied', {filter_type: 'nearby', value: true});
+      trackEvent(ANALYTICS_EVENTS.FILTER_APPLIED, {
+        filter_type: 'nearby',
+        value: true,
+      });
       onChange({...value, type: 'nearby', lat: coords.lat, lng: coords.lng});
       setRegionOpen(false);
       scrollIntoView();
@@ -116,7 +119,10 @@ export const LocationFilterBar = ({
       ? [...current, region]
       : current.filter(r => r !== region);
     if (isAdding) {
-      posthog.capture('filter_applied', {filter_type: 'region', value: region});
+      trackEvent(ANALYTICS_EVENTS.FILTER_APPLIED, {
+        filter_type: 'region',
+        value: region,
+      });
     }
     if (updated.length === 0) {
       onChange({...value, type: 'all', regions: undefined});
@@ -131,7 +137,7 @@ export const LocationFilterBar = ({
     if (isRemoving) {
       onChange({...value, dateFrom: undefined, dateTo: undefined});
     } else {
-      posthog.capture('filter_applied', {
+      trackEvent(ANALYTICS_EVENTS.FILTER_APPLIED, {
         filter_type: 'date',
         value: preset.label,
       });
@@ -148,7 +154,7 @@ export const LocationFilterBar = ({
 
   const handleToggleHasTickets = () => {
     if (!value.hasTickets) {
-      posthog.capture('filter_applied', {
+      trackEvent(ANALYTICS_EVENTS.FILTER_APPLIED, {
         filter_type: 'has_tickets',
         value: true,
       });

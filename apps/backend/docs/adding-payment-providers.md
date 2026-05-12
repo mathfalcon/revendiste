@@ -1,6 +1,6 @@
 # Adding New Payment Providers
 
-This guide walks you through adding a new payment provider (Stripe, PayPal, etc.) to the system.
+This guide walks you through adding a new payment provider (Stripe, MercadoPago, etc.) to the system.
 
 ---
 
@@ -44,13 +44,13 @@ export class StripePaymentProvider implements PaymentProvider {
    */
   private mapStatus(stripeStatus: string): StandardPaymentStatus {
     const statusMap: Record<string, StandardPaymentStatus> = {
-      'requires_payment_method': 'pending',
-      'requires_confirmation': 'pending',
-      'requires_action': 'processing',
-      'processing': 'processing',
-      'succeeded': 'paid',
-      'canceled': 'cancelled',
-      'failed': 'failed',
+      requires_payment_method: 'pending',
+      requires_confirmation: 'pending',
+      requires_action: 'processing',
+      processing: 'processing',
+      succeeded: 'paid',
+      canceled: 'cancelled',
+      failed: 'failed',
     };
     return statusMap[stripeStatus] || 'pending';
   }
@@ -64,9 +64,9 @@ export class StripePaymentProvider implements PaymentProvider {
     if (!stripeMethod) return undefined;
 
     const methodMap: Record<string, StandardPaymentMethod> = {
-      'card': 'credit_card',
-      'bank_transfer': 'bank_transfer',
-      'cash': 'cash',
+      card: 'credit_card',
+      bank_transfer: 'bank_transfer',
+      cash: 'cash',
     };
     return methodMap[stripeMethod] || 'other';
   }
@@ -80,21 +80,23 @@ export class StripePaymentProvider implements PaymentProvider {
     // Create Stripe checkout session
     const session = await this.stripeService.checkout.sessions.create({
       payment_method_types: ['card', 'bank_transfer'],
-      line_items: [{
-        price_data: {
-          currency: params.currency.toLowerCase(),
-          product_data: {
-            name: params.description,
+      line_items: [
+        {
+          price_data: {
+            currency: params.currency.toLowerCase(),
+            product_data: {
+              name: params.description,
+            },
+            unit_amount: Math.round(params.amount * 100), // Stripe uses cents
           },
-          unit_amount: Math.round(params.amount * 100), // Stripe uses cents
+          quantity: 1,
         },
-        quantity: 1,
-      }],
+      ],
       mode: 'payment',
       success_url: params.successUrl,
       cancel_url: params.backUrl,
       client_reference_id: params.orderId,
-      expires_at: Math.floor(Date.now() / 1000) + (params.expirationMinutes * 60),
+      expires_at: Math.floor(Date.now() / 1000) + params.expirationMinutes * 60,
     });
 
     return {
@@ -135,23 +137,29 @@ export class StripePaymentProvider implements PaymentProvider {
       paymentMethod: this.mapPaymentMethod(
         paymentIntent?.payment_method_types?.[0],
       ),
-      balanceAmount: paymentIntent?.amount_received 
-        ? paymentIntent.amount_received / 100 
+      balanceAmount: paymentIntent?.amount_received
+        ? paymentIntent.amount_received / 100
         : undefined,
       balanceFee: paymentIntent?.charges?.data[0]?.balance_transaction?.fee
         ? paymentIntent.charges.data[0].balance_transaction.fee / 100
         : undefined,
       balanceCurrency: session.currency.toUpperCase(),
-      approvedAt: paymentIntent?.status === 'succeeded' 
-        ? new Date(paymentIntent.created * 1000)
-        : undefined,
+      approvedAt:
+        paymentIntent?.status === 'succeeded'
+          ? new Date(paymentIntent.created * 1000)
+          : undefined,
       rejectedReason: paymentIntent?.last_payment_error?.message,
-      payer: session.customer_details ? {
-        email: session.customer_details.email,
-        firstName: session.customer_details.name?.split(' ')[0],
-        lastName: session.customer_details.name?.split(' ').slice(1).join(' '),
-        country: session.customer_details.address?.country,
-      } : undefined,
+      payer: session.customer_details
+        ? {
+            email: session.customer_details.email,
+            firstName: session.customer_details.name?.split(' ')[0],
+            lastName: session.customer_details.name
+              ?.split(' ')
+              .slice(1)
+              .join(' '),
+            country: session.customer_details.address?.country,
+          }
+        : undefined,
       metadata: {
         sessionId: session.id,
         paymentIntentId: paymentIntent?.id,
@@ -189,8 +197,8 @@ Update `apps/backend/src/controllers/webhooks/index.ts`:
 export class WebhooksController {
   private paymentsService = new PaymentsService(db);
   private stripePaymentsService = new PaymentsService(
-    db, 
-    new StripePaymentProvider()
+    db,
+    new StripePaymentProvider(),
   );
 
   // Existing dLocal webhook...
@@ -204,7 +212,8 @@ export class WebhooksController {
     @Body() body: StripeWebhookPayload,
     @Request() request: express.Request,
   ): Promise<{received: boolean}> {
-    const ipAddress = (request.headers['x-forwarded-for'] as string) || request.ip;
+    const ipAddress =
+      (request.headers['x-forwarded-for'] as string) || request.ip;
     const userAgent = request.headers['user-agent'];
 
     logger.info('Stripe webhook received', {
@@ -215,7 +224,7 @@ export class WebhooksController {
 
     // Process webhook asynchronously
     this.stripePaymentsService
-      .handleStripeWebhook(body.data.object.id, { ipAddress, userAgent })
+      .handleStripeWebhook(body.data.object.id, {ipAddress, userAgent})
       .then(() => {
         logger.info('Stripe webhook processed successfully');
       })
@@ -248,14 +257,14 @@ export const validateStripeWebhook = (
 ): void => {
   try {
     const signature = req.headers['stripe-signature'];
-    
+
     if (!signature) {
       throw new UnauthorizedError('Missing Stripe signature');
     }
 
     // Stripe signature validation logic
     // See: https://stripe.com/docs/webhooks/signatures
-    
+
     const payload = JSON.stringify(req.body);
     const expectedSignature = crypto
       .createHmac('sha256', STRIPE_WEBHOOK_SECRET)
@@ -263,18 +272,18 @@ export const validateStripeWebhook = (
       .digest('hex');
 
     // Verify signature...
-    
+
     return next();
   } catch (error) {
     logger.error('Stripe webhook validation failed', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    
+
     if (error instanceof UnauthorizedError) {
       res.status(401).json({error: error.message});
       return;
     }
-    
+
     res.status(500).json({error: 'Internal server error'});
   }
 };
@@ -300,8 +309,9 @@ export class PaymentsService {
     // Same implementation as handleDLocalWebhook
     // The provider pattern handles the differences automatically!
     try {
-      const providerPayment = await this.paymentProvider.getPaymentDetails(paymentId);
-      
+      const providerPayment =
+        await this.paymentProvider.getPaymentDetails(paymentId);
+
       // ... rest of webhook handling logic (same as dLocal)
     } catch (error: any) {
       logger.error('Error handling payment webhook', {
@@ -331,7 +341,7 @@ Update `apps/backend/src/config/env.ts`:
 ```typescript
 const envSchema = z.object({
   // ... existing vars ...
-  
+
   // Stripe
   STRIPE_API_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
@@ -383,8 +393,8 @@ const getPaymentProvider = (providerName: string): PaymentProvider => {
       return new StripePaymentProvider();
     case 'dlocal':
       return new DLocalPaymentProvider();
-    case 'paypal':
-      return new PayPalPaymentProvider();
+    case 'mercadopago':
+      return new MercadoPagoPaymentProvider();
     default:
       return new DLocalPaymentProvider(); // Default
   }
@@ -458,7 +468,7 @@ describe('PaymentsService with Stripe', () => {
     });
 
     expect(result.redirectUrl).toContain('stripe.com');
-    
+
     // Verify payment record created with stripe provider
     const payment = await paymentsRepository.getByOrderId(testOrder.id);
     expect(payment?.provider).toBe('stripe');
@@ -482,13 +492,6 @@ describe('PaymentsService with Stripe', () => {
 - **Webhooks**: Uses `stripe-signature` header
 - **Checkout**: Use `checkout.sessions` for hosted checkout
 - **Idempotency**: Stripe has built-in idempotency with `idempotency-key` header
-
-### PayPal
-
-- **Amounts**: Uses decimal strings
-- **Webhooks**: Requires webhook ID verification
-- **Checkout**: Use `orders` API
-- **Idempotency**: Use `PayPal-Request-Id` header
 
 ### MercadoPago
 
@@ -538,7 +541,7 @@ public async handleStripeWebhook(...) {
   this.paymentsService.handleStripeWebhook(...) // No await!
     .then(() => logger.info('Success'))
     .catch(error => logger.error('Error', error));
-  
+
   return {received: true}; // Return immediately
 }
 ```
@@ -548,9 +551,8 @@ public async handleStripeWebhook(...) {
 ## Support
 
 For questions or issues:
+
 1. Check provider's official documentation
 2. Review `PaymentProvider` interface requirements
 3. Test with provider's sandbox/test environment first
 4. Check logs in `payment_events` table for debugging
-
-
