@@ -326,6 +326,14 @@ export type GetDistinctRegionsResponse = {
 }[];
 
 export interface GetEventBySlugResponse {
+  userListings: {
+    maxPrice: string | null;
+    minPrice: string | null;
+    availableTicketCount: string | number | null;
+    ticketWaveName: string;
+    id: string;
+    currency: EventTicketCurrency;
+  }[];
   ticketWaves: {
     priceGroups: {
       availableTickets: string | number;
