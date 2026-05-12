@@ -518,6 +518,263 @@
 					"UYU"
 				]
 			},
+			"GetEventBySlugResponse": {
+				"properties": {
+					"ticketWaves": {
+						"items": {
+							"properties": {
+								"priceGroups": {
+									"items": {
+										"properties": {
+											"availableTickets": {
+												"anyOf": [
+													{
+														"type": "string"
+													},
+													{
+														"type": "number",
+														"format": "double"
+													}
+												]
+											},
+											"price": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"availableTickets",
+											"price"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"faceValue": {
+									"type": "string"
+								},
+								"currency": {
+									"$ref": "#/components/schemas/EventTicketCurrency"
+								},
+								"name": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string",
+									"nullable": true
+								}
+							},
+							"required": [
+								"priceGroups",
+								"faceValue",
+								"currency",
+								"name",
+								"id",
+								"description"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"userActiveTicketCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"userListingsCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"venueLongitude": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueLatitude": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueCountry": {
+						"type": "string",
+						"nullable": true
+					},
+					"eventImages": {
+						"items": {
+							"properties": {
+								"imageType": {
+									"$ref": "#/components/schemas/EventImageType"
+								},
+								"url": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"imageType",
+								"url"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"venueCity": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueAddress": {
+						"type": "string",
+						"nullable": true
+					},
+					"venueName": {
+						"type": "string",
+						"nullable": true
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"status": {
+						"type": "string"
+					},
+					"slug": {
+						"type": "string"
+					},
+					"qrAvailabilityTiming": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/QrAvailabilityTiming"
+							}
+						],
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"externalUrl": {
+						"type": "string"
+					},
+					"eventStartDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"eventEndDate": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"relatedUpcomingEvents": {
+						"items": {
+							"properties": {
+								"images": {
+									"items": {
+										"properties": {
+											"thumbnailUrl": {
+												"type": "string",
+												"nullable": true
+											},
+											"imageType": {
+												"$ref": "#/components/schemas/EventImageType"
+											},
+											"url": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"thumbnailUrl",
+											"imageType",
+											"url"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"venueCity": {
+									"type": "string",
+									"nullable": true
+								},
+								"venueName": {
+									"type": "string",
+									"nullable": true
+								},
+								"slug": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								},
+								"eventStartDate": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"eventEndDate": {
+									"type": "string",
+									"format": "date-time"
+								}
+							},
+							"required": [
+								"images",
+								"venueCity",
+								"venueName",
+								"slug",
+								"name",
+								"id",
+								"eventStartDate",
+								"eventEndDate"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"ticketWaves",
+					"userActiveTicketCount",
+					"userListingsCount",
+					"venueLongitude",
+					"venueLatitude",
+					"venueCountry",
+					"eventImages",
+					"venueCity",
+					"venueAddress",
+					"venueName",
+					"updatedAt",
+					"status",
+					"slug",
+					"qrAvailabilityTiming",
+					"name",
+					"id",
+					"externalUrl",
+					"eventStartDate",
+					"eventEndDate",
+					"description",
+					"createdAt",
+					"relatedUpcomingEvents"
+				],
+				"type": "object"
+			},
+			"TrackViewResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object"
+			},
 			"GetEventByIdResponse": {
 				"properties": {
 					"ticketWaves": {
@@ -694,20 +951,6 @@
 					"eventEndDate",
 					"description",
 					"createdAt"
-				],
-				"type": "object"
-			},
-			"GetEventBySlugResponse": {
-				"$ref": "#/components/schemas/GetEventByIdResponse"
-			},
-			"TrackViewResponse": {
-				"properties": {
-					"success": {
-						"type": "boolean"
-					}
-				},
-				"required": [
-					"success"
 				],
 				"type": "object"
 			},

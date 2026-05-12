@@ -16,6 +16,8 @@ import {getStorageProvider} from '~/services';
 import {logger} from '~/utils';
 import type {PaginationOptions} from '~/types/pagination';
 import {generateUniqueSlug} from '~/utils';
+import {pingIndexNow} from '~/lib/indexnow';
+import {APP_BASE_URL} from '~/config/env';
 
 interface GetEventsFilters {
   includePast?: boolean;
@@ -216,6 +218,8 @@ export class AdminEventsService {
       }
     }
 
+    pingIndexNow([`${APP_BASE_URL}/eventos/${createdEvent.slug}`]);
+
     return createdEvent;
   }
 
@@ -255,6 +259,8 @@ export class AdminEventsService {
     if (data.clearDeletion) {
       await this.ticketWavesRepository.restoreSoftDeletedForEvent(eventId);
     }
+
+    pingIndexNow([`${APP_BASE_URL}/eventos/${updated.slug}`]);
 
     return updated;
   }
