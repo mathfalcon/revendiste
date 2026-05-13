@@ -1,0 +1,22 @@
+# Revendiste
+
+> Revendiste es la plataforma de compra y venta de entradas en Uruguay para fiestas, conciertos y eventos. Entre personas, la reventa es segura: custodia de fondos y vendedores verificados. Si no podés ir, publicá y transferí tu entrada; si te pintó ir a último momento, encontrá entradas disponibles.
+
+Somos intermediarios entre compradores y vendedores (no somos la ticketera oficial de cada evento). Las preguntas frecuentes cubren General, Compradores, Publicadores y Pagos: comisiones, pagos, plazos de entrega, garantías, verificación y más. Los precios y la disponibilidad cambian en el sitio; este archivo solo resume para asistentes. Al usar los servicios aplican los Términos de Servicio y la Política de Privacidad (enlaces en la sección Optional más abajo).
+
+## Sitio público
+
+- [Inicio](https://revendiste.com/): Eventos, filtros por ubicación y fechas, y acceso a compra o publicación de entradas.
+- [Preguntas frecuentes](https://revendiste.com/preguntas-frecuentes): Dudas sobre cómo comprar o vender en Revendiste: comisiones, pagos, plazos de entrega, garantías y más (secciones General, Compradores, Publicadores y Pagos).
+- [Contacto](https://revendiste.com/contacto): Consultas y ayuda; también podés escribir a ayuda@revendiste.com como indica la página de preguntas frecuentes.
+
+## Calendario y descubrimiento
+
+- [Eventos hoy](https://revendiste.com/eventos/hoy): Eventos con fecha el día corriente.
+- [Este fin de semana](https://revendiste.com/eventos/este-fin-de-semana): Eventos agrupados para el fin de semana próximo.
+
+## Optional
+
+- [Términos de Servicio](https://revendiste.com/terminos-y-condiciones)
+- [Política de Privacidad](https://revendiste.com/politica-de-privacidad)
+- [Mapa del sitio (XML)](https://revendiste.com/sitemap.xml)

@@ -86,14 +86,8 @@ export const Route = createFileRoute('/')({
           name: 'Revendiste',
           url: homePageUrl,
           publisher: {'@id': organizationId},
-          potentialAction: {
-            '@type': 'SearchAction',
-            target: {
-              '@type': 'EntryPoint',
-              urlTemplate: `${origin}/eventos?search={search_term_string}`,
-            },
-            'query-input': 'required name=search_term_string',
-          },
+          // No SearchAction: listing and filters live on `/` (Spanish query params),
+          // not `/eventos?search=`. Omit until a canonical text-search URL exists.
         },
       ],
     };
@@ -111,7 +105,7 @@ export const Route = createFileRoute('/')({
         }),
         {
           property: 'og:url',
-          content: baseUrl,
+          content: homePageUrl,
         },
         // Additional meta tag for app purpose (for Google verification)
         {
@@ -120,7 +114,10 @@ export const Route = createFileRoute('/')({
             'Revendiste - Comprá y vendé entradas de forma segura en Uruguay',
         },
       ],
-      links: [alternateHreflangEsUy(baseUrl), {rel: 'canonical', href: baseUrl}],
+      links: [
+        alternateHreflangEsUy(homePageUrl),
+        {rel: 'canonical', href: homePageUrl},
+      ],
       scripts: [
         {
           type: 'application/ld+json',
