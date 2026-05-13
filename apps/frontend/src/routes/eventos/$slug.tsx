@@ -11,6 +11,8 @@ import {
 import {isAxiosError} from 'axios';
 import {alternateHreflangEsUy, seo} from '~/utils/seo';
 import {getBaseUrl} from '~/config/env';
+import {CDN_ASSETS} from '~/assets';
+import {getEventPageFaqItems} from '~/content/faq-items';
 import type {ErrorComponentProps} from '@tanstack/react-router';
 import {createServerFn} from '@tanstack/react-start';
 import {auth} from '@clerk/tanstack-react-start/server';
@@ -160,8 +162,10 @@ export const Route = createFileRoute('/eventos/$slug')({
     );
     const metaImage = ogHeroImage || heroImage;
 
-    // Get base URL for canonical and absolute URLs
+    // Get base URL for canonical and absolute URLs (listing hub is `/`, not `/eventos`)
     const baseUrl = getBaseUrl();
+    const origin = baseUrl.replace(/\/$/, '');
+    const eventsListingUrl = `${origin}/`;
     const canonicalUrl = `${baseUrl}${match.pathname}`;
 
     // Format event date for display
@@ -173,13 +177,14 @@ export const Route = createFileRoute('/eventos/$slug')({
         })
       : null;
 
+    // Meta description: curated template (not raw organizer copy). Past events get a distinct snippet.
     const description = isPast
       ? `${event.name}${eventDate ? ` — ${eventDate}` : ''}${event.venueName ? ` en ${event.venueName}` : ''}. Este evento ya finalizó. Descubrí próximos eventos similares en Revendiste.`
       : `Comprá o vendé entradas para ${event.name}${
           eventDate ? ` el ${eventDate}` : ''
         }${
           event.venueName ? ` en ${event.venueName}` : ''
-        }. Compra y venta con garantía en Revendiste.`;
+        }. Comprá y vendé con garantía en Revendiste.`;
 
     // Get absolute URL for image (required for Open Graph)
     const imageUrl = metaImage?.url
@@ -209,7 +214,7 @@ export const Route = createFileRoute('/eventos/$slug')({
 
     // Get base SEO tags (this includes og:type: 'website' by default)
     const baseSeoTags = seo({
-      title: `${event.name} | Revendiste`,
+      title: `Entradas para ${event.name} | Revendiste`,
       description,
       image: imageUrl,
       keywords,
@@ -234,8 +239,20 @@ export const Route = createFileRoute('/eventos/$slug')({
           .filter(p => !isNaN(p) && p > 0);
 
     const hasAvailableTickets = allPrices.length > 0;
-    const lowPrice = hasAvailableTickets ? Math.min(...allPrices) : undefined;
-    const highPrice = hasAvailableTickets ? Math.max(...allPrices) : undefined;
+    let lowPrice = hasAvailableTickets ? Math.min(...allPrices) : undefined;
+    let highPrice = hasAvailableTickets ? Math.max(...allPrices) : undefined;
+
+    if (!hasAvailableTickets) {
+      const faceValues = event.ticketWaves
+        .map(w => parseFloat(w.faceValue))
+        .filter(v => !isNaN(v) && v > 0);
+      if (faceValues.length > 0) {
+        lowPrice = Math.min(...faceValues);
+        highPrice = Math.max(...faceValues);
+      }
+    }
+
+    const absoluteEventImage = imageUrl ?? CDN_ASSETS.DEFAULT_OG_IMAGE;
 
     // Generate structured data (JSON-LD) for the event
     const structuredData = {
@@ -269,29 +286,41 @@ export const Route = createFileRoute('/eventos/$slug')({
             }
           : {}),
       },
-      image: imageUrl ? [imageUrl] : undefined,
-      ...(!isPast && {
-        offers: {
-          '@type': 'AggregateOffer',
-          availability: hasAvailableTickets
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
-          priceCurrency: 'UYU',
-          url: canonicalUrl,
-          validFrom: event.createdAt,
-          ...(lowPrice !== undefined ? {lowPrice} : {}),
-          ...(highPrice !== undefined ? {highPrice} : {}),
-        },
-      }),
-      performer: {
-        '@type': 'PerformingGroup',
-        name: event.name,
-      },
+      image: [absoluteEventImage],
+      ...(isPast
+        ? {}
+        : {
+            offers: {
+              '@type': 'AggregateOffer',
+              availability: hasAvailableTickets
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+              priceCurrency: 'UYU',
+              url: canonicalUrl,
+              validFrom: event.createdAt,
+              ...(lowPrice !== undefined ? {lowPrice} : {}),
+              ...(highPrice !== undefined ? {highPrice} : {}),
+            },
+          }),
       organizer: {
         '@type': 'Organization',
         name: 'Revendiste',
-        url: baseUrl,
+        url: eventsListingUrl,
       },
+    };
+
+    const eventFaqItems = getEventPageFaqItems();
+    const faqPageStructuredData = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: eventFaqItems.map(item => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
     };
 
     return {
@@ -359,22 +388,20 @@ export const Route = createFileRoute('/eventos/$slug')({
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Inicio',
-                item: baseUrl,
+                item: eventsListingUrl,
               },
               {
                 '@type': 'ListItem',
                 position: 2,
-                name: 'Eventos',
-                item: `${baseUrl}/eventos`,
-              },
-              {
-                '@type': 'ListItem',
-                position: 3,
                 name: event.name,
                 item: canonicalUrl,
               },
             ],
           }),
+        },
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(faqPageStructuredData),
         },
       ],
     };

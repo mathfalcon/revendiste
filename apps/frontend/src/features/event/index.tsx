@@ -7,7 +7,7 @@ import {VenueMapLazy} from './VenueMapLazy';
 import {PastEventBanner} from './PastEventBanner';
 import {RelatedUpcomingEvents} from './RelatedUpcomingEvents';
 import {EventImageType, getEventBySlugQuery} from '~/lib';
-import {useParams} from '@tanstack/react-router';
+import {Link, useParams} from '@tanstack/react-router';
 import {useEffect, useState} from 'react';
 import {TextEllipsis} from '~/components';
 import {CDN_ASSETS} from '~/assets';
@@ -118,11 +118,17 @@ export const EventPage = () => {
                 />
               </div>
             )}
-            <div className='order-5 md:order-0'>
+            <div className='order-5 md:order-0 flex flex-col gap-3'>
               <EventDescription
                 description={event.description}
                 externalUrl={event.externalUrl}
               />
+              <Link
+                to='/preguntas-frecuentes'
+                className='text-sm text-muted-foreground hover:text-primary underline-offset-4 hover:underline w-fit'
+              >
+                ¿Tenés dudas? Mirá las preguntas frecuentes
+              </Link>
             </div>
           </div>
 
