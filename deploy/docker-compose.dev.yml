@@ -1,0 +1,168 @@
+# Dev deployment compose file for the single-EC2 "VPS" architecture.
+#
+# Runs the full Revendiste dev stack on one box:
+#   - postgres : in-VM Postgres replacing the destroyed dev RDS
+#   - backend  : Node API (in-process cronjobs via ENABLE_INPROCESS_CRONJOBS=true)
+#   - frontend : TanStack Start (Nitro node-server)
+#   - caddy    : reverse proxy / TLS termination behind Cloudflare
+#
+# Required env vars (read from /opt/revendiste/.env on the EC2, written at boot
+# by deploy/scripts/bootstrap-env.sh from AWS Secrets Manager):
+#   AWS_ACCOUNT_ID                 ECR account id
+#   AWS_REGION                     ECR region (sa-east-1)
+#   IMAGE_TAG                      backend & frontend image tag (default: latest)
+#   POSTGRES_USER / PASSWORD / DB  in-VM Postgres credentials
+#   DB_CREDENTIALS_JSON            JSON consumed by backend-entrypoint.sh
+#   BACKEND_SECRETS_JSON           JSON consumed by backend-entrypoint.sh
+#   APP_HOSTNAME                   public hostname (e.g. dev.revendiste.com)
+#
+# Cronjob strategy: in-process (plan strategy A). Backend boots with
+# ENABLE_INPROCESS_CRONJOBS=true so node-cron drives all 6 jobs from inside the
+# API container. node-cron skips a tick when the previous run is still in
+# flight, giving us per-job concurrency=1 on the 2 GiB t4g.small.
+
+name: revendiste-dev
+
+x-aws-region: &aws-region ${AWS_REGION:-sa-east-1}
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: revendiste-dev-postgres
+    restart: unless-stopped
+    # Match the major of dev RDS db_engine_version (15.x).
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:-revendiste}
+      # Avoid Postgres recreating data dir on every restart.
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Postgres is reachable only on the internal compose network.
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  backend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION:-sa-east-1}.amazonaws.com/revendiste/backend-dev:${IMAGE_TAG:-latest}
+    container_name: revendiste-dev-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: '3001'
+      ENABLE_INPROCESS_CRONJOBS: 'true'
+      # backend-entrypoint.sh parses these JSON blobs into individual env vars.
+      # DB_CREDENTIALS_JSON points at the in-VM Postgres service (host=postgres).
+      DB_CREDENTIALS_JSON: ${DB_CREDENTIALS_JSON:?DB_CREDENTIALS_JSON must be set}
+      BACKEND_SECRETS_JSON: ${BACKEND_SECRETS_JSON:?BACKEND_SECRETS_JSON must be set}
+    networks:
+      - internal
+      - edge
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3001/api/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: '20m'
+        max-file: '5'
+
+  frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION:-sa-east-1}.amazonaws.com/revendiste/frontend-dev:${IMAGE_TAG:-latest}
+    container_name: revendiste-dev-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+    networks:
+      - edge
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3000', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: '20m'
+        max-file: '5'
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: revendiste-dev-caddy
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
+    environment:
+      APP_HOSTNAME: ${APP_HOSTNAME:?APP_HOSTNAME must be set}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+networks:
+  # Private network for backend ↔ postgres traffic. Postgres is NOT on `edge`,
+  # so the proxy and frontend cannot reach it directly.
+  internal:
+    driver: bridge
+    internal: true
+  # Network for traffic that needs egress (Caddy talks to frontend/backend).
+  edge:
+    driver: bridge
+
+volumes:
+  pgdata:
+    # Lives on the EC2 EBS data volume (mounted at /var/lib/docker by the
+    # bootstrap script). Surviving instance-type changes requires keeping the
+    # data volume separate from the root volume — see infrastructure/modules/ec2-app.
+    name: revendiste-dev-pgdata
+  caddy_data:
+    name: revendiste-dev-caddy-data
+  caddy_config:
+    name: revendiste-dev-caddy-config

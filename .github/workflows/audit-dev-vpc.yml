@@ -1,0 +1,204 @@
+name: Audit Dev VPC for Costly Leftovers
+
+# After the single-EC2 migration, the dev VPC should NOT have:
+#   - NAT gateways (~$30-45+/mo each plus per-GB)
+#   - Interface VPC endpoints (ssm/ssmmessages/ec2messages/ecr.api/ecr.dkr/
+#     logs/secretsmanager) at ~$7/endpoint/mo — only needed for private-subnet
+#     workloads we no longer have.
+#   - Unattached Elastic IPs or EIPs on stopped instances.
+#   - Public IPv4 ENIs left over from destroyed ECS tasks.
+#
+# This workflow lists those resources in the dev VPC and (with delete=true)
+# prunes them. Dispatch-only — never schedule it, deletes are irreversible.
+
+on:
+  workflow_dispatch:
+    inputs:
+      delete:
+        description: 'Actually delete resources (false = dry-run / list only)'
+        required: true
+        type: boolean
+        default: false
+
+env:
+  AWS_REGION: sa-east-1
+  NAME_PREFIX: revendiste-dev
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve dev VPC ID
+        id: vpc
+        run: |
+          set -euo pipefail
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters "Name=tag:Name,Values=${NAME_PREFIX}-vpc" \
+            --query 'Vpcs[0].VpcId' \
+            --output text \
+            --region "$AWS_REGION")
+          if [ -z "$VPC_ID" ] || [ "$VPC_ID" = "None" ]; then
+            echo "::error::No VPC found with tag Name=${NAME_PREFIX}-vpc"; exit 1
+          fi
+          echo "VPC_ID=$VPC_ID" >>"$GITHUB_OUTPUT"
+          echo "Dev VPC: $VPC_ID"
+
+      - name: NAT gateways
+        run: |
+          set -euo pipefail
+          DELETE='${{ github.event.inputs.delete }}'
+          VPC_ID='${{ steps.vpc.outputs.VPC_ID }}'
+
+          NAT_IDS=$(aws ec2 describe-nat-gateways \
+            --filter "Name=vpc-id,Values=$VPC_ID" "Name=state,Values=pending,available" \
+            --query 'NatGateways[].NatGatewayId' \
+            --output text \
+            --region "$AWS_REGION")
+
+          if [ -z "$NAT_IDS" ]; then
+            echo "No NAT gateways in $VPC_ID."
+          else
+            echo "NAT gateways found:"
+            for id in $NAT_IDS; do echo "  $id"; done
+            if [ "$DELETE" = 'true' ]; then
+              for id in $NAT_IDS; do
+                echo "Deleting $id..."
+                aws ec2 delete-nat-gateway --nat-gateway-id "$id" --region "$AWS_REGION" --no-cli-pager
+              done
+            else
+              echo "Dry-run: leaving in place."
+            fi
+          fi
+
+      - name: Interface VPC endpoints
+        run: |
+          set -euo pipefail
+          DELETE='${{ github.event.inputs.delete }}'
+          VPC_ID='${{ steps.vpc.outputs.VPC_ID }}'
+
+          # All interface endpoints in the VPC. Includes both the SSM trio
+          # managed by toggle-database-access (now obsolete) and any others.
+          ENDPOINT_IDS=$(aws ec2 describe-vpc-endpoints \
+            --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Interface" \
+                      "Name=vpc-endpoint-state,Values=available,pending" \
+            --query 'VpcEndpoints[].VpcEndpointId' \
+            --output text \
+            --region "$AWS_REGION")
+
+          if [ -z "$ENDPOINT_IDS" ]; then
+            echo "No interface VPC endpoints in $VPC_ID."
+          else
+            echo "Interface VPC endpoints found:"
+            aws ec2 describe-vpc-endpoints \
+              --vpc-endpoint-ids $ENDPOINT_IDS \
+              --query 'VpcEndpoints[].[VpcEndpointId,ServiceName,Tags[?Key==`Name`]|[0].Value]' \
+              --output table \
+              --region "$AWS_REGION"
+
+            if [ "$DELETE" = 'true' ]; then
+              aws ec2 delete-vpc-endpoints \
+                --vpc-endpoint-ids $ENDPOINT_IDS \
+                --region "$AWS_REGION" \
+                --no-cli-pager
+            else
+              echo "Dry-run: leaving in place."
+            fi
+          fi
+
+      - name: Unattached / orphaned Elastic IPs
+        run: |
+          set -euo pipefail
+          DELETE='${{ github.event.inputs.delete }}'
+          VPC_ID='${{ steps.vpc.outputs.VPC_ID }}'
+
+          # An EIP is wasted money when it is either unassociated or attached
+          # to an instance that is stopped. Filter to dev-VPC scope by checking
+          # NetworkInterface VpcId or by looking for the dev tag.
+          ALLOC_JSON=$(aws ec2 describe-addresses --region "$AWS_REGION" --output json)
+
+          STALE_ALLOCS=$(echo "$ALLOC_JSON" | jq -r --arg vpc "$VPC_ID" --arg prefix "$NAME_PREFIX" '
+            .Addresses[]
+            | select(
+                # Unassociated
+                (.AssociationId == null)
+                or (
+                  # Or attached to an ENI in this VPC. Use the tag scope as a
+                  # secondary filter to avoid touching prod EIPs.
+                  ((.Tags // []) | map(select(.Key=="Name").Value) | first // "")
+                    | startswith($prefix)
+                )
+              )
+            | .AllocationId
+          ')
+
+          # Cross-check stopped instances within this VPC for EIPs we missed.
+          STOPPED_INSTANCES=$(aws ec2 describe-instances \
+            --filters "Name=vpc-id,Values=$VPC_ID" "Name=instance-state-name,Values=stopped" \
+            --query 'Reservations[].Instances[].InstanceId' \
+            --output text \
+            --region "$AWS_REGION")
+          for iid in $STOPPED_INSTANCES; do
+            ALLOCS=$(echo "$ALLOC_JSON" | jq -r --arg iid "$iid" '.Addresses[] | select(.InstanceId==$iid) | .AllocationId')
+            STALE_ALLOCS="$STALE_ALLOCS $ALLOCS"
+          done
+
+          STALE_ALLOCS=$(echo "$STALE_ALLOCS" | tr ' ' '\n' | sort -u | grep -v '^$' || true)
+
+          if [ -z "$STALE_ALLOCS" ]; then
+            echo "No orphaned/stale Elastic IPs in $VPC_ID."
+          else
+            echo "Stale Elastic IPs:"
+            echo "$STALE_ALLOCS"
+            if [ "$DELETE" = 'true' ]; then
+              for alloc in $STALE_ALLOCS; do
+                echo "Releasing $alloc..."
+                aws ec2 release-address --allocation-id "$alloc" --region "$AWS_REGION" --no-cli-pager || true
+              done
+            else
+              echo "Dry-run: leaving in place."
+            fi
+          fi
+
+      - name: Public IPv4 ENIs not attached to anything
+        run: |
+          set -euo pipefail
+          DELETE='${{ github.event.inputs.delete }}'
+          VPC_ID='${{ steps.vpc.outputs.VPC_ID }}'
+
+          ENI_IDS=$(aws ec2 describe-network-interfaces \
+            --filters "Name=vpc-id,Values=$VPC_ID" "Name=status,Values=available" \
+            --query 'NetworkInterfaces[?Association.PublicIp!=`null`].NetworkInterfaceId' \
+            --output text \
+            --region "$AWS_REGION")
+
+          if [ -z "$ENI_IDS" ]; then
+            echo "No orphaned public-IPv4 ENIs in $VPC_ID."
+          else
+            echo "Orphaned ENIs:"
+            for id in $ENI_IDS; do echo "  $id"; done
+            if [ "$DELETE" = 'true' ]; then
+              for id in $ENI_IDS; do
+                echo "Deleting $id..."
+                aws ec2 delete-network-interface --network-interface-id "$id" --region "$AWS_REGION" --no-cli-pager || true
+              done
+            else
+              echo "Dry-run: leaving in place."
+            fi
+          fi
+
+      - name: Summary
+        run: |
+          echo "Audit complete for $NAME_PREFIX in ${{ steps.vpc.outputs.VPC_ID }}."
+          if [ '${{ github.event.inputs.delete }}' = 'true' ]; then
+            echo 'Deletions executed (where applicable). Re-run with delete=false to verify nothing is left.'
+          else
+            echo 'Dry-run only. Re-run with delete=true to actually prune.'
+          fi

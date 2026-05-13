@@ -1,0 +1,255 @@
+name: Deploy Dev (EC2)
+
+# Single-EC2 dev deploy: build & push amd64 images to ECR, ship the deploy/
+# bundle to S3, restart the systemd unit on the EC2 via SSM, then health-check
+# the dev URL. Replaces .github/workflows/deploy-dev.yml (now dispatch-only).
+
+on:
+  push:
+    branches:
+      - development
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy (defaults to dev-<sha>)'
+        required: false
+        type: string
+
+env:
+  AWS_REGION: sa-east-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.sa-east-1.amazonaws.com
+  BACKEND_IMAGE_NAME: revendiste/backend-dev
+  FRONTEND_IMAGE_NAME: revendiste/frontend-dev
+  DEPLOY_BUCKET: revendiste-dev-deploy-artifacts
+  APP_HOSTNAME: dev.revendiste.com
+
+jobs:
+  build-backend:
+    # Graviton runner so we build linux/arm64 natively (matches the dev EC2
+    # architecture), avoiding QEMU emulation and the slow Playwright/Chromium
+    # build under emulation we hit before.
+    runs-on: ubuntu-24.04-arm
+    environment: development
+    outputs:
+      image_tag: ${{ steps.tag.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "image_tag=${{ github.event.inputs.image_tag }}" >>"$GITHUB_OUTPUT"
+          else
+            echo "image_tag=dev-${GITHUB_SHA::7}" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend (arm64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/backend.Dockerfile
+          # The dev EC2 is t4g.small (Graviton / arm64), so we publish arm64
+          # natively from a Graviton GitHub runner — no QEMU emulation.
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+            ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ steps.tag.outputs.image_tag }}
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache-arm64
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:buildcache-arm64,mode=max
+
+  build-frontend:
+    runs-on: ubuntu-24.04-arm
+    environment: development
+    needs: build-backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push frontend (arm64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/frontend.Dockerfile
+          platforms: linux/arm64
+          push: true
+          build-args: |
+            ENVIRONMENT=development
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+            ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ needs.build-backend.outputs.image_tag }}
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:buildcache,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Bundle deploy/ into a tarball
+        run: |
+          set -euo pipefail
+          # Pin the structure the user-data systemd unit expects under
+          # /opt/revendiste: docker-compose.dev.yml, Caddyfile, scripts/*.sh.
+          tar -C deploy -czvf deploy-bundle.tar.gz \
+            docker-compose.dev.yml \
+            Caddyfile \
+            scripts
+          ls -lh deploy-bundle.tar.gz
+
+      - name: Upload bundle to S3
+        run: |
+          set -euo pipefail
+          KEY="deploy-bundles/${GITHUB_SHA}.tar.gz"
+          aws s3 cp deploy-bundle.tar.gz "s3://${DEPLOY_BUCKET}/${KEY}" --no-progress
+          # Always keep a `latest` pointer so SSM can fetch by a stable name.
+          aws s3 cp deploy-bundle.tar.gz "s3://${DEPLOY_BUCKET}/deploy-bundles/latest.tar.gz" --no-progress
+          echo "BUNDLE_KEY=$KEY" >>"$GITHUB_ENV"
+
+      - name: Resolve dev EC2 instance ID
+        id: instance
+        run: |
+          set -euo pipefail
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=revendiste-dev-app-compute" \
+                      "Name=instance-state-name,Values=running" \
+            --query 'Reservations[0].Instances[0].InstanceId' \
+            --output text \
+            --region "$AWS_REGION")
+          if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
+            echo "::error::Dev EC2 instance not found (tag Name=revendiste-dev-app-compute)"
+            exit 1
+          fi
+          echo "instance_id=$INSTANCE_ID" >>"$GITHUB_OUTPUT"
+          echo "Dev EC2: $INSTANCE_ID"
+
+      - name: Send deploy command via SSM
+        id: ssm
+        run: |
+          set -euo pipefail
+          INSTANCE_ID='${{ steps.instance.outputs.instance_id }}'
+          IMAGE_TAG='${{ needs.build-backend.outputs.image_tag }}'
+
+          # The script the EC2 runs:
+          # 1. Fetches the bundle by stable `latest.tar.gz` (also pinned by SHA above).
+          # 2. Extracts on top of /opt/revendiste, fixing perms.
+          # 3. Updates IMAGE_TAG in /opt/revendiste/runtime.env.
+          # 4. Restarts the systemd unit (which runs bootstrap-env, ECR login,
+          #    docker compose up).
+          REMOTE_SCRIPT=$(cat <<'EOS'
+          set -euxo pipefail
+          BUNDLE=/tmp/deploy-bundle.tar.gz
+          aws s3 cp "s3://${DEPLOY_BUCKET}/deploy-bundles/latest.tar.gz" "$BUNDLE"
+          mkdir -p /opt/revendiste/scripts
+          tar -xzvf "$BUNDLE" -C /opt/revendiste
+          chmod +x /opt/revendiste/scripts/*.sh
+          chown -R root:root /opt/revendiste
+          # Update IMAGE_TAG in runtime.env so the next compose up uses the new tag.
+          sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=${IMAGE_TAG}|" /opt/revendiste/runtime.env
+          systemctl restart revendiste.service
+          # Wait briefly for compose to settle so the workflow's curl probe is meaningful.
+          sleep 15
+          docker compose --env-file /opt/revendiste/.env -f /opt/revendiste/docker-compose.dev.yml ps
+          EOS
+          )
+
+          CMD_ID=$(aws ssm send-command \
+            --document-name AWS-RunShellScript \
+            --instance-ids "$INSTANCE_ID" \
+            --comment "deploy-dev-ec2 ${IMAGE_TAG}" \
+            --parameters "{\"commands\":[$(jq -Rs . <<<"$REMOTE_SCRIPT")],\"executionTimeout\":[\"600\"]}" \
+            --query 'Command.CommandId' \
+            --output text \
+            --region "$AWS_REGION")
+          echo "command_id=$CMD_ID" >>"$GITHUB_OUTPUT"
+
+      - name: Wait for SSM command to finish
+        run: |
+          set -euo pipefail
+          CMD_ID='${{ steps.ssm.outputs.command_id }}'
+          INSTANCE_ID='${{ steps.instance.outputs.instance_id }}'
+
+          for i in $(seq 1 60); do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$CMD_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query 'Status' \
+              --output text \
+              --region "$AWS_REGION" 2>/dev/null || echo "Pending")
+            case "$STATUS" in
+              Success)
+                echo "SSM command succeeded."
+                exit 0 ;;
+              Cancelled|Failed|TimedOut)
+                echo "::error::SSM command $STATUS"
+                aws ssm get-command-invocation \
+                  --command-id "$CMD_ID" \
+                  --instance-id "$INSTANCE_ID" \
+                  --region "$AWS_REGION" || true
+                exit 1 ;;
+              *)
+                echo "  SSM status: $STATUS (attempt $i/60)"
+                sleep 10 ;;
+            esac
+          done
+          echo "::error::SSM command did not finish within 10 minutes"
+          exit 1
+
+      - name: Health check
+        run: |
+          set -euo pipefail
+          API_URL="https://${APP_HOSTNAME}/api/health"
+          WEB_URL="https://${APP_HOSTNAME}/"
+
+          probe() {
+            local url=$1
+            for i in $(seq 1 20); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$url" || echo 000)
+              if [ "$code" = "200" ]; then
+                echo "OK: $url -> $code"
+                return 0
+              fi
+              echo "  $url -> $code (attempt $i/20)"
+              sleep 10
+            done
+            echo "::error::$url failed health check after 20 attempts"
+            return 1
+          }
+
+          probe "$API_URL"
+          probe "$WEB_URL"
