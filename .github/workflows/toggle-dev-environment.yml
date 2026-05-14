@@ -1,5 +1,9 @@
-name: Toggle Dev Environment
+name: Toggle Dev Environment (LEGACY ECS)
 
+# Legacy: started/stopped the ECS Fargate dev stack to save money. The new dev
+# architecture is always-on EC2 (deploy-dev-ec2.yml). Kept for rollback only;
+# do not run unless you have re-applied the legacy ECS Terraform per
+# docs/ROLLBACK_TO_ECS.md.
 on:
   workflow_dispatch:
     inputs:

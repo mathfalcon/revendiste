@@ -1,6 +1,6 @@
 # Política de Privacidad – Revendiste
 
-**Última actualización:** 30 de Abril de 2026
+**Última actualización:** 13 de Mayo de 2026
 
 ## 1. Introducción
 
@@ -152,7 +152,7 @@ Los datos personales serán conservados durante los siguientes períodos:
 - **Datos de cuenta:** mientras la cuenta del usuario permanezca activa o hasta que el usuario solicite su eliminación.
 - **Datos de transacciones:** durante el tiempo necesario para cumplir con obligaciones fiscales y legales (mínimo 5 años según normativa tributaria uruguaya).
 - **Datos de verificación de identidad (documento):** las imágenes de documentos se conservan en formato cifrado durante un máximo de 5 (cinco) años para cumplir con obligaciones legales, gestionar posibles reclamos, contracargos o requerimientos de autoridades competentes. Transcurrido este plazo, serán eliminados de forma segura. Durante todo el período de conservación, los datos permanecen cifrados y no son accesibles para visualización humana.
-- **Datos biométricos de verificación de vida (liveness):** estas imágenes se conservan de forma segura durante el mismo período que las imágenes del documento (5 años) para fines de auditoría, investigación de fraude y cumplimiento de obligaciones legales. Las imágenes incluyen la foto de referencia y hasta 4 imágenes de auditoría del proceso de verificación.
+- **Datos biométricos de verificación de vida (liveness):** estas imágenes se conservan de forma segura **mientras la cuenta del usuario permanezca activa** (ya que constituyen el medio de vinculación entre la identidad verificada y la cuenta), y durante un máximo de **2 (dos) años posteriores al cierre de la cuenta**, para gestionar posibles reclamos, disputas o acciones legales pendientes. Transcurridos dichos plazos, serán eliminados de forma segura.
 - **Datos técnicos y de registro:** durante un período razonable para fines de seguridad y detección de fraudes (generalmente hasta 2 años).
 
 Una vez cumplidos los plazos de conservación, los datos serán eliminados de forma segura o anonimizados.
@@ -171,7 +171,16 @@ De acuerdo con la Ley Nº 18.331 de Protección de Datos Personales y su normati
 
 Para ejercer estos derechos, el usuario puede enviar una solicitud al correo electrónico **privacidad@revendiste.com**, indicando claramente el derecho que desea ejercer y adjuntando una copia de su documento de identidad para verificar su identidad.
 
-Revendiste responderá a las solicitudes dentro de los plazos establecidos por la normativa vigente (10 días hábiles).
+Revendiste responderá a las solicitudes dentro de los **5 (cinco) días hábiles** establecidos por la Ley Nº 18.331 (artículos 14 y 15).
+
+**Excepciones al derecho de supresión:** La solicitud de eliminación de datos no procederá cuando exista una obligación legal que requiera su conservación. En particular:
+
+- **Datos de transacciones:** deben conservarse por un mínimo de 5 años conforme a la normativa tributaria uruguaya.
+- **Datos de verificación de identidad (documentos):** se conservan hasta 5 años para gestionar reclamos, contracargos o requerimientos de autoridades competentes.
+- **Datos biométricos (liveness):** se conservan mientras la cuenta esté activa y hasta 2 años posteriores al cierre, para vinculación de identidad y gestión de disputas.
+- **Datos necesarios para el ejercicio o defensa de reclamaciones** en curso.
+
+En estos casos, Revendiste informará al usuario los motivos por los cuales no puede proceder a la supresión total e indicará el plazo estimado de conservación obligatoria.
 
 En caso de no obtener una respuesta satisfactoria, el usuario puede presentar una denuncia ante la **Unidad Reguladora y de Control de Datos Personales (URCDP)**: [https://www.gub.uy/urcdp](https://www.gub.uy/unidad-reguladora-control-datos-personales/)
 
@@ -207,9 +216,17 @@ Para los datos de verificación de identidad, implementamos medidas de seguridad
 - **Almacenamiento de datos biométricos:** Las imágenes de verificación de vida (liveness) se almacenan de forma segura para fines de auditoría, revisión manual en casos excepcionales y cumplimiento de obligaciones legales.
 - **Auditoría de accesos:** Todos los intentos de acceso a datos de verificación quedan registrados para fines de auditoría y detección de actividades sospechosas.
 
-### 11.3 Limitación de responsabilidad
+### 11.3 Notificación de incidentes de seguridad
 
-Sin embargo, ningún sistema de transmisión o almacenamiento de datos es completamente seguro. Revendiste no puede garantizar la seguridad absoluta de la información, pero se compromete a implementar las mejores prácticas de la industria y a notificar a los usuarios afectados en caso de cualquier incidente de seguridad que pueda comprometer sus datos personales, conforme a la normativa vigente.
+En caso de un incidente de seguridad que pueda comprometer datos personales, Revendiste se compromete a:
+
+- Notificar a la **URCDP** dentro de las **72 (setenta y dos) horas** siguientes a tomar conocimiento del incidente.
+- Notificar a los **usuarios afectados** sin dilación indebida, informando la naturaleza del incidente, los datos potencialmente comprometidos, las medidas adoptadas y las recomendaciones para mitigar posibles consecuencias.
+- Documentar internamente el incidente, incluyendo sus causas, efectos y las medidas correctivas implementadas.
+
+### 11.4 Limitación de responsabilidad
+
+Sin embargo, ningún sistema de transmisión o almacenamiento de datos es completamente seguro. Revendiste no puede garantizar la seguridad absoluta de la información, pero se compromete a implementar las mejores prácticas de la industria conforme a la normativa vigente.
 
 ---
 
@@ -223,32 +240,47 @@ Si usted es padre o tutor y cree que su hijo menor de edad nos ha proporcionado 
 
 ## 13. Transferencias internacionales de datos
 
-Algunos de nuestros proveedores tecnológicos están ubicados fuera del territorio uruguayo. Esto implica una transferencia internacional de datos personales que Revendiste informa con transparencia. Los principales proveedores con los que se realizan transferencias internacionales son:
+Algunos de nuestros proveedores tecnológicos están ubicados fuera del territorio uruguayo. Esto implica una transferencia internacional de datos personales que Revendiste informa con transparencia.
 
-- **Cloudflare R2** (Estados Unidos / red global): almacenamiento de archivos (imágenes de tickets, documentos de verificación cifrados, recursos estáticos).
-- **Clerk** (Estados Unidos): proveedor de autenticación y gestión de identidad.
-- **dLocal Go** (Uruguay / regional): procesamiento de pagos. Si bien dLocal tiene presencia local, parte de su infraestructura puede operar en otras jurisdicciones.
-- **PostHog** (Reino Unido / Estados Unidos): plataforma de analítica de producto y observabilidad.
-- **Meta Platforms, Inc. (WhatsApp Business API)** (Estados Unidos): mensajería operativa, únicamente cuando el usuario opta por activar este canal.
-- **Proveedores de infraestructura cloud y email transaccional** ubicados habitualmente en Estados Unidos o Europa.
+**Nota importante:** Estados Unidos **no cuenta con una decisión de adecuación** por parte de la Unidad Reguladora y de Control de Datos Personales (URCDP) de Uruguay. Las transferencias a proveedores ubicados en dicho país se realizan con base en el **consentimiento informado del usuario** (artículo 23 de la Ley Nº 18.331) y en salvaguardas contractuales adicionales.
 
-En todos los casos, Revendiste procura que dichos proveedores:
+### 13.1 Detalle de transferencias internacionales
 
-- Cuenten con estándares adecuados de protección de datos (cifrado en tránsito y en reposo, controles de acceso, auditorías independientes).
-- Se encuentren en países con niveles de protección reconocidos como adecuados, o adopten salvaguardas contractuales equivalentes.
-- Suscriban condiciones contractuales (incluidos contratos de procesamiento de datos cuando corresponda) que garanticen la protección de los datos conforme a la normativa uruguaya y, cuando aplique, al Reglamento General de Protección de Datos europeo (RGPD).
+| Proveedor                                  | País                         | Datos transferidos                                                                                                                                                        |
+| ------------------------------------------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cloudflare R2**                          | Estados Unidos               | Imágenes de documentos de verificación (cifradas AES-256), imágenes de verificación facial/liveness (cifradas AES-256), imágenes de tickets digitales, recursos estáticos |
+| **Clerk**                                  | Estados Unidos               | Nombre, apellido, correo electrónico, imagen de perfil, tokens de sesión, datos de autenticación                                                                          |
+| **PostHog**                                | Estados Unidos / Reino Unido | Datos de uso pseudonimizados, eventos de interacción, datos técnicos de navegación (IP, dispositivo, navegador)                                                           |
+| **Meta Platforms (WhatsApp Business API)** | Estados Unidos               | Número de teléfono y contenido de notificaciones operativas (únicamente cuando el usuario activa este canal)                                                              |
+| **dLocal Go**                              | Uruguay / regional           | Datos de pago y transacciones. Si bien dLocal tiene presencia local, parte de su infraestructura puede operar en otras jurisdicciones                                     |
+| **Proveedores de email transaccional**     | Estados Unidos / Europa      | Correo electrónico del destinatario y contenido de notificaciones operativas                                                                                              |
 
-El usuario, al aceptar esta Política de Privacidad y utilizar la Plataforma, otorga su consentimiento informado a estas transferencias internacionales en los términos del artículo 23 de la Ley Nº 18.331.
+### 13.2 Base de datos principal
+
+La base de datos principal de Revendiste (datos de usuarios, transacciones, órdenes) se encuentra alojada en **Amazon Web Services (AWS) en São Paulo, Brasil**. Brasil cuenta con legislación de protección de datos (LGPD) alineada con estándares internacionales.
+
+### 13.3 Salvaguardas aplicadas
+
+En todos los casos, Revendiste aplica las siguientes salvaguardas:
+
+- Condiciones contractuales con cada proveedor que incluyen obligaciones de confidencialidad y protección de datos.
+- Cifrado de datos en tránsito (TLS 1.3) y en reposo (AES-256 para datos sensibles).
+- Controles de acceso y auditorías de seguridad por parte de los proveedores (certificaciones SOC 2, ISO 27001 cuando aplique).
+- Minimización de datos: cada proveedor recibe únicamente los datos estrictamente necesarios para la prestación del servicio.
+
+### 13.4 Consentimiento del usuario
+
+El usuario, al aceptar esta Política de Privacidad y utilizar la Plataforma, **otorga su consentimiento libre, específico e informado** a las transferencias internacionales de datos detalladas en esta sección, en los términos del artículo 23 de la Ley Nº 18.331. El usuario comprende que Estados Unidos no cuenta con un nivel de protección de datos considerado adecuado por la URCDP y que las salvaguardas contractuales descritas constituyen la protección adicional aplicada.
+
+El usuario puede revocar este consentimiento en cualquier momento contactando a **privacidad@revendiste.com**, lo cual podrá implicar la imposibilidad de continuar utilizando determinadas funcionalidades de la Plataforma que dependen de dichos proveedores.
 
 ---
 
 ## 14. Modificaciones a esta política
 
-Revendiste se reserva el derecho de modificar esta Política de Privacidad en cualquier momento. Las modificaciones serán publicadas en la plataforma con indicación de la fecha de última actualización.
+Revendiste se reserva el derecho de modificar esta Política de Privacidad. Las modificaciones serán notificadas a los usuarios con un **preaviso mínimo de 30 (treinta) días corridos** antes de su entrada en vigencia, mediante publicación en la plataforma con indicación de la fecha de última actualización y comunicación al correo electrónico registrado.
 
-En caso de cambios sustanciales que afecten el tratamiento de datos personales, notificaremos a los usuarios a través del correo electrónico registrado o mediante un aviso destacado en la plataforma.
-
-El uso continuado de la plataforma después de la publicación de cambios constituye la aceptación de la política modificada.
+Si el usuario no está de acuerdo con las modificaciones, podrá ejercer sus derechos conforme la Sección 10 (incluyendo la revocación del consentimiento) antes de la fecha de entrada en vigencia. El uso continuado de la plataforma luego de dicha fecha implica la aceptación de la política modificada.
 
 ---
 
@@ -264,13 +296,21 @@ Cualquier controversia relacionada con esta política será sometida a la jurisd
 
 ---
 
-## 16. Contacto
+## 16. Responsable de protección de datos
+
+De conformidad con el Decreto Reglamentario Nº 414/009, Revendiste designa como responsable de la protección de datos personales a:
+
+**Nombre:** Mathías Falcón Gallaztegui  
+**Correo electrónico:** privacidad@revendiste.com  
+**Dirección:** Avenida Ocho de Octubre 2487, Apartamento 801, Montevideo, Uruguay
+
+Esta persona es el punto de contacto para el ejercicio de los derechos de acceso, rectificación, actualización, supresión y revocación del consentimiento, así como para cualquier consulta de la URCDP.
+
+---
+
+## 17. Contacto
 
 Para cualquier consulta, solicitud o reclamo relacionado con esta Política de Privacidad o el tratamiento de sus datos personales, el usuario puede contactarse a:
 
 **Correo electrónico para temas de datos personales:** privacidad@revendiste.com  
 **Correo electrónico para consultas generales:** ayuda@revendiste.com
-
----
-
-_Esta Política de Privacidad fue redactada para cumplir con la normativa de protección de datos personales vigente en la República Oriental del Uruguay y los requisitos de privacidad de Google OAuth 2.0._

@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# User-data for the Revendiste single-EC2 host.
+#
+# Idempotent: re-running on instance replacement does the same prep, then waits
+# for the deploy workflow to ship deploy/ artifacts via SSM and run
+# `docker compose up -d`. Designed for ${name_prefix} / ${environment}.
+
+set -euxo pipefail
+
+# ─── 1. Packages ─────────────────────────────────────────────────────────────
+dnf -y update
+dnf -y install \
+  docker \
+  jq \
+  amazon-ssm-agent
+
+# AWS CLI v2 ships in AL2023 base images; verify.
+aws --version
+
+systemctl enable --now amazon-ssm-agent
+
+# ─── 2. Docker engine + compose plugin ───────────────────────────────────────
+systemctl enable --now docker
+usermod -aG docker ec2-user
+
+# Docker Compose plugin for Amazon Linux 2023 (CLI plugin convention).
+mkdir -p /usr/libexec/docker/cli-plugins
+COMPOSE_VERSION=v2.29.7
+COMPOSE_ARCH=$(uname -m)
+case "$COMPOSE_ARCH" in
+  aarch64) COMPOSE_BIN="docker-compose-linux-aarch64" ;;
+  x86_64)  COMPOSE_BIN="docker-compose-linux-x86_64" ;;
+  *) echo "unsupported arch $COMPOSE_ARCH"; exit 1 ;;
+esac
+curl -sSL "https://github.com/docker/compose/releases/download/$${COMPOSE_VERSION}/$${COMPOSE_BIN}" \
+  -o /usr/libexec/docker/cli-plugins/docker-compose
+chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+docker compose version
+
+# ─── 3. Mount the dedicated data volume at /var/lib/docker ───────────────────
+DATA_DEV="${data_volume_device}"
+# AL2023 may rename /dev/sdf to /dev/nvme1n1 or similar. Resolve via lsblk.
+RESOLVED_DEV=$(lsblk -ndo NAME "$DATA_DEV" 2>/dev/null || true)
+if [ -z "$RESOLVED_DEV" ]; then
+  # Search by NVMe alias.
+  for dev in /dev/nvme1n1 /dev/nvme2n1 /dev/xvdf; do
+    if [ -b "$dev" ]; then DATA_DEV="$dev"; break; fi
+  done
+fi
+echo "ec2-app: data device resolved to $DATA_DEV"
+
+# Wait for the volume attachment to settle.
+for i in $(seq 1 30); do
+  if [ -b "$DATA_DEV" ]; then break; fi
+  echo "ec2-app: waiting for $DATA_DEV ($i/30)"
+  sleep 5
+done
+
+# Only format if the device has no filesystem (preserves Postgres data on
+# instance-type swaps / replacements).
+FS_TYPE=$(blkid -o value -s TYPE "$DATA_DEV" 2>/dev/null || true)
+if [ -z "$FS_TYPE" ]; then
+  echo "ec2-app: formatting $DATA_DEV as ext4 (first attach)"
+  mkfs.ext4 -L revendiste-data "$DATA_DEV"
+fi
+
+# Stop docker before swapping its data dir.
+systemctl stop docker || true
+
+mkdir -p /var/lib/docker
+DEV_UUID=$(blkid -o value -s UUID "$DATA_DEV")
+if ! grep -q "$DEV_UUID" /etc/fstab; then
+  echo "UUID=$DEV_UUID /var/lib/docker ext4 defaults,nofail 0 2" >>/etc/fstab
+fi
+mountpoint -q /var/lib/docker || mount /var/lib/docker
+
+systemctl start docker
+
+# ─── 4. Drop a placeholder /opt/revendiste/.env so compose can resolve ──────
+mkdir -p /opt/revendiste
+mkdir -p /opt/revendiste/scripts
+chown -R ec2-user:ec2-user /opt/revendiste
+
+# ─── 5. systemd unit that fetches secrets + brings the stack up ─────────────
+cat >/etc/systemd/system/revendiste.service <<'UNIT'
+[Unit]
+Description=Revendiste Docker Compose stack
+After=docker.service network-online.target
+Wants=docker.service network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/revendiste
+EnvironmentFile=/opt/revendiste/runtime.env
+# Refresh secrets, log in to ECR, and bring containers up. The deploy workflow
+# also calls `docker compose pull && docker compose up -d` via SSM, but having
+# the unit do it on boot lets us reboot the instance without an external nudge.
+ExecStartPre=/opt/revendiste/scripts/bootstrap-env.sh
+ExecStartPre=/bin/bash -lc 'aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"'
+ExecStart=/usr/bin/docker compose --env-file /opt/revendiste/.env -f /opt/revendiste/docker-compose.dev.yml up -d
+ExecStop=/usr/bin/docker compose --env-file /opt/revendiste/.env -f /opt/revendiste/docker-compose.dev.yml down
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+# Static env values consumed by bootstrap-env.sh and the systemd unit itself.
+cat >/opt/revendiste/runtime.env <<EOF
+AWS_REGION=${aws_region}
+AWS_ACCOUNT_ID=${aws_account_id}
+ENVIRONMENT=${environment}
+APP_HOSTNAME=${app_hostname}
+IMAGE_TAG=${image_tag}
+DB_CREDENTIALS_SECRET_ID=${db_credentials_secret_id}
+BACKEND_SECRETS_SECRET_ID=${backend_secrets_secret_id}
+ENV_DIR=/opt/revendiste
+EOF
+chmod 600 /opt/revendiste/runtime.env
+
+systemctl daemon-reload
+# Don't start revendiste.service yet — the deploy-dev-ec2 workflow will ship
+# the actual deploy/ files via SSM and then enable+start the unit.
+systemctl enable revendiste.service || true
+
+echo "ec2-app: user-data complete"

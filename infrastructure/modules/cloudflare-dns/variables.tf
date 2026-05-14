@@ -11,13 +11,21 @@ variable "domain_name" {
 }
 
 variable "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
+  description = "DNS name of the Application Load Balancer (legacy ALB target). Mutually exclusive with origin_ip."
   type        = string
+  default     = ""
+}
+
+variable "origin_ip" {
+  description = "IPv4 address (typically an Elastic IP) for an A-record origin (single-EC2 'VPS' deployment). Mutually exclusive with alb_dns_name."
+  type        = string
+  default     = ""
 }
 
 variable "acm_certificate_domain_validation_options" {
-  description = "Domain validation options for ACM certificate"
+  description = "Domain validation options for ACM certificate. Empty list when no ALB/ACM is in use (e.g. EC2 origin behind Cloudflare TLS)."
   type        = any
+  default     = []
 }
 
 variable "create_www_record" {

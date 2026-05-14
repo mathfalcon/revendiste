@@ -1,0 +1,63 @@
+# Caddy reverse proxy for the dev single-EC2 deployment.
+#
+# Cloudflare proxies inbound traffic, so the origin is always reached via
+# Cloudflare IPs (allowed by the EC2 security group). For production-grade
+# end-to-end TLS, replace the `tls internal` block with a Cloudflare Origin CA
+# certificate (mount /etc/caddy/origin.pem and origin.key, then use:
+#   tls /etc/caddy/origin.pem /etc/caddy/origin.key
+# ) and set Cloudflare SSL/TLS mode to Full (strict).
+#
+# Until then `tls internal` issues a Caddy-local cert so the origin still serves
+# HTTPS. Cloudflare needs SSL/TLS mode "Full" (NOT "Full strict") for that to
+# work end-to-end. This is documented in docs/ROLLBACK_TO_ECS.md.
+
+{
+	# Quiet down the admin API; we manage Caddy via `docker compose restart caddy`.
+	admin off
+
+	# Honor Cloudflare's CF-Connecting-IP header so client-IP-based logs and
+	# rate limits use the real visitor IP, not the Cloudflare edge IP.
+	servers {
+		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/12 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+		client_ip_headers CF-Connecting-IP X-Forwarded-For
+	}
+}
+
+{$APP_HOSTNAME} {
+	encode zstd gzip
+
+	tls internal
+
+	# API and Swagger live under /api on the backend (Express mounts at /api).
+	@api path /api /api/*
+	handle @api {
+		reverse_proxy backend:3001 {
+			# Forward the original visitor info upstream.
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Everything else goes to the TanStack Start (Nitro) frontend.
+	handle {
+		reverse_proxy frontend:3000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+}
+
+# Plain HTTP listener so health probes from Cloudflare and ad-hoc curl checks
+# during cutover succeed even before the app cert is provisioned.
+:80 {
+	respond /healthz "ok" 200
+	redir https://{host}{uri} permanent
+}

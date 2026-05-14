@@ -335,3 +335,70 @@ module "cloudwatch_alarms" {
   db_instance_identifier = module.rds.db_instance_identifier
   common_tags            = local.common_tags
 }
+
+# ============================================================================
+# PHASE 5 — Production EC2 cutover (KEEP COMMENTED OUT until dev validation
+# gate has passed; see docs/DEV_VALIDATION_GATE.md and
+# docs/PROD_CUTOVER_CHECKLIST.md).
+#
+# When the operator uncomments this block:
+#   1. terraform apply creates the prod EC2 + EIP + app SG + IAM profile + S3
+#      deploy-artifacts bucket. Postgres-in-Docker is NOT used in prod
+#      (create_db_credentials_secret = false); the prod RDS secret is reused.
+#   2. The new prod app SG is granted 5432 ingress on the prod RDS SG via
+#      `aws_security_group_rule.rds_from_prod_app_compute` below.
+#   3. Run .github/workflows/deploy-production-ec2.yml (dispatch-only) to ship
+#      the deploy bundle and start the systemd unit.
+#   4. Validate via direct EIP / hosts override before flipping
+#      module.cloudflare_dns to origin_ip = module.ec2_app.instance_public_ip
+#      (and removing alb_dns_name + acm_certificate_domain_validation_options).
+#   5. Once stable: scale ECS services to 0, pause EventBridge rules. Leave
+#      module "ecs", "alb", "cronjobs", "service_discovery", "bastion" in this
+#      file for the 7-day rollback window per docs/ROLLBACK_TO_ECS.md.
+# ============================================================================
+
+# module "ec2_app" {
+#   source = "../../modules/ec2-app"
+#
+#   name_prefix    = local.name_prefix
+#   environment    = local.environment
+#   aws_region     = var.aws_region
+#   aws_account_id = data.aws_caller_identity.current.account_id
+#
+#   vpc_id    = module.vpc.vpc_id
+#   subnet_id = module.vpc.public_subnet_ids[0]
+#
+#   instance_type        = "t4g.medium" # Decide at execution time; t4g.large if scrape/cron overlaps user traffic
+#   data_volume_size_gb  = 30           # No in-VM Postgres; just Docker image cache and logs
+#   root_volume_size_gb  = 20
+#
+#   cloudflare_ip_ranges   = var.cloudflare_ip_ranges
+#   cloudflare_ipv6_ranges = var.cloudflare_ipv6_ranges
+#
+#   ecr_backend_repository_arn  = module.ecr.backend_repository_arn
+#   ecr_frontend_repository_arn = module.ecr.frontend_repository_arn
+#   backend_secrets_arn         = module.secrets.backend_secrets_arn
+#
+#   # Prod uses RDS, not Postgres-in-Docker. Reuse the existing RDS-backed
+#   # credentials secret so backend-entrypoint.sh keeps working unchanged.
+#   create_db_credentials_secret = false
+#   db_credentials_secret_arn    = module.rds.db_credentials_secret_arn
+#
+#   app_hostname = var.domain_name
+#   image_tag    = var.backend_image_tag
+#
+#   common_tags = local.common_tags
+# }
+#
+# # Allow the prod app host to reach prod RDS on 5432. The existing ECS tasks
+# # SG rule on the RDS SG is unchanged so rollback to ECS still works.
+# resource "aws_security_group_rule" "rds_from_prod_app_compute" {
+#   type                     = "ingress"
+#   from_port                = 5432
+#   to_port                  = 5432
+#   protocol                 = "tcp"
+#   security_group_id        = module.security_groups.rds_security_group_id
+#   source_security_group_id = module.ec2_app.app_compute_security_group_id
+#   description              = "PostgreSQL from prod EC2 app host"
+# }
+

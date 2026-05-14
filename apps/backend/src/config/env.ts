@@ -101,6 +101,15 @@ const EnvSchema = z.object({
   // Rate limiting (Postgres-backed; optional, defaults apply to /api)
   RATE_LIMIT_WINDOW_MS: z.coerce.number().optional().default(60_000), // 1 minute
   RATE_LIMIT_MAX: z.coerce.number().optional().default(100), // max requests per window per IP
+  // In-process cronjob scheduler. When true, the API process schedules and runs all
+  // cronjobs via node-cron (no external EventBridge needed). Used by the dev
+  // single-EC2 deployment. Default false; legacy NODE_ENV=local also enables them
+  // for backward compatibility.
+  ENABLE_INPROCESS_CRONJOBS: z.preprocess(v => {
+    if (v === undefined || v === '' || v === false) return false;
+    const s = String(v).toLowerCase();
+    return s === '1' || s === 'true' || s === 'yes';
+  }, z.boolean()),
   // FEU Electronic Invoicing (optional; required for invoice generation)
   FEU_ENV: z.enum(['test', 'prod']).optional().default('test'),
   FEU_AUTH_URL: z.url().nonempty(),
@@ -191,6 +200,7 @@ export const {
   POSTHOG_OTLP_LOGS_URL,
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_MAX,
+  ENABLE_INPROCESS_CRONJOBS,
   FEU_ENV,
   FEU_AUTH_URL,
   FEU_API_BASE_URL,

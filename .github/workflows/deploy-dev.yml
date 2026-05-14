@@ -1,9 +1,10 @@
-name: Deploy to Dev
+name: Deploy to Dev (LEGACY ECS)
 
+# Legacy ECS Fargate path. Kept for rollback per docs/ROLLBACK_TO_ECS.md.
+# The active dev pipeline is .github/workflows/deploy-dev-ec2.yml.
+# Only run this when explicitly dispatched.
 on:
-  push:
-    branches:
-      - development
+  workflow_dispatch:
 
 env:
   AWS_REGION: sa-east-1

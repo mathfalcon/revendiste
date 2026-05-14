@@ -3,7 +3,13 @@ import cors from 'cors';
 import morgan from 'morgan';
 import multer from 'multer';
 import path from 'path';
-import {PORT, STORAGE_LOCAL_PATH, APP_BASE_URL, NODE_ENV} from './config/env';
+import {
+  PORT,
+  STORAGE_LOCAL_PATH,
+  APP_BASE_URL,
+  NODE_ENV,
+  ENABLE_INPROCESS_CRONJOBS,
+} from './config/env';
 import {shutdownPostHog} from './lib/posthog';
 import {initOtel, shutdownOtel} from './lib/otel';
 import {apiRateLimitMiddleware} from './middleware/rateLimit';
@@ -26,6 +32,7 @@ import {
   initializeJobQueue,
   startProcessPendingJobsJob,
 } from './cronjobs/process-pending-jobs';
+import {startScrapeEventsJob} from './cronjobs/scrape-events';
 import {ValidationService} from '@mathfalcon/tsoa-runtime';
 
 // Initialize OpenTelemetry before any logging so the OTel transport is active
@@ -179,18 +186,29 @@ app.use(errorHandler);
 app.listen(PORT, '0.0.0.0', () => {
   logger.info(`🚀 API listening on http://localhost:${PORT}/api`);
 
-  // Start scheduled jobs only in local environments
-  // In production, jobs run via EventBridge + ECS RunTask using scripts/run-job.ts
-  if (NODE_ENV === 'local') {
-    logger.info('Starting cronjob schedulers (dev/local mode)...');
+  // Cronjobs run inside the API process when:
+  //   - ENABLE_INPROCESS_CRONJOBS=true (single-EC2 dev deployment), or
+  //   - NODE_ENV=local (legacy local dev behavior).
+  // Otherwise jobs are driven by EventBridge → ECS RunTask using scripts/run-job.ts.
+  // Each helper uses node-cron, which by default ALREADY skips ticks when the
+  // previous invocation is still running, so we get per-job concurrency=1 for free.
+  // This matters on the 2 GiB dev VM where the scrape job must not stack up.
+  const inProcessEnabled = ENABLE_INPROCESS_CRONJOBS || NODE_ENV === 'local';
+
+  if (inProcessEnabled) {
+    logger.info('Starting in-process cronjob schedulers', {
+      enableInprocessCronjobs: ENABLE_INPROCESS_CRONJOBS,
+      nodeEnv: NODE_ENV,
+    });
     startSyncPaymentsAndExpireOrdersJob();
     startNotifyUploadAvailabilityJob();
     startCheckPayoutHoldPeriodsJob();
     startProcessPendingNotificationsJob();
     startProcessPendingJobsJob();
+    startScrapeEventsJob();
   } else {
     logger.info(
-      'Cronjobs disabled in production (using EventBridge + ECS RunTask)',
+      'In-process cronjobs disabled (using EventBridge + ECS RunTask)',
     );
   }
 });
