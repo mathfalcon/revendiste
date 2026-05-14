@@ -7,11 +7,12 @@ import {sql, type Kysely} from 'kysely';
  *
  * Predicate constraints (PostgreSQL):
  * - Do not use `status::text` here — casts in partial-index predicates must be IMMUTABLE.
- * - Do not use `status != 'failed_payout'` — can error with "unsafe use of new enum value" if this
- *   runs in the same transaction as `ALTER TYPE ... ADD VALUE 'failed_payout'`.
- * So we list every non-failed_payout label that exists when this migration runs (see
- * 1766443202567, 1768511937269). If you add a new status that should participate in this
- * uniqueness rule, ship a follow-up migration that drops and recreates this index.
+ * - Listing `ADD VALUE` enum labels (e.g. `payout_requested` from 1768511937269) is only safe
+ *   after those values have committed. `kysely.config.ts` sets `disableTransactions: true` so
+ *   each migration commits before the next; without that, Kysely wraps all pending migrations
+ *   in one transaction and Postgres errors with "unsafe use of new value".
+ * If you add a new status that should participate in this uniqueness rule, extend this list
+ * or ship a follow-up migration that drops and recreates this index.
  */
 export async function up(db: Kysely<any>): Promise<void> {
   await sql`
