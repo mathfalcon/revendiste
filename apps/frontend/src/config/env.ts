@@ -10,8 +10,8 @@ const EnvSchema = z.object({
   // Fee configuration
   VITE_PLATFORM_COMMISSION_RATE: z.coerce.number().min(0).max(1).default(0.06), // 6%
   VITE_VAT_RATE: z.coerce.number().min(0).max(1).default(0.22), // 22%
-  // Backend IP for direct access during SSR (bypasses Cloudflare)
-  // Optional - if not set, will use VITE_APP_API_URL even during SSR
+  // Backend host:port for SSR-only direct API calls (Docker: backend:3001; ECS: Cloud Map DNS).
+  // Optional — if unset, SSR uses VITE_APP_API_URL only.
   BACKEND_IP: z.string().optional(),
   // Web Push (VAPID public key — safe to expose)
   VITE_VAPID_PUBLIC_KEY: z.string().min(1),
