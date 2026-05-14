@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {Loader} from '@aws-amplify/ui-react';
 import {
   Camera,
@@ -9,6 +10,8 @@ import {
   Glasses,
 } from 'lucide-react';
 import {Button} from '~/components/ui/button';
+import {Checkbox} from '~/components/ui/checkbox';
+import {Label} from '~/components/ui/label';
 import {
   Card,
   CardContent,
@@ -28,6 +31,8 @@ export function LivenessInstructionsCard({
   onStartVerification,
   isLoading,
 }: LivenessInstructionsCardProps) {
+  const [consentGiven, setConsentGiven] = useState(false);
+
   return (
     <Card>
       <CardHeader>
@@ -99,6 +104,30 @@ export function LivenessInstructionsCard({
           </ul>
         </div>
 
+        <div className='flex items-start gap-3 rounded-lg border p-4'>
+          <Checkbox
+            id='biometric-consent'
+            checked={consentGiven}
+            onCheckedChange={checked => setConsentGiven(checked === true)}
+          />
+          <Label
+            htmlFor='biometric-consent'
+            className='text-sm leading-relaxed cursor-pointer'
+          >
+            Autorizo a Revendiste a capturar y procesar mi imagen facial para
+            verificar mi identidad. Esta imagen se conservará mientras mi cuenta
+            esté activa y hasta 2 años posteriores al cierre.{' '}
+            <a
+              href='/politica-de-privacidad'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-primary underline'
+            >
+              Más información
+            </a>
+          </Label>
+        </div>
+
         <div className='flex gap-3'>
           <Button variant='outline' onClick={onBack} className='flex-1'>
             Volver
@@ -106,7 +135,7 @@ export function LivenessInstructionsCard({
           <Button
             onClick={onStartVerification}
             className='flex-1'
-            disabled={isLoading}
+            disabled={isLoading || !consentGiven}
           >
             {isLoading ? (
               <>
