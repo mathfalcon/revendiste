@@ -5,15 +5,26 @@ import {sql, type Kysely} from 'kysely';
  * Allows clone flow: original earning can be failed_payout, clone is available (same listing_ticket_id).
  * Prevents duplicate earnings from duplicate webhooks or bugs.
  *
- * Use `status::text <> 'failed_payout'` (not `status <> 'failed_payout'::...`) so PostgreSQL
- * does not hit "unsafe use of new value" when this migration runs in the same transaction
- * as `ALTER TYPE ... ADD VALUE 'failed_payout'` (common with batched migrators / fresh DBs).
+ * Predicate constraints (PostgreSQL):
+ * - Do not use `status::text` here — casts in partial-index predicates must be IMMUTABLE.
+ * - Do not use `status != 'failed_payout'` — can error with "unsafe use of new enum value" if this
+ *   runs in the same transaction as `ALTER TYPE ... ADD VALUE 'failed_payout'`.
+ * So we list every non-failed_payout label that exists when this migration runs (see
+ * 1766443202567, 1768511937269). If you add a new status that should participate in this
+ * uniqueness rule, ship a follow-up migration that drops and recreates this index.
  */
 export async function up(db: Kysely<any>): Promise<void> {
   await sql`
     CREATE UNIQUE INDEX seller_earnings_listing_ticket_id_active_unique
     ON seller_earnings (listing_ticket_id)
-    WHERE (status::text) <> 'failed_payout' AND deleted_at IS NULL
+    WHERE status IN (
+      'pending',
+      'available',
+      'retained',
+      'paid_out',
+      'payout_requested'
+    )
+    AND deleted_at IS NULL
   `.execute(db);
 }
 
