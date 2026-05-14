@@ -13,10 +13,10 @@ import {DB} from '@revendiste/shared';
 
 /**
  * Determines SSL configuration based on NODE_ENV and connection target
- * - local + localhost: no SSL needed
- * - local + remote (e.g., Supabase): SSL enabled
- * - development: SSL enabled
- * - production: SSL enabled with rejectUnauthorized: false (RDS within AWS network)
+ * - local + localhost: no SSL
+ * - local + remote (e.g., Supabase): SSL on
+ * - development/production: SSL off for plain Postgres (e.g. Docker service `postgres`);
+ *   SSL on for RDS / managed hosts (hostname does not look like local compose)
  */
 function getSslConfig(): boolean | {rejectUnauthorized: boolean} {
   if (NODE_ENV === 'local') {
@@ -26,8 +26,14 @@ function getSslConfig(): boolean | {rejectUnauthorized: boolean} {
     return true;
   }
 
+  // Single-EC2 dev compose uses host `postgres` with no TLS. RDS uses *.rds.amazonaws.com etc.
+  const host = POSTGRES_HOST.toLowerCase();
+  if (host === 'postgres' || host === 'localhost' || host === '127.0.0.1') {
+    return false;
+  }
+
   return {
-    rejectUnauthorized: false, // Skip certificate verification for RDS (connection is within AWS network)
+    rejectUnauthorized: false, // RDS / managed PG — verify cert chain not required on private paths
   };
 }
 

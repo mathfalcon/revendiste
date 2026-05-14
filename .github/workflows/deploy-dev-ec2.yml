@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Image tag to deploy (defaults to dev-<sha>)'
+        description: 'ECR image tag to deploy (e.g. dev-<7-char-sha>, or latest). Empty = dev-<sha> from commit.'
         required: false
         type: string
 
@@ -38,6 +38,7 @@ jobs:
       - name: Compute image tag
         id: tag
         run: |
+          # Manual dispatch may pass e.g. latest (must exist in ECR) or dev-abc1234.
           if [ -n "${{ github.event.inputs.image_tag }}" ]; then
             echo "image_tag=${{ github.event.inputs.image_tag }}" >>"$GITHUB_OUTPUT"
           else
@@ -171,17 +172,23 @@ jobs:
           # 3. Updates IMAGE_TAG in /opt/revendiste/runtime.env.
           # 4. Restarts the systemd unit (which runs bootstrap-env, ECR login,
           #    docker compose up).
-          REMOTE_SCRIPT=$(cat <<'EOS'
+          # Unquoted <<EOS so DEPLOY_BUCKET and IMAGE_TAG expand on the runner.
+          # Escape \$ for variables that must be evaluated on the EC2 (set -u).
+          REMOTE_SCRIPT=$(cat <<EOS
           set -euxo pipefail
           BUNDLE=/tmp/deploy-bundle.tar.gz
-          aws s3 cp "s3://${DEPLOY_BUCKET}/deploy-bundles/latest.tar.gz" "$BUNDLE"
+          aws s3 cp "s3://${DEPLOY_BUCKET}/deploy-bundles/latest.tar.gz" "\$BUNDLE"
           mkdir -p /opt/revendiste/scripts
-          tar -xzvf "$BUNDLE" -C /opt/revendiste
+          tar -xzvf "\$BUNDLE" -C /opt/revendiste
           chmod +x /opt/revendiste/scripts/*.sh
           chown -R root:root /opt/revendiste
           # Update IMAGE_TAG in runtime.env so the next compose up uses the new tag.
           sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=${IMAGE_TAG}|" /opt/revendiste/runtime.env
-          systemctl restart revendiste.service
+          if ! systemctl restart revendiste.service; then
+            systemctl status revendiste.service --no-pager -l || true
+            journalctl -u revendiste.service -n 200 --no-pager -l || true
+            exit 1
+          fi
           # Wait briefly for compose to settle so the workflow's curl probe is meaningful.
           sleep 15
           docker compose --env-file /opt/revendiste/.env -f /opt/revendiste/docker-compose.dev.yml ps
