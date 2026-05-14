@@ -26,21 +26,27 @@ import {db} from '~/db';
 // --- Explicit controller response types for TSOA Swagger generation ---
 // Always use named type aliases for controller return values (see Custom Rules).
 
-export type GetEventsPaginatedResponse = Awaited<ReturnType<
-  EventsService['getAllEventsPaginated']
->>;
-export type SearchEventsResponse = Awaited<ReturnType<EventsService['getBySearch']>>;
-export type GetTrendingEventsResponse = Awaited<ReturnType<
-  EventViewsService['getTrendingEvents']
->>;
-export type GetDistinctCitiesResponse = Awaited<ReturnType<
-  EventsService['getDistinctCities']
->>;
-export type GetDistinctRegionsResponse = Awaited<ReturnType<
-  VenuesService['getDistinctRegions']
->>;
-export type GetEventByIdResponse = Awaited<ReturnType<EventsService['getEventById']>>;
-export type GetEventBySlugResponse = GetEventByIdResponse;
+export type GetEventsPaginatedResponse = Awaited<
+  ReturnType<EventsService['getAllEventsPaginated']>
+>;
+export type SearchEventsResponse = Awaited<
+  ReturnType<EventsService['getBySearch']>
+>;
+export type GetTrendingEventsResponse = Awaited<
+  ReturnType<EventViewsService['getTrendingEvents']>
+>;
+export type GetDistinctCitiesResponse = Awaited<
+  ReturnType<EventsService['getDistinctCities']>
+>;
+export type GetDistinctRegionsResponse = Awaited<
+  ReturnType<VenuesService['getDistinctRegions']>
+>;
+export type GetEventByIdResponse = Awaited<
+  ReturnType<EventsService['getEventById']>
+>;
+export type GetEventBySlugResponse = Awaited<
+  ReturnType<EventsService['getEventBySlug']>
+>;
 export type TrackViewResponse = {success: boolean};
 
 interface EventsPaginatedQuery extends PaginationQuery {
@@ -92,7 +98,10 @@ export class EventsController {
         radiusKm: query.radiusKm != null ? Number(query.radiusKm) : undefined,
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
-        hasTickets: query.hasTickets != null ? String(query.hasTickets) === 'true' : undefined,
+        hasTickets:
+          query.hasTickets != null
+            ? String(query.hasTickets) === 'true'
+            : undefined,
         tzOffset: query.tzOffset != null ? Number(query.tzOffset) : undefined,
       },
       request.user?.id,

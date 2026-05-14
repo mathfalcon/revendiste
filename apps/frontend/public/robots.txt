@@ -2,45 +2,12 @@
 
 User-agent: *
 Allow: /
-
-# Private/Auth pages
 Disallow: /ingresar
 Disallow: /registrarse
-
-# User account pages
 Disallow: /cuenta/
-
-# Admin panel
 Disallow: /admin/
-
-# Transaction pages
 Disallow: /checkout/
-
-# Listing management
 Disallow: /entradas/publicar
 Disallow: /entradas/editar/
 
-# Allow AI crawlers (ChatGPT, Perplexity, etc.)
-User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: anthropic-ai
-Allow: /
-
-User-agent: Claude-Web
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-# Sitemap
-Sitemap: https://revendiste.com/sitemap
+Sitemap: https://revendiste.com/sitemap.xml
