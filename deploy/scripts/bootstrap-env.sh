@@ -75,6 +75,17 @@ if [[ -z "$POSTGRES_USER" || -z "$POSTGRES_PASSWORD" || -z "$POSTGRES_DB" ]]; th
   exit 65
 fi
 
+# Docker Compose .env treats `#` as starting a comment unless the value is
+# quoted. DB passwords may include `#` (see ec2-app random_password), which
+# otherwise truncates POSTGRES_* and JSON lines and breaks the backend at boot.
+dotenv_kv_json_string() {
+  local key=$1
+  local val=$2
+  local encoded
+  encoded=$(jq -nr --arg v "$val" '$v|@json')
+  printf '%s=%s\n' "$key" "$encoded"
+}
+
 umask 077
 {
   printf 'AWS_REGION=%s\n' "$AWS_REGION"
@@ -82,14 +93,11 @@ umask 077
   printf 'ENVIRONMENT=%s\n' "$ENVIRONMENT"
   printf 'APP_HOSTNAME=%s\n' "$APP_HOSTNAME"
   printf 'IMAGE_TAG=%s\n' "${IMAGE_TAG:-latest}"
-  printf 'POSTGRES_USER=%s\n' "$POSTGRES_USER"
-  printf 'POSTGRES_PASSWORD=%s\n' "$POSTGRES_PASSWORD"
-  printf 'POSTGRES_DB=%s\n' "$POSTGRES_DB"
-  # Pass the raw JSON blobs through; backend-entrypoint.sh parses them.
-  # Quoting them once is enough — docker-compose reads .env line-by-line and
-  # forwards the value verbatim to the container env.
-  printf 'DB_CREDENTIALS_JSON=%s\n' "$DB_CREDENTIALS_JSON"
-  printf 'BACKEND_SECRETS_JSON=%s\n' "$BACKEND_SECRETS_JSON"
+  dotenv_kv_json_string POSTGRES_USER "$POSTGRES_USER"
+  dotenv_kv_json_string POSTGRES_PASSWORD "$POSTGRES_PASSWORD"
+  dotenv_kv_json_string POSTGRES_DB "$POSTGRES_DB"
+  dotenv_kv_json_string DB_CREDENTIALS_JSON "$DB_CREDENTIALS_JSON"
+  dotenv_kv_json_string BACKEND_SECRETS_JSON "$BACKEND_SECRETS_JSON"
 } >"$ENV_FILE_TMP"
 
 mv "$ENV_FILE_TMP" "$ENV_FILE"

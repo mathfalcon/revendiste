@@ -91,6 +91,8 @@ Wants=docker.service network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+# Pull + health deps can exceed distro defaults; 0 = no start timeout.
+TimeoutStartSec=0
 WorkingDirectory=/opt/revendiste
 EnvironmentFile=/opt/revendiste/runtime.env
 # Refresh secrets, log in to ECR, and bring containers up. The deploy workflow
@@ -99,7 +101,8 @@ EnvironmentFile=/opt/revendiste/runtime.env
 ExecStartPre=/opt/revendiste/scripts/bootstrap-env.sh
 ExecStartPre=/bin/bash -lc 'aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"'
 ExecStart=/usr/bin/docker compose --env-file /opt/revendiste/.env -f /opt/revendiste/docker-compose.dev.yml up -d
-ExecStop=/usr/bin/docker compose --env-file /opt/revendiste/.env -f /opt/revendiste/docker-compose.dev.yml down
+# Ignore stop failures so a broken stack does not block the next restart/deploy.
+ExecStop=-/usr/bin/docker compose --env-file /opt/revendiste/.env -f /opt/revendiste/docker-compose.dev.yml down
 
 [Install]
 WantedBy=multi-user.target

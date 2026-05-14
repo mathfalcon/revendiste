@@ -184,7 +184,11 @@ jobs:
           chown -R root:root /opt/revendiste
           # Update IMAGE_TAG in runtime.env so the next compose up uses the new tag.
           sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=${IMAGE_TAG}|" /opt/revendiste/runtime.env
-          systemctl restart revendiste.service
+          if ! systemctl restart revendiste.service; then
+            systemctl status revendiste.service --no-pager -l || true
+            journalctl -u revendiste.service -n 200 --no-pager -l || true
+            exit 1
+          fi
           # Wait briefly for compose to settle so the workflow's curl probe is meaningful.
           sleep 15
           docker compose --env-file /opt/revendiste/.env -f /opt/revendiste/docker-compose.dev.yml ps
