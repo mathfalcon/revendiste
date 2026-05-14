@@ -23,7 +23,6 @@ export const apiRateLimitMiddleware = rateLimit({
   // prevents store errors from marking the backend unhealthy at boot.
   skip: req => {
     const fullPath = (req.originalUrl ?? '').split('?')[0] ?? '';
-    return (
-      isHealthCheckPath(req.path) || isHealthCheckPath(fullPath)
-    );
+    return isHealthCheckPath(req.path) || isHealthCheckPath(fullPath);
   },
+});
