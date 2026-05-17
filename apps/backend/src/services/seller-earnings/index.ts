@@ -81,6 +81,18 @@ function computeHoldEndsAt(eventEndDate: Date, holdPeriodHours: number): Date {
   return d;
 }
 
+function hasPublisherUserId<T extends {publisherUserId: string | null}>(
+  row: T,
+): row is T & {publisherUserId: string} {
+  return row.publisherUserId !== null;
+}
+
+function hasSellerUserId<T extends {sellerUserId: string | null}>(
+  row: T,
+): row is T & {sellerUserId: string} {
+  return row.sellerUserId !== null;
+}
+
 interface BalanceByCurrency {
   currency: EventTicketCurrency;
   amount: string;
@@ -178,6 +190,13 @@ export class SellerEarningsService {
       });
       throw new Error('Listing not found');
     }
+    if (!listing.publisherUserId) {
+      logger.info('Skipping user seller earnings for producer-owned listing', {
+        listingId: ticketData.listingId,
+        listingTicketId,
+      });
+      return;
+    }
 
     // Calculate seller amount and round to 2 decimal places (same logic as payments)
     const sellerAmountCalc = calculateSellerAmount(Number(ticketData.price));
@@ -273,21 +292,23 @@ export class SellerEarningsService {
     ]);
 
     return {
-      byListing,
-      byTicket: byTicket.map(ticket => ({
-        id: ticket.id,
-        listingTicketId: ticket.listingTicketId,
-        sellerAmount: ticket.sellerAmount,
-        currency: ticket.currency,
-        holdUntil: computeHoldEndsAt(
-          ticket.eventEndDate,
-          PAYOUT_HOLD_PERIOD_HOURS,
-        ),
-        listingId: ticket.listingId,
-        publisherUserId: ticket.publisherUserId,
-        eventName: ticket.eventName,
-        eventStartDate: ticket.eventStartDate,
-      })),
+      byListing: byListing.filter(hasPublisherUserId),
+      byTicket: byTicket
+        .filter(hasPublisherUserId)
+        .map(ticket => ({
+          id: ticket.id,
+          listingTicketId: ticket.listingTicketId,
+          sellerAmount: ticket.sellerAmount,
+          currency: ticket.currency,
+          holdUntil: computeHoldEndsAt(
+            ticket.eventEndDate,
+            PAYOUT_HOLD_PERIOD_HOURS,
+          ),
+          listingId: ticket.listingId,
+          publisherUserId: ticket.publisherUserId,
+          eventName: ticket.eventName,
+          eventStartDate: ticket.eventStartDate,
+        })),
     };
   }
 
@@ -333,7 +354,9 @@ export class SellerEarningsService {
       totalReleased += batch.length;
 
       if (this.notificationService && batchRows.length > 0) {
-        const grouped = aggregateReleasedEarningsBySeller(batchRows);
+        const grouped = aggregateReleasedEarningsBySeller(
+          batchRows.filter(hasSellerUserId),
+        );
         for (const g of grouped) {
           notifySellerEarningsAvailable(this.notificationService, {
             sellerUserId: g.sellerUserId,
@@ -405,7 +428,7 @@ export class SellerEarningsService {
         );
 
         // 3. Send notifications (fire-and-forget)
-        if (this.notificationService) {
+        if (this.notificationService && item.sellerUserId) {
           notifySellerEarningsRetained(this.notificationService, {
             sellerUserId: item.sellerUserId,
             eventName: item.eventName,

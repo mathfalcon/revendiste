@@ -15,7 +15,7 @@ interface BalanceResult {
 
 interface EarningsByListing {
   listingId: string;
-  publisherUserId: string;
+  publisherUserId: string | null;
   totalAmount: string;
   ticketCount: number;
   currency: EventTicketCurrency;
@@ -160,7 +160,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       .innerJoin('events', 'eventTicketWaves.eventId', 'events.id')
       .select(eb => [
         'listings.id as listingId',
-        'listings.publisherUserId',
+        sql<string>`listings.publisher_user_id`.as('publisherUserId'),
         sql<string>`SUM(seller_earnings.seller_amount)`.as('totalAmount'),
         sql<number>`COUNT(seller_earnings.id)`.as('ticketCount'),
         'sellerEarnings.currency',
@@ -168,6 +168,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'events.eventStartDate',
       ])
       .where('sellerEarnings.sellerUserId', '=', sellerUserId)
+      .where('listings.publisherUserId', 'is not', null)
       .where('sellerEarnings.status', '=', 'available')
       .where('sellerEarnings.payoutId', 'is', null)
       .where('sellerEarnings.deletedAt', 'is', null)
@@ -204,11 +205,12 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'sellerEarnings.currency',
         'events.eventEndDate',
         'listings.id as listingId',
-        'listings.publisherUserId',
+        sql<string>`listings.publisher_user_id`.as('publisherUserId'),
         'events.name as eventName',
         'events.eventStartDate',
       ])
       .where('sellerEarnings.sellerUserId', '=', sellerUserId)
+      .where('listings.publisherUserId', 'is not', null)
       .where('sellerEarnings.status', '=', 'available')
       .where('sellerEarnings.payoutId', 'is', null)
       .where('sellerEarnings.deletedAt', 'is', null)
@@ -500,6 +502,7 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
         'sellerEarnings.currency',
         'sellerEarnings.status',
       ])
+      .where('sellerEarnings.sellerUserId', 'is not', null)
       .where(NO_OPEN_TICKET_REPORT)
       .where(
         sql<boolean>`events.event_end_date + (${sql.lit(holdPeriodHours)} * interval '1 hour') <= ${now}`,
@@ -555,8 +558,9 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
   async getListingPublisherUserId(listingId: string) {
     return await this.db
       .selectFrom('listings')
-      .select(['listings.publisherUserId'])
+      .select(sql<string>`listings.publisher_user_id`.as('publisherUserId'))
       .where('listings.id', '=', listingId)
+      .where('listings.publisherUserId', 'is not', null)
       .where('listings.deletedAt', 'is', null)
       .executeTakeFirst();
   }
@@ -758,13 +762,14 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
       )
       .where('events.eventEndDate', '<=', now)
       .where('ticketDocuments.id', 'is', null)
+      .where('sellerEarnings.sellerUserId', 'is not', null)
       .where('sellerEarnings.status', '=', 'pending')
       .where('sellerEarnings.deletedAt', 'is', null)
       .where('listingTickets.deletedAt', 'is', null)
       .distinctOn('sellerEarnings.id')
       .select(eb => [
         eb.ref('sellerEarnings.id').as('earningsId'),
-        eb.ref('sellerEarnings.sellerUserId').as('sellerUserId'),
+        sql<string>`seller_earnings.seller_user_id`.as('sellerUserId'),
         eb.ref('listingTickets.id').as('ticketId'),
         eb.ref('orderTicketReservations.id').as('reservationId'),
         eb.ref('orderTicketReservations.orderId').as('orderId'),

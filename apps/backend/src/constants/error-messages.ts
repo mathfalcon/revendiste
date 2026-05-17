@@ -227,6 +227,19 @@ export const ADMIN_EVENTS_ERROR_MESSAGES = {
   EXTERNAL_ID_DUPLICATE: 'Ya existe un evento con este ID externo',
 } as const;
 
+// Error messages for admin event producers
+export const EVENT_PRODUCER_ERROR_MESSAGES = {
+  EVENT_PRODUCER_NOT_FOUND: 'Productora no encontrada',
+  EVENT_PRODUCER_MEMBER_NOT_FOUND: 'Miembro de la productora no encontrado',
+  USER_NOT_FOUND: 'Usuario no encontrado',
+  EVENT_PRODUCER_SLUG_ALREADY_EXISTS:
+    'Ya existe una productora con ese identificador',
+  EVENT_PRODUCER_MEMBER_ALREADY_EXISTS:
+    'El usuario ya es miembro activo de esta productora',
+  DEFAULT_FEE_PAIR_REQUIRED:
+    'La comisión fija de la productora requiere monto y moneda',
+} as const;
+
 // Error messages for admin identity verification
 export const ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES = {
   USER_NOT_FOUND: 'Usuario no encontrado',

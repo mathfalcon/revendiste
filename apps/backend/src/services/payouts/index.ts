@@ -597,19 +597,21 @@ export class PayoutsService {
     });
 
     // Send notification (fire-and-forget, outside transaction)
-    notifyPayoutCompleted(this.notificationService, {
-      sellerUserId: payout.sellerUserId,
-      payoutId,
-      amount: payout.amount,
-      currency: payout.currency as 'UYU' | 'USD',
-      transactionReference: updates.transactionReference,
-      completedAt: new Date(),
-    }).catch(error => {
-      logger.error('Failed to send payout completed notification', {
+    if (payout.sellerUserId) {
+      notifyPayoutCompleted(this.notificationService, {
+        sellerUserId: payout.sellerUserId,
         payoutId,
-        error,
+        amount: payout.amount,
+        currency: payout.currency as 'UYU' | 'USD',
+        transactionReference: updates.transactionReference,
+        completedAt: new Date(),
+      }).catch(error => {
+        logger.error('Failed to send payout completed notification', {
+          payoutId,
+          error,
+        });
       });
-    });
+    }
 
     return updatedPayout;
   }
@@ -671,18 +673,20 @@ export class PayoutsService {
     );
 
     // Send notification (fire-and-forget, outside transaction)
-    notifyPayoutFailed(this.notificationService, {
-      sellerUserId: payout.sellerUserId,
-      payoutId,
-      amount: payout.amount,
-      currency: payout.currency as 'UYU' | 'USD',
-      failureReason,
-    }).catch(error => {
-      logger.error('Failed to send payout failed notification', {
+    if (payout.sellerUserId) {
+      notifyPayoutFailed(this.notificationService, {
+        sellerUserId: payout.sellerUserId,
         payoutId,
-        error,
+        amount: payout.amount,
+        currency: payout.currency as 'UYU' | 'USD',
+        failureReason,
+      }).catch(error => {
+        logger.error('Failed to send payout failed notification', {
+          payoutId,
+          error,
+        });
       });
-    });
+    }
 
     return updatedPayout;
   }
@@ -776,31 +780,35 @@ export class PayoutsService {
 
     // Send notification (fire-and-forget, outside transaction)
     if (reasonType === 'error') {
-      notifyPayoutFailed(this.notificationService, {
-        sellerUserId: payout.sellerUserId,
-        payoutId,
-        amount: payout.amount,
-        currency: payout.currency as 'UYU' | 'USD',
-        failureReason,
-      }).catch(error => {
-        logger.error('Failed to send payout failed notification', {
+      if (payout.sellerUserId) {
+        notifyPayoutFailed(this.notificationService, {
+          sellerUserId: payout.sellerUserId,
           payoutId,
-          error,
+          amount: payout.amount,
+          currency: payout.currency as 'UYU' | 'USD',
+          failureReason,
+        }).catch(error => {
+          logger.error('Failed to send payout failed notification', {
+            payoutId,
+            error,
+          });
         });
-      });
+      }
     } else {
-      notifyPayoutCancelled(this.notificationService, {
-        sellerUserId: payout.sellerUserId,
-        payoutId,
-        amount: payout.amount,
-        currency: payout.currency as 'UYU' | 'USD',
-        cancellationReason: failureReason,
-      }).catch(error => {
-        logger.error('Failed to send payout cancelled notification', {
+      if (payout.sellerUserId) {
+        notifyPayoutCancelled(this.notificationService, {
+          sellerUserId: payout.sellerUserId,
           payoutId,
-          error,
+          amount: payout.amount,
+          currency: payout.currency as 'UYU' | 'USD',
+          cancellationReason: failureReason,
+        }).catch(error => {
+          logger.error('Failed to send payout cancelled notification', {
+            payoutId,
+            error,
+          });
         });
-      });
+      }
     }
 
     return updatedPayout;
@@ -915,9 +923,10 @@ export class PayoutsService {
           ?.averageExchangeRate ?? null,
     };
 
-    const sellerUser = this.usersRepository
-      ? await this.usersRepository.getById(payout.sellerUserId)
-      : null;
+    const sellerUser =
+      this.usersRepository && payout.sellerUserId
+        ? await this.usersRepository.getById(payout.sellerUserId)
+        : null;
 
     return {
       ...payout,
@@ -957,7 +966,7 @@ export class PayoutsService {
     }
 
     // Validate payout belongs to seller
-    if (payout.sellerUserId !== sellerUserId) {
+    if (!payout.sellerUserId || payout.sellerUserId !== sellerUserId) {
       throw new NotFoundError(PAYOUT_ERROR_MESSAGES.PAYOUT_NOT_FOUND);
     }
 

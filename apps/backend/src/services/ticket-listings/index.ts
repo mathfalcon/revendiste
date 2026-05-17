@@ -557,6 +557,13 @@ export class TicketListingsService {
     for (const listing of listings) {
       const ticketCount = ticketsByListing.get(listing.id) || 0;
       if (ticketCount === 0) continue;
+      if (!listing.publisherUserId) {
+        logger.info('Skipping seller notifications for producer-owned listing', {
+          listingId: listing.id,
+          orderId,
+        });
+        continue;
+      }
       const current = sellerCountMap.get(listing.publisherUserId) || 0;
       sellerCountMap.set(listing.publisherUserId, current + ticketCount);
       const existingIds = sellerTicketIds.get(listing.publisherUserId) || [];

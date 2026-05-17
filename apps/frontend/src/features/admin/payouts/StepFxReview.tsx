@@ -311,8 +311,12 @@ export function StepFxReview({payoutId, payout, onNext}: StepFxReviewProps) {
               </Link>
             </Button>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-              <span className='font-mono break-all'>{payout.sellerUserId}</span>
-              <CopyButton text={payout.sellerUserId} size='sm' />
+              <span className='font-mono break-all'>
+                {payout.sellerUserId ?? 'No disponible'}
+              </span>
+              {payout.sellerUserId ? (
+                <CopyButton text={payout.sellerUserId} size='sm' />
+              ) : null}
             </div>
           </div>
         </CardContent>

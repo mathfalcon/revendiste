@@ -1,4 +1,4 @@
-import {Kysely} from 'kysely';
+import {Kysely, sql} from 'kysely';
 import {DB} from '@revendiste/shared';
 import {BaseRepository} from '../base';
 import {
@@ -319,7 +319,7 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .select([
         'listingTickets.id as ticketId',
         'listingTickets.listingId',
-        'listings.publisherUserId as sellerUserId',
+        sql<string>`listings.publisher_user_id`.as('sellerUserId'),
         'events.name as eventName',
         'events.eventStartDate',
         'events.qrAvailabilityTiming',
@@ -327,6 +327,7 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       ])
       .where('listingTickets.deletedAt', 'is', null)
       .where('listings.deletedAt', 'is', null)
+      .where('listings.publisherUserId', 'is not', null)
       .where('ticketDocuments.id', 'is', null) // No documents yet
       .where('events.eventStartDate', 'is not', null)
       .where('events.eventStartDate', '>', now) // Event hasn't started yet

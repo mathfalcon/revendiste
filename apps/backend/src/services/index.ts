@@ -1,5 +1,6 @@
 export * from './admin-events';
 export * from './events';
+export * from './event-producers';
 export * from './health';
 export * from './users';
 export * from './ticket-listings';

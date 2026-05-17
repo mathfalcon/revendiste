@@ -59,6 +59,34 @@ describe('SellerEarningsService', () => {
       expect(mockSellerEarningsRepository.create).not.toHaveBeenCalled();
       expect(mockSellerEarningsRepository.getTicketDataForEarnings).not.toHaveBeenCalled();
     });
+
+    it('creates earnings for user-owned listing after owner columns became nullable', async () => {
+      mockSellerEarningsRepository.getEarningsByListingTicketIds.mockResolvedValue(
+        [],
+      );
+      mockSellerEarningsRepository.getTicketDataForEarnings.mockResolvedValue({
+        id: 'lt-1',
+        price: '1200',
+        listingId: 'listing-1',
+        eventEndDate: new Date('2030-01-01T00:00:00.000Z'),
+        currency: 'UYU',
+      } as any);
+      mockSellerEarningsRepository.getListingPublisherUserId.mockResolvedValue({
+        publisherUserId: 'seller-user-1',
+      } as any);
+
+      await service.createEarningFromSale('lt-1');
+
+      expect(mockSellerEarningsRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sellerUserId: 'seller-user-1',
+          listingTicketId: 'lt-1',
+          currency: 'UYU',
+          status: 'pending',
+          sellerAmount: expect.any(Number),
+        }),
+      );
+    });
   });
 
   describe('checkHoldPeriods', () => {
