@@ -55,6 +55,16 @@ import {Link} from '@tanstack/react-router';
 import {Alert, AlertDescription, AlertTitle} from '~/components/ui/alert';
 
 const QR_TIMINGS = ['3h', '6h', '12h', '24h', '48h', '72h'] as const;
+const EVENT_STATUSES = [
+  'draft',
+  'under_review',
+  'rejected',
+  'published',
+  'active',
+  'inactive',
+  'finished',
+  'cancelled',
+] as const;
 
 const eventFormSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -63,7 +73,7 @@ const eventFormSchema = z.object({
   eventEndDate: z.string().min(1, 'La fecha de fin es requerida'),
   externalUrl: z.string().optional(),
   qrAvailabilityTiming: z.enum(['none', ...QR_TIMINGS]),
-  status: z.enum(['active', 'inactive']),
+  status: z.enum(EVENT_STATUSES),
 });
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
@@ -86,6 +96,12 @@ function formatDateTimeLocal(dateString: string): string {
 function buildEventFormDefaults(
   event: GetEventDetailsResponse,
 ): EventFormValues {
+  const normalizedStatus = EVENT_STATUSES.includes(
+    event.status as (typeof EVENT_STATUSES)[number],
+  )
+    ? (event.status as (typeof EVENT_STATUSES)[number])
+    : 'inactive';
+
   return {
     name: event.name,
     description: event.description || '',
@@ -93,8 +109,50 @@ function buildEventFormDefaults(
     eventEndDate: formatDateTimeLocal(event.eventEndDate),
     externalUrl: event.externalUrl || '',
     qrAvailabilityTiming: event.qrAvailabilityTiming ?? 'none',
-    status: event.status as 'active' | 'inactive',
+    status: normalizedStatus,
   };
+}
+
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'draft':
+      return 'Borrador';
+    case 'under_review':
+      return 'En revisión';
+    case 'rejected':
+      return 'Rechazado';
+    case 'published':
+      return 'Publicado';
+    case 'active':
+      return 'Activo';
+    case 'inactive':
+      return 'Inactivo';
+    case 'finished':
+      return 'Finalizado';
+    case 'cancelled':
+      return 'Cancelado';
+    default:
+      return status;
+  }
+}
+
+function getStatusBadgeClassName(status: string) {
+  switch (status) {
+    case 'active':
+      return 'border-green-400 text-green-100';
+    case 'under_review':
+      return 'border-amber-400 text-amber-100';
+    case 'rejected':
+      return 'border-rose-400 text-rose-100';
+    case 'published':
+      return 'border-sky-400 text-sky-100';
+    default:
+      return 'border-gray-400 text-gray-100';
+  }
+}
+
+function isLegacyEditableStatus(status: string) {
+  return status === 'active' || status === 'inactive';
 }
 
 type QrTimingApi = NonNullable<GetEventDetailsResponse['qrAvailabilityTiming']>;
@@ -110,6 +168,7 @@ function EventDetailEditor({
 }) {
   const queryClient = useQueryClient();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const canEditLegacyStatus = isLegacyEditableStatus(event.status);
 
   const form = useForm<EventFormValues>({
     resolver: standardSchemaResolver(eventFormSchema),
@@ -165,7 +224,9 @@ function EventDetailEditor({
           data.qrAvailabilityTiming === 'none'
             ? null
             : (data.qrAvailabilityTiming as QrTimingApi),
-        status: data.status,
+        status: canEditLegacyStatus
+          ? (data.status as 'active' | 'inactive')
+          : undefined,
       },
     });
   };
@@ -223,13 +284,9 @@ function EventDetailEditor({
             <Badge className='bg-white text-black'>{event.platform}</Badge>
             <Badge
               variant='outline'
-              className={
-                event.status === 'active'
-                  ? 'border-green-400 text-green-100'
-                  : 'border-gray-400 text-gray-100'
-              }
+              className={getStatusBadgeClassName(event.status)}
             >
-              {event.status === 'active' ? 'Activo' : 'Inactivo'}
+              {getStatusLabel(event.status)}
             </Badge>
             {event.deletedAt ? (
               <Badge className='bg-rose-600 text-white border-0'>
@@ -376,30 +433,37 @@ function EventDetailEditor({
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name='status'
-                    render={({field}) => (
-                      <FormItem>
-                        <FormLabel>Estado</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value='active'>Activo</SelectItem>
-                            <SelectItem value='inactive'>Inactivo</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {canEditLegacyStatus ? (
+                    <FormField
+                      control={form.control}
+                      name='status'
+                      render={({field}) => (
+                        <FormItem>
+                          <FormLabel>Estado</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value='active'>Activo</SelectItem>
+                              <SelectItem value='inactive'>Inactivo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ) : (
+                    <FormItem>
+                      <FormLabel>Estado</FormLabel>
+                      <Input value={getStatusLabel(event.status)} disabled />
+                    </FormItem>
+                  )}
 
                   <Button
                     type='submit'

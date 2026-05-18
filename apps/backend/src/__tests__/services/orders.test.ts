@@ -400,7 +400,7 @@ describe('OrdersService', () => {
       );
     });
 
-    it('throws TICKETS_NO_LONGER_AVAILABLE when createReservations hits unique violation', async () => {
+    it('rethrows reservation persistence errors that are not handled conflicts', async () => {
       mockOrdersRepository.getPendingOrderByUserAndEvent.mockResolvedValue(
         undefined,
       );
@@ -431,9 +431,9 @@ describe('OrdersService', () => {
         vatOnCommission: '0',
         currency: 'UYU',
       } as any);
-      const dbErr = Object.assign(new Error('duplicate key'), {code: '23505'});
+      const reservationError = new Error('reservation write failed');
       mockOrderTicketReservationsRepository.createReservations.mockRejectedValue(
-        dbErr,
+        reservationError,
       );
 
       const data = {
@@ -441,9 +441,9 @@ describe('OrdersService', () => {
         ticketSelections: {'wave-1': {'100': 1}},
       };
 
-      await expect(service.createOrder(data, 'user-1')).rejects.toMatchObject({
-        message: ORDER_ERROR_MESSAGES.TICKETS_NO_LONGER_AVAILABLE,
-      });
+      await expect(service.createOrder(data, 'user-1')).rejects.toBe(
+        reservationError,
+      );
     });
   });
 

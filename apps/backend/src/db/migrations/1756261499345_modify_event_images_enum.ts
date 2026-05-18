@@ -1,7 +1,7 @@
 import {sql, type Kysely} from 'kysely';
 
 export async function up(db: Kysely<any>): Promise<void> {
-  sql`CREATE TYPE event_image_type AS ENUM ('flyer', 'hero')`.execute(db);
+  await sql`CREATE TYPE event_image_type AS ENUM ('flyer', 'hero')`.execute(db);
 
   await sql`
     ALTER TABLE event_images

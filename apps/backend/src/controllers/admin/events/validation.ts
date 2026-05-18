@@ -2,6 +2,17 @@ import {z} from 'zod';
 import {PaginationSchema} from '~/middleware';
 import {VALIDATION_MESSAGES} from '~/constants/error-messages';
 
+const AdminEventStatusSchema = z.enum([
+  'draft',
+  'under_review',
+  'rejected',
+  'published',
+  'active',
+  'inactive',
+  'finished',
+  'cancelled',
+]);
+
 // ============================================================================
 // Events Query/List
 // ============================================================================
@@ -11,7 +22,7 @@ export const AdminEventsQuerySchema = PaginationSchema.extend({
   /** When true, includes events with soft-delete (deletedAt set) in the list */
   includeDeleted: z.coerce.boolean().optional().default(false),
   search: z.string().optional(),
-  status: z.enum(['active', 'inactive']).optional(),
+  status: AdminEventStatusSchema.optional(),
 });
 
 export const AdminEventsRouteSchema = z.object({
@@ -44,6 +55,20 @@ export const UpdateEventRouteSchema = z.object({
 
 export type UpdateEventRouteBody = z.infer<
   typeof UpdateEventRouteSchema
+>['body'];
+
+// ============================================================================
+// Event Lifecycle (Official Events)
+// ============================================================================
+
+export const RejectEventRouteSchema = z.object({
+  body: z.object({
+    rejectedReason: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED),
+  }),
+});
+
+export type RejectEventRouteBody = z.infer<
+  typeof RejectEventRouteSchema
 >['body'];
 
 // ============================================================================

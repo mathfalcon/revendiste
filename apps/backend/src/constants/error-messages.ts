@@ -214,6 +214,30 @@ export const EVENT_ERROR_MESSAGES = {
   EVENT_NOT_FOUND: 'Evento no encontrado',
 } as const;
 
+export const EVENT_LIFECYCLE_ERROR_MESSAGES = {
+  EVENT_NOT_OFFICIAL:
+    'El evento indicado no corresponde a un flujo oficial de productoras.',
+  EVENT_PRODUCER_REQUIRED:
+    'El evento oficial debe estar asociado a una productora.',
+  INVALID_DRAFT_SAVE_STATUS: (status: string) =>
+    `No se puede guardar el borrador de un evento en estado "${status}".`,
+  INVALID_SUBMIT_TRANSITION: (status: string) =>
+    `No se puede enviar a revisión un evento en estado "${status}".`,
+  INVALID_APPROVAL_TRANSITION: (status: string) =>
+    `No se puede aprobar un evento en estado "${status}".`,
+  INVALID_REJECTION_TRANSITION: (status: string) =>
+    `No se puede rechazar un evento en estado "${status}".`,
+  REVIEW_FIELDS_INCOMPLETE:
+    'Completá los datos requeridos antes de enviar el evento a revisión.',
+  INVALID_DRAFT_PAYLOAD:
+    'El borrador contiene datos inválidos. Revisá el contenido y volvé a intentar.',
+  INVALID_EVENT_DATES:
+    'La fecha de finalización debe ser posterior a la fecha de inicio.',
+  OFFICIAL_RESALE_MARKUP_MINIMUM:
+    'El tope de reventa oficial debe ser igual o mayor a 110%.',
+  REJECTION_REASON_REQUIRED: 'El motivo de rechazo es obligatorio.',
+} as const;
+
 // Error messages for admin events
 export const ADMIN_EVENTS_ERROR_MESSAGES = {
   TICKET_WAVE_NOT_FOUND: 'Tanda de entradas no encontrada',
@@ -238,6 +262,10 @@ export const EVENT_PRODUCER_ERROR_MESSAGES = {
     'El usuario ya es miembro activo de esta productora',
   DEFAULT_FEE_PAIR_REQUIRED:
     'La comisión fija de la productora requiere monto y moneda',
+  EVENT_PRODUCER_MEMBERSHIP_REQUIRED:
+    'No tenés membresía activa en la productora indicada.',
+  EVENT_PRODUCER_ROLE_REQUIRED:
+    'Necesitás permisos de owner o manager para realizar esta acción.',
 } as const;
 
 // Error messages for admin identity verification

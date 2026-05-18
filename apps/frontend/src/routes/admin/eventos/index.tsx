@@ -30,9 +30,31 @@ const eventsSearchSchema = z.object({
   /** Incluye eventos con borrado lógico (p. ej. quitados del scrape por agotado) */
   includeDeleted: z.boolean().optional().default(false),
   search: z.string().optional(),
-  status: z.enum(['active', 'inactive']).optional(),
+  status: z
+    .enum([
+      'draft',
+      'under_review',
+      'rejected',
+      'published',
+      'active',
+      'inactive',
+      'finished',
+      'cancelled',
+    ])
+    .optional(),
   platform: z.string().optional(),
 });
+
+const EVENT_STATUS_OPTIONS = [
+  {value: 'draft', label: 'Borrador'},
+  {value: 'under_review', label: 'En revisión'},
+  {value: 'rejected', label: 'Rechazado'},
+  {value: 'published', label: 'Publicado'},
+  {value: 'active', label: 'Activo'},
+  {value: 'inactive', label: 'Inactivo'},
+  {value: 'finished', label: 'Finalizado'},
+  {value: 'cancelled', label: 'Cancelado'},
+] as const;
 
 export const Route = createFileRoute('/admin/eventos/')({
   component: EventsPage,
@@ -137,7 +159,17 @@ function EventsPage() {
               search: prev => ({
                 ...prev,
                 status:
-                  val !== 'all' ? (val as 'active' | 'inactive') : undefined,
+                  val !== 'all'
+                    ? (val as
+                        | 'draft'
+                        | 'under_review'
+                        | 'rejected'
+                        | 'published'
+                        | 'active'
+                        | 'inactive'
+                        | 'finished'
+                        | 'cancelled')
+                    : undefined,
                 page: 1,
               }),
             });
@@ -148,8 +180,11 @@ function EventsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value='all'>Todos</SelectItem>
-            <SelectItem value='active'>Activos</SelectItem>
-            <SelectItem value='inactive'>Inactivos</SelectItem>
+            {EVENT_STATUS_OPTIONS.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

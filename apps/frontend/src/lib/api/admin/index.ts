@@ -213,7 +213,15 @@ export interface AdminEventsQueryParams extends PaginationQuery {
   includePast?: boolean;
   includeDeleted?: boolean;
   search?: string;
-  status?: 'active' | 'inactive';
+  status?:
+    | 'draft'
+    | 'under_review'
+    | 'rejected'
+    | 'published'
+    | 'active'
+    | 'inactive'
+    | 'finished'
+    | 'cancelled';
 }
 
 export const adminEventsQueryOptions = (params: AdminEventsQueryParams) => {

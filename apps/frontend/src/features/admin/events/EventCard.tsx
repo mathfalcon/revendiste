@@ -44,6 +44,29 @@ function getPlatformColor(platform: string) {
 
 function getStatusBadgeProps(status: string) {
   switch (status) {
+    case 'draft':
+      return {
+        variant: 'outline' as const,
+        className:
+          'border-slate-500 bg-slate-500/10 text-slate-700 dark:text-slate-400',
+      };
+    case 'under_review':
+      return {
+        variant: 'outline' as const,
+        className:
+          'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400',
+      };
+    case 'rejected':
+      return {
+        variant: 'outline' as const,
+        className: 'border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400',
+      };
+    case 'published':
+      return {
+        variant: 'outline' as const,
+        className:
+          'border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-400',
+      };
     case 'active':
       return {
         variant: 'outline' as const,
@@ -56,8 +79,43 @@ function getStatusBadgeProps(status: string) {
         className:
           'border-gray-500 bg-gray-500/10 text-gray-700 dark:text-gray-400',
       };
+    case 'finished':
+      return {
+        variant: 'outline' as const,
+        className:
+          'border-indigo-500 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400',
+      };
+    case 'cancelled':
+      return {
+        variant: 'outline' as const,
+        className:
+          'border-zinc-500 bg-zinc-500/10 text-zinc-700 dark:text-zinc-400',
+      };
     default:
       return {variant: 'outline' as const};
+  }
+}
+
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'draft':
+      return 'Borrador';
+    case 'under_review':
+      return 'En revisión';
+    case 'rejected':
+      return 'Rechazado';
+    case 'published':
+      return 'Publicado';
+    case 'active':
+      return 'Activo';
+    case 'inactive':
+      return 'Inactivo';
+    case 'finished':
+      return 'Finalizado';
+    case 'cancelled':
+      return 'Cancelado';
+    default:
+      return status;
   }
 }
 
@@ -127,7 +185,7 @@ export function EventCard({event, onClick}: EventCardProps) {
 
           {/* Status */}
           <Badge {...getStatusBadgeProps(event.status)}>
-            {event.status === 'active' ? 'Activo' : 'Inactivo'}
+            {getStatusLabel(event.status)}
           </Badge>
 
           {event.deletedAt ? (

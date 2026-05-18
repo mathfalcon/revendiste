@@ -38,6 +38,8 @@ import {
   AdminEventsRouteSchema,
   UpdateEventRouteBody,
   UpdateEventRouteSchema,
+  RejectEventRouteBody,
+  RejectEventRouteSchema,
   CreateEventRouteBody,
   CreateEventRouteSchema,
   CreateTicketWaveRouteBody,
@@ -46,6 +48,7 @@ import {
   UpdateTicketWaveRouteSchema,
 } from './validation';
 import {AdminEventsService} from '~/services/admin-events';
+import {AdminEventApprovalsService} from '~/services/admin-event-approvals';
 
 type GetEventsResponse = Awaited<ReturnType<AdminEventsService['getEvents']>>;
 type GetEventDetailsResponse = Awaited<
@@ -56,6 +59,12 @@ type CreateEventResponse = Awaited<
 >;
 type UpdateEventResponse = Awaited<
   ReturnType<AdminEventsService['updateEvent']>
+>;
+type ApproveEventResponse = Awaited<
+  ReturnType<AdminEventApprovalsService['approveEvent']>
+>;
+type RejectEventResponse = Awaited<
+  ReturnType<AdminEventApprovalsService['rejectEvent']>
 >;
 type DeleteEventResponse = Awaited<
   ReturnType<AdminEventsService['deleteEvent']>
@@ -87,6 +96,9 @@ export class AdminEventsController {
     new EventsRepository(db),
     new EventTicketWavesRepository(db),
     db,
+  );
+  private approvalsService = new AdminEventApprovalsService(
+    new EventsRepository(db),
   );
 
   // ============================================================================
@@ -142,6 +154,31 @@ export class AdminEventsController {
     @Body() body: UpdateEventRouteBody,
   ): Promise<UpdateEventResponse> {
     return this.service.updateEvent(eventId, body);
+  }
+
+  @Post('/{eventId}/approve')
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  @Response<NotFoundError>(404, 'Event not found')
+  @Response<ValidationError>(422, 'Validation failed')
+  public async approveEvent(
+    @Path() eventId: string,
+    @Request() request: express.Request,
+  ): Promise<ApproveEventResponse> {
+    return this.approvalsService.approveEvent(eventId, request.user.id);
+  }
+
+  @Post('/{eventId}/reject')
+  @ValidateBody(RejectEventRouteSchema)
+  @Response<UnauthorizedError>(401, 'Authentication required')
+  @Response<UnauthorizedError>(403, 'Admin access required')
+  @Response<NotFoundError>(404, 'Event not found')
+  @Response<ValidationError>(422, 'Validation failed')
+  public async rejectEvent(
+    @Path() eventId: string,
+    @Body() body: RejectEventRouteBody,
+  ): Promise<RejectEventResponse> {
+    return this.approvalsService.rejectEvent(eventId, body.rejectedReason);
   }
 
   @Delete('/{eventId}')

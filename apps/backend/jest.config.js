@@ -4,8 +4,12 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/*.test.ts'],
-  // Ignore factory files (not tests)
-  testPathIgnorePatterns: ['/node_modules/', '/__tests__/factories/'],
+  // Ignore factory and integration files in unit suite
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/__tests__/factories/',
+    '/__tests__/integration/',
+  ],
   moduleNameMapper: {
     '^~\\/(.*)$': '<rootDir>/src/$1',
     // Use built dist for shared/transactional to avoid ts-jest outDir errors when transforming workspace packages
