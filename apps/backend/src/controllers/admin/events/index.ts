@@ -22,7 +22,10 @@ import {
 } from '~/middleware';
 import {
   EventsRepository,
+  EventTicketWaveConfigsRepository,
   EventTicketWavesRepository,
+  ListingTicketsRepository,
+  TicketListingsRepository,
   VenuesRepository,
 } from '~/repositories';
 import {db} from '~/db';
@@ -49,6 +52,7 @@ import {
 } from './validation';
 import {AdminEventsService} from '~/services/admin-events';
 import {AdminEventApprovalsService} from '~/services/admin-event-approvals';
+import {OfficialWaveStockMaterializer} from '~/services/producer-events/stock-materializer';
 
 type GetEventsResponse = Awaited<ReturnType<AdminEventsService['getEvents']>>;
 type GetEventDetailsResponse = Awaited<
@@ -99,6 +103,13 @@ export class AdminEventsController {
   );
   private approvalsService = new AdminEventApprovalsService(
     new EventsRepository(db),
+    new OfficialWaveStockMaterializer(
+      new EventsRepository(db),
+      new EventTicketWavesRepository(db),
+      new EventTicketWaveConfigsRepository(db),
+      new TicketListingsRepository(db),
+      new ListingTicketsRepository(db),
+    ),
   );
 
   // ============================================================================

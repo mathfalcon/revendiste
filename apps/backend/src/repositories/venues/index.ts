@@ -1,6 +1,7 @@
 import {type Kysely, type Insertable, sql} from 'kysely';
 import type {DB, EventVenues} from '@revendiste/shared';
 import {BaseRepository} from '../base';
+import {isUniqueViolation} from '~/utils/db-errors';
 
 type InsertableVenue = Insertable<EventVenues>;
 
@@ -130,7 +131,7 @@ export class VenuesRepository extends BaseRepository<VenuesRepository> {
         .executeTakeFirstOrThrow();
     } catch (error: any) {
       // Unique constraint violation on googlePlaceId — return existing venue
-      if (error?.code === '23505' && data.googlePlaceId) {
+      if (isUniqueViolation(error) && data.googlePlaceId) {
         const existing = await this.findByGooglePlaceId(
           data.googlePlaceId as string,
         );

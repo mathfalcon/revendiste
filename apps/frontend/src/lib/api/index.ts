@@ -97,6 +97,14 @@ api.instance.interceptors.response.use(
     // This prevents showing "event not found" toasts during prefetch
     const isEvent404 =
       error.response?.status === 404 && error.config?.url?.includes('/events/');
+    const headerValue =
+      (error.config?.headers as Record<string, string | undefined> | undefined)?.[
+        'X-Silent-Error'
+      ] ??
+      (error.config?.headers as Record<string, string | undefined> | undefined)?.[
+        'x-silent-error'
+      ];
+    const shouldSkipErrorToast = String(headerValue ?? '').toLowerCase() === 'true';
 
     // Handle standardized error responses from backend
     if (error.response?.data) {
@@ -106,7 +114,11 @@ api.instance.interceptors.response.use(
       if (errorData?.message && typeof errorData.message === 'string') {
         // Only show toast in browser (client-side)
         // Skip toasts for event 404s (they're handled by notFoundComponent)
-        if (typeof window !== 'undefined' && !isEvent404) {
+        if (
+          typeof window !== 'undefined' &&
+          !isEvent404 &&
+          !shouldSkipErrorToast
+        ) {
           toast.error(errorData.message);
         }
       }
@@ -125,4 +137,5 @@ export * from './users';
 export * from './identity-verification';
 export * from './ticket-reports';
 export * from './profile';
+export * from './tickets';
 export * from './generated';

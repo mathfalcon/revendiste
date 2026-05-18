@@ -9,6 +9,7 @@ import {
 } from '~/repositories';
 import {logger} from '~/utils';
 import {wideEvent, withDuration} from '~/utils/logFields';
+import {isUniqueViolation} from '~/utils/db-errors';
 import {NotFoundError, ValidationError, UnauthorizedError} from '~/errors';
 import {CreateOrderRouteBody} from '~/controllers/orders/validation';
 import type {EventTicketCurrency} from '@revendiste/shared';
@@ -295,8 +296,7 @@ export class OrdersService {
       } catch (error: unknown) {
         // PostgreSQL unique violation (23505). We're in createReservations, so this is our index.
         // Some drivers report constraint name, others don't for unique indexes; 23505 is sufficient.
-        const code = (error as {code?: string})?.code;
-        if (code === '23505') {
+        if (isUniqueViolation(error)) {
           throw new ValidationError(
             ORDER_ERROR_MESSAGES.TICKETS_NO_LONGER_AVAILABLE,
           );

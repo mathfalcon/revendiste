@@ -17,7 +17,7 @@ describe('SellerEarningsService', () => {
     mockSellerEarningsRepository = {
       getEarningsByListingTicketIds: jest.fn(),
       getTicketDataForEarnings: jest.fn(),
-      getListingPublisherUserId: jest.fn(),
+      getListingOwner: jest.fn(),
       create: jest.fn(),
       getEarningsReadyForRelease: jest.fn(),
       updateStatus: jest.fn(),
@@ -71,8 +71,9 @@ describe('SellerEarningsService', () => {
         eventEndDate: new Date('2030-01-01T00:00:00.000Z'),
         currency: 'UYU',
       } as any);
-      mockSellerEarningsRepository.getListingPublisherUserId.mockResolvedValue({
+      mockSellerEarningsRepository.getListingOwner.mockResolvedValue({
         publisherUserId: 'seller-user-1',
+        publisherEventProducerId: null,
       } as any);
 
       await service.createEarningFromSale('lt-1');

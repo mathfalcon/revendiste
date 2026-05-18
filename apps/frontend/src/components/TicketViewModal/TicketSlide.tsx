@@ -12,6 +12,7 @@ import type {GetOrderTicketsResponse} from '~/lib/api/generated';
 import {TicketIdHero} from './TicketIds';
 import {DocumentPreview} from './DocumentPreview';
 import {SlideDetailsAccordion} from './SlideDetailsAccordion';
+import {RotatingTicketCode} from './RotatingTicketCode';
 
 export type OrderTicket = GetOrderTicketsResponse['tickets'][number];
 
@@ -124,50 +125,57 @@ export function TicketSlide({
             </Button>
           )}
         </div>
-      ) : ticket.hasDocument && ticket.document?.url ? (
-        <div className='space-y-3'>
-          <div className='flex items-center gap-2 text-sm'>
-            <FileCheck className='h-4 w-4 text-green-500' />
-            <span className='text-green-600 font-medium'>
-              Entrada disponible
-            </span>
-          </div>
-          <DocumentPreview
-            url={ticket.document.url}
-            ticketId={ticket.id}
-            mimeType={ticket.document.mimeType}
-            onDownload={() => onDownload(ticket)}
-            onReport={() => onReport(ticket)}
-            isReportDisabled={isReportPending}
-          />
-        </div>
       ) : (
-        <div className='rounded-lg border border-dashed bg-muted/30 p-6 text-center space-y-3'>
-          <div className='flex justify-center'>
-            <div className='flex h-12 w-12 items-center justify-center rounded-full bg-muted'>
-              <Clock className='h-6 w-6 text-muted-foreground' />
-            </div>
-          </div>
-          <div className='space-y-1'>
-            <p className='font-medium text-foreground'>
-              Entrada aún no disponible
-            </p>
-            <p className='text-sm text-muted-foreground'>
-              El vendedor todavía no subió el documento. Te
-              avisamos cuando esté listo.
-            </p>
-          </div>
-          <Button
-            variant='ghost'
-            size='sm'
-            className='h-8 text-xs text-muted-foreground hover:text-destructive'
-            disabled={isReportPending}
-            onClick={() => onReport(ticket)}
-          >
-            <Flag className='h-3.5 w-3.5 mr-1' />
-            Reportar problema
-          </Button>
-        </div>
+        <RotatingTicketCode
+          ticketId={ticket.id}
+          fallback={
+            ticket.hasDocument && ticket.document?.url ? (
+              <div className='space-y-3'>
+                <div className='flex items-center gap-2 text-sm'>
+                  <FileCheck className='h-4 w-4 text-green-500' />
+                  <span className='text-green-600 font-medium'>
+                    Entrada disponible
+                  </span>
+                </div>
+                <DocumentPreview
+                  url={ticket.document.url}
+                  ticketId={ticket.id}
+                  mimeType={ticket.document.mimeType}
+                  onDownload={() => onDownload(ticket)}
+                  onReport={() => onReport(ticket)}
+                  isReportDisabled={isReportPending}
+                />
+              </div>
+            ) : (
+              <div className='rounded-lg border border-dashed bg-muted/30 p-6 text-center space-y-3'>
+                <div className='flex justify-center'>
+                  <div className='flex h-12 w-12 items-center justify-center rounded-full bg-muted'>
+                    <Clock className='h-6 w-6 text-muted-foreground' />
+                  </div>
+                </div>
+                <div className='space-y-1'>
+                  <p className='font-medium text-foreground'>
+                    Entrada aún no disponible
+                  </p>
+                  <p className='text-sm text-muted-foreground'>
+                    El vendedor todavía no subió el documento. Te
+                    avisamos cuando esté listo.
+                  </p>
+                </div>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='h-8 text-xs text-muted-foreground hover:text-destructive'
+                  disabled={isReportPending}
+                  onClick={() => onReport(ticket)}
+                >
+                  <Flag className='h-3.5 w-3.5 mr-1' />
+                  Reportar problema
+                </Button>
+              </div>
+            )
+          }
+        />
       )}
 
       <SlideDetailsAccordion

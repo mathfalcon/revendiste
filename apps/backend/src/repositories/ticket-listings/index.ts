@@ -72,6 +72,19 @@ export class TicketListingsRepository extends BaseRepository<TicketListingsRepos
     });
   }
 
+  async createHouseListing(ticketWaveId: string, publisherEventProducerId: string) {
+    return await this.db
+      .insertInto('listings')
+      .values({
+        publisherUserId: null,
+        publisherEventProducerId,
+        ticketWaveId,
+        isHouseListing: true,
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  }
+
   async countActiveTicketsByUserAndEvent(
     userId: string,
     eventId: string,

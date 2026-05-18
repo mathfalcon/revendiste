@@ -180,9 +180,8 @@ export class SellerEarningsService {
       throw new Error('Ticket not found');
     }
 
-    // Get seller user ID from listing via repository
-    const listing =
-      await earningsRepo.getListingPublisherUserId(ticketData.listingId);
+    // Get listing owner (user or producer) via repository
+    const listing = await earningsRepo.getListingOwner(ticketData.listingId);
 
     if (!listing) {
       logger.error('Listing not found for earnings creation', {
@@ -190,8 +189,8 @@ export class SellerEarningsService {
       });
       throw new Error('Listing not found');
     }
-    if (!listing.publisherUserId) {
-      logger.info('Skipping user seller earnings for producer-owned listing', {
+    if (!listing.publisherUserId && !listing.publisherEventProducerId) {
+      logger.warn('Skipping seller earnings because listing owner is missing', {
         listingId: ticketData.listingId,
         listingTicketId,
       });
@@ -204,7 +203,8 @@ export class SellerEarningsService {
 
     // Create earnings record (hold ends at event end + PAYOUT_HOLD_PERIOD_HOURS; derived in queries)
     await earningsRepo.create({
-      sellerUserId: listing.publisherUserId,
+      sellerUserId: listing.publisherUserId ?? null,
+      sellerEventProducerId: listing.publisherEventProducerId ?? null,
       listingTicketId,
       sellerAmount,
       currency: ticketData.currency,
@@ -214,6 +214,7 @@ export class SellerEarningsService {
     logger.info('Created seller earning', {
       listingTicketId,
       sellerUserId: listing.publisherUserId,
+      sellerEventProducerId: listing.publisherEventProducerId,
       sellerAmount,
       currency: ticketData.currency,
       eventEndDate: ticketData.eventEndDate,

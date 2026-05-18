@@ -140,10 +140,113 @@ export class ListingTicketsRepository extends BaseRepository<ListingTicketsRepos
       .execute();
   }
 
+  async countByListingId(listingId: string) {
+    const row = await this.db
+      .selectFrom('listingTickets')
+      .select(this.db.fn.count('listingTickets.id').as('count'))
+      .where('listingId', '=', listingId)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
+    return Number(row?.count ?? 0);
+  }
+
+  async insertTicketsForListing(
+    listingId: string,
+    startTicketNumber: number,
+    quantity: number,
+    price: number,
+  ) {
+    if (quantity <= 0) {
+      return [];
+    }
+
+    return await this.db
+      .insertInto('listingTickets')
+      .values(
+        Array.from({length: quantity}, (_, index) => ({
+          listingId,
+          ticketNumber: startTicketNumber + index,
+          price,
+        })),
+      )
+      .returningAll()
+      .execute();
+  }
+
+  async getOwnershipContextByTicketIds(ticketIds: string[]) {
+    if (ticketIds.length === 0) {
+      return [];
+    }
+
+    return await this.db
+      .selectFrom('listingTickets')
+      .innerJoin('listings', 'listings.id', 'listingTickets.listingId')
+      .select([
+        'listingTickets.id',
+        'listingTickets.listingId',
+        'listingTickets.currentOwnerUserId',
+        'listingTickets.originalOrderId',
+        'listings.publisherUserId',
+        'listings.publisherEventProducerId',
+      ])
+      .where('listingTickets.id', 'in', ticketIds)
+      .where('listingTickets.deletedAt', 'is', null)
+      .where('listings.deletedAt', 'is', null)
+      .execute();
+  }
+
+  async assignOwnershipByTicketIds(
+    ticketIds: string[],
+    currentOwnerUserId: string,
+    originalOrderId: string,
+  ) {
+    if (ticketIds.length === 0) {
+      return [];
+    }
+
+    return await this.db
+      .updateTable('listingTickets')
+      .set({
+        currentOwnerUserId,
+        originalOrderId: sql`coalesce(listing_tickets.original_order_id, ${originalOrderId})`,
+        updatedAt: new Date(),
+      })
+      .where('id', 'in', ticketIds)
+      .returning([
+        'listingTickets.id',
+        'listingTickets.currentOwnerUserId',
+        'listingTickets.originalOrderId',
+      ])
+      .execute();
+  }
+
+  async getTicketForCodeIssue(listingTicketId: string) {
+    return await this.db
+      .selectFrom('listingTickets')
+      .innerJoin('listings', 'listings.id', 'listingTickets.listingId')
+      .innerJoin(
+        'eventTicketWaves',
+        'eventTicketWaves.id',
+        'listings.ticketWaveId',
+      )
+      .innerJoin('events', 'events.id', 'eventTicketWaves.eventId')
+      .select([
+        'listingTickets.id',
+        'listingTickets.currentOwnerUserId',
+        'listingTickets.deletedAt',
+        'events.id as eventId',
+        'events.isOfficial',
+      ])
+      .where('listingTickets.id', '=', listingTicketId)
+      .where('listingTickets.deletedAt', 'is', null)
+      .where('listings.deletedAt', 'is', null)
+      .executeTakeFirst();
+  }
+
   async getListingsByIds(listingIds: string[]) {
     return await this.db
       .selectFrom('listings')
-      .select(['id', 'publisherUserId'])
+      .select(['id', 'publisherUserId', 'publisherEventProducerId'])
       .where('id', 'in', listingIds)
       .where('deletedAt', 'is', null)
       .execute();

@@ -16,6 +16,7 @@ import {getStorageProvider} from '~/services';
 import {logger} from '~/utils';
 import type {PaginationOptions} from '~/types/pagination';
 import {generateUniqueSlug} from '~/utils';
+import {isUniqueViolation} from '~/utils/db-errors';
 import {pingIndexNow} from '~/lib/indexnow';
 import {APP_BASE_URL} from '~/config/env';
 
@@ -193,7 +194,7 @@ export class AdminEventsService {
       logger.error('Failed to create event', {error});
 
       // Check if it's a unique constraint violation on externalId
-      if (error?.code === '23505') {
+      if (isUniqueViolation(error)) {
         throw new ValidationError(
           ADMIN_EVENTS_ERROR_MESSAGES.EXTERNAL_ID_DUPLICATE,
         );

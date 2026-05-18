@@ -9,10 +9,12 @@ import type {
   PaymentsRepository,
   PaymentEventsRepository,
   ListingTicketsRepository,
+  TicketOwnershipTransfersRepository,
   TicketListingsRepository,
 } from '~/repositories';
 import type {TicketListingsService} from '~/services/ticket-listings';
 import type {SellerEarningsService} from '~/services/seller-earnings';
+import type {TicketCodesService} from '~/services/ticket-codes';
 import type {NotificationService} from '~/services/notifications';
 import {ValidationError} from '~/errors';
 import {PAYMENT_ERROR_MESSAGES} from '~/constants/error-messages';
@@ -20,6 +22,8 @@ import {PAYMENT_ERROR_MESSAGES} from '~/constants/error-messages';
 function createAdapterMocks() {
   const mockOrdersRepository = {
     getByIdWithItems: jest.fn(),
+    getByIdForUpdate: jest.fn(),
+    updateStatus: jest.fn(),
     executeTransaction: jest.fn(),
     withTransaction: jest.fn(),
     getDb: jest.fn(),
@@ -50,6 +54,8 @@ function createAdapterMocks() {
 
   const mockListingTicketsRepository = {
     markTicketsAsSoldByOrderId: jest.fn(),
+    getOwnershipContextByTicketIds: jest.fn(),
+    assignOwnershipByTicketIds: jest.fn(),
     withTransaction: jest.fn(),
     getDb: jest.fn(),
   } as unknown as jest.Mocked<ListingTicketsRepository>;
@@ -59,6 +65,12 @@ function createAdapterMocks() {
     withTransaction: jest.fn(),
     getDb: jest.fn(),
   } as unknown as jest.Mocked<TicketListingsRepository>;
+
+  const mockTicketOwnershipTransfersRepository = {
+    createManyIdempotent: jest.fn(),
+    withTransaction: jest.fn(),
+    getDb: jest.fn(),
+  } as unknown as jest.Mocked<TicketOwnershipTransfersRepository>;
 
   const mockTicketListingsService = {
     markTicketsAsSoldAndNotifySeller: jest.fn(),
@@ -76,6 +88,11 @@ function createAdapterMocks() {
     createEarningsForSoldTickets: jest.fn(),
   } as unknown as jest.Mocked<SellerEarningsService>;
 
+  const mockTicketCodesService = {
+    bumpGeneration: jest.fn(),
+    withTransaction: jest.fn(),
+  } as unknown as jest.Mocked<TicketCodesService>;
+
   const mockNotificationService = {} as unknown as NotificationService;
 
   const mockProvider: jest.Mocked<PaymentProvider> = {
@@ -85,6 +102,26 @@ function createAdapterMocks() {
     normalizeStatus: jest.fn((s: string) => s.toLowerCase() as any),
   };
 
+  mockOrdersRepository.executeTransaction.mockImplementation(async callback =>
+    callback({} as any),
+  );
+  mockOrdersRepository.withTransaction.mockReturnValue(mockOrdersRepository as any);
+  mockOrderTicketReservationsRepository.withTransaction.mockReturnValue(
+    mockOrderTicketReservationsRepository as any,
+  );
+  mockListingTicketsRepository.withTransaction.mockReturnValue(
+    mockListingTicketsRepository as any,
+  );
+  mockTicketOwnershipTransfersRepository.withTransaction.mockReturnValue(
+    mockTicketOwnershipTransfersRepository as any,
+  );
+  mockTicketListingsRepository.withTransaction.mockReturnValue(
+    mockTicketListingsRepository as any,
+  );
+  mockTicketCodesService.withTransaction.mockReturnValue(
+    mockTicketCodesService as any,
+  );
+
   const adapter = new PaymentWebhookAdapter(
     mockProvider,
     mockOrdersRepository,
@@ -92,9 +129,11 @@ function createAdapterMocks() {
     mockPaymentsRepository,
     mockPaymentEventsRepository,
     mockListingTicketsRepository,
+    mockTicketOwnershipTransfersRepository,
     mockTicketListingsRepository,
     mockTicketListingsService,
     mockSellerEarningsService,
+    mockTicketCodesService,
     mockNotificationService,
     () => mockJobQueueService as any,
   );
@@ -131,11 +170,16 @@ describe('PaymentWebhookAdapter', () => {
         status: 'confirmed',
         totalAmount: '100',
       } as any);
+      mocks.mockOrdersRepository.getByIdForUpdate.mockResolvedValue({
+        id: 'order-1',
+        status: 'confirmed',
+        userId: 'buyer-1',
+      } as any);
       mocks.mockPaymentsRepository.update.mockResolvedValue({} as any);
 
       await mocks.adapter.processWebhook('ext-1');
 
-      expect(mocks.mockOrdersRepository.executeTransaction).not.toHaveBeenCalled();
+      expect(mocks.mockOrdersRepository.executeTransaction).toHaveBeenCalledTimes(1);
       expect(mocks.mockTicketListingsService.markTicketsAsSoldAndReturnSellerData).not.toHaveBeenCalled();
       expect(mocks.mockSellerEarningsService.createEarningsForSoldTickets).not.toHaveBeenCalled();
     });

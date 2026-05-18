@@ -268,6 +268,28 @@ export const EVENT_PRODUCER_ERROR_MESSAGES = {
     'Necesitás permisos de owner o manager para realizar esta acción.',
 } as const;
 
+export const OFFICIAL_WAVE_ERROR_MESSAGES = {
+  CONFIG_NOT_FOUND: 'No se encontró la configuración oficial de la tanda.',
+  EVENT_NOT_OFFICIAL:
+    'Solo se puede materializar stock para eventos oficiales de productoras.',
+  EVENT_PRODUCER_REQUIRED:
+    'El evento oficial debe tener una productora asociada para generar stock.',
+  WAVE_NOT_FOUND: 'No se encontró la tanda oficial indicada.',
+} as const;
+
+export const TICKET_CODE_ERROR_MESSAGES = {
+  TICKET_NOT_FOUND: 'Entrada no encontrada.',
+  ROTATION_NOT_AVAILABLE:
+    'Esta entrada no usa código rotativo en este momento.',
+  NOT_TICKET_OWNER:
+    'No estás autorizado para generar el código de esta entrada.',
+  INVALID_QR_PAYLOAD: 'El código QR es inválido o está incompleto.',
+  INVALID_QR_SIGNATURE: 'El código QR no es válido.',
+  EXPIRED_QR_TOKEN: 'El código QR expiró.',
+  GENERATION_MISMATCH:
+    'El código QR ya no es válido porque la entrada cambió de titularidad.',
+} as const;
+
 // Error messages for admin identity verification
 export const ADMIN_IDENTITY_VERIFICATION_ERROR_MESSAGES = {
   USER_NOT_FOUND: 'Usuario no encontrado',

@@ -3,10 +3,14 @@ import {
   EVENT_LIFECYCLE_ERROR_MESSAGES,
 } from '~/constants/error-messages';
 import {NotFoundError, ValidationError} from '~/errors';
+import {OfficialWaveStockMaterializer} from '~/services/producer-events/stock-materializer';
 import {EventsRepository} from '~/repositories';
 
 export class AdminEventApprovalsService {
-  constructor(private readonly eventsRepository: EventsRepository) {}
+  constructor(
+    private readonly eventsRepository: EventsRepository,
+    private readonly stockMaterializer: OfficialWaveStockMaterializer,
+  ) {}
 
   async approveEvent(eventId: string, adminUserId: string) {
     const event = await this.getRequiredEvent(eventId);
@@ -26,6 +30,10 @@ export class AdminEventApprovalsService {
 
     if (!approved) {
       throw new NotFoundError(EVENT_ERROR_MESSAGES.EVENT_NOT_FOUND);
+    }
+
+    if (approved.isOfficial) {
+      await this.stockMaterializer.materializePublishedEventWaves(eventId);
     }
 
     return approved;

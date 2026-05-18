@@ -57,7 +57,8 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
   }
 
   async create(earningData: {
-    sellerUserId: string;
+    sellerUserId: string | null;
+    sellerEventProducerId: string | null;
     listingTicketId: string;
     sellerAmount: number;
     currency: EventTicketCurrency;
@@ -555,12 +556,14 @@ export class SellerEarningsRepository extends BaseRepository<SellerEarningsRepos
   /**
    * Gets listing publisher user ID for earnings creation
    */
-  async getListingPublisherUserId(listingId: string) {
+  async getListingOwner(listingId: string) {
     return await this.db
       .selectFrom('listings')
-      .select(sql<string>`listings.publisher_user_id`.as('publisherUserId'))
+      .select([
+        sql<string | null>`listings.publisher_user_id`.as('publisherUserId'),
+        'listings.publisherEventProducerId',
+      ])
       .where('listings.id', '=', listingId)
-      .where('listings.publisherUserId', 'is not', null)
       .where('listings.deletedAt', 'is', null)
       .executeTakeFirst();
   }
