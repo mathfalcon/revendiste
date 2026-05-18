@@ -5,6 +5,7 @@ import {
   PaymentsRepository,
   PaymentEventsRepository,
   ListingTicketsRepository,
+  TicketOwnershipTransfersRepository,
   TicketListingsRepository,
 } from '~/repositories';
 import {NotFoundError, ValidationError} from '~/errors';
@@ -21,6 +22,7 @@ import {
 import type {PaymentStatus, PaymentMethod} from '@revendiste/shared';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {SellerEarningsService} from '~/services/seller-earnings';
+import {TicketCodesService} from '~/services/ticket-codes';
 import {NotificationService} from '~/services/notifications';
 import {
   notifyOrderConfirmed,
@@ -98,9 +100,11 @@ export class PaymentWebhookAdapter {
     private readonly paymentsRepository: PaymentsRepository,
     private readonly paymentEventsRepository: PaymentEventsRepository,
     private readonly listingTicketsRepository: ListingTicketsRepository,
+    private readonly ticketOwnershipTransfersRepository: TicketOwnershipTransfersRepository,
     private readonly ticketListingsRepository: TicketListingsRepository,
     private readonly ticketListingsService: TicketListingsService,
     private readonly sellerEarningsService: SellerEarningsService,
+    private readonly ticketCodesService: TicketCodesService,
     private readonly notificationService: NotificationService,
     private readonly jobQueueService: JobQueueService | (() => JobQueueService),
   ) {}
@@ -475,21 +479,38 @@ export class PaymentWebhookAdapter {
     orderId: string,
     paymentData: NormalizedPaymentData,
   ): Promise<'duplicate_confirmed' | 'fresh'> {
-    // Idempotency: skip if order already confirmed (duplicate webhook or retry)
-    const existingOrder = await this.ordersRepository.getByIdWithItems(orderId);
-    if (existingOrder?.status === 'confirmed') {
-      return 'duplicate_confirmed';
-    }
-
     let sellerNotifications: SellerNotificationData[] = [];
     let soldTickets: Array<{listingId: string}> = [];
+    let isDuplicateConfirmed = false;
 
     await this.ordersRepository.executeTransaction(async trx => {
       const ordersRepo = this.ordersRepository.withTransaction(trx);
       const reservationsRepo =
         this.orderTicketReservationsRepository.withTransaction(trx);
+      const listingTicketsRepo = this.listingTicketsRepository.withTransaction(trx);
+      const ownershipTransfersRepo =
+        this.ticketOwnershipTransfersRepository.withTransaction(trx);
       const ticketListingsRepo =
         this.ticketListingsRepository.withTransaction(trx);
+      const ticketCodesService = this.ticketCodesService.withTransaction(trx);
+
+      const lockedOrder = await ordersRepo.getByIdForUpdate(orderId);
+      if (!lockedOrder) {
+        throw new NotFoundError(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND);
+      }
+      if (lockedOrder.status === 'confirmed') {
+        isDuplicateConfirmed = true;
+        return;
+      }
+      if (lockedOrder.status !== 'pending') {
+        isDuplicateConfirmed = true;
+        return;
+      }
+
+      const reservations = await reservationsRepo.getByOrderId(orderId);
+      const listingTicketIds = [
+        ...new Set(reservations.map(reservation => reservation.listingTicketId)),
+      ];
 
       await ordersRepo.updateStatus(orderId, 'confirmed', {
         confirmedAt: new Date(),
@@ -508,6 +529,33 @@ export class PaymentWebhookAdapter {
         trx,
       );
 
+      if (listingTicketIds.length > 0) {
+        const ownershipContext =
+          await listingTicketsRepo.getOwnershipContextByTicketIds(listingTicketIds);
+
+        await listingTicketsRepo.assignOwnershipByTicketIds(
+          listingTicketIds,
+          lockedOrder.userId,
+          lockedOrder.id,
+        );
+
+        await ownershipTransfersRepo.createManyIdempotent(
+          ownershipContext.map(ticket => ({
+            listingTicketId: ticket.id,
+            fromUserId: ticket.currentOwnerUserId ?? ticket.publisherUserId ?? null,
+            toUserId: lockedOrder.userId,
+            fromOrderId: ticket.originalOrderId ?? null,
+            toOrderId: lockedOrder.id,
+            transferType: ticket.publisherEventProducerId
+              ? 'primary_sale'
+              : 'resale',
+            createdAt: new Date(),
+          })),
+        );
+
+        await ticketCodesService.bumpGeneration(listingTicketIds);
+      }
+
       await reservationsRepo.confirmOrderReservations(orderId);
 
       const uniqueListingIds = [
@@ -525,6 +573,10 @@ export class PaymentWebhookAdapter {
         listingsSoldOut: soldListings.length,
       });
     });
+
+    if (isDuplicateConfirmed) {
+      return 'duplicate_confirmed';
+    }
 
     const orderWithItems =
       await this.ordersRepository.getByIdWithItems(orderId);

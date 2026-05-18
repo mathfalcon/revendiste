@@ -26,6 +26,8 @@ import {
   PaymentEventsRepository,
   TicketListingsRepository,
   SellerEarningsRepository,
+  TicketCodesRepository,
+  TicketOwnershipTransfersRepository,
   UsersRepository,
   NotificationsRepository,
 } from '~/repositories';
@@ -35,6 +37,7 @@ import {PaymentWebhookAdapter} from '~/services/payments/adapters';
 import {getPaymentProvider} from '~/services/payments/providers/PaymentProviderFactory';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {SellerEarningsService} from '~/services/seller-earnings';
+import {TicketCodesService} from '~/services/ticket-codes';
 import {NotificationService} from '~/services/notifications';
 import {
   NotFoundError,
@@ -69,6 +72,9 @@ const orderTicketReservationsRepository = new OrderTicketReservationsRepository(
 const paymentsRepository = new PaymentsRepository(db);
 const paymentEventsRepository = new PaymentEventsRepository(db);
 const listingTicketsRepository = new ListingTicketsRepository(db);
+const ticketCodesRepository = new TicketCodesRepository(db);
+const ticketOwnershipTransfersRepository =
+  new TicketOwnershipTransfersRepository(db);
 const ticketListingsRepository = new TicketListingsRepository(db);
 const eventsRepository = new EventsRepository(db);
 const eventTicketWavesRepository = new EventTicketWavesRepository(db);
@@ -96,6 +102,10 @@ const sellerEarningsService = new SellerEarningsService(
   sellerEarningsRepository,
   orderTicketReservationsRepository,
 );
+const ticketCodesService = new TicketCodesService(
+  ticketCodesRepository,
+  listingTicketsRepository,
+);
 
 // Create adapter factory function for payment sync
 // This creates an adapter with all dependencies for the given provider
@@ -110,9 +120,11 @@ const createPaymentWebhookAdapter = (
     paymentsRepository,
     paymentEventsRepository,
     listingTicketsRepository,
+    ticketOwnershipTransfersRepository,
     ticketListingsRepository,
     ticketListingsService,
     sellerEarningsService,
+    ticketCodesService,
     notificationService,
     () => getJobQueueService(),
   );

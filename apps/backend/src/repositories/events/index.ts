@@ -14,6 +14,19 @@ import {BaseRepository} from '../base';
 import type {PaginationOptions} from '~/types/pagination';
 import {getStorageProvider} from '~/services';
 
+export const EVENT_LIFECYCLE_STATUSES = [
+  'draft',
+  'under_review',
+  'rejected',
+  'published',
+  'active',
+  'inactive',
+  'finished',
+  'cancelled',
+] as const;
+
+export type EventLifecycleStatus = (typeof EVENT_LIFECYCLE_STATUSES)[number];
+
 export class EventsRepository extends BaseRepository<EventsRepository> {
   withTransaction(trx: Kysely<DB>): EventsRepository {
     return new EventsRepository(trx);
@@ -242,6 +255,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .selectFrom('events')
       .select(this.db.fn.count('events.id').as('total'))
       .where('events.deletedAt', 'is', null)
+      .where('events.isOfficial', '=', false)
       .where('events.status', '=', 'active')
       .where('events.eventEndDate', '>', now);
 
@@ -464,6 +478,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         ).as('images'),
       ])
       .where('events.deletedAt', 'is', null)
+      .where('events.isOfficial', '=', false)
       .where('events.status', '=', 'active')
       .where('events.eventEndDate', '>', now)
       .$if(!!filters?.city, qb =>
@@ -582,6 +597,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         updatedAt: deletedAt,
       })
       .where('deletedAt', 'is', null)
+      .where('isOfficial', '=', false)
       .where('externalId', 'in', externalIds);
 
     if (options?.platform !== undefined) {
@@ -608,6 +624,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         updatedAt: deletedAt,
       })
       .where('deletedAt', 'is', null)
+      .where('isOfficial', '=', false)
       .where('eventEndDate', '<', deletedAt)
       .returning(['id', 'externalId', 'name'])
       .execute();
@@ -621,6 +638,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .selectFrom('events')
       .select('externalId')
       .where('deletedAt', 'is', null)
+      .where('isOfficial', '=', false)
       .where('status', '=', 'active')
       .execute();
 
@@ -641,6 +659,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         updatedAt: deletedAt,
       })
       .where('deletedAt', 'is', null)
+      .where('isOfficial', '=', false)
       .where('eventEndDate', '<', deletedAt)
       .where(eb =>
         eb.not(
@@ -665,6 +684,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .selectFrom('events')
       .select(this.db.fn.count('id').as('total'))
       .where('deletedAt', 'is', null)
+      .where('isOfficial', '=', false)
       .where('status', '=', 'active')
       .where('platform', '=', platform)
       .executeTakeFirst();
@@ -678,6 +698,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .selectFrom('events')
       .select('externalId')
       .where('deletedAt', 'is', null)
+      .where('isOfficial', '=', false)
       .where('status', '=', 'active')
       .where('platform', '=', platform)
       .execute();
@@ -699,6 +720,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         updatedAt: deletedAt,
       })
       .where('deletedAt', 'is', null)
+      .where('isOfficial', '=', false)
       .where('platform', '=', platform)
       .where('eventEndDate', '<', deletedAt)
       .where(eb =>
@@ -951,6 +973,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .$if(!includePast, qb =>
         qb
           .where('events.deletedAt', 'is', null)
+          .where('events.isOfficial', '=', false)
           .where('events.status', '=', 'active'),
       )
       .orderBy('events.eventStartDate', 'asc')
@@ -968,6 +991,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .selectFrom('events')
       .select('id')
       .where('slug', '=', slug)
+      .where('isOfficial', '=', false)
       .executeTakeFirst();
 
     if (!event) return null;
@@ -1016,6 +1040,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         ).as('images'),
       ])
       .where('events.deletedAt', 'is', null)
+      .where('events.isOfficial', '=', false)
       .where('events.status', '=', 'active')
       .where('events.eventEndDate', '>', now)
       .where('events.id', '!=', eventId)
@@ -1074,6 +1099,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         ).as('eventImages'),
       ])
       .where('events.deletedAt', 'is', null)
+      .where('events.isOfficial', '=', false)
       .where('events.status', '=', 'active')
       .where('events.eventEndDate', '>', now) // Include events that haven't ended yet
       .orderBy('events.eventStartDate', 'asc')
@@ -1118,6 +1144,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
         ).as('eventImages'),
       ])
       .where('events.deletedAt', 'is', null)
+      .where('events.isOfficial', '=', false)
       .where('events.status', '=', 'active')
       .where('events.eventEndDate', '>', now) // Only include events that haven't ended yet
       // Use ILIKE for substring matching (works for partial word matches like "fideles" in "WAVES OF LIFE w/ FIDELES PDE 2026")
@@ -1157,7 +1184,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       includePast?: boolean;
       includeDeleted?: boolean;
       search?: string;
-      status?: 'active' | 'inactive';
+      status?: EventLifecycleStatus;
     } = {},
   ) {
     const {page, limit, offset} = pagination;
@@ -1359,6 +1386,15 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .executeTakeFirstOrThrow();
   }
 
+  async getLifecycleEventById(eventId: string) {
+    return await this.db
+      .selectFrom('events')
+      .selectAll()
+      .where('id', '=', eventId)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
+  }
+
   /**
    * Update event fields
    */
@@ -1372,6 +1408,27 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .updateTable('events')
       .set(updateData)
       .where('id', '=', eventId)
+      .returningAll()
+      .execute();
+
+    return updated ?? null;
+  }
+
+  async updateOfficialDraftEvent(
+    eventId: string,
+    eventProducerId: string,
+    data: Updateable<Events>,
+  ) {
+    const [updated] = await this.db
+      .updateTable('events')
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where('id', '=', eventId)
+      .where('eventProducerId', '=', eventProducerId)
+      .where('isOfficial', '=', true)
+      .where('deletedAt', 'is', null)
       .returningAll()
       .execute();
 
@@ -1425,6 +1482,7 @@ export class EventsRepository extends BaseRepository<EventsRepository> {
       .innerJoin('events', 'events.venueId', 'eventVenues.id')
       .select('eventVenues.city')
       .where('events.deletedAt', 'is', null)
+      .where('events.isOfficial', '=', false)
       .where('events.status', '=', 'active')
       .where('events.eventEndDate', '>', new Date())
       .where('eventVenues.deletedAt', 'is', null)

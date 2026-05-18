@@ -3,32 +3,35 @@
  * Please do not edit it manually.
  */
 
-import type {ColumnType} from 'kysely';
+import type { ColumnType } from "kysely";
 
-export type ArrayType<T> =
-  ArrayTypeImpl<T> extends (infer U)[] ? U[] : ArrayTypeImpl<T>;
+export type ArrayType<T> = ArrayTypeImpl<T> extends (infer U)[]
+  ? U[]
+  : ArrayTypeImpl<T>;
 
-export type ArrayTypeImpl<T> =
-  T extends ColumnType<infer S, infer I, infer U>
-    ? ColumnType<S[], I[], U[]>
-    : T[];
+export type ArrayTypeImpl<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S[], I[], U[]>
+  : T[];
 
-export type DocumentTypeEnum = 'ci_uy' | 'dni_ar' | 'passport';
+export type DocumentTypeEnum = "ci_uy" | "dni_ar" | "passport";
 
-export type EventImageType = 'flyer' | 'hero' | 'og_hero';
+export type EventImageType = "flyer" | "hero" | "og_hero";
 
-export type EventTicketCurrency = 'ARS' | 'USD' | 'UYU';
+export type EventProducerMemberRole = "manager" | "owner" | "viewer";
 
-export type Generated<T> =
-  T extends ColumnType<infer S, infer I, infer U>
-    ? ColumnType<S, I | undefined, U>
-    : ColumnType<T, T | undefined, T>;
+export type EventStatus = "active" | "cancelled" | "draft" | "finished" | "inactive" | "published" | "rejected" | "under_review";
 
-export type InvoiceParty = 'buyer' | 'seller';
+export type EventTicketCurrency = "ARS" | "USD" | "UYU";
 
-export type InvoiceStatus = 'failed' | 'issued' | 'pending';
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
 
-export type JobStatus = 'completed' | 'failed' | 'pending' | 'processing';
+export type InvoiceParty = "buyer" | "seller";
+
+export type InvoiceStatus = "failed" | "issued" | "pending";
+
+export type JobStatus = "completed" | "failed" | "pending" | "processing";
 
 export type Json = JsonValue;
 
@@ -42,164 +45,65 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type NotificationBatchStatus = 'cancelled' | 'pending' | 'processed';
+export type NotificationBatchStatus = "cancelled" | "pending" | "processed";
 
-export type NotificationChannel = 'email' | 'in_app' | 'sms' | 'whatsapp';
+export type NotificationChannel = "email" | "in_app" | "sms" | "whatsapp";
 
-export type NotificationStatus = 'failed' | 'pending' | 'seen' | 'sent';
+export type NotificationStatus = "failed" | "pending" | "seen" | "sent";
 
-export type NotificationType =
-  | 'auth_invitation'
-  | 'auth_new_device_sign_in'
-  | 'auth_password_changed'
-  | 'auth_password_removed'
-  | 'auth_primary_email_changed'
-  | 'auth_reset_password_code'
-  | 'auth_verification_code'
-  | 'buyer_ticket_cancelled'
-  | 'document_reminder'
-  | 'document_uploaded'
-  | 'document_uploaded_batch'
-  | 'identity_verification_completed'
-  | 'identity_verification_failed'
-  | 'identity_verification_manual_review'
-  | 'identity_verification_rejected'
-  | 'order_confirmed'
-  | 'order_expired'
-  | 'order_invoice'
-  | 'payment_failed'
-  | 'payment_succeeded'
-  | 'payout_cancelled'
-  | 'payout_completed'
-  | 'payout_failed'
-  | 'payout_processing'
-  | 'seller_earnings_available'
-  | 'seller_earnings_retained'
-  | 'ticket_report_action_added'
-  | 'ticket_report_closed'
-  | 'ticket_report_created'
-  | 'ticket_report_status_changed'
-  | 'ticket_sold_seller';
+export type NotificationType = "auth_invitation" | "auth_new_device_sign_in" | "auth_password_changed" | "auth_password_removed" | "auth_primary_email_changed" | "auth_reset_password_code" | "auth_verification_code" | "buyer_ticket_cancelled" | "document_reminder" | "document_uploaded" | "document_uploaded_batch" | "identity_verification_completed" | "identity_verification_failed" | "identity_verification_manual_review" | "identity_verification_rejected" | "order_confirmed" | "order_expired" | "order_invoice" | "payment_failed" | "payment_succeeded" | "payout_cancelled" | "payout_completed" | "payout_failed" | "payout_processing" | "seller_earnings_available" | "seller_earnings_retained" | "ticket_report_action_added" | "ticket_report_closed" | "ticket_report_created" | "ticket_report_status_changed" | "ticket_sold_seller";
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
-export type OrderStatus = 'cancelled' | 'confirmed' | 'expired' | 'pending';
+export type OrderStatus = "cancelled" | "confirmed" | "expired" | "pending";
 
-export type OrderTicketReservationStatus =
-  | 'active'
-  | 'cancelled'
-  | 'refund_pending'
-  | 'refunded';
+export type OrderTicketReservationStatus = "active" | "cancelled" | "refund_pending" | "refunded";
 
-export type PaymentEventType =
-  | 'chargeback_received'
-  | 'dispute_opened'
-  | 'dispute_resolved'
-  | 'fraud_check_failed'
-  | 'manual_review_required'
-  | 'payment_created'
-  | 'refund_completed'
-  | 'refund_initiated'
-  | 'status_change'
-  | 'status_synced'
-  | 'webhook_received';
+export type PaymentEventType = "chargeback_received" | "dispute_opened" | "dispute_resolved" | "fraud_check_failed" | "manual_review_required" | "payment_created" | "refund_completed" | "refund_initiated" | "status_change" | "status_synced" | "webhook_received";
 
-export type PaymentMethod =
-  | 'bank_transfer'
-  | 'cash'
-  | 'credit_card'
-  | 'debit_card'
-  | 'other'
-  | 'pix'
-  | 'voucher';
+export type PaymentMethod = "bank_transfer" | "cash" | "credit_card" | "debit_card" | "other" | "pix" | "voucher";
 
-export type PaymentProvider = 'dlocal' | 'mercadopago' | 'stripe';
+export type PaymentProvider = "dlocal" | "mercadopago" | "stripe";
 
-export type PaymentStatus =
-  | 'cancelled'
-  | 'expired'
-  | 'failed'
-  | 'paid'
-  | 'partially_refunded'
-  | 'pending'
-  | 'processing'
-  | 'refunded';
+export type PaymentStatus = "cancelled" | "expired" | "failed" | "paid" | "partially_refunded" | "pending" | "processing" | "refunded";
 
-export type PayoutEventType =
-  | 'admin_processed'
-  | 'cancelled'
-  | 'payout_requested'
-  | 'provider_response'
-  | 'status_change'
-  | 'transfer_completed'
-  | 'transfer_failed'
-  | 'transfer_initiated';
+export type PayoutEventType = "admin_processed" | "cancelled" | "payout_requested" | "provider_response" | "status_change" | "transfer_completed" | "transfer_failed" | "transfer_initiated";
 
-export type PayoutProvider = 'dlocal_go' | 'manual_bank';
+export type PayoutProvider = "dlocal_go" | "manual_bank";
 
-export type PayoutStatus =
-  | 'cancelled'
-  | 'completed'
-  | 'failed'
-  | 'pending'
-  | 'processing';
+export type PayoutStatus = "cancelled" | "completed" | "failed" | "pending" | "processing";
 
-export type PayoutType = 'argentinian_bank' | 'uruguayan_bank';
+export type PayoutType = "argentinian_bank" | "uruguayan_bank";
 
-export type QrAvailabilityTiming = '12h' | '24h' | '3h' | '48h' | '6h' | '72h';
+export type QrAvailabilityTiming = "12h" | "24h" | "3h" | "48h" | "6h" | "72h";
 
-export type SellerEarningsRetainedReason =
-  | 'dispute'
-  | 'fraud'
-  | 'missing_document'
-  | 'other';
+export type SellerEarningsRetainedReason = "dispute" | "fraud" | "missing_document" | "other";
 
-export type SellerEarningsStatus =
-  | 'available'
-  | 'failed_payout'
-  | 'paid_out'
-  | 'payout_requested'
-  | 'pending'
-  | 'retained';
+export type SellerEarningsStatus = "available" | "failed_payout" | "paid_out" | "payout_requested" | "pending" | "retained";
 
-export type TicketReportActionType =
-  | 'close'
-  | 'comment'
-  | 'refund_full'
-  | 'refund_partial'
-  | 'reject';
+export type TicketOwnershipTransferType = "primary_sale" | "resale" | "rrpp_invitation" | "rrpp_off_platform_sale";
 
-export type TicketReportCaseType =
-  | 'invalid_ticket'
-  | 'other'
-  | 'problem_with_seller'
-  | 'ticket_not_received';
+export type TicketReportActionType = "close" | "comment" | "refund_full" | "refund_partial" | "reject";
 
-export type TicketReportEntityType =
-  | 'listing'
-  | 'listing_ticket'
-  | 'order'
-  | 'order_ticket_reservation';
+export type TicketReportCaseType = "invalid_ticket" | "other" | "problem_with_seller" | "ticket_not_received";
 
-export type TicketReportRefundStatus = 'pending' | 'refunded' | 'skipped';
+export type TicketReportEntityType = "listing" | "listing_ticket" | "order" | "order_ticket_reservation";
 
-export type TicketReportSource = 'auto_missing_document' | 'user_report';
+export type TicketReportRefundStatus = "pending" | "refunded" | "skipped";
 
-export type TicketReportStatus =
-  | 'awaiting_customer'
-  | 'awaiting_support'
-  | 'closed';
+export type TicketReportSource = "auto_missing_document" | "user_report";
+
+export type TicketReportStatus = "awaiting_customer" | "awaiting_support" | "closed";
+
+export type TicketWaveAvailabilityMode = "after_previous" | "always" | "scheduled";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
-export type UserRole = 'admin' | 'organizer' | 'user';
+export type UserRole = "admin" | "organizer" | "user";
 
-export type VerificationStatusEnum =
-  | 'completed'
-  | 'failed'
-  | 'pending'
-  | 'rejected'
-  | 'requires_manual_review';
+export type VerificationStatusEnum = "completed" | "failed" | "pending" | "rejected" | "requires_manual_review";
+
+export type WaveRrppIssuanceType = "both" | "invitation" | "off_platform_sale";
 
 export interface EventImages {
   createdAt: Generated<Timestamp>;
@@ -212,24 +116,78 @@ export interface EventImages {
   url: string;
 }
 
+export interface EventProducerMembers {
+  acceptedAt: Timestamp | null;
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  eventProducerId: string;
+  id: Generated<string>;
+  invitedAt: Generated<Timestamp>;
+  role: Generated<EventProducerMemberRole>;
+  userId: string;
+}
+
+export interface EventProducers {
+  contactEmail: string | null;
+  contactPhone: string | null;
+  country: string | null;
+  createdAt: Generated<Timestamp>;
+  defaultBuyerCommissionRate: Numeric | null;
+  defaultProducerFeeAmount: Numeric | null;
+  defaultProducerFeeCurrency: EventTicketCurrency | null;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  legalName: string | null;
+  name: string;
+  slug: string;
+  taxId: string | null;
+  updatedAt: Generated<Timestamp>;
+}
+
 export interface Events {
+  approvedAt: Timestamp | null;
+  approvedByUserId: string | null;
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
   description: string | null;
+  draftPayload: Json | null;
   eventEndDate: Timestamp;
+  eventProducerId: string | null;
   eventStartDate: Timestamp;
   externalId: string;
   externalUrl: string;
   id: Generated<string>;
+  isOfficial: Generated<boolean>;
   lastScrapedAt: Generated<Timestamp>;
   metadata: Json | null;
   name: string;
+  officialResaleEnabled: Generated<boolean>;
+  officialResaleMaxMarkupPercent: Numeric | null;
   platform: string;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
+  rejectedReason: string | null;
   slug: string;
-  status: Generated<string>;
+  status: Generated<EventStatus>;
+  submittedAt: Timestamp | null;
   updatedAt: Generated<Timestamp>;
   venueId: string | null;
+}
+
+export interface EventTicketWaveConfigs {
+  availabilityMode: Generated<TicketWaveAvailabilityMode>;
+  availableFrom: Timestamp | null;
+  availableUntil: Timestamp | null;
+  createdAt: Generated<Timestamp>;
+  displayOrder: Generated<number>;
+  eventTicketWaveId: string;
+  houseListingId: string | null;
+  id: Generated<string>;
+  isHiddenFromSale: Generated<boolean>;
+  previousWaveId: string | null;
+  rrppIssuable: Generated<boolean>;
+  rrppIssuanceType: Generated<WaveRrppIssuanceType>;
+  stock: number;
+  updatedAt: Generated<Timestamp>;
 }
 
 export interface EventTicketWaves {
@@ -322,7 +280,9 @@ export interface Listings {
   createdAt: Generated<Timestamp>;
   deletedAt: Timestamp | null;
   id: Generated<string>;
-  publisherUserId: string;
+  isHouseListing: Generated<boolean>;
+  publisherEventProducerId: string | null;
+  publisherUserId: string | null;
   soldAt: Timestamp | null;
   ticketWaveId: string;
   updatedAt: Generated<Timestamp>;
@@ -330,9 +290,13 @@ export interface Listings {
 
 export interface ListingTickets {
   createdAt: Generated<Timestamp>;
+  currentOwnerUserId: string | null;
   deletedAt: Timestamp | null;
+  entryUsedAt: Timestamp | null;
+  entryUsedByUserId: string | null;
   id: Generated<string>;
   listingId: string;
+  originalOrderId: string | null;
   price: Numeric;
   soldAt: Timestamp | null;
   ticketNumber: number;
@@ -538,7 +502,8 @@ export interface Payouts {
   processedBy: string | null;
   processingFee: Numeric | null;
   requestedAt: Generated<Timestamp>;
-  sellerUserId: string;
+  sellerEventProducerId: string | null;
+  sellerUserId: string | null;
   sourceAmount: Numeric | null;
   sourceCurrency: EventTicketCurrency | null;
   status: Generated<PayoutStatus>;
@@ -602,9 +567,20 @@ export interface SellerEarnings {
   payoutId: string | null;
   retainedReason: SellerEarningsRetainedReason | null;
   sellerAmount: Numeric;
-  sellerUserId: string;
+  sellerEventProducerId: string | null;
+  sellerUserId: string | null;
   status: Generated<SellerEarningsStatus>;
   updatedAt: Generated<Timestamp>;
+}
+
+export interface TicketCodes {
+  createdAt: Generated<Timestamp>;
+  generation: Generated<number>;
+  id: Generated<string>;
+  listingTicketId: string;
+  secret: Buffer;
+  updatedAt: Generated<Timestamp>;
+  windowSeconds: Generated<number>;
 }
 
 export interface TicketDocuments {
@@ -625,6 +601,17 @@ export interface TicketDocuments {
   verifiedAt: Timestamp | null;
   verifiedBy: string | null;
   version: Generated<number>;
+}
+
+export interface TicketOwnershipTransfers {
+  createdAt: Generated<Timestamp>;
+  fromOrderId: string | null;
+  fromUserId: string | null;
+  id: Generated<string>;
+  listingTicketId: string;
+  toOrderId: string | null;
+  toUserId: string | null;
+  transferType: TicketOwnershipTransferType;
 }
 
 export interface TicketReportActions {
@@ -722,7 +709,10 @@ export interface VerificationAuditLogs {
 
 export interface DB {
   eventImages: EventImages;
+  eventProducerMembers: EventProducerMembers;
+  eventProducers: EventProducers;
   events: Events;
+  eventTicketWaveConfigs: EventTicketWaveConfigs;
   eventTicketWaves: EventTicketWaves;
   eventVenues: EventVenues;
   eventViewsDaily: EventViewsDaily;
@@ -749,7 +739,9 @@ export interface DB {
   pushSubscriptions: PushSubscriptions;
   rateLimit: RateLimit;
   sellerEarnings: SellerEarnings;
+  ticketCodes: TicketCodes;
   ticketDocuments: TicketDocuments;
+  ticketOwnershipTransfers: TicketOwnershipTransfers;
   ticketReportActions: TicketReportActions;
   ticketReportAttachments: TicketReportAttachments;
   ticketReportRefunds: TicketReportRefunds;

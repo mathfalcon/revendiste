@@ -180,7 +180,7 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeThumbnailUrlStringOrNullArray {
+export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusActiveOrCancelledOrDraftOrFinishedOrInactiveOrPublishedOrRejectedOrUnderReviewUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeThumbnailUrlStringOrNullArray {
   data: {
     images: {
       thumbnailUrl: string | null;
@@ -195,7 +195,15 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
     venueName: string | null;
     /** @format date-time */
     updatedAt: string;
-    status: string;
+    status:
+      | "active"
+      | "cancelled"
+      | "draft"
+      | "finished"
+      | "inactive"
+      | "published"
+      | "rejected"
+      | "under_review";
     slug: string;
     name: string;
     id: string;
@@ -212,7 +220,7 @@ export interface PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDa
 }
 
 export type GetEventsPaginatedResponse =
-  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeThumbnailUrlStringOrNullArray;
+  PaginatedResponseCreatedAtDateDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalUrlStringIdStringNameStringSlugStringStatusActiveOrCancelledOrDraftOrFinishedOrInactiveOrPublishedOrRejectedOrUnderReviewUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullLowestAvailableTicketPriceNumberOrNullLowestAvailableTicketCurrencyStringOrNullImages58UrlStringImageTypeEventImageTypeThumbnailUrlStringOrNullArray;
 
 export interface InferTypeofPaginationSchema {
   sortOrder?: "asc" | "desc";
@@ -272,7 +280,15 @@ export type SearchEventsResponse = {
   venueName: string | null;
   /** @format date-time */
   updatedAt: string;
-  status: string;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
   slug: string;
   name: string;
   id: string;
@@ -303,7 +319,15 @@ export type GetTrendingEventsResponse = {
   lowestAvailableTicketPrice: number | null;
   /** @format date-time */
   updatedAt: string;
-  status: string;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
   slug: string;
   name: string;
   id: string;
@@ -361,7 +385,15 @@ export interface GetEventBySlugResponse {
   venueName: string | null;
   /** @format date-time */
   updatedAt: string;
-  status: string;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
   slug: string;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
   name: string;
@@ -432,7 +464,15 @@ export interface GetEventByIdResponse {
   venueName: string | null;
   /** @format date-time */
   updatedAt: string;
-  status: string;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
   slug: string;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
   name: string;
@@ -477,7 +517,9 @@ export interface CreateTicketListingResponse {
   ticketWaveId: string;
   /** @format date-time */
   soldAt: string | null;
-  publisherUserId: string;
+  publisherUserId: string | null;
+  publisherEventProducerId: string | null;
+  isHouseListing: boolean;
   /** @format date-time */
   updatedAt: string;
   id: string;
@@ -489,7 +531,12 @@ export interface CreateTicketListingResponse {
     /** @format double */
     ticketNumber: number;
     price: string;
+    originalOrderId: string | null;
     listingId: string;
+    entryUsedByUserId: string | null;
+    /** @format date-time */
+    entryUsedAt: string | null;
+    currentOwnerUserId: string | null;
     /** @format date-time */
     soldAt: string | null;
     /** @format date-time */
@@ -685,7 +732,12 @@ export interface UpdateTicketPriceResponse {
   /** @format double */
   ticketNumber: number;
   price: string;
+  originalOrderId: string | null;
   listingId: string;
+  entryUsedByUserId: string | null;
+  /** @format date-time */
+  entryUsedAt: string | null;
+  currentOwnerUserId: string | null;
   /** @format date-time */
   soldAt: string | null;
   /** @format date-time */
@@ -706,7 +758,12 @@ export interface RemoveTicketResponse {
   /** @format double */
   ticketNumber: number;
   price: string;
+  originalOrderId: string | null;
   listingId: string;
+  entryUsedByUserId: string | null;
+  /** @format date-time */
+  entryUsedAt: string | null;
+  currentOwnerUserId: string | null;
   /** @format date-time */
   soldAt: string | null;
   /** @format date-time */
@@ -770,9 +827,9 @@ export interface CreateOrderResponse {
   confirmedAt: string | null;
   /** @format date-time */
   cancelledAt: string | null;
-  userId: string;
   totalAmount: string;
   currency: EventTicketCurrency;
+  userId: string;
   eventId: string;
   /** @format date-time */
   updatedAt: string;
@@ -829,9 +886,9 @@ export interface GetOrderByIdResponse {
   confirmedAt: string | null;
   /** @format date-time */
   cancelledAt: string | null;
-  userId: string;
   totalAmount: string;
   currency: EventTicketCurrency;
+  userId: string;
   eventId: string;
   /** @format date-time */
   updatedAt: string;
@@ -842,7 +899,7 @@ export interface GetOrderByIdResponse {
   hasActivePaymentAttempt: boolean;
 }
 
-export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullSlugStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray {
+export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringUserIdStringCurrencyEventTicketCurrencyTotalAmountStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullSlugStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray {
   data: {
     items: {
       ticketWaveName: string | null;
@@ -878,9 +935,9 @@ export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirme
     confirmedAt: string | null;
     /** @format date-time */
     cancelledAt: string | null;
-    userId: string;
     totalAmount: string;
     currency: EventTicketCurrency;
+    userId: string;
     eventId: string;
     /** @format date-time */
     updatedAt: string;
@@ -893,7 +950,7 @@ export interface PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirme
 }
 
 export type GetUserOrdersResponse =
-  PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringCurrencyEventTicketCurrencyTotalAmountStringUserIdStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullSlugStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray;
+  PaginatedResponseCreatedAtDateIdStringStatusCancelledOrConfirmedOrExpiredOrPendingUpdatedAtDateEventIdStringUserIdStringCurrencyEventTicketCurrencyTotalAmountStringCancelledAtDateOrNullConfirmedAtDateOrNullPlatformCommissionStringReservationExpiresAtDateSubtotalAmountStringVatOnCommissionStringEvent58EventEndDateStringOrNullEventStartDateStringOrNullIdStringOrNullNameStringOrNullPlatformStringOrNullSlugStringOrNullVenueNameStringOrNullVenueAddressStringOrNullVenueCountryStringOrNullImages58UrlStringImageTypeEventImageTypeArrayOrNullItems58CurrencyEventTicketCurrencyOrNullIdStringTicketWaveIdStringPricePerTicketStringQuantityNumberSubtotalStringTicketWaveNameStringOrNullArray;
 
 export interface GetOrderTicketsResponse {
   tickets: {
@@ -1036,7 +1093,7 @@ export interface OmitAwaitedReturnTypePayoutsServiceAtRequestPayoutFxSnapshot {
   /** @format date-time */
   updatedAt: string;
   currency: EventTicketCurrency;
-  sellerUserId: string;
+  sellerUserId: string | null;
   /** @format date-time */
   completedAt: string | null;
   amount: string;
@@ -1053,6 +1110,7 @@ export interface OmitAwaitedReturnTypePayoutsServiceAtRequestPayoutFxSnapshot {
   processingFee: string | null;
   /** @format date-time */
   requestedAt: string;
+  sellerEventProducerId: string | null;
   sourceAmount: string | null;
   sourceCurrency: EventTicketCurrency | null;
   transactionReference: string | null;
@@ -1098,8 +1156,8 @@ export type GetPayoutMethodsResponse = {
   isDefault: boolean;
   accountHolderSurname: string;
   accountHolderName: string;
-  userId: string;
   currency: EventTicketCurrency;
+  userId: string;
   /** @format date-time */
   updatedAt: string;
   metadata: string | number | boolean | JsonArray | JsonObject | null;
@@ -1115,8 +1173,8 @@ export interface AddPayoutMethodResponse {
   isDefault: boolean;
   accountHolderSurname: string;
   accountHolderName: string;
-  userId: string;
   currency: EventTicketCurrency;
+  userId: string;
   /** @format date-time */
   updatedAt: string;
   metadata: string | number | boolean | JsonArray | JsonObject | null;
@@ -1218,8 +1276,8 @@ export interface UpdatePayoutMethodResponse {
   isDefault: boolean;
   accountHolderSurname: string;
   accountHolderName: string;
-  userId: string;
   currency: EventTicketCurrency;
+  userId: string;
   /** @format date-time */
   updatedAt: string;
   metadata: string | number | boolean | JsonArray | JsonObject | null;
@@ -1272,7 +1330,7 @@ export interface GetUserPayoutDetailsResponse {
   amount: string;
   /** @format date-time */
   completedAt: string | null;
-  sellerUserId: string;
+  sellerUserId: string | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1430,7 +1488,7 @@ export interface GetPayoutsResponse {
     amount: string;
     /** @format date-time */
     completedAt: string | null;
-    sellerUserId: string;
+    sellerUserId: string | null;
     currency: EventTicketCurrency;
     /** @format date-time */
     updatedAt: string;
@@ -1502,7 +1560,7 @@ export interface GetPayoutDetailsResponse {
   amount: string;
   /** @format date-time */
   completedAt: string | null;
-  sellerUserId: string;
+  sellerUserId: string | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1664,6 +1722,7 @@ export interface ProcessPayoutResponse {
   transactionReference: string | null;
   sourceCurrency: EventTicketCurrency | null;
   sourceAmount: string | null;
+  sellerEventProducerId: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1680,7 +1739,7 @@ export interface ProcessPayoutResponse {
   amount: string;
   /** @format date-time */
   completedAt: string | null;
-  sellerUserId: string;
+  sellerUserId: string | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1708,6 +1767,7 @@ export interface FailPayoutResponse {
   transactionReference: string | null;
   sourceCurrency: EventTicketCurrency | null;
   sourceAmount: string | null;
+  sellerEventProducerId: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1724,7 +1784,7 @@ export interface FailPayoutResponse {
   amount: string;
   /** @format date-time */
   completedAt: string | null;
-  sellerUserId: string;
+  sellerUserId: string | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1745,6 +1805,7 @@ export interface CancelPayoutResponse {
   transactionReference: string | null;
   sourceCurrency: EventTicketCurrency | null;
   sourceAmount: string | null;
+  sellerEventProducerId: string | null;
   /** @format date-time */
   requestedAt: string;
   processingFee: string | null;
@@ -1761,7 +1822,7 @@ export interface CancelPayoutResponse {
   amount: string;
   /** @format date-time */
   completedAt: string | null;
-  sellerUserId: string;
+  sellerUserId: string | null;
   currency: EventTicketCurrency;
   /** @format date-time */
   updatedAt: string;
@@ -1830,10 +1891,10 @@ export interface GetVerificationsResponse {
     /** @format double */
     verificationAttempts: number | null;
     verificationStatus:
+      | "rejected"
       | "pending"
       | "completed"
       | "failed"
-      | "rejected"
       | "requires_manual_review"
       | null;
     documentCountry: string | null;
@@ -1848,10 +1909,10 @@ export interface GetVerificationsResponse {
 
 export interface InferTypeofAdminVerificationsQuerySchema {
   status?:
+    | "rejected"
     | "pending"
     | "completed"
     | "failed"
-    | "rejected"
     | "requires_manual_review";
   sortOrder?: "asc" | "desc";
   sortBy: "createdAt" | "updatedAt" | "verificationAttempts";
@@ -1895,10 +1956,10 @@ export interface GetVerificationDetailsResponse {
   /** @format double */
   verificationAttempts: number | null;
   verificationStatus:
+    | "rejected"
     | "pending"
     | "completed"
     | "failed"
-    | "rejected"
     | "requires_manual_review"
     | null;
   documentCountry: string | null;
@@ -1956,7 +2017,7 @@ export interface GetVerificationAuditHistoryResponse {
   }[];
 }
 
-export interface PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray {
+export interface PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusActiveOrCancelledOrDraftOrFinishedOrInactiveOrPublishedOrRejectedOrUnderReviewUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray {
   data: {
     ticketWaves: {
       isSoldOut: boolean;
@@ -1981,7 +2042,15 @@ export interface PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStr
     venueName: string | null;
     /** @format date-time */
     updatedAt: string;
-    status: string;
+    status:
+      | "active"
+      | "cancelled"
+      | "draft"
+      | "finished"
+      | "inactive"
+      | "published"
+      | "rejected"
+      | "under_review";
     slug: string;
     qrAvailabilityTiming: QrAvailabilityTiming | null;
     platform: string;
@@ -2003,10 +2072,18 @@ export interface PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStr
 }
 
 export type GetEventsResponse =
-  PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusStringUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray;
+  PaginatedResponseCreatedAtDateDeletedAtDateOrNullDescriptionStringOrNullEventEndDateDateEventStartDateDateExternalIdStringExternalUrlStringIdStringNameStringPlatformStringQrAvailabilityTimingQrAvailabilityTimingOrNullSlugStringStatusActiveOrCancelledOrDraftOrFinishedOrInactiveOrPublishedOrRejectedOrUnderReviewUpdatedAtDateVenueNameStringOrNullVenueAddressStringOrNullVenueCityStringOrNullImages58UrlStringIdStringDisplayOrderNumberImageTypeEventImageTypeArrayTicketWaves58DescriptionStringOrNullExternalIdStringIdStringNameStringStatusStringCurrencyEventTicketCurrencyFaceValueStringIsAvailableBooleanIsSoldOutBooleanArray;
 
 export interface InferTypeofAdminEventsQuerySchema {
-  status?: "active" | "inactive";
+  status?:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
   search?: string;
   sortOrder?: "asc" | "desc";
   sortBy?: string;
@@ -2048,7 +2125,15 @@ export interface GetEventDetailsResponse {
   venueName: string | null;
   /** @format date-time */
   updatedAt: string;
-  status: string;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
   slug: string;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
   platform: string;
@@ -2099,26 +2184,45 @@ export interface UpdateEventResponse {
   venueId: string | null;
   /** @format date-time */
   updatedAt: string;
-  status: string;
+  /** @format date-time */
+  submittedAt: string | null;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
   slug: string;
+  rejectedReason: string | null;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
   platform: string;
+  officialResaleMaxMarkupPercent: string | null;
+  officialResaleEnabled: boolean;
   name: string;
   metadata: JsonValue;
   /** @format date-time */
   lastScrapedAt: string;
+  isOfficial: boolean;
   id: string;
   externalUrl: string;
   externalId: string;
   /** @format date-time */
   eventStartDate: string;
+  eventProducerId: string | null;
   /** @format date-time */
   eventEndDate: string;
+  draftPayload: JsonValue;
   description: string | null;
   /** @format date-time */
   deletedAt: string | null;
   /** @format date-time */
   createdAt: string;
+  approvedByUserId: string | null;
+  /** @format date-time */
+  approvedAt: string | null;
 }
 
 export interface UpdateEventRouteBody {
@@ -2132,30 +2236,143 @@ export interface UpdateEventRouteBody {
   name?: string;
 }
 
-export interface DeleteEventResponse {
+export interface ApproveEventResponse {
   venueId: string | null;
   /** @format date-time */
   updatedAt: string;
-  status: string;
+  /** @format date-time */
+  submittedAt: string | null;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
   slug: string;
+  rejectedReason: string | null;
   qrAvailabilityTiming: QrAvailabilityTiming | null;
   platform: string;
+  officialResaleMaxMarkupPercent: string | null;
+  officialResaleEnabled: boolean;
   name: string;
   metadata: JsonValue;
   /** @format date-time */
   lastScrapedAt: string;
+  isOfficial: boolean;
   id: string;
   externalUrl: string;
   externalId: string;
   /** @format date-time */
   eventStartDate: string;
+  eventProducerId: string | null;
   /** @format date-time */
   eventEndDate: string;
+  draftPayload: JsonValue;
   description: string | null;
   /** @format date-time */
   deletedAt: string | null;
   /** @format date-time */
   createdAt: string;
+  approvedByUserId: string | null;
+  /** @format date-time */
+  approvedAt: string | null;
+}
+
+export interface RejectEventResponse {
+  venueId: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  submittedAt: string | null;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
+  slug: string;
+  rejectedReason: string | null;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  platform: string;
+  officialResaleMaxMarkupPercent: string | null;
+  officialResaleEnabled: boolean;
+  name: string;
+  metadata: JsonValue;
+  /** @format date-time */
+  lastScrapedAt: string;
+  isOfficial: boolean;
+  id: string;
+  externalUrl: string;
+  externalId: string;
+  /** @format date-time */
+  eventStartDate: string;
+  eventProducerId: string | null;
+  /** @format date-time */
+  eventEndDate: string;
+  draftPayload: JsonValue;
+  description: string | null;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+  approvedByUserId: string | null;
+  /** @format date-time */
+  approvedAt: string | null;
+}
+
+export interface RejectEventRouteBody {
+  rejectedReason: string;
+}
+
+export interface DeleteEventResponse {
+  venueId: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  submittedAt: string | null;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
+  slug: string;
+  rejectedReason: string | null;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  platform: string;
+  officialResaleMaxMarkupPercent: string | null;
+  officialResaleEnabled: boolean;
+  name: string;
+  metadata: JsonValue;
+  /** @format date-time */
+  lastScrapedAt: string;
+  isOfficial: boolean;
+  id: string;
+  externalUrl: string;
+  externalId: string;
+  /** @format date-time */
+  eventStartDate: string;
+  eventProducerId: string | null;
+  /** @format date-time */
+  eventEndDate: string;
+  draftPayload: JsonValue;
+  description: string | null;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+  approvedByUserId: string | null;
+  /** @format date-time */
+  approvedAt: string | null;
 }
 
 export interface CreateTicketWaveResponse {
@@ -2377,6 +2594,16 @@ export interface ClerkWebhookRouteBody {
   };
   type: "email.created";
   object: "event";
+}
+
+export interface IssueTicketCodeResponse {
+  supportsNfc: boolean;
+  /** @format double */
+  windowSeconds: number;
+  /** @format date-time */
+  expiresAt: string;
+  qrPayload: string;
+  listingTicketId: string;
 }
 
 export interface UserCreateCaseResponse {
@@ -2804,8 +3031,8 @@ export interface PickNotificationExcludeKeysMetadataOrActionsOrTypeOrTitleOrDesc
   status: "pending" | "failed" | "seen" | "sent";
   /** @format date-time */
   updatedAt: string;
-  channels: ("email" | "in_app" | "sms" | "whatsapp")[];
   userId: string;
+  channels: ("email" | "in_app" | "sms" | "whatsapp")[];
   channelStatus: string | number | boolean | JsonArray | JsonObject | null;
   /** @format double */
   retryCount: number;
@@ -2977,6 +3204,110 @@ export interface GetLivenessCredentialsResponse {
   sessionToken: string;
   secretAccessKey: string;
   accessKeyId: string;
+}
+
+export interface SaveProducerEventDraftResponse {
+  venueId: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  submittedAt: string | null;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
+  slug: string;
+  rejectedReason: string | null;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  platform: string;
+  officialResaleMaxMarkupPercent: string | null;
+  officialResaleEnabled: boolean;
+  name: string;
+  metadata: JsonValue;
+  /** @format date-time */
+  lastScrapedAt: string;
+  isOfficial: boolean;
+  id: string;
+  externalUrl: string;
+  externalId: string;
+  /** @format date-time */
+  eventStartDate: string;
+  eventProducerId: string | null;
+  /** @format date-time */
+  eventEndDate: string;
+  draftPayload: JsonValue;
+  description: string | null;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+  approvedByUserId: string | null;
+  /** @format date-time */
+  approvedAt: string | null;
+}
+
+export interface SaveProducerEventDraftRouteBody {
+  draftPayload?: any;
+  /** @format double */
+  officialResaleMaxMarkupPercent?: number | null;
+  officialResaleEnabled?: boolean;
+  externalUrl?: string;
+  eventEndDate?: string;
+  eventStartDate?: string;
+  description?: string | null;
+  name?: string;
+  eventId?: string;
+  eventProducerId: string;
+}
+
+export interface SubmitProducerEventForReviewResponse {
+  venueId: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  /** @format date-time */
+  submittedAt: string | null;
+  status:
+    | "active"
+    | "cancelled"
+    | "draft"
+    | "finished"
+    | "inactive"
+    | "published"
+    | "rejected"
+    | "under_review";
+  slug: string;
+  rejectedReason: string | null;
+  qrAvailabilityTiming: QrAvailabilityTiming | null;
+  platform: string;
+  officialResaleMaxMarkupPercent: string | null;
+  officialResaleEnabled: boolean;
+  name: string;
+  metadata: JsonValue;
+  /** @format date-time */
+  lastScrapedAt: string;
+  isOfficial: boolean;
+  id: string;
+  externalUrl: string;
+  externalId: string;
+  /** @format date-time */
+  eventStartDate: string;
+  eventProducerId: string | null;
+  /** @format date-time */
+  eventEndDate: string;
+  draftPayload: JsonValue;
+  description: string | null;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+  approvedByUserId: string | null;
+  /** @format date-time */
+  approvedAt: string | null;
 }
 
 export interface PaginatedResponseUser58IdStringEmailStringFirstNameStringOrNullLastNameStringOrNullImageUrlStringOrNullRoleAdminOrOrganizerOrUserLastActiveAtDateOrNull {
@@ -3370,7 +3701,7 @@ export interface SettlementBreakdownResponse {
     currency: EventTicketCurrency;
     amount: string;
     status: "cancelled" | "pending" | "completed" | "failed" | "processing";
-    sellerUserId: string;
+    sellerUserId: string | null;
     payoutId: string;
   }[];
   items: {
@@ -3385,7 +3716,7 @@ export interface SettlementBreakdownResponse {
         | "paid_out"
         | "payout_requested"
         | "retained";
-      sellerUserId: string;
+      sellerUserId: string | null;
       sellerAmountConverted: string | null;
       sellerAmount: string;
       id: string;
@@ -3443,6 +3774,247 @@ export type FailSettlementResponse = ProcessorSettlementListRow;
 
 export interface FailSettlementRouteBody {
   reason?: string;
+}
+
+export type ListEventProducersResponse = {
+  taxId: string | null;
+  legalName: string | null;
+  defaultProducerFeeCurrency: EventTicketCurrency | null;
+  defaultProducerFeeAmount: string | null;
+  defaultBuyerCommissionRate: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  country: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  slug: string;
+  name: string;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}[];
+
+export interface AdminEventProducersListQuery {
+  search?: string;
+}
+
+export interface GetEventProducerResponse {
+  taxId: string | null;
+  legalName: string | null;
+  defaultProducerFeeCurrency: EventTicketCurrency | null;
+  defaultProducerFeeAmount: string | null;
+  defaultBuyerCommissionRate: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  country: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  slug: string;
+  name: string;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+  members: {
+    userImageUrl: string | null;
+    userLastName: string | null;
+    userFirstName: string | null;
+    userEmail: string;
+    userId: string;
+    role: "manager" | "owner" | "viewer";
+    /** @format date-time */
+    invitedAt: string;
+    /** @format date-time */
+    acceptedAt: string | null;
+    id: string;
+    eventProducerId: string;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+}
+
+export interface CreateEventProducerResponse {
+  taxId: string | null;
+  legalName: string | null;
+  defaultProducerFeeCurrency: EventTicketCurrency | null;
+  defaultProducerFeeAmount: string | null;
+  defaultBuyerCommissionRate: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  country: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  slug: string;
+  name: string;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+  members: {
+    userImageUrl: string | null;
+    userLastName: string | null;
+    userFirstName: string | null;
+    userEmail: string;
+    userId: string;
+    role: "manager" | "owner" | "viewer";
+    /** @format date-time */
+    invitedAt: string;
+    /** @format date-time */
+    acceptedAt: string | null;
+    id: string;
+    eventProducerId: string;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+}
+
+export interface CreateEventProducerRouteBody {
+  defaultProducerFeeCurrency?: "ARS" | "USD" | "UYU" | null;
+  /** @format double */
+  defaultProducerFeeAmount?: number | null;
+  ownerUserId?: string;
+  /** @format double */
+  defaultBuyerCommissionRate?: number | null;
+  country?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  taxId?: string | null;
+  legalName?: string | null;
+  slug?: string;
+  name: string;
+}
+
+export interface UpdateEventProducerResponse {
+  taxId: string | null;
+  legalName: string | null;
+  defaultProducerFeeCurrency: EventTicketCurrency | null;
+  defaultProducerFeeAmount: string | null;
+  defaultBuyerCommissionRate: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  country: string | null;
+  /** @format date-time */
+  updatedAt: string;
+  slug: string;
+  name: string;
+  id: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+  members: {
+    userImageUrl: string | null;
+    userLastName: string | null;
+    userFirstName: string | null;
+    userEmail: string;
+    userId: string;
+    role: "manager" | "owner" | "viewer";
+    /** @format date-time */
+    invitedAt: string;
+    /** @format date-time */
+    acceptedAt: string | null;
+    id: string;
+    eventProducerId: string;
+    /** @format date-time */
+    createdAt: string;
+  }[];
+}
+
+export interface UpdateEventProducerRouteBody {
+  defaultProducerFeeCurrency?: "ARS" | "USD" | "UYU" | null;
+  /** @format double */
+  defaultProducerFeeAmount?: number | null;
+  name?: string;
+  taxId?: string | null;
+  legalName?: string | null;
+  /** @format double */
+  defaultBuyerCommissionRate?: number | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  country?: string | null;
+  slug?: string;
+}
+
+export interface DeleteEventProducerResponse {
+  /** @format date-time */
+  deletedAt: string | null;
+  id: string;
+}
+
+export type ListEventProducerMembersResponse = {
+  userImageUrl: string | null;
+  userLastName: string | null;
+  userFirstName: string | null;
+  userEmail: string;
+  userId: string;
+  role: "manager" | "owner" | "viewer";
+  /** @format date-time */
+  invitedAt: string;
+  /** @format date-time */
+  acceptedAt: string | null;
+  id: string;
+  eventProducerId: string;
+  /** @format date-time */
+  createdAt: string;
+}[];
+
+export interface AddEventProducerMemberResponse {
+  userId: string;
+  role: "manager" | "owner" | "viewer";
+  /** @format date-time */
+  invitedAt: string;
+  /** @format date-time */
+  acceptedAt: string | null;
+  id: string;
+  eventProducerId: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface AddEventProducerMemberRouteBody {
+  accepted?: boolean;
+  role: "manager" | "owner" | "viewer";
+  userId: string;
+}
+
+export interface UpdateEventProducerMemberRoleResponse {
+  userId: string;
+  role: "manager" | "owner" | "viewer";
+  /** @format date-time */
+  invitedAt: string;
+  /** @format date-time */
+  acceptedAt: string | null;
+  id: string;
+  eventProducerId: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
+}
+
+export interface UpdateEventProducerMemberRoleRouteBody {
+  role: "manager" | "owner" | "viewer";
+}
+
+export interface RemoveEventProducerMemberResponse {
+  userId: string;
+  role: "manager" | "owner" | "viewer";
+  /** @format date-time */
+  invitedAt: string;
+  /** @format date-time */
+  acceptedAt: string | null;
+  id: string;
+  eventProducerId: string;
+  /** @format date-time */
+  deletedAt: string | null;
+  /** @format date-time */
+  createdAt: string;
 }
 
 export interface GetDashboardTicketsResponse {
@@ -4801,10 +5373,10 @@ export class Api<
     getVerifications: (
       query: {
         status?:
+          | "rejected"
           | "pending"
           | "completed"
           | "failed"
-          | "rejected"
           | "requires_manual_review";
         sortOrder?: "asc" | "desc";
         sortBy: "createdAt" | "updatedAt" | "verificationAttempts";
@@ -4950,7 +5522,15 @@ export class Api<
      */
     getEvents: (
       query: {
-        status?: "active" | "inactive";
+        status?:
+          | "active"
+          | "cancelled"
+          | "draft"
+          | "finished"
+          | "inactive"
+          | "published"
+          | "rejected"
+          | "under_review";
         search?: string;
         sortOrder?: "asc" | "desc";
         sortBy?: string;
@@ -5038,6 +5618,48 @@ export class Api<
       this.request<DeleteEventResponse, UnauthorizedError | NotFoundError>({
         path: `/admin/events/${eventId}`,
         method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Events
+     * @name ApproveEvent
+     * @request POST:/admin/events/{eventId}/approve
+     */
+    approveEvent: (eventId: string, params: RequestParams = {}) =>
+      this.request<
+        ApproveEventResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/events/${eventId}/approve`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Events
+     * @name RejectEvent
+     * @request POST:/admin/events/{eventId}/reject
+     */
+    rejectEvent: (
+      eventId: string,
+      data: RejectEventRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        RejectEventResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/events/${eventId}/reject`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -5558,6 +6180,201 @@ export class Api<
     /**
      * No description
      *
+     * @tags Admin - Event Producers
+     * @name ListEventProducers
+     * @request GET:/admin/event-producers
+     */
+    listEventProducers: (
+      query?: {
+        search?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ListEventProducersResponse, UnauthorizedError>({
+        path: `/admin/event-producers`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Event Producers
+     * @name CreateEventProducer
+     * @request POST:/admin/event-producers
+     */
+    createEventProducer: (
+      data: CreateEventProducerRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CreateEventProducerResponse,
+        UnauthorizedError | ValidationError
+      >({
+        path: `/admin/event-producers`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Event Producers
+     * @name GetEventProducer
+     * @request GET:/admin/event-producers/{eventProducerId}
+     */
+    getEventProducer: (eventProducerId: string, params: RequestParams = {}) =>
+      this.request<GetEventProducerResponse, UnauthorizedError | NotFoundError>(
+        {
+          path: `/admin/event-producers/${eventProducerId}`,
+          method: "GET",
+          format: "json",
+          ...params,
+        },
+      ),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Event Producers
+     * @name UpdateEventProducer
+     * @request PUT:/admin/event-producers/{eventProducerId}
+     */
+    updateEventProducer: (
+      eventProducerId: string,
+      data: UpdateEventProducerRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UpdateEventProducerResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/event-producers/${eventProducerId}`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Event Producers
+     * @name DeleteEventProducer
+     * @request DELETE:/admin/event-producers/{eventProducerId}
+     */
+    deleteEventProducer: (
+      eventProducerId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        DeleteEventProducerResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/event-producers/${eventProducerId}`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Event Producers
+     * @name ListMembers
+     * @request GET:/admin/event-producers/{eventProducerId}/members
+     */
+    listMembers: (eventProducerId: string, params: RequestParams = {}) =>
+      this.request<
+        ListEventProducerMembersResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/event-producers/${eventProducerId}/members`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Event Producers
+     * @name AddMember
+     * @request POST:/admin/event-producers/{eventProducerId}/members
+     */
+    addMember: (
+      eventProducerId: string,
+      data: AddEventProducerMemberRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AddEventProducerMemberResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/event-producers/${eventProducerId}/members`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Event Producers
+     * @name UpdateMemberRole
+     * @request PUT:/admin/event-producers/{eventProducerId}/members/{userId}
+     */
+    updateMemberRole: (
+      eventProducerId: string,
+      userId: string,
+      data: UpdateEventProducerMemberRoleRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UpdateEventProducerMemberRoleResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/admin/event-producers/${eventProducerId}/members/${userId}`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Admin - Event Producers
+     * @name RemoveMember
+     * @request DELETE:/admin/event-producers/{eventProducerId}/members/{userId}
+     */
+    removeMember: (
+      eventProducerId: string,
+      userId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        RemoveEventProducerMemberResponse,
+        UnauthorizedError | NotFoundError
+      >({
+        path: `/admin/event-producers/${eventProducerId}/members/${userId}`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @tags Admin - Dashboard
      * @name GetDashboardTickets
      * @request GET:/admin/dashboard/tickets
@@ -5940,6 +6757,25 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  tickets = {
+    /**
+     * No description
+     *
+     * @tags Tickets
+     * @name IssueTicketCode
+     * @request GET:/tickets/{listingTicketId}/code
+     */
+    issueTicketCode: (listingTicketId: string, params: RequestParams = {}) =>
+      this.request<
+        IssueTicketCodeResponse,
+        UnauthorizedError | NotFoundError | ValidationError
+      >({
+        path: `/tickets/${listingTicketId}/code`,
+        method: "GET",
         format: "json",
         ...params,
       }),
@@ -6723,6 +7559,48 @@ export class Api<
       this.request<GetLivenessCredentialsResponse, ApiErrorResponse>({
         path: `/identity-verification/liveness-credentials`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+  };
+  eventProducer = {
+    /**
+     * No description
+     *
+     * @tags Event Producer - Events
+     * @name SaveDraft
+     * @request POST:/event-producer/events/draft
+     */
+    saveDraft: (
+      data: SaveProducerEventDraftRouteBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        SaveProducerEventDraftResponse,
+        UnauthorizedError | ValidationError
+      >({
+        path: `/event-producer/events/draft`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Event Producer - Events
+     * @name SubmitForReview
+     * @request POST:/event-producer/events/{eventId}/submit-for-review
+     */
+    submitForReview: (eventId: string, params: RequestParams = {}) =>
+      this.request<
+        SubmitProducerEventForReviewResponse,
+        UnauthorizedError | ValidationError
+      >({
+        path: `/event-producer/events/${eventId}/submit-for-review`,
+        method: "POST",
         format: "json",
         ...params,
       }),

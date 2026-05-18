@@ -14,6 +14,7 @@ import {DLocalService} from '~/services/dlocal';
 import {ClerkWebhookService} from '~/services/clerk-webhook';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {SellerEarningsService} from '~/services/seller-earnings';
+import {TicketCodesService} from '~/services/ticket-codes';
 import {NotificationService} from '~/services/notifications';
 import {
   OrdersRepository,
@@ -21,6 +22,8 @@ import {
   PaymentsRepository,
   PaymentEventsRepository,
   ListingTicketsRepository,
+  TicketCodesRepository,
+  TicketOwnershipTransfersRepository,
   TicketListingsRepository,
   EventsRepository,
   EventTicketWavesRepository,
@@ -52,6 +55,9 @@ export function createWebhookDependencies(database: Kysely<DB> = db) {
   const paymentsRepository = new PaymentsRepository(database);
   const paymentEventsRepository = new PaymentEventsRepository(database);
   const listingTicketsRepository = new ListingTicketsRepository(database);
+  const ticketCodesRepository = new TicketCodesRepository(database);
+  const ticketOwnershipTransfersRepository =
+    new TicketOwnershipTransfersRepository(database);
   const ticketListingsRepository = new TicketListingsRepository(database);
   const eventsRepository = new EventsRepository(database);
   const eventTicketWavesRepository = new EventTicketWavesRepository(database);
@@ -79,6 +85,10 @@ export function createWebhookDependencies(database: Kysely<DB> = db) {
     sellerEarningsRepository,
     orderTicketReservationsRepository,
   );
+  const ticketCodesService = new TicketCodesService(
+    ticketCodesRepository,
+    listingTicketsRepository,
+  );
 
   const dlocalAdapter = new PaymentWebhookAdapter(
     new DLocalService(),
@@ -87,9 +97,11 @@ export function createWebhookDependencies(database: Kysely<DB> = db) {
     paymentsRepository,
     paymentEventsRepository,
     listingTicketsRepository,
+    ticketOwnershipTransfersRepository,
     ticketListingsRepository,
     ticketListingsService,
     sellerEarningsService,
+    ticketCodesService,
     notificationService,
     () => getJobQueueService(),
   );

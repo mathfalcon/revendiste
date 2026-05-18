@@ -8,6 +8,8 @@ import {
   NotificationsRepository,
   PaymentEventsRepository,
   ListingTicketsRepository,
+  TicketCodesRepository,
+  TicketOwnershipTransfersRepository,
   TicketListingsRepository,
   EventsRepository,
   EventTicketWavesRepository,
@@ -18,6 +20,7 @@ import {getPaymentProvider} from '~/services/payments/providers/PaymentProviderF
 import {NotificationService} from '~/services/notifications';
 import {TicketListingsService} from '~/services/ticket-listings';
 import {SellerEarningsService} from '~/services/seller-earnings';
+import {TicketCodesService} from '~/services/ticket-codes';
 import {notifyOrderExpired} from '~/services/notifications/helpers';
 import {expireOrderWithoutPaymentLink} from '~/services/orders/reservation-expiry';
 import {logger} from '~/utils';
@@ -37,6 +40,9 @@ const orderTicketReservationsRepository = new OrderTicketReservationsRepository(
 const paymentsRepository = new PaymentsRepository(db);
 const paymentEventsRepository = new PaymentEventsRepository(db);
 const listingTicketsRepository = new ListingTicketsRepository(db);
+const ticketCodesRepository = new TicketCodesRepository(db);
+const ticketOwnershipTransfersRepository =
+  new TicketOwnershipTransfersRepository(db);
 const ticketListingsRepository = new TicketListingsRepository(db);
 const eventsRepository = new EventsRepository(db);
 const eventTicketWavesRepository = new EventTicketWavesRepository(db);
@@ -64,6 +70,10 @@ const sellerEarningsService = new SellerEarningsService(
   sellerEarningsRepository,
   orderTicketReservationsRepository,
 );
+const ticketCodesService = new TicketCodesService(
+  ticketCodesRepository,
+  listingTicketsRepository,
+);
 
 const orderReservationExpiryDeps = {
   ordersRepository,
@@ -84,9 +94,11 @@ const createPaymentWebhookAdapter = (
     paymentsRepository,
     paymentEventsRepository,
     listingTicketsRepository,
+    ticketOwnershipTransfersRepository,
     ticketListingsRepository,
     ticketListingsService,
     sellerEarningsService,
+    ticketCodesService,
     notificationService,
     () => getJobQueueService(),
   );
